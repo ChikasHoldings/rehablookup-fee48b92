@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, Cell, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
 import { Building2, Crown, Shield, AlertTriangle, Handshake, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 interface ProviderStatsChartsProps {
   statusCounts: {
@@ -31,8 +32,8 @@ interface StatItemProps {
 function StatItem({ label, value, icon: Icon, tab, activeTab, onTabChange, variant = "default" }: StatItemProps) {
   const isActive = activeTab === tab;
   
-  const variantStyles = {
-    default: "text-foreground",
+  const variantStyles: Record<string, string> = {
+    default: "text-muted-foreground",
     success: "text-success",
     warning: "text-warning",
     destructive: "text-destructive",
@@ -44,19 +45,15 @@ function StatItem({ label, value, icon: Icon, tab, activeTab, onTabChange, varia
     <button
       onClick={() => onTabChange(tab)}
       className={cn(
-        "flex flex-col items-center justify-center p-3 rounded-lg transition-all text-center min-w-[80px]",
+        "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
         isActive 
           ? "bg-accent/10 ring-1 ring-accent" 
           : "hover:bg-muted/50"
       )}
     >
-      <Icon className={cn("h-4 w-4 mb-1", variantStyles[variant])} />
-      <span className={cn("text-xl font-semibold tabular-nums", variantStyles[variant])}>
-        {value}
-      </span>
-      <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
-        {label}
-      </span>
+      <Icon className={cn("h-3.5 w-3.5 mb-1", variantStyles[variant])} />
+      <span className="text-lg font-semibold tabular-nums leading-none">{value}</span>
+      <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">{label}</span>
     </button>
   );
 }
@@ -89,10 +86,10 @@ export function ProviderStatsCharts({ statusCounts, onTabChange, activeTab }: Pr
 
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          {/* Stats Row */}
-          <div className="flex items-center gap-1 flex-wrap">
+      <CardContent className="p-0">
+        <div className="flex items-stretch">
+          {/* Primary Stats */}
+          <div className="flex items-center gap-0.5 p-3">
             <StatItem
               label="Total"
               value={statusCounts?.all || 0}
@@ -102,7 +99,6 @@ export function ProviderStatsCharts({ statusCounts, onTabChange, activeTab }: Pr
               onTabChange={onTabChange}
               variant="default"
             />
-            <div className="w-px h-10 bg-border mx-1 hidden sm:block" />
             <StatItem
               label="Approved"
               value={statusCounts?.approved || 0}
@@ -130,7 +126,12 @@ export function ProviderStatsCharts({ statusCounts, onTabChange, activeTab }: Pr
               onTabChange={onTabChange}
               variant="destructive"
             />
-            <div className="w-px h-10 bg-border mx-1 hidden sm:block" />
+          </div>
+
+          <Separator orientation="vertical" className="h-auto" />
+
+          {/* Subscription Stats */}
+          <div className="flex items-center gap-0.5 p-3">
             <StatItem
               label="Pro"
               value={statusCounts?.pro || 0}
@@ -151,32 +152,40 @@ export function ProviderStatsCharts({ statusCounts, onTabChange, activeTab }: Pr
             />
           </div>
 
-          {/* Subscription Metrics */}
-          <div className="flex items-center gap-4 ml-auto text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Crown className="h-3.5 w-3.5 text-accent" />
-              <span>{proPercentage}% Pro</span>
+          {/* Subscription Percentages - Hidden on small screens */}
+          <div className="hidden lg:flex items-center gap-4 px-4 ml-auto border-l">
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <Crown className="h-3.5 w-3.5 text-accent" />
+                <span className="text-sm font-medium tabular-nums">{proPercentage}%</span>
+              </div>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Pro Rate</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Handshake className="h-3.5 w-3.5 text-primary" />
-              <span>{placementPercentage}% Placement</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <Handshake className="h-3.5 w-3.5 text-primary" />
+                <span className="text-sm font-medium tabular-nums">{placementPercentage}%</span>
+              </div>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Placement Rate</span>
             </div>
           </div>
 
-          {/* Mini Bar Chart */}
-          <div className="lg:w-[200px] h-[60px] hidden xl:block">
-            <ChartContainer config={chartConfig} className="h-full w-full">
-              <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" hide />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" radius={[0, 2, 2, 0]} barSize={8}>
-                  {barData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ChartContainer>
+          {/* Mini Bar Chart - Hidden on smaller screens */}
+          <div className="hidden xl:flex items-center px-4 border-l">
+            <div className="w-[180px] h-[56px]">
+              <ChartContainer config={chartConfig} className="h-full w-full">
+                <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 0, top: 4, bottom: 4 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" hide />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" radius={[0, 3, 3, 0]} barSize={8}>
+                    {barData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            </div>
           </div>
         </div>
       </CardContent>
