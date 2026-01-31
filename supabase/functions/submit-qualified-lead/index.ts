@@ -38,6 +38,30 @@ interface InquiryRequest {
   source?: string;
 }
 
+// ============ LEAD MASKING (PRIVACY) ============
+function maskLeadName(fullName: string): string {
+  if (!fullName || fullName.trim().length === 0) return "New Lead";
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  const firstName = parts[0];
+  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+  return `${firstName} ${lastInitial}.`;
+}
+
+function maskEmail(email: string): string {
+  if (!email) return "●●●@●●●.com";
+  const [local, domain] = email.split("@");
+  if (!domain) return "●●●@●●●.com";
+  const maskedLocal = local[0] + "●●●";
+  const domainParts = domain.split(".");
+  const tld = domainParts[domainParts.length - 1];
+  return `${maskedLocal}@●●●.${tld}`;
+}
+
+function maskPhone(): string {
+  return "(●●●) ●●●-●●●●";
+}
+
 // ============ DUPLICATE CHECK ============
 // deno-lint-ignore no-explicit-any
 async function checkForDuplicate(
@@ -72,6 +96,7 @@ async function checkForDuplicate(
 
 // ============ EMAIL TEMPLATES ============
 function getSeekerConfirmationEmail(name: string, facilityName: string): string {
+  const firstName = name.split(" ")[0];
   return `
 <!DOCTYPE html>
 <html>
@@ -79,40 +104,69 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <!-- Header -->
           <tr>
-            <td style="padding: 40px; text-align: center; background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); border-radius: 12px 12px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Inquiry Received</h1>
+            <td style="background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 16px;">✉️</div>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+                Inquiry Received
+              </h1>
+              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">Your message has been delivered</p>
             </td>
           </tr>
+          <!-- Body -->
           <tr>
-            <td style="padding: 40px;">
-              <p style="margin: 0 0 20px; color: #1e293b; font-size: 16px; line-height: 1.6;">
-                Hi ${name},
+            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                Hi ${firstName},
               </p>
-              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
-                Thank you for reaching out. Your inquiry has been sent to <strong>${facilityName}</strong>.
+              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Thank you for reaching out! Your inquiry has been successfully delivered to <strong style="color: #0f766e;">${facilityName}</strong>.
               </p>
-              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
-                A representative will contact you soon using your preferred contact method.
+              
+              <!-- What's Next Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #0f766e;">📞 What happens next?</p>
+                    <ul style="margin: 0; padding: 0 0 0 20px; color: #115e59; font-size: 14px; line-height: 1.8;">
+                      <li>The facility will review your inquiry shortly</li>
+                      <li>A representative will contact you within 24-48 hours</li>
+                      <li>They'll reach out using your preferred contact method</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                If you have any questions in the meantime, feel free to reply to this email or contact us at <a href="mailto:help@rehablookup.com" style="color: #0f766e; text-decoration: none;">help@rehablookup.com</a>.
               </p>
-              <div style="background-color: #f0fdfa; border-left: 4px solid #14b8a6; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
-                <p style="margin: 0; color: #0f766e; font-size: 14px;">
-                  <strong>What happens next?</strong><br>
-                  The facility will review your inquiry and reach out within 24-48 hours.
-                </p>
-              </div>
             </td>
           </tr>
+          <!-- Footer -->
           <tr>
-            <td style="padding: 30px; background-color: #f8fafc; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0; color: #64748b; font-size: 12px;">
-                © ${new Date().getFullYear()} RehabLookup. All rights reserved.
-              </p>
+            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 12px 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600;">
+                      RehabLookup
+                    </p>
+                    <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
+                      Connecting families with quality care
+                    </p>
+                    <p style="margin: 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
@@ -125,11 +179,26 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
 
 function getFacilityNotificationEmail(
   leadName: string,
-  leadEmail: string,
-  leadPhone: string,
+  _leadEmail: string,
+  _leadPhone: string,
   facilityName: string,
   details: { urgency?: string; levelOfCare?: string; insuranceType?: string; message?: string; preferredContact?: string }
 ): string {
+  // PRIVACY: Mask all contact information - providers must unlock to see full details
+  const maskedName = maskLeadName(leadName);
+  const maskedEmail = maskEmail(_leadEmail);
+  const maskedPhone = maskPhone();
+  const firstName = leadName.split(" ")[0];
+  
+  // Format urgency display
+  const urgencyDisplay = details.urgency === 'immediate' ? '🔴 Immediate' 
+    : details.urgency === 'within_week' ? '🟡 Within a week'
+    : details.urgency === 'within_month' ? '🟢 Within a month'
+    : '⚪ Not specified';
+  
+  // Format level of care
+  const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Not specified';
+  
   return `
 <!DOCTYPE html>
 <html>
@@ -137,50 +206,143 @@ function getFacilityNotificationEmail(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <!-- Header -->
           <tr>
-            <td style="padding: 40px; text-align: center; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 12px 12px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">New Inquiry for ${facilityName}</h1>
+            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 16px;">🔔</div>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+                New Inquiry Received
+              </h1>
+              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">${facilityName}</p>
             </td>
           </tr>
+          <!-- Body -->
           <tr>
-            <td style="padding: 40px;">
-              <p style="margin: 0 0 20px; color: #1e293b; font-size: 16px;">
-                You have received a new inquiry through RehabLookup.
+            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Great news! Someone is interested in your facility and has submitted an inquiry through RehabLookup.
               </p>
               
-              <div style="background-color: #f8fafc; border-radius: 8px; padding: 24px; margin: 20px 0;">
-                <h3 style="margin: 0 0 16px; color: #1e293b; font-size: 18px;">Contact Information</h3>
-                <p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Name:</strong> ${leadName}</p>
-                <p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Email:</strong> <a href="mailto:${leadEmail}" style="color: #2563eb;">${leadEmail}</a></p>
-                <p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Phone:</strong> <a href="tel:${leadPhone}" style="color: #2563eb;">${leadPhone}</a></p>
-                <p style="margin: 0; color: #475569; font-size: 15px;"><strong>Preferred Contact:</strong> ${details.preferredContact || 'Phone'}</p>
-              </div>
+              <!-- Lead Preview Card -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="vertical-align: top; width: 60px;">
+                          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 50%; color: #ffffff; font-size: 18px; font-weight: 600; text-align: center; line-height: 50px;">
+                            ${firstName[0]?.toUpperCase() || '?'}
+                          </div>
+                        </td>
+                        <td style="vertical-align: top; padding-left: 16px;">
+                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1e293b;">${maskedName}</p>
+                          <p style="margin: 0; font-size: 13px; color: #64748b;">New inquiry • ${urgencyDisplay}</p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                    
+                    <!-- Masked Contact Info -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #64748b; font-size: 13px;">📧 Email:</span>
+                          <span style="color: #94a3b8; font-size: 13px; float: right; font-family: monospace;">${maskedEmail}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #64748b; font-size: 13px;">📱 Phone:</span>
+                          <span style="color: #94a3b8; font-size: 13px; float: right; font-family: monospace;">${maskedPhone}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #64748b; font-size: 13px;">💬 Preferred:</span>
+                          <span style="color: #475569; font-size: 13px; float: right;">${details.preferredContact === 'email' ? 'Email' : details.preferredContact === 'text' ? 'Text' : 'Phone'}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
               
-              <div style="background-color: #f0f9ff; border-radius: 8px; padding: 24px; margin: 20px 0;">
-                <h3 style="margin: 0 0 16px; color: #1e293b; font-size: 18px;">Inquiry Details</h3>
-                ${details.urgency ? `<p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Urgency:</strong> ${details.urgency}</p>` : ''}
-                ${details.levelOfCare ? `<p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Level of Care:</strong> ${details.levelOfCare}</p>` : ''}
-                ${details.insuranceType ? `<p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Insurance:</strong> ${details.insuranceType}</p>` : ''}
-                ${details.message ? `<p style="margin: 16px 0 0; color: #475569; font-size: 15px;"><strong>Message:</strong><br>${details.message}</p>` : ''}
-              </div>
+              <!-- Inquiry Details -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1e40af;">📋 Inquiry Details</p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 6px 0; color: #475569; font-size: 14px;">
+                          <strong>Level of Care:</strong> ${levelOfCareDisplay}
+                        </td>
+                      </tr>
+                      ${details.insuranceType ? `
+                      <tr>
+                        <td style="padding: 6px 0; color: #475569; font-size: 14px;">
+                          <strong>Insurance:</strong> ${details.insuranceType}
+                        </td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
               
-              <div style="text-align: center; margin-top: 30px;">
-                <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                  View in Dashboard
-                </a>
-              </div>
+              <!-- Unlock CTA -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #92400e;">🔒 Full Contact Info Hidden</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #78350f; line-height: 1.5;">
+                      Unlock this lead in your dashboard to view full contact details and connect with this potential client.
+                    </p>
+                    <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                      🔓 Unlock Lead in Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Tip -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0; font-size: 13px; color: #1e40af; line-height: 1.5;">
+                      💡 <strong>Tip:</strong> Quick response times lead to higher conversion rates. Try to reach out within 24 hours!
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
+          <!-- Footer -->
           <tr>
-            <td style="padding: 30px; background-color: #f8fafc; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0; color: #64748b; font-size: 12px;">
-                © ${new Date().getFullYear()} RehabLookup. All rights reserved.
-              </p>
+            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 12px 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600;">
+                      RehabLookup
+                    </p>
+                    <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
+                      Connecting families with quality care
+                    </p>
+                    <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Notification Settings</a>
+                    <p style="margin: 16px 0 0 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
@@ -306,7 +468,7 @@ serve(async (req) => {
         from: "RehabLookup <notifications@rehablookup.com>",
         to: data.email,
         subject: `Your inquiry to ${facility.name} has been received`,
-        html: getSeekerConfirmationEmail(firstName, facility.name),
+        html: getSeekerConfirmationEmail(data.name, facility.name),
       });
       log(requestId, "INFO", "Seeker email sent", { email: data.email });
     } catch (e) {
