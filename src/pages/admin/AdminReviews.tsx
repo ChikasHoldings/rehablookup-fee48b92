@@ -64,6 +64,16 @@ export default function AdminReviews() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [disputeNotes, setDisputeNotes] = useState<Record<string, string>>({});
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Get current admin user ID
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getUser();
+  }, []);
 
   const fetchReviews = async () => {
     setIsLoading(true);
@@ -168,6 +178,34 @@ export default function AdminReviews() {
   useEffect(() => {
     fetchReviews();
     fetchDisputes();
+
+    // Real-time subscriptions
+    const reviewsChannel = supabase
+      .channel('admin-reviews-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'facility_reviews' },
+        () => {
+          fetchReviews();
+        }
+      )
+      .subscribe();
+
+    const disputesChannel = supabase
+      .channel('admin-disputes-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'review_disputes' },
+        () => {
+          fetchDisputes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(reviewsChannel);
+      supabase.removeChannel(disputesChannel);
+    };
   }, []);
 
   const handleApprove = async (reviewId: string) => {
@@ -178,6 +216,7 @@ export default function AdminReviews() {
       .update({ 
         status: 'approved',
         admin_notes: adminNotes[reviewId] || null,
+        reviewed_by: currentUserId,
         reviewed_at: new Date().toISOString()
       })
       .eq('id', reviewId);
@@ -197,7 +236,9 @@ export default function AdminReviews() {
             facilityId: review.facility_id,
             seekerId: review.user_id,
           }
-        }).catch(err => console.error('Failed to send approval notification:', err));
+        }).catch(() => {
+          // Notification failure is non-critical, review was still approved
+        });
       }
       toast.success('Review approved');
       fetchReviews();
@@ -217,6 +258,7 @@ export default function AdminReviews() {
       .update({ 
         status: 'rejected',
         admin_notes: adminNotes[reviewId],
+        reviewed_by: currentUserId,
         reviewed_at: new Date().toISOString()
       })
       .eq('id', reviewId);
@@ -237,7 +279,9 @@ export default function AdminReviews() {
             seekerId: review.user_id,
             rejectionReason: adminNotes[reviewId],
           }
-        }).catch(err => console.error('Failed to send rejection notification:', err));
+        }).catch(() => {
+          // Notification failure is non-critical, review was still rejected
+        });
       }
       toast.success('Review rejected');
       fetchReviews();
@@ -277,6 +321,7 @@ export default function AdminReviews() {
       .update({
         status: 'upheld',
         admin_notes: disputeNotes[dispute.id] || null,
+        resolved_by: currentUserId,
         resolved_at: new Date().toISOString()
       })
       .eq('id', dispute.id);
@@ -305,6 +350,7 @@ export default function AdminReviews() {
       .update({
         status: 'dismissed',
         admin_notes: disputeNotes[dispute.id] || null,
+        resolved_by: currentUserId,
         resolved_at: new Date().toISOString()
       })
       .eq('id', dispute.id);
