@@ -136,12 +136,12 @@ const DrugAddictionTreatment = () => {
       <SEO
         title="Drug Addiction Treatment Programs | Detox, Rehab & Recovery"
         description="Find drug addiction treatment programs including medical detox, residential rehab, outpatient care, and medication-assisted treatment for opioids, stimulants, and more."
-        canonical="/treatment-types/drug-addiction"
+        canonical="/treatment-types/drug-addiction-treatment"
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },
-          { name: "Drug Addiction", url: "/treatment-types/drug-addiction" },
+          { name: "Drug Addiction", url: "/treatment-types/drug-addiction-treatment" },
         ]}
       />
 

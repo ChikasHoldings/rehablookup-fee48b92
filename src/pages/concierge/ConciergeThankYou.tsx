@@ -119,6 +119,7 @@ export default function ConciergeThankYou() {
       <>
         <Helmet>
           <title>Processing | RehabLookup Concierge</title>
+          <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         <div className="min-h-screen flex flex-col bg-background">
           <PublicHeader />
@@ -141,6 +142,7 @@ export default function ConciergeThankYou() {
       <>
         <Helmet>
           <title>Error | RehabLookup Concierge</title>
+          <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         <div className="min-h-screen flex flex-col bg-background">
           <PublicHeader />
