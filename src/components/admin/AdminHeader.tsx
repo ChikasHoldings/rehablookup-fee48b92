@@ -443,12 +443,12 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           <div className="hidden md:block w-full max-w-md">
             <Button
               variant="ghost"
-              className="relative h-10 w-full justify-start text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white bg-slate-800/50 border border-slate-600/50 rounded-xl transition-all duration-200 hover:border-slate-500 hover:shadow-lg hover:shadow-slate-900/20"
+              className="relative h-10 w-full justify-start text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white bg-slate-800/50 border border-white/40 rounded-xl transition-all duration-200 hover:border-white/60 hover:shadow-lg hover:shadow-slate-900/20"
               onClick={() => setSearchOpen(true)}
             >
-              <Search className="h-4 w-4 mr-3 text-slate-400" />
-              <span className="text-slate-400">Search providers, leads, pages...</span>
-              <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden h-6 select-none items-center gap-1 rounded-md border border-slate-600 bg-slate-700 px-2 font-mono text-[11px] font-medium text-slate-300 sm:flex">
+              <Search className="h-4 w-4 mr-3 text-slate-300" />
+              <span className="text-slate-300">Search providers, leads, pages...</span>
+              <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden h-6 select-none items-center gap-1 rounded-md border border-white/30 bg-slate-700 px-2 font-mono text-[11px] font-medium text-slate-300 sm:flex">
                 ⌘K
               </kbd>
             </Button>
