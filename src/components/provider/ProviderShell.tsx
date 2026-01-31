@@ -63,7 +63,7 @@ function ProviderShellContent() {
     if (!isAuthenticated) {
       hasRedirected.current = true;
       clearSentryUser();
-      navigate("/provider-login", { replace: true });
+      navigate("/login?type=provider", { replace: true });
       return;
     }
     
@@ -74,7 +74,7 @@ function ProviderShellContent() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           hasRedirected.current = true;
-          navigate("/provider-login", { replace: true });
+          navigate("/login?type=provider", { replace: true });
           return;
         }
         
@@ -87,7 +87,7 @@ function ProviderShellContent() {
         if (!profile) {
           // Not a provider - redirect
           hasRedirected.current = true;
-          navigate("/provider-login", { replace: true });
+          navigate("/login?type=provider", { replace: true });
         }
       };
       checkProvider();
@@ -116,7 +116,7 @@ function ProviderShellContent() {
         if (!session && !hasRedirected.current) {
           hasRedirected.current = true;
           clearSentryUser();
-          navigate("/provider-login", { replace: true });
+          navigate("/login?type=provider", { replace: true });
         }
       }
     );
@@ -154,7 +154,7 @@ function ProviderShellContent() {
         title: "Signed out",
         description: "You've been successfully logged out.",
       });
-      navigate("/provider-login", { replace: true });
+      navigate("/login", { replace: true });
     } catch (err) {
       console.error("Logout exception:", err);
       toast({

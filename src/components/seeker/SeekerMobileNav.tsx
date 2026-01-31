@@ -47,8 +47,8 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
     { href: "/account/settings", label: "Settings", icon: Settings },
     { href: "/account/help", label: "Help & Support", icon: HelpCircle },
   ] : [
-    { href: "/auth", label: "Sign In", icon: LogIn },
-    { href: "/auth?mode=signup", label: "Create Account", icon: User },
+    { href: "/login", label: "Sign In", icon: LogIn },
+    { href: "/signup", label: "Create Account", icon: User },
     { href: "/account/help", label: "Help & Support", icon: HelpCircle },
   ];
 

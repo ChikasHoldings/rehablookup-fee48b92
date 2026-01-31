@@ -78,6 +78,8 @@ import NotFound from "./pages/NotFound";
 import SeekerAuth from "./pages/SeekerAuth";
 import SeekerSignup from "./pages/SeekerSignup";
 import ResetPassword from "./pages/ResetPassword";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import { SeekerShell } from "./components/seeker/SeekerShell";
 import SeekerHome from "./pages/seeker/SeekerHome";
 import SeekerRequests from "./pages/seeker/SeekerRequests";
@@ -215,7 +217,9 @@ const App = () => (
             
             <Route path="/lp/treatment" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
             <Route path="/lp/social" element={<PublicRouteGuard><SocialLanding /></PublicRouteGuard>} />
-            <Route path="/auth" element={<PublicRouteGuard><SeekerAuth /></PublicRouteGuard>} />
+            <Route path="/auth" element={<Navigate to="/login?type=seeker" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/signup" element={<PublicRouteGuard><SeekerSignup /></PublicRouteGuard>} />
             <Route path="/reset-password" element={<PublicRouteGuard><ResetPassword /></PublicRouteGuard>} />
             
@@ -236,8 +240,9 @@ const App = () => (
             <Route path="/my-account" element={<Navigate to="/account" replace />} />
             <Route path="/for-providers" element={<ForProviders />} />
             <Route path="/provider-resources" element={<ProviderResources />} />
-            <Route path="/provider-login" element={<ProviderLogin />} />
+            <Route path="/provider-login" element={<Navigate to="/login?type=provider" replace />} />
             <Route path="/provider-forgot-password" element={<ProviderForgotPassword />} />
+            <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
             <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
             <Route path="/provider-support" element={<ProviderSupport />} />
             <Route path="/provider-faq" element={<ProviderFAQ />} />
