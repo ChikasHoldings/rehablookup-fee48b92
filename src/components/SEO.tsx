@@ -21,6 +21,32 @@ const SITE_URL = "https://rehablookup.com";
 const DEFAULT_IMAGE = "/og-image.jpg";
 const TWITTER_HANDLE = "@rehablookup";
 
+/**
+ * Normalizes a URL path for canonical use:
+ * - Removes trailing slashes (except for root "/")
+ * - Removes query parameters
+ * - Removes hash fragments
+ */
+function normalizeCanonicalPath(path: string): string {
+  // Remove query parameters and hash
+  let normalized = path.split('?')[0].split('#')[0];
+  // Remove trailing slash (except for root)
+  if (normalized.length > 1 && normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+/**
+ * Gets the current path from window.location for auto-canonical
+ */
+function getCurrentPath(): string {
+  if (typeof window !== 'undefined') {
+    return normalizeCanonicalPath(window.location.pathname);
+  }
+  return '/';
+}
+
 export function SEO({
   title,
   description,
@@ -37,7 +63,13 @@ export function SEO({
   locale = "en_US",
 }: SEOProps) {
   const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
-  const canonicalUrl = canonical ? `${SITE_URL}${canonical}` : undefined;
+  
+  // Auto-generate canonical from current path if not provided, always normalize
+  const normalizedCanonical = canonical 
+    ? normalizeCanonicalPath(canonical) 
+    : getCurrentPath();
+  const canonicalUrl = `${SITE_URL}${normalizedCanonical}`;
+  
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
   const truncatedDescription = description.length > 160 ? description.slice(0, 157) + "..." : description;
 
@@ -169,7 +201,7 @@ export function SEO({
       {keywords && keywords.length > 0 && (
         <meta name="keywords" content={keywords.join(", ")} />
       )}
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      <link rel="canonical" href={canonicalUrl} />
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (

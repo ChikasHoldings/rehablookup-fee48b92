@@ -214,19 +214,35 @@ Disallow: /node_modules/
 Disallow: /.env
 
 # Query parameters that create duplicate content
-Disallow: /*?*source=
-Disallow: /*?*utm_source=
-Disallow: /*?*utm_medium=
-Disallow: /*?*utm_campaign=
-Disallow: /*?*utm_term=
-Disallow: /*?*utm_content=
-Disallow: /*?*ref=
-Disallow: /*?*fbclid=
-Disallow: /*?*gclid=
-Disallow: /*?*msclkid=
-Disallow: /*?*_ga=
-Disallow: /*?*mc_cid=
-Disallow: /*?*mc_eid=
+Disallow: /*?source=*
+Disallow: /*?*&source=*
+Disallow: /*?utm_source=*
+Disallow: /*?*&utm_source=*
+Disallow: /*?utm_medium=*
+Disallow: /*?*&utm_medium=*
+Disallow: /*?utm_campaign=*
+Disallow: /*?*&utm_campaign=*
+Disallow: /*?utm_term=*
+Disallow: /*?*&utm_term=*
+Disallow: /*?utm_content=*
+Disallow: /*?*&utm_content=*
+Disallow: /*?ref=*
+Disallow: /*?*&ref=*
+Disallow: /*?fbclid=*
+Disallow: /*?*&fbclid=*
+Disallow: /*?gclid=*
+Disallow: /*?*&gclid=*
+Disallow: /*?msclkid=*
+Disallow: /*?*&msclkid=*
+Disallow: /*?_ga=*
+Disallow: /*?*&_ga=*
+Disallow: /*?mc_cid=*
+Disallow: /*?*&mc_cid=*
+Disallow: /*?mc_eid=*
+Disallow: /*?*&mc_eid=*
+
+# Block trailing slash duplicates (canonical is without trailing slash)
+# Crawlers should follow canonical tags, but this helps prevent crawling
 
 # -----------------------------------------------------------------------------
 # EXPLICITLY ALLOWED PATHS
@@ -335,4 +351,4 @@ Sitemap: https://rehablookup.com/sitemap.xml
 Host: https://rehablookup.com
 
 # Clean URL parameters (Google-specific)
-Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&fbclid&gclid&msclkid&ref&_ga&mc_cid&mc_eid
+Clean-param: source&utm_source&utm_medium&utm_campaign&utm_term&utm_content&fbclid&gclid&msclkid&ref&_ga&mc_cid&mc_eid
