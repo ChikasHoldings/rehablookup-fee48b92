@@ -6,7 +6,7 @@ import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Buildin
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
-import { useSeekerAuth } from "@/hooks/useSeekerAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useFavorites } from "@/hooks/useFavorites";
 
 export interface NavLink {
@@ -50,7 +50,9 @@ export function Header({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated: isSeekerLoggedIn, isLoading: seekerLoading } = useSeekerAuth();
+  // Use unified role system - only show "My Account" for seekers (not admin/provider)
+  const { role, isLoading: roleLoading, isAuthenticated } = useUserRole();
+  const isSeekerLoggedIn = isAuthenticated && role === "seeker";
   const { favoritesCount } = useFavorites();
 
   useEffect(() => {
@@ -190,7 +192,7 @@ export function Header({
               </>
             ) : (
               <div className="hidden sm:flex items-center gap-2">
-                {!seekerLoading && isSeekerLoggedIn ? (
+                {!roleLoading && isSeekerLoggedIn ? (
                   <PrefetchLink to="/account">
                     <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
                       <User className="h-4 w-4" />
@@ -391,7 +393,7 @@ export function Header({
               </>
             ) : (
               <div className="space-y-3">
-                {!seekerLoading && isSeekerLoggedIn ? (
+                {!roleLoading && isSeekerLoggedIn ? (
                   <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
                     <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
                       <User className="h-4 w-4" />
