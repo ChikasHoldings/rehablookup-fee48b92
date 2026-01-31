@@ -47,6 +47,10 @@
     --success: 160 60% 40%;
     --success-foreground: 0 0% 100%;
 
+    /* Info blue */
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
     /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
@@ -107,6 +111,9 @@
 
     --success: 152 55% 45%;
     --success-foreground: 0 0% 100%;
+
+    --info: 217 85% 65%;
+    --info-foreground: 0 0% 100%;
 
     --warning: 25 90% 55%;
     --warning-foreground: 0 0% 10%;
