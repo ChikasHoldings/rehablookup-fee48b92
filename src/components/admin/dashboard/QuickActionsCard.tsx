@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, Star, CreditCard, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +12,10 @@ interface QuickActionsCardProps {
   providerStats?: ProviderStats;
 }
 
-export function QuickActionsCard({ providerStats }: QuickActionsCardProps) {
+export const QuickActionsCard = forwardRef<HTMLDivElement, QuickActionsCardProps>(
+  function QuickActionsCard({ providerStats }, ref) {
   return (
-    <Card className="border shadow-sm">
+    <Card ref={ref} className="border shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium">Quick Actions</CardTitle>
       </CardHeader>
@@ -59,4 +61,6 @@ export function QuickActionsCard({ providerStats }: QuickActionsCardProps) {
       </CardContent>
     </Card>
   );
-}
+});
+
+QuickActionsCard.displayName = "QuickActionsCard";
