@@ -2,76 +2,184 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const ADDITIONAL_LISTING_PRICE_ID = "price_1SvUAg9fxdThyiakhDtW2pG9";
+const LISTING_SLOT_PRICE_CENTS = 4900; // $49.00
+
+// Structured logging with version and request tracking
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[PURCHASE-LISTING-SLOT] [${VERSION}] [${requestId}] [${timestamp}] ${step}${detailsStr}`);
+};
+
+const logError = (requestId: string, step: string, error: unknown) => {
+  const timestamp = new Date().toISOString();
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorStack = error instanceof Error ? error.stack : undefined;
+  console.error(`[PURCHASE-LISTING-SLOT] [${VERSION}] [${requestId}] [${timestamp}] ERROR in ${step}: ${errorMessage}`, errorStack ? `\nStack: ${errorStack}` : "");
+};
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  logStep(requestId, "Request received", { method: req.method, url: req.url });
+
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
+    logStep(requestId, "CORS preflight response");
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+  // Validate request method
+  if (req.method !== "POST") {
+    logStep(requestId, "Invalid method", { method: req.method });
+    return new Response(
+      JSON.stringify({ error: "Method not allowed", requestId, _version: VERSION }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 405 }
     );
+  }
+
+  try {
+    // Validate environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      logError(requestId, "Environment validation", new Error("Missing Supabase configuration"));
+      return new Response(
+        JSON.stringify({ error: "Server configuration error", requestId, _version: VERSION }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
+    if (!stripeSecretKey || !stripeSecretKey.startsWith("sk_")) {
+      logError(requestId, "Environment validation", new Error("Invalid Stripe secret key format"));
+      return new Response(
+        JSON.stringify({ error: "Payment configuration error", requestId, _version: VERSION }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
+    logStep(requestId, "Environment validated");
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      throw new Error("Unauthorized");
+      logStep(requestId, "Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", requestId, _version: VERSION }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     
     if (claimsError || !claimsData?.claims) {
-      throw new Error("Unauthorized");
+      logError(requestId, "JWT validation", claimsError || new Error("No claims data"));
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication token", requestId, _version: VERSION }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
     }
     
     const userId = claimsData.claims.sub as string;
     const userEmail = claimsData.claims.email as string;
 
     if (!userId || !userEmail) {
-      throw new Error("User not authenticated or email not available");
+      logStep(requestId, "Missing user data from claims", { hasUserId: !!userId, hasEmail: !!userEmail });
+      return new Response(
+        JSON.stringify({ error: "User not authenticated or email not available", requestId, _version: VERSION }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
     }
 
-    // Verify user has Pro subscription
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    logStep(requestId, "User authenticated", { userId, email: userEmail.substring(0, 3) + "***" });
 
-    const { data: proSub } = await adminClient
+    // Initialize admin client for privileged operations
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify user has Pro subscription
+    const { data: proSub, error: proError } = await adminClient
       .from("pro_subscriptions")
-      .select("id, status")
+      .select("id, status, current_period_end")
       .eq("user_id", userId)
       .eq("status", "active")
       .maybeSingle();
 
+    if (proError) {
+      logError(requestId, "Pro subscription check", proError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify subscription status", requestId, _version: VERSION }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
     if (!proSub) {
-      throw new Error("Pro subscription required to purchase additional listing slots");
+      logStep(requestId, "No active Pro subscription found", { userId });
+      return new Response(
+        JSON.stringify({ error: "Pro subscription required to purchase additional listing slots", requestId, _version: VERSION }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
+    logStep(requestId, "Pro subscription verified", { subscriptionId: proSub.id });
+
+    // Get current slot count for idempotency check
+    const { data: existingSlots, error: slotsError } = await adminClient
+      .from("purchased_listing_slots")
+      .select("id, status, stripe_checkout_session_id")
+      .eq("user_id", userId)
+      .eq("status", "pending")
+      .gte("created_at", new Date(Date.now() - 30 * 60 * 1000).toISOString()); // Last 30 minutes
+
+    if (slotsError) {
+      logError(requestId, "Pending slots check", slotsError);
+    } else if (existingSlots && existingSlots.length > 0) {
+      logStep(requestId, "Found recent pending slot purchase", { count: existingSlots.length });
+      // Could return the existing session URL, but for simplicity create new one
     }
 
     // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+    logStep(requestId, "Stripe initialized");
+
+    // Check if customer exists in Stripe
     let customerId: string | undefined;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
+    try {
+      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep(requestId, "Found existing Stripe customer", { customerId });
+      }
+    } catch (stripeErr) {
+      logError(requestId, "Stripe customer lookup", stripeErr);
+      // Continue without customer ID - will create new
     }
 
     // Create checkout session
     const origin = req.headers.get("origin") || "https://rehablookup.lovable.app";
     
+    logStep(requestId, "Creating checkout session", { 
+      customerId: customerId || "new", 
+      priceId: ADDITIONAL_LISTING_PRICE_ID,
+      origin 
+    });
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
@@ -87,31 +195,63 @@ serve(async (req) => {
       metadata: {
         user_id: userId,
         purchase_type: "additional_listing_slot",
+        request_id: requestId,
+      },
+      payment_intent_data: {
+        metadata: {
+          user_id: userId,
+          purchase_type: "additional_listing_slot",
+          request_id: requestId,
+        },
       },
     });
 
-    // Create pending record
-    await adminClient.from("purchased_listing_slots").insert({
+    logStep(requestId, "Checkout session created", { sessionId: session.id });
+
+    // Create pending record in database
+    const { error: insertError } = await adminClient.from("purchased_listing_slots").insert({
       user_id: userId,
       stripe_checkout_session_id: session.id,
-      price_cents: 4900,
+      price_cents: LISTING_SLOT_PRICE_CENTS,
       status: "pending",
     });
 
-    console.log(`Created checkout session ${session.id} for user ${userId} to purchase additional listing slot`);
+    if (insertError) {
+      logError(requestId, "Database insert", insertError);
+      // Don't fail the request - checkout was already created
+      // Webhook will handle completion
+    } else {
+      logStep(requestId, "Pending slot record created");
+    }
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+    logStep(requestId, "Request completed successfully", { 
+      sessionId: session.id,
+      hasUrl: !!session.url 
     });
-  } catch (error) {
-    console.error("Error creating listing slot checkout:", error);
+
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      JSON.stringify({ 
+        url: session.url, 
+        sessionId: session.id,
+        requestId,
+        _version: VERSION 
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
+
+  } catch (error) {
+    logError(requestId, "Unhandled exception", error);
+    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const isStripeError = error instanceof Stripe.errors.StripeError;
+    
+    return new Response(
+      JSON.stringify({ 
+        error: isStripeError ? "Payment processing error" : errorMessage,
+        requestId,
+        _version: VERSION 
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });
