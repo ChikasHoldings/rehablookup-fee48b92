@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +45,10 @@ import {
   Loader2,
   ShieldOff,
   ExternalLink,
+  FileText,
+  Building2,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -63,6 +68,22 @@ interface UserProfile {
   created_at: string;
   updated_at: string;
   email?: string;
+  aggregated_phone?: string;
+  aggregated_city?: string;
+  aggregated_state?: string;
+  aggregated_zipcode?: string;
+  has_concierge?: boolean;
+  has_leads?: boolean;
+}
+
+interface AggregatedUserData {
+  email: string | null;
+  phone: string | null;
+  fullName: string | null;
+  city: string | null;
+  state: string | null;
+  zipcode: string | null;
+  sources: string[];
 }
 
 interface UserProfileModalProps {
@@ -97,23 +118,75 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
     }
   }, [user?.user_id]);
 
-  // Fetch user email from edge function or RPC
-  const { data: userEmail } = useQuery({
-    queryKey: ["admin-user-email", user?.user_id],
-    queryFn: async (): Promise<string | null> => {
-      if (!user?.user_id) return null;
+  // Fetch aggregated user data from all sources
+  const { data: aggregatedData } = useQuery({
+    queryKey: ["admin-user-aggregated", user?.user_id],
+    queryFn: async (): Promise<AggregatedUserData> => {
+      if (!user?.user_id) {
+        return { email: null, phone: null, fullName: null, city: null, state: null, zipcode: null, sources: [] };
+      }
       
-      // Try to get email from concierge inquiries
-      const { data: inquiry } = await supabase
+      const sources: string[] = [];
+      let email: string | null = null;
+      let phone: string | null = null;
+      let fullName: string | null = null;
+      let city: string | null = null;
+      let state: string | null = null;
+      let zipcode: string | null = null;
+
+      // Get from concierge inquiries
+      const conciergeResult = await supabase
         .from("concierge_inquiries")
-        .select("user_email")
+        .select("user_email, user_phone, user_name, preferred_city, preferred_state")
         .eq("user_id", user.user_id)
-        .limit(1)
-        .maybeSingle();
-      
-      return inquiry?.user_email || null;
+        .order("created_at", { ascending: false })
+        .limit(1) as any;
+      const concierge = conciergeResult.data?.[0] || null;
+
+      if (concierge) {
+        if (concierge.user_email) { email = concierge.user_email; sources.push("Concierge Form"); }
+        if (concierge.user_phone && !phone) phone = concierge.user_phone;
+        if (concierge.user_name && !fullName) fullName = concierge.user_name;
+        if (concierge.preferred_city && !city) city = concierge.preferred_city;
+        if (concierge.preferred_state && !state) state = concierge.preferred_state;
+      }
+
+      // Get from leads (direct inquiries)
+      const leadResult: any = await supabase
+        .from("leads" as any)
+        .select("email, phone, name, location_city_state, location_zip")
+        .eq("seeker_user_id", user.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const lead = leadResult.data?.[0] || null;
+
+      if (lead) {
+        if (lead.email && !email) { email = lead.email; sources.push("Inquiry Form"); }
+        if (lead.phone && !phone) phone = lead.phone;
+        if (lead.name && !fullName) fullName = lead.name;
+        if (lead.location_city_state) {
+          const parts = lead.location_city_state.split(',').map((s: string) => s.trim());
+          if (parts.length >= 2) {
+            if (!city) city = parts[0];
+            if (!state) state = parts[1];
+          }
+        }
+        if (lead.location_zip && !zipcode) zipcode = lead.location_zip;
+      }
+
+      // Use profile data as fallback
+      if (user.first_name || user.last_name) {
+        const profileName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+        if (!fullName && profileName) { fullName = profileName; sources.push("Account Signup"); }
+      }
+      if (user.phone && !phone) phone = user.phone;
+      if (user.city && !city) city = user.city;
+      if (user.state && !state) state = user.state;
+      if (user.zipcode && !zipcode) zipcode = user.zipcode;
+
+      return { email, phone, fullName, city, state, zipcode, sources };
     },
-    enabled: !!user?.user_id && !user?.email,
+    enabled: !!user?.user_id,
   });
 
   // Fetch user activity
@@ -121,56 +194,94 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
     queryKey: ["admin-user-activity", user?.user_id],
     queryFn: async (): Promise<{
       favorites: any[];
-      inquiries: any[];
+      conciergeInquiries: any[];
+      directLeads: any[];
       reviews: any[];
       activityLog: any[];
     } | null> => {
       if (!user?.user_id) return null;
 
-      const [favorites, inquiries, reviews, activityLog] = await Promise.all([
+      const [favorites, conciergeInquiries, directLeads, reviews, activityLog] = await Promise.all([
         supabase
           .from("user_favorites")
           .select("id, facility_id, created_at, facilities(name, city, state)")
           .eq("user_id", user.user_id)
           .order("created_at", { ascending: false })
-          .limit(20),
+          .limit(20) as any,
         supabase
           .from("concierge_inquiries")
-          .select("id, status, created_at, primary_concern, level_of_care, user_name, user_email, user_phone, payment_status")
+          .select("id, status, created_at, primary_concern, level_of_care, user_name, user_email, user_phone, payment_status, preferred_city, preferred_state")
           .eq("user_id", user.user_id)
+          .order("created_at", { ascending: false })
+          .limit(20) as any,
+        supabase
+          .from("leads" as any)
+          .select("id, name, email, phone, status, created_at, urgency, level_of_care, location_city_state, insurance_type, facility_id")
+          .eq("seeker_user_id", user.user_id)
           .order("created_at", { ascending: false })
           .limit(20),
         supabase
           .from("facility_reviews")
-          .select("id, rating, review_text, status, created_at, facilities(name)")
+          .select("id, rating, review_text, status, created_at, facility_id")
           .eq("user_id", user.user_id)
           .order("created_at", { ascending: false })
-          .limit(20),
+          .limit(20) as any,
         supabase
           .from("account_activity_log")
           .select("id, event_type, event_description, created_at, metadata")
           .eq("user_id", user.user_id)
           .order("created_at", { ascending: false })
-          .limit(20),
+          .limit(20) as any,
       ]);
+
+      // Fetch facility names separately for leads and reviews
+      const leadFacilityIds = directLeads.data?.map((l: any) => l.facility_id).filter(Boolean) || [];
+      const reviewFacilityIds = reviews.data?.map((r: any) => r.facility_id).filter(Boolean) || [];
+      const allFacilityIds = [...new Set([...leadFacilityIds, ...reviewFacilityIds])];
+      
+      let facilitiesMap: Record<string, any> = {};
+      if (allFacilityIds.length > 0) {
+        const { data: facilities } = await supabase
+          .from("facilities")
+          .select("id, name, city, state")
+          .in("id", allFacilityIds);
+        facilities?.forEach((f: any) => { facilitiesMap[f.id] = f; });
+      }
+
+      // Attach facility info to leads and reviews
+      const enrichedLeads = directLeads.data?.map((lead: any) => ({
+        ...lead,
+        facilities: facilitiesMap[lead.facility_id] || null,
+      })) || [];
+
+      const enrichedReviews = reviews.data?.map((review: any) => ({
+        ...review,
+        facilities: facilitiesMap[review.facility_id] || null,
+      })) || [];
 
       return {
         favorites: favorites.data || [],
-        inquiries: inquiries.data || [],
-        reviews: reviews.data || [],
+        conciergeInquiries: conciergeInquiries.data || [],
+        directLeads: enrichedLeads,
+        reviews: enrichedReviews,
         activityLog: activityLog.data || [],
       };
     },
     enabled: !!user?.user_id,
   });
 
-  const email = user?.email || userEmail;
+  const email = aggregatedData?.email || user?.email;
+  const phone = aggregatedData?.phone || user?.aggregated_phone || user?.phone;
+  const fullName = aggregatedData?.fullName || 
+    (user?.first_name || user?.last_name ? `${user?.first_name || ''} ${user?.last_name || ''}`.trim() : null);
+  const city = aggregatedData?.city || user?.aggregated_city || user?.city;
+  const state = aggregatedData?.state || user?.aggregated_state || user?.state;
+  const zipcode = aggregatedData?.zipcode || user?.aggregated_zipcode || user?.zipcode;
   
   const getDisplayName = () => {
     if (!user) return "Unknown";
+    if (fullName) return fullName;
     if (user.display_name) return user.display_name;
-    if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
-    if (user.first_name) return user.first_name;
     return "Anonymous User";
   };
 
@@ -184,10 +295,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
   };
 
   const getLocation = () => {
-    if (!user) return null;
-    if (user.city && user.state) return `${user.city}, ${user.state}`;
-    if (user.state) return user.state;
-    if (user.zipcode) return user.zipcode;
+    if (city && state) return `${city}, ${state}`;
+    if (state) return state;
+    if (zipcode) return zipcode;
     return null;
   };
 
@@ -226,7 +336,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
 
   if (!user) return null;
 
-  const hasConcierge = (userActivity?.inquiries?.length || 0) > 0;
+  const hasConcierge = (userActivity?.conciergeInquiries?.length || 0) > 0;
+  const hasDirectLeads = (userActivity?.directLeads?.length || 0) > 0;
+  const totalInquiries = (userActivity?.conciergeInquiries?.length || 0) + (userActivity?.directLeads?.length || 0);
 
   return (
     <>
@@ -245,459 +357,511 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-6">
-            {/* Profile Header */}
-            <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50">
-              <Avatar className="h-20 w-20 border-2 border-background shadow-md">
-                <AvatarImage src={user.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1 min-w-0">
-                <h2 className="text-2xl font-bold truncate">{getDisplayName()}</h2>
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-6">
+              {/* Profile Header */}
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50">
+                <Avatar className="h-20 w-20 border-2 border-background shadow-md">
+                  <AvatarImage src={user.avatar_url || undefined} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                  {email && (
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-2xl font-bold truncate">{getDisplayName()}</h2>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                     <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="truncate">{email}</span>
+                      <span className="truncate">{email || <span className="text-muted-foreground italic">No email available</span>}</span>
                     </div>
-                  )}
-                  {user.phone && (
                     <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span>{user.phone}</span>
-                      {user.phone_verified && (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Verified
-                        </Badge>
+                      {phone ? (
+                        <>
+                          <span>{phone}</span>
+                          {user.phone_verified && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Verified
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground italic">No phone</span>
                       )}
                     </div>
-                  )}
-                  {getLocation() && (
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span>{getLocation()}</span>
+                      <span>{getLocation() || <span className="text-muted-foreground italic">No location</span>}</span>
                     </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span>Joined {format(new Date(user.created_at), "MMM d, yyyy")}</span>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span>Joined {format(new Date(user.created_at), "MMM d, yyyy")}</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Quick Stats */}
-                <div className="flex flex-wrap gap-3 mt-4">
-                  <Badge variant="secondary" className="gap-1">
-                    <Heart className="h-3 w-3" />
-                    {userActivity?.favorites?.length || 0} Saved
-                  </Badge>
-                  <Badge variant="secondary" className="gap-1">
-                    <MessageSquare className="h-3 w-3" />
-                    {userActivity?.inquiries?.length || 0} Inquiries
-                  </Badge>
-                  <Badge variant="secondary" className="gap-1">
-                    <Star className="h-3 w-3" />
-                    {userActivity?.reviews?.length || 0} Reviews
-                  </Badge>
-                  {hasConcierge && (
-                    <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1">
-                      <Shield className="h-3 w-3" />
-                      Concierge User
+                  {/* Quick Stats */}
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <Badge variant="secondary" className="gap-1">
+                      <Heart className="h-3 w-3" />
+                      {userActivity?.favorites?.length || 0} Saved
                     </Badge>
-                  )}
+                    <Badge variant="secondary" className="gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      {totalInquiries} Inquiries
+                    </Badge>
+                    <Badge variant="secondary" className="gap-1">
+                      <Star className="h-3 w-3" />
+                      {userActivity?.reviews?.length || 0} Reviews
+                    </Badge>
+                    {hasConcierge && (
+                      <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1">
+                        <Shield className="h-3 w-3" />
+                        Concierge User
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 p-4 rounded-xl border bg-card">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleContactUser}
-                disabled={!email}
-                className="gap-2"
-              >
-                <Send className="h-4 w-4" />
-                Contact User
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSendPasswordReset}
-                disabled={!email || isSendingReset}
-                className="gap-2"
-              >
-                {isSendingReset ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                Send Password Reset
-              </Button>
-              {isBanned ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleUnban}
-                  className="gap-2 text-green-600 hover:text-green-700"
-                >
-                  <ShieldOff className="h-4 w-4" />
-                  Unban User
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setBanDialogOpen(true)}
-                  className="gap-2 text-amber-600 hover:text-amber-700"
-                >
-                  <Ban className="h-4 w-4" />
-                  Ban User
-                </Button>
+              {/* Data Sources Info */}
+              {aggregatedData?.sources && aggregatedData.sources.length > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    Contact info sourced from: {aggregatedData.sources.join(", ")}
+                  </span>
+                </div>
               )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setDeleteDialogOpen(true)}
-                className="gap-2 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Account
-              </Button>
-            </div>
 
-            <Separator />
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 p-4 rounded-xl border bg-card">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleContactUser}
+                  disabled={!email}
+                  className="gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  Contact User
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSendPasswordReset}
+                  disabled={!email || isSendingReset}
+                  className="gap-2"
+                >
+                  {isSendingReset ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                  Send Password Reset
+                </Button>
+                {isBanned ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleUnban}
+                    className="gap-2 text-green-600 hover:text-green-700"
+                  >
+                    <ShieldOff className="h-4 w-4" />
+                    Unban User
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setBanDialogOpen(true)}
+                    className="gap-2 text-amber-600 hover:text-amber-700"
+                  >
+                    <Ban className="h-4 w-4" />
+                    Ban User
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="gap-2 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Account
+                </Button>
+              </div>
 
-            {/* Activity Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Overview</span>
-                </TabsTrigger>
-                <TabsTrigger value="inquiries" className="gap-1.5 text-xs sm:text-sm">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">Inquiries</span>
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">{userActivity?.inquiries?.length || 0}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="reviews" className="gap-1.5 text-xs sm:text-sm">
-                  <Star className="h-4 w-4" />
-                  <span className="hidden sm:inline">Reviews</span>
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">{userActivity?.reviews?.length || 0}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="saved" className="gap-1.5 text-xs sm:text-sm">
-                  <Heart className="h-4 w-4" />
-                  <span className="hidden sm:inline">Saved</span>
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">{userActivity?.favorites?.length || 0}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="activity" className="gap-1.5 text-xs sm:text-sm">
-                  <Clock className="h-4 w-4" />
-                  <span className="hidden sm:inline">Activity</span>
-                </TabsTrigger>
-              </TabsList>
+              <Separator />
 
-              {/* Overview Tab */}
-              <TabsContent value="overview" className="mt-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Contact Information */}
-                  <div className="p-4 rounded-xl border bg-card">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <User className="h-4 w-4 text-primary" />
-                      Contact Information
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Full Name</span>
-                        <span className="font-medium">
-                          {user.first_name || user.last_name 
-                            ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
-                            : 'Not provided'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Display Name</span>
-                        <span className="font-medium">{user.display_name || 'Not set'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Email</span>
-                        <span className="font-medium">{email || 'Not available'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Phone</span>
-                        <span className="font-medium">{user.phone || 'Not provided'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Phone Verified</span>
-                        <span className="font-medium">
-                          {user.phone_verified ? (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Yes</Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
-                          )}
-                        </span>
+              {/* Activity Tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">Overview</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="inquiries" className="gap-1.5 text-xs sm:text-sm">
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="hidden sm:inline">Inquiries</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5">{totalInquiries}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="reviews" className="gap-1.5 text-xs sm:text-sm">
+                    <Star className="h-4 w-4" />
+                    <span className="hidden sm:inline">Reviews</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5">{userActivity?.reviews?.length || 0}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="saved" className="gap-1.5 text-xs sm:text-sm">
+                    <Heart className="h-4 w-4" />
+                    <span className="hidden sm:inline">Saved</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5">{userActivity?.favorites?.length || 0}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="activity" className="gap-1.5 text-xs sm:text-sm">
+                    <Clock className="h-4 w-4" />
+                    <span className="hidden sm:inline">Activity</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Overview Tab */}
+                <TabsContent value="overview" className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Contact Information */}
+                    <div className="p-4 rounded-xl border bg-card">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        Contact Information
+                      </h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-start">
+                          <span className="text-muted-foreground">Full Name</span>
+                          <span className="font-medium text-right max-w-[60%]">
+                            {fullName || 'Not provided'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-muted-foreground">Display Name</span>
+                          <span className="font-medium text-right max-w-[60%]">{user.display_name || 'Not set'}</span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-muted-foreground">Email</span>
+                          <span className="font-medium text-right max-w-[60%] break-all">{email || 'Not available'}</span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-muted-foreground">Phone</span>
+                          <span className="font-medium text-right max-w-[60%]">{phone || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Phone Verified</span>
+                          <span className="font-medium">
+                            {user.phone_verified ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Yes</Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Location Information */}
-                  <div className="p-4 rounded-xl border bg-card">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      Location
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">City</span>
-                        <span className="font-medium">{user.city || 'Not provided'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">State</span>
-                        <span className="font-medium">{user.state || 'Not provided'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Zip Code</span>
-                        <span className="font-medium">{user.zipcode || 'Not provided'}</span>
+                    {/* Location Information */}
+                    <div className="p-4 rounded-xl border bg-card">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        Location
+                      </h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">City</span>
+                          <span className="font-medium">{city || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">State</span>
+                          <span className="font-medium">{state || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Zip Code</span>
+                          <span className="font-medium">{zipcode || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Full Location</span>
+                          <span className="font-medium">{getLocation() || 'Not available'}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Account Details */}
-                  <div className="p-4 rounded-xl border bg-card">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-primary" />
-                      Account Details
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">User ID</span>
-                        <span className="font-mono text-xs">{user.user_id.slice(0, 8)}...</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Created</span>
-                        <span className="font-medium">{format(new Date(user.created_at), "MMM d, yyyy h:mm a")}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Last Updated</span>
-                        <span className="font-medium">{format(new Date(user.updated_at), "MMM d, yyyy h:mm a")}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Account Status</span>
-                        <span className="font-medium">
+                    {/* Account Status */}
+                    <div className="p-4 rounded-xl border bg-card">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        Account Status
+                      </h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Status</span>
                           {isBanned ? (
                             <Badge variant="destructive">Banned</Badge>
                           ) : (
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>
                           )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Engagement Summary */}
-                  <div className="p-4 rounded-xl border bg-card">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-primary" />
-                      Engagement Summary
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Concierge User</span>
-                        <span className="font-medium">
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Created</span>
+                          <span className="font-medium">{format(new Date(user.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Last Updated</span>
+                          <span className="font-medium">{format(new Date(user.updated_at), "MMM d, yyyy 'at' h:mm a")}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Concierge User</span>
                           {hasConcierge ? (
                             <Badge className="bg-purple-100 text-purple-700 border-purple-200">Yes</Badge>
                           ) : (
-                            <Badge variant="outline">No</Badge>
+                            <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
                           )}
-                        </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Saved Facilities</span>
-                        <span className="font-medium">{userActivity?.favorites?.length || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Inquiries Submitted</span>
-                        <span className="font-medium">{userActivity?.inquiries?.length || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Reviews Written</span>
-                        <span className="font-medium">{userActivity?.reviews?.length || 0}</span>
+                    </div>
+
+                    {/* Engagement Summary */}
+                    <div className="p-4 rounded-xl border bg-card">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        Engagement Summary
+                      </h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Direct Inquiries</span>
+                          <span className="font-medium">{userActivity?.directLeads?.length || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Concierge Requests</span>
+                          <span className="font-medium">{userActivity?.conciergeInquiries?.length || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Reviews Written</span>
+                          <span className="font-medium">{userActivity?.reviews?.length || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Facilities Saved</span>
+                          <span className="font-medium">{userActivity?.favorites?.length || 0}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </TabsContent>
+                </TabsContent>
 
-              {/* Inquiries Tab */}
-              <TabsContent value="inquiries" className="mt-4">
-                {activityLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : userActivity?.inquiries?.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p>No inquiries submitted</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                    {userActivity?.inquiries?.map((inquiry: any) => (
-                      <div key={inquiry.id} className="p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="outline" className={cn(
-                                inquiry.status === 'matched' && "bg-green-50 text-green-700 border-green-200",
-                                inquiry.status === 'pending' && "bg-amber-50 text-amber-700 border-amber-200",
-                                inquiry.status === 'closed' && "bg-slate-50 text-slate-500 border-slate-200"
-                              )}>
-                                {inquiry.status}
-                              </Badge>
-                              {inquiry.level_of_care && (
-                                <Badge variant="secondary">{inquiry.level_of_care}</Badge>
-                              )}
-                              {inquiry.payment_status === 'paid' && (
-                                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Paid</Badge>
-                              )}
-                            </div>
-                            {inquiry.primary_concern && (
-                              <p className="text-sm text-muted-foreground mt-2">{inquiry.primary_concern}</p>
-                            )}
-                            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                              {inquiry.user_name && <span>Name: {inquiry.user_name}</span>}
-                              {inquiry.user_phone && <span>Phone: {inquiry.user_phone}</span>}
+                {/* Inquiries Tab */}
+                <TabsContent value="inquiries" className="mt-4 space-y-4">
+                  {/* Direct Inquiries */}
+                  {hasDirectLeads && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2 text-sm">
+                        <Building2 className="h-4 w-4 text-blue-600" />
+                        Direct Facility Inquiries ({userActivity?.directLeads?.length || 0})
+                      </h4>
+                      <div className="space-y-2">
+                        {userActivity?.directLeads?.map((lead: any) => (
+                          <div key={lead.id} className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{lead.facilities?.name || 'Unknown Facility'}</p>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  <Badge variant="outline" className="text-xs">{lead.status}</Badge>
+                                  {lead.urgency && <Badge variant="secondary" className="text-xs">{lead.urgency}</Badge>}
+                                  {lead.level_of_care && <Badge variant="secondary" className="text-xs">{lead.level_of_care}</Badge>}
+                                </div>
+                                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                                  {lead.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{lead.email}</span>}
+                                  {lead.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.phone}</span>}
+                                  {lead.location_city_state && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lead.location_city_state}</span>}
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                              </div>
                             </div>
                           </div>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                            {formatDistanceToNow(new Date(inquiry.created_at), { addSuffix: true })}
-                          </span>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
+                    </div>
+                  )}
 
-              {/* Reviews Tab */}
-              <TabsContent value="reviews" className="mt-4">
-                {activityLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : userActivity?.reviews?.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Star className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p>No reviews written</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                    {userActivity?.reviews?.map((review: any) => (
-                      <div key={review.id} className="p-4 rounded-xl border bg-card">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">{review.facilities?.name || "Unknown Facility"}</p>
-                              <Badge variant="outline" className={cn(
-                                review.status === 'approved' && "bg-green-50 text-green-700 border-green-200",
-                                review.status === 'pending' && "bg-amber-50 text-amber-700 border-amber-200",
-                                review.status === 'rejected' && "bg-red-50 text-red-700 border-red-200"
-                              )}>
+                  {/* Concierge Inquiries */}
+                  {hasConcierge && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2 text-sm">
+                        <Shield className="h-4 w-4 text-purple-600" />
+                        Concierge Requests ({userActivity?.conciergeInquiries?.length || 0})
+                      </h4>
+                      <div className="space-y-2">
+                        {userActivity?.conciergeInquiries?.map((inquiry: any) => (
+                          <div key={inquiry.id} className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium">{inquiry.primary_concern || 'General Inquiry'}</p>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "text-xs",
+                                      inquiry.status === 'matched' && "bg-green-50 text-green-700 border-green-200",
+                                      inquiry.status === 'pending' && "bg-yellow-50 text-yellow-700 border-yellow-200",
+                                      inquiry.status === 'closed' && "bg-slate-50 text-slate-500 border-slate-200"
+                                    )}
+                                  >
+                                    {inquiry.status}
+                                  </Badge>
+                                  {inquiry.level_of_care && <Badge variant="secondary" className="text-xs">{inquiry.level_of_care}</Badge>}
+                                  {inquiry.payment_status && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className={cn(
+                                        "text-xs",
+                                        inquiry.payment_status === 'paid' && "bg-green-50 text-green-700 border-green-200"
+                                      )}
+                                    >
+                                      {inquiry.payment_status}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                                  {inquiry.user_email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{inquiry.user_email}</span>}
+                                  {inquiry.user_phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{inquiry.user_phone}</span>}
+                                  {(inquiry.preferred_city || inquiry.preferred_state) && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {[inquiry.preferred_city, inquiry.preferred_state].filter(Boolean).join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                {formatDistanceToNow(new Date(inquiry.created_at), { addSuffix: true })}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {!hasDirectLeads && !hasConcierge && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>No inquiries found</p>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Reviews Tab */}
+                <TabsContent value="reviews" className="mt-4 space-y-3">
+                  {userActivity?.reviews?.length ? (
+                    userActivity.reviews.map((review: any) => (
+                      <div key={review.id} className="p-3 rounded-lg border bg-card">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{review.facilities?.name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-0.5">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={cn(
+                                      "h-4 w-4",
+                                      i < review.rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-muted-foreground/30"
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "text-xs",
+                                  review.status === 'approved' && "bg-green-50 text-green-700 border-green-200",
+                                  review.status === 'pending' && "bg-yellow-50 text-yellow-700 border-yellow-200",
+                                  review.status === 'rejected' && "bg-red-50 text-red-700 border-red-200"
+                                )}
+                              >
                                 {review.status}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-1 mt-1">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={cn(
-                                    "h-4 w-4",
-                                    i < review.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"
-                                  )}
-                                />
-                              ))}
-                              <span className="ml-2 text-sm text-muted-foreground">({review.rating}/5)</span>
-                            </div>
                             {review.review_text && (
-                              <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{review.review_text}</p>
+                              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{review.review_text}</p>
                             )}
                           </div>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
+                          <div className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
-                          </span>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Star className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>No reviews written</p>
+                    </div>
+                  )}
+                </TabsContent>
 
-              {/* Saved Facilities Tab */}
-              <TabsContent value="saved" className="mt-4">
-                {activityLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : userActivity?.favorites?.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Heart className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p>No saved facilities</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {userActivity?.favorites?.map((item: any) => (
-                      <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Heart className="h-5 w-5 text-primary" />
+                {/* Saved Facilities Tab */}
+                <TabsContent value="saved" className="mt-4 space-y-3">
+                  {userActivity?.favorites?.length ? (
+                    userActivity.favorites.map((fav: any) => (
+                      <div key={fav.id} className="p-3 rounded-lg border bg-card flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="h-5 w-5 text-primary" />
                           </div>
-                          <div>
-                            <p className="font-medium">{item.facilities?.name || "Unknown Facility"}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {item.facilities?.city}, {item.facilities?.state}
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{fav.facilities?.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {fav.facilities?.city}, {fav.facilities?.state}
                             </p>
                           </div>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                        </span>
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDistanceToNow(new Date(fav.created_at), { addSuffix: true })}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Heart className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>No saved facilities</p>
+                    </div>
+                  )}
+                </TabsContent>
 
-              {/* Activity Log Tab */}
-              <TabsContent value="activity" className="mt-4">
-                {activityLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : userActivity?.activityLog?.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Clock className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p>No activity recorded</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {userActivity?.activityLog?.map((activity: any) => (
-                      <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl border bg-card">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
+                {/* Activity Log Tab */}
+                <TabsContent value="activity" className="mt-4 space-y-3">
+                  {userActivity?.activityLog?.length ? (
+                    userActivity.activityLog.map((activity: any) => (
+                      <div key={activity.id} className="p-3 rounded-lg border bg-card flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm capitalize">{activity.event_type.replace(/_/g, ' ')}</p>
+                            <p className="text-xs text-muted-foreground truncate">{activity.event_description}</p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium capitalize">{activity.event_type.replace(/_/g, ' ')}</p>
-                          <p className="text-xs text-muted-foreground">{activity.event_description}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
-                        </span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Clock className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>No activity recorded</p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
@@ -705,18 +869,13 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" />
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
               Delete User Account
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the user account for <strong>{getDisplayName()}</strong> and remove all associated data including:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Saved facilities</li>
-                <li>Submitted reviews</li>
-                <li>Inquiry history</li>
-                <li>Activity logs</li>
-              </ul>
+              This action cannot be undone. This will permanently delete the user account
+              and all associated data including favorites, reviews, and activity logs.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -737,25 +896,23 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
       <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
-              <Ban className="h-5 w-5" />
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-amber-600" />
               Ban User
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
-              <p>
-                You are about to ban <strong>{getDisplayName()}</strong>. This will prevent them from accessing their account.
-              </p>
-              <div>
-                <label className="text-sm font-medium text-foreground">Reason for ban (optional)</label>
-                <Textarea
-                  value={banReason}
-                  onChange={(e) => setBanReason(e.target.value)}
-                  placeholder="Enter reason for banning this user..."
-                  className="mt-1"
-                />
-              </div>
+            <AlertDialogDescription>
+              This will prevent the user from accessing their account. You can unban them later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium">Reason for ban (optional)</label>
+            <Textarea
+              value={banReason}
+              onChange={(e) => setBanReason(e.target.value)}
+              placeholder="Enter reason for banning this user..."
+              className="mt-2"
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
