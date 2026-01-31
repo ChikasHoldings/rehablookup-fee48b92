@@ -1,20 +1,30 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Building2, Loader2 } from "lucide-react";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ListingCard } from "./ListingCard";
 import { AddListingCard } from "./AddListingCard";
+import { ListingPreviewModal } from "./ListingPreviewModal";
 
 interface ListingsLandingPageProps {
   onEditListing: (facilityId: string) => void;
   onAddListing: () => void;
 }
 
+interface PreviewState {
+  name: string;
+  slug: string;
+}
+
 export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLandingPageProps) {
   const { facilities, isLoading } = useProviderFacilities();
   const { limit, used, canAddMore, planTier, isLoading: limitsLoading } = useFacilityLimits();
   const { setSelectedFacility } = useSelectedFacility();
+  
+  // Preview modal state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFacility, setPreviewFacility] = useState<PreviewState | null>(null);
 
   const handleSelectFacility = (facilityId: string) => {
     const facility = facilities.find(f => f.id === facilityId);
@@ -22,6 +32,11 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
       setSelectedFacility(facility);
       onEditListing(facilityId);
     }
+  };
+
+  const handlePreview = (facility: { name: string; slug: string }) => {
+    setPreviewFacility(facility);
+    setPreviewOpen(true);
   };
 
   const handleAddClick = () => {
@@ -70,6 +85,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
               key={facility.id}
               facility={facility}
               onSelect={handleSelectFacility}
+              onPreview={handlePreview}
             />
           ))}
 
@@ -92,6 +108,16 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
           </div>
         )}
       </div>
+
+      {/* Preview Modal */}
+      {previewFacility && (
+        <ListingPreviewModal
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          facilityName={previewFacility.name}
+          facilitySlug={previewFacility.slug}
+        />
+      )}
     </div>
   );
 }

@@ -12,3 +12,4 @@ export { StaffCard } from './StaffCard';
 export { ListingCard } from './ListingCard';
 export { AddListingCard } from './AddListingCard';
 export { ListingsLandingPage } from './ListingsLandingPage';
+export { ListingPreviewModal } from './ListingPreviewModal';
