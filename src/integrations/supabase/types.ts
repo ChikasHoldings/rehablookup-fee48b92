@@ -4425,6 +4425,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_seeker_phones_for_admin: {
+        Args: never
+        Returns: {
+          phone: string
+          source: string
+          user_id: string
+        }[]
+      }
       get_unlocked_lead_data: {
         Args: { p_facility_id: string; p_lead_id: string }
         Returns: {
