@@ -500,13 +500,7 @@ export default function AdminAnalytics() {
 
   // Calculate KPIs with comparison
   const kpis = useMemo(() => {
-    // Safeguard against undefined data
-    const safeViewsData = viewsData || [];
-    const safeInteractionsData = interactionsData || [];
-    const safeLeadsData = leadsData || [];
-    const safePrevViewsData = prevViewsData || [];
-    const safePrevInteractionsData = prevInteractionsData || [];
-    const safePrevLeadsData = prevLeadsData || [];
+    // Calculate current period totals
     const totalViews = viewsData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
     const totalClicks = interactionsData?.reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
     const totalLeads = leadsData?.length || 0;
