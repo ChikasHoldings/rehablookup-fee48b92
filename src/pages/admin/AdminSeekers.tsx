@@ -203,8 +203,6 @@ export default function AdminSeekers() {
 
   // Stats
   const totalCount = safeUsers.length;
-  const verifiedCount = safeUsers.filter(u => u.phone_verified).length;
-  const withEmailCount = safeUsers.filter(u => u.email).length;
   const thisMonthCount = safeUsers.filter(u => {
     const created = new Date(u.created_at);
     const now = new Date();
@@ -274,7 +272,7 @@ export default function AdminSeekers() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card className="relative overflow-hidden border-l-4 border-l-primary">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
@@ -284,34 +282,6 @@ export default function AdminSeekers() {
               </div>
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <UsersIcon className="h-6 w-6 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">With Email</p>
-                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : withEmailCount}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Mail className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-l-4 border-l-green-500">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Phone Verified</p>
-                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : verifiedCount}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -335,11 +305,11 @@ export default function AdminSeekers() {
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Inquiries</p>
-                <p className="text-3xl font-bold">{activityStats ? activityStats.inquiries + activityStats.leads : <Skeleton className="h-9 w-12" />}</p>
+                <p className="text-sm font-medium text-muted-foreground">Concierge Users</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : safeUsers.filter(u => u.has_concierge).length}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-purple-600" />
+                <Shield className="h-6 w-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
