@@ -813,7 +813,7 @@ export default function Login() {
               <Link to="/signup">
                 <Button variant="outline" className="w-full h-10 text-sm">
                   <User className="h-4 w-4 mr-2" />
-                  Personal
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/provider-signup">
