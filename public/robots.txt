@@ -1,6 +1,6 @@
 # robots.txt for RehabLookup
 # https://rehablookup.com
-# Last updated: 2025-12-22
+# Last updated: 2026-01-31
 # 
 # This file controls how search engines crawl and index our website.
 # For more info: https://developers.google.com/search/docs/crawling-indexing/robots/intro
@@ -252,9 +252,51 @@ Allow: /rehab-centers/*
 Allow: /treatment-types/
 Allow: /treatment-types/*
 
-# Near me landing pages
+# Near me landing pages (all variations)
+Allow: /drug-rehab-near-me
+Allow: /drug-rehab-near-me/*
+Allow: /alcohol-rehab-near-me
+Allow: /alcohol-rehab-near-me/*
+Allow: /detox-near-me
+Allow: /detox-near-me/*
+Allow: /dual-diagnosis-near-me
+Allow: /dual-diagnosis-near-me/*
+Allow: /inpatient-rehab-near-me
+Allow: /inpatient-rehab-near-me/*
+Allow: /outpatient-near-me
+Allow: /outpatient-near-me/*
+Allow: /free-rehab-near-me
+Allow: /free-rehab-near-me/*
+Allow: /luxury-rehab-near-me
+Allow: /luxury-rehab-near-me/*
+Allow: /womens-rehab-near-me
+Allow: /womens-rehab-near-me/*
+Allow: /mens-rehab-near-me
+Allow: /mens-rehab-near-me/*
+Allow: /fentanyl-rehab-near-me
+Allow: /fentanyl-rehab-near-me/*
+Allow: /sober-living-near-me
+Allow: /sober-living-near-me/*
+Allow: /teen-rehab-near-me
+Allow: /teen-rehab-near-me/*
+Allow: /veterans-rehab-near-me
+Allow: /veterans-rehab-near-me/*
+Allow: /medicaid-rehab-near-me
+Allow: /medicaid-rehab-near-me/*
+Allow: /court-ordered-rehab-near-me
+Allow: /court-ordered-rehab-near-me/*
+Allow: /suboxone-clinic-near-me
+Allow: /suboxone-clinic-near-me/*
+Allow: /methadone-clinic-near-me
+Allow: /methadone-clinic-near-me/*
+Allow: /outpatient-rehab-near-me
+Allow: /outpatient-rehab-near-me/*
+Allow: /dual-diagnosis-rehab-near-me
+Allow: /dual-diagnosis-rehab-near-me/*
+Allow: /faith-based-rehab-near-me
+Allow: /faith-based-rehab-near-me/*
 Allow: /*-near-me
-Allow: /*-near-me/
+Allow: /*-near-me/*
 
 # Insurance pages
 Allow: /insurance/
