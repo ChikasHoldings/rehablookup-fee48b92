@@ -819,7 +819,7 @@ export default function Login() {
               <Link to="/provider-signup">
                 <Button variant="outline" className="w-full h-10 text-sm">
                   <Building2 className="h-4 w-4 mr-2" />
-                  Provider
+                  List Your Facility
                 </Button>
               </Link>
             </div>
