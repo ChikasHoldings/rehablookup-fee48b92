@@ -361,61 +361,6 @@ export default function AdminReviews() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingCount}</p>
-                <p className="text-sm text-muted-foreground">Pending</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{approvedCount}</p>
-                <p className="text-sm text-muted-foreground">Approved</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <XCircle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{rejectedCount}</p>
-                <p className="text-sm text-muted-foreground">Rejected</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Flag className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingDisputesCount}</p>
-                <p className="text-sm text-muted-foreground">Disputes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList>
           <TabsTrigger value="pending" className="gap-2">

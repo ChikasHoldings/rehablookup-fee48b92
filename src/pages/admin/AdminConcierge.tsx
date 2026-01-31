@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, Users, UserCheck, Send, CheckCircle, XCircle } from "lucide-react";
+import { Search, RefreshCw, Users, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
 
@@ -88,12 +87,29 @@ export default function AdminConcierge() {
 
   const selectedCase = cases?.find((c) => c.id === selectedCaseId);
 
+  // Pipeline stages configuration
+  const pipelineStages = [
+    { key: "new", label: "New", count: stats?.new || 0, color: "hsl(217, 91%, 60%)" },
+    { key: "reviewing", label: "Reviewing", count: stats?.reviewing || 0, color: "hsl(45, 93%, 47%)" },
+    { key: "matching", label: "Matching", count: stats?.matching || 0, color: "hsl(262, 83%, 58%)" },
+    { key: "matched", label: "Matched", count: stats?.matched || 0, color: "hsl(142, 71%, 45%)" },
+    { key: "introductions_sent", label: "Intros Sent", count: stats?.introductions_sent || 0, color: "hsl(199, 89%, 48%)" },
+    { key: "in_contact", label: "In Contact", count: stats?.in_contact || 0, color: "hsl(280, 67%, 52%)" },
+    { key: "placed", label: "Placed", count: stats?.placed || 0, color: "hsl(160, 84%, 39%)" },
+    { key: "closed", label: "Closed", count: stats?.closed || 0, color: "hsl(0, 0%, 45%)" },
+  ];
+
+  const totalCases = pipelineStages.reduce((sum, s) => sum + s.count, 0);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Concierge Cases</h1>
-          <p className="text-muted-foreground">Manage placement inquiries and matching</p>
+          <p className="text-muted-foreground">
+            Manage placement inquiries and matching
+            <span className="ml-2 text-foreground font-medium">• {totalCases} total cases</span>
+          </p>
         </div>
         <Button variant="outline" onClick={() => refetch()}>
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -101,43 +117,57 @@ export default function AdminConcierge() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        {Object.entries(STATUS_CONFIG).map(([status, config]) => (
-          <Card
-            key={status}
-            className={`cursor-pointer transition-colors ${
-              statusFilter === status ? "ring-2 ring-primary" : ""
+      {/* Compact Pipeline Stats */}
+      <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg overflow-x-auto">
+        <button
+          onClick={() => setStatusFilter("all")}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
+            statusFilter === "all"
+              ? "bg-background shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+          }`}
+        >
+          <span>All</span>
+          <span className={`text-xs px-1.5 py-0.5 rounded-full tabular-nums ${
+            statusFilter === "all" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+          }`}>
+            {totalCases}
+          </span>
+        </button>
+        <div className="w-px h-6 bg-border mx-1" />
+        {pipelineStages.map((stage) => (
+          <button
+            key={stage.key}
+            onClick={() => setStatusFilter(stage.key as CaseStatus)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
+              statusFilter === stage.key
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
             }`}
-            onClick={() => setStatusFilter(status as CaseStatus)}
           >
-            <CardContent className="p-3 text-center">
-              <p className="text-2xl font-bold">{stats?.[status] || 0}</p>
-              <p className="text-xs text-muted-foreground">{config.label}</p>
-            </CardContent>
-          </Card>
+            <span 
+              className="w-2 h-2 rounded-full" 
+              style={{ backgroundColor: stage.color }}
+            />
+            <span>{stage.label}</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full tabular-nums ${
+              statusFilter === stage.key ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+            }`}>
+              {stage.count}
+            </span>
+          </button>
         ))}
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, email, or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as CaseStatus)}>
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="new">New</TabsTrigger>
-            <TabsTrigger value="matched">Matched</TabsTrigger>
-            <TabsTrigger value="placed">Placed</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name, email, or phone..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       {/* Cases Table */}
