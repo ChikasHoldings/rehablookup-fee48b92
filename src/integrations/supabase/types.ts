@@ -4445,6 +4445,21 @@ export type Database = {
         }
         Returns: Json
       }
+      get_admin_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          admin_role: Database["public"]["Enums"]["admin_role_type"]
+          avatar_url: string
+          display_name: string
+          first_name: string
+          force_password_change: boolean
+          last_name: string
+          mfa_enabled: boolean
+          mfa_skip: boolean
+          status: string
+          user_id: string
+        }[]
+      }
       get_admin_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["admin_role_type"]
