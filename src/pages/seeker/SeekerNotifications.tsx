@@ -131,6 +131,7 @@ export default function SeekerNotifications() {
       <Helmet>
         <title>Notifications | RehabLookup</title>
         <meta name="description" content="View your notifications about facility updates, request responses, reviews, and concierge service updates." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">

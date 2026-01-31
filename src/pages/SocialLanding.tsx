@@ -81,6 +81,7 @@ export default function SocialLanding() {
         <title>Looking for treatment options? | RehabLookup</title>
         <meta name="description" content="Share a few details and we'll help guide you to available options. Confidential and no obligation." />
         <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://rehablookup.com/lp/social" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Helmet>
       

@@ -376,6 +376,7 @@ export default function SeekerRequests() {
     <Helmet>
       <title>My Requests | RehabLookup</title>
       <meta name="description" content="Track and manage your treatment center inquiries. View request status, facility responses, and send new requests." />
+      <meta name="robots" content="noindex, nofollow" />
     </Helmet>
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between gap-4 mb-6">

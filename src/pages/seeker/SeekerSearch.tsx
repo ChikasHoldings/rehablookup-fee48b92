@@ -239,6 +239,7 @@ export default function SeekerSearch() {
       <Helmet>
         <title>Search Treatment Centers | RehabLookup</title>
         <meta name="description" content="Search and find treatment centers near you. Filter by location, treatment type, and facility type." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       <div className="flex flex-col min-h-full bg-background">

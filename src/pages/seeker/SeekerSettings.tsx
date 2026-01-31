@@ -599,6 +599,7 @@ export default function SeekerSettings() {
       <Helmet>
         <title>Settings | RehabLookup</title>
         <meta name="description" content="Manage your account settings, profile information, notification preferences, and security options." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-2xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-display font-bold mb-6">Settings</h1>

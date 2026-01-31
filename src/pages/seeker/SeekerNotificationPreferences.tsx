@@ -153,6 +153,7 @@ export default function SeekerNotificationPreferences() {
       <Helmet>
         <title>Notification Preferences | RehabLookup</title>
         <meta name="description" content="Customize your email, in-app, and review notification settings to control how we communicate with you." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">

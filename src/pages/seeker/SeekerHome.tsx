@@ -149,6 +149,7 @@ export default function SeekerHome() {
       <Helmet>
         <title>Find Treatment Centers | RehabLookup</title>
         <meta name="description" content="Discover addiction treatment centers near you. Search, compare, and connect with verified rehab facilities." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="min-h-full">
         {/* Hero Search Section */}
@@ -279,6 +280,7 @@ export default function SeekerHome() {
     <Helmet>
       <title>Find Treatment Centers | RehabLookup</title>
       <meta name="description" content="Discover addiction treatment centers near you. Search, compare, and connect with verified rehab facilities." />
+      <meta name="robots" content="noindex, nofollow" />
     </Helmet>
     <div className="min-h-full">
       {/* Search Header */}
