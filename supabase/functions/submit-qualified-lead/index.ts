@@ -1,58 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// ============ PLAN CONFIGURATION - FREE/PRO MODEL ============
-// Free = cannot receive routed leads (pay-per-unlock only)
-// Pro = priority routing, 20% unlock discount, featured placement
-const PRO_PRODUCT_IDS = [
-  "prod_pro_monthly",
-  "prod_TbalLOPujTIoUe", // legacy professional
-  "prod_Tbyz1bf6iYyzYd", // professional
-  "prod_TbalOeJZA2ZoJl", // legacy featured
-  "prod_TbyzJVNOQL71NN", // featured
-];
-
-const PLAN_CONFIG: Record<string, { 
-  product_ids: string[]; 
-  priority_score: number;
-  can_receive_routed_leads: boolean;
-}> = {
-  free: { 
-    product_ids: [], 
-    priority_score: 0,
-    can_receive_routed_leads: false,
-  },
-  pro: { 
-    product_ids: PRO_PRODUCT_IDS, 
-    priority_score: 30,
-    can_receive_routed_leads: true,
-  },
-};
-
-// ============ SCORING WEIGHTS (Internal Only - Never Exposed to Providers) ============
-const SCORING_WEIGHTS = {
-  PLAN_PRO: 30,
-  // Tiered location matching: zip > city > state > nationwide
-  LOCATION_ZIP_MATCH: 40,      // Exact zip code match - highest priority
-  LOCATION_CITY_MATCH: 25,     // Same city
-  LOCATION_STATE_MATCH: 10,    // Same state
-  LOCATION_NATIONWIDE: 0,      // No location match but still eligible
-  TREATMENT_LEVEL_MATCH: 20,
-  INSURANCE_MATCH: 10,
-  FAIRNESS_FEW_LEADS: 15,
-  FAIRNESS_LONGEST_WAIT: 10,
-  FAIRNESS_ZERO_LEADS_BOOST: 20,
-  PENALTY_NON_RESPONSE: -15,
-  PENALTY_REASSIGNED: -10,
 };
 
 // ============ LOGGING UTILITIES ============
@@ -65,9 +19,9 @@ const log = (requestId: string, level: "INFO" | "WARN" | "ERROR", step: string, 
 };
 
 // ============ INTERFACES ============
-interface QualifiedLeadRequest {
-  facilityId?: string;
-  inquiryType?: 'request_info' | 'request_callback' | 'placement_match';
+interface LeadInquiryRequest {
+  facilityId: string; // Required - direct submission to specific facility
+  inquiryType?: 'request_info' | 'request_callback';
   whoSeekingHelp: string;
   locationZip: string;
   locationCityState?: string;
@@ -87,7 +41,6 @@ interface QualifiedLeadRequest {
   preferredContact: string;
   message?: string;
   source?: string;
-  // NEW: Industry-standard fields for provider decision-making
   ageRange?: string;
   gender?: string;
   relationshipToPatient?: string;
@@ -101,83 +54,7 @@ interface QualifiedLeadRequest {
   bestTimeToCall?: string;
 }
 
-interface ProviderCapacity {
-  facilityId: string;
-  facilityUserId: string;
-  facilityName: string;
-  facilityEmail: string | null;
-  providerEmail: string | null;
-  city: string;
-  state: string;
-  zipCode: string;  // Added for zip code matching
-  planName: string;
-  leadLimit: number;
-  usedLeads: number;
-  availableCapacity: number;
-  lastAssignedAt: string | null;
-  serviceTypes: string[];
-  insuranceTypes: string[];
-  subscriptionStatus: string;
-  isSuspended: boolean;
-  leadsThisCycle: number;
-  nonResponseCount: number;
-  reassignedCount: number;
-  locationTier: 'zip' | 'city' | 'state' | 'nationwide';  // Track match tier for logging
-}
-
-interface ProviderScore {
-  provider: ProviderCapacity;
-  totalScore: number;
-  breakdown: {
-    planPriority: number;
-    locationRelevance: number;
-    serviceRelevance: number;
-    fairnessBonus: number;
-    qualityPenalty: number;
-  };
-}
-
-interface ProviderEligibility {
-  isEligible: boolean;
-  planName: string;
-  subscriptionStatus: string;
-  leadLimit: number;
-  usedLeads: number;
-  isSuspended: boolean;
-  reason?: string;
-}
-
 // ============ UTILITY FUNCTIONS ============
-
-// State name to abbreviation mapping
-const STATE_ABBREVIATIONS: Record<string, string> = {
-  "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR", "california": "CA",
-  "colorado": "CO", "connecticut": "CT", "delaware": "DE", "florida": "FL", "georgia": "GA",
-  "hawaii": "HI", "idaho": "ID", "illinois": "IL", "indiana": "IN", "iowa": "IA",
-  "kansas": "KS", "kentucky": "KY", "louisiana": "LA", "maine": "ME", "maryland": "MD",
-  "massachusetts": "MA", "michigan": "MI", "minnesota": "MN", "mississippi": "MS", "missouri": "MO",
-  "montana": "MT", "nebraska": "NE", "nevada": "NV", "new hampshire": "NH", "new jersey": "NJ",
-  "new mexico": "NM", "new york": "NY", "north carolina": "NC", "north dakota": "ND", "ohio": "OH",
-  "oklahoma": "OK", "oregon": "OR", "pennsylvania": "PA", "rhode island": "RI", "south carolina": "SC",
-  "south dakota": "SD", "tennessee": "TN", "texas": "TX", "utah": "UT", "vermont": "VT",
-  "virginia": "VA", "washington": "WA", "west virginia": "WV", "wisconsin": "WI", "wyoming": "WY",
-  "district of columbia": "DC"
-};
-
-// Normalize state to 2-letter abbreviation
-function normalizeState(state: string): string {
-  if (!state) return "";
-  const trimmed = state.trim().toLowerCase();
-  
-  // If it's already a 2-letter code, return uppercase
-  if (trimmed.length === 2) {
-    return trimmed.toUpperCase();
-  }
-  
-  // Look up full state name
-  return STATE_ABBREVIATIONS[trimmed] || trimmed.toUpperCase();
-}
-
 async function hashIP(ip: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(ip + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
@@ -186,1849 +63,405 @@ async function hashIP(ip: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").substring(0, 16);
 }
 
-function getStartOfMonth(): Date {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-  return startOfMonth;
-}
-
-// ============ PROVIDER ELIGIBILITY CHECK ============
+// ============ SPAM/DUPLICATE DETECTION ============
 // deno-lint-ignore no-explicit-any
-async function checkProviderEligibility(
+async function checkForDuplicate(
   supabase: any,
-  facilityUserId: string,
-  providerEmail: string,
+  email: string,
+  phone: string,
   facilityId: string,
   requestId: string
-): Promise<ProviderEligibility> {
-  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+): Promise<{ isDuplicate: boolean; reason?: string }> {
+  // Check for recent submissions (within 24 hours) to same facility
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   
-  log(requestId, "INFO", "checkProviderEligibility", { facilityId, providerEmail });
+  const { data: recentLeads, error } = await supabase
+    .from("leads")
+    .select("id, created_at")
+    .eq("facility_id", facilityId)
+    .or(`email.eq.${email},phone.eq.${phone}`)
+    .gte("created_at", twentyFourHoursAgo)
+    .limit(1);
   
-  // Check if facility is suspended
-  const { data: facility, error: facilityError } = await supabase
-    .from("facilities")
-    .select("suspended, status")
-    .eq("id", facilityId)
-    .maybeSingle();
-  
-  if (facilityError) {
-    log(requestId, "ERROR", "Failed to fetch facility", { error: facilityError.message });
-    return {
-      isEligible: false,
-      planName: "unknown",
-      subscriptionStatus: "error",
-      leadLimit: 0,
-      usedLeads: 0,
-      isSuspended: false,
-      reason: "Failed to verify facility status"
-    };
+  if (error) {
+    log(requestId, "WARN", "Duplicate check error", { error: error.message });
+    return { isDuplicate: false };
   }
   
-  if (facility?.suspended === true) {
-    log(requestId, "WARN", "Facility is SUSPENDED", { facilityId });
-    return {
-      isEligible: false,
-      planName: "unknown",
-      subscriptionStatus: "unknown",
-      leadLimit: 0,
-      usedLeads: 0,
-      isSuspended: true,
-      reason: "Facility is suspended"
-    };
+  if (recentLeads && recentLeads.length > 0) {
+    log(requestId, "WARN", "Duplicate submission detected", { email, facilityId });
+    return { isDuplicate: true, reason: "You've already submitted an inquiry to this facility recently." };
   }
-
-  if (facility?.status !== "approved") {
-    log(requestId, "WARN", "Facility not approved", { facilityId, status: facility?.status });
-    return {
-      isEligible: false,
-      planName: "unknown",
-      subscriptionStatus: "unknown",
-      leadLimit: 0,
-      usedLeads: 0,
-      isSuspended: false,
-      reason: "Facility is not approved"
-    };
-  }
-
-  let planName = "free";
-  let subscriptionStatus = "none";
   
-  if (!stripeKey) {
-    log(requestId, "ERROR", "STRIPE_SECRET_KEY not set - defaulting to free");
-    return {
-      isEligible: false,
-      planName: "free",
-      subscriptionStatus: "none",
-      leadLimit: 0,
-      usedLeads: 0,
-      isSuspended: false,
-      reason: "No active subscription (Free plan)"
-    };
-  }
-
-  try {
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
-    
-    if (customers.data.length > 0) {
-      const customerId = customers.data[0].id;
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-        limit: 1,
-      });
-      
-      if (subscriptions.data.length > 0) {
-        subscriptionStatus = "active";
-        const subscription = subscriptions.data[0];
-        const productId = subscription.items.data[0].price.product as string;
-        
-        // Check if this is a Pro subscription
-        if (PRO_PRODUCT_IDS.includes(productId)) {
-          planName = "pro";
-        }
-        
-        log(requestId, "INFO", "Subscription found", { planName, productId, subscriptionId: subscription.id });
-      } else {
-        log(requestId, "INFO", "No active subscription found for customer", { customerId });
-      }
-    } else {
-      log(requestId, "INFO", "No Stripe customer found for email", { providerEmail });
-    }
-    
-    // CRITICAL: Free plan providers cannot receive routed leads
-    if (planName !== "pro") {
-      log(requestId, "WARN", "Provider on Free plan - NOT eligible for routed leads", { planName });
-      return {
-        isEligible: false,
-        planName,
-        subscriptionStatus,
-        leadLimit: 0,
-        usedLeads: 0,
-        isSuspended: false,
-        reason: "Free plan providers do not receive qualified leads"
-      };
-    }
-    // Pro providers are always eligible (no lead limits in pay-per-unlock model)
-    // Count leads this month for tracking purposes only
-    const startOfMonth = getStartOfMonth();
-    
-    const { data: userFacilities } = await supabase
-      .from("facilities")
-      .select("id")
-      .eq("user_id", facilityUserId);
-    
-    const facilityIds = (userFacilities as { id: string }[] || []).map(f => f.id);
-    
-    let usedLeads = 0;
-    if (facilityIds.length > 0) {
-      const { count: monthlyLeadCount, error: countError } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .in("facility_id", facilityIds)
-        .gte("created_at", startOfMonth.toISOString())
-        .eq("qualified", true);
-      
-      if (countError) {
-        log(requestId, "ERROR", "Failed to count monthly leads", { error: countError.message });
-      }
-      
-      usedLeads = monthlyLeadCount || 0;
-    }
-    
-    log(requestId, "INFO", "Pro Provider ELIGIBLE", { planName, usedLeads });
-    return {
-      isEligible: true,
-      planName,
-      subscriptionStatus,
-      leadLimit: 0, // No limit in pay-per-unlock model
-      usedLeads,
-      isSuspended: false
-    };
-    
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    log(requestId, "ERROR", "Error checking eligibility", { error: errorMsg });
-    return {
-      isEligible: false,
-      planName: "unknown",
-      subscriptionStatus: "error",
-      leadLimit: 0,
-      usedLeads: 0,
-      isSuspended: false,
-      reason: "Error checking subscription status"
-    };
-  }
+  return { isDuplicate: false };
 }
 
-// ============ GET ELIGIBLE PROVIDERS ============
-// deno-lint-ignore no-explicit-any
-async function getEligibleProviders(
-  supabase: any,
-  leadData: QualifiedLeadRequest,
-  requestId: string
-): Promise<ProviderCapacity[]> {
-  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-  
-  log(requestId, "INFO", "getEligibleProviders starting", { 
-    leadLocation: leadData.locationCityState, 
-    leadZip: leadData.locationZip 
-  });
-
-  if (!stripeKey) {
-    log(requestId, "ERROR", "STRIPE_SECRET_KEY not set");
-    return [];
-  }
-
-  try {
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    
-    // Get all approved, non-suspended facilities with services and insurance
-    const { data: facilities, error: facilitiesError } = await supabase
-      .from("facilities")
-      .select(`
-        id, name, email, user_id, city, state, zip_code, suspended,
-        facility_services (service_name),
-        facility_insurance (insurance_name)
-      `)
-      .eq("status", "approved")
-      .neq("suspended", true);
-    
-    if (facilitiesError) {
-      log(requestId, "ERROR", "Failed to fetch facilities", { error: facilitiesError.message });
-      return [];
-    }
-    
-    log(requestId, "INFO", "Facilities fetched", { count: facilities?.length || 0 });
-    
-    if (!facilities || facilities.length === 0) return [];
-    
-    const startOfMonth = getStartOfMonth();
-    
-    // Parse lead location for matching - normalize state to 2-letter abbreviation
-    const leadState = normalizeState(leadData.locationCityState?.split(",").pop()?.trim() || "");
-    const leadCity = leadData.locationCityState?.split(",")[0]?.trim().toLowerCase() || "";
-    const leadZip = leadData.locationZip?.trim() || "";
-    
-    const providers: ProviderCapacity[] = [];
-    let skippedBasic = 0;
-    let skippedNoEmail = 0;
-    let skippedAtCapacity = 0;
-    
-    for (const facility of facilities) {
-      // Skip suspended (double-check)
-      if (facility.suspended === true) continue;
-      
-      // Get provider profile email
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("user_id", facility.user_id)
-        .maybeSingle();
-      
-      if (!profile?.email) {
-        skippedNoEmail++;
-        continue;
-      }
-      
-      // Get subscription plan from Stripe
-      let planName = "free";
-      let subscriptionStatus = "none";
-      
-      try {
-        const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
-        if (customers.data.length > 0) {
-          const subscriptions = await stripe.subscriptions.list({
-            customer: customers.data[0].id,
-            status: "active",
-            limit: 1,
-          });
-          
-          if (subscriptions.data.length > 0) {
-            subscriptionStatus = "active";
-            const productId = subscriptions.data[0].items.data[0].price.product as string;
-            if (PRO_PRODUCT_IDS.includes(productId)) {
-              planName = "pro";
-            }
-          }
-        }
-      } catch (e) {
-        log(requestId, "WARN", "Stripe error for provider", { email: profile.email, error: String(e) });
-        continue;
-      }
-      
-      // CRITICAL: Skip free plan providers
-      if (planName !== "pro") {
-        skippedBasic++;
-        continue;
-      }
-      
-      // ============ TIERED LOCATION MATCHING (NO hard filter - nationwide fallback) ============
-      // Normalize provider location for comparison
-      const providerState = normalizeState(facility.state || "");
-      const providerCity = (facility.city || "").trim().toLowerCase();
-      const providerZip = (facility.zip_code || "").trim();
-      
-      // Determine location tier for this provider
-      let locationTier: 'zip' | 'city' | 'state' | 'nationwide' = 'nationwide';
-      if (leadZip && providerZip && providerZip === leadZip) {
-        locationTier = 'zip';
-      } else if (leadCity && providerCity && providerCity === leadCity && providerState === leadState) {
-        locationTier = 'city';
-      } else if (leadState && providerState && providerState === leadState) {
-        locationTier = 'state';
-      }
-      // No continue here - nationwide providers are still eligible!
-      // Count qualified leads this month for tracking purposes
-      const { count: monthlyLeadCount } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("facility_id", facility.id)
-        .gte("created_at", startOfMonth.toISOString())
-        .eq("qualified", true);
-      
-      const usedLeads = monthlyLeadCount || 0;
-      // No lead limits in pay-per-unlock model - all Pro providers are eligible
-      const availableCapacity = 999; // Always available
-      
-      // Get last assigned lead timestamp for fairness calculation
-      const { data: lastLead } = await supabase
-        .from("leads")
-        .select("assigned_at")
-        .eq("facility_id", facility.id)
-        .not("assigned_at", "is", null)
-        .order("assigned_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      // Get non-response count (leads that stayed "new" for > 24 hours) for quality penalty
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count: nonResponseCount } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("facility_id", facility.id)
-        .eq("status", "new")
-        .lte("created_at", twentyFourHoursAgo);
-      
-      // Get reassigned leads count for quality penalty
-      const { count: reassignedCount } = await supabase
-        .from("lead_routing_logs")
-        .select("*", { count: "exact", head: true })
-        .eq("requested_facility_id", facility.id)
-        .neq("assigned_provider_id", facility.id)
-        .gte("created_at", startOfMonth.toISOString());
-      
-      const serviceTypes = (facility.facility_services || []).map((s: { service_name: string }) => s.service_name.toLowerCase());
-      const insuranceTypes = (facility.facility_insurance || []).map((i: { insurance_name: string }) => i.insurance_name.toLowerCase());
-      
-      providers.push({
-        facilityId: facility.id,
-        facilityUserId: facility.user_id,
-        facilityName: facility.name,
-        facilityEmail: facility.email,
-        providerEmail: profile.email,
-        city: facility.city,
-        state: facility.state,
-        zipCode: facility.zip_code || "",
-        planName,
-        leadLimit: 0, // No limit in pay-per-unlock model
-        usedLeads,
-        availableCapacity,
-        lastAssignedAt: lastLead?.assigned_at || null,
-        serviceTypes,
-        insuranceTypes,
-        subscriptionStatus,
-        isSuspended: false,
-        leadsThisCycle: usedLeads,
-        nonResponseCount: nonResponseCount || 0,
-        reassignedCount: reassignedCount || 0,
-        locationTier,
-      });
-    }
-    
-    log(requestId, "INFO", "Eligible providers found", { 
-      eligible: providers.length,
-      byTier: {
-        zip: providers.filter(p => p.locationTier === 'zip').length,
-        city: providers.filter(p => p.locationTier === 'city').length,
-        state: providers.filter(p => p.locationTier === 'state').length,
-        nationwide: providers.filter(p => p.locationTier === 'nationwide').length,
-      },
-      skipped: { basic: skippedBasic, noEmail: skippedNoEmail, atCapacity: skippedAtCapacity }
-    });
-    
-    return providers;
-  } catch (error) {
-    log(requestId, "ERROR", "getEligibleProviders error", { error: String(error) });
-    return [];
-  }
-}
-
-// ============ SCORING MODEL ============
-function calculateProviderScore(
-  provider: ProviderCapacity,
-  leadData: QualifiedLeadRequest,
-  allProviders: ProviderCapacity[]
-): ProviderScore {
-  const breakdown = {
-    planPriority: 0,
-    locationRelevance: 0,
-    serviceRelevance: 0,
-    fairnessBonus: 0,
-    qualityPenalty: 0,
-  };
-
-  // 1. Plan Priority - Pro gets boost
-  if (provider.planName === "pro") {
-    breakdown.planPriority = SCORING_WEIGHTS.PLAN_PRO;
-  }
-
-  // 2. Location Relevance - use pre-computed location tier
-  switch (provider.locationTier) {
-    case 'zip':
-      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_ZIP_MATCH;
-      break;
-    case 'city':
-      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_CITY_MATCH;
-      break;
-    case 'state':
-      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_STATE_MATCH;
-      break;
-    case 'nationwide':
-    default:
-      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_NATIONWIDE;
-      break;
-  }
-
-  // 3. Service Relevance
-  const levelOfCare = leadData.levelOfCare?.toLowerCase() || "";
-  const insuranceType = leadData.insuranceType?.toLowerCase() || "";
-  const insuranceProvider = leadData.insuranceProvider?.toLowerCase() || "";
-  
-  if (levelOfCare && provider.serviceTypes.some(s => 
-    s.includes(levelOfCare) || 
-    levelOfCare.includes(s) ||
-    (levelOfCare.includes("inpatient") && s.includes("residential")) ||
-    (levelOfCare.includes("outpatient") && s.includes("iop")) ||
-    (levelOfCare.includes("detox") && s.includes("detox"))
-  )) {
-    breakdown.serviceRelevance += SCORING_WEIGHTS.TREATMENT_LEVEL_MATCH;
-  }
-  
-  if (insuranceProvider && provider.insuranceTypes.some(i => 
-    i.includes(insuranceProvider) || insuranceProvider.includes(i)
-  )) {
-    breakdown.serviceRelevance += SCORING_WEIGHTS.INSURANCE_MATCH;
-  } else if (insuranceType && insuranceType !== "none" && provider.insuranceTypes.length > 0) {
-    breakdown.serviceRelevance += SCORING_WEIGHTS.INSURANCE_MATCH / 2;
-  }
-
-  // 4. Fairness & Rotation (Churn Protection)
-  const sameTierProviders = allProviders.filter(p => p.planName === provider.planName);
-  
-  if (sameTierProviders.length > 1) {
-    const avgLeads = sameTierProviders.reduce((sum, p) => sum + p.leadsThisCycle, 0) / sameTierProviders.length;
-    
-    if (provider.leadsThisCycle < avgLeads) {
-      const difference = avgLeads - provider.leadsThisCycle;
-      breakdown.fairnessBonus += Math.min(SCORING_WEIGHTS.FAIRNESS_FEW_LEADS, difference * 3);
-    }
-    
-    if (provider.leadsThisCycle === 0) {
-      breakdown.fairnessBonus += SCORING_WEIGHTS.FAIRNESS_ZERO_LEADS_BOOST;
-    }
-  }
-  
-  // Longest time since last assignment bonus
-  if (provider.lastAssignedAt) {
-    const hoursSinceLastAssignment = (Date.now() - new Date(provider.lastAssignedAt).getTime()) / (1000 * 60 * 60);
-    if (hoursSinceLastAssignment > 24) {
-      breakdown.fairnessBonus += Math.min(SCORING_WEIGHTS.FAIRNESS_LONGEST_WAIT, Math.floor(hoursSinceLastAssignment / 24) * 2);
-    }
-  } else {
-    breakdown.fairnessBonus += SCORING_WEIGHTS.FAIRNESS_LONGEST_WAIT;
-  }
-
-  // 5. Quality Penalties
-  if (provider.nonResponseCount > 2) {
-    breakdown.qualityPenalty += SCORING_WEIGHTS.PENALTY_NON_RESPONSE;
-  }
-  
-  if (provider.reassignedCount > 0) {
-    breakdown.qualityPenalty += SCORING_WEIGHTS.PENALTY_REASSIGNED * Math.min(provider.reassignedCount, 3);
-  }
-
-  // 6. Fairness Dampener (Prevents monopolization)
-  if (sameTierProviders.length > 1) {
-    const maxLeads = Math.max(...sameTierProviders.map(p => p.leadsThisCycle));
-    const minLeads = Math.min(...sameTierProviders.map(p => p.leadsThisCycle));
-    
-    if (maxLeads > 0 && provider.leadsThisCycle === maxLeads && maxLeads > minLeads + 3) {
-      const dampening = Math.min(20, (provider.leadsThisCycle - minLeads) * 2);
-      breakdown.fairnessBonus -= dampening;
-    }
-  }
-
-  const totalScore = 
-    breakdown.planPriority + 
-    breakdown.locationRelevance + 
-    breakdown.serviceRelevance + 
-    breakdown.fairnessBonus + 
-    breakdown.qualityPenalty;
-
-  return { provider, totalScore, breakdown };
-}
-
-// ============ FIND BEST PROVIDERS (supports shared leads for Professional) ============
-function findBestProviders(
-  providers: ProviderCapacity[],
-  leadData: QualifiedLeadRequest,
-  requestId: string
-): { 
-  primary: { provider: ProviderCapacity; score: ProviderScore } | null;
-  secondary: { provider: ProviderCapacity; score: ProviderScore } | null;
-  exclusivity: 'exclusive' | 'shared';
-  reason: string;
-} {
-  // Only Pro subscribers can receive routed leads
-  const available = providers.filter(p => p.availableCapacity > 0 && p.planName === "pro");
-  
-  if (available.length === 0) {
-    return { 
-      primary: null, 
-      secondary: null, 
-      exclusivity: 'exclusive',
-      reason: "No eligible paid providers with available capacity" 
-    };
-  }
-  
-  // Score all providers
-  const scoredProviders = available.map(p => calculateProviderScore(p, leadData, available));
-  
-  // Sort by total score (descending), then by last-assigned (round-robin for ties)
-  scoredProviders.sort((a, b) => {
-    if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-    const aTime = a.provider.lastAssignedAt ? new Date(a.provider.lastAssignedAt).getTime() : 0;
-    const bTime = b.provider.lastAssignedAt ? new Date(b.provider.lastAssignedAt).getTime() : 0;
-    return aTime - bTime;
-  });
-  
-  // Log top candidates
-  log(requestId, "INFO", "Top scored providers", {
-    candidates: scoredProviders.slice(0, 5).map((s, i) => ({
-      rank: i + 1,
-      name: s.provider.facilityName,
-      plan: s.provider.planName,
-      score: s.totalScore,
-      breakdown: s.breakdown,
-      capacity: `${s.provider.usedLeads}/${s.provider.leadLimit}`
-    }))
-  });
-  
-  const best = scoredProviders[0];
-  if (!best) {
-    return { 
-      primary: null, 
-      secondary: null, 
-      exclusivity: 'exclusive',
-      reason: "No matching eligible providers found" 
-    };
-  }
-  
-  // EXCLUSIVITY LOGIC:
-  // Featured providers get EXCLUSIVE leads (no sharing)
-  // Professional providers get SHARED leads (max 2 providers)
-  
-  if (best.provider.planName === "featured") {
-    // Featured = exclusive, no secondary provider
-    const reason = buildAssignmentReason(best.provider, best.breakdown, best.totalScore, true);
-    log(requestId, "INFO", "Featured provider selected - EXCLUSIVE lead", { facilityName: best.provider.facilityName });
-    return {
-      primary: { provider: best.provider, score: best },
-      secondary: null,
-      exclusivity: 'exclusive',
-      reason
-    };
-  } else {
-    // Professional = shared, find second provider
-    const reason = buildAssignmentReason(best.provider, best.breakdown, best.totalScore, false);
-    
-    // Find next eligible Professional provider for shared lead
-    let secondary: { provider: ProviderCapacity; score: ProviderScore } | null = null;
-    for (let i = 1; i < scoredProviders.length; i++) {
-      const candidate = scoredProviders[i];
-      // Only share with other Professional providers (not Featured - Featured never gets shared leads)
-      if (candidate.provider.planName === "professional" && candidate.provider.availableCapacity > 0) {
-        secondary = { provider: candidate.provider, score: candidate };
-        log(requestId, "INFO", "Secondary Professional provider for shared lead", { 
-          facilityName: candidate.provider.facilityName 
-        });
-        break;
-      }
-    }
-    
-    return {
-      primary: { provider: best.provider, score: best },
-      secondary,
-      exclusivity: 'shared',
-      reason
-    };
-  }
-}
-
-function buildAssignmentReason(
-  provider: ProviderCapacity, 
-  breakdown: ProviderScore['breakdown'], 
-  totalScore: number,
-  isExclusive: boolean
-): string {
-  const reasons: string[] = [];
-  
-  // Use location tier for clearer reason
-  if (breakdown.locationRelevance >= SCORING_WEIGHTS.LOCATION_ZIP_MATCH) {
-    reasons.push("zip code match");
-  } else if (breakdown.locationRelevance >= SCORING_WEIGHTS.LOCATION_CITY_MATCH) {
-    reasons.push("city match");
-  } else if (breakdown.locationRelevance >= SCORING_WEIGHTS.LOCATION_STATE_MATCH) {
-    reasons.push("state match");
-  } else {
-    reasons.push("nationwide");
-  }
-  
-  if (breakdown.serviceRelevance >= SCORING_WEIGHTS.TREATMENT_LEVEL_MATCH) {
-    reasons.push("service match");
-  }
-  
-  if (provider.planName === "featured") {
-    reasons.push("Featured provider");
-  } else if (provider.planName === "professional") {
-    reasons.push("Professional provider");
-  }
-  
-  if (breakdown.fairnessBonus > 10) {
-    reasons.push("fair rotation");
-  }
-  
-  const exclusivityLabel = isExclusive ? "exclusive" : "shared";
-  
-  return reasons.length > 0 
-    ? `Auto-assigned (${exclusivityLabel}): ${reasons.join(", ")} (score: ${totalScore})`
-    : `Auto-assigned (${exclusivityLabel}): best available match (score: ${totalScore})`;
-}
-
-// ============ EMAIL FUNCTIONS ============
-async function sendLeadNotificationEmail(
-  facilityEmail: string,
-  facilityName: string,
-  leadData: QualifiedLeadRequest,
-  assignmentReason: string,
-  isShared: boolean,
-  requestId: string
-): Promise<void> {
-  const sharedBadge = isShared 
-    ? '<span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-left: 8px;">SHARED LEAD</span>'
-    : '<span style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-left: 8px;">EXCLUSIVE</span>';
-    
-  try {
-    await resend.emails.send({
-      from: "RehabLookup <no-reply@rehablookup.com>",
-      to: [facilityEmail],
-      subject: `New Qualified Lead: ${leadData.name}${isShared ? ' (Shared)' : ''}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="utf-8"></head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f6f8fb; padding: 40px 20px;">
-          <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <div style="display: flex; align-items: center; margin-bottom: 24px;">
-              <h1 style="color: #1B365D; font-size: 24px; margin: 0;">New Qualified Lead</h1>
-              ${sharedBadge}
-            </div>
-            
-            <div style="background: #e8f5e9; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
-              <p style="margin: 0; color: #2e7d32; font-size: 14px;">
-                ${isShared 
-                  ? 'This lead has been shared with one other provider. Respond quickly for the best chance of connection.' 
-                  : 'This lead was matched exclusively to you based on location, services, and availability.'
-                }
+// ============ EMAIL TEMPLATES ============
+function getSeekerConfirmationEmail(leadName: string, facilityName: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inquiry Received</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="padding: 40px; text-align: center; background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Inquiry Received</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <p style="margin: 0 0 20px; color: #1e293b; font-size: 16px; line-height: 1.6;">
+                Hi ${leadName},
               </p>
-            </div>
-            
-            <div style="background: #F6F8FB; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-              <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${leadData.name}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Phone:</strong> ${leadData.phone}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${leadData.email}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Preferred Contact:</strong> ${leadData.preferredContact}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Location:</strong> ${leadData.locationZip}${leadData.locationCityState ? ` (${leadData.locationCityState})` : ""}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Urgency:</strong> ${leadData.urgency}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Level of Care:</strong> ${leadData.levelOfCare}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Insurance:</strong> ${leadData.insuranceType}</p>
-              ${leadData.message ? `<p style="margin: 0;"><strong>Message:</strong> ${leadData.message}</p>` : ""}
-            </div>
-            
-            <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Lead Details</a>
-            
-            <p style="color: #5E6B7A; font-size: 14px; margin-top: 24px;">
-              This lead has been verified via email confirmation. View and respond to this lead in your RehabLookup provider dashboard.
-            </p>
-          </div>
-          
-          <div style="background: #1B365D; padding: 24px 40px; border-radius: 0 0 12px 12px; max-width: 600px; margin: 0 auto;">
-            <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
-            <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
-            <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">
-              <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd;">Settings</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd;">Support</a>
-            </p>
-          </div>
-        </body>
-        </html>
-      `,
-    });
-    log(requestId, "INFO", "Lead notification email sent", { to: facilityEmail, isShared });
-  } catch (emailError) {
-    log(requestId, "ERROR", "Failed to send lead notification", { error: String(emailError) });
-  }
+              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
+                Thank you for reaching out. Your inquiry has been sent directly to <strong>${facilityName}</strong>.
+              </p>
+              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
+                A representative from the facility will contact you soon using your preferred contact method.
+              </p>
+              <div style="background-color: #f0fdfa; border-left: 4px solid #14b8a6; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; color: #0f766e; font-size: 14px;">
+                  <strong>What happens next?</strong><br>
+                  The facility will review your inquiry and reach out within 24-48 hours. If you have an urgent need, feel free to contact them directly.
+                </p>
+              </div>
+              <p style="margin: 30px 0 0; color: #64748b; font-size: 14px; line-height: 1.6;">
+                Need personalized help finding the right treatment center?<br>
+                <a href="https://rehablookup.com/concierge" style="color: #0f766e; text-decoration: underline;">Try our Concierge Service</a> – we'll match you with facilities tailored to your needs.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #f8fafc; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0; color: #64748b; font-size: 12px;">
+                © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 }
 
-// ============ FREE PROVIDER UPGRADE NOTIFICATION ============
-async function sendFreeProviderUpgradeNotification(
-  providerEmail: string,
+function getFacilityNotificationEmail(
+  leadName: string,
+  leadEmail: string,
+  leadPhone: string,
   facilityName: string,
-  leadLocation: string,
-  requestId: string
-): Promise<void> {
-  try {
-    await resend.emails.send({
-      from: "RehabLookup <no-reply@rehablookup.com>",
-      to: [providerEmail],
-      subject: `You missed a lead from your profile - Add credits to unlock leads`,
-      html: `
+  inquiryDetails: {
+    urgency?: string;
+    levelOfCare?: string;
+    insuranceType?: string;
+    message?: string;
+    preferredContact?: string;
+  }
+): string {
+  return `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">A Lead Just Submitted From Your Profile</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You need credits to unlock this lead</p>
-  </div>
-  
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #92400e;">📍 Lead Location: ${leadLocation || 'Not specified'}</p>
-      <p style="margin: 0; color: #92400e; font-size: 14px;">This lead was submitted directly from your facility profile at <strong>${facilityName}</strong>.</p>
-    </div>
-    
-    <p style="margin: 0 0 16px 0; font-size: 15px; color: #4b5563;">Someone looking for treatment reached out through your profile, but you don't have enough credits to unlock their contact information.</p>
-    
-    <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563;">Add credits now to unlock this lead and connect with potential clients. <strong>Don't miss the next one!</strong></p>
-    
-    <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #166534;">Start Unlocking Leads Today</p>
-      <ul style="margin: 0 0 16px 0; padding-left: 20px; color: #166534; font-size: 14px;">
-        <li style="margin-bottom: 8px;"><strong>Pay-per-unlock:</strong> Only pay for leads you want ($25-39 per lead)</li>
-        <li style="margin-bottom: 0;"><strong>Pro subscription:</strong> Get 20% off all lead unlocks + featured placement</li>
-      </ul>
-    </div>
-    
-    <div style="text-align: center;">
-      <a href="https://rehablookup.com/provider/credits" style="display: inline-block; background: #1B365D; color: #fff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Add Credits Now</a>
-    </div>
-    
-    <p style="margin: 24px 0 0 0; font-size: 13px; color: #9ca3af; text-align: center;">Questions? Contact us at <a href="mailto:support@rehablookup.com" style="color: #1B365D;">support@rehablookup.com</a></p>
-  </div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Inquiry Received</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="padding: 40px; text-align: center; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">New Inquiry for ${facilityName}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <p style="margin: 0 0 20px; color: #1e293b; font-size: 16px; line-height: 1.6;">
+                You have received a new inquiry through RehabLookup.
+              </p>
+              
+              <div style="background-color: #f8fafc; border-radius: 8px; padding: 24px; margin: 20px 0;">
+                <h3 style="margin: 0 0 16px; color: #1e293b; font-size: 18px;">Contact Information</h3>
+                <p style="margin: 0 0 8px; color: #475569; font-size: 15px;">
+                  <strong>Name:</strong> ${leadName}
+                </p>
+                <p style="margin: 0 0 8px; color: #475569; font-size: 15px;">
+                  <strong>Email:</strong> <a href="mailto:${leadEmail}" style="color: #2563eb;">${leadEmail}</a>
+                </p>
+                <p style="margin: 0 0 8px; color: #475569; font-size: 15px;">
+                  <strong>Phone:</strong> <a href="tel:${leadPhone}" style="color: #2563eb;">${leadPhone}</a>
+                </p>
+                <p style="margin: 0; color: #475569; font-size: 15px;">
+                  <strong>Preferred Contact:</strong> ${inquiryDetails.preferredContact || 'Phone'}
+                </p>
+              </div>
+              
+              <div style="background-color: #f0f9ff; border-radius: 8px; padding: 24px; margin: 20px 0;">
+                <h3 style="margin: 0 0 16px; color: #1e293b; font-size: 18px;">Inquiry Details</h3>
+                ${inquiryDetails.urgency ? `<p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Urgency:</strong> ${inquiryDetails.urgency}</p>` : ''}
+                ${inquiryDetails.levelOfCare ? `<p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Level of Care:</strong> ${inquiryDetails.levelOfCare}</p>` : ''}
+                ${inquiryDetails.insuranceType ? `<p style="margin: 0 0 8px; color: #475569; font-size: 15px;"><strong>Insurance:</strong> ${inquiryDetails.insuranceType}</p>` : ''}
+                ${inquiryDetails.message ? `<p style="margin: 16px 0 0; color: #475569; font-size: 15px;"><strong>Message:</strong><br>${inquiryDetails.message}</p>` : ''}
+              </div>
+              
+              <div style="text-align: center; margin-top: 30px;">
+                <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  View in Dashboard
+                </a>
+              </div>
+              
+              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                  <strong>Tip:</strong> Responding quickly to inquiries improves your chances of helping this person find the care they need.
+                </p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #f8fafc; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0; color: #64748b; font-size: 12px;">
+                © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
-      `,
-    });
-    log(requestId, "INFO", "Free provider upgrade notification sent", { to: providerEmail, facilityName });
-  } catch (error) {
-    log(requestId, "ERROR", "Failed to send free provider upgrade notification", { error: String(error) });
-  }
-}
-
-async function sendLeadLimitWarningEmail(
-  providerEmail: string,
-  facilityName: string,
-  usedLeads: number,
-  leadLimit: number,
-  planName: string,
-  requestId: string
-): Promise<void> {
-  const percentage = Math.round((usedLeads / leadLimit) * 100);
-  const remainingLeads = leadLimit - usedLeads;
-
-  try {
-    await resend.emails.send({
-      from: "RehabLookup <no-reply@rehablookup.com>",
-      to: [providerEmail],
-      subject: `Lead Limit Warning: ${percentage}% used (${remainingLeads} leads remaining)`,
-      html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">Lead Limit Warning</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You're approaching your monthly lead limit</p>
-  </div>
-  
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
-      <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: #92400e;">${percentage}%</p>
-      <p style="margin: 0; color: #92400e; font-size: 16px;">of your monthly lead limit used</p>
-    </div>
-    
-    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0; color: #6b7280;">Leads Used:</td><td style="padding: 8px 0; font-weight: 600; text-align: right;">${usedLeads} of ${leadLimit}</td></tr>
-        <tr><td style="padding: 8px 0; color: #6b7280;">Leads Remaining:</td><td style="padding: 8px 0; font-weight: 600; text-align: right; color: ${remainingLeads <= 5 ? '#dc2626' : '#16a34a'};">${remainingLeads}</td></tr>
-        <tr><td style="padding: 8px 0; color: #6b7280;">Current Plan:</td><td style="padding: 8px 0; font-weight: 600; text-align: right; text-transform: capitalize;">${planName}</td></tr>
-        <tr><td style="padding: 8px 0; color: #6b7280;">Facility:</td><td style="padding: 8px 0; font-weight: 600; text-align: right;">${facilityName}</td></tr>
-      </table>
-    </div>
-    
-    <p style="color: #4b5563; font-size: 15px; margin-bottom: 24px;">
-      Once you reach your limit, new leads will be paused until next month. Contact support if you need additional capacity.
-    </p>
-    
-    <div style="text-align: center; margin-top: 28px;">
-      <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
-        View Usage Details
-      </a>
-    </div>
-  </div>
-  
-  <div style="background: #1B365D; padding: 24px; border-radius: 12px; margin-top: 16px;">
-    <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
-    <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">
-      <a href="https://rehablookup.com/provider/billing" style="color: #93c5fd;">Billing</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd;">Support</a>
-    </p>
-  </div>
-</body>
-</html>
-      `,
-    });
-    log(requestId, "INFO", "Lead limit warning sent", { to: providerEmail, percentage });
-  } catch (error) {
-    log(requestId, "ERROR", "Failed to send lead limit warning", { error: String(error) });
-  }
-}
-
-async function sendUserConfirmationEmail(
-  userEmail: string,
-  firstName: string,
-  requestId: string
-): Promise<void> {
-  try {
-    await resend.emails.send({
-      from: "RehabLookup <no-reply@rehablookup.com>",
-      to: [userEmail],
-      subject: "We've received your request",
-      html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 28px; text-align: center;">
-      <h1 style="color: #fff; margin: 0; font-size: 22px; font-weight: 600;">We've received your request</h1>
-    </div>
-    
-    <div style="padding: 32px 28px;">
-      <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">Hi ${firstName},</p>
-      
-      <p style="margin: 0 0 16px 0; font-size: 15px; color: #4b5563;">Thank you for reaching out to RehabLookup.</p>
-      
-      <p style="margin: 0 0 16px 0; font-size: 15px; color: #4b5563;">Your request for information has been received and successfully reviewed. Based on what you shared, your request has been forwarded to a treatment provider that matches your needs and location.</p>
-      
-      <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563;">There's no obligation at any point. If a provider reaches out, you're free to ask questions, take your time, and decide what feels right for you or your loved one.</p>
-      
-      <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-        <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #1B365D;">What to expect next</p>
-        <ul style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 14px;">
-          <li style="margin-bottom: 8px;">A treatment provider may contact you using your preferred method</li>
-          <li style="margin-bottom: 8px;">You can learn more about available options and next steps</li>
-          <li style="margin-bottom: 0;">If you choose not to move forward, no action is required</li>
-        </ul>
-      </div>
-      
-      <p style="margin: 0 0 24px 0; font-size: 14px; color: #6b7280;">If you have any questions about your request or need assistance, our support team is here to help at <a href="mailto:support@rehablookup.com" style="color: #1B365D; text-decoration: none;">support@rehablookup.com</a>.</p>
-      
-      <p style="margin: 0 0 4px 0; font-size: 15px; color: #4b5563;">Thank you for taking this step.</p>
-      <p style="margin: 0 0 4px 0; font-size: 15px; color: #4b5563;">Warm regards,</p>
-      <p style="margin: 0; font-size: 15px; font-weight: 600; color: #1B365D;">The RehabLookup Team</p>
-    </div>
-    
-    <div style="background: #1B365D; padding: 28px; border-radius: 0 0 12px 12px;">
-      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
-      <p style="margin: 0 0 16px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
-      <div style="text-align: center; margin-bottom: 12px;">
-        <a href="https://rehablookup.com/privacy-policy" style="color: #93c5fd; font-size: 11px; text-decoration: none;">Privacy Policy</a>
-        <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
-        <a href="mailto:support@rehablookup.com" style="color: #93c5fd; font-size: 11px; text-decoration: none;">Support</a>
-      </div>
-      <p style="margin: 0; font-size: 10px; color: rgba(255,255,255,0.4); text-align: center;">If you did not make this request, please disregard this email.</p>
-    </div>
-  </div>
-</body>
-</html>
-      `,
-    });
-    log(requestId, "INFO", "User confirmation email sent", { to: userEmail });
-  } catch (error) {
-    log(requestId, "ERROR", "Failed to send user confirmation", { error: String(error) });
-  }
+  `;
 }
 
 // ============ MAIN HANDLER ============
-const handler = async (req: Request): Promise<Response> => {
+serve(async (req) => {
   const requestId = generateRequestId();
-  
-  log(requestId, "INFO", "Request received", { 
-    method: req.method,
-    url: req.url,
-    contentType: req.headers.get("content-type"),
-  });
+  log(requestId, "INFO", "Request received", { method: req.method });
 
   if (req.method === "OPTIONS") {
-    log(requestId, "INFO", "CORS preflight request");
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    log(requestId, "WARN", "Invalid request method", { method: req.method });
-    return new Response(
-      JSON.stringify({ error: "Method not allowed", details: `Expected POST, got ${req.method}` }),
-      { status: 405, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // ============ ENVIRONMENT VALIDATION ============
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const resendKey = Deno.env.get("RESEND_API_KEY");
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      log(requestId, "ERROR", "Missing required environment variables", {
-        hasSupabaseUrl: !!supabaseUrl,
-        hasServiceKey: !!supabaseServiceKey,
-      });
-      return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    log(requestId, "INFO", "Environment check", {
-      hasSupabaseUrl: true,
-      hasServiceKey: true,
-      hasStripeKey: !!stripeKey,
-      hasResendKey: !!resendKey,
-    });
-
-    // ============ PARSE REQUEST BODY ============
-    let leadData: QualifiedLeadRequest;
-    try {
-      const rawBody = await req.text();
-      log(requestId, "INFO", "Raw body received", { length: rawBody.length, preview: rawBody.substring(0, 100) });
-      
-      if (!rawBody || rawBody.trim() === "") {
-        log(requestId, "ERROR", "Empty request body");
-        return new Response(
-          JSON.stringify({ error: "Request body is empty" }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-      
-      leadData = JSON.parse(rawBody);
-      log(requestId, "INFO", "JSON parsed successfully");
-    } catch (parseError) {
-      const errorMsg = parseError instanceof Error ? parseError.message : String(parseError);
-      log(requestId, "ERROR", "Failed to parse request body", { error: errorMsg });
-      return new Response(
-        JSON.stringify({ error: "Invalid JSON in request body", details: errorMsg }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-    
-    log(requestId, "INFO", "Lead data parsed", { 
-      facilityId: leadData.facilityId || "none",
-      location: leadData.locationCityState,
-      email: leadData.email?.substring(0, 3) + "***",
-      hasName: !!leadData.name,
-      hasPhone: !!leadData.phone,
-      hasUrgency: !!leadData.urgency,
-      hasLevelOfCare: !!leadData.levelOfCare,
-    });
-
-    // ============ LEAD QUALIFICATION GATE ============
-    // A lead is QUALIFIED only if ALL of the following pass:
-    // 1. Phone OR email is valid (at least one contact method)
-    // 2. Location is provided (matches provider service area - checked during routing)
-    // 3. Lead is not a duplicate within suppression window
-    // 4. Spam/bot checks pass (IP rate limiting)
-    // 
-    // UNQUALIFIED leads:
-    // - Are NOT routed to providers
-    // - Do NOT count toward monthly caps
-    
-    // ============ 1. Validate required fields ============
-    const requiredFields = ["whoSeekingHelp", "locationZip", "urgency", "levelOfCare", "name", "preferredContact"];
-    const missingFields: string[] = [];
-    
-    for (const field of requiredFields) {
-      const value = leadData[field as keyof QualifiedLeadRequest];
-      if (!value || (typeof value === "string" && value.trim() === "")) {
-        missingFields.push(field);
-      }
-    }
-    
-    // Phone OR email is required (at least one valid contact method)
-    const hasPhone = leadData.phone && leadData.phone.trim() !== "";
-    const hasEmail = leadData.email && leadData.email.trim() !== "";
-    
-    if (!hasPhone && !hasEmail) {
-      missingFields.push("phone or email");
-    }
-    
-    if (missingFields.length > 0) {
-      log(requestId, "WARN", "Missing required fields - UNQUALIFIED", { missingFields });
-      return new Response(
-        JSON.stringify({ error: `Missing required fields: ${missingFields.join(", ")}` }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // ============ 2. Validate contact methods (phone OR email must be valid) ============
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isEmailValid = hasEmail && emailRegex.test(leadData.email);
-    
-    const phoneDigits = leadData.phone?.replace(/\D/g, "") || "";
-    const isPhoneValid = hasPhone && phoneDigits.length >= 10;
-    
-    // At least one valid contact method is required
-    if (!isEmailValid && !isPhoneValid) {
-      log(requestId, "WARN", "No valid contact method - UNQUALIFIED", { 
-        emailProvided: hasEmail, 
-        emailValid: isEmailValid,
-        phoneProvided: hasPhone,
-        phoneValid: isPhoneValid 
-      });
-      return new Response(
-        JSON.stringify({ error: "Please provide a valid phone number or email address" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // ============ 3. Validate input lengths (spam check) ============
-    if (leadData.name.length > 200 || (leadData.email && leadData.email.length > 255) || (leadData.message && leadData.message.length > 2000)) {
-      log(requestId, "WARN", "Input length exceeded - spam check failed", { 
-        nameLen: leadData.name.length, 
-        emailLen: leadData.email?.length || 0,
-        messageLen: leadData.message?.length || 0 
-      });
-      return new Response(
-        JSON.stringify({ error: "Input length exceeded maximum allowed" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // ============ 4. Location validation ============
-    if (!leadData.locationZip || leadData.locationZip.length < 5) {
-      log(requestId, "WARN", "Invalid location - UNQUALIFIED", { zip: leadData.locationZip });
-      return new Response(
-        JSON.stringify({ error: "Please provide a valid ZIP code" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    log(requestId, "INFO", "Basic validation passed - creating Supabase client");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ============ 5. EMAIL VERIFICATION CHECK (enhances qualification) ============
-    let emailVerified = false;
-    if (isEmailValid) {
-      const { data: verificationRecord } = await supabase
-        .from("email_verification_codes")
-        .select("verified")
-        .eq("email", leadData.email.toLowerCase())
-        .eq("verified", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      emailVerified = !!verificationRecord;
-    }
-    log(requestId, "INFO", "Email verification status", { verified: emailVerified, emailProvided: isEmailValid });
-
-    // ============ 6. DUPLICATE CHECK (suppression window) ============
-    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0] || 
-                     req.headers.get("cf-connecting-ip") || 
-                     "unknown";
-    const ipHash = await hashIP(clientIP);
-
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    
-    // Check for duplicate by email (if provided) or phone
-    let isDuplicate = false;
-    
-    if (isEmailValid) {
-      const { data: recentLeadsByEmail } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("email", leadData.email.toLowerCase())
-        .gte("created_at", oneHourAgo);
-      
-      if ((recentLeadsByEmail || []).length > 0) {
-        isDuplicate = true;
-      }
-    }
-    
-    if (!isDuplicate && isPhoneValid) {
-      const { data: recentLeadsByPhone } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("phone", leadData.phone.trim())
-        .gte("created_at", oneHourAgo);
-      
-      if ((recentLeadsByPhone || []).length > 0) {
-        isDuplicate = true;
-      }
-    }
-    
-    if (isDuplicate) {
-      log(requestId, "WARN", "Duplicate submission blocked - UNQUALIFIED", { 
-        email: leadData.email?.substring(0, 5) + "***",
-        phone: phoneDigits.substring(0, 3) + "***" 
-      });
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "You've already submitted a help request recently. Please wait before submitting again.",
-          isDuplicate: true 
-        }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // ============ 7. RATE LIMIT CHECK (spam/bot validation) ============
-    const { count: ipCount } = await supabase
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .eq("ip_hash", ipHash)
-      .gte("created_at", oneHourAgo);
-
-    if (ipCount && ipCount >= 5) {
-      log(requestId, "WARN", "IP rate limit exceeded - UNQUALIFIED (bot/spam)", { ipHash });
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Too many submissions. Please try again later.",
-          isRateLimited: true 
-        }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // ============ LEAD QUALIFICATION DETERMINATION ============
-    // A lead is QUALIFIED if:
-    // 1. At least one valid contact method (phone or email) ✓ (validated above)
-    // 2. Location provided ✓ (validated above)
-    // 3. Not a duplicate ✓ (validated above)
-    // 4. Not spam/bot ✓ (validated above)
-    // 5. Email verified (enhances quality score but not required for qualification)
-    
-    const isQualified = isPhoneValid || isEmailValid; // At least one valid contact
-    const qualificationReason = !isQualified 
-      ? "No valid contact method provided" 
-      : (emailVerified ? null : "Email not verified (valid contact available)");
-    
-    log(requestId, "INFO", "Qualification check complete", { 
-      isQualified, 
-      phoneValid: isPhoneValid, 
-      emailValid: isEmailValid, 
-      emailVerified,
-      qualificationReason 
+    const leadData: LeadInquiryRequest = await req.json();
+    log(requestId, "INFO", "Lead data received", { 
+      facilityId: leadData.facilityId,
+      email: leadData.email?.substring(0, 3) + "***",
+      inquiryType: leadData.inquiryType 
     });
 
-    // ============ ROUTING VARIABLES ============
-    let primaryFacilityId: string | null = null;
-    let primaryFacilityUserId: string | null = null;
-    let primaryFacilityEmail: string | null = null;
-    let primaryFacilityName: string | null = null;
-    let primaryProviderEmail: string | null = null;
-    let primaryPlanName: string | null = null;
-    
-    let secondaryFacilityId: string | null = null;
-    let secondaryFacilityUserId: string | null = null;
-    let secondaryFacilityEmail: string | null = null;
-    let secondaryFacilityName: string | null = null;
-    let secondaryProviderEmail: string | null = null;
-    
-    let assignmentStatus = "pending";
-    let assignmentReason = "";
-    let leadExclusivity: 'exclusive' | 'shared' = 'exclusive';
-    let scoringBreakdown: Record<string, number> | null = null;
-    let eligibilityResult: ProviderEligibility | null = null;
-
-    // ============ UNQUALIFIED LEADS: DO NOT ROUTE ============
-    // Unqualified leads are stored but NOT routed to providers and do NOT count toward caps
-    if (!isQualified) {
-      log(requestId, "WARN", "Lead is UNQUALIFIED - will NOT be routed", { qualificationReason });
-      assignmentStatus = "unqualified_not_routed";
-      assignmentReason = qualificationReason || "Lead did not pass qualification checks";
+    // ============ VALIDATION ============
+    if (!leadData.facilityId) {
+      log(requestId, "ERROR", "Missing facilityId");
+      return new Response(
+        JSON.stringify({ success: false, error: "Facility ID is required for direct inquiries" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // ============ DIRECT PROFILE SUBMISSION ROUTING ============
-    // When a lead is submitted from a provider profile page:
-    // - FEATURED profile: Route EXCLUSIVELY to that Featured provider only. No fallback, no secondary.
-    // - PROFESSIONAL profile: Route to that Professional provider AND share with next eligible Professional.
-    // ONLY route if the lead is qualified.
-    if (isQualified && leadData.facilityId) {
-      log(requestId, "INFO", "Processing direct provider profile submission", { facilityId: leadData.facilityId });
-      
-      const { data: facility } = await supabase
-        .from("facilities")
-        .select("id, name, email, status, user_id, suspended")
-        .eq("id", leadData.facilityId)
-        .eq("status", "approved")
-        .maybeSingle();
-
-      if (facility) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("email")
-          .eq("user_id", facility.user_id)
-          .maybeSingle();
-
-        if (profile?.email) {
-          eligibilityResult = await checkProviderEligibility(
-            supabase, 
-            facility.user_id, 
-            profile.email,
-            facility.id,
-            requestId
-          );
-          
-          if (!eligibilityResult.isEligible) {
-            log(requestId, "WARN", "Requested provider not eligible", { 
-              reason: eligibilityResult.reason,
-              planName: eligibilityResult.planName 
-            });
-            
-            // Free plan providers cannot receive leads - notify and route to Pro providers
-            if (eligibilityResult.planName !== "pro") {
-              log(requestId, "INFO", "Free plan profile submission - notifying provider and routing to Pro providers", { 
-                facilityName: facility.name 
-              });
-              
-              // Notify the Free provider about the missed lead (encourage credits or Pro upgrade)
-              await sendFreeProviderUpgradeNotification(
-                profile.email,
-                facility.name,
-                leadData.locationCityState || leadData.locationZip,
-                requestId
-              );
-              
-              // Find eligible paid providers to route this lead to
-              const eligibleProviders = await getEligibleProviders(supabase, leadData, requestId);
-              
-              if (eligibleProviders.length > 0) {
-                // Use findBestProviders to determine routing based on plan type
-                const result = findBestProviders(eligibleProviders, leadData, requestId);
-                
-                if (result.primary) {
-                  primaryFacilityId = result.primary.provider.facilityId;
-                  primaryFacilityUserId = result.primary.provider.facilityUserId;
-                  primaryFacilityEmail = result.primary.provider.facilityEmail;
-                  primaryFacilityName = result.primary.provider.facilityName;
-                  primaryProviderEmail = result.primary.provider.providerEmail;
-                  primaryPlanName = result.primary.provider.planName;
-                  assignmentStatus = "assigned";
-                  leadExclusivity = result.exclusivity;
-                  scoringBreakdown = result.primary.score.breakdown;
-                  
-                  assignmentReason = `Rerouted from Basic provider (${facility.name}): ${result.reason}`;
-                  
-                  // Handle secondary provider for shared leads
-                  if (result.secondary && result.exclusivity === 'shared') {
-                    secondaryFacilityId = result.secondary.provider.facilityId;
-                    secondaryFacilityUserId = result.secondary.provider.facilityUserId;
-                    secondaryFacilityEmail = result.secondary.provider.facilityEmail;
-                    secondaryFacilityName = result.secondary.provider.facilityName;
-                    secondaryProviderEmail = result.secondary.provider.providerEmail;
-                  }
-                  
-                  log(requestId, "INFO", "Basic profile lead rerouted successfully", { 
-                    from: facility.name,
-                    to: primaryFacilityName,
-                    exclusivity: leadExclusivity,
-                    secondary: secondaryFacilityName || null
-                  });
-                } else {
-                  assignmentStatus = "unassigned_no_capacity";
-                  assignmentReason = `Lead from Basic provider ${facility.name} - no paid providers available: ${result.reason}`;
-                  log(requestId, "WARN", "No paid providers available to reroute Basic profile lead");
-                }
-              } else {
-                assignmentStatus = "unassigned_no_providers";
-                assignmentReason = `Lead from Basic provider ${facility.name} - no eligible paid providers in location`;
-                log(requestId, "WARN", "No eligible paid providers found for Basic profile lead");
-              }
-              
-              // Create admin notification about the Basic provider lead
-              await supabase.from("admin_notifications").insert({
-                type: "basic_provider_lead",
-                title: "Lead submitted from Basic profile",
-                message: `A lead was submitted from ${facility.name} (Basic plan). Provider was notified to upgrade. Lead was ${primaryFacilityId ? `rerouted to ${primaryFacilityName}` : 'not routed - no providers available'}.`,
-                metadata: {
-                  basic_facility_id: facility.id,
-                  basic_facility_name: facility.name,
-                  rerouted_to: primaryFacilityId || null,
-                  rerouted_to_name: primaryFacilityName || null,
-                  lead_location: leadData.locationCityState,
-                }
-              });
-            } else if (eligibilityResult.isSuspended) {
-              // FEATURED: Block completely. PROFESSIONAL: Block (no fallback for direct submissions)
-              assignmentStatus = "unassigned_provider_suspended";
-              assignmentReason = `Requested provider (${facility.name}) is currently suspended`;
-              log(requestId, "WARN", "Provider suspended - no fallback for direct submissions");
-            } else {
-              // At capacity - FEATURED: Block. PROFESSIONAL: Block (no fallback for direct submissions)
-              assignmentStatus = "unassigned_provider_at_capacity";
-              assignmentReason = `Requested provider (${facility.name}) at capacity (${eligibilityResult.usedLeads}/${eligibilityResult.leadLimit})`;
-              log(requestId, "WARN", "Provider at capacity - no fallback for direct submissions");
-            }
-          } else {
-            // Provider is eligible - assign directly based on plan type
-            primaryFacilityId = facility.id;
-            primaryFacilityUserId = facility.user_id;
-            primaryFacilityEmail = facility.email;
-            primaryFacilityName = facility.name;
-            primaryProviderEmail = profile.email;
-            primaryPlanName = eligibilityResult.planName;
-            assignmentStatus = "assigned";
-            
-            if (eligibilityResult.planName === "featured") {
-              // FEATURED PROFILE: Exclusive lead, no secondary provider, no fallback
-              leadExclusivity = 'exclusive';
-              assignmentReason = `Direct profile submission: Exclusive to ${facility.name} (Featured plan)`;
-              log(requestId, "INFO", "Featured profile submission - EXCLUSIVE, no secondary", { 
-                facilityName: facility.name 
-              });
-            } else if (eligibilityResult.planName === "professional") {
-              // PROFESSIONAL PROFILE: Shared lead, find next eligible Professional provider
-              leadExclusivity = 'shared';
-              assignmentReason = `Direct profile submission: Shared from ${facility.name} (Professional plan)`;
-              
-              log(requestId, "INFO", "Professional profile submission - finding secondary provider", { 
-                facilityName: facility.name 
-              });
-              
-              // Find next eligible Professional provider for sharing
-              const eligibleProviders = await getEligibleProviders(supabase, leadData, requestId);
-              
-              // Filter out the primary provider and only consider Professional providers
-              const otherProfessionalProviders = eligibleProviders.filter(p => 
-                p.facilityId !== facility.id && 
-                p.planName === "professional" && 
-                p.availableCapacity > 0
-              );
-              
-              if (otherProfessionalProviders.length > 0) {
-                // Score and sort other professionals
-                const scoredOthers = otherProfessionalProviders.map(p => 
-                  calculateProviderScore(p, leadData, otherProfessionalProviders)
-                );
-                scoredOthers.sort((a, b) => {
-                  if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-                  const aTime = a.provider.lastAssignedAt ? new Date(a.provider.lastAssignedAt).getTime() : 0;
-                  const bTime = b.provider.lastAssignedAt ? new Date(b.provider.lastAssignedAt).getTime() : 0;
-                  return aTime - bTime;
-                });
-                
-                const bestSecondary = scoredOthers[0];
-                if (bestSecondary) {
-                  secondaryFacilityId = bestSecondary.provider.facilityId;
-                  secondaryFacilityUserId = bestSecondary.provider.facilityUserId;
-                  secondaryFacilityEmail = bestSecondary.provider.facilityEmail;
-                  secondaryFacilityName = bestSecondary.provider.facilityName;
-                  secondaryProviderEmail = bestSecondary.provider.providerEmail;
-                  
-                  assignmentReason = `Direct profile submission: Shared between ${facility.name} and ${secondaryFacilityName} (Professional)`;
-                  log(requestId, "INFO", "Secondary Professional provider found for shared lead", { 
-                    secondary: secondaryFacilityName,
-                    score: bestSecondary.totalScore
-                  });
-                }
-              } else {
-                log(requestId, "INFO", "No secondary Professional provider available - lead goes to primary only");
-              }
-            }
-          }
-        }
-      } else {
-        assignmentStatus = "unassigned_facility_not_found";
-        assignmentReason = "Requested facility not found or not approved";
-        log(requestId, "WARN", "Requested facility not found", { facilityId: leadData.facilityId });
-      }
+    if (!leadData.name || !leadData.email || !leadData.phone) {
+      log(requestId, "ERROR", "Missing required fields");
+      return new Response(
+        JSON.stringify({ success: false, error: "Name, email, and phone are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // ============ AUTO-ASSIGNMENT: Fair-share routing with exclusivity rules ============
-    // ONLY run auto-assignment for QUALIFIED leads that don't have a provider yet
-    if (isQualified && !primaryFacilityId && assignmentStatus !== "unqualified_not_routed") {
-      log(requestId, "INFO", "Starting scored auto-assignment", { qualified: isQualified });
-      const eligibleProviders = await getEligibleProviders(supabase, leadData, requestId);
-      
-      if (eligibleProviders.length > 0) {
-        const result = findBestProviders(eligibleProviders, leadData, requestId);
-        
-        if (result.primary) {
-          primaryFacilityId = result.primary.provider.facilityId;
-          primaryFacilityUserId = result.primary.provider.facilityUserId;
-          primaryFacilityEmail = result.primary.provider.facilityEmail;
-          primaryFacilityName = result.primary.provider.facilityName;
-          primaryProviderEmail = result.primary.provider.providerEmail;
-          primaryPlanName = result.primary.provider.planName;
-          assignmentStatus = "assigned";
-          assignmentReason = result.reason;
-          leadExclusivity = result.exclusivity;
-          scoringBreakdown = result.primary.score.breakdown;
-          
-          // Secondary provider for shared leads
-          if (result.secondary && result.exclusivity === 'shared') {
-            secondaryFacilityId = result.secondary.provider.facilityId;
-            secondaryFacilityUserId = result.secondary.provider.facilityUserId;
-            secondaryFacilityEmail = result.secondary.provider.facilityEmail;
-            secondaryFacilityName = result.secondary.provider.facilityName;
-            secondaryProviderEmail = result.secondary.provider.providerEmail;
-            log(requestId, "INFO", "Shared lead assignment", { 
-              primary: primaryFacilityName, 
-              secondary: secondaryFacilityName 
-            });
-          }
-          
-          log(requestId, "INFO", "Scored assignment complete", { 
-            facilityName: primaryFacilityName, 
-            exclusivity: leadExclusivity,
-            score: result.primary.score.totalScore 
-          });
-        } else {
-          if (!assignmentReason) {
-            assignmentStatus = "unassigned_no_capacity";
-            assignmentReason = result.reason;
-          }
-        }
-      } else {
-        if (!assignmentReason) {
-          assignmentStatus = "unassigned_no_providers";
-          assignmentReason = "No eligible paid providers available in lead's location";
-        }
-        log(requestId, "WARN", "No eligible providers found");
-      }
+    // ============ VERIFY FACILITY EXISTS AND IS APPROVED ============
+    const { data: facility, error: facilityError } = await supabase
+      .from("facilities")
+      .select("id, name, email, user_id, status, suspended, reply_email, reply_email_verified")
+      .eq("id", leadData.facilityId)
+      .maybeSingle();
+
+    if (facilityError || !facility) {
+      log(requestId, "ERROR", "Facility not found", { facilityId: leadData.facilityId, error: facilityError?.message });
+      return new Response(
+        JSON.stringify({ success: false, error: "Facility not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // ============ CREATE THE LEAD ============
-    const sharedWithArray: string[] = [];
-    if (leadExclusivity === 'shared') {
-      if (primaryFacilityId) sharedWithArray.push(primaryFacilityId);
-      if (secondaryFacilityId) sharedWithArray.push(secondaryFacilityId);
+    if (facility.status !== "approved") {
+      log(requestId, "ERROR", "Facility not approved", { facilityId: leadData.facilityId, status: facility.status });
+      return new Response(
+        JSON.stringify({ success: false, error: "This facility is not currently accepting inquiries" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-    
-    const { data: lead, error: insertError } = await supabase
+
+    if (facility.suspended === true) {
+      log(requestId, "ERROR", "Facility is suspended", { facilityId: leadData.facilityId });
+      return new Response(
+        JSON.stringify({ success: false, error: "This facility is not currently accepting inquiries" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ DUPLICATE CHECK ============
+    const duplicateCheck = await checkForDuplicate(supabase, leadData.email, leadData.phone, leadData.facilityId, requestId);
+    if (duplicateCheck.isDuplicate) {
+      log(requestId, "WARN", "Duplicate submission blocked");
+      return new Response(
+        JSON.stringify({ success: false, error: duplicateCheck.reason }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ GET IP HASH FOR SPAM TRACKING ============
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                     req.headers.get("x-real-ip") || 
+                     "unknown";
+    const ipHash = clientIP !== "unknown" ? await hashIP(clientIP) : null;
+
+    // ============ INSERT LEAD RECORD ============
+    const leadRecord = {
+      facility_id: leadData.facilityId,
+      name: leadData.name,
+      email: leadData.email,
+      phone: leadData.phone,
+      preferred_contact: leadData.preferredContact || "phone",
+      message: leadData.message || null,
+      urgency: leadData.urgency || "not_sure",
+      level_of_care: leadData.levelOfCare || null,
+      insurance_type: leadData.insuranceType || null,
+      insurance_provider: leadData.insuranceProvider || null,
+      location_zip: leadData.locationZip || null,
+      location_city_state: leadData.locationCityState || null,
+      primary_substance: leadData.primarySubstance || [],
+      dual_diagnosis: leadData.dualDiagnosis || null,
+      budget_preference: leadData.budgetPreference || null,
+      special_needs: leadData.specialNeeds || [],
+      who_seeking_help: leadData.whoSeekingHelp || null,
+      age_range: leadData.ageRange || null,
+      gender: leadData.gender || null,
+      relationship_to_patient: leadData.relationshipToPatient || null,
+      previous_treatment: leadData.previousTreatment || null,
+      previous_treatment_details: leadData.previousTreatmentDetails || null,
+      co_occurring_conditions: leadData.coOccurringConditions || [],
+      employment_status: leadData.employmentStatus || null,
+      veteran_status: leadData.veteranStatus || null,
+      legal_involvement: leadData.legalInvolvement || null,
+      readiness_level: leadData.readinessLevel || null,
+      best_time_to_call: leadData.bestTimeToCall || null,
+      source: leadData.source || "facility_profile",
+      inquiry_type: leadData.inquiryType || "request_info",
+      status: "pending",
+      qualified: true, // All direct inquiries are qualified
+      exclusivity: "exclusive", // Direct inquiries go only to the specified facility
+      ip_hash: ipHash,
+      assigned_at: new Date().toISOString(),
+    };
+
+    const { data: insertedLead, error: insertError } = await supabase
       .from("leads")
-      .insert({
-        facility_id: primaryFacilityId,
-        name: leadData.name.trim(),
-        phone: leadData.phone.trim(),
-        email: leadData.email.toLowerCase().trim(),
-        preferred_contact: leadData.preferredContact,
-        message: leadData.message?.trim() || null,
-        ip_hash: ipHash,
-        email_verified: emailVerified,
-        source: leadData.source || (leadData.facilityId ? "Profile Submission" : "Request Help"),
-        inquiry_type: leadData.inquiryType || 'request_info',
-        who_seeking_help: leadData.whoSeekingHelp,
-        location_zip: leadData.locationZip,
-        location_city_state: leadData.locationCityState || null,
-        urgency: leadData.urgency,
-        primary_substance: leadData.primarySubstance || [],
-        level_of_care: leadData.levelOfCare,
-        dual_diagnosis: leadData.dualDiagnosis,
-        insurance_type: leadData.insuranceType,
-        insurance_provider: leadData.insuranceProvider || null,
-        budget_preference: leadData.budgetPreference || null,
-        special_needs: leadData.specialNeeds || [],
-        // NEW: Industry-standard fields
-        age_range: leadData.ageRange || null,
-        gender: leadData.gender || null,
-        relationship_to_patient: leadData.relationshipToPatient || null,
-        previous_treatment: leadData.previousTreatment || null,
-        previous_treatment_details: leadData.previousTreatmentDetails || null,
-        co_occurring_conditions: leadData.coOccurringConditions || [],
-        employment_status: leadData.employmentStatus || null,
-        veteran_status: leadData.veteranStatus || null,
-        legal_involvement: leadData.legalInvolvement || null,
-        readiness_level: leadData.readinessLevel || null,
-        best_time_to_call: leadData.bestTimeToCall || null,
-        // Standard fields
-        status: "new",
-        quality_flag: isQualified ? "qualified" : "unqualified",
-        validation_status: "valid",
-        qualified: isQualified,
-        qualification_reason: qualificationReason,
-        assignment_status: assignmentStatus,
-        assignment_reason: assignmentReason,
-        assigned_at: primaryFacilityId ? new Date().toISOString() : null,
-        exclusivity: leadExclusivity,
-        routing_order: 1,
-        shared_with: sharedWithArray,
-        provider_response_status: 'pending',
-      })
-      .select()
+      .insert(leadRecord)
+      .select("id")
       .single();
 
     if (insertError) {
       log(requestId, "ERROR", "Failed to insert lead", { error: insertError.message });
-      throw new Error("Failed to submit request");
+      return new Response(
+        JSON.stringify({ success: false, error: "Failed to submit inquiry. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    log(requestId, "INFO", "Lead created", { 
-      leadId: lead.id, 
-      qualified: isQualified, 
-      assignmentStatus,
-      exclusivity: leadExclusivity,
-      plan: primaryPlanName || "none" 
-    });
-
-    // ============ LOG ROUTING DECISION (Primary Provider) ============
-    // IMPORTANT: lead_deducted_at is set ONLY when the lead is actually routed to a provider
-    // This prevents duplicate deductions and enables audit tracking
-    const leadDeductedAt = primaryFacilityId && isQualified ? new Date().toISOString() : null;
-    
-    try {
-      // Check for duplicate routing to prevent over-routing
-      if (primaryFacilityId) {
-        const { data: existingRoute } = await supabase
-          .from("lead_routing_logs")
-          .select("id")
-          .eq("lead_id", lead.id)
-          .eq("assigned_provider_id", primaryFacilityId)
-          .maybeSingle();
-        
-        if (existingRoute) {
-          log(requestId, "WARN", "Duplicate routing prevented for primary provider", { 
-            leadId: lead.id, 
-            providerId: primaryFacilityId 
-          });
-        } else {
-          await supabase.from("lead_routing_logs").insert({
-            lead_id: lead.id,
-            assigned_provider_id: primaryFacilityId,
-            assignment_reason: assignmentReason,
-            plan_tier: primaryPlanName,
-            subscription_status: primaryFacilityId ? "active" : null,
-            lead_limit: null, // No limits in pay-per-unlock model
-            used_leads: eligibilityResult?.usedLeads ?? null,
-            routing_source: leadData.facilityId ? "direct" : "system",
-            requested_facility_id: leadData.facilityId || null,
-            exclusivity: leadExclusivity,
-            provider_routing_order: 1,
-            lead_deducted_at: leadDeductedAt,
-            eligibility_check_result: {
-              request_id: requestId,
-              provider_id: primaryFacilityId,
-              plan_type: primaryPlanName,
-              exclusivity: leadExclusivity,
-              routing_order: 1,
-              qualified: isQualified,
-              email_verified: emailVerified,
-              assignment_status: assignmentStatus,
-              scoring_breakdown: scoringBreakdown,
-              lead_location: {
-                city_state: leadData.locationCityState,
-                zip: leadData.locationZip,
-              },
-              lead_criteria: {
-                level_of_care: leadData.levelOfCare,
-                insurance_type: leadData.insuranceType,
-                urgency: leadData.urgency,
-              },
-            },
-          });
-          
-          log(requestId, "INFO", "Primary routing logged", {
-            leadId: lead.id,
-            providerId: primaryFacilityId,
-            planType: primaryPlanName,
-            exclusivity: leadExclusivity,
-            routingOrder: 1,
-            leadDeductedAt,
-          });
-        }
-      } else {
-        // Log unassigned lead for tracking
-        await supabase.from("lead_routing_logs").insert({
-          lead_id: lead.id,
-          assigned_provider_id: null,
-          assignment_reason: assignmentReason,
-          plan_tier: null,
-          subscription_status: null,
-          routing_source: leadData.facilityId ? "direct" : "system",
-          requested_facility_id: leadData.facilityId || null,
-          exclusivity: leadExclusivity,
-          provider_routing_order: 0,
-          lead_deducted_at: null, // No deduction for unassigned leads
-          eligibility_check_result: {
-            request_id: requestId,
-            qualified: isQualified,
-            assignment_status: assignmentStatus,
-            reason: "No eligible provider found",
-          },
-        });
-      }
-      
-      // Log secondary provider for shared leads (with duplicate prevention)
-      if (secondaryFacilityId && leadExclusivity === 'shared') {
-        const { data: existingSecondaryRoute } = await supabase
-          .from("lead_routing_logs")
-          .select("id")
-          .eq("lead_id", lead.id)
-          .eq("assigned_provider_id", secondaryFacilityId)
-          .maybeSingle();
-        
-        if (existingSecondaryRoute) {
-          log(requestId, "WARN", "Duplicate routing prevented for secondary provider", { 
-            leadId: lead.id, 
-            providerId: secondaryFacilityId 
-          });
-        } else {
-          const secondaryDeductedAt = new Date().toISOString();
-          await supabase.from("lead_routing_logs").insert({
-            lead_id: lead.id,
-            assigned_provider_id: secondaryFacilityId,
-            assignment_reason: `Shared lead - secondary assignment`,
-            plan_tier: "pro",
-            subscription_status: "active",
-            lead_limit: null, // No limits in pay-per-unlock model
-            routing_source: "system",
-            exclusivity: 'exclusive', // All leads exclusive in new model
-            provider_routing_order: 2,
-            lead_deducted_at: secondaryDeductedAt,
-            eligibility_check_result: {
-              request_id: requestId,
-              provider_id: secondaryFacilityId,
-              plan_type: "pro",
-              exclusivity: 'exclusive',
-              routing_order: 2,
-              is_secondary: true,
-              primary_provider: primaryFacilityName,
-            },
-          });
-          
-          log(requestId, "INFO", "Secondary routing logged", {
-            leadId: lead.id,
-            providerId: secondaryFacilityId,
-            planType: "pro",
-            exclusivity: 'exclusive',
-            routingOrder: 2,
-            leadDeductedAt: secondaryDeductedAt,
-          });
-        }
-      }
-    } catch (logError) {
-      log(requestId, "ERROR", "Failed to create routing log", { error: String(logError) });
-    }
+    log(requestId, "INFO", "Lead inserted successfully", { leadId: insertedLead.id });
 
     // ============ SEND EMAILS ============
-    if (isQualified && emailVerified) {
-      const firstName = leadData.firstName || leadData.name.split(' ')[0] || 'there';
-      await sendUserConfirmationEmail(leadData.email, firstName, requestId);
+    const firstName = leadData.firstName || leadData.name.split(" ")[0];
+
+    // Send confirmation to seeker
+    try {
+      await resend.emails.send({
+        from: "RehabLookup <notifications@rehablookup.com>",
+        to: leadData.email,
+        subject: `Your inquiry to ${facility.name} has been received`,
+        html: getSeekerConfirmationEmail(firstName, facility.name),
+      });
+      log(requestId, "INFO", "Seeker confirmation email sent", { email: leadData.email });
+    } catch (emailError) {
+      log(requestId, "WARN", "Failed to send seeker confirmation email", { error: String(emailError) });
     }
 
-    // Email primary provider
-    if (primaryFacilityEmail && primaryFacilityName && primaryPlanName === "pro") {
-      await sendLeadNotificationEmail(
-        primaryFacilityEmail,
-        primaryFacilityName,
-        leadData,
-        assignmentReason,
-        leadExclusivity === 'shared',
-        requestId
-      );
-      
-      // Send SMS notification to primary provider
-      if (primaryFacilityUserId) {
-        try {
-          await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify({
-              userId: primaryFacilityUserId,
-              notificationType: "new_lead",
-              data: {
-                leadName: leadData.name,
-                leadCity: leadData.locationCityState?.split(",")[0]?.trim(),
-                levelOfCare: leadData.levelOfCare,
-                urgency: leadData.urgency,
-                facilityName: primaryFacilityName,
-              },
-            }),
-          });
-          log(requestId, "INFO", "SMS notification sent to primary provider", { userId: primaryFacilityUserId });
-        } catch (smsError) {
-          log(requestId, "WARN", "Failed to send SMS to primary provider", { error: String(smsError) });
-        }
-      }
-    }
-    
-    // Email secondary provider for shared leads
-    if (secondaryFacilityEmail && secondaryFacilityName && leadExclusivity === 'shared') {
-      await sendLeadNotificationEmail(
-        secondaryFacilityEmail,
-        secondaryFacilityName,
-        leadData,
-        `Shared lead - secondary assignment`,
-        true,
-        requestId
-      );
-      
-      // Send SMS notification to secondary provider
-      if (secondaryFacilityUserId) {
-        try {
-          await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify({
-              userId: secondaryFacilityUserId,
-              notificationType: "new_lead",
-              data: {
-                leadName: leadData.name,
-                leadCity: leadData.locationCityState?.split(",")[0]?.trim(),
-                levelOfCare: leadData.levelOfCare,
-                urgency: leadData.urgency,
-                facilityName: secondaryFacilityName,
-              },
-            }),
-          });
-          log(requestId, "INFO", "SMS notification sent to secondary provider", { userId: secondaryFacilityUserId });
-        } catch (smsError) {
-          log(requestId, "WARN", "Failed to send SMS to secondary provider", { error: String(smsError) });
-        }
-      }
-    }
+    // Get provider email for notification
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("user_id", facility.user_id)
+      .maybeSingle();
 
-    // Create in-app notifications
-    if (primaryFacilityUserId && primaryFacilityId) {
+    // Determine which email to send notification to
+    const notificationEmail = (facility.reply_email_verified && facility.reply_email) 
+      ? facility.reply_email 
+      : (profile?.email || facility.email);
+
+    if (notificationEmail) {
       try {
-        await supabase.from("provider_notifications").insert({
-          user_id: primaryFacilityUserId,
-          facility_id: primaryFacilityId,
-          type: "lead_received",
-          title: `🎉 You have a new lead!`,
-          message: `${leadData.name} is seeking ${leadData.levelOfCare} care. Contact them quickly for the best results!`,
-          metadata: {
-            lead_id: lead.id,
-            lead_name: leadData.name,
-            preferred_contact: leadData.preferredContact,
-            level_of_care: leadData.levelOfCare,
-            urgency: leadData.urgency,
-            quality_flag: isQualified ? "qualified" : "unqualified",
-            plan_name: primaryPlanName,
-            exclusivity: leadExclusivity,
-          },
+        await resend.emails.send({
+          from: "RehabLookup <notifications@rehablookup.com>",
+          to: notificationEmail,
+          subject: `New Inquiry from ${firstName} - ${facility.name}`,
+          html: getFacilityNotificationEmail(
+            leadData.name,
+            leadData.email,
+            leadData.phone,
+            facility.name,
+            {
+              urgency: leadData.urgency,
+              levelOfCare: leadData.levelOfCare,
+              insuranceType: leadData.insuranceType,
+              message: leadData.message,
+              preferredContact: leadData.preferredContact,
+            }
+          ),
         });
-      } catch (notifError) {
-        log(requestId, "ERROR", "Failed to create notification", { error: String(notifError) });
-      }
-    }
-    
-    // Notification for secondary provider
-    if (secondaryFacilityUserId && secondaryFacilityId && leadExclusivity === 'shared') {
-      try {
-        await supabase.from("provider_notifications").insert({
-          user_id: secondaryFacilityUserId,
-          facility_id: secondaryFacilityId,
-          type: "lead_received",
-          title: `🎉 You have a new lead!`,
-          message: `${leadData.name} is seeking ${leadData.levelOfCare} care. Contact them quickly for the best results!`,
-          metadata: {
-            lead_id: lead.id,
-            lead_name: leadData.name,
-            preferred_contact: leadData.preferredContact,
-            level_of_care: leadData.levelOfCare,
-            urgency: leadData.urgency,
-            quality_flag: isQualified ? "qualified" : "unqualified",
-            plan_name: "pro",
-            exclusivity: 'exclusive',
-            is_secondary: true,
-          },
-        });
-      } catch (notifError) {
-        log(requestId, "ERROR", "Failed to create secondary notification", { error: String(notifError) });
+        log(requestId, "INFO", "Facility notification email sent", { email: notificationEmail });
+      } catch (emailError) {
+        log(requestId, "WARN", "Failed to send facility notification email", { error: String(emailError) });
       }
     }
 
-    // Pay-per-unlock model: No lead limits, no limit warnings needed
-
-    log(requestId, "INFO", "Request completed successfully");
+    // ============ SUCCESS RESPONSE ============
+    log(requestId, "INFO", "Lead submission completed successfully", { 
+      leadId: insertedLead.id, 
+      facilityId: leadData.facilityId,
+      facilityName: facility.name 
+    });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        leadId: lead.id,
-        qualified: isQualified,
-        assigned: !!primaryFacilityId,
-        assignmentStatus,
-        exclusivity: leadExclusivity,
+      JSON.stringify({
+        success: true,
+        leadId: insertedLead.id,
+        facilityName: facility.name,
+        message: "Your inquiry has been sent successfully!",
       }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    
-    log(requestId, "ERROR", "Request failed with exception", { 
-      error: errorMsg,
-      stack: errorStack?.substring(0, 500),
-      type: error instanceof Error ? error.constructor.name : typeof error,
-    });
-    
-    let statusCode = 500;
-    let userMessage = "Failed to submit request. Please try again.";
-    
-    if (errorMsg.includes("duplicate") || errorMsg.includes("unique constraint")) {
-      statusCode = 409;
-      userMessage = "A similar request was already submitted recently.";
-    } else if (errorMsg.includes("timeout") || errorMsg.includes("TIMEOUT")) {
-      statusCode = 504;
-      userMessage = "Request timed out. Please try again.";
-    } else if (errorMsg.includes("rate limit") || errorMsg.includes("too many")) {
-      statusCode = 429;
-      userMessage = "Too many requests. Please wait a moment and try again.";
-    }
-    
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log(requestId, "ERROR", "Unhandled error", { error: errorMessage });
     return new Response(
-      JSON.stringify({ 
-        error: userMessage,
-        requestId: requestId,
-        timestamp: new Date().toISOString(),
-      }),
-      { status: statusCode, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      JSON.stringify({ success: false, error: "An unexpected error occurred. Please try again." }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-};
-
-serve(handler);
+});
