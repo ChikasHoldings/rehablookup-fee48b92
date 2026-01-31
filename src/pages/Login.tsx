@@ -583,256 +583,259 @@ export default function Login() {
         </div>
 
         {/* Right Panel - Form */}
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
           <div className="w-full max-w-md">
-            {/* Mobile Logo */}
-            <div className="lg:hidden text-center mb-8">
-              <h1 className="text-2xl font-display font-bold text-foreground">Sign In</h1>
-              <p className="text-muted-foreground mt-1">Welcome back to RehabLookup</p>
-            </div>
-
-            {/* Desktop Title */}
-            <div className="hidden lg:block mb-8">
-              <h2 className="text-2xl font-display font-bold text-foreground">Sign in to your account</h2>
-              <p className="text-muted-foreground mt-1">Enter your credentials below</p>
-            </div>
-
-            {/* Error Alert */}
-            {error && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-                {detectedType === "admin" && (
-                  <Link 
-                    to="/admin-login" 
-                    className="mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
-                  >
-                    Go to Admin Login <ExternalLink className="h-3 w-3" />
-                  </Link>
-                )}
-                {detectedType === "unknown" && (
-                  <div className="mt-3 flex gap-2">
-                    <Link to="/signup">
-                      <Button size="sm" variant="outline" className="text-xs">
-                        Create Personal Account
-                      </Button>
-                    </Link>
-                    <Link to="/provider-signup">
-                      <Button size="sm" variant="outline" className="text-xs">
-                        List Your Facility
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </Alert>
-            )}
-
-            {/* Lockout Alert */}
-            {isLocked && (
-              <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
-                <Clock className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-700 dark:text-amber-400">
-                  Account temporarily locked. Please wait{" "}
-                  <span className="font-semibold">{formatTimeRemaining(lockoutTimeRemaining)}</span>{" "}
-                  before trying again.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Account Type Indicator */}
-            {detectedType && !error && (
-              <div className={`mb-6 p-3 rounded-lg border ${
-                detectedType === "provider" 
-                  ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800" 
-                  : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
-              }`}>
-                <div className="flex items-center gap-2">
-                  {detectedType === "provider" ? (
-                    <>
-                      <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                        Provider Account Detected
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                        Personal Account Detected
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setError(null);
-                      setDetectedType(null);
-                    }}
-                    placeholder="you@example.com"
-                    className="pl-10"
-                    autoComplete="email"
-                    autoCapitalize="none"
-                    disabled={isSubmitting || isLocked}
-                    required
-                  />
-                </div>
+            {/* Mobile Container Card */}
+            <div className="lg:bg-transparent lg:border-0 lg:shadow-none lg:p-0 bg-card border border-border rounded-xl shadow-sm p-5 sm:p-6">
+              {/* Mobile Logo */}
+              <div className="lg:hidden text-center mb-6">
+                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Sign In</h1>
+                <p className="text-sm text-muted-foreground mt-1">Welcome back to RehabLookup</p>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link 
-                    to="/forgot-password" 
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setError(null);
-                    }}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10"
-                    autoComplete="current-password"
-                    disabled={isSubmitting || isLocked}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+              {/* Desktop Title */}
+              <div className="hidden lg:block mb-8">
+                <h2 className="text-2xl font-display font-bold text-foreground">Sign in to your account</h2>
+                <p className="text-muted-foreground mt-1">Enter your credentials below</p>
               </div>
 
-              {/* CAPTCHA */}
-              {showCaptcha && captcha && (
-                <div className="space-y-3 p-4 bg-muted/50 rounded-lg border border-border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Security Check</span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={refreshCaptcha}
-                      className="h-8 w-8 p-0"
+              {/* Error Alert */}
+              {error && (
+                <Alert variant="destructive" className="mb-5 sm:mb-6">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                  {detectedType === "admin" && (
+                    <Link 
+                      to="/admin-login" 
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
                     >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
+                      Go to Admin Login <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  )}
+                  {detectedType === "unknown" && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link to="/signup">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          Create Personal Account
+                        </Button>
+                      </Link>
+                      <Link to="/provider-signup">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          List Your Facility
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </Alert>
+              )}
+
+              {/* Lockout Alert */}
+              {isLocked && (
+                <Alert className="mb-5 sm:mb-6 border-amber-500/50 bg-amber-500/10">
+                  <Clock className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-700 dark:text-amber-400">
+                    Account temporarily locked. Please wait{" "}
+                    <span className="font-semibold">{formatTimeRemaining(lockoutTimeRemaining)}</span>{" "}
+                    before trying again.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Account Type Indicator */}
+              {detectedType && !error && (
+                <div className={`mb-5 sm:mb-6 p-3 rounded-lg border ${
+                  detectedType === "provider" 
+                    ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800" 
+                    : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {detectedType === "provider" ? (
+                      <>
+                        <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                          Provider Account Detected
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                          Personal Account Detected
+                        </span>
+                      </>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Solve: <span className="font-mono font-bold text-foreground text-lg">
-                      {captcha.num1} {captcha.operator} {captcha.num2} = ?
-                    </span>
-                  </p>
-                  <Input
-                    type="number"
-                    value={captchaAnswer}
-                    onChange={(e) => {
-                      setCaptchaAnswer(e.target.value);
-                      setCaptchaError(false);
-                    }}
-                    placeholder="Enter answer"
-                    className={captchaError ? "border-destructive" : ""}
-                    disabled={isSubmitting}
-                  />
                 </div>
               )}
 
-              {/* Remember Me */}
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked === true)}
-                  disabled={isSubmitting || isLocked}
-                />
-                <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                  Remember me for 30 days
-                </Label>
-              </div>
+              {/* Login Form */}
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="email" className="text-sm">Email address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError(null);
+                        setDetectedType(null);
+                      }}
+                      placeholder="you@example.com"
+                      className="pl-10 h-10 sm:h-11"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      disabled={isSubmitting || isLocked}
+                      required
+                    />
+                  </div>
+                </div>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full h-11"
-                disabled={isSubmitting || isLocked}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    Sign In
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-sm">Password</Label>
+                    <Link 
+                      to="/forgot-password" 
+                      className="text-xs sm:text-sm text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError(null);
+                      }}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10 h-10 sm:h-11"
+                      autoComplete="current-password"
+                      disabled={isSubmitting || isLocked}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* CAPTCHA */}
+                {showCaptcha && captcha && (
+                  <div className="space-y-3 p-3 sm:p-4 bg-muted/50 rounded-lg border border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">Security Check</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={refreshCaptcha}
+                        className="h-8 w-8 p-0"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Solve: <span className="font-mono font-bold text-foreground text-lg">
+                        {captcha.num1} {captcha.operator} {captcha.num2} = ?
+                      </span>
+                    </p>
+                    <Input
+                      type="number"
+                      value={captchaAnswer}
+                      onChange={(e) => {
+                        setCaptchaAnswer(e.target.value);
+                        setCaptchaError(false);
+                      }}
+                      placeholder="Enter answer"
+                      className={`h-10 sm:h-11 ${captchaError ? "border-destructive" : ""}`}
+                      disabled={isSubmitting}
+                    />
+                  </div>
                 )}
-              </Button>
-            </form>
 
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">New to RehabLookup?</span>
-              </div>
-            </div>
+                {/* Remember Me */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    disabled={isSubmitting || isLocked}
+                  />
+                  <Label htmlFor="remember" className="text-xs sm:text-sm font-normal cursor-pointer">
+                    Remember me for 30 days
+                  </Label>
+                </div>
 
-            {/* Signup Options */}
-            <div className="grid grid-cols-2 gap-3">
-              <Link to="/signup">
-                <Button variant="outline" className="w-full h-10 text-sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Find Treatment
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className="w-full h-10 sm:h-11"
+                  disabled={isSubmitting || isLocked}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Sign In
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
-              </Link>
-              <Link to="/provider-signup">
-                <Button variant="outline" className="w-full h-10 text-sm">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  List Your Facility
-                </Button>
-              </Link>
-            </div>
+              </form>
 
-            {/* Type Hint Message */}
-            {typeHint && (
-              <p className="text-xs text-center text-muted-foreground mt-6">
-                {typeHint === "provider" 
-                  ? "Sign in to manage your treatment facility listings."
-                  : "Sign in to access your saved facilities and requests."
-                }
-              </p>
-            )}
+              {/* Divider */}
+              <div className="relative my-6 sm:my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card lg:bg-background px-2 text-muted-foreground">New to RehabLookup?</span>
+                </div>
+              </div>
+
+              {/* Signup Options */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <Link to="/signup">
+                  <Button variant="outline" className="w-full h-9 sm:h-10 text-xs sm:text-sm">
+                    <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                    Find Treatment
+                  </Button>
+                </Link>
+                <Link to="/provider-signup">
+                  <Button variant="outline" className="w-full h-9 sm:h-10 text-xs sm:text-sm">
+                    <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                    List Facility
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Type Hint Message */}
+              {typeHint && (
+                <p className="text-xs text-center text-muted-foreground mt-5 sm:mt-6">
+                  {typeHint === "provider" 
+                    ? "Sign in to manage your treatment facility listings."
+                    : "Sign in to access your saved facilities and requests."
+                  }
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
