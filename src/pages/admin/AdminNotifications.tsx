@@ -262,7 +262,7 @@ export default function AdminNotifications() {
       return "/admin/subscriptions";
     }
     if (notification.type === "flagged_image") {
-      return "/admin/flagged-images";
+      return "/admin/providers";
     }
     return null;
   };

@@ -129,13 +129,11 @@ const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
-const AdminFlaggedImages = lazy(() => import("./pages/admin/AdminFlaggedImages"));
 const AdminCredentials = lazy(() => import("./pages/admin/AdminCredentials"));
 const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
-const AdminLocationChanges = lazy(() => import("./pages/admin/AdminLocationChanges"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
 const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementRevenueDashboard"));
@@ -283,11 +281,9 @@ const App = () => (
               <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="featured" element={<AdminFeatured />} />
               <Route path="credentials" element={<AdminCredentials />} />
-              <Route path="flagged-images" element={<AdminFlaggedImages />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
               <Route path="security-logs" element={<AdminSecurityLogs />} />
-              <Route path="location-changes" element={<AdminLocationChanges />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="concierge" element={<AdminConcierge />} />
               <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
