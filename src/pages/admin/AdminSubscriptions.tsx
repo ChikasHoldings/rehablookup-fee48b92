@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import {
   CreditCard,
@@ -20,6 +20,11 @@ import {
   ChevronRight,
   ExternalLink,
   Settings2,
+  Star,
+  Crown,
+  Eye,
+  MapPin,
+  Info,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +34,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -56,6 +63,7 @@ import { AtRiskProvidersCard } from "@/components/admin/AtRiskProvidersCard";
 import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
 import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
 import { PlanSettingsTab } from "@/components/admin/PlanSettingsTab";
+import { FeaturedPlacementTab } from "@/components/admin/FeaturedPlacementTab";
 
 type SubscriptionStats = {
   total_subscriptions: number;
@@ -488,14 +496,18 @@ export default function AdminSubscriptions() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <LayoutDashboard className="h-4 w-4" />
             Overview
           </TabsTrigger>
           <TabsTrigger value="subscriptions" className="flex items-center gap-2">
             <List className="h-4 w-4" />
-            All Subscriptions
+            Subscriptions
+          </TabsTrigger>
+          <TabsTrigger value="featured" className="flex items-center gap-2">
+            <Star className="h-4 w-4" />
+            Featured
           </TabsTrigger>
           <TabsTrigger value="retention" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -503,7 +515,7 @@ export default function AdminSubscriptions() {
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings2 className="h-4 w-4" />
-            Plan Settings
+            Settings
           </TabsTrigger>
         </TabsList>
 
@@ -963,6 +975,11 @@ export default function AdminSubscriptions() {
           
           {/* Retention Dashboard with Outreach Analytics */}
           <RetentionDashboard />
+        </TabsContent>
+
+        {/* Featured Placement Tab */}
+        <TabsContent value="featured" className="space-y-6">
+          <FeaturedPlacementTab />
         </TabsContent>
 
         {/* Plan Settings Tab */}
