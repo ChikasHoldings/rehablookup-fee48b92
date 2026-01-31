@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ const HIDDEN_ROUTES = [
   "/lp/",
 ];
 
-export function FloatingHelpButton() {
+export const FloatingHelpButton = forwardRef<HTMLAnchorElement>((_, ref) => {
   const [isVisible, setIsVisible] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -40,6 +40,7 @@ export function FloatingHelpButton() {
 
   return (
     <Link
+      ref={ref}
       to="/account/concierge"
       className={cn(
         "fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-accent-foreground shadow-lg transition-all duration-300 hover:bg-accent/90 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2",
@@ -50,4 +51,6 @@ export function FloatingHelpButton() {
       <span className="text-sm font-semibold">Get Matched</span>
     </Link>
   );
-}
+});
+
+FloatingHelpButton.displayName = "FloatingHelpButton";
