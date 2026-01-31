@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AlertTriangle, TrendingDown, ArrowUpRight, Users, Wallet, CreditCard } from "lucide-react";
@@ -22,7 +22,7 @@ interface ProviderCreditStatus {
 // Threshold for low credits warning (in cents)
 const LOW_CREDIT_THRESHOLD_CENTS = 5000; // $50
 
-export default function LowCreditMonitorWidget() {
+const LowCreditMonitorWidget = forwardRef<HTMLDivElement>(function LowCreditMonitorWidget(_, ref) {
   const { data: lowCreditProviders, isLoading } = useQuery<ProviderCreditStatus[]>({
     queryKey: ["admin-low-credit-monitor"],
     queryFn: async () => {
@@ -158,7 +158,7 @@ export default function LowCreditMonitorWidget() {
   const lowCredits = lowCreditProviders?.filter(p => p.balanceCents > 0 && p.balanceCents < LOW_CREDIT_THRESHOLD_CENTS).length || 0;
 
   return (
-    <Card className="border-0 shadow-card bg-card">
+    <Card ref={ref} className="border-0 shadow-card bg-card">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center">
@@ -270,4 +270,8 @@ export default function LowCreditMonitorWidget() {
       </CardContent>
     </Card>
   );
-}
+});
+
+LowCreditMonitorWidget.displayName = "LowCreditMonitorWidget";
+
+export default LowCreditMonitorWidget;
