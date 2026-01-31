@@ -290,6 +290,7 @@ export default function SeekerFacilityProfile() {
       <Helmet>
         <title>{facility.name} - Treatment Center | RehabLookup</title>
         <meta name="description" content={`${facility.name} in ${facility.city}, ${facility.state}. ${facility.facility_type} treatment center. ${facility.description?.slice(0, 120) || 'Find treatment options and request information.'}`} />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="flex-1 pb-6 bg-gradient-to-b from-background to-muted/20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">

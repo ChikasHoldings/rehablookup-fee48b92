@@ -215,6 +215,8 @@ Disallow: /auth
 # Account pages - require authentication, no SEO value
 Disallow: /account/
 Disallow: /account/*
+Disallow: /seeker/
+Disallow: /seeker/*
 
 # Concierge transactional pages - not for search
 Disallow: /concierge/intake

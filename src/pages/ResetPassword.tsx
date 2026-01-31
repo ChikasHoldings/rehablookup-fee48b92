@@ -79,7 +79,7 @@ export default function ResetPassword() {
   if (!isValidSession) {
     return (
       <>
-        <SEO title="Invalid Link | Reset Password" description="This password reset link is invalid or has expired." />
+        <SEO title="Invalid Link | Reset Password" description="This password reset link is invalid or has expired." noindex={true} />
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
           <div className="p-4">
             <Link to="/auth" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -113,7 +113,7 @@ export default function ResetPassword() {
 
   return (
     <>
-      <SEO title="Reset Password" description="Set a new password for your account." />
+      <SEO title="Reset Password" description="Set a new password for your account." noindex={true} />
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
         <div className="p-4">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">

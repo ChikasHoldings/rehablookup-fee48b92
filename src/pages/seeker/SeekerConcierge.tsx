@@ -360,6 +360,7 @@ export default function SeekerConcierge() {
           <Helmet>
             <title>Placement Network | RehabLookup</title>
             <meta name="description" content="Get personalized treatment center matching with our placement service." />
+            <meta name="robots" content="noindex, nofollow" />
           </Helmet>
           <div className="container max-w-4xl py-6 space-y-6">
             <ConciergePaymentRecovery userId={currentUser.id} onRecoveryComplete={() => refetch()} />
@@ -410,6 +411,7 @@ export default function SeekerConcierge() {
       <>
         <Helmet>
           <title>Placement Network | RehabLookup</title>
+          <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         <div className="container max-w-4xl py-8 text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
@@ -440,6 +442,7 @@ export default function SeekerConcierge() {
       <Helmet>
         <title>Placement Network | RehabLookup</title>
         <meta name="description" content="Track your placement progress and communicate with matched treatment facilities." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       
       <div className="container max-w-4xl py-6 space-y-6">

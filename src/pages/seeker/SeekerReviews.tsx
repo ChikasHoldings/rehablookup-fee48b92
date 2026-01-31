@@ -487,6 +487,7 @@ export default function SeekerReviews() {
       <Helmet>
         <title>My Reviews | RehabLookup</title>
         <meta name="description" content="View and manage your treatment center reviews. Edit pending reviews, see approval status, and read facility responses." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between gap-4 mb-6">

@@ -124,6 +124,7 @@ export default function SeekerHelp() {
       <Helmet>
         <title>Help & Support | RehabLookup</title>
         <meta name="description" content="Get help finding treatment centers and managing your account." />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       <div className="min-h-screen bg-background pb-24">
