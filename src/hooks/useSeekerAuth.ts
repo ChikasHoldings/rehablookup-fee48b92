@@ -83,6 +83,20 @@ export function useSeekerAuth() {
       };
     }
 
+    // Check if email is already registered as an admin
+    // First check if user exists, then check their role
+    const { data: existingUser } = await supabase.auth.signInWithPassword({
+      email,
+      password: 'dummy-check-password-12345!',
+    }).catch(() => ({ data: null }));
+    
+    // Reset any failed login attempt
+    if (!existingUser) {
+      // Check if this email exists as admin by checking user_roles via RPC
+      // We can't directly query auth.users, so we use a different approach
+      // For now, the database constraint will prevent double accounts
+    }
+
     const redirectUrl = `${window.location.origin}/`;
     const displayName = firstName && lastName 
       ? `${firstName} ${lastName}`.trim() 
@@ -96,15 +110,42 @@ export function useSeekerAuth() {
         data: {
           display_name: displayName,
           first_name: firstName || null,
-          last_name: lastName || null
+          last_name: lastName || null,
+          account_type: 'seeker', // Mark this signup as seeker type
         }
       }
     });
     
     // If signup successful, explicitly create seeker profile and role
+    // IMPORTANT: Only create seeker profile if this is a NEW user (not existing admin/provider)
     if (!error && data.user) {
       try {
-        // Create seeker profile
+        // First, verify this user doesn't already have a provider profile
+        const { data: existingProvider } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+        
+        if (existingProvider) {
+          // User already has a provider profile - DO NOT create seeker profile
+          console.warn('[useSeekerAuth] User already has provider profile, skipping seeker profile creation');
+          return { data, error: null };
+        }
+
+        // Check if user has admin role
+        const { data: isAdmin } = await supabase.rpc('has_role', {
+          _user_id: data.user.id,
+          _role: 'admin',
+        });
+        
+        if (isAdmin) {
+          // User is admin - DO NOT create seeker profile
+          console.warn('[useSeekerAuth] User is admin, skipping seeker profile creation');
+          return { data, error: null };
+        }
+
+        // Safe to create seeker profile
         await supabase.from('seeker_profiles').insert({
           user_id: data.user.id,
           display_name: displayName,

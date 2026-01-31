@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
+import { useUserRole } from "@/hooks/useUserRole";
 
 // Use components directly - memo can cause issues with hot reloading
 
@@ -24,6 +25,9 @@ function ProviderShellContent() {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const hasRedirected = useRef(false);
+  
+  // Use unified role system
+  const { role, isLoading: isRoleLoading, isAuthenticated } = useUserRole();
 
   const { data: providerData } = useProviderData(selectedFacility?.id);
   
@@ -37,30 +41,76 @@ function ProviderShellContent() {
     }
   }, [location.pathname]);
 
-  // Auth check - non-blocking, just redirects if no session
+  // Role-based redirect - Admins go to admin panel, non-providers go to login
   useEffect(() => {
-    if (hasRedirected.current) return;
+    if (isRoleLoading || hasRedirected.current) return;
     
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        hasRedirected.current = true;
-        clearSentryUser();
-        navigate("/provider-login", { replace: true });
-        return;
-      }
-      
-      // Set Sentry user context
-      setSentryUser({
-        id: session.user.id,
-        email: session.user.email,
-        role: "provider",
+    // If user is admin, redirect to admin panel
+    if (role === "admin") {
+      hasRedirected.current = true;
+      navigate("/admin", { replace: true });
+      return;
+    }
+    
+    // If user is seeker, redirect to seeker home
+    if (role === "seeker") {
+      hasRedirected.current = true;
+      navigate("/account", { replace: true });
+      return;
+    }
+    
+    // If not authenticated, redirect to login
+    if (!isAuthenticated) {
+      hasRedirected.current = true;
+      clearSentryUser();
+      navigate("/provider-login", { replace: true });
+      return;
+    }
+    
+    // If authenticated but not a provider (null role), redirect to login
+    if (role === null && isAuthenticated) {
+      // User might be signing up - check if they have a provider profile
+      const checkProvider = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          hasRedirected.current = true;
+          navigate("/provider-login", { replace: true });
+          return;
+        }
+        
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        
+        if (!profile) {
+          // Not a provider - redirect
+          hasRedirected.current = true;
+          navigate("/provider-login", { replace: true });
+        }
+      };
+      checkProvider();
+    }
+  }, [role, isRoleLoading, isAuthenticated, navigate]);
+
+  // Set Sentry user context when authenticated as provider
+  useEffect(() => {
+    if (role === "provider" && isAuthenticated) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setSentryUser({
+            id: session.user.id,
+            email: session.user.email,
+            role: "provider",
+          });
+        }
       });
-    };
+    }
+  }, [role, isAuthenticated]);
 
-    checkAuth();
-
+  // Listen for auth changes
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!session && !hasRedirected.current) {
@@ -125,6 +175,24 @@ function ProviderShellContent() {
 
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
+
+  // Show loading while checking role
+  if (isRoleLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If admin or seeker, show loading during redirect
+  if (role === "admin" || role === "seeker") {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">

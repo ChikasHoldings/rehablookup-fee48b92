@@ -4484,6 +4484,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      user_has_provider_profile: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      user_has_seeker_profile: { Args: { p_user_id: string }; Returns: boolean }
+      user_is_admin: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "seeker"
