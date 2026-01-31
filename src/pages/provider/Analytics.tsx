@@ -181,23 +181,33 @@ export default function ProviderAnalyticsPage() {
       )}
 
       {/* Main Tabs */}
-      <Tabs defaultValue="leads" className="space-y-6">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="leads" className="flex-1 sm:flex-none text-xs sm:text-sm">Lead Analytics</TabsTrigger>
-          <TabsTrigger value="engagement" className="flex-1 sm:flex-none gap-1 sm:gap-1.5 text-xs sm:text-sm">
-            <Phone className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-            <span className="hidden sm:inline">Engagement</span>
-            <span className="sm:hidden">Stats</span>
+      <Tabs defaultValue="engagement" className="space-y-6">
+        <TabsList className="w-full sm:w-auto h-11 p-1 bg-muted/50">
+          <TabsTrigger 
+            value="engagement" 
+            className="flex-1 sm:flex-none gap-2 text-xs sm:text-sm px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            <div className="flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5" />
+              <Globe className="h-3.5 w-3.5" />
+            </div>
+            <span>Engagement</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="leads" 
+            className="flex-1 sm:flex-none gap-2 text-xs sm:text-sm px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span>Lead Analytics</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="leads">
-          <CentralizedLeadAnalyticsDashboard dateRange={dateRange} />
+        <TabsContent value="engagement" className="mt-6">
+          <CentralizedEngagementAnalytics dateRange={dateRange} />
         </TabsContent>
 
-        <TabsContent value="engagement">
-          <CentralizedEngagementAnalytics dateRange={dateRange} />
+        <TabsContent value="leads" className="mt-6">
+          <CentralizedLeadAnalyticsDashboard dateRange={dateRange} />
         </TabsContent>
       </Tabs>
       </div>
