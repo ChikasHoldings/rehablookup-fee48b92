@@ -42,6 +42,7 @@ import {
   Wallet,
   LayoutList,
   Plus,
+  FileCheck2,
 } from "lucide-react";
 import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
 import { supabase } from "@/integrations/supabase/client";
@@ -168,6 +169,19 @@ type ProSubscription = {
   status: string;
   unlock_discount_percent: number;
   current_period_end: string | null;
+};
+
+type CredentialDocument = {
+  id: string;
+  facility_id: string;
+  document_name: string;
+  document_type: string;
+  document_url: string;
+  status: string;
+  rejection_reason: string | null;
+  uploaded_at: string;
+  verified_at: string | null;
+  verified_by: string | null;
 };
 
 const ITEMS_PER_PAGE = 15;
@@ -518,6 +532,21 @@ export default function AdminProviders() {
         .eq("facility_id", selectedProvider.id)
         .order("created_at", { ascending: true });
       return (data || []) as Accreditation[];
+    },
+    enabled: !!selectedProvider?.id && showDetailDialog,
+  });
+
+  // Fetch credential documents for selected provider
+  const { data: credentialDocuments, refetch: refetchCredentialDocuments } = useQuery({
+    queryKey: ["admin-provider-credentials", selectedProvider?.id],
+    queryFn: async () => {
+      if (!selectedProvider?.id) return [];
+      const { data } = await supabase
+        .from("facility_credential_documents")
+        .select("*")
+        .eq("facility_id", selectedProvider.id)
+        .order("uploaded_at", { ascending: false });
+      return (data || []) as CredentialDocument[];
     },
     enabled: !!selectedProvider?.id && showDetailDialog,
   });
@@ -1309,6 +1338,15 @@ export default function AdminProviders() {
                   <History className="h-4 w-4 mr-2" />
                   Activity
                 </TabsTrigger>
+                <TabsTrigger value="credentials" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <FileCheck2 className="h-4 w-4 mr-2" />
+                  Credentials
+                  {((providerAccreditations?.length || 0) + (credentialDocuments?.length || 0)) > 0 && (
+                    <Badge variant="secondary" className="ml-2 h-5">
+                      {(providerAccreditations?.length || 0) + (credentialDocuments?.length || 0)}
+                    </Badge>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="billing" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
                   <Wallet className="h-4 w-4 mr-2" />
                   Billing
@@ -1470,71 +1508,44 @@ export default function AdminProviders() {
                   </div>
                 </div>
 
-                {/* Trust & Accreditations */}
-                {providerAccreditations && providerAccreditations.length > 0 && (
+                {/* Credentials Summary - Links to Credentials tab */}
+                {((providerAccreditations && providerAccreditations.length > 0) || (credentialDocuments && credentialDocuments.length > 0)) && (
                   <>
                     <Separator />
                     <div>
                       <h3 className="font-semibold mb-3 flex items-center gap-2">
                         <Award className="h-4 w-4" />
-                        Trust & Accreditations
+                        Credentials
                         <Badge variant="outline" className="ml-2">
-                          {providerAccreditations.filter(a => a.verified).length}/{providerAccreditations.length} verified
+                          {(providerAccreditations?.filter(a => a.verified).length || 0) + (credentialDocuments?.filter(d => d.status === "verified").length || 0)}/
+                          {(providerAccreditations?.length || 0) + (credentialDocuments?.length || 0)} verified
                         </Badge>
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Verify claimed accreditations by checking the boxes below.
-                      </p>
-                      <div className="space-y-3">
-                        {providerAccreditations.map((accreditation) => (
-                          <div 
-                            key={accreditation.id} 
-                            className={cn(
-                              "flex items-center justify-between p-3 rounded-lg border transition-colors",
-                              accreditation.verified 
-                                ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" 
-                                : "bg-muted/50 border-border"
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Checkbox
-                                id={`accred-${accreditation.id}`}
-                                checked={accreditation.verified || false}
-                                onCheckedChange={(checked) => {
-                                  updateAccreditationVerification.mutate({
-                                    accreditationId: accreditation.id,
-                                    verified: checked as boolean,
-                                  });
-                                }}
-                              />
-                              <label 
-                                htmlFor={`accred-${accreditation.id}`}
-                                className="flex flex-col cursor-pointer"
-                              >
-                                <span className="font-medium text-sm">
-                                  {accreditation.accreditation_type}
-                                </span>
-                                {accreditation.expiry_date && (
-                                  <span className="text-xs text-muted-foreground">
-                                    Expires: {format(new Date(accreditation.expiry_date), "MMM d, yyyy")}
-                                  </span>
-                                )}
-                              </label>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {accreditation.verified ? (
-                                <Badge className="bg-emerald-600 text-white">
-                                  <BadgeCheck className="h-3 w-3 mr-1" />
-                                  Verified
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-muted-foreground">
-                                  Pending
-                                </Badge>
-                              )}
-                            </div>
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div className="flex gap-6">
+                          <div className="text-center">
+                            <p className="text-2xl font-bold">{providerAccreditations?.length || 0}</p>
+                            <p className="text-xs text-muted-foreground">Accreditations</p>
                           </div>
-                        ))}
+                          <div className="text-center">
+                            <p className="text-2xl font-bold">{credentialDocuments?.length || 0}</p>
+                            <p className="text-xs text-muted-foreground">Documents</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-amber-600">
+                              {(providerAccreditations?.filter(a => !a.verified).length || 0) + (credentialDocuments?.filter(d => d.status === "pending").length || 0)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Pending Review</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDetailTab("credentials")}
+                        >
+                          <FileCheck2 className="h-4 w-4 mr-2" />
+                          Review Credentials
+                        </Button>
                       </div>
                     </div>
                   </>
@@ -1903,6 +1914,223 @@ export default function AdminProviders() {
                     userId={selectedProvider.user_id}
                   />
                 )}
+              </TabsContent>
+
+              {/* Credentials Tab */}
+              <TabsContent value="credentials" className="p-6 space-y-6 m-0 data-[state=inactive]:hidden">
+                {/* Accreditations Section */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Award className="h-5 w-5 text-primary" />
+                        Accreditations
+                      </CardTitle>
+                      <Badge variant="outline">
+                        {providerAccreditations?.filter(a => a.verified).length || 0}/{providerAccreditations?.length || 0} verified
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Verify claimed accreditations by checking the boxes below.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {providerAccreditations && providerAccreditations.length > 0 ? (
+                      <div className="space-y-3">
+                        {providerAccreditations.map((accreditation) => (
+                          <div 
+                            key={accreditation.id} 
+                            className={cn(
+                              "flex items-center justify-between p-3 rounded-lg border transition-colors",
+                              accreditation.verified 
+                                ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" 
+                                : "bg-muted/50 border-border"
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                id={`cred-accred-${accreditation.id}`}
+                                checked={accreditation.verified || false}
+                                onCheckedChange={(checked) => {
+                                  updateAccreditationVerification.mutate({
+                                    accreditationId: accreditation.id,
+                                    verified: checked as boolean,
+                                  });
+                                }}
+                              />
+                              <label 
+                                htmlFor={`cred-accred-${accreditation.id}`}
+                                className="flex flex-col cursor-pointer"
+                              >
+                                <span className="font-medium text-sm">
+                                  {accreditation.accreditation_type}
+                                </span>
+                                {accreditation.expiry_date && (
+                                  <span className="text-xs text-muted-foreground">
+                                    Expires: {format(new Date(accreditation.expiry_date), "MMM d, yyyy")}
+                                  </span>
+                                )}
+                              </label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {accreditation.verified ? (
+                                <Badge className="bg-emerald-600 text-white">
+                                  <BadgeCheck className="h-3 w-3 mr-1" />
+                                  Verified
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  Pending
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Award className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                        <p className="text-muted-foreground">No accreditations claimed</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Credential Documents Section */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <FileCheck2 className="h-5 w-5 text-primary" />
+                        Uploaded Documents
+                      </CardTitle>
+                      <Badge variant="outline">
+                        {credentialDocuments?.filter(d => d.status === "verified").length || 0}/{credentialDocuments?.length || 0} verified
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Review and verify uploaded credential documents.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {credentialDocuments && credentialDocuments.length > 0 ? (
+                      <div className="space-y-3">
+                        {credentialDocuments.map((doc) => (
+                          <div 
+                            key={doc.id} 
+                            className={cn(
+                              "flex items-center justify-between p-3 rounded-lg border transition-colors",
+                              doc.status === "verified" 
+                                ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" 
+                                : doc.status === "rejected"
+                                ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800"
+                                : "bg-muted/50 border-border"
+                            )}
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">{doc.document_name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {doc.document_type} • Uploaded {formatDistanceToNow(new Date(doc.uploaded_at), { addSuffix: true })}
+                                </p>
+                                {doc.status === "rejected" && doc.rejection_reason && (
+                                  <p className="text-xs text-destructive mt-1">
+                                    Rejected: {doc.rejection_reason}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                              >
+                                <a href={doc.document_url} target="_blank" rel="noopener noreferrer">
+                                  <Eye className="h-3.5 w-3.5 mr-1" />
+                                  View
+                                </a>
+                              </Button>
+                              {doc.status === "pending" && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                                    onClick={async () => {
+                                      const { data: { user } } = await supabase.auth.getUser();
+                                      const { error } = await supabase
+                                        .from("facility_credential_documents")
+                                        .update({
+                                          status: "verified",
+                                          verified_at: new Date().toISOString(),
+                                          verified_by: user?.id,
+                                        })
+                                        .eq("id", doc.id);
+                                      if (error) {
+                                        toast.error("Failed to verify document");
+                                      } else {
+                                        toast.success("Document verified");
+                                        refetchCredentialDocuments();
+                                      }
+                                    }}
+                                  >
+                                    <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                    Verify
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                    onClick={async () => {
+                                      const reason = prompt("Enter rejection reason:");
+                                      if (reason) {
+                                        const { error } = await supabase
+                                          .from("facility_credential_documents")
+                                          .update({
+                                            status: "rejected",
+                                            rejection_reason: reason,
+                                          })
+                                          .eq("id", doc.id);
+                                        if (error) {
+                                          toast.error("Failed to reject document");
+                                        } else {
+                                          toast.success("Document rejected");
+                                          refetchCredentialDocuments();
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <XCircle className="h-3.5 w-3.5 mr-1" />
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              {doc.status === "verified" && (
+                                <Badge className="bg-emerald-600 text-white">
+                                  <BadgeCheck className="h-3 w-3 mr-1" />
+                                  Verified
+                                </Badge>
+                              )}
+                              {doc.status === "rejected" && (
+                                <Badge variant="destructive">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Rejected
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                        <p className="text-muted-foreground">No documents uploaded</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Billing Tab */}
