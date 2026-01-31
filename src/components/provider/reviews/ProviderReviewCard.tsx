@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,14 +30,15 @@ interface ProviderReviewCardProps {
   onFlagReview: (review: ProviderReview) => void;
 }
 
-export const ProviderReviewCard = memo(function ProviderReviewCard({ 
+// Using forwardRef to properly handle refs from parent components (e.g., Radix Tabs)
+export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReviewCardProps>(function ProviderReviewCard({ 
   review,
   showFacility,
   onSubmitResponse, 
   onUpdateResponse, 
   onDeleteResponse,
   onFlagReview 
-}: ProviderReviewCardProps) {
+}, ref) {
   const [isResponding, setIsResponding] = useState(false);
   const [responseText, setResponseText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +108,7 @@ export const ProviderReviewCard = memo(function ProviderReviewCard({
   }, [review.response]);
 
   return (
-    <Card className="overflow-hidden">
+    <Card ref={ref} className="overflow-hidden">
       <CardContent className="p-0">
         {/* Header */}
         <div className="p-4 border-b border-border/50">
@@ -293,4 +294,4 @@ export const ProviderReviewCard = memo(function ProviderReviewCard({
       </CardContent>
     </Card>
   );
-});
+}));
