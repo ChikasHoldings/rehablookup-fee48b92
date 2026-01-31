@@ -129,12 +129,6 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
 
   return (
     <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200/80 bg-gradient-to-b from-slate-50 to-white sticky top-16 h-[calc(100vh-4rem)]">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-100">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Admin Panel
-        </p>
-      </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
@@ -250,12 +244,6 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-100">
-        <p className="text-[10px] text-slate-400 text-center">
-          v2.0 • Admin Console
-        </p>
-      </div>
     </aside>
   );
 }
