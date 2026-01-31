@@ -344,7 +344,7 @@ export default function AdminAnalytics() {
       // Fetch all leads including those without facility assignments
       let query = supabase
         .from("leads")
-        .select("*, facilities(city, state)")
+        .select("*, facilities!facility_id(city, state)")
         .gte("created_at", dateRange.from.toISOString())
         .lte("created_at", dateRange.to.toISOString());
 
@@ -441,7 +441,7 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       let query = supabase
         .from("leads")
-        .select("*, facilities(city, state)")
+        .select("*, facilities!facility_id(city, state)")
         .gte("created_at", previousDateRange.from.toISOString())
         .lte("created_at", previousDateRange.to.toISOString());
 

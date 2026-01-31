@@ -272,3 +272,9 @@ verify_jwt = false
 
 [functions.purchase-listing-slot]
 verify_jwt = false
+
+[functions.send-unlock-reminders]
+verify_jwt = false
+
+[functions.process-lead-redistribution]
+verify_jwt = false

@@ -1938,6 +1938,71 @@ export type Database = {
           },
         ]
       }
+      lead_distributions: {
+        Row: {
+          created_at: string
+          distributed_at: string
+          facility_id: string
+          id: string
+          is_original: boolean
+          lead_id: string
+          notification_sent: boolean
+          notification_sent_at: string | null
+          unlocked_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          distributed_at?: string
+          facility_id: string
+          id?: string
+          is_original?: boolean
+          lead_id: string
+          notification_sent?: boolean
+          notification_sent_at?: string | null
+          unlocked_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          distributed_at?: string
+          facility_id?: string
+          id?: string
+          is_original?: boolean
+          lead_id?: string
+          notification_sent?: boolean
+          notification_sent_at?: string | null
+          unlocked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_distributions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_distributions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_distributions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_distributions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_emails: {
         Row: {
           created_at: string
@@ -2227,7 +2292,9 @@ export type Database = {
           email: string
           email_verified: boolean | null
           employment_status: string | null
+          exclusive_until: string | null
           exclusivity: string | null
+          extended_until: string | null
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
           gender: string | null
@@ -2242,6 +2309,7 @@ export type Database = {
           location_zip: string | null
           message: string | null
           name: string
+          original_facility_id: string | null
           phone: string
           preferred_contact: string
           previous_treatment: string | null
@@ -2253,7 +2321,11 @@ export type Database = {
           qualified: boolean | null
           quality_flag: string | null
           readiness_level: string | null
+          redistribution_status: string | null
           relationship_to_patient: string | null
+          reminder_12h_sent_at: string | null
+          reminder_24h_sent_at: string | null
+          reminder_6h_sent_at: string | null
           routing_order: number | null
           shared_with: string[] | null
           snooze_until: string | null
@@ -2278,7 +2350,9 @@ export type Database = {
           email: string
           email_verified?: boolean | null
           employment_status?: string | null
+          exclusive_until?: string | null
           exclusivity?: string | null
+          extended_until?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
@@ -2293,6 +2367,7 @@ export type Database = {
           location_zip?: string | null
           message?: string | null
           name: string
+          original_facility_id?: string | null
           phone: string
           preferred_contact?: string
           previous_treatment?: string | null
@@ -2304,7 +2379,11 @@ export type Database = {
           qualified?: boolean | null
           quality_flag?: string | null
           readiness_level?: string | null
+          redistribution_status?: string | null
           relationship_to_patient?: string | null
+          reminder_12h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          reminder_6h_sent_at?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
           snooze_until?: string | null
@@ -2329,7 +2408,9 @@ export type Database = {
           email?: string
           email_verified?: boolean | null
           employment_status?: string | null
+          exclusive_until?: string | null
           exclusivity?: string | null
+          extended_until?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
@@ -2344,6 +2425,7 @@ export type Database = {
           location_zip?: string | null
           message?: string | null
           name?: string
+          original_facility_id?: string | null
           phone?: string
           preferred_contact?: string
           previous_treatment?: string | null
@@ -2355,7 +2437,11 @@ export type Database = {
           qualified?: boolean | null
           quality_flag?: string | null
           readiness_level?: string | null
+          redistribution_status?: string | null
           relationship_to_patient?: string | null
+          reminder_12h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          reminder_6h_sent_at?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
           snooze_until?: string | null
@@ -2378,6 +2464,20 @@ export type Database = {
           {
             foreignKeyName: "leads_facility_id_fkey"
             columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_original_facility_id_fkey"
+            columns: ["original_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_original_facility_id_fkey"
+            columns: ["original_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
             referencedColumns: ["id"]
