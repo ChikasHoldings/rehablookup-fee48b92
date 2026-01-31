@@ -391,51 +391,98 @@ export default function ProviderBillingPage() {
 
         {/* Purchase Credits Modal */}
         <Dialog open={showPurchaseModal} onOpenChange={setShowPurchaseModal}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add Credits</DialogTitle>
-              <DialogDescription>
-                Select a package to purchase
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3 py-4">
-              {CREDIT_PACKAGES.map((pkg) => (
-                <button
-                  key={pkg.amountCents}
-                  onClick={() => handlePurchase(pkg.amountCents)}
-                  disabled={purchaseLoading !== null}
-                  className={cn(
-                    "relative flex items-center justify-between p-4 rounded-lg border transition-colors text-left",
-                    "hover:bg-muted/50 hover:border-primary/50",
-                    purchaseLoading === pkg.amountCents && "opacity-50 cursor-wait"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                      <Wallet className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-lg">{pkg.label}</p>
-                      <p className="text-sm text-muted-foreground">in credits</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {pkg.bonus && (
-                      <Badge variant="secondary">
-                        {pkg.bonus}
-                      </Badge>
-                    )}
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  {purchaseLoading === pkg.amountCents && (
-                    <Loader2 className="h-5 w-5 animate-spin absolute right-4" />
-                  )}
-                </button>
-              ))}
+          <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+            {/* Header with balance */}
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 border-b">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Wallet className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Add Credits</h2>
+                  <p className="text-muted-foreground">
+                    Current balance: <span className="font-semibold text-foreground">{balanceFormatted}</span>
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-center text-muted-foreground">
-              Secure checkout via Stripe
-            </p>
+
+            {/* Packages */}
+            <div className="p-6 space-y-3">
+              <p className="text-sm font-medium text-muted-foreground mb-4">Select a package</p>
+              {CREDIT_PACKAGES.map((pkg, index) => {
+                const isPopular = pkg.bonus === "Popular";
+                const isBestValue = pkg.bonus === "Best Value";
+                const isHighlighted = isPopular || isBestValue;
+                
+                return (
+                  <button
+                    key={pkg.amountCents}
+                    onClick={() => handlePurchase(pkg.amountCents)}
+                    disabled={purchaseLoading !== null}
+                    className={cn(
+                      "relative w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left group",
+                      isHighlighted 
+                        ? "border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10" 
+                        : "border-border hover:border-primary/50 hover:bg-muted/50",
+                      purchaseLoading === pkg.amountCents && "opacity-50 cursor-wait",
+                      purchaseLoading !== null && purchaseLoading !== pkg.amountCents && "opacity-60"
+                    )}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "h-12 w-12 rounded-xl flex items-center justify-center transition-colors",
+                        isHighlighted ? "bg-primary/15" : "bg-muted group-hover:bg-primary/10"
+                      )}>
+                        <Wallet className={cn(
+                          "h-6 w-6 transition-colors",
+                          isHighlighted ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                        )} />
+                      </div>
+                      <div>
+                        <p className="text-xl font-bold text-foreground">{pkg.label}</p>
+                        <p className="text-sm text-muted-foreground">in credits</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {pkg.bonus && (
+                        <Badge 
+                          className={cn(
+                            "font-medium",
+                            isPopular && "bg-amber-500/15 text-amber-600 border-amber-500/30",
+                            isBestValue && "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                          )}
+                          variant="outline"
+                        >
+                          {isPopular && <Star className="h-3 w-3 mr-1" />}
+                          {isBestValue && <CheckCircle className="h-3 w-3 mr-1" />}
+                          {pkg.bonus}
+                        </Badge>
+                      )}
+                      {purchaseLoading === pkg.amountCents ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      ) : (
+                        <ChevronRight className={cn(
+                          "h-5 w-5 transition-colors",
+                          isHighlighted ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                        )} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 pt-2">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>Secure checkout powered by Stripe</span>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
