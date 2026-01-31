@@ -161,18 +161,16 @@ export default function AdminSeekers() {
   const { data: activityStats } = useQuery({
     queryKey: ["admin-user-activity-stats"],
     queryFn: async () => {
-      const [favorites, inquiries, reviews, leads] = await Promise.all([
+      const [favorites, inquiries, reviews] = await Promise.all([
         supabase.from("user_favorites").select("user_id", { count: "exact", head: true }),
         supabase.from("concierge_inquiries").select("user_id", { count: "exact", head: true }).not("user_id", "is", null),
         supabase.from("facility_reviews").select("user_id", { count: "exact", head: true }),
-        supabase.from("leads").select("seeker_user_id", { count: "exact", head: true }).not("seeker_user_id", "is", null),
       ]);
 
       return {
         favorites: favorites.count || 0,
         inquiries: inquiries.count || 0,
         reviews: reviews.count || 0,
-        leads: leads.count || 0,
       };
     },
   });
@@ -181,33 +179,27 @@ export default function AdminSeekers() {
   const { data: userActivityCounts } = useQuery({
     queryKey: ["admin-user-activity-counts"],
     queryFn: async () => {
-      const [favoriteCounts, inquiryCounts, reviewCounts, leadsCounts] = await Promise.all([
+      const [favoriteCounts, inquiryCounts, reviewCounts] = await Promise.all([
         supabase.from("user_favorites").select("user_id"),
         supabase.from("concierge_inquiries").select("user_id").not("user_id", "is", null),
         supabase.from("facility_reviews").select("user_id"),
-        supabase.from("leads").select("seeker_user_id").not("seeker_user_id", "is", null),
       ]);
 
-      const counts: Record<string, { favorites: number; inquiries: number; reviews: number; leads: number }> = {};
+      const counts: Record<string, { favorites: number; inquiries: number; reviews: number }> = {};
 
       favoriteCounts.data?.forEach((item: any) => {
-        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
+        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
         counts[item.user_id].favorites++;
       });
 
       inquiryCounts.data?.forEach((item: any) => {
-        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
+        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
         counts[item.user_id].inquiries++;
       });
 
       reviewCounts.data?.forEach((item: any) => {
-        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
+        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
         counts[item.user_id].reviews++;
-      });
-
-      leadsCounts.data?.forEach((item: any) => {
-        if (!counts[item.seeker_user_id]) counts[item.seeker_user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
-        counts[item.seeker_user_id].leads++;
       });
 
       return counts;
@@ -286,50 +278,93 @@ export default function AdminSeekers() {
         <p className="text-muted-foreground">View and manage end-user accounts</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="relative overflow-hidden border-l-4 border-l-primary">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : totalCount}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <UsersIcon className="h-6 w-6 text-primary" />
-              </div>
+      {/* Enterprise KPI Summary Bar */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="flex items-stretch">
+            {/* Primary Stats */}
+            <div className="flex items-center gap-0.5 p-3">
+              <button
+                onClick={() => setVerificationFilter("all")}
+                className={cn(
+                  "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
+                  verificationFilter === "all" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
+                )}
+              >
+                <UsersIcon className="h-3.5 w-3.5 text-muted-foreground mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : totalCount}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Total</span>
+              </button>
+              <button
+                onClick={() => setVerificationFilter("all")}
+                className="flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px] hover:bg-muted/50"
+              >
+                <Calendar className="h-3.5 w-3.5 text-warning mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : thisMonthCount}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">This Month</span>
+              </button>
+              <button
+                onClick={() => setVerificationFilter("verified")}
+                className={cn(
+                  "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
+                  verificationFilter === "verified" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
+                )}
+              >
+                <CheckCircle className="h-3.5 w-3.5 text-success mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => u.phone_verified).length}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Verified</span>
+              </button>
+              <button
+                onClick={() => setVerificationFilter("unverified")}
+                className={cn(
+                  "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
+                  verificationFilter === "unverified" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
+                )}
+              >
+                <XCircle className="h-3.5 w-3.5 text-muted-foreground mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => !u.phone_verified).length}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Unverified</span>
+              </button>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">New This Month</p>
-                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : thisMonthCount}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <div className="w-px bg-border my-2" />
 
-        <Card className="relative overflow-hidden border-l-4 border-l-purple-500">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Concierge Users</p>
-                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : safeUsers.filter(u => u.has_concierge).length}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <Shield className="h-6 w-6 text-purple-600" />
+            {/* Concierge Stats */}
+            <div className="flex items-center gap-0.5 p-3">
+              <div className="flex flex-col items-center justify-center px-3 py-2.5 min-w-[72px]">
+                <Shield className="h-3.5 w-3.5 text-primary mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => u.has_concierge).length}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Concierge</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Activity Stats */}
+            <div className="hidden lg:flex items-center gap-4 px-4 ml-auto border-l">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5 text-destructive" />
+                  <span className="text-sm font-medium tabular-nums">{activityStats?.favorites || 0}</span>
+                </div>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Saves</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-info" />
+                  <span className="text-sm font-medium tabular-nums">{activityStats?.inquiries || 0}</span>
+                </div>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Inquiries</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5 text-warning" />
+                  <span className="text-sm font-medium tabular-nums">{activityStats?.reviews || 0}</span>
+                </div>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Reviews</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>
@@ -394,8 +429,7 @@ export default function AdminSeekers() {
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => {
-                  const counts = userActivityCounts?.[user.user_id] || { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
-                  const totalInquiries = counts.inquiries + counts.leads;
+                  const counts = userActivityCounts?.[user.user_id] || { favorites: 0, inquiries: 0, reviews: 0 };
                   return (
                     <TableRow 
                       key={user.id} 
@@ -450,10 +484,10 @@ export default function AdminSeekers() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 flex-wrap">
-                          {totalInquiries > 0 && (
+                          {counts.inquiries > 0 && (
                             <Badge variant="secondary" className="gap-1 text-xs">
                               <MessageSquare className="h-3 w-3" />
-                              {totalInquiries}
+                              {counts.inquiries}
                             </Badge>
                           )}
                           {counts.reviews > 0 && (
@@ -473,7 +507,7 @@ export default function AdminSeekers() {
                               <Shield className="h-3 w-3" />
                             </Badge>
                           )}
-                          {totalInquiries === 0 && counts.reviews === 0 && counts.favorites === 0 && !user.has_concierge && (
+                          {counts.inquiries === 0 && counts.reviews === 0 && counts.favorites === 0 && !user.has_concierge && (
                             <span className="text-xs text-muted-foreground">No activity</span>
                           )}
                         </div>
