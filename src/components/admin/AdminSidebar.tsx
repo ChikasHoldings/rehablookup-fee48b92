@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Building2,
   Users,
+  UserSearch,
   CreditCard,
   Star,
   ClipboardList,
@@ -58,6 +59,7 @@ const navEntries: NavEntry[] = [
     ],
   },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
+  { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
   {
     icon: CreditCard,
     label: "Subscriptions",
