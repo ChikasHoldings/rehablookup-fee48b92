@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
-import { Users, Clock, CheckCircle, TrendingUp } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
+import { Users, Clock, CheckCircle, TrendingUp, FileText, Send, MessageCircle, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ConciergeStatsChartsProps {
   stats: Record<string, number> | undefined;
@@ -10,55 +11,51 @@ interface ConciergeStatsChartsProps {
   activeStatus: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  new: "hsl(var(--chart-1))",
-  reviewing: "hsl(var(--chart-2))",
-  matching: "hsl(var(--chart-3))",
-  matched: "hsl(var(--chart-4))",
-  introductions_sent: "hsl(var(--chart-5))",
-  in_contact: "hsl(142 76% 36%)",
-  placed: "hsl(142 71% 45%)",
-  closed: "hsl(var(--muted-foreground))",
-};
+interface StatItemProps {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  status: string;
+  activeStatus: string;
+  onStatusClick: (status: string) => void;
+  variant?: "default" | "success" | "warning" | "destructive" | "accent" | "primary" | "muted";
+}
 
-const STATUS_LABELS: Record<string, string> = {
-  new: "New",
-  reviewing: "Reviewing",
-  matching: "Matching",
-  matched: "Matched",
-  introductions_sent: "Intros Sent",
-  in_contact: "In Contact",
-  placed: "Placed",
-  closed: "Closed",
-};
+function StatItem({ label, value, icon: Icon, status, activeStatus, onStatusClick, variant = "default" }: StatItemProps) {
+  const isActive = activeStatus === status;
+  
+  const variantStyles = {
+    default: "text-foreground",
+    success: "text-success",
+    warning: "text-warning",
+    destructive: "text-destructive",
+    accent: "text-accent",
+    primary: "text-primary",
+    muted: "text-muted-foreground",
+  };
+
+  return (
+    <button
+      onClick={() => onStatusClick(status)}
+      className={cn(
+        "flex flex-col items-center justify-center p-2.5 rounded-lg transition-all text-center min-w-[70px]",
+        isActive 
+          ? "bg-accent/10 ring-1 ring-accent" 
+          : "hover:bg-muted/50"
+      )}
+    >
+      <Icon className={cn("h-3.5 w-3.5 mb-0.5", variantStyles[variant])} />
+      <span className={cn("text-lg font-semibold tabular-nums", variantStyles[variant])}>
+        {value}
+      </span>
+      <span className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium leading-tight">
+        {label}
+      </span>
+    </button>
+  );
+}
 
 export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: ConciergeStatsChartsProps) {
-  const chartData = useMemo(() => {
-    if (!stats) return [];
-    return Object.entries(stats)
-      .filter(([_, value]) => value > 0)
-      .map(([status, value]) => ({
-        name: STATUS_LABELS[status] || status,
-        value,
-        status,
-        fill: STATUS_COLORS[status] || "hsl(var(--muted))",
-      }));
-  }, [stats]);
-
-  const barData = useMemo(() => {
-    if (!stats) return [];
-    return [
-      { name: "New", value: stats.new || 0, fill: STATUS_COLORS.new },
-      { name: "Reviewing", value: stats.reviewing || 0, fill: STATUS_COLORS.reviewing },
-      { name: "Matching", value: stats.matching || 0, fill: STATUS_COLORS.matching },
-      { name: "Matched", value: stats.matched || 0, fill: STATUS_COLORS.matched },
-      { name: "Intros Sent", value: stats.introductions_sent || 0, fill: STATUS_COLORS.introductions_sent },
-      { name: "In Contact", value: stats.in_contact || 0, fill: STATUS_COLORS.in_contact },
-      { name: "Placed", value: stats.placed || 0, fill: STATUS_COLORS.placed },
-      { name: "Closed", value: stats.closed || 0, fill: STATUS_COLORS.closed },
-    ];
-  }, [stats]);
-
   const totalCases = useMemo(() => {
     if (!stats) return 0;
     return Object.values(stats).reduce((sum, val) => sum + val, 0);
@@ -71,155 +68,160 @@ export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: Con
   }, [stats]);
 
   const placementRate = useMemo(() => {
-    if (!stats || totalCases === 0) return 0;
+    if (!stats) return 0;
     const closedAndPlaced = (stats.placed || 0) + (stats.closed || 0);
     if (closedAndPlaced === 0) return 0;
     return Math.round((stats.placed || 0) / closedAndPlaced * 100);
-  }, [stats, totalCases]);
+  }, [stats]);
+
+  const barData = useMemo(() => {
+    if (!stats) return [];
+    return [
+      { name: "New", value: stats.new || 0, fill: "hsl(var(--primary))" },
+      { name: "Reviewing", value: stats.reviewing || 0, fill: "hsl(var(--accent))" },
+      { name: "Matching", value: stats.matching || 0, fill: "hsl(var(--warning))" },
+      { name: "Matched", value: stats.matched || 0, fill: "hsl(var(--accent))" },
+      { name: "Intros", value: stats.introductions_sent || 0, fill: "hsl(var(--primary))" },
+      { name: "Contact", value: stats.in_contact || 0, fill: "hsl(var(--accent))" },
+      { name: "Placed", value: stats.placed || 0, fill: "hsl(var(--success))" },
+      { name: "Closed", value: stats.closed || 0, fill: "hsl(var(--muted-foreground))" },
+    ];
+  }, [stats]);
 
   const chartConfig: ChartConfig = {
     value: { label: "Cases" },
-    new: { label: "New", color: STATUS_COLORS.new },
-    reviewing: { label: "Reviewing", color: STATUS_COLORS.reviewing },
-    matching: { label: "Matching", color: STATUS_COLORS.matching },
-    matched: { label: "Matched", color: STATUS_COLORS.matched },
-    introductions_sent: { label: "Intros Sent", color: STATUS_COLORS.introductions_sent },
-    in_contact: { label: "In Contact", color: STATUS_COLORS.in_contact },
-    placed: { label: "Placed", color: STATUS_COLORS.placed },
-    closed: { label: "Closed", color: STATUS_COLORS.closed },
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Summary Metrics */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Overview</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Users className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-sm">Total Cases</span>
-            </div>
-            <span className="text-2xl font-bold">{totalCases}</span>
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex flex-col xl:flex-row xl:items-center gap-4">
+          {/* Summary Stats */}
+          <div className="flex items-center gap-1">
+            <StatItem
+              label="Total"
+              value={totalCases}
+              icon={Users}
+              status="all"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="default"
+            />
+            <StatItem
+              label="Active"
+              value={activeCases}
+              icon={Clock}
+              status="all"
+              activeStatus={activeStatus}
+              onStatusClick={() => {}}
+              variant="warning"
+            />
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Clock className="h-4 w-4 text-amber-500" />
-              </div>
-              <span className="text-sm">Active Cases</span>
-            </div>
-            <span className="text-2xl font-bold">{activeCases}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              </div>
-              <span className="text-sm">Placed</span>
-            </div>
-            <span className="text-2xl font-bold">{stats?.placed || 0}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <TrendingUp className="h-4 w-4 text-blue-500" />
-              </div>
-              <span className="text-sm">Placement Rate</span>
-            </div>
-            <span className="text-2xl font-bold">{placementRate}%</span>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Status Distribution Pie */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Status Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[180px]">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={70}
-                paddingAngle={2}
-                dataKey="value"
-                onClick={(data) => onStatusClick(data.status)}
-                className="cursor-pointer"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.fill}
-                    stroke={activeStatus === entry.status ? "hsl(var(--primary))" : "transparent"}
-                    strokeWidth={2}
-                  />
-                ))}
-              </Pie>
-              <ChartTooltip content={<ChartTooltipContent />} />
-            </PieChart>
-          </ChartContainer>
-          <div className="flex flex-wrap gap-2 mt-2 justify-center">
-            {chartData.slice(0, 4).map((item) => (
-              <button
-                key={item.status}
-                onClick={() => onStatusClick(item.status)}
-                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${
-                  activeStatus === item.status 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-muted hover:bg-muted/80"
-                }`}
-              >
-                <span 
-                  className="w-2 h-2 rounded-full" 
-                  style={{ backgroundColor: item.fill }}
-                />
-                {item.name}: {item.value}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          <div className="w-px h-10 bg-border hidden xl:block" />
 
-      {/* Pipeline Bar Chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Pipeline Stages</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px]">
-            <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 10 }}>
-              <XAxis type="number" hide />
-              <YAxis 
-                type="category" 
-                dataKey="name" 
-                width={70}
-                tick={{ fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar 
-                dataKey="value" 
-                radius={[0, 4, 4, 0]}
-                className="cursor-pointer"
-              >
-                {barData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-    </div>
+          {/* Pipeline Stages */}
+          <div className="flex items-center gap-1 flex-wrap">
+            <StatItem
+              label="New"
+              value={stats?.new || 0}
+              icon={FileText}
+              status="new"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="primary"
+            />
+            <StatItem
+              label="Reviewing"
+              value={stats?.reviewing || 0}
+              icon={Clock}
+              status="reviewing"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="accent"
+            />
+            <StatItem
+              label="Matching"
+              value={stats?.matching || 0}
+              icon={Users}
+              status="matching"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="warning"
+            />
+            <StatItem
+              label="Matched"
+              value={stats?.matched || 0}
+              icon={CheckCircle}
+              status="matched"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="accent"
+            />
+            <StatItem
+              label="Intros"
+              value={stats?.introductions_sent || 0}
+              icon={Send}
+              status="introductions_sent"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="primary"
+            />
+            <StatItem
+              label="Contact"
+              value={stats?.in_contact || 0}
+              icon={MessageCircle}
+              status="in_contact"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="accent"
+            />
+            <StatItem
+              label="Placed"
+              value={stats?.placed || 0}
+              icon={CheckCircle}
+              status="placed"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="success"
+            />
+            <StatItem
+              label="Closed"
+              value={stats?.closed || 0}
+              icon={XCircle}
+              status="closed"
+              activeStatus={activeStatus}
+              onStatusClick={onStatusClick}
+              variant="muted"
+            />
+          </div>
+
+          {/* Placement Rate & Mini Chart */}
+          <div className="flex items-center gap-4 xl:ml-auto">
+            <div className="flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4 text-success" />
+              <span className="text-muted-foreground">Placement Rate:</span>
+              <span className="font-semibold text-success">{placementRate}%</span>
+            </div>
+
+            {/* Mini Bar Chart */}
+            <div className="w-[180px] h-[50px] hidden 2xl:block">
+              <ChartContainer config={chartConfig} className="h-full w-full">
+                <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" hide />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" radius={[0, 2, 2, 0]} barSize={5}>
+                    {barData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
