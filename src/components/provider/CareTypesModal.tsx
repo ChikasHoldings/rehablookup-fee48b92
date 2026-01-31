@@ -10,8 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Loader2, Stethoscope, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
