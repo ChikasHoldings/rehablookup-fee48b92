@@ -17,6 +17,9 @@ import {
   ChevronRight,
   PieChart as PieChartIcon,
   Activity,
+  Share2,
+  Timer,
+  Clock,
 } from "lucide-react";
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip, 
@@ -268,6 +271,23 @@ export default function AdminDashboard() {
         verificationRate: totalMonth.count ? Math.round(((verified.count || 0) / totalMonth.count) * 100) : 0,
         newLeads: newLeads.count || 0,
         assigned: assigned.count || 0,
+      };
+    },
+  });
+
+  // Fetch redistribution stats
+  const { data: redistStats } = useQuery({
+    queryKey: ["admin-redistribution-stats"],
+    queryFn: async () => {
+      const [exclusive, extended, expired] = await Promise.all([
+        supabase.from("leads").select("*", { count: "exact", head: true }).eq("redistribution_status", "exclusive"),
+        supabase.from("leads").select("*", { count: "exact", head: true }).eq("redistribution_status", "extended"),
+        supabase.from("leads").select("*", { count: "exact", head: true }).eq("redistribution_status", "expired"),
+      ]);
+      return {
+        exclusive: exclusive.count || 0,
+        extended: extended.count || 0,
+        expired: expired.count || 0,
       };
     },
   });
@@ -607,6 +627,56 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Lead Redistribution Stats */}
+      {redistStats && (redistStats.exclusive > 0 || redistStats.extended > 0 || redistStats.expired > 0) && (
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <Share2 className="h-4 w-4 text-muted-foreground" />
+                  Lead Distribution Status
+                </CardTitle>
+                <CardDescription className="text-xs">Exclusivity and redistribution tracking</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/admin/leads" className="text-xs">
+                  View all <ChevronRight className="h-3 w-3 ml-1" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="flex items-center gap-2 text-amber-700 mb-1">
+                  <Timer className="h-4 w-4" />
+                  <span className="text-sm font-medium">Exclusive</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-700">{redistStats.exclusive}</p>
+                <p className="text-xs text-amber-600 mt-0.5">Awaiting original facility</p>
+              </div>
+              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-center gap-2 text-blue-700 mb-1">
+                  <Share2 className="h-4 w-4" />
+                  <span className="text-sm font-medium">Redistributed</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-700">{redistStats.extended}</p>
+                <p className="text-xs text-blue-600 mt-0.5">Available to nearby facilities</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <div className="flex items-center gap-2 text-slate-600 mb-1">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-sm font-medium">Expired</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-600">{redistStats.expired}</p>
+                <p className="text-xs text-slate-500 mt-0.5">Window closed</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions + Top Cities */}
       <div className="grid gap-6 lg:grid-cols-2">
