@@ -228,8 +228,8 @@ export function FeaturedAnalyticsDashboard() {
       const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
       const avgConversion = totalClicks > 0 ? (totalLeads / totalClicks) * 100 : 0;
       
-      // Estimate revenue: $1,099/month per Featured subscriber * number of subscribers
-      const estimatedRevenue = featuredIds.length * 1099;
+      // Estimate revenue: $399/month per Pro subscriber * number of subscribers
+      const estimatedRevenue = featuredIds.length * 399;
 
       // Calculate comparison metrics
       const avgLeadsPerProvider = featuredIds.length > 0 ? totalLeads / featuredIds.length : 0;
