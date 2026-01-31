@@ -196,6 +196,7 @@ export type Database = {
       }
       admin_user_profiles: {
         Row: {
+          admin_role: Database["public"]["Enums"]["admin_role_type"] | null
           avatar_url: string | null
           created_at: string
           created_by: string | null
@@ -220,6 +221,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_role?: Database["public"]["Enums"]["admin_role_type"] | null
           avatar_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_role?: Database["public"]["Enums"]["admin_role_type"] | null
           avatar_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -4442,6 +4445,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_admin_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["admin_role_type"]
+      }
       get_owner_facility_data: {
         Args: { p_user_id: string }
         Returns: {
@@ -4572,6 +4579,13 @@ export type Database = {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
       }
+      has_admin_role: {
+        Args: {
+          _admin_role: Database["public"]["Enums"]["admin_role_type"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -4607,6 +4621,7 @@ export type Database = {
       user_is_admin: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {
+      admin_role_type: "super_admin" | "manager" | "customer_rep" | "advisor"
       app_role: "admin" | "moderator" | "seeker"
     }
     CompositeTypes: {
@@ -4735,6 +4750,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_role_type: ["super_admin", "manager", "customer_rep", "advisor"],
       app_role: ["admin", "moderator", "seeker"],
     },
   },

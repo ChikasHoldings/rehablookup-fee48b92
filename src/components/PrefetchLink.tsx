@@ -20,7 +20,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/providers": () => import("@/pages/admin/AdminProviders"),
   "/admin/leads": () => import("@/pages/admin/AdminLeads"),
   "/admin/subscriptions": () => import("@/pages/admin/AdminSubscriptions"),
-  "/admin/users": () => import("@/pages/admin/AdminUsers"),
+  "/admin/users": () => import("@/pages/admin/AdminStaff"),
   "/admin/analytics": () => import("@/pages/admin/AdminAnalytics"),
 };
 

@@ -10,7 +10,7 @@ const corsHeaders = {
 interface ManageAdminUserRequest {
   action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions" | "resend_invitation" | "toggle_mfa_skip";
   targetUserId: string;
-  newRole?: "admin" | "moderator";
+  newRole?: "super_admin" | "manager" | "customer_rep" | "advisor";
   permissions?: Record<string, boolean>;
 }
 
