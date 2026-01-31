@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 
 export interface CreditBalance {
@@ -15,6 +15,10 @@ export interface CreditTransaction {
   description: string | null;
   reference_id: string | null;
   created_at: string;
+  base_price_cents?: number;
+  discount_applied?: boolean;
+  discount_amount_cents?: number;
+  inquiry_type?: string;
 }
 
 export interface ProviderCreditsData {
@@ -36,40 +40,52 @@ export function useProviderCredits(facilityId?: string) {
   const query = useQuery({
     queryKey: ["provider-credits", facilityId],
     queryFn: async (): Promise<ProviderCreditsData> => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return DEFAULT_CREDITS;
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("[useProviderCredits] Session error:", sessionError);
+          return DEFAULT_CREDITS;
+        }
+        
+        if (!session) return DEFAULT_CREDITS;
 
-      // Get credit balance
-      const { data: creditsData, error: creditsError } = await supabase
-        .from("provider_credits")
-        .select("balance_cents, facility_id")
-        .eq("provider_id", session.user.id)
-        .maybeSingle();
+        // Get credit balance
+        const { data: creditsData, error: creditsError } = await supabase
+          .from("provider_credits")
+          .select("balance_cents, facility_id")
+          .eq("provider_id", session.user.id)
+          .maybeSingle();
 
-      if (creditsError) {
-        console.error("[useProviderCredits] Error fetching credits:", creditsError);
+        if (creditsError) {
+          console.error("[useProviderCredits] Error fetching credits:", creditsError);
+        }
+
+        // Get recent transactions with all fields
+        const { data: transactionsData, error: transactionsError } = await supabase
+          .from("credit_transactions")
+          .select("id, amount_cents, transaction_type, description, reference_id, created_at, base_price_cents, discount_applied, discount_amount_cents, inquiry_type")
+          .eq("provider_id", session.user.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (transactionsError) {
+          console.error("[useProviderCredits] Error fetching transactions:", transactionsError);
+        }
+
+        return {
+          balance_cents: creditsData?.balance_cents ?? 0,
+          transactions: (transactionsData ?? []) as CreditTransaction[],
+        };
+      } catch (err) {
+        console.error("[useProviderCredits] Unexpected error:", err);
+        return DEFAULT_CREDITS;
       }
-
-      // Get recent transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from("credit_transactions")
-        .select("*")
-        .eq("provider_id", session.user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (transactionsError) {
-        console.error("[useProviderCredits] Error fetching transactions:", transactionsError);
-      }
-
-      return {
-        balance_cents: creditsData?.balance_cents ?? 0,
-        transactions: (transactionsData ?? []) as CreditTransaction[],
-      };
     },
     enabled: true,
     staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: true,
+    retry: 2,
   });
 
   // Track previous balance to detect when it drops below threshold
@@ -117,16 +133,37 @@ export function useProviderCredits(facilityId?: string) {
       const { data, error } = await supabase.functions.invoke("purchase-credits", {
         body: { amountCents, facilityId: fId },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("[useProviderCredits] Purchase error:", error);
+        throw error;
+      }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
+      // Log successful checkout initiation
+      console.log("[useProviderCredits] Checkout initiated:", { 
+        sessionId: data?.sessionId, 
+        version: data?._version 
+      });
+    },
+    onError: (error: Error) => {
+      console.error("[useProviderCredits] Purchase mutation error:", error.message);
     },
   });
 
+  // Memoized refetch function for external use
+  const refetchCredits = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
+  }, [queryClient]);
+
   const isLowCredits = (query.data?.balance_cents ?? 0) > 0 && 
                        (query.data?.balance_cents ?? 0) < LOW_CREDITS_THRESHOLD;
+
+  const hasCredits = (query.data?.balance_cents ?? 0) > 0;
 
   return {
     ...query,
@@ -135,5 +172,7 @@ export function useProviderCredits(facilityId?: string) {
     transactions: query.data?.transactions ?? [],
     purchaseCredits,
     isLowCredits,
+    hasCredits,
+    refetchCredits,
   };
 }

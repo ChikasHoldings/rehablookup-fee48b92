@@ -2,16 +2,21 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Version tracking for deployment verification
+const VERSION = "1.0.2";
+const DEPLOYED_AT = "2026-01-31T00:00:00Z";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Production logging with request ID
+// Production logging with request ID and version
 const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
-  console.log(`[UNLOCK-LEAD] [${requestId}] ${step}${detailsStr}`);
+  console.log(`[UNLOCK-LEAD] [${VERSION}] [${requestId}] [${timestamp}] ${step}${detailsStr}`);
 };
 
 // Unlock pricing per inquiry type (in cents) - defaults if admin settings not found
@@ -366,6 +371,12 @@ serve(async (req) => {
       .eq("id", leadId)
       .single();
 
+    logStep(requestId, "Lead unlock completed successfully", { 
+      unlockId: unlock.id, 
+      pricePaid: unlockPrice,
+      discountApplied: isPro 
+    });
+
     return new Response(JSON.stringify({ 
       success: true,
       unlock,
@@ -376,6 +387,8 @@ serve(async (req) => {
       discountPercent,
       discountAmount,
       pricePaid: unlockPrice,
+      requestId,
+      _version: VERSION,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -383,7 +396,11 @@ serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logStep(requestId, "ERROR - Unhandled exception", { error: message });
-    return new Response(JSON.stringify({ error: "Failed to unlock lead", requestId }), {
+    return new Response(JSON.stringify({ 
+      error: "Failed to unlock lead", 
+      requestId,
+      _version: VERSION 
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
