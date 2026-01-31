@@ -140,9 +140,9 @@ function ProviderShellContent() {
         />
       </div>
 
-      <div className="flex flex-1 min-h-0">
-        {/* Fixed Desktop Sidebar */}
-        <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
+      <div className="flex flex-1 min-h-0 w-full">
+        {/* Fixed Desktop Sidebar - Responsive width */}
+        <aside className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
           <ProviderSidebar />
         </aside>
 
@@ -160,10 +160,10 @@ function ProviderShellContent() {
           </SheetContent>
         </Sheet>
 
-        {/* Main Content Area */}
+        {/* Main Content Area - Responsive with proper overflow handling */}
         <main 
           ref={mainContentRef} 
-          className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
+          className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
         >
           <ProviderErrorBoundary>
             <Outlet />

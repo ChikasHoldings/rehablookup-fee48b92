@@ -403,7 +403,7 @@ export default function ProviderPlacementNetworkPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-full bg-background p-6">
+      <div className="min-h-full bg-background px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
         <div className="max-w-5xl mx-auto space-y-6">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -414,7 +414,7 @@ export default function ProviderPlacementNetworkPage() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header with Network Toggle */}
         <PlacementLandingHeader
           statusSlot={
