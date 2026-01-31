@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Plus, Building2, Lock, Sparkles, CreditCard, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Plus, Building2, Lock, Sparkles, CreditCard, Loader2, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ interface AddListingCardProps {
   planTier: "pro" | "free";
   canPurchaseSlot?: boolean;
   onAddClick: () => void;
+  onSlotPurchased?: () => void;
 }
 
 export function AddListingCard({ 
@@ -21,25 +22,67 @@ export function AddListingCard({
   limit, 
   planTier, 
   canPurchaseSlot = false,
-  onAddClick 
+  onAddClick,
+  onSlotPurchased 
 }: AddListingCardProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle slot purchase confirmation from URL params
+  useEffect(() => {
+    const slotPurchased = searchParams.get("slot_purchased");
+    const slotCancelled = searchParams.get("slot_cancelled");
+
+    if (slotPurchased === "true") {
+      toast.success("Listing slot purchased successfully! You can now add another facility.", {
+        duration: 5000,
+        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+      });
+      // Clear the param and trigger refetch
+      setSearchParams((prev) => {
+        prev.delete("slot_purchased");
+        return prev;
+      });
+      onSlotPurchased?.();
+    } else if (slotCancelled === "true") {
+      toast.info("Slot purchase was cancelled.");
+      setSearchParams((prev) => {
+        prev.delete("slot_cancelled");
+        return prev;
+      });
+    }
+  }, [searchParams, setSearchParams, onSlotPurchased]);
 
   const handlePurchaseSlot = async () => {
     setIsPurchasing(true);
+    console.log("[AddListingCard] Starting slot purchase checkout");
+    
     try {
-      const { data, error } = await supabase.functions.invoke("purchase-listing-slot");
+      const { data, error } = await supabase.functions.invoke("purchase-listing-slot", {
+        method: "POST",
+      });
       
-      if (error) throw error;
+      if (error) {
+        console.error("[AddListingCard] Invoke error:", error);
+        throw error;
+      }
+      
+      console.log("[AddListingCard] Checkout response:", { 
+        hasUrl: !!data?.url, 
+        sessionId: data?.sessionId,
+        requestId: data?.requestId 
+      });
       
       if (data?.url) {
-        window.open(data.url, "_blank");
+        // Open in same window for better UX
+        window.location.href = data.url;
       } else {
         throw new Error("No checkout URL returned");
       }
     } catch (error) {
-      console.error("Error purchasing listing slot:", error);
-      toast.error("Failed to start checkout. Please try again.");
+      console.error("[AddListingCard] Error purchasing listing slot:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to start checkout";
+      toast.error(errorMessage + ". Please try again.");
     } finally {
       setIsPurchasing(false);
     }

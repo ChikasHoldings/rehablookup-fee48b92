@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Building2, Loader2 } from "lucide-react";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
@@ -18,8 +18,8 @@ interface PreviewState {
 }
 
 export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLandingPageProps) {
-  const { facilities, isLoading } = useProviderFacilities();
-  const { limit, used, canAddMore, canPurchaseSlot, planTier, isLoading: limitsLoading } = useFacilityLimits();
+  const { facilities, isLoading, refetch: refetchFacilities } = useProviderFacilities();
+  const { limit, used, canAddMore, canPurchaseSlot, planTier, isLoading: limitsLoading, refetch: refetchLimits } = useFacilityLimits();
   const { setSelectedFacility } = useSelectedFacility();
   
   // Preview modal state
@@ -44,6 +44,13 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
       onAddListing();
     }
   };
+
+  // Callback when a slot is purchased - refetch all data
+  const handleSlotPurchased = useCallback(() => {
+    console.log("[ListingsLandingPage] Slot purchased, refetching data");
+    refetchLimits();
+    refetchFacilities();
+  }, [refetchLimits, refetchFacilities]);
 
   if (isLoading || limitsLoading) {
     return (
@@ -97,6 +104,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
             planTier={planTier}
             canPurchaseSlot={canPurchaseSlot}
             onAddClick={handleAddClick}
+            onSlotPurchased={handleSlotPurchased}
           />
         </div>
 
