@@ -338,8 +338,8 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-          <p className="text-muted-foreground">Manage admin users, roles and permissions</p>
+          <h1 className="text-2xl font-bold text-slate-900">Admin Staff</h1>
+          <p className="text-muted-foreground">Manage admin staff accounts, roles and permissions</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
           <UserPlus className="h-4 w-4" />
