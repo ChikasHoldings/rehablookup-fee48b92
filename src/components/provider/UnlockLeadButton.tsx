@@ -23,6 +23,7 @@ interface UnlockLeadButtonProps {
   cityState?: string | null;
   variant?: "default" | "compact" | "card";
   className?: string;
+  hidePrice?: boolean;
   onUnlockSuccess?: () => void;
 }
 
@@ -34,6 +35,7 @@ export function UnlockLeadButton({
   cityState,
   variant = "default",
   className,
+  hidePrice = false,
   onUnlockSuccess,
 }: UnlockLeadButtonProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -146,9 +148,13 @@ export function UnlockLeadButton({
           <Lock className="h-4 w-4" />
         )}
         <span>Unlock Lead</span>
-        <span className="font-bold">{priceDisplay}</span>
-        {proDiscountPercent > 0 && (
-          <span className="text-xs line-through opacity-60">{originalPriceDisplay}</span>
+        {!hidePrice && (
+          <>
+            <span className="font-bold">{priceDisplay}</span>
+            {proDiscountPercent > 0 && (
+              <span className="text-xs line-through opacity-60">{originalPriceDisplay}</span>
+            )}
+          </>
         )}
       </Button>
 

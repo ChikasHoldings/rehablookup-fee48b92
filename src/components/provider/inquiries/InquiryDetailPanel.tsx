@@ -83,28 +83,20 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
   return (
     <div className="h-full flex flex-col bg-card">
       {/* Header */}
-      <div className="flex-shrink-0 p-5 border-b bg-gradient-to-r from-card to-muted/30">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <InquiryTypeBadge type={inquiry.inquiry_type} size="md" />
-              {inquiry.urgency && (
-                <Badge 
-                  variant="outline"
-                  className={cn(
-                    "font-medium",
-                    inquiry.urgency === 'Urgent' && "border-red-400 text-red-600 bg-red-50 dark:bg-red-900/20",
-                    inquiry.urgency === 'This week' && "border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-900/20"
-                  )}
-                >
-                  {inquiry.urgency}
-                </Badge>
-              )}
-            </div>
-            <h2 className="text-xl font-semibold text-foreground">{displayName}</h2>
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>{inquiry.location_city_state || "Location not specified"}</span>
+      <div className="flex-shrink-0 p-4 border-b">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground truncate">{displayName}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <InquiryTypeBadge type={inquiry.inquiry_type} size="sm" />
+                {inquiry.location_city_state && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {inquiry.location_city_state}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -114,6 +106,7 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
               facilityId={inquiry.facility_id}
               inquiryType={inquiry.inquiry_type}
               cityState={inquiry.location_city_state}
+              hidePrice
               onUnlockSuccess={onUnlockSuccess}
             />
           )}
