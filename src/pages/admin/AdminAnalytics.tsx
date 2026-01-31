@@ -23,22 +23,6 @@ import { toast } from "sonner";
 
 type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "custom";
 type Grouping = "daily" | "weekly" | "monthly";
-type ActivityType = "new_lead" | "qualified_lead" | "provider_signup" | "provider_approved";
-
-interface ActivityItem {
-  id: string;
-  type: ActivityType;
-  title: string;
-  description: string;
-  timestamp: string;
-  metadata?: {
-    email?: string;
-    phone?: string;
-    city?: string;
-    state?: string;
-    qualified?: boolean;
-  };
-}
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
@@ -107,71 +91,6 @@ export default function AdminAnalytics() {
     queryClient.invalidateQueries({ queryKey: ["admin-analytics-facilities"] });
     queryClient.invalidateQueries({ queryKey: ["admin-activity-feed"] });
   }, [queryClient]);
-
-  // Fetch activity feed data
-  const { data: activityFeed, isLoading: isLoadingActivity, error: activityError } = useQuery({
-    queryKey: ["admin-activity-feed"],
-    queryFn: async () => {
-      const activities: ActivityItem[] = [];
-      
-      // Fetch recent leads (last 24 hours)
-      const { data: recentLeads } = await supabase
-        .from("leads")
-        .select("id, name, email, phone, created_at, qualified, location_city_state")
-        .gte("created_at", subDays(new Date(), 1).toISOString())
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (recentLeads) {
-        recentLeads.forEach(lead => {
-          activities.push({
-            id: `lead-${lead.id}`,
-            type: lead.qualified ? "qualified_lead" : "new_lead",
-            title: lead.qualified ? "Qualified Lead" : "New Lead",
-            description: lead.name || "Anonymous",
-            timestamp: lead.created_at,
-            metadata: {
-              email: lead.email,
-              phone: lead.phone,
-              city: lead.location_city_state?.split(',')[0]?.trim(),
-              state: lead.location_city_state?.split(',')[1]?.trim(),
-              qualified: lead.qualified || false,
-            },
-          });
-        });
-      }
-
-      // Fetch recent provider signups (last 24 hours)
-      const { data: recentProviders } = await supabase
-        .from("facilities")
-        .select("id, name, city, state, status, created_at")
-        .gte("created_at", subDays(new Date(), 1).toISOString())
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (recentProviders) {
-        recentProviders.forEach(provider => {
-          activities.push({
-            id: `provider-${provider.id}`,
-            type: provider.status === "approved" ? "provider_approved" : "provider_signup",
-            title: provider.status === "approved" ? "Provider Approved" : "New Provider Signup",
-            description: provider.name,
-            timestamp: provider.created_at,
-            metadata: {
-              city: provider.city,
-              state: provider.state,
-            },
-          });
-        });
-      }
-
-      // Sort by timestamp descending
-      return activities.sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      ).slice(0, 15);
-    },
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
 
   useEffect(() => {
 
@@ -462,10 +381,6 @@ export default function AdminAnalytics() {
   });
 
   // Log query errors
-  useEffect(() => {
-    if (activityError) logError("fetch_activity_feed", activityError, { queryKey: "admin-activity-feed" });
-  }, [activityError, logError]);
-
   useEffect(() => {
     if (facilitiesError) logError("fetch_facilities", facilitiesError, { queryKey: "admin-analytics-facilities" });
   }, [facilitiesError, logError]);
@@ -1341,56 +1256,6 @@ export default function AdminAnalytics() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Activity Feed Widget */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Activity className="h-4 w-4 text-blue-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-semibold">Live Activity Feed</CardTitle>
-                <CardDescription className="text-xs">Recent leads and provider signups (last 24h)</CardDescription>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-xs gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-              Live
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ScrollArea className="h-[280px] pr-4">
-            {isLoadingActivity ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50/50">
-                    <Skeleton className="h-9 w-9 rounded-lg" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-48" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : activityFeed && activityFeed.length > 0 ? (
-              <div className="space-y-2">
-                {activityFeed.map((activity) => (
-                  <ActivityFeedItem key={activity.id} activity={activity} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium text-sm">No recent activity</p>
-                <p className="text-xs mt-1">Activity from the last 24 hours will appear here</p>
-              </div>
-            )}
-          </ScrollArea>
-        </CardContent>
-      </Card>
 
       {/* Charts */}
       <Tabs defaultValue="traffic" className="space-y-4">
@@ -2347,104 +2212,3 @@ function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPIC
   );
 }
 
-// Activity Feed Item Component
-function ActivityFeedItem({ activity }: { activity: ActivityItem }) {
-  const navigate = useNavigate();
-
-  const getActivityIcon = () => {
-    switch (activity.type) {
-      case "qualified_lead":
-        return (
-          <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-100">
-            <Sparkles className="h-4 w-4 text-emerald-600" />
-          </div>
-        );
-      case "new_lead":
-        return (
-          <div className="p-2 rounded-lg bg-blue-50 border border-blue-100">
-            <FileText className="h-4 w-4 text-blue-600" />
-          </div>
-        );
-      case "provider_signup":
-        return (
-          <div className="p-2 rounded-lg bg-purple-50 border border-purple-100">
-            <UserPlus className="h-4 w-4 text-purple-600" />
-          </div>
-        );
-      case "provider_approved":
-        return (
-          <div className="p-2 rounded-lg bg-green-50 border border-green-100">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </div>
-        );
-      default:
-        return (
-          <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
-            <Activity className="h-4 w-4 text-slate-600" />
-          </div>
-        );
-    }
-  };
-
-  const getBadgeVariant = () => {
-    switch (activity.type) {
-      case "qualified_lead":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "new_lead":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case "provider_signup":
-        return "bg-purple-50 text-purple-700 border-purple-200";
-      case "provider_approved":
-        return "bg-green-50 text-green-700 border-green-200";
-      default:
-        return "bg-slate-50 text-slate-700 border-slate-200";
-    }
-  };
-
-  const handleClick = () => {
-    if (activity.type === "new_lead" || activity.type === "qualified_lead") {
-      navigate(`/admin/leads?highlight=${activity.id}`);
-    } else if (activity.type === "provider_signup" || activity.type === "provider_approved") {
-      navigate(`/admin/providers?highlight=${activity.id}`);
-    }
-  };
-
-  return (
-    <div 
-      onClick={handleClick}
-      className="flex items-start gap-3 p-3 rounded-lg bg-slate-50/50 hover:bg-slate-100/50 transition-colors cursor-pointer group"
-    >
-      {getActivityIcon()}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-medium text-sm text-slate-900 truncate group-hover:text-primary transition-colors">
-            {activity.description}
-          </span>
-          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 font-medium", getBadgeVariant())}>
-            {activity.title}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {activity.metadata?.city && activity.metadata?.state && (
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {activity.metadata.city}, {activity.metadata.state}
-            </span>
-          )}
-          {activity.metadata?.email && (
-            <span className="flex items-center gap-1">
-              <Mail className="h-3 w-3" />
-              {activity.metadata.email.slice(0, 20)}{activity.metadata.email.length > 20 ? '...' : ''}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-        </span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </div>
-    </div>
-  );
-}
