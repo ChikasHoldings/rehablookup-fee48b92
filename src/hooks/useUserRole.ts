@@ -73,7 +73,8 @@ export function useUserRole(): UserRoleResult {
 
   useEffect(() => {
     let mounted = true;
-    let isInitializing = true; // Flag to track initial load vs ongoing changes
+    let isInitializing = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const determineRole = async (uid: string): Promise<UserRole> => {
       try {
@@ -117,7 +118,6 @@ export function useUserRole(): UserRoleResult {
       }
     };
 
-    // INITIAL load (controls isLoading) - must run before onAuthStateChange processes events
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -128,26 +128,40 @@ export function useUserRole(): UserRoleResult {
           setIsAuthenticated(false);
           setUserId(null);
           setRole(null);
+          setIsLoading(false);
+          isInitializing = false;
           return;
         }
 
         setIsAuthenticated(true);
         setUserId(session.user.id);
         
-        // Fetch role BEFORE setting loading false
         const userRole = await determineRole(session.user.id);
         if (mounted) {
           setRole(userRole);
+          setIsLoading(false);
+          isInitializing = false;
         }
       } catch (error) {
         console.error("[useUserRole] Error checking session:", error);
-      } finally {
         if (mounted) {
-          isInitializing = false; // Mark initialization complete
+          setIsAuthenticated(false);
+          setUserId(null);
+          setRole(null);
           setIsLoading(false);
+          isInitializing = false;
         }
       }
     };
+
+    // Safety timeout - ensure loading state resolves even if auth hangs
+    timeoutId = setTimeout(() => {
+      if (mounted && isInitializing) {
+        console.warn("[useUserRole] Auth initialization timed out");
+        setIsLoading(false);
+        isInitializing = false;
+      }
+    }, 5000);
 
     // Listener for ONGOING auth changes (does NOT control isLoading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -180,6 +194,7 @@ export function useUserRole(): UserRoleResult {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
