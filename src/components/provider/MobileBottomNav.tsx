@@ -44,7 +44,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
     staleTime: 1000 * 60 * 2,
   });
 
-  const isMoreActive = ["/provider/credits", "/provider/settings", "/provider/pro-upgrade"].some(
+  const isMoreActive = ["/provider/billing", "/provider/settings", "/provider/pro-upgrade"].some(
     path => location.pathname.startsWith(path)
   );
 

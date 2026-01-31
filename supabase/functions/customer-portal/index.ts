@@ -52,7 +52,7 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "https://rehablookup.com";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/provider/credits`,
+      return_url: `${origin}/provider/billing`,
     });
     logStep("Customer portal session created", { sessionId: portalSession.id });
 

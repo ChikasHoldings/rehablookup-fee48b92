@@ -95,7 +95,7 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDe
         {/* CTA */}
         <div className="space-y-2">
           <Button asChild size="default" className="w-full gap-2">
-            <Link to="/provider/credits">
+            <Link to="/provider/billing">
               <Coins className="h-4 w-4" />
               Get Credits
             </Link>
