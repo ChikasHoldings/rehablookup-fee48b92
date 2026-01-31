@@ -680,11 +680,11 @@ export default function ProviderSettingsPage() {
   if (isLoading) {
     return (
       <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
         </div>
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <Skeleton className="h-12 w-full max-w-md" />
           <Skeleton className="h-96 w-full mt-4" />
         </div>
@@ -694,7 +694,7 @@ export default function ProviderSettingsPage() {
 
   return (
     <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Page Header */}
         <div>
           <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">

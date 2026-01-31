@@ -202,7 +202,7 @@ export default function ProviderBillingPage() {
   return (
     <div className="min-h-full bg-background">
       <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Billing</h1>

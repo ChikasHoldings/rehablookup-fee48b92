@@ -89,7 +89,8 @@ export default function ProviderReviews() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 max-w-full overflow-x-hidden">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
+      <div className="max-w-5xl mx-auto space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0">
@@ -231,12 +232,14 @@ export default function ProviderReviews() {
       </Tabs>
 
       {/* Flag Review Dialog */}
+      {/* Flag Review Dialog */}
       <FlagReviewDialog
         review={selectedReviewForDispute}
         open={disputeDialogOpen}
         onOpenChange={setDisputeDialogOpen}
         onSubmit={handleSubmitDispute}
       />
+      </div>
     </div>
   );
 }
