@@ -2,14 +2,18 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CHARGE-PLACEMENT-FEE] ${step}${detailsStr}`);
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[CHARGE-PLACEMENT-FEE] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
 // Placement fee structure
@@ -25,12 +29,14 @@ const PLACEMENT_FEES = {
 };
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
+    logStep(requestId, "Function started", { version: VERSION });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -49,7 +55,7 @@ serve(async (req) => {
       throw new Error("Inquiry ID and Facility ID are required");
     }
 
-    logStep("Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated });
+    logStep(requestId, "Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated });
 
     // Verify the inquiry and placement
     const { data: inquiry, error: inquiryError } = await supabase
@@ -64,7 +70,7 @@ serve(async (req) => {
 
     // For admin-initiated charges, update the inquiry to mark placement
     if (adminInitiated) {
-      logStep("Admin-initiated charge, updating placement status");
+      logStep(requestId, "Admin-initiated charge, updating placement status");
       const { error: updateError } = await supabase
         .from('concierge_inquiries')
         .update({
@@ -77,7 +83,7 @@ serve(async (req) => {
         .eq('id', inquiryId);
 
       if (updateError) {
-        logStep("Warning: Failed to update inquiry status", { error: updateError.message });
+        logStep(requestId, "Warning: Failed to update inquiry status", { error: updateError.message });
       }
 
       // Log the event
@@ -128,7 +134,7 @@ serve(async (req) => {
       
       // Apply commission cap
       if (feeCents > COMMISSION_CAP_CENTS) {
-        logStep("Commission capped", { originalFee: feeCents, cappedFee: COMMISSION_CAP_CENTS });
+        logStep(requestId, "Commission capped", { originalFee: feeCents, cappedFee: COMMISSION_CAP_CENTS });
         feeCents = COMMISSION_CAP_CENTS;
       }
     } else {
@@ -138,7 +144,7 @@ serve(async (req) => {
       }
     }
 
-    logStep("Fee calculated", { feeCents, feeType: actualFeeType, hasPro });
+    logStep(requestId, "Fee calculated", { feeCents, feeType: actualFeeType, hasPro });
 
     // Get provider's default payment method
     const { data: paymentMethod, error: pmError } = await supabase
@@ -150,7 +156,7 @@ serve(async (req) => {
 
     if (pmError || !paymentMethod) {
       // Create invoice instead of charging directly
-      logStep("No payment method, creating invoice");
+      logStep(requestId, "No payment method, creating invoice");
       
       const dueAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
       
@@ -204,9 +210,9 @@ serve(async (req) => {
             },
           }),
         });
-        logStep("Invoice issued notification sent");
+        logStep(requestId, "Invoice issued notification sent");
       } catch (notifError) {
-        logStep("Warning: Failed to send invoice notification", { error: notifError });
+        logStep(requestId, "Warning: Failed to send invoice notification", { error: String(notifError) });
       }
 
       return new Response(
@@ -216,6 +222,8 @@ serve(async (req) => {
           invoiceId: invoice.id,
           amountCents: feeCents,
           message: "Invoice created - payment method required",
+          requestId,
+          _version: VERSION,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -232,7 +240,7 @@ serve(async (req) => {
 
     if (!customerId) {
       // Fallback to retrieving from Stripe if not stored
-      logStep("Customer ID not stored, retrieving from Stripe");
+      logStep(requestId, "Customer ID not stored, retrieving from Stripe");
       const pm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
       if (!pm.customer) {
         throw new Error("Payment method not attached to customer");
@@ -257,7 +265,7 @@ serve(async (req) => {
       },
     });
 
-    logStep("Payment intent created", { 
+    logStep(requestId, "Payment intent created", { 
       paymentIntentId: paymentIntent.id, 
       status: paymentIntent.status 
     });
@@ -280,7 +288,7 @@ serve(async (req) => {
       .single();
 
     if (invoiceError) {
-      logStep("Warning: Invoice record failed", { error: invoiceError });
+      logStep(requestId, "Warning: Invoice record failed", { error: invoiceError.message });
     }
 
     // Log to audit trail
@@ -299,7 +307,7 @@ serve(async (req) => {
         payment_status: paymentIntent.status,
       },
     });
-    logStep("Audit event logged");
+    logStep(requestId, "Audit event logged");
 
     // Update inquiry
     await supabase
@@ -332,9 +340,9 @@ serve(async (req) => {
             },
           }),
         });
-        logStep("Invoice paid notification sent");
+        logStep(requestId, "Invoice paid notification sent");
       } catch (notifError) {
-        logStep("Warning: Failed to send payment notification", { error: notifError });
+        logStep(requestId, "Warning: Failed to send payment notification", { error: String(notifError) });
       }
     }
 
@@ -345,6 +353,8 @@ serve(async (req) => {
         paymentIntentId: paymentIntent.id,
         invoiceId: invoice?.id,
         amountCents: feeCents,
+        requestId,
+        _version: VERSION,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -353,9 +363,9 @@ serve(async (req) => {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    logStep(requestId, "ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

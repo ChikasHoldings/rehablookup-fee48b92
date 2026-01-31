@@ -1,14 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[MATCH-CONCIERGE] ${step}${detailsStr}`);
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[MATCH-CONCIERGE] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
 interface MatchFactors {
@@ -149,12 +153,14 @@ function getNearbyStates(state: string): string[] {
 }
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
+    logStep(requestId, "Function started", { version: VERSION });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -170,7 +176,7 @@ serve(async (req) => {
       throw new Error("Inquiry ID is required");
     }
 
-    logStep("Matching for inquiry", { inquiryId });
+    logStep(requestId, "Matching for inquiry", { inquiryId });
 
     // Fetch the inquiry details
     const { data: inquiry, error: inquiryError } = await supabase
@@ -183,7 +189,7 @@ serve(async (req) => {
       throw new Error("Inquiry not found");
     }
 
-    logStep("Inquiry found", { 
+    logStep(requestId, "Inquiry found", { 
       levelOfCare: inquiry.level_of_care,
       state: inquiry.desired_location_state,
       paymentType: inquiry.payment_type 
@@ -215,11 +221,11 @@ serve(async (req) => {
       throw new Error(`Failed to fetch facilities: ${facilitiesError.message}`);
     }
 
-    logStep("Found opted-in facilities", { count: facilities?.length || 0 });
+    logStep(requestId, "Found opted-in facilities", { count: facilities?.length || 0 });
 
     if (!facilities || facilities.length === 0) {
       return new Response(
-        JSON.stringify({ matches: [], message: "No matching facilities available" }),
+        JSON.stringify({ matches: [], message: "No matching facilities available", requestId, _version: VERSION }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
@@ -344,7 +350,7 @@ serve(async (req) => {
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, 3);
 
-    logStep("Top matches found", { 
+    logStep(requestId, "Top matches found", { 
       count: topMatches.length, 
       topScore: topMatches[0]?.matchScore 
     });
@@ -369,7 +375,7 @@ serve(async (req) => {
       .eq('id', inquiryId);
 
     if (updateError) {
-      logStep("Warning: Failed to update inquiry", { error: updateError });
+      logStep(requestId, "Warning: Failed to update inquiry", { error: updateError.message });
     }
 
     // Send matches_found notification
@@ -385,9 +391,9 @@ serve(async (req) => {
           inquiryId: inquiryId,
         }),
       });
-      logStep("Matches found notification sent");
+      logStep(requestId, "Matches found notification sent");
     } catch (notifError) {
-      logStep("Warning: Failed to send notification", { error: notifError });
+      logStep(requestId, "Warning: Failed to send notification", { error: String(notifError) });
     }
 
     return new Response(
@@ -395,6 +401,8 @@ serve(async (req) => {
         success: true,
         matches: topMatches,
         matchCount: topMatches.length,
+        requestId,
+        _version: VERSION,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -403,9 +411,9 @@ serve(async (req) => {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    logStep(requestId, "ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

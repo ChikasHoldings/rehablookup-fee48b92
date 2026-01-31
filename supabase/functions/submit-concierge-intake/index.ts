@@ -2,14 +2,18 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[SUBMIT-CONCIERGE-INTAKE] ${step}${detailsStr}`);
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[SUBMIT-CONCIERGE-INTAKE] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
 // Full intake data structure (public flow - 5 steps)
@@ -90,12 +94,14 @@ interface InlineIntakeData {
 type IntakeData = FullIntakeData | InlineIntakeData;
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
+    logStep(requestId, "Function started", { version: VERSION });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -119,10 +125,10 @@ serve(async (req) => {
         const { data: { user } } = await anonClient.auth.getUser(token);
         if (user) {
           authenticatedUserId = user.id;
-          logStep("Authenticated user found", { userId: user.id });
+          logStep(requestId, "Authenticated user found", { userId: user.id });
         }
       } catch (authErr) {
-        logStep("Auth check failed, proceeding as anonymous", { error: authErr });
+        logStep(requestId, "Auth check failed, proceeding as anonymous", { error: String(authErr) });
       }
     }
 
@@ -142,7 +148,7 @@ serve(async (req) => {
     // Use authenticated user ID first, then passed userId
     const finalUserId = authenticatedUserId || passedUserId || null;
 
-    logStep("Processing intake submission", { 
+    logStep(requestId, "Processing intake submission", { 
       sessionId, 
       email: intakeData.email,
       userId: finalUserId,
@@ -161,7 +167,7 @@ serve(async (req) => {
     const sessionUserId = session.metadata?.user_id || null;
     const effectiveUserId = finalUserId || sessionUserId;
 
-    logStep("Payment verified", { 
+    logStep(requestId, "Payment verified", { 
       paymentStatus: session.payment_status,
       effectiveUserId 
     });
@@ -177,12 +183,14 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingInquiry) {
-      logStep("Intake already submitted", { existingId: existingInquiry.id });
+      logStep(requestId, "Intake already submitted", { existingId: existingInquiry.id });
       return new Response(
         JSON.stringify({ 
           success: true, 
           inquiryId: existingInquiry.id,
-          alreadySubmitted: true 
+          alreadySubmitted: true,
+          requestId,
+          _version: VERSION,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -284,11 +292,11 @@ serve(async (req) => {
       .single();
 
     if (insertError) {
-      logStep("Insert error", { error: insertError });
+      logStep(requestId, "Insert error", { error: insertError.message });
       throw new Error(`Failed to create inquiry: ${insertError.message}`);
     }
 
-    logStep("Inquiry created successfully", { inquiryId: inquiry.id, userId: effectiveUserId });
+    logStep(requestId, "Inquiry created successfully", { inquiryId: inquiry.id, userId: effectiveUserId });
 
     // Send intake_received notification
     try {
@@ -303,16 +311,18 @@ serve(async (req) => {
           inquiryId: inquiry.id,
         }),
       });
-      logStep("Intake received notification sent");
+      logStep(requestId, "Intake received notification sent");
     } catch (notifError) {
-      logStep("Warning: Failed to send notification", { error: notifError });
+      logStep(requestId, "Warning: Failed to send notification", { error: String(notifError) });
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         inquiryId: inquiry.id,
-        alreadySubmitted: false 
+        alreadySubmitted: false,
+        requestId,
+        _version: VERSION,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -321,9 +331,9 @@ serve(async (req) => {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    logStep(requestId, "ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

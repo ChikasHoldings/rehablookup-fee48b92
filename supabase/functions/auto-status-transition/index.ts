@@ -1,14 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[AUTO-STATUS-TRANSITION] ${step}${detailsStr}`);
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[AUTO-STATUS-TRANSITION] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
 /**
@@ -43,12 +47,14 @@ const VALID_TRANSITIONS: Record<string, { from: string[]; to: string }> = {
 };
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
+    logStep(requestId, "Function started", { version: VERSION });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -60,7 +66,7 @@ serve(async (req) => {
       throw new Error("inquiryId and trigger are required");
     }
 
-    logStep("Processing transition", { inquiryId, trigger });
+    logStep(requestId, "Processing transition", { inquiryId, trigger });
 
     // Fetch current inquiry state
     const { data: inquiry, error: inquiryError } = await supabase
@@ -155,9 +161,9 @@ serve(async (req) => {
       });
 
       transitionMade = true;
-      logStep("Status transitioned", { from: inquiry.status, to: newStatus, trigger });
+      logStep(requestId, "Status transitioned", { from: inquiry.status, to: newStatus, trigger });
     } else {
-      logStep("No transition made", { 
+      logStep(requestId, "No transition made", { 
         currentStatus: inquiry.status, 
         trigger,
         reason: newStatus ? "already in target status" : "transition not valid for current status"
@@ -170,14 +176,16 @@ serve(async (req) => {
       previousStatus: inquiry.status,
       newStatus: newStatus || inquiry.status,
       trigger,
+      requestId,
+      _version: VERSION,
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    logStep(requestId, "ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage, requestId, _version: VERSION }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

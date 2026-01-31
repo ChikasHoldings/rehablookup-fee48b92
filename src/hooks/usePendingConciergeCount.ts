@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 export function usePendingConciergeCount(facilityId?: string) {
   const queryClient = useQueryClient();
@@ -21,7 +21,7 @@ export function usePendingConciergeCount(facilityId?: string) {
         .is("provider_response", null);
 
       if (error) {
-        console.error("[usePendingConciergeCount] Error:", error);
+        console.error("[usePendingConciergeCount] Error:", error.message);
         return 0;
       }
 
@@ -30,7 +30,12 @@ export function usePendingConciergeCount(facilityId?: string) {
     enabled: !!facilityId,
     staleTime: 1000 * 30, // 30 seconds
     refetchInterval: 60000, // Refresh every minute
+    retry: 2,
   });
+
+  const refetchCount = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["pending-concierge-count", facilityId] });
+  }, [queryClient, facilityId]);
 
   // Subscribe to realtime changes
   useEffect(() => {
@@ -62,5 +67,6 @@ export function usePendingConciergeCount(facilityId?: string) {
   return {
     count: query.data ?? 0,
     isLoading: query.isLoading,
+    refetchCount,
   };
 }
