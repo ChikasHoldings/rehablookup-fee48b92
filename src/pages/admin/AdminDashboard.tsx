@@ -358,24 +358,28 @@ export default function AdminDashboard() {
       {/* Primary KPIs - 4 cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Revenue */}
-        <Card className="border-0 bg-primary text-primary-foreground shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium opacity-90">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 opacity-70" />
+        <Card className="border-0 bg-primary text-primary-foreground shadow-md overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium opacity-90 truncate pr-2">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 opacity-70 shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[60px]">
             {loadingRevenue ? (
               <Skeleton className="h-8 w-24 bg-white/20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">${revenueStats?.monthlyRevenue?.toLocaleString() || "0"}</div>
-                <p className="text-xs opacity-70 mt-1 flex items-center gap-1">
+                <div className="text-2xl font-bold truncate">
+                  ${revenueStats?.monthlyRevenue?.toLocaleString() || "0"}
+                </div>
+                <p className="text-xs opacity-70 mt-1 flex items-center gap-1 truncate">
                   {revenueStats?.percentChange && revenueStats.percentChange >= 0 ? (
-                    <TrendingUp className="h-3 w-3" />
+                    <TrendingUp className="h-3 w-3 shrink-0" />
                   ) : (
-                    <TrendingDown className="h-3 w-3" />
+                    <TrendingDown className="h-3 w-3 shrink-0" />
                   )}
-                  {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last month
+                  <span className="truncate">
+                    {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last month
+                  </span>
                 </p>
               </>
             )}
@@ -383,16 +387,16 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Providers */}
-        <Card className="border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Providers</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+        <Card className="border shadow-sm overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Total Providers</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent className="pb-0">
+          <CardContent className="pb-0 min-h-[40px]">
             {loadingProviders ? (
               <Skeleton className="h-8 w-20" />
             ) : (
-              <div className="text-2xl font-bold">{providerStats?.total}</div>
+              <div className="text-2xl font-bold tabular-nums">{providerStats?.total?.toLocaleString()}</div>
             )}
           </CardContent>
           {weeklyTrends?.providers && (
@@ -403,18 +407,18 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Leads */}
-        <Card className="border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Leads</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+        <Card className="border shadow-sm overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Total Leads</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent className="pb-0">
+          <CardContent className="pb-0 min-h-[40px]">
             {loadingLeads ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{leadStats?.totalAll}</div>
-                <p className="text-xs text-muted-foreground">{leadStats?.totalMonth} this month</p>
+                <div className="text-2xl font-bold tabular-nums">{leadStats?.totalAll?.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground truncate">{leadStats?.totalMonth?.toLocaleString()} this month</p>
               </>
             )}
           </CardContent>
@@ -426,25 +430,25 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Actions Needed */}
-        <Card className={`border shadow-sm ${actionItemsCount > 0 ? "border-amber-200 bg-amber-50/50" : ""}`}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Actions Needed</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+        <Card className={`border shadow-sm overflow-hidden ${actionItemsCount > 0 ? "border-amber-200 bg-amber-50/50" : ""}`}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Actions Needed</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[60px]">
             {loadingProviders || loadingLeads ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{actionItemsCount}</div>
-                <div className="flex gap-2 mt-1">
+                <div className="text-2xl font-bold tabular-nums">{actionItemsCount}</div>
+                <div className="flex flex-wrap gap-1.5 mt-1">
                   {providerStats?.pending ? (
-                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 hover:bg-amber-100">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 hover:bg-amber-100 whitespace-nowrap">
                       {providerStats.pending} pending
                     </Badge>
                   ) : null}
                   {leadStats?.newLeads ? (
-                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-100">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-100 whitespace-nowrap">
                       {leadStats.newLeads} new
                     </Badge>
                   ) : null}
