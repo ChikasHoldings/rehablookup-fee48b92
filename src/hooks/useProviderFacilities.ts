@@ -40,12 +40,9 @@ export function useProviderFacilities() {
   const query = useQuery({
     queryKey: ["provider-facilities"],
     queryFn: async (): Promise<ProviderFacility[]> => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      console.log("[useProviderFacilities] Session check:", { hasSession: !!session, sessionError, userId: session?.user?.id });
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.warn("[useProviderFacilities] No session found");
         return [];
       }
 
@@ -54,8 +51,6 @@ export function useProviderFacilities() {
         .select("id, name, slug, status, address, city, state, zip_code, facility_type, logo_url, gallery_urls, created_at")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
-
-      console.log("[useProviderFacilities] Fetch result:", { count: data?.length, error, facilities: data });
 
       if (error) throw error;
       
