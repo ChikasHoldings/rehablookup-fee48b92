@@ -14,8 +14,10 @@ import {
   CalendarIcon,
   PieChart,
   Building2,
+  Share2,
+  Timer,
 } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,6 +129,59 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+// Redistribution Status Badge Component
+function RedistributionBadge({ status, exclusiveUntil, extendedUntil }: { 
+  status: string | null; 
+  exclusiveUntil?: string | null;
+  extendedUntil?: string | null;
+}) {
+  if (!status) return <span className="text-muted-foreground text-xs">—</span>;
+  
+  const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
+    exclusive: { 
+      label: "Exclusive", 
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: <Timer className="h-3 w-3" />
+    },
+    extended: { 
+      label: "Redistributed", 
+      className: "bg-blue-50 text-blue-700 border-blue-200",
+      icon: <Share2 className="h-3 w-3" />
+    },
+    expired: { 
+      label: "Expired", 
+      className: "bg-slate-50 text-slate-500 border-slate-200",
+      icon: <Clock className="h-3 w-3" />
+    },
+  };
+
+  const { label, className, icon } = config[status] || { label: status, className: "bg-muted text-muted-foreground", icon: null };
+  
+  const timeLeft = status === "exclusive" && exclusiveUntil 
+    ? formatDistanceToNow(new Date(exclusiveUntil), { addSuffix: true })
+    : status === "extended" && extendedUntil
+    ? formatDistanceToNow(new Date(extendedUntil), { addSuffix: true })
+    : null;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={cn(className, "gap-1")}>
+            {icon}
+            {label}
+          </Badge>
+        </TooltipTrigger>
+        {timeLeft && (
+          <TooltipContent>
+            <p>Expires {timeLeft}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 // Urgency Indicator
 function UrgencyIndicator({ urgency }: { urgency: string | null }) {
   if (!urgency) return null;
@@ -162,6 +217,7 @@ export default function AdminLeads() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [urgencyFilter, setUrgencyFilter] = useState("all");
+  const [redistributionFilter, setRedistributionFilter] = useState("all");
   const [datePreset, setDatePreset] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -217,7 +273,7 @@ export default function AdminLeads() {
 
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-leads-count", statusFilter, urgencyFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads-count", statusFilter, urgencyFilter, redistributionFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         let query = supabase
@@ -230,6 +286,10 @@ export default function AdminLeads() {
 
         if (urgencyFilter !== "all") {
           query = query.eq("urgency", urgencyFilter);
+        }
+
+        if (redistributionFilter !== "all") {
+          query = query.eq("redistribution_status", redistributionFilter);
         }
 
         if (searchQuery) {
@@ -256,7 +316,7 @@ export default function AdminLeads() {
 
   // Fetch leads with pagination
   const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", statusFilter, urgencyFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads", statusFilter, urgencyFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         const from = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -274,6 +334,10 @@ export default function AdminLeads() {
 
         if (urgencyFilter !== "all") {
           query = query.eq("urgency", urgencyFilter);
+        }
+
+        if (redistributionFilter !== "all") {
+          query = query.eq("redistribution_status", redistributionFilter);
         }
 
         if (searchQuery) {
@@ -364,6 +428,29 @@ export default function AdminLeads() {
     setShowProfileModal(true);
   };
 
+  // Fetch redistribution stats
+  const { data: redistStats } = useQuery({
+    queryKey: ["admin-leads-redistribution-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("redistribution_status");
+      
+      if (error) throw error;
+      
+      const counts = { exclusive: 0, extended: 0, expired: 0, none: 0 };
+      (data || []).forEach((lead) => {
+        const status = lead.redistribution_status as keyof typeof counts;
+        if (status && counts[status] !== undefined) {
+          counts[status]++;
+        } else {
+          counts.none++;
+        }
+      });
+      return counts;
+    },
+  });
+
   // Stats
   const stats = useMemo(() => {
     if (!leads) return { total: 0, newCount: 0, highPriority: 0, contacted: 0 };
@@ -444,6 +531,57 @@ export default function AdminLeads() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Redistribution Stats */}
+      {redistStats && (redistStats.exclusive > 0 || redistStats.extended > 0 || redistStats.expired > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-lg">Lead Distribution Status</CardTitle>
+            </div>
+            <CardDescription>
+              Current status of lead exclusivity and redistribution
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="flex items-center gap-2 text-amber-700">
+                  <Timer className="h-4 w-4" />
+                  <span className="text-sm font-medium">Exclusive</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-700 mt-1">{redistStats.exclusive}</p>
+                <p className="text-xs text-amber-600">Waiting for original facility</p>
+              </div>
+              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Share2 className="h-4 w-4" />
+                  <span className="text-sm font-medium">Redistributed</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-700 mt-1">{redistStats.extended}</p>
+                <p className="text-xs text-blue-600">Available to nearby facilities</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-sm font-medium">Expired</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-600 mt-1">{redistStats.expired}</p>
+                <p className="text-xs text-slate-500">Window closed</p>
+              </div>
+              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                <div className="flex items-center gap-2 text-emerald-700">
+                  <Users className="h-4 w-4" />
+                  <span className="text-sm font-medium">Legacy/Unlocked</span>
+                </div>
+                <p className="text-2xl font-bold text-emerald-700 mt-1">{redistStats.none}</p>
+                <p className="text-xs text-emerald-600">Pre-system or unlocked</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Lead Sources Chart */}
       <Card>
@@ -576,6 +714,17 @@ export default function AdminLeads() {
                     <SelectItem value="researching">Researching</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={redistributionFilter} onValueChange={handleFilterChange(setRedistributionFilter)}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Distribution" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Distribution</SelectItem>
+                    <SelectItem value="exclusive">Exclusive</SelectItem>
+                    <SelectItem value="extended">Redistributed</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             {/* Date Range Filter */}
@@ -669,6 +818,7 @@ export default function AdminLeads() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead>Contact</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Distribution</TableHead>
                     <TableHead>Provider</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Source</TableHead>
@@ -707,6 +857,13 @@ export default function AdminLeads() {
                         </TableCell>
                         <TableCell>
                           <StatusBadge status={lead.status} />
+                        </TableCell>
+                        <TableCell>
+                          <RedistributionBadge 
+                            status={(lead as any).redistribution_status} 
+                            exclusiveUntil={(lead as any).exclusive_until}
+                            extendedUntil={(lead as any).extended_until}
+                          />
                         </TableCell>
                         <TableCell>
                           {assignedFacility ? (
