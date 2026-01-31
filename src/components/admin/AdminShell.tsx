@@ -124,15 +124,17 @@ export function AdminShell() {
           ref={mainContentRef}
           className="flex-1 overflow-y-auto h-[calc(100vh-4rem)] p-4 lg:p-6"
         >
-          <AdminErrorBoundary>
-            {hasRouteAccess ? (
-              <Suspense fallback={<AdminPageLoading />}>
-                <Outlet />
-              </Suspense>
-            ) : (
-              <AccessDenied />
-            )}
-          </AdminErrorBoundary>
+          <div className="max-w-[1600px] mx-auto">
+            <AdminErrorBoundary>
+              {hasRouteAccess ? (
+                <Suspense fallback={<AdminPageLoading />}>
+                  <Outlet />
+                </Suspense>
+              ) : (
+                <AccessDenied />
+              )}
+            </AdminErrorBoundary>
+          </div>
         </main>
       </div>
 
