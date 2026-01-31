@@ -8,6 +8,8 @@ export interface LeadUnlock {
   facility_id: string;
   unlock_price_cents: number;
   unlocked_at: string;
+  payment_method?: string;
+  provider_id?: string;
 }
 
 export function useLeadUnlocks(facilityId?: string) {
