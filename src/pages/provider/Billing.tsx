@@ -17,7 +17,6 @@ import {
   ExternalLink,
   Landmark,
   Trash2,
-  Shield,
   AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -271,65 +270,15 @@ export default function ProviderBillingPage() {
               </Alert>
             )}
 
-            {/* Benefits of Saved Payment Methods */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-muted-foreground" />
-                  Why Save a Payment Method?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Automated Pro Billing</p>
-                      <p className="text-xs text-muted-foreground">Your Pro subscription renews automatically each month</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Wallet className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Quick Credit Purchases</p>
-                      <p className="text-xs text-muted-foreground">Buy credits instantly without re-entering card details</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Award className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Placement Fee Billing</p>
-                      <p className="text-xs text-muted-foreground">Placement fees are charged only on confirmed placements</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Shield className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Secure & Encrypted</p>
-                      <p className="text-xs text-muted-foreground">Card details stored securely by Stripe</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Saved Payment Methods List */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-muted-foreground" />
-                  Saved Payment Methods
+                  Saved Cards
                 </CardTitle>
                 <CardDescription>
-                  Manage your saved cards and bank accounts
+                  Manage your saved cards for billing and credit purchases
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -340,9 +289,9 @@ export default function ProviderBillingPage() {
                 ) : paymentMethods.length === 0 ? (
                   <div className="text-center py-8">
                     <CreditCard className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                    <p className="text-muted-foreground">No payment methods saved</p>
+                    <p className="text-muted-foreground">No cards saved</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Add a card or bank account for seamless billing
+                      Add a card for Pro subscription and credit purchases
                     </p>
                   </div>
                 ) : (
@@ -420,7 +369,7 @@ export default function ProviderBillingPage() {
                   onClick={() => setShowPaymentMethodModal(true)}
                 >
                   <Plus className="h-4 w-4" />
-                  Add Payment Method
+                  Add Card
                 </Button>
               </CardContent>
             </Card>
@@ -700,6 +649,7 @@ export default function ProviderBillingPage() {
             onOpenChange={setShowPaymentMethodModal}
             facilityId={facilityId}
             onSuccess={() => setShowPaymentMethodModal(false)}
+            cardOnly
           />
         )}
       </div>

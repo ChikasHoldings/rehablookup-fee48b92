@@ -29,12 +29,15 @@ interface AddPaymentMethodModalProps {
   onOpenChange: (open: boolean) => void;
   facilityId: string;
   onSuccess?: () => void;
+  /** If true, only show card option (ACH is for Placement Network only) */
+  cardOnly?: boolean;
 }
 
 interface PaymentFormProps {
   facilityId: string;
   onSuccess?: () => void;
   onCancel: () => void;
+  cardOnly?: boolean;
 }
 
 interface SetupData {
@@ -52,11 +55,12 @@ function PaymentFormContent({
   facilityId,
   onSuccess,
   onCancel,
+  cardOnly,
   stripe,
   elements,
 }: PaymentFormProps & { stripe: StripeType | null; elements: StripeElements | null }) {
   const queryClient = useQueryClient();
-  const [paymentType, setPaymentType] = useState<"ach" | "card">("ach");
+  const [paymentType, setPaymentType] = useState<"ach" | "card">(cardOnly ? "card" : "ach");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConnectingBank, setIsConnectingBank] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -393,28 +397,30 @@ function PaymentFormContent({
   return (
     <div className="space-y-4">
       <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as "ach" | "card")}>
-        <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-          <TabsTrigger 
-            value="ach" 
-            className={cn(
-              "gap-1.5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
-              "flex-col h-auto"
-            )}
-          >
-            <Landmark className="h-4 w-4" />
-            <span className="font-medium text-sm">Bank Account</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="card" 
-            className={cn(
-              "gap-1.5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
-              "flex-col h-auto"
-            )}
-          >
-            <CreditCard className="h-4 w-4" />
-            <span className="font-medium text-sm">Card</span>
-          </TabsTrigger>
-        </TabsList>
+        {!cardOnly && (
+          <TabsList className="grid w-full grid-cols-2 h-auto p-1">
+            <TabsTrigger 
+              value="ach" 
+              className={cn(
+                "gap-1.5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+                "flex-col h-auto"
+              )}
+            >
+              <Landmark className="h-4 w-4" />
+              <span className="font-medium text-sm">Bank Account</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="card" 
+              className={cn(
+                "gap-1.5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+                "flex-col h-auto"
+              )}
+            >
+              <CreditCard className="h-4 w-4" />
+              <span className="font-medium text-sm">Card</span>
+            </TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="ach" className="mt-4 space-y-3">
           <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
@@ -571,6 +577,7 @@ export function AddPaymentMethodModal({
   onOpenChange,
   facilityId,
   onSuccess,
+  cardOnly = false,
 }: AddPaymentMethodModalProps) {
   const [stripePromise, setStripePromise] = useState<Promise<StripeType | null> | null>(null);
   const [isLoadingStripe, setIsLoadingStripe] = useState(true);
@@ -623,11 +630,14 @@ export function AddPaymentMethodModal({
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <Landmark className="h-4 w-4" />
-            Add Payment Method
+            {cardOnly ? <CreditCard className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
+            {cardOnly ? "Add Card" : "Add Payment Method"}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            For placement network billing. Charged only on confirmed placements.
+            {cardOnly 
+              ? "Save a card for Pro subscription and credit purchases." 
+              : "For placement network billing. Charged only on confirmed placements."
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -650,6 +660,7 @@ export function AddPaymentMethodModal({
           <Elements stripe={stripePromise}>
             <PaymentFormWrapper
               facilityId={facilityId}
+              cardOnly={cardOnly}
               onSuccess={() => {
                 onOpenChange(false);
                 onSuccess?.();
