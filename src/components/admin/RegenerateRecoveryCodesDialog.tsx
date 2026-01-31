@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Key, Copy, Check, Download, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,11 +20,10 @@ interface RegenerateRecoveryCodesDialogProps {
 
 type DialogStep = "confirm" | "codes";
 
-export function RegenerateRecoveryCodesDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: RegenerateRecoveryCodesDialogProps) {
+export const RegenerateRecoveryCodesDialog = forwardRef<
+  HTMLDivElement,
+  RegenerateRecoveryCodesDialogProps
+>(function RegenerateRecoveryCodesDialog({ open, onOpenChange, onSuccess }, _ref) {
   const [step, setStep] = useState<DialogStep>("confirm");
   const [isGenerating, setIsGenerating] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
@@ -206,4 +205,6 @@ export function RegenerateRecoveryCodesDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+RegenerateRecoveryCodesDialog.displayName = "RegenerateRecoveryCodesDialog";

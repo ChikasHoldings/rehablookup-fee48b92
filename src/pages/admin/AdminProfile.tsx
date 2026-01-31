@@ -1,32 +1,21 @@
 import { useState, useEffect } from "react";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  User, Camera, Eye, EyeOff, ShieldCheck, Save, Loader2, History, 
-  UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, 
-  BadgeCheck, Star, FileText, Settings, RefreshCw, Shield, 
-  Clock, AlertTriangle, Lock, Monitor, Smartphone, Laptop, Tablet,
-  Globe, MapPin, LogOut, Trash2, ShieldOff, Key, Mail, CreditCard,
-  UserCheck, FileWarning
+  History, Bell, Save, Loader2, 
+  UserCheck, FileText, ShieldCheck, CreditCard, FileWarning,
+  Clock, Monitor, Smartphone, Laptop, Tablet, Globe, MapPin,
+  LogOut, Trash2, Shield
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDistanceToNow, format } from "date-fns";
-import { TwoFactorSetupDialog } from "@/components/admin/TwoFactorSetupDialog";
-import { DisableTwoFactorDialog } from "@/components/admin/DisableTwoFactorDialog";
-import { RegenerateRecoveryCodesDialog } from "@/components/admin/RegenerateRecoveryCodesDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,53 +27,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+import { ProfileInformationCard, SecurityCard, TwoFactorCard } from "@/components/admin/profile";
 
-// Enhanced password schema with special character requirement
-const passwordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
-  confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-type PasswordFormData = z.infer<typeof passwordSchema>;
-
-// Password strength calculator
-const calculatePasswordStrength = (password: string): number => {
-  let strength = 0;
-  if (password.length >= 8) strength += 20;
-  if (password.length >= 12) strength += 10;
-  if (/[A-Z]/.test(password)) strength += 20;
-  if (/[a-z]/.test(password)) strength += 20;
-  if (/[0-9]/.test(password)) strength += 15;
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 15;
-  return Math.min(strength, 100);
-};
-
-const getStrengthLabel = (strength: number): { label: string; color: string } => {
-  if (strength < 40) return { label: "Weak", color: "bg-red-500" };
-  if (strength < 70) return { label: "Medium", color: "bg-amber-500" };
-  if (strength < 90) return { label: "Strong", color: "bg-green-500" };
-  return { label: "Very Strong", color: "bg-emerald-600" };
-};
+// Extended admin profile type
+interface AdminProfile {
+  avatar_url: string | null;
+  display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  status: string;
+  last_login_at: string | null;
+  notify_new_providers: boolean | null;
+  notify_new_leads: boolean | null;
+  notify_security_events: boolean | null;
+  notify_system_alerts: boolean | null;
+  notify_subscription_changes: boolean | null;
+  email_digest_frequency: string | null;
+}
 
 // Get device icon based on device/browser info
 const getDeviceIcon = (deviceName: string | null, browser: string | null) => {
@@ -101,27 +62,43 @@ const getDeviceIcon = (deviceName: string | null, browser: string | null) => {
   return <Monitor className="h-5 w-5" />;
 };
 
+// Action icons and labels for activity timeline
+const getActionIcon = (actionType: string) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    profile_photo_updated: <History className="h-4 w-4" />,
+    profile_name_updated: <History className="h-4 w-4" />,
+    password_changed: <Shield className="h-4 w-4" />,
+    notification_preferences_updated: <Bell className="h-4 w-4" />,
+    mfa_enabled: <Shield className="h-4 w-4" />,
+    mfa_disabled: <Shield className="h-4 w-4" />,
+    mfa_recovery_codes_regenerated: <Shield className="h-4 w-4" />,
+    login: <Shield className="h-4 w-4" />,
+    session_revoked: <LogOut className="h-4 w-4" />,
+  };
+  return iconMap[actionType] || <History className="h-4 w-4" />;
+};
+
+const getActionLabel = (actionType: string) => {
+  const labelMap: Record<string, string> = {
+    profile_photo_updated: "Updated profile photo",
+    profile_name_updated: "Updated display name",
+    password_changed: "Changed password",
+    notification_preferences_updated: "Updated notification preferences",
+    mfa_enabled: "Enabled two-factor authentication",
+    mfa_disabled: "Disabled two-factor authentication",
+    mfa_recovery_codes_regenerated: "Regenerated recovery codes",
+    login: "Signed in",
+    session_revoked: "Revoked session",
+  };
+  return labelMap[actionType] || actionType.replace(/_/g, " ");
+};
+
 export default function AdminProfile() {
   const { toast } = useToast();
   const { logError } = useAdminErrorHandler("AdminProfile");
   const queryClient = useQueryClient();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [avatarKey, setAvatarKey] = useState(Date.now());
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAll, setIsRevokingAll] = useState(false);
-  const [show2FASetup, setShow2FASetup] = useState(false);
-  const [show2FADisable, setShow2FADisable] = useState(false);
-  const [showRegenerateCodes, setShowRegenerateCodes] = useState(false);
-  const [mfaEnabled, setMfaEnabled] = useState(false);
-  const [isCheckingMFA, setIsCheckingMFA] = useState(true);
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState({
     notify_new_providers: true,
@@ -132,7 +109,7 @@ export default function AdminProfile() {
     email_digest_frequency: 'daily',
   });
 
-  // Fetch current user and profile
+  // Fetch current user
   const { data: userData, error: userError } = useQuery({
     queryKey: ["admin-profile-user"],
     queryFn: async () => {
@@ -141,6 +118,7 @@ export default function AdminProfile() {
     },
   });
 
+  // Fetch profile
   const { data: profile, isLoading, refetch: refetchProfile, error: profileError } = useQuery({
     queryKey: ["admin-profile", userData?.id],
     queryFn: async () => {
@@ -152,7 +130,7 @@ export default function AdminProfile() {
         .maybeSingle();
       
       if (error) throw error;
-      return data;
+      return data as AdminProfile | null;
     },
     enabled: !!userData?.id,
   });
@@ -175,7 +153,7 @@ export default function AdminProfile() {
     enabled: !!userData?.id,
   });
 
-  // Fetch recent activity with real-time updates
+  // Fetch recent activity
   const { data: recentActivity, isLoading: isLoadingActivity, error: activityError } = useQuery({
     queryKey: ["admin-activity", userData?.id],
     queryFn: async () => {
@@ -210,7 +188,7 @@ export default function AdminProfile() {
     if (activityError) logError("fetch_activity", activityError, { queryKey: "admin-activity" });
   }, [activityError, logError]);
 
-  // Real-time subscription for activity and session updates
+  // Real-time subscriptions
   useEffect(() => {
     if (!userData?.id) return;
 
@@ -252,12 +230,9 @@ export default function AdminProfile() {
     };
   }, [userData?.id, queryClient]);
 
+  // Load notification preferences from profile
   useEffect(() => {
     if (profile) {
-      setFirstName((profile as any).first_name || "");
-      setLastName((profile as any).last_name || "");
-      setDisplayName(profile.display_name || "");
-      // Load notification preferences from profile
       setNotificationPrefs({
         notify_new_providers: profile.notify_new_providers ?? true,
         notify_new_leads: profile.notify_new_leads ?? true,
@@ -268,268 +243,6 @@ export default function AdminProfile() {
       });
     }
   }, [profile]);
-
-  // Check MFA status
-  useEffect(() => {
-    const checkMFAStatus = async () => {
-      setIsCheckingMFA(true);
-      try {
-        const { data: factorsData } = await supabase.auth.mfa.listFactors();
-        const hasVerifiedTotp = factorsData?.totp?.some(f => f.status === 'verified');
-        setMfaEnabled(!!hasVerifiedTotp);
-      } catch (err) {
-        console.error('Error checking MFA status:', err);
-      } finally {
-        setIsCheckingMFA(false);
-      }
-    };
-    
-    checkMFAStatus();
-  }, []);
-
-  // Fetch recovery codes count
-  const { data: recoveryCodesCount, refetch: refetchRecoveryCodes } = useQuery({
-    queryKey: ["recovery-codes-count", userData?.id],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return 0;
-      
-      const response = await supabase.functions.invoke('manage-mfa-recovery', {
-        body: { action: 'count' },
-      });
-      
-      if (response.error) {
-        console.error('Error fetching recovery codes count:', response.error);
-        return 0;
-      }
-      
-      return response.data?.count ?? 0;
-    },
-    enabled: !!userData?.id && mfaEnabled,
-  });
-
-  const handleMFASetupSuccess = () => {
-    setMfaEnabled(true);
-    // Refetch recovery codes count after setup (query will be enabled now)
-    setTimeout(() => refetchRecoveryCodes(), 500);
-  };
-
-  const handleMFADisableSuccess = () => {
-    setMfaEnabled(false);
-  };
-
-  const getActionIcon = (actionType: string) => {
-    const iconMap: Record<string, React.ReactNode> = {
-      profile_photo_updated: <Image className="h-4 w-4" />,
-      profile_name_updated: <UserCog className="h-4 w-4" />,
-      password_changed: <KeyRound className="h-4 w-4" />,
-      notification_preferences_updated: <Bell className="h-4 w-4" />,
-      notifications_marked_read: <Bell className="h-4 w-4" />,
-      notifications_cleared: <Bell className="h-4 w-4" />,
-      mfa_enabled: <Shield className="h-4 w-4" />,
-      mfa_disabled: <ShieldOff className="h-4 w-4" />,
-      mfa_recovery_codes_regenerated: <Key className="h-4 w-4" />,
-      provider_approved: <CheckCircle className="h-4 w-4" />,
-      provider_suspended: <Ban className="h-4 w-4" />,
-      provider_verified: <BadgeCheck className="h-4 w-4" />,
-      provider_featured: <Star className="h-4 w-4" />,
-      lead_assigned: <FileText className="h-4 w-4" />,
-      lead_status_changed: <FileText className="h-4 w-4" />,
-      admin_user_created: <UserPlus className="h-4 w-4" />,
-      admin_user_deactivated: <Ban className="h-4 w-4" />,
-      admin_permissions_updated: <Settings className="h-4 w-4" />,
-      login: <Lock className="h-4 w-4" />,
-      session_revoked: <LogOut className="h-4 w-4" />,
-    };
-    return iconMap[actionType] || <History className="h-4 w-4" />;
-  };
-
-  const getActionLabel = (actionType: string) => {
-    const labelMap: Record<string, string> = {
-      profile_photo_updated: "Updated profile photo",
-      profile_name_updated: "Updated display name",
-      password_changed: "Changed password",
-      notification_preferences_updated: "Updated notification preferences",
-      notifications_marked_read: "Marked notifications as read",
-      notifications_cleared: "Cleared notifications",
-      mfa_enabled: "Enabled two-factor authentication",
-      mfa_disabled: "Disabled two-factor authentication",
-      mfa_recovery_codes_regenerated: "Regenerated recovery codes",
-      provider_approved: "Approved provider",
-      provider_suspended: "Suspended provider",
-      provider_verified: "Verified provider",
-      provider_featured: "Toggled featured status",
-      lead_assigned: "Assigned lead",
-      lead_status_changed: "Changed lead status",
-      admin_user_created: "Created admin user",
-      admin_user_deactivated: "Deactivated admin user",
-      admin_permissions_updated: "Updated admin permissions",
-      login: "Signed in",
-      session_revoked: "Revoked session",
-    };
-    return labelMap[actionType] || actionType.replace(/_/g, " ");
-  };
-
-  const passwordForm = useForm<PasswordFormData>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
-  const watchedNewPassword = passwordForm.watch("newPassword");
-  const passwordStrength = calculatePasswordStrength(watchedNewPassword || "");
-  const strengthInfo = getStrengthLabel(passwordStrength);
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userData?.id) return;
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a JPG, PNG, WebP, or GIF image.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-    try {
-      const fileExt = file.name.split(".").pop()?.toLowerCase() || 'png';
-      const timestamp = Date.now();
-      const fileName = `admin-avatars/${userData.id}-${timestamp}.${fileExt}`;
-
-      // Delete old avatar if exists
-      if (profile?.avatar_url) {
-        const oldPath = profile.avatar_url.split('/').pop();
-        if (oldPath && oldPath.startsWith(userData.id)) {
-          await supabase.storage
-            .from("facility-images")
-            .remove([`admin-avatars/${oldPath}`]);
-        }
-      }
-
-      // Upload new avatar
-      const { error: uploadError } = await supabase.storage
-        .from("facility-images")
-        .upload(fileName, file, { 
-          upsert: true,
-          cacheControl: '0',
-          contentType: file.type
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL with cache buster
-      const { data: urlData } = supabase.storage
-        .from("facility-images")
-        .getPublicUrl(fileName);
-
-      const avatarUrlWithCacheBuster = `${urlData.publicUrl}?t=${timestamp}`;
-
-      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from("admin_user_profiles")
-        .update({ 
-          avatar_url: avatarUrlWithCacheBuster,
-          updated_at: new Date().toISOString()
-        })
-        .eq("user_id", userData.id);
-
-      if (updateError) throw updateError;
-
-      // Force avatar refresh
-      setAvatarKey(timestamp);
-      
-      // Invalidate and refetch profile - including header profile for real-time avatar update
-      await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
-      await queryClient.invalidateQueries({ queryKey: ["admin-header-profile"] });
-      await refetchProfile();
-      
-      // Log audit action
-      await logAdminAction({
-        actionType: AdminAuditActions.PROFILE_PHOTO_UPDATED,
-        targetType: "admin_profile",
-        targetId: userData.id,
-        details: { fileName, timestamp },
-      });
-
-      toast({
-        title: "Photo updated",
-        description: "Your profile photo has been updated successfully.",
-      });
-    } catch (err) {
-      console.error("Error uploading photo:", err);
-      toast({
-        title: "Upload failed",
-        description: err instanceof Error ? err.message : "Failed to upload photo. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploadingPhoto(false);
-      // Reset input so same file can be selected again
-      e.target.value = '';
-    }
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!userData?.id) return;
-
-    setIsUpdatingProfile(true);
-    try {
-      const { error } = await supabase
-        .from("admin_user_profiles")
-        .update({ 
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
-          display_name: displayName.trim() || null,
-          updated_at: new Date().toISOString()
-        } as any)
-        .eq("user_id", userData.id);
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
-      await queryClient.invalidateQueries({ queryKey: ["admin-header-profile"] });
-      
-      // Log audit action
-      await logAdminAction({
-        actionType: AdminAuditActions.PROFILE_NAME_UPDATED,
-        targetType: "admin_profile",
-        targetId: userData.id,
-        details: { firstName: firstName.trim(), lastName: lastName.trim(), displayName: displayName.trim() },
-      });
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated.",
-      });
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      toast({
-        title: "Update failed",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingProfile(false);
-    }
-  };
 
   const handleSaveNotificationPrefs = async () => {
     if (!userData?.id) return;
@@ -553,7 +266,6 @@ export default function AdminProfile() {
 
       await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
       
-      // Log audit action
       await logAdminAction({
         actionType: AdminAuditActions.NOTIFICATION_PREFERENCES_UPDATED,
         targetType: "admin_profile",
@@ -577,74 +289,6 @@ export default function AdminProfile() {
     }
   };
 
-  const handleChangePassword = async (data: PasswordFormData) => {
-    if (!userData?.email) return;
-
-    setIsUpdatingPassword(true);
-    try {
-      // First verify current password by attempting a sign-in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData.email,
-        password: data.currentPassword,
-      });
-
-      if (signInError) {
-        toast({
-          title: "Invalid current password",
-          description: "The current password you entered is incorrect.",
-          variant: "destructive",
-        });
-        setIsUpdatingPassword(false);
-        return;
-      }
-
-      // Check if new password is same as current
-      if (data.currentPassword === data.newPassword) {
-        toast({
-          title: "Password unchanged",
-          description: "New password must be different from current password.",
-          variant: "destructive",
-        });
-        setIsUpdatingPassword(false);
-        return;
-      }
-
-      // Update password
-      const { error } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      });
-
-      if (error) throw error;
-
-      passwordForm.reset();
-      
-      // Log audit action
-      await logAdminAction({
-        actionType: AdminAuditActions.PASSWORD_CHANGED,
-        targetType: "admin_profile",
-        targetId: userData?.id,
-        details: { 
-          changedAt: new Date().toISOString(),
-          ipAddress: "logged"
-        },
-      });
-
-      toast({
-        title: "Password updated",
-        description: "Your password has been changed successfully. Please use the new password for future logins.",
-      });
-    } catch (err) {
-      console.error("Error changing password:", err);
-      toast({
-        title: "Password change failed",
-        description: err instanceof Error ? err.message : "Failed to change password. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingPassword(false);
-    }
-  };
-
   const handleRevokeSession = async (sessionId: string) => {
     if (!userData?.id) return;
 
@@ -660,7 +304,6 @@ export default function AdminProfile() {
 
       await refetchSessions();
       
-      // Log audit action
       await logAdminAction({
         actionType: AdminAuditActions.SESSION_REVOKED,
         targetType: "user_session",
@@ -689,7 +332,6 @@ export default function AdminProfile() {
 
     setIsRevokingAll(true);
     try {
-      // Find the current session (most recent or marked as current)
       const currentSession = sessions.find(s => s.is_current) || sessions[0];
       const otherSessionIds = sessions
         .filter(s => s.id !== currentSession?.id)
@@ -714,7 +356,6 @@ export default function AdminProfile() {
 
       await refetchSessions();
       
-      // Log audit action
       await logAdminAction({
         actionType: AdminAuditActions.SESSION_REVOKED,
         targetType: "user_sessions",
@@ -740,9 +381,6 @@ export default function AdminProfile() {
       setIsRevokingAll(false);
     }
   };
-
-  const initials = profile?.display_name?.slice(0, 2).toUpperCase() || 
-                   userData?.email?.slice(0, 2).toUpperCase() || "AD";
 
   const currentSession = sessions?.find(s => s.is_current) || sessions?.[0];
   const otherSessions = sessions?.filter(s => s.id !== currentSession?.id) || [];
@@ -792,109 +430,20 @@ export default function AdminProfile() {
         </CardContent>
       </Card>
 
-      {/* Profile Photo & Name */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Profile Information
-          </CardTitle>
-          <CardDescription>Update your photo and display name</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Photo Upload */}
-          <div className="flex items-center gap-6">
-            <div className="relative group">
-              <Avatar className="h-24 w-24 ring-2 ring-border ring-offset-2 ring-offset-background" key={avatarKey}>
-                <AvatarImage 
-                  src={profile?.avatar_url || undefined} 
-                  alt={profile?.display_name || "Admin"} 
-                />
-                <AvatarFallback className="bg-amber-100 text-amber-600 text-xl font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                {isUploadingPhoto ? (
-                  <Loader2 className="h-6 w-6 text-white animate-spin" />
-                ) : (
-                  <Camera className="h-6 w-6 text-white" />
-                )}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                  disabled={isUploadingPhoto}
-                />
-              </label>
-            </div>
-            <div className="space-y-1">
-              <p className="font-medium text-lg">{profile?.display_name || "Admin User"}</p>
-              <p className="text-sm text-muted-foreground">{userData?.email}</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Camera className="h-3 w-3" />
-                Click on the photo to upload (max 5MB)
-              </p>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Name Fields */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Enter first name"
-                  maxLength={50}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Enter last name"
-                  maxLength={50}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Enter display name (shown in header)"
-                maxLength={50}
-              />
-              <p className="text-xs text-muted-foreground">This name appears in the header dropdown</p>
-            </div>
-            <Button 
-              onClick={handleUpdateProfile} 
-              disabled={isUpdatingProfile}
-            >
-              {isUpdatingProfile ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Profile Information */}
+      {userData?.id && userData?.email && (
+        <ProfileInformationCard
+          userId={userData.id}
+          userEmail={userData.email}
+          profile={profile ? {
+            avatar_url: profile.avatar_url,
+            display_name: profile.display_name,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+          } : null}
+          onProfileUpdated={refetchProfile}
+        />
+      )}
 
       {/* Session Management */}
       <Card>
@@ -972,9 +521,7 @@ export default function AdminProfile() {
                             {currentSession.browser || "Unknown Browser"}
                             {currentSession.os && ` on ${currentSession.os}`}
                           </p>
-                          <Badge className="bg-green-100 text-green-700 text-xs">
-                            Current Session
-                          </Badge>
+                          <Badge className="bg-green-100 text-green-700 text-xs">Current</Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {currentSession.ip_address && (
@@ -992,9 +539,7 @@ export default function AdminProfile() {
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          Active {currentSession.last_active_at 
-                            ? formatDistanceToNow(new Date(currentSession.last_active_at), { addSuffix: true })
-                            : "now"}
+                          Active now
                         </p>
                       </div>
                     </div>
@@ -1093,311 +638,23 @@ export default function AdminProfile() {
       </Card>
 
       {/* Security Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5" />
-                Password & Security
-              </CardTitle>
-              <CardDescription>Secure your account with a strong password</CardDescription>
-            </div>
-            <Badge variant="outline" className="gap-1">
-              <Lock className="h-3 w-3" />
-              Encrypted
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Security Tips */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <div className="flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-medium text-amber-800">Security Best Practices</p>
-                <ul className="text-sm text-amber-700 list-disc list-inside space-y-0.5">
-                  <li>Use a unique password not used elsewhere</li>
-                  <li>Change your password regularly (every 90 days)</li>
-                  <li>Never share your credentials with anyone</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <Form {...passwordForm}>
-            <form onSubmit={passwordForm.handleSubmit(handleChangePassword)} className="space-y-4">
-              <FormField
-                control={passwordForm.control}
-                name="currentPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showCurrentPassword ? "text" : "password"}
-                          placeholder="Enter current password"
-                          autoComplete="current-password"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        >
-                          {showCurrentPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showNewPassword ? "text" : "password"}
-                          placeholder="Enter new password"
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                    {watchedNewPassword && (
-                      <div className="space-y-2 mt-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Password Strength</span>
-                          <span className={`font-medium ${
-                            passwordStrength < 40 ? "text-red-600" : 
-                            passwordStrength < 70 ? "text-amber-600" : 
-                            "text-green-600"
-                          }`}>
-                            {strengthInfo.label}
-                          </span>
-                        </div>
-                        <Progress value={passwordStrength} className="h-2" />
-                      </div>
-                    )}
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm new password"
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="bg-muted/50 rounded-lg p-4 text-sm">
-                <p className="font-medium text-foreground mb-2 flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Password Requirements
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className={`flex items-center gap-1.5 ${watchedNewPassword?.length >= 8 ? "text-green-600" : "text-muted-foreground"}`}>
-                    <CheckCircle className="h-3 w-3" />
-                    At least 8 characters
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${/[A-Z]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
-                    <CheckCircle className="h-3 w-3" />
-                    One uppercase letter
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${/[a-z]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
-                    <CheckCircle className="h-3 w-3" />
-                    One lowercase letter
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${/[0-9]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
-                    <CheckCircle className="h-3 w-3" />
-                    One number
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${/[!@#$%^&*(),.?":{}|<>]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
-                    <CheckCircle className="h-3 w-3" />
-                    One special character
-                  </div>
-                </div>
-              </div>
-
-              <Button type="submit" disabled={isUpdatingPassword} className="w-full">
-                {isUpdatingPassword ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Updating Password...
-                  </>
-                ) : (
-                  <>
-                    <KeyRound className="h-4 w-4 mr-2" />
-                    Change Password
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      {userData?.id && userData?.email && (
+        <SecurityCard userId={userData.id} userEmail={userData.email} />
+      )}
 
       {/* Two-Factor Authentication */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Two-Factor Authentication
-              </CardTitle>
-              <CardDescription>Add an extra layer of security to your account</CardDescription>
-            </div>
-            {isCheckingMFA ? (
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            ) : mfaEnabled ? (
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
-            ) : (
-              <Badge variant="secondary">Disabled</Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {mfaEnabled ? (
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex gap-3">
-                  <ShieldCheck className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="font-medium text-green-800">Your account is protected</p>
-                    <p className="text-sm text-green-700">
-                      Two-factor authentication is enabled. You'll need your authenticator app to sign in.
-                    </p>
-                    {recoveryCodesCount !== undefined && (
-                      <p className={`text-sm mt-2 ${recoveryCodesCount <= 2 ? 'text-amber-700 font-medium' : 'text-green-700'}`}>
-                        {recoveryCodesCount === 0 ? (
-                          <span className="text-red-700 font-medium">⚠️ No recovery codes remaining - regenerate now</span>
-                        ) : recoveryCodesCount <= 2 ? (
-                          <span>⚠️ Only {recoveryCodesCount} recovery code{recoveryCodesCount === 1 ? '' : 's'} remaining</span>
-                        ) : (
-                          <span>{recoveryCodesCount} recovery codes remaining</span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setShowRegenerateCodes(true)}
-                >
-                  <Key className="h-4 w-4 mr-2" />
-                  Regenerate Recovery Codes
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => setShow2FADisable(true)}
-                >
-                  <ShieldOff className="h-4 w-4 mr-2" />
-                  Disable 2FA
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="font-medium text-amber-800">Recommended for admin accounts</p>
-                    <p className="text-sm text-amber-700">
-                      Two-factor authentication adds an extra layer of security by requiring a code from your authenticator app when signing in.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <Button
-                className="w-full"
-                onClick={() => setShow2FASetup(true)}
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Enable Two-Factor Authentication
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {userData?.id && (
+        <TwoFactorCard userId={userData.id} />
+      )}
 
-      {/* Email Notification Preferences */}
+      {/* Notification Preferences */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Email Notification Preferences
-              </CardTitle>
-              <CardDescription>Choose which email alerts you want to receive</CardDescription>
-            </div>
-            <Badge variant="outline" className="gap-1">
-              <Mail className="h-3 w-3" />
-              Email Alerts
-            </Badge>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notification Preferences
+          </CardTitle>
+          <CardDescription>Control what notifications you receive</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Notification Categories */}
@@ -1614,23 +871,6 @@ export default function AdminProfile() {
           )}
         </CardContent>
       </Card>
-
-      {/* 2FA Dialogs */}
-      <TwoFactorSetupDialog
-        open={show2FASetup}
-        onOpenChange={setShow2FASetup}
-        onSuccess={handleMFASetupSuccess}
-      />
-      <DisableTwoFactorDialog
-        open={show2FADisable}
-        onOpenChange={setShow2FADisable}
-        onSuccess={handleMFADisableSuccess}
-      />
-      <RegenerateRecoveryCodesDialog
-        open={showRegenerateCodes}
-        onOpenChange={setShowRegenerateCodes}
-        onSuccess={() => refetchRecoveryCodes()}
-      />
     </div>
   );
 }
