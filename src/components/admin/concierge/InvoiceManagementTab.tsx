@@ -58,7 +58,6 @@ import {
   CheckCircle2,
   RefreshCw,
   Loader2,
-  FileText,
   AlertTriangle,
   CreditCard,
   Building2,
@@ -118,11 +117,11 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["admin-placement-invoices", statusFilter, caseData?.id],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = supabase
         .from("placement_invoices")
         .select(`
           *,
-          facilities(id, name),
+          facilities(id, name, email, user_id),
           concierge_inquiries(id, user_name, user_email)
         `)
         .order("created_at", { ascending: false })
@@ -397,11 +396,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                                 </DropdownMenuItem>
                               )}
                             </>
-                          )}
-                          <DropdownMenuItem disabled>
-                            <FileText className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
+                              )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

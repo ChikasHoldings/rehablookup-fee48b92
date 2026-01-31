@@ -107,15 +107,15 @@ export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: Con
               onStatusClick={onStatusClick}
               variant="default"
             />
-            <StatItem
-              label="Active"
-              value={activeCases}
-              icon={Clock}
-              status="all"
-              activeStatus={activeStatus}
-              onStatusClick={() => {}}
-              variant="warning"
-            />
+            <div className="flex flex-col items-center justify-center p-2.5 rounded-lg text-center min-w-[70px] bg-warning/10">
+              <Clock className="h-3.5 w-3.5 mb-0.5 text-warning" />
+              <span className="text-lg font-semibold tabular-nums text-warning">
+                {activeCases}
+              </span>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium leading-tight">
+                Active
+              </span>
+            </div>
           </div>
 
           <div className="w-px h-10 bg-border hidden xl:block" />
