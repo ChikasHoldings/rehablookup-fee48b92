@@ -6,6 +6,7 @@ import { SeekerMobileNav } from "./SeekerMobileNav";
 import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useProviderRedirect } from "@/hooks/useProviderRedirect";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -14,6 +15,9 @@ interface SeekerProfile {
 }
 
 export function SeekerShell() {
+  // Redirect providers to their panel - they shouldn't access seeker routes
+  useProviderRedirect();
+  
   const mainContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();

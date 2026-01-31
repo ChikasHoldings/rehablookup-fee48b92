@@ -246,6 +246,7 @@ const App = () => (
             
             {/* Provider Panel Routes - Nested under persistent shell */}
             <Route path="/provider-dashboard" element={<Navigate to="/provider/dashboard" replace />} />
+            <Route path="/provider/listing/preview/:slug" element={<ProviderListingPreview />} />
             <Route path="/provider" element={<ProviderShell />}>
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="listing" element={<ProviderListingPage />} />
@@ -267,7 +268,6 @@ const App = () => (
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
               <Route path="add-location" element={<ProviderAddLocation />} />
-              <Route path="listing/preview/:slug" element={<ProviderListingPreview />} />
               <Route path="choose-plan" element={<Navigate to="/provider/dashboard" replace />} />
             </Route>
             
