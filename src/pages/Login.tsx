@@ -534,7 +534,7 @@ export default function Login() {
             <img src="/logo.png" alt="RehabLookup" className="h-7 md:h-8 w-auto" />
           </Link>
           <div className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            <span className="hidden sm:inline">Don't have an account?{" "}</span>
             <Link to="/signup" className="text-primary font-medium hover:underline">
               Sign up
             </Link>
