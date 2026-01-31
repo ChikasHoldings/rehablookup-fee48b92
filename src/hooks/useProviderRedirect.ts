@@ -60,6 +60,12 @@ export function useProviderRedirect(options: { enabled?: boolean } = {}) {
             "/provider-signup", 
             "/provider-forgot-password",
             "/provider-reset-password",
+            "/provider-support",
+            "/provider-faq",
+            "/provider-resources",
+            "/for-providers",
+            "/privacy-policy",
+            "/terms-of-service",
             "/admin",
           ];
           

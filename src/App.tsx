@@ -8,6 +8,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { PageLoading } from "@/components/ui/page-loading";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 
 // Eagerly load all public pages for instant navigation
 import Index from "./pages/Index";
@@ -160,65 +161,66 @@ const App = () => (
         <CookieConsentBanner />
         <Suspense fallback={<PageLoading />}>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/locations" element={<Locations />} />
-            <Route path="/rehab-centers" element={<RehabCenters />} />
-            <Route path="/search-results" element={<SearchResults />} />
-            <Route path="/rehab-centers/:stateSlug/:citySlug" element={<CityPage />} />
-            <Route path="/rehab-centers/:stateSlug" element={<StatePage />} />
-            <Route path="/center/:slug" element={<CenterProfile />} />
-            <Route path="/treatment-types" element={<TreatmentTypes />} />
-            <Route path="/treatment-types/drug-addiction" element={<DrugAddictionTreatment />} />
-            <Route path="/treatment-types/drug-addiction-treatment" element={<DrugAddictionTreatment />} />
-            <Route path="/treatment-types/drug-addiction/:stateSlug" element={<StateDrugAddiction />} />
-            <Route path="/treatment-types/drug-addiction/:stateSlug/:citySlug" element={<CityDrugAddiction />} />
-            <Route path="/treatment-types/alcohol-rehabilitation" element={<AlcoholRehabilitation />} />
-            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug" element={<StateAlcoholRehab />} />
-            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug/:citySlug" element={<CityAlcoholRehab />} />
-            <Route path="/treatment-types/dual-diagnosis" element={<DualDiagnosisTreatment />} />
-            <Route path="/treatment-types/dual-diagnosis-treatment" element={<DualDiagnosisTreatment />} />
-            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug" element={<StateDualDiagnosis />} />
-            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug/:citySlug" element={<CityDualDiagnosis />} />
-            <Route path="/treatment-types/residential-inpatient" element={<ResidentialInpatient />} />
-            <Route path="/treatment-types/residential-inpatient/:stateSlug" element={<StateInpatientRehab />} />
-            <Route path="/treatment-types/residential-inpatient/:stateSlug/:citySlug" element={<CityInpatientRehab />} />
-            <Route path="/treatment-types/outpatient-programs" element={<OutpatientPrograms />} />
-            <Route path="/treatment-types/outpatient-programs/:stateSlug" element={<StateOutpatientPrograms />} />
-            <Route path="/treatment-types/outpatient-programs/:stateSlug/:citySlug" element={<CityOutpatientPrograms />} />
-            <Route path="/treatment-types/holistic-therapy" element={<HolisticTherapy />} />
-            <Route path="/treatment-types/detox-programs" element={<DetoxPrograms />} />
-            <Route path="/treatment-types/detox-programs/:stateSlug" element={<StateDetoxPrograms />} />
-            <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<CityDetoxPrograms />} />
+            {/* Public Routes - Providers are redirected away */}
+            <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
+            <Route path="/locations" element={<PublicRouteGuard><Locations /></PublicRouteGuard>} />
+            <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
+            <Route path="/search-results" element={<PublicRouteGuard><SearchResults /></PublicRouteGuard>} />
+            <Route path="/rehab-centers/:stateSlug/:citySlug" element={<PublicRouteGuard><CityPage /></PublicRouteGuard>} />
+            <Route path="/rehab-centers/:stateSlug" element={<PublicRouteGuard><StatePage /></PublicRouteGuard>} />
+            <Route path="/center/:slug" element={<PublicRouteGuard><CenterProfile /></PublicRouteGuard>} />
+            <Route path="/treatment-types" element={<PublicRouteGuard><TreatmentTypes /></PublicRouteGuard>} />
+            <Route path="/treatment-types/drug-addiction" element={<PublicRouteGuard><DrugAddictionTreatment /></PublicRouteGuard>} />
+            <Route path="/treatment-types/drug-addiction-treatment" element={<PublicRouteGuard><DrugAddictionTreatment /></PublicRouteGuard>} />
+            <Route path="/treatment-types/drug-addiction/:stateSlug" element={<PublicRouteGuard><StateDrugAddiction /></PublicRouteGuard>} />
+            <Route path="/treatment-types/drug-addiction/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDrugAddiction /></PublicRouteGuard>} />
+            <Route path="/treatment-types/alcohol-rehabilitation" element={<PublicRouteGuard><AlcoholRehabilitation /></PublicRouteGuard>} />
+            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug" element={<PublicRouteGuard><StateAlcoholRehab /></PublicRouteGuard>} />
+            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug/:citySlug" element={<PublicRouteGuard><CityAlcoholRehab /></PublicRouteGuard>} />
+            <Route path="/treatment-types/dual-diagnosis" element={<PublicRouteGuard><DualDiagnosisTreatment /></PublicRouteGuard>} />
+            <Route path="/treatment-types/dual-diagnosis-treatment" element={<PublicRouteGuard><DualDiagnosisTreatment /></PublicRouteGuard>} />
+            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug" element={<PublicRouteGuard><StateDualDiagnosis /></PublicRouteGuard>} />
+            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDualDiagnosis /></PublicRouteGuard>} />
+            <Route path="/treatment-types/residential-inpatient" element={<PublicRouteGuard><ResidentialInpatient /></PublicRouteGuard>} />
+            <Route path="/treatment-types/residential-inpatient/:stateSlug" element={<PublicRouteGuard><StateInpatientRehab /></PublicRouteGuard>} />
+            <Route path="/treatment-types/residential-inpatient/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInpatientRehab /></PublicRouteGuard>} />
+            <Route path="/treatment-types/outpatient-programs" element={<PublicRouteGuard><OutpatientPrograms /></PublicRouteGuard>} />
+            <Route path="/treatment-types/outpatient-programs/:stateSlug" element={<PublicRouteGuard><StateOutpatientPrograms /></PublicRouteGuard>} />
+            <Route path="/treatment-types/outpatient-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityOutpatientPrograms /></PublicRouteGuard>} />
+            <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
+            <Route path="/treatment-types/detox-programs" element={<PublicRouteGuard><DetoxPrograms /></PublicRouteGuard>} />
+            <Route path="/treatment-types/detox-programs/:stateSlug" element={<PublicRouteGuard><StateDetoxPrograms /></PublicRouteGuard>} />
+            <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDetoxPrograms /></PublicRouteGuard>} />
             
             {/* Near Me SEO Routes */}
-            <Route path="/drug-rehab-near-me" element={<DrugRehabNearMe />} />
-            <Route path="/drug-rehab-near-me/:stateSlug" element={<DrugRehabNearMe />} />
-            <Route path="/alcohol-rehab-near-me" element={<AlcoholRehabNearMe />} />
-            <Route path="/alcohol-rehab-near-me/:stateSlug" element={<AlcoholRehabNearMe />} />
-            <Route path="/detox-near-me" element={<DetoxNearMe />} />
-            <Route path="/detox-near-me/:stateSlug" element={<DetoxNearMe />} />
-            <Route path="/dual-diagnosis-near-me" element={<DualDiagnosisNearMe />} />
-            <Route path="/dual-diagnosis-near-me/:stateSlug" element={<DualDiagnosisNearMe />} />
-            <Route path="/inpatient-rehab-near-me" element={<InpatientRehabNearMe />} />
-            <Route path="/inpatient-rehab-near-me/:stateSlug" element={<InpatientRehabNearMe />} />
-            <Route path="/outpatient-near-me" element={<OutpatientNearMe />} />
-            <Route path="/outpatient-near-me/:stateSlug" element={<OutpatientNearMe />} />
+            <Route path="/drug-rehab-near-me" element={<PublicRouteGuard><DrugRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/drug-rehab-near-me/:stateSlug" element={<PublicRouteGuard><DrugRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/alcohol-rehab-near-me" element={<PublicRouteGuard><AlcoholRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/alcohol-rehab-near-me/:stateSlug" element={<PublicRouteGuard><AlcoholRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/detox-near-me" element={<PublicRouteGuard><DetoxNearMe /></PublicRouteGuard>} />
+            <Route path="/detox-near-me/:stateSlug" element={<PublicRouteGuard><DetoxNearMe /></PublicRouteGuard>} />
+            <Route path="/dual-diagnosis-near-me" element={<PublicRouteGuard><DualDiagnosisNearMe /></PublicRouteGuard>} />
+            <Route path="/dual-diagnosis-near-me/:stateSlug" element={<PublicRouteGuard><DualDiagnosisNearMe /></PublicRouteGuard>} />
+            <Route path="/inpatient-rehab-near-me" element={<PublicRouteGuard><InpatientRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/inpatient-rehab-near-me/:stateSlug" element={<PublicRouteGuard><InpatientRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/outpatient-near-me" element={<PublicRouteGuard><OutpatientNearMe /></PublicRouteGuard>} />
+            <Route path="/outpatient-near-me/:stateSlug" element={<PublicRouteGuard><OutpatientNearMe /></PublicRouteGuard>} />
             
-            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/request-help" element={<Navigate to="/account/concierge" replace />} />
             <Route path="/placement-help" element={<Navigate to="/account/concierge" replace />} />
             
             {/* Concierge Placement Routes (Paid Service) */}
-            <Route path="/concierge" element={<ConciergeLanding />} />
-            <Route path="/concierge/intake" element={<ConciergeIntake />} />
-            <Route path="/concierge/thank-you" element={<ConciergeThankYou />} />
-            <Route path="/concierge/create-password" element={<ConciergeCreatePassword />} />
+            <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
+            <Route path="/concierge/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
+            <Route path="/concierge/thank-you" element={<PublicRouteGuard><ConciergeThankYou /></PublicRouteGuard>} />
+            <Route path="/concierge/create-password" element={<PublicRouteGuard><ConciergeCreatePassword /></PublicRouteGuard>} />
             
-            <Route path="/lp/treatment" element={<AdLanding />} />
-            <Route path="/lp/social" element={<SocialLanding />} />
-            <Route path="/auth" element={<SeekerAuth />} />
-            <Route path="/signup" element={<SeekerSignup />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/lp/treatment" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
+            <Route path="/lp/social" element={<PublicRouteGuard><SocialLanding /></PublicRouteGuard>} />
+            <Route path="/auth" element={<PublicRouteGuard><SeekerAuth /></PublicRouteGuard>} />
+            <Route path="/signup" element={<PublicRouteGuard><SeekerSignup /></PublicRouteGuard>} />
+            <Route path="/reset-password" element={<PublicRouteGuard><ResetPassword /></PublicRouteGuard>} />
             
             {/* Seeker Account Routes - Nested under seeker shell */}
             <Route path="/account" element={<SeekerShell />}>
@@ -296,22 +298,22 @@ const App = () => (
               <Route path="profile" element={<AdminProfile />} />
             </Route>
             
-            <Route path="/resources" element={<Resources />} />
-            <Route path="/insurance" element={<Insurance />} />
-            <Route path="/insurance/aetna-rehab" element={<AetnaRehab />} />
-            <Route path="/insurance/bcbs-treatment" element={<BCBSTreatment />} />
-            <Route path="/insurance/cigna-rehab" element={<CignaRehab />} />
-            <Route path="/insurance/united-healthcare-rehab" element={<UnitedHealthcareRehab />} />
-            <Route path="/insurance/humana-rehab" element={<HumanaRehab />} />
-            <Route path="/insurance/kaiser-rehab" element={<KaiserRehab />} />
-            <Route path="/insurance/medicare-rehab" element={<MedicareRehab />} />
-            <Route path="/insurance/medicaid-rehab" element={<MedicaidRehab />} />
-            <Route path="/insurance/anthem-rehab" element={<AnthemRehab />} />
-            <Route path="/cost-estimator" element={<CostEstimator />} />
-            <Route path="/resources/:id" element={<ArticleDetail />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
+            <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
+            <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
+            <Route path="/insurance/aetna-rehab" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/bcbs-treatment" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
+            <Route path="/insurance/cigna-rehab" element={<PublicRouteGuard><CignaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/united-healthcare-rehab" element={<PublicRouteGuard><UnitedHealthcareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/humana-rehab" element={<PublicRouteGuard><HumanaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/kaiser-rehab" element={<PublicRouteGuard><KaiserRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/medicare-rehab" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/medicaid-rehab" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/anthem-rehab" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
+            <Route path="/cost-estimator" element={<PublicRouteGuard><CostEstimator /></PublicRouteGuard>} />
+            <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
+            <Route path="/faq" element={<PublicRouteGuard><FAQ /></PublicRouteGuard>} />
+            <Route path="/about" element={<PublicRouteGuard><About /></PublicRouteGuard>} />
+            <Route path="/contact" element={<PublicRouteGuard><Contact /></PublicRouteGuard>} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
