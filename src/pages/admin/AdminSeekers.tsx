@@ -89,6 +89,9 @@ export default function AdminSeekers() {
       // Fetch user emails from auth.users via secure function
       const { data: emailsData } = await supabase.rpc("get_seeker_emails_for_admin");
       
+      // Fetch user phones from all sources via secure function
+      const { data: phonesData } = await supabase.rpc("get_seeker_phones_for_admin");
+      
       // Fetch additional details from concierge_inquiries
       const { data: conciergeData } = await supabase
         .from("concierge_inquiries")
@@ -97,6 +100,7 @@ export default function AdminSeekers() {
 
       // Create lookup maps for aggregated data
       const emailMap = new Map<string, string>();
+      const phoneMap = new Map<string, string>();
       const conciergeMap = new Map<string, { email?: string; phone?: string; city?: string; state?: string }>();
       const hasConciergeSet = new Set<string>();
 
@@ -104,6 +108,16 @@ export default function AdminSeekers() {
       emailsData?.forEach((item: any) => {
         if (item.user_id && item.email) {
           emailMap.set(item.user_id, item.email);
+        }
+      });
+
+      // Map phones - profile source takes priority
+      phonesData?.forEach((item: any) => {
+        if (item.user_id && item.phone) {
+          // Only set if not already set (profile comes first in the union)
+          if (!phoneMap.has(item.user_id)) {
+            phoneMap.set(item.user_id, item.phone);
+          }
         }
       });
 
@@ -124,13 +138,14 @@ export default function AdminSeekers() {
       // Merge data into profiles
       const enrichedProfiles = profiles?.map((profile: any) => {
         const authEmail = emailMap.get(profile.user_id);
+        const aggregatedPhone = phoneMap.get(profile.user_id);
         const concierge = conciergeMap.get(profile.user_id);
 
         return {
           ...profile,
           // Priority: auth email > concierge email
           email: authEmail || concierge?.email,
-          aggregated_phone: profile.phone || concierge?.phone,
+          aggregated_phone: aggregatedPhone || profile.phone || concierge?.phone,
           aggregated_city: profile.city || concierge?.city,
           aggregated_state: profile.state || concierge?.state,
           aggregated_zipcode: profile.zipcode,
