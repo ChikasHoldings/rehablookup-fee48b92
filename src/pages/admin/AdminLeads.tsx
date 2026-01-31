@@ -18,7 +18,6 @@ import {
   Timer,
   Download,
   AlertCircle,
-  TrendingUp,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -509,12 +508,11 @@ export default function AdminLeads() {
 
   // Stats
   const stats = useMemo(() => {
-    if (!leads) return { total: 0, newCount: 0, highPriority: 0, contacted: 0 };
+    if (!leads) return { total: 0, newCount: 0, contacted: 0 };
     
     return {
       total: leads.length,
       newCount: leads.filter((l) => l.status === "new").length,
-      highPriority: leads.filter((l) => l.urgency === "immediate").length,
       contacted: leads.filter((l) => l.status === "contacted").length,
     };
   }, [leads]);
@@ -574,19 +572,6 @@ export default function AdminLeads() {
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">New</span>
             </button>
 
-            {/* High Priority */}
-            <button
-              onClick={() => handleFilterChange(setUrgencyFilter)("immediate")}
-              className={cn(
-                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
-                urgencyFilter === "immediate" && "bg-accent/10 ring-1 ring-inset ring-accent"
-              )}
-            >
-              <Zap className="h-4 w-4 text-destructive mb-1" />
-              <span className="text-xl font-bold tabular-nums">{stats.highPriority}</span>
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Urgent</span>
-            </button>
-
             {/* Contacted */}
             <button
               onClick={() => handleFilterChange(setStatusFilter)("contacted")}
@@ -598,21 +583,6 @@ export default function AdminLeads() {
               <Phone className="h-4 w-4 text-chart-3 mb-1" />
               <span className="text-xl font-bold tabular-nums">{stats.contacted}</span>
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Contacted</span>
-            </button>
-
-            {/* Converted */}
-            <button
-              onClick={() => handleFilterChange(setStatusFilter)("converted")}
-              className={cn(
-                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
-                statusFilter === "converted" && "bg-accent/10 ring-1 ring-inset ring-accent"
-              )}
-            >
-              <TrendingUp className="h-4 w-4 text-success mb-1" />
-              <span className="text-xl font-bold tabular-nums">
-                {leads?.filter((l) => l.status === "converted").length || 0}
-              </span>
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Converted</span>
             </button>
 
             {/* Redistribution Stats (compact) */}
