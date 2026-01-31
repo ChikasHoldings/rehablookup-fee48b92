@@ -200,8 +200,8 @@ export default function AdminSeekers() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Seekers</h1>
-        <p className="text-muted-foreground">View and manage seeker user accounts</p>
+        <h1 className="text-2xl font-bold text-foreground">Users</h1>
+        <p className="text-muted-foreground">View and manage end-user accounts</p>
       </div>
 
       {/* Stats Cards */}
