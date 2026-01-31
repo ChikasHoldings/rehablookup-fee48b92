@@ -410,6 +410,11 @@ const CenterProfile = () => {
   if (isLoading) {
     return (
       <Layout>
+        <SEO
+          title="Loading Treatment Center..."
+          description="Loading facility information. Please wait."
+          noindex={true}
+        />
         <CenterProfileSkeleton />
       </Layout>
     );
@@ -418,6 +423,11 @@ const CenterProfile = () => {
   if (error || !facility) {
     return (
       <Layout>
+        <SEO
+          title="Center Not Found"
+          description="The treatment center you're looking for doesn't exist or is no longer available."
+          noindex={true}
+        />
         <div className="bg-gradient-to-b from-muted/50 to-background min-h-screen py-20">
           <div className="container max-w-md text-center">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-destructive/10 shadow-lg">
