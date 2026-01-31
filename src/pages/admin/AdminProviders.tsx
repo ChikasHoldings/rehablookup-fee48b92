@@ -44,6 +44,7 @@ import {
   Plus,
   FileCheck2,
 } from "lucide-react";
+import { ProviderStatsCharts } from "@/components/admin/ProviderStatsCharts";
 import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -950,117 +951,22 @@ export default function AdminProviders() {
         <p className="text-muted-foreground">Manage facilities, subscriptions, and placement network</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Total Facilities</p>
-                <p className="text-2xl font-bold">{statusCounts?.all || 0}</p>
-              </div>
-              <Building2 className="h-5 w-5 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Interactive Stats Charts */}
+      <ProviderStatsCharts 
+        statusCounts={statusCounts}
+        onTabChange={handleTabChange}
+        activeTab={activeTab}
+      />
 
-        <Card className="border-l-4 border-l-emerald-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold text-emerald-600">{statusCounts?.approved || 0}</p>
-              </div>
-              <CheckCircle className="h-5 w-5 text-emerald-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold text-amber-600">{statusCounts?.pending || 0}</p>
-              </div>
-              <Clock className="h-5 w-5 text-amber-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-destructive">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Suspended</p>
-                <p className="text-2xl font-bold text-destructive">{statusCounts?.suspended || 0}</p>
-              </div>
-              <Ban className="h-5 w-5 text-destructive" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-400">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Pro Subscribers</p>
-                <p className="text-2xl font-bold text-amber-600">{statusCounts?.pro || 0}</p>
-              </div>
-              <Crown className="h-5 w-5 text-amber-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Placement Network</p>
-                <p className="text-2xl font-bold text-purple-600">{statusCounts?.placement || 0}</p>
-              </div>
-              <Handshake className="h-5 w-5 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs and Search */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full sm:w-auto">
-          <TabsList className="grid w-full sm:w-auto grid-cols-6 h-10">
-            <TabsTrigger value="all" className="text-xs">
-              All
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="text-xs">
-              Approved
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs">
-              Pending
-            </TabsTrigger>
-            <TabsTrigger value="suspended" className="text-xs">
-              Suspended
-            </TabsTrigger>
-            <TabsTrigger value="pro" className="text-xs gap-1">
-              <Crown className="h-3 w-3" />
-              Pro
-            </TabsTrigger>
-            <TabsTrigger value="placement" className="text-xs gap-1">
-              <Handshake className="h-3 w-3" />
-              Placement
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, city, or email..."
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name, city, or email..."
+          value={searchQuery}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       {/* Provider List */}

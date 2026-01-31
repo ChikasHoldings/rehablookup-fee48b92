@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, Users, UserCheck, Send, CheckCircle, XCircle } from "lucide-react";
+import { Search, RefreshCw, Users, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
+import { ConciergeStatsCharts } from "@/components/admin/ConciergeStatsCharts";
 
 type CaseStatus = 'new' | 'reviewing' | 'matching' | 'matched' | 'introductions_sent' | 'in_contact' | 'placed' | 'closed' | 'all';
 
@@ -88,6 +88,10 @@ export default function AdminConcierge() {
 
   const selectedCase = cases?.find((c) => c.id === selectedCaseId);
 
+  const handleStatusClick = (status: string) => {
+    setStatusFilter(status as CaseStatus);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -101,43 +105,22 @@ export default function AdminConcierge() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        {Object.entries(STATUS_CONFIG).map(([status, config]) => (
-          <Card
-            key={status}
-            className={`cursor-pointer transition-colors ${
-              statusFilter === status ? "ring-2 ring-primary" : ""
-            }`}
-            onClick={() => setStatusFilter(status as CaseStatus)}
-          >
-            <CardContent className="p-3 text-center">
-              <p className="text-2xl font-bold">{stats?.[status] || 0}</p>
-              <p className="text-xs text-muted-foreground">{config.label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Interactive Stats Charts */}
+      <ConciergeStatsCharts 
+        stats={stats} 
+        onStatusClick={handleStatusClick}
+        activeStatus={statusFilter}
+      />
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, email, or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as CaseStatus)}>
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="new">New</TabsTrigger>
-            <TabsTrigger value="matched">Matched</TabsTrigger>
-            <TabsTrigger value="placed">Placed</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name, email, or phone..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 max-w-md"
+        />
       </div>
 
       {/* Cases Table */}
