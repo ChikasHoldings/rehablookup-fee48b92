@@ -3,12 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface SMSNotificationRequest {
   userId: string;
-  notificationType: "new_lead" | "lead_status" | "lead_limit_warning" | "general";
+  notificationType: "new_lead" | "lead_status" | "lead_limit_warning" | "subscription_alert" | "general";
   data: {
     leadName?: string;
     leadCity?: string;
@@ -18,28 +18,82 @@ interface SMSNotificationRequest {
     usedLeads?: number;
     leadLimit?: number;
     customMessage?: string;
+    alertType?: string;
   };
 }
 
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[SMS-NOTIFICATION] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
-  // Handle CORS preflight requests
+  const requestId = crypto.randomUUID().slice(0, 8);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { userId, notificationType, data }: SMSNotificationRequest = await req.json();
+    logStep("Function started", { requestId });
 
-    if (!userId || !notificationType) {
+    // Validate environment
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      logStep("Missing Supabase credentials", { requestId });
       return new Response(
-        JSON.stringify({ error: "userId and notificationType are required" }),
+        JSON.stringify({ error: "Server configuration error", requestId }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+      logStep("Twilio credentials not configured", { requestId });
+      return new Response(
+        JSON.stringify({ success: false, sent: false, reason: "SMS service not configured", requestId }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse and validate request
+    let body: SMSNotificationRequest;
+    try {
+      body = await req.json();
+    } catch {
+      logStep("Invalid JSON body", { requestId });
+      return new Response(
+        JSON.stringify({ error: "Invalid request body", requestId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const { userId, notificationType, data } = body;
+
+    if (!userId || !notificationType) {
+      logStep("Missing required fields", { requestId, hasUserId: !!userId, hasType: !!notificationType });
+      return new Response(
+        JSON.stringify({ error: "userId and notificationType are required", requestId }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate notification type
+    const validTypes = ["new_lead", "lead_status", "lead_limit_warning", "subscription_alert", "general"];
+    if (!validTypes.includes(notificationType)) {
+      logStep("Invalid notification type", { requestId, type: notificationType });
+      return new Response(
+        JSON.stringify({ error: "Invalid notification type", requestId }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    logStep("Processing request", { requestId, userId: userId.slice(0, 8), notificationType });
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get user's notification preferences and phone
@@ -50,14 +104,14 @@ serve(async (req) => {
       .maybeSingle();
 
     if (prefsError) {
-      console.error("Error fetching notification preferences:", prefsError);
+      logStep("Error fetching notification preferences", { requestId, error: prefsError.message });
     }
 
     // Check if SMS alerts are enabled
     if (!notifPrefs?.sms_lead_alerts) {
-      console.log("SMS alerts disabled for user:", userId);
+      logStep("SMS alerts disabled for user", { requestId, userId: userId.slice(0, 8) });
       return new Response(
-        JSON.stringify({ success: true, sent: false, reason: "SMS alerts disabled" }),
+        JSON.stringify({ success: true, sent: false, reason: "SMS alerts disabled", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -70,25 +124,25 @@ serve(async (req) => {
       .maybeSingle();
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError);
+      logStep("Error fetching profile", { requestId, error: profileError.message });
       return new Response(
-        JSON.stringify({ error: "Failed to fetch user profile" }),
+        JSON.stringify({ error: "Failed to fetch user profile", requestId }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!profile?.phone) {
-      console.log("No phone number for user:", userId);
+      logStep("No phone number for user", { requestId, userId: userId.slice(0, 8) });
       return new Response(
-        JSON.stringify({ success: true, sent: false, reason: "No phone number on file" }),
+        JSON.stringify({ success: true, sent: false, reason: "No phone number on file", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!profile.phone_verified) {
-      console.log("Phone not verified for user:", userId);
+      logStep("Phone not verified for user", { requestId, userId: userId.slice(0, 8) });
       return new Response(
-        JSON.stringify({ success: true, sent: false, reason: "Phone not verified" }),
+        JSON.stringify({ success: true, sent: false, reason: "Phone not verified", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -99,8 +153,18 @@ serve(async (req) => {
       phone = `+1${phone}`;
     } else if (phone.length === 11 && phone.startsWith("1")) {
       phone = `+${phone}`;
-    } else {
+    } else if (!phone.startsWith("+")) {
       phone = `+${phone}`;
+    }
+
+    // Validate phone format
+    const phoneRegex = /^\+1\d{10}$/;
+    if (!phoneRegex.test(phone)) {
+      logStep("Invalid phone format after normalization", { requestId, phoneLength: phone.length });
+      return new Response(
+        JSON.stringify({ success: true, sent: false, reason: "Invalid phone number format", requestId }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Build message based on notification type
@@ -108,29 +172,42 @@ serve(async (req) => {
     
     switch (notificationType) {
       case "new_lead":
-        messageBody = `RehabLookup: New lead from ${data.leadName || "a potential client"}`;
-        if (data.leadCity) {
+        messageBody = `RehabLookup: New lead from ${data?.leadName || "a potential client"}`;
+        if (data?.leadCity) {
           messageBody += ` in ${data.leadCity}`;
         }
-        if (data.levelOfCare) {
+        if (data?.levelOfCare) {
           messageBody += `. Seeking ${data.levelOfCare}`;
         }
-        if (data.urgency === "within_24_hours" || data.urgency === "emergency") {
+        if (data?.urgency === "within_24_hours" || data?.urgency === "emergency") {
           messageBody += `. URGENT - needs immediate care`;
         }
         messageBody += `. Login to view details.`;
         break;
         
       case "lead_status":
-        messageBody = `RehabLookup: Lead ${data.leadName || ""} status updated. Check your dashboard for details.`;
+        messageBody = `RehabLookup: Lead ${data?.leadName || ""} status updated. Check your dashboard for details.`;
         break;
         
       case "lead_limit_warning":
-        messageBody = `RehabLookup: You've used ${data.usedLeads || 0} of ${data.leadLimit || 100} leads this month (${Math.round(((data.usedLeads || 0) / (data.leadLimit || 100)) * 100)}%). Consider upgrading for more leads.`;
+        const usedLeads = data?.usedLeads || 0;
+        const leadLimit = data?.leadLimit || 100;
+        const percentage = Math.round((usedLeads / leadLimit) * 100);
+        messageBody = `RehabLookup: You've used ${usedLeads} of ${leadLimit} leads this month (${percentage}%). Consider upgrading for more leads.`;
+        break;
+
+      case "subscription_alert":
+        if (data?.alertType === "expiring") {
+          messageBody = `RehabLookup: Your subscription is expiring soon. Renew now to keep receiving leads.`;
+        } else if (data?.alertType === "expired") {
+          messageBody = `RehabLookup: Your subscription has expired. Renew now to resume receiving leads.`;
+        } else {
+          messageBody = `RehabLookup: Important subscription update. Please check your account.`;
+        }
         break;
         
       case "general":
-        messageBody = data.customMessage || "RehabLookup: You have a new notification. Check your dashboard.";
+        messageBody = data?.customMessage || "RehabLookup: You have a new notification. Check your dashboard.";
         break;
         
       default:
@@ -142,19 +219,9 @@ serve(async (req) => {
       messageBody = messageBody.substring(0, 157) + "...";
     }
 
+    logStep("Sending SMS via Twilio", { requestId, notificationType, messageLength: messageBody.length });
+
     // Send SMS via Twilio
-    const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
-
-    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
-      console.error("Twilio credentials not configured");
-      return new Response(
-        JSON.stringify({ success: false, sent: false, reason: "SMS service not configured" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     const authHeader = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
 
@@ -173,29 +240,30 @@ serve(async (req) => {
 
     if (!twilioResponse.ok) {
       const twilioError = await twilioResponse.text();
-      console.error("Twilio error:", twilioError);
+      logStep("Twilio API error", { requestId, status: twilioResponse.status, error: twilioError.slice(0, 200) });
       return new Response(
-        JSON.stringify({ success: false, sent: false, reason: "Failed to send SMS" }),
+        JSON.stringify({ success: false, sent: false, reason: "Failed to send SMS", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const twilioResult = await twilioResponse.json();
-    console.log("SMS sent successfully:", twilioResult.sid, "to:", phone);
+    logStep("SMS sent successfully", { requestId, messageId: twilioResult.sid, notificationType });
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         sent: true,
-        messageId: twilioResult.sid 
+        messageId: twilioResult.sid,
+        requestId
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Error in send-sms-notification:", error);
+    logStep("Unexpected error", { requestId, error: error instanceof Error ? error.message : "Unknown error" });
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", requestId }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
