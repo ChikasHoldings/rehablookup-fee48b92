@@ -1,23 +1,29 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CONFIRM-PLACEMENT] ${step}${detailsStr}`);
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[CONFIRM-PLACEMENT] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
+    logStep(requestId, "Function started", { version: VERSION });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -44,7 +50,7 @@ serve(async (req) => {
       throw new Error("Inquiry ID, Facility ID, and confirmation type are required");
     }
 
-    logStep("Processing confirmation", { inquiryId, facilityId, confirmationType });
+    logStep(requestId, "Processing confirmation", { inquiryId, facilityId, confirmationType });
 
     const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -89,13 +95,13 @@ serve(async (req) => {
       if (!isSeeker) throw new Error("Only seeker can confirm admission");
       updates.seeker_confirmed = true;
       updates.seeker_confirmed_at = new Date().toISOString();
-      logStep("Seeker confirmation recorded");
+      logStep(requestId, "Seeker confirmation recorded");
     } else if (confirmationType === 'provider') {
       if (!isProvider) throw new Error("Only provider can confirm placement");
       updates.placed_facility_id = facilityId;
       updates.placement_confirmed = true;
       updates.placement_confirmed_at = admittedAt || new Date().toISOString();
-      logStep("Provider confirmation recorded");
+      logStep(requestId, "Provider confirmation recorded");
     }
 
     // Check if both parties have confirmed
@@ -105,7 +111,7 @@ serve(async (req) => {
 
     if (willBeFullyConfirmed) {
       updates.status = 'placed';
-      logStep("Dual confirmation complete - placement confirmed");
+      logStep(requestId, "Dual confirmation complete - placement confirmed");
     } else {
       updates.status = 'confirming';
     }
@@ -153,14 +159,14 @@ serve(async (req) => {
           }),
         });
       }
-      logStep("Confirmation notification sent");
+      logStep(requestId, "Confirmation notification sent");
     } catch (notifError) {
-      logStep("Warning: Failed to send confirmation notification", { error: notifError });
+      logStep(requestId, "Warning: Failed to send confirmation notification", { error: String(notifError) });
     }
 
     // If fully confirmed, send placement complete and trigger fee charge
     if (willBeFullyConfirmed) {
-      logStep("Sending placement complete notifications");
+      logStep(requestId, "Sending placement complete notifications");
       
       try {
         await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
@@ -176,10 +182,10 @@ serve(async (req) => {
           }),
         });
       } catch (notifError) {
-        logStep("Warning: Failed to send placement complete notification", { error: notifError });
+        logStep(requestId, "Warning: Failed to send placement complete notification", { error: String(notifError) });
       }
 
-      logStep("Triggering placement fee charge");
+      logStep(requestId, "Triggering placement fee charge");
       
       // Call the charge function
       try {
@@ -197,9 +203,9 @@ serve(async (req) => {
         });
 
         const chargeResult = await chargeResponse.json();
-        logStep("Charge result", chargeResult);
+        logStep(requestId, "Charge result", chargeResult);
       } catch (chargeError) {
-        logStep("Warning: Charge failed", { error: chargeError });
+        logStep(requestId, "Warning: Charge failed", { error: String(chargeError) });
         // Don't fail the confirmation if charge fails
       }
     }
@@ -210,6 +216,8 @@ serve(async (req) => {
         confirmationType,
         fullyConfirmed: willBeFullyConfirmed,
         status: willBeFullyConfirmed ? 'placed' : 'confirming',
+        requestId,
+        _version: VERSION,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -218,9 +226,9 @@ serve(async (req) => {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    logStep(requestId, "ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
