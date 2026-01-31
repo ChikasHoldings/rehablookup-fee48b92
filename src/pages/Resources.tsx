@@ -45,6 +45,17 @@ import interventionGuideImg from "@/assets/articles/intervention-guide.jpg";
 import ptsdAddictionImg from "@/assets/articles/ptsd-addiction.jpg";
 import workplaceSubstanceImg from "@/assets/articles/workplace-substance.jpg";
 import longTermSuccessImg from "@/assets/articles/long-term-success.jpg";
+import heroinTreatmentImg from "@/assets/articles/heroin-treatment.jpg";
+import alcoholTreatmentImg from "@/assets/articles/alcohol-treatment.jpg";
+import xanaxAddictionImg from "@/assets/articles/xanax-addiction.jpg";
+import adderallAddictionImg from "@/assets/articles/adderall-addiction.jpg";
+import marijuanaAddictionImg from "@/assets/articles/marijuana-addiction.jpg";
+import couplesRehabImg from "@/assets/articles/couples-rehab.jpg";
+import seniorAddictionImg from "@/assets/articles/senior-addiction.jpg";
+import lgbtqTreatmentImg from "@/assets/articles/lgbtq-treatment.jpg";
+import bipolarAddictionImg from "@/assets/articles/bipolar-addiction.jpg";
+import eatingDisordersImg from "@/assets/articles/eating-disorders.jpg";
+import overdosePreventionImg from "@/assets/articles/overdose-prevention.jpg";
 
 const categories = [
   { id: "all", label: "All Articles", icon: BookOpen, color: "bg-primary" },
@@ -445,6 +456,116 @@ const articles = [
     categoryLabel: "Treatment Options",
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=800&h=400&fit=crop",
+    featured: false,
+  },
+  {
+    id: "heroin-addiction-treatment",
+    title: "Heroin Addiction Treatment: Understanding Your Options",
+    excerpt: "Heroin addiction requires specialized medical treatment. Learn about medication-assisted treatment, detox protocols, and evidence-based recovery programs.",
+    category: "treatment",
+    categoryLabel: "Treatment Options",
+    readTime: "9 min read",
+    image: heroinTreatmentImg,
+    featured: false,
+  },
+  {
+    id: "alcohol-addiction-guide",
+    title: "Alcohol Addiction Treatment: Your Complete Recovery Guide",
+    excerpt: "Alcohol use disorder affects millions of Americans. Discover the full spectrum of treatment options from medical detox to long-term recovery support.",
+    category: "treatment",
+    categoryLabel: "Treatment Options",
+    readTime: "10 min read",
+    image: alcoholTreatmentImg,
+    featured: false,
+  },
+  {
+    id: "xanax-addiction-treatment",
+    title: "Xanax Addiction: Recognizing the Signs and Finding Help",
+    excerpt: "Benzodiazepine addiction can develop even with prescribed use. Learn how Xanax dependency forms and why professional treatment is essential for recovery.",
+    category: "treatment",
+    categoryLabel: "Treatment Options",
+    readTime: "8 min read",
+    image: xanaxAddictionImg,
+    featured: false,
+  },
+  {
+    id: "adderall-addiction-recovery",
+    title: "Adderall Addiction: When ADHD Medication Becomes a Problem",
+    excerpt: "Stimulant medications like Adderall have high abuse potential. Understand the signs of addiction and treatment approaches for stimulant use disorder.",
+    category: "prevention",
+    categoryLabel: "Prevention",
+    readTime: "7 min read",
+    image: adderallAddictionImg,
+    featured: false,
+  },
+  {
+    id: "marijuana-addiction-help",
+    title: "Marijuana Addiction: Is It Real and How to Get Help",
+    excerpt: "Cannabis use disorder is more common than many realize. Learn about marijuana dependency, withdrawal symptoms, and effective treatment options.",
+    category: "treatment",
+    categoryLabel: "Treatment Options",
+    readTime: "7 min read",
+    image: marijuanaAddictionImg,
+    featured: false,
+  },
+  {
+    id: "couples-rehab-guide",
+    title: "Couples Rehab: Recovering Together as Partners",
+    excerpt: "When both partners struggle with addiction, couples rehab offers a unique approach to healing together. Learn what to expect and if it's right for you.",
+    category: "treatment",
+    categoryLabel: "Treatment Options",
+    readTime: "6 min read",
+    image: couplesRehabImg,
+    featured: false,
+  },
+  {
+    id: "senior-addiction-treatment",
+    title: "Senior Addiction Treatment: Help for Older Adults",
+    excerpt: "Addiction in older adults is often overlooked but increasingly common. Discover age-appropriate treatment options and unique considerations for seniors.",
+    category: "treatment",
+    categoryLabel: "Treatment Options",
+    readTime: "7 min read",
+    image: seniorAddictionImg,
+    featured: false,
+  },
+  {
+    id: "lgbtq-addiction-treatment",
+    title: "LGBTQ+ Addiction Treatment: Finding Affirming Care",
+    excerpt: "LGBTQ+ individuals face unique challenges in addiction recovery. Learn how to find culturally competent, affirming treatment programs.",
+    category: "treatment",
+    categoryLabel: "Treatment Options",
+    readTime: "7 min read",
+    image: lgbtqTreatmentImg,
+    featured: false,
+  },
+  {
+    id: "bipolar-disorder-addiction",
+    title: "Bipolar Disorder and Addiction: Understanding the Connection",
+    excerpt: "Bipolar disorder and substance abuse frequently co-occur. Learn why this happens and how integrated dual diagnosis treatment addresses both conditions.",
+    category: "mental-health",
+    categoryLabel: "Mental Health",
+    readTime: "8 min read",
+    image: bipolarAddictionImg,
+    featured: false,
+  },
+  {
+    id: "eating-disorders-addiction",
+    title: "Eating Disorders and Substance Abuse: The Hidden Connection",
+    excerpt: "Eating disorders and addiction share common roots and frequently co-occur. Understand the relationship and how specialized treatment can help.",
+    category: "mental-health",
+    categoryLabel: "Mental Health",
+    readTime: "7 min read",
+    image: eatingDisordersImg,
+    featured: false,
+  },
+  {
+    id: "overdose-prevention-naloxone",
+    title: "Overdose Prevention: Understanding Naloxone and Harm Reduction",
+    excerpt: "Naloxone saves lives by reversing opioid overdoses. Learn how to recognize an overdose, use Narcan, and where to access this life-saving medication.",
+    category: "prevention",
+    categoryLabel: "Prevention",
+    readTime: "6 min read",
+    image: overdosePreventionImg,
     featured: false,
   },
 ];
