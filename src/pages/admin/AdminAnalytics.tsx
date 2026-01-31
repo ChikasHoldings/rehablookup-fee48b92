@@ -1114,97 +1114,195 @@ export default function AdminAnalytics() {
         </div>
       )}
 
-      {/* KPI Cards - Primary Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <KPICard
-          title="Visitors"
-          value={kpis.visitors}
-          change={kpis.visitorsChange}
-          icon={<Users className="h-5 w-5" />}
-          tooltip="Total page views across all facility profiles"
-          isLoading={isLoading}
-          color="blue"
-        />
-        <KPICard
-          title="Clicks"
-          value={kpis.clicks}
-          change={kpis.clicksChange}
-          icon={<MousePointerClick className="h-5 w-5" />}
-          tooltip="CTA clicks: Call Now, View Profile, Request Help"
-          isLoading={isLoading}
-          color="purple"
-        />
-        <KPICard
-          title="Total Leads"
-          value={kpis.totalLeads}
-          change={kpis.totalLeadsChange}
-          icon={<FileText className="h-5 w-5" />}
-          tooltip="Total lead submissions from all sources"
-          isLoading={isLoading}
-          color="cyan"
-        />
-        <KPICard
-          title="Qualified"
-          value={kpis.qualifiedLeads}
-          change={kpis.qualifiedLeadsChange}
-          icon={<CheckCircle className="h-5 w-5" />}
-          tooltip="Leads with verified email addresses"
-          isLoading={isLoading}
-          color="green"
-        />
-        <KPICard
-          title="Conversion"
-          value={`${kpis.conversionRate}%`}
-          change={kpis.conversionRateChange}
-          icon={<Target className="h-5 w-5" />}
-          tooltip="Leads divided by Visitors"
-          isLoading={isLoading}
-          color="amber"
-        />
-      </div>
+      {/* Consolidated KPI Summary Cards */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Traffic & Engagement Card */}
+        <Card className="border-slate-200">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-blue-50">
+                  <Users className="h-4 w-4 text-blue-600" />
+                </div>
+                <CardTitle className="text-sm font-semibold">Traffic & Engagement</CardTitle>
+              </div>
+              {compareMode && kpis.visitorsChange !== null && (
+                <Badge variant={kpis.visitorsChange >= 0 ? "default" : "destructive"} className="text-xs">
+                  {kpis.visitorsChange >= 0 ? "+" : ""}{kpis.visitorsChange.toFixed(1)}%
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {isLoading ? (
+              <Skeleton className="h-[140px] w-full" />
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-4 mb-3">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-slate-900">{kpis.visitors.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">Visitors</p>
+                  </div>
+                  <div className="text-center border-x border-slate-100">
+                    <div className="text-2xl font-bold text-slate-900">{kpis.clicks.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">Clicks</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-amber-600">{kpis.conversionRate}%</div>
+                    <p className="text-xs text-muted-foreground">Conversion</p>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={80}>
+                  <AreaChart data={timeSeriesData.slice(-14)}>
+                    <defs>
+                      <linearGradient id="colorVisitorsMini" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="visitors" stroke={CHART_COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#colorVisitorsMini)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* KPI Cards - Secondary Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <KPICard
-          title="Active Subs"
-          value={kpis.activeSubscriptions}
-          icon={<CreditCard className="h-5 w-5" />}
-          tooltip="Currently active subscriptions"
-          isLoading={isLoading}
-          color="blue"
-        />
-        <KPICard
-          title="New Subs"
-          value={kpis.newSubscriptions}
-          icon={<Zap className="h-5 w-5" />}
-          tooltip="New subscriptions in selected period"
-          isLoading={isLoading}
-          color="green"
-        />
-        <KPICard
-          title="Revenue"
-          value={`$${kpis.revenue.toLocaleString()}`}
-          icon={<DollarSign className="h-5 w-5" />}
-          tooltip="Total revenue in selected period"
-          isLoading={isLoading}
-          color="emerald"
-        />
-        <KPICard
-          title="MRR"
-          value={`$${kpis.mrr.toLocaleString()}`}
-          icon={<Activity className="h-5 w-5" />}
-          tooltip="Monthly Recurring Revenue"
-          isLoading={isLoading}
-          color="purple"
-        />
-        <KPICard
-          title="Churn"
-          value={`${kpis.churnRate}%`}
-          icon={<UserMinus className="h-5 w-5" />}
-          tooltip="Subscription cancellation rate"
-          isLoading={isLoading}
-          color={kpis.churnRate > 5 ? "red" : "slate"}
-        />
+        {/* Leads Performance Card */}
+        <Card className="border-slate-200">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-cyan-50">
+                  <FileText className="h-4 w-4 text-cyan-600" />
+                </div>
+                <CardTitle className="text-sm font-semibold">Lead Performance</CardTitle>
+              </div>
+              {compareMode && kpis.totalLeadsChange !== null && (
+                <Badge variant={kpis.totalLeadsChange >= 0 ? "default" : "destructive"} className="text-xs">
+                  {kpis.totalLeadsChange >= 0 ? "+" : ""}{kpis.totalLeadsChange.toFixed(1)}%
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {isLoading ? (
+              <Skeleton className="h-[140px] w-full" />
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height={120}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "Qualified", value: kpis.qualifiedLeads, color: CHART_COLORS.success },
+                          { name: "Unqualified", value: Math.max(0, kpis.totalLeads - kpis.qualifiedLeads), color: CHART_COLORS.warning },
+                        ].filter(d => d.value > 0)}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={50}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        <Cell fill={CHART_COLORS.success} />
+                        <Cell fill={CHART_COLORS.warning} />
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <div className="text-2xl font-bold text-slate-900">{kpis.totalLeads}</div>
+                    <p className="text-xs text-muted-foreground">Total Leads</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                      <span className="text-muted-foreground">{kpis.qualifiedLeads} qualified</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                    <span className="text-muted-foreground">{Math.max(0, kpis.totalLeads - kpis.qualifiedLeads)} unqualified</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Revenue & Subscriptions Card */}
+        <Card className="border-slate-200">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-emerald-50">
+                  <DollarSign className="h-4 w-4 text-emerald-600" />
+                </div>
+                <CardTitle className="text-sm font-semibold">Revenue & Subscriptions</CardTitle>
+              </div>
+              <Badge variant="outline" className={cn("text-xs", kpis.churnRate > 5 ? "border-red-200 text-red-600" : "border-slate-200")}>
+                {kpis.churnRate}% churn
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {isLoading ? (
+              <Skeleton className="h-[140px] w-full" />
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xl font-bold text-emerald-600">${kpis.revenue.toLocaleString()}</div>
+                      <p className="text-xs text-muted-foreground">Revenue</p>
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold text-purple-600">${kpis.mrr.toLocaleString()}</div>
+                      <p className="text-xs text-muted-foreground">MRR</p>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Active</span>
+                      <span className="font-semibold">{kpis.activeSubscriptions}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">New</span>
+                      <span className="font-semibold text-green-600">+{kpis.newSubscriptions}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="w-[100px]">
+                  {planDistributionData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={100}>
+                      <PieChart>
+                        <Pie
+                          data={planDistributionData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={25}
+                          outerRadius={40}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {planDistributionData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[100px] flex items-center justify-center text-muted-foreground text-xs">
+                      No data
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Activity Feed Widget */}
