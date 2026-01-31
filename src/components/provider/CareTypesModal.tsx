@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -31,12 +31,12 @@ interface CareTypesModalProps {
   initialCareTypes?: string[];
 }
 
-export function CareTypesModal({
+export const CareTypesModal = forwardRef<HTMLDivElement, CareTypesModalProps>(function CareTypesModal({
   open,
   onOpenChange,
   facilityId,
   initialCareTypes = [],
-}: CareTypesModalProps) {
+}, ref) {
   const queryClient = useQueryClient();
   const [selectedTypes, setSelectedTypes] = useState<string[]>(initialCareTypes);
 
@@ -143,4 +143,4 @@ export function CareTypesModal({
       </DialogContent>
     </Dialog>
   );
-}
+});
