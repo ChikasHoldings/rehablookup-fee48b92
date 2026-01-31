@@ -106,7 +106,11 @@ import WomensRehabNearMe from "./pages/near-me/WomensRehabNearMe";
 import MensRehabNearMe from "./pages/near-me/MensRehabNearMe";
 import FentanylRehabNearMe from "./pages/near-me/FentanylRehabNearMe";
 import SoberLivingNearMe from "./pages/near-me/SoberLivingNearMe";
-
+import TeenRehabNearMe from "./pages/near-me/TeenRehabNearMe";
+import VeteransRehabNearMe from "./pages/near-me/VeteransRehabNearMe";
+import MedicaidRehabNearMe from "./pages/near-me/MedicaidRehabNearMe";
+import CourtOrderedRehabNearMe from "./pages/near-me/CourtOrderedRehabNearMe";
+import SuboxoneClinicNearMe from "./pages/near-me/SuboxoneClinicNearMe";
 // Provider Panel - eagerly load for instant navigation
 import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
@@ -222,6 +226,16 @@ const App = () => (
             <Route path="/fentanyl-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FentanylRehabNearMe /></PublicRouteGuard>} />
             <Route path="/sober-living-near-me" element={<PublicRouteGuard><SoberLivingNearMe /></PublicRouteGuard>} />
             <Route path="/sober-living-near-me/:stateSlug" element={<PublicRouteGuard><SoberLivingNearMe /></PublicRouteGuard>} />
+            <Route path="/teen-rehab-near-me" element={<PublicRouteGuard><TeenRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/teen-rehab-near-me/:stateSlug" element={<PublicRouteGuard><TeenRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/veterans-rehab-near-me" element={<PublicRouteGuard><VeteransRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/veterans-rehab-near-me/:stateSlug" element={<PublicRouteGuard><VeteransRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/medicaid-rehab-near-me" element={<PublicRouteGuard><MedicaidRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/medicaid-rehab-near-me/:stateSlug" element={<PublicRouteGuard><MedicaidRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/court-ordered-rehab-near-me" element={<PublicRouteGuard><CourtOrderedRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/court-ordered-rehab-near-me/:stateSlug" element={<PublicRouteGuard><CourtOrderedRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/suboxone-clinic-near-me" element={<PublicRouteGuard><SuboxoneClinicNearMe /></PublicRouteGuard>} />
+            <Route path="/suboxone-clinic-near-me/:stateSlug" element={<PublicRouteGuard><SuboxoneClinicNearMe /></PublicRouteGuard>} />
             
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/request-help" element={<Navigate to="/account/concierge" replace />} />
