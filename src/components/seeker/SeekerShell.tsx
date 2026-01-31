@@ -6,7 +6,7 @@ import { SeekerMobileNav } from "./SeekerMobileNav";
 import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useProviderRedirect } from "@/hooks/useProviderRedirect";
+import { useUserRole, getPortalHome } from "@/hooks/useUserRole";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -15,8 +15,8 @@ interface SeekerProfile {
 }
 
 export function SeekerShell() {
-  // Redirect providers to their panel - they shouldn't access seeker routes
-  const { isProvider, isLoading: isProviderCheckLoading } = useProviderRedirect();
+  // Use unified role system - redirects admins and providers
+  const { role, isLoading: isRoleLoading, isAuthenticated } = useUserRole();
   
   const mainContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
@@ -25,7 +25,6 @@ export function SeekerShell() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,7 +56,26 @@ export function SeekerShell() {
     }
   }, [location.pathname]);
 
-  // Auth check - NO FORCED REDIRECT
+  // Redirect admins and providers to their respective portals
+  useEffect(() => {
+    if (isRoleLoading) return;
+    
+    // Skip in iframe
+    if (typeof window !== "undefined" && window.self !== window.top) return;
+
+    // If admin or provider, redirect to their portal
+    if (role === "admin") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+    
+    if (role === "provider") {
+      navigate("/provider/dashboard", { replace: true });
+      return;
+    }
+  }, [role, isRoleLoading, navigate]);
+
+  // Auth check - NO FORCED REDIRECT for unauthenticated users
   useEffect(() => {
     let isMounted = true;
     
@@ -67,7 +85,6 @@ export function SeekerShell() {
         
         if (!isMounted) return;
         
-        setIsAuthenticated(!!session);
         setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
@@ -86,7 +103,6 @@ export function SeekerShell() {
       async (event, session) => {
         if (!isMounted) return;
         
-        setIsAuthenticated(!!session);
         setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
@@ -132,8 +148,8 @@ export function SeekerShell() {
   // Get display name - prefer first name, fall back to display name or email
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
-  // Show loading while checking provider status or auth
-  if (isProviderCheckLoading || isLoading) {
+  // Show loading while checking role or auth
+  if (isRoleLoading || isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -141,8 +157,8 @@ export function SeekerShell() {
     );
   }
 
-  // If user is a provider, don't render seeker shell (redirect is happening)
-  if (isProvider) {
+  // If user is admin or provider, show loading (redirect is happening)
+  if (role === "admin" || role === "provider") {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -180,4 +196,3 @@ export function SeekerShell() {
     </div>
   );
 }
-

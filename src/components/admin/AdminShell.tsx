@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState, Suspense, useCallback } from "react";
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { useRef, useEffect, useState, Suspense } from "react";
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
+import { useUserRole } from "@/hooks/useUserRole";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 

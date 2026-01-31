@@ -7,19 +7,21 @@ import { supabase } from "@/integrations/supabase/client";
  * to their provider panel. This enforces separation between provider and public experiences.
  * 
  * Provider detection is based on having a profile in the `profiles` table (provider profiles).
+ * Also checks for admin role to redirect admins to admin panel.
  * 
  * Skips redirect check when:
  * - Page is loaded in an iframe (for preview functionality)
  * - User is on provider or admin routes
  * 
  * @param options.enabled - Whether to enable the redirect check (default: true)
- * @returns { isProvider, isLoading } - Provider status and loading state
+ * @returns { isProvider, isAdmin, isLoading } - Role status and loading state
  */
 export function useProviderRedirect(options: { enabled?: boolean } = {}) {
   const { enabled = true } = options;
   const navigate = useNavigate();
   const location = useLocation();
   const [isProvider, setIsProvider] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -30,15 +32,39 @@ export function useProviderRedirect(options: { enabled?: boolean } = {}) {
       return;
     }
 
-    const checkProviderStatus = async () => {
+    const checkRoleStatus = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
           setIsProvider(false);
+          setIsAdmin(false);
           setIsLoading(false);
           return;
         }
+
+        // Check admin role FIRST (higher priority)
+        const { data: adminRole } = await supabase.rpc("has_role", {
+          _user_id: session.user.id,
+          _role: "admin",
+        });
+
+        if (adminRole === true) {
+          setIsAdmin(true);
+          setIsProvider(false);
+          
+          const currentPath = location.pathname;
+          
+          // If admin is on non-admin route, redirect to admin panel
+          if (!currentPath.startsWith("/admin") && currentPath !== "/admin-login") {
+            navigate("/admin", { replace: true });
+          }
+          
+          setIsLoading(false);
+          return;
+        }
+
+        setIsAdmin(false);
 
         // Check if user has a provider profile (profiles table is for providers only)
         const { data: profile } = await supabase
@@ -66,29 +92,28 @@ export function useProviderRedirect(options: { enabled?: boolean } = {}) {
             "/for-providers",
             "/privacy-policy",
             "/terms-of-service",
-            "/admin",
           ];
           
-          // Check if already on provider routes, admin routes, or allowed paths
+          // Check if already on provider routes or allowed paths
           const isProviderRoute = currentPath.startsWith("/provider");
-          const isAdminRoute = currentPath.startsWith("/admin");
           const isAllowedPath = allowedPaths.some(path => currentPath.startsWith(path));
           
-          if (!isProviderRoute && !isAdminRoute && !isAllowedPath) {
+          if (!isProviderRoute && !isAllowedPath) {
             // Redirect to provider dashboard
             navigate("/provider/dashboard", { replace: true });
           }
         }
       } catch (error) {
-        console.error("Error checking provider status:", error);
+        console.error("Error checking role status:", error);
         setIsProvider(false);
+        setIsAdmin(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkProviderStatus();
+    checkRoleStatus();
   }, [enabled, navigate, location.pathname]);
 
-  return { isProvider, isLoading };
+  return { isProvider, isAdmin, isLoading };
 }
