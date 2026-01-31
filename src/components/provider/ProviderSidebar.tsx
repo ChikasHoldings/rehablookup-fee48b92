@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -12,13 +12,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useProStatus } from "@/hooks/useProStatus";
 import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
+import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
 
 interface ProviderSidebarProps {
   onNavigate?: () => void;
@@ -37,44 +35,11 @@ const navItems = [
 
 export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const { selectedFacility } = useSelectedFacility();
-  const queryClient = useQueryClient();
   const { balanceFormatted } = useProviderCredits(selectedFacility?.id);
   const { data: proStatus } = useProStatus();
   const { count: pendingConciergeCount } = usePendingConciergeCount(selectedFacility?.id);
-
-  // Fetch new inquiries count
-  const { data: newInquiriesCount = 0 } = useQuery({
-    queryKey: ["new-inquiries-count", selectedFacility?.id],
-    queryFn: async () => {
-      if (!selectedFacility?.id) return 0;
-      const { count, error } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("facility_id", selectedFacility.id)
-        .eq("status", "new");
-      if (error) return 0;
-      return count || 0;
-    },
-    enabled: !!selectedFacility?.id,
-    refetchInterval: 30000,
-  });
-
-  // Subscribe to realtime lead changes
-  useEffect(() => {
-    if (!selectedFacility?.id) return;
-    const channel = supabase
-      .channel("sidebar-inquiries-count")
-      .on("postgres_changes", 
-        { event: "*", schema: "public", table: "leads", filter: `facility_id=eq.${selectedFacility.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["new-inquiries-count", selectedFacility.id] });
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedFacility?.id, queryClient]);
+  const { count: pendingInquiriesCount } = usePendingInquiriesCount();
 
   return (
     <div className="flex flex-col h-full">
@@ -85,10 +50,10 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             const Icon = item.icon;
             const isInquiriesItem = item.href === "/provider/inquiries";
             const isPlacementItem = item.href === "/provider/placement-network";
-            const showInquiriesBadge = isInquiriesItem && newInquiriesCount > 0;
+            const showInquiriesBadge = isInquiriesItem && pendingInquiriesCount > 0;
             const showPlacementBadge = isPlacementItem && pendingConciergeCount > 0;
             const showBadge = showInquiriesBadge || showPlacementBadge;
-            const badgeCount = isInquiriesItem ? newInquiriesCount : pendingConciergeCount;
+            const badgeCount = isInquiriesItem ? pendingInquiriesCount : pendingConciergeCount;
             const badgeLabel = isInquiriesItem ? "new" : "pending";
             
             return (
