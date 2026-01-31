@@ -14,8 +14,9 @@ import {
   MessageSquare,
   Star,
   Heart,
+  Mail,
+  Shield,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,7 +54,14 @@ interface UserProfile {
   zipcode: string | null;
   created_at: string;
   updated_at: string;
+  // Aggregated fields from multiple sources
   email?: string;
+  aggregated_phone?: string;
+  aggregated_city?: string;
+  aggregated_state?: string;
+  aggregated_zipcode?: string;
+  has_concierge?: boolean;
+  has_leads?: boolean;
 }
 
 export default function AdminSeekers() {
@@ -64,11 +72,12 @@ export default function AdminSeekers() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  // Fetch users
+  // Fetch users with aggregated data from multiple sources
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch base seeker profiles
+      const { data: profiles, error } = await supabase
         .from("seeker_profiles")
         .select("*")
         .order("created_at", { ascending: false });
@@ -78,7 +87,82 @@ export default function AdminSeekers() {
         throw error;
       }
 
-      return data as UserProfile[];
+      // Fetch emails and additional details from concierge_inquiries
+      const { data: conciergeData } = await supabase
+        .from("concierge_inquiries")
+        .select("user_id, user_email, user_phone, preferred_city, preferred_state")
+        .not("user_id", "is", null);
+
+      // Fetch emails and additional details from leads
+      const { data: leadsData } = await supabase
+        .from("leads")
+        .select("seeker_user_id, email, phone, location_city_state, location_zip")
+        .not("seeker_user_id", "is", null);
+
+      // Create lookup maps for aggregated data
+      const conciergeMap = new Map<string, { email?: string; phone?: string; city?: string; state?: string }>();
+      const leadsMap = new Map<string, { email?: string; phone?: string; cityState?: string; zip?: string }>();
+      const hasConciergeSet = new Set<string>();
+      const hasLeadsSet = new Set<string>();
+
+      conciergeData?.forEach((item: any) => {
+        if (item.user_id) {
+          hasConciergeSet.add(item.user_id);
+          if (!conciergeMap.has(item.user_id)) {
+            conciergeMap.set(item.user_id, {
+              email: item.user_email,
+              phone: item.user_phone,
+              city: item.preferred_city,
+              state: item.preferred_state,
+            });
+          }
+        }
+      });
+
+      leadsData?.forEach((item: any) => {
+        if (item.seeker_user_id) {
+          hasLeadsSet.add(item.seeker_user_id);
+          if (!leadsMap.has(item.seeker_user_id)) {
+            leadsMap.set(item.seeker_user_id, {
+              email: item.email,
+              phone: item.phone,
+              cityState: item.location_city_state,
+              zip: item.location_zip,
+            });
+          }
+        }
+      });
+
+      // Merge data into profiles
+      const enrichedProfiles = profiles?.map((profile: any) => {
+        const concierge = conciergeMap.get(profile.user_id);
+        const lead = leadsMap.get(profile.user_id);
+        
+        // Parse city/state from leads location_city_state if available
+        let leadCity: string | undefined;
+        let leadState: string | undefined;
+        if (lead?.cityState) {
+          const parts = lead.cityState.split(',').map((s: string) => s.trim());
+          if (parts.length >= 2) {
+            leadCity = parts[0];
+            leadState = parts[1];
+          }
+        }
+
+        return {
+          ...profile,
+          // Priority: profile > concierge > leads
+          email: concierge?.email || lead?.email,
+          aggregated_phone: profile.phone || concierge?.phone || lead?.phone,
+          aggregated_city: profile.city || concierge?.city || leadCity,
+          aggregated_state: profile.state || concierge?.state || leadState,
+          aggregated_zipcode: profile.zipcode || lead?.zip,
+          has_concierge: hasConciergeSet.has(profile.user_id),
+          has_leads: hasLeadsSet.has(profile.user_id),
+        };
+      });
+
+      return enrichedProfiles as UserProfile[];
     },
   });
 
@@ -86,16 +170,18 @@ export default function AdminSeekers() {
   const { data: activityStats } = useQuery({
     queryKey: ["admin-user-activity-stats"],
     queryFn: async () => {
-      const [favorites, inquiries, reviews] = await Promise.all([
+      const [favorites, inquiries, reviews, leads] = await Promise.all([
         supabase.from("user_favorites").select("user_id", { count: "exact", head: true }),
         supabase.from("concierge_inquiries").select("user_id", { count: "exact", head: true }).not("user_id", "is", null),
         supabase.from("facility_reviews").select("user_id", { count: "exact", head: true }),
+        supabase.from("leads").select("seeker_user_id", { count: "exact", head: true }).not("seeker_user_id", "is", null),
       ]);
 
       return {
         favorites: favorites.count || 0,
         inquiries: inquiries.count || 0,
         reviews: reviews.count || 0,
+        leads: leads.count || 0,
       };
     },
   });
@@ -104,27 +190,33 @@ export default function AdminSeekers() {
   const { data: userActivityCounts } = useQuery({
     queryKey: ["admin-user-activity-counts"],
     queryFn: async () => {
-      const [favoriteCounts, inquiryCounts, reviewCounts] = await Promise.all([
+      const [favoriteCounts, inquiryCounts, reviewCounts, leadsCounts] = await Promise.all([
         supabase.from("user_favorites").select("user_id"),
         supabase.from("concierge_inquiries").select("user_id").not("user_id", "is", null),
         supabase.from("facility_reviews").select("user_id"),
+        supabase.from("leads").select("seeker_user_id").not("seeker_user_id", "is", null),
       ]);
 
-      const counts: Record<string, { favorites: number; inquiries: number; reviews: number }> = {};
+      const counts: Record<string, { favorites: number; inquiries: number; reviews: number; leads: number }> = {};
 
       favoriteCounts.data?.forEach((item: any) => {
-        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
+        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
         counts[item.user_id].favorites++;
       });
 
       inquiryCounts.data?.forEach((item: any) => {
-        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
+        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
         counts[item.user_id].inquiries++;
       });
 
       reviewCounts.data?.forEach((item: any) => {
-        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
+        if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
         counts[item.user_id].reviews++;
+      });
+
+      leadsCounts.data?.forEach((item: any) => {
+        if (!counts[item.seeker_user_id]) counts[item.seeker_user_id] = { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
+        counts[item.seeker_user_id].leads++;
       });
 
       return counts;
@@ -136,6 +228,7 @@ export default function AdminSeekers() {
   // Stats
   const totalCount = safeUsers.length;
   const verifiedCount = safeUsers.filter(u => u.phone_verified).length;
+  const withEmailCount = safeUsers.filter(u => u.email).length;
   const thisMonthCount = safeUsers.filter(u => {
     const created = new Date(u.created_at);
     const now = new Date();
@@ -148,8 +241,9 @@ export default function AdminSeekers() {
       user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.state?.toLowerCase().includes(searchQuery.toLowerCase());
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.aggregated_city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.aggregated_state?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesVerification = verificationFilter === "all" ||
       (verificationFilter === "verified" && user.phone_verified) ||
@@ -174,9 +268,13 @@ export default function AdminSeekers() {
   };
 
   const getLocation = (user: UserProfile) => {
-    if (user.city && user.state) return `${user.city}, ${user.state}`;
-    if (user.state) return user.state;
-    if (user.zipcode) return user.zipcode;
+    const city = user.aggregated_city || user.city;
+    const state = user.aggregated_state || user.state;
+    const zip = user.aggregated_zipcode || user.zipcode;
+    
+    if (city && state) return `${city}, ${state}`;
+    if (state) return state;
+    if (zip) return zip;
     return null;
   };
 
@@ -200,7 +298,7 @@ export default function AdminSeekers() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card className="relative overflow-hidden border-l-4 border-l-primary">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
@@ -210,6 +308,20 @@ export default function AdminSeekers() {
               </div>
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <UsersIcon className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">With Email</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : withEmailCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <Mail className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -229,15 +341,15 @@ export default function AdminSeekers() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">New This Month</p>
                 <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : thisMonthCount}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-blue-600" />
+              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-amber-600" />
               </div>
             </div>
           </CardContent>
@@ -247,8 +359,8 @@ export default function AdminSeekers() {
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Inquiries</p>
-                <p className="text-3xl font-bold">{activityStats ? activityStats.inquiries : <Skeleton className="h-9 w-12" />}</p>
+                <p className="text-sm font-medium text-muted-foreground">Inquiries</p>
+                <p className="text-3xl font-bold">{activityStats ? activityStats.inquiries + activityStats.leads : <Skeleton className="h-9 w-12" />}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
                 <MessageSquare className="h-6 w-6 text-purple-600" />
@@ -265,7 +377,7 @@ export default function AdminSeekers() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, city, or state..."
+                placeholder="Search by name, email, city, or state..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -292,10 +404,11 @@ export default function AdminSeekers() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Activity</TableHead>
-                <TableHead>Verified</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
               </TableRow>
             </TableHeader>
@@ -304,6 +417,7 @@ export default function AdminSeekers() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-10 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
@@ -313,13 +427,14 @@ export default function AdminSeekers() {
                 ))
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No users found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => {
-                  const counts = userActivityCounts?.[user.user_id] || { favorites: 0, inquiries: 0, reviews: 0 };
+                  const counts = userActivityCounts?.[user.user_id] || { favorites: 0, inquiries: 0, reviews: 0, leads: 0 };
+                  const totalInquiries = counts.inquiries + counts.leads;
                   return (
                     <TableRow 
                       key={user.id} 
@@ -343,6 +458,16 @@ export default function AdminSeekers() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {user.email ? (
+                          <div className="flex items-center gap-1.5 text-sm max-w-[200px]">
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="truncate">{user.email}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {getLocation(user) ? (
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                             <MapPin className="h-3.5 w-3.5" />
@@ -353,21 +478,21 @@ export default function AdminSeekers() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {user.phone ? (
+                        {(user.aggregated_phone || user.phone) ? (
                           <div className="flex items-center gap-1.5 text-sm">
                             <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                            {user.phone}
+                            {user.aggregated_phone || user.phone}
                           </div>
                         ) : (
                           <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          {counts.inquiries > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {totalInquiries > 0 && (
                             <Badge variant="secondary" className="gap-1 text-xs">
                               <MessageSquare className="h-3 w-3" />
-                              {counts.inquiries}
+                              {totalInquiries}
                             </Badge>
                           )}
                           {counts.reviews > 0 && (
@@ -382,7 +507,12 @@ export default function AdminSeekers() {
                               {counts.favorites}
                             </Badge>
                           )}
-                          {counts.inquiries === 0 && counts.reviews === 0 && counts.favorites === 0 && (
+                          {user.has_concierge && (
+                            <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1 text-xs">
+                              <Shield className="h-3 w-3" />
+                            </Badge>
+                          )}
+                          {totalInquiries === 0 && counts.reviews === 0 && counts.favorites === 0 && !user.has_concierge && (
                             <span className="text-xs text-muted-foreground">No activity</span>
                           )}
                         </div>
