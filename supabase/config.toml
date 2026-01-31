@@ -1,8 +1,5 @@
 project_id = "plckxokpyiubuekvodtc"
 
-[functions.submit-lead]
-verify_jwt = false
-
 [functions.track-view]
 verify_jwt = false
 
