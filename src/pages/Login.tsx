@@ -641,33 +641,6 @@ export default function Login() {
                 </Alert>
               )}
 
-              {/* Account Type Indicator */}
-              {detectedType && !error && (
-                <div className={`mb-5 sm:mb-6 p-3 rounded-lg border ${
-                  detectedType === "provider" 
-                    ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800" 
-                    : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
-                }`}>
-                  <div className="flex items-center gap-2">
-                    {detectedType === "provider" ? (
-                      <>
-                        <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                          Provider Account Detected
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                          Personal Account Detected
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Login Form */}
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                 <div className="space-y-1.5 sm:space-y-2">
