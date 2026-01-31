@@ -107,14 +107,41 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange) {
         return getEmptyAnalytics();
       }
 
-      // Fetch all leads for all facilities
-      const { data: leads, error } = await supabase
+      // Fetch direct leads for all facilities
+      const { data: directLeads, error: directError } = await supabase
         .from("leads")
         .select("*")
         .in("facility_id", facilityIds)
         .order("created_at", { ascending: true });
 
-      if (error) throw error;
+      if (directError) throw directError;
+
+      // Fetch redistributed leads from lead_distributions
+      const { data: distributions } = await supabase
+        .from("lead_distributions")
+        .select("lead_id")
+        .in("facility_id", facilityIds)
+        .eq("is_original", false);
+
+      let redistributedLeads: any[] = [];
+      if (distributions && distributions.length > 0) {
+        const redistributedLeadIds = distributions.map(d => d.lead_id);
+        const { data: redistLeads } = await supabase
+          .from("leads")
+          .select("*")
+          .in("id", redistributedLeadIds);
+        redistributedLeads = redistLeads || [];
+      }
+
+      // Combine and deduplicate leads
+      const leadsMap = new Map<string, any>();
+      (directLeads || []).forEach(lead => leadsMap.set(lead.id, lead));
+      redistributedLeads.forEach(lead => {
+        if (!leadsMap.has(lead.id)) leadsMap.set(lead.id, lead);
+      });
+      
+      const leads = Array.from(leadsMap.values())
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
       // Create facility lookup map
       const facilityMap = new Map(facilities.map(f => [f.id, f.name]));
