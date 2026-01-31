@@ -376,7 +376,9 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
     return 0;
   });
 
-  const unreadCount = (pendingProviders?.length || 0) + (unassignedLeads && unassignedLeads.length > 0 ? 1 : 0) + userUnreadCount;
+  // Only count user notifications that can actually be marked as read
+  // Pending providers and unassigned leads are action items, not clearable notifications
+  const unreadCount = userUnreadCount;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
