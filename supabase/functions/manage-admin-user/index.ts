@@ -476,24 +476,52 @@ serve(async (req) => {
           throw new Error("New role is required");
         }
 
-        // Get current roles
-        const { data: currentRoles } = await supabase
+        // Get current admin_role from admin_user_profiles
+        const { data: currentAdminProfile } = await supabase
+          .from("admin_user_profiles")
+          .select("admin_role")
+          .eq("user_id", targetUserId)
+          .single();
+
+        const oldRole = currentAdminProfile?.admin_role || "customer_rep";
+
+        // Update admin_role in admin_user_profiles (this is the actual role)
+        const { error: updateError } = await supabase
+          .from("admin_user_profiles")
+          .upsert({
+            user_id: targetUserId,
+            admin_role: newRole,
+          }, { onConflict: "user_id" });
+
+        if (updateError) {
+          console.error("[MANAGE-ADMIN-USER] Failed to update admin_role:", updateError);
+          throw new Error("Failed to update role");
+        }
+
+        // Ensure user has admin role in user_roles table (for RLS policies)
+        const { data: existingRole } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", targetUserId);
-
-        // Delete current admin/moderator roles
-        await supabase
-          .from("user_roles")
-          .delete()
           .eq("user_id", targetUserId)
-          .in("role", ["admin", "moderator"]);
+          .eq("role", "admin")
+          .single();
 
-        // Insert new role
-        await supabase.from("user_roles").insert({
-          user_id: targetUserId,
-          role: newRole,
-        });
+        if (!existingRole) {
+          await supabase.from("user_roles").insert({
+            user_id: targetUserId,
+            role: "admin",
+          });
+        }
+
+        // Update super_admin permission based on role
+        const isSuperAdmin = newRole === "super_admin";
+        await supabase
+          .from("admin_user_permissions")
+          .upsert({
+            user_id: targetUserId,
+            permission_key: "super_admin",
+            granted: isSuperAdmin,
+          }, { onConflict: "user_id,permission_key" });
 
         // Log action
         await supabase.from("admin_audit_log").insert({
@@ -503,7 +531,7 @@ serve(async (req) => {
           target_id: targetUserId,
           details: {
             email: targetProfile?.email,
-            old_roles: currentRoles?.map(r => r.role),
+            old_role: oldRole,
             new_role: newRole,
           },
         });
