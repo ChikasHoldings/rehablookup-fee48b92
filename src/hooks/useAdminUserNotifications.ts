@@ -68,7 +68,7 @@ export function useAdminUserNotifications() {
     }
   }, []);
 
-  const { data: notifications = [], isLoading, error } = useQuery({
+  const { data: notifications = [], isLoading, error, refetch } = useQuery({
     queryKey: ["admin-user-notifications"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -316,6 +316,7 @@ export function useAdminUserNotifications() {
     unreadCount,
     isLoading,
     error,
+    refetch,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
     deleteNotification: deleteNotificationMutation.mutate,

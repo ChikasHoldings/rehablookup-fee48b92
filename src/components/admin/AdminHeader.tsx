@@ -348,11 +348,11 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   // Add user-specific notifications (tasks assigned to this admin, etc.)
   userNotifications?.slice(0, 5).forEach((notif) => {
     let notifType: Notification["type"] = "provider";
-    if (notif.type === "payment_failed") notifType = "warning";
-    else if (notif.type === "lead_assigned" || notif.type === "new_lead") notifType = "lead";
+    if (["payment_failed", "payment_delinquent", "placement_payment_failed"].includes(notif.type)) notifType = "warning";
+    else if (["lead_assigned", "new_lead"].includes(notif.type)) notifType = "lead";
     else if (notif.type === "provider_signup") notifType = "provider";
-    else if (notif.type === "brute_force" || notif.type === "login_alert" || notif.type === "security_event") notifType = "security";
-    else if (notif.type === "facility_approved") notifType = "success";
+    else if (["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"].includes(notif.type)) notifType = "security";
+    else if (["facility_approved", "new_subscription"].includes(notif.type)) notifType = "success";
 
     notifications.push({
       id: `user-${notif.id}`,
