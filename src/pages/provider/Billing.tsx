@@ -14,14 +14,20 @@ import {
   Star,
   TrendingUp,
   Award,
-  ExternalLink
+  ExternalLink,
+  Landmark,
+  Trash2,
+  Shield,
+  AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useProStatus } from "@/hooks/useProStatus";
+import { useProviderPaymentMethods } from "@/hooks/useProviderPaymentMethods";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
+import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
 
 const CREDIT_PACKAGES = [
   { amountCents: 10000, label: "$100", bonus: null },
@@ -68,15 +75,24 @@ const PRO_BENEFITS = [
 
 export default function ProviderBillingPage() {
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "credits";
+  const defaultTab = searchParams.get("tab") || "payment-methods";
   
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
   const { balance, balanceFormatted, transactions, isLoading, refetch } = useProviderCredits(facilityId);
   const { data: proStatus, isLoading: proLoading } = useProStatus();
+  const { 
+    paymentMethods, 
+    defaultPaymentMethod,
+    hasPaymentMethod,
+    isLoading: paymentMethodsLoading,
+    deletePaymentMethod,
+    setDefaultPaymentMethod,
+  } = useProviderPaymentMethods(facilityId);
   
   const [purchaseLoading, setPurchaseLoading] = useState<number | null>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
@@ -185,21 +201,230 @@ export default function ProviderBillingPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">Billing</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your credits and Pro subscription
+            Manage your payment methods, credits, and Pro subscription
           </p>
         </div>
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="payment-methods" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">Payment Methods</span>
+              <span className="sm:hidden">Cards</span>
+            </TabsTrigger>
             <TabsTrigger value="credits" className="gap-2">
               <Wallet className="h-4 w-4" />
               Credits
             </TabsTrigger>
             <TabsTrigger value="pro" className="gap-2">
               <Sparkles className="h-4 w-4" />
-              Pro Subscription
+              <span className="hidden sm:inline">Pro Subscription</span>
+              <span className="sm:hidden">Pro</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Payment Methods Tab */}
+          <TabsContent value="payment-methods" className="space-y-6">
+            {/* Default Payment Method Card */}
+            {defaultPaymentMethod ? (
+              <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-600/10 border-emerald-500/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        {defaultPaymentMethod.type === "ach" ? (
+                          <Landmark className="h-6 w-6 text-emerald-600" />
+                        ) : (
+                          <CreditCard className="h-6 w-6 text-emerald-600" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-lg">
+                            {defaultPaymentMethod.type === "ach" 
+                              ? defaultPaymentMethod.bank_name || "Bank Account"
+                              : defaultPaymentMethod.card_brand || "Card"
+                            } •••• {defaultPaymentMethod.last_four}
+                          </p>
+                          <Badge className="bg-emerald-500 text-white">Default</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {defaultPaymentMethod.type === "ach" 
+                            ? "Used for automated billing"
+                            : defaultPaymentMethod.exp_month && defaultPaymentMethod.exp_year
+                              ? `Expires ${defaultPaymentMethod.exp_month}/${defaultPaymentMethod.exp_year}`
+                              : "Used for automated billing"
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Alert className="border-amber-500/30 bg-amber-500/5">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription>
+                  Add a payment method to enable automated billing for Pro subscription and easy credit purchases.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Benefits of Saved Payment Methods */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-muted-foreground" />
+                  Why Save a Payment Method?
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">Automated Pro Billing</p>
+                      <p className="text-xs text-muted-foreground">Your Pro subscription renews automatically each month</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Wallet className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">Quick Credit Purchases</p>
+                      <p className="text-xs text-muted-foreground">Buy credits instantly without re-entering card details</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Award className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">Placement Fee Billing</p>
+                      <p className="text-xs text-muted-foreground">Placement fees are charged only on confirmed placements</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Shield className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">Secure & Encrypted</p>
+                      <p className="text-xs text-muted-foreground">Card details stored securely by Stripe</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Saved Payment Methods List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-muted-foreground" />
+                  Saved Payment Methods
+                </CardTitle>
+                <CardDescription>
+                  Manage your saved cards and bank accounts
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {paymentMethodsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : paymentMethods.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CreditCard className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                    <p className="text-muted-foreground">No payment methods saved</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Add a card or bank account for seamless billing
+                    </p>
+                  </div>
+                ) : (
+                  paymentMethods.map((pm) => (
+                    <div 
+                      key={pm.id} 
+                      className={cn(
+                        "flex items-center justify-between p-4 rounded-lg border transition-colors",
+                        pm.is_default ? "bg-muted/50 border-primary/30" : "hover:bg-muted/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "h-10 w-10 rounded-full flex items-center justify-center",
+                          pm.is_default ? "bg-primary/20" : "bg-muted"
+                        )}>
+                          {pm.type === "ach" ? (
+                            <Landmark className={cn("h-5 w-5", pm.is_default ? "text-primary" : "text-muted-foreground")} />
+                          ) : (
+                            <CreditCard className={cn("h-5 w-5", pm.is_default ? "text-primary" : "text-muted-foreground")} />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">
+                              {pm.type === "ach" ? pm.bank_name || "Bank" : pm.card_brand || "Card"} •••• {pm.last_four}
+                            </p>
+                            {pm.is_default && (
+                              <Badge variant="secondary" className="text-xs">Default</Badge>
+                            )}
+                            {!pm.is_verified && (
+                              <Badge variant="outline" className="text-xs text-amber-600 border-amber-600">Pending</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {pm.type === "card" && pm.exp_month && pm.exp_year
+                              ? `Expires ${pm.exp_month}/${pm.exp_year}`
+                              : `Added ${format(new Date(pm.created_at), "MMM d, yyyy")}`
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!pm.is_default && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDefaultPaymentMethod.mutate(pm.id)}
+                            disabled={setDefaultPaymentMethod.isPending}
+                          >
+                            Set Default
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            if (confirm("Remove this payment method?")) {
+                              deletePaymentMethod.mutate(pm.id);
+                            }
+                          }}
+                          disabled={deletePaymentMethod.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2 mt-2"
+                  onClick={() => setShowPaymentMethodModal(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Payment Method
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Credits Tab */}
           <TabsContent value="credits" className="space-y-6">
@@ -467,6 +692,16 @@ export default function ProviderBillingPage() {
             </p>
           </DialogContent>
         </Dialog>
+
+        {/* Add Payment Method Modal */}
+        {facilityId && (
+          <AddPaymentMethodModal
+            open={showPaymentMethodModal}
+            onOpenChange={setShowPaymentMethodModal}
+            facilityId={facilityId}
+            onSuccess={() => setShowPaymentMethodModal(false)}
+          />
+        )}
       </div>
     </div>
   );
