@@ -33,7 +33,7 @@ const resources = [
 const providerLinks = [
   { name: "List Your Facility", path: "/for-providers" },
   { name: "Provider Resources", path: "/provider-resources" },
-  { name: "Provider Login", path: "/provider-login" },
+  { name: "Provider Login", path: "/login?type=provider" },
 ];
 
 // Social icons as inline SVGs for better control

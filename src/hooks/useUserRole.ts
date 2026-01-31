@@ -33,6 +33,8 @@ const PORTAL_CONFIG = {
 
 // Routes that are always accessible regardless of role
 const PUBLIC_AUTH_ROUTES = [
+  "/login",
+  "/forgot-password",
   "/provider-login",
   "/provider-signup",
   "/provider-forgot-password",

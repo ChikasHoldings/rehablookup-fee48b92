@@ -10,6 +10,8 @@ interface PublicRouteGuardProps {
 const ALWAYS_ALLOWED_ROUTES = [
   "/privacy-policy",
   "/terms-of-service",
+  "/login",
+  "/forgot-password",
 ];
 
 // Provider-specific public pages
