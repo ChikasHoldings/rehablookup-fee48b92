@@ -34,6 +34,8 @@ export type AdminRoleType = "super_admin" | "manager" | "customer_rep" | "adviso
 interface AdminProfile {
   force_password_change: boolean | null;
   status: string;
+  first_name: string | null;
+  last_name: string | null;
   display_name: string | null;
   avatar_url: string | null;
   mfa_enabled: boolean | null;
@@ -121,9 +123,7 @@ export function useAdminAuth() {
   const fetchAdminProfile = useCallback(async (userId: string): Promise<AdminProfile | null> => {
     try {
       const { data, error } = await supabase
-        .from("admin_user_profiles")
-        .select("force_password_change, status, display_name, avatar_url, mfa_enabled, mfa_skip, admin_role")
-        .eq("user_id", userId)
+        .rpc("get_admin_profile", { p_user_id: userId })
         .maybeSingle();
 
       if (error) {
@@ -131,7 +131,19 @@ export function useAdminAuth() {
         return null;
       }
 
-      return data as AdminProfile | null;
+      if (!data) return null;
+
+      return {
+        force_password_change: data.force_password_change,
+        status: data.status,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        display_name: data.display_name,
+        avatar_url: data.avatar_url,
+        mfa_enabled: data.mfa_enabled,
+        mfa_skip: data.mfa_skip,
+        admin_role: data.admin_role,
+      };
     } catch (err) {
       console.error("Exception fetching admin profile:", err);
       return null;
@@ -361,11 +373,17 @@ export function useAdminAuth() {
     ? "super_admin" 
     : (adminProfile?.admin_role || "customer_rep");
 
+  // Compute full name from first/last name
+  const adminFullName = adminProfile?.first_name && adminProfile?.last_name
+    ? `${adminProfile.first_name} ${adminProfile.last_name}`
+    : adminProfile?.first_name || adminProfile?.display_name || null;
+
   return { 
     user, 
     isAdmin: isAdmin === true, // Convert null to false for backwards compat
     isSuperAdmin, 
     adminRole,
+    adminFullName,
     permissions, 
     adminProfile,
     forcePasswordChange,
