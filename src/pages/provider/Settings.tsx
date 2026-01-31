@@ -989,7 +989,22 @@ export default function ProviderSettingsPage() {
                   Get help with your account
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
+                <a 
+                  href="mailto:support@rehablookup.com" 
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                >
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Email Support</p>
+                    <p className="text-xs text-muted-foreground">support@rehablookup.com</p>
+                  </div>
+                </a>
+                <p className="text-xs text-muted-foreground pt-2">
+                  Our team typically responds within 24 hours during business days.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
