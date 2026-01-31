@@ -66,7 +66,7 @@ export default function ProviderAnalyticsPage() {
   const hasActiveFilter = selectedPreset !== "billing_cycle";
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
       <div className="max-w-6xl mx-auto space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

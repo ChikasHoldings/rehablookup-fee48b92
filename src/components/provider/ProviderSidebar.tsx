@@ -78,7 +78,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <nav className="p-2 flex-1">
+      <nav className="p-2 flex-1 overflow-y-auto">
         <ul className="space-y-0.5">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
@@ -97,31 +97,31 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   to={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    "group flex items-center gap-2.5 lg:gap-3 px-2.5 lg:px-3 py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive 
                       ? "bg-primary text-white shadow-sm" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <div className={cn(
-                    "flex items-center justify-center h-8 w-8 rounded-md transition-colors relative",
+                    "flex items-center justify-center h-7 w-7 lg:h-8 lg:w-8 rounded-md transition-colors relative shrink-0",
                     isActive 
                       ? "bg-white/20" 
                       : "bg-muted group-hover:bg-background"
                   )}>
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                     {showBadge && (
                       <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 flex items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
                         {badgeCount > 99 ? "99+" : badgeCount}
                       </span>
                     )}
                   </div>
-                  <span className="truncate flex-1">{item.label}</span>
+                  <span className="truncate flex-1 text-xs lg:text-sm">{item.label}</span>
                   {showBadge && (
                     <Badge 
                       variant="secondary" 
                       className={cn(
-                        "h-4 px-1 text-[9px] font-semibold",
+                        "h-4 px-1 text-[9px] font-semibold shrink-0 hidden sm:flex",
                         isActive 
                           ? "bg-white/20 text-white" 
                           : "bg-primary/10 text-primary"
