@@ -54,10 +54,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
-import { calculateLeadScore } from "@/lib/leadScoring";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
 // Re-export Lead for backwards compatibility
@@ -269,7 +267,6 @@ export function LeadProfileModal({
 
   if (!lead) return null;
 
-  const leadScore = calculateLeadScore(lead);
   const firstName = lead.name.split(" ")[0];
 
   const formatUrgency = (urgency: string | null) => {
@@ -369,8 +366,6 @@ export function LeadProfileModal({
                 {/* Quick Stats Row */}
                 <div className="flex items-center gap-3 mt-3">
                   <LeadStatusBadge status={lead.status as LeadStatus} />
-                  <Separator orientation="vertical" className="h-4" />
-                  <LeadScoreBadge lead={lead} />
                   {lead.urgency === "immediate" && (
                     <>
                       <Separator orientation="vertical" className="h-4" />
@@ -580,31 +575,6 @@ export function LeadProfileModal({
                       </span>
                     </div>
                     <p className="text-sm font-medium">{formatUrgency(lead.urgency)}</p>
-                  </div>
-
-                  {/* Lead Score Breakdown */}
-                  <div className="p-4 rounded-xl bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Lead Score
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-primary">{leadScore.total}</span>
-                      <span className="text-sm text-muted-foreground">/100</span>
-                      <Badge 
-                        className={`ml-auto ${
-                          leadScore.grade === 'A' ? 'bg-green-100 text-green-700 border-green-200' :
-                          leadScore.grade === 'B' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                          leadScore.grade === 'C' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                          'bg-slate-100 text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        Grade {leadScore.grade}
-                      </Badge>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Message */}

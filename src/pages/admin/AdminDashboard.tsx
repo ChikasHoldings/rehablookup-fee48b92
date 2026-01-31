@@ -30,7 +30,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
 import LowCreditMonitorWidget from "@/components/admin/LowCreditMonitorWidget";
-import { LeadDeliveryHealthCheck } from "@/components/admin/LeadDeliveryHealthCheck";
+
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 
 // Subscription plan colors
@@ -996,9 +996,6 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Lead Delivery Health Check */}
-      <LeadDeliveryHealthCheck />
     </div>
   );
 }

@@ -49,7 +49,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
-import { LeadScoreBadge } from "./LeadScoreBadge";
 import { getLeadDisplayInfo } from "@/lib/leadMasking";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
@@ -268,9 +267,6 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Lead Score */}
-              <LeadScoreBadge lead={lead} showDetails />
 
               {/* Snooze Reminders */}
               <div className="space-y-2">

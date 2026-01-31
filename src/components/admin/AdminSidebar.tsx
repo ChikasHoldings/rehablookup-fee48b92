@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   Image,
   BarChart3,
-  RotateCcw,
+  
   ShieldAlert,
   FileCheck,
   GitCompare,
@@ -61,15 +61,7 @@ const navEntries: NavEntry[] = [
       { to: "/admin/location-changes", icon: GitCompare, label: "Location Changes", permission: "location_changes" },
     ],
   },
-  {
-    icon: Users,
-    label: "Leads",
-    permission: "leads",
-    items: [
-      { to: "/admin/leads", icon: Users, label: "All Leads", permission: "leads" },
-      { to: "/admin/lead-routing", icon: RotateCcw, label: "Lead Routing", permission: "lead_routing" },
-    ],
-  },
+  { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
   {
     icon: CreditCard,
     label: "Subscriptions",
