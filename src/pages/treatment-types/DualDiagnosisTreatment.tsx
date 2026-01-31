@@ -164,12 +164,12 @@ const DualDiagnosisTreatment = () => {
       <SEO
         title="Dual Diagnosis Treatment | Mental Health & Addiction Programs"
         description="Find dual diagnosis treatment programs for co-occurring mental health and substance use disorders. Get integrated care for depression, anxiety, PTSD, and addiction."
-        canonical="/treatment-types/dual-diagnosis"
+        canonical="/treatment-types/dual-diagnosis-treatment"
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },
-          { name: "Dual Diagnosis", url: "/treatment-types/dual-diagnosis" },
+          { name: "Dual Diagnosis", url: "/treatment-types/dual-diagnosis-treatment" },
         ]}
       />
 
