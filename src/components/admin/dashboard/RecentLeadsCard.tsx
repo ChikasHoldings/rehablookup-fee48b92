@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,48 +38,54 @@ function formatTimeAgo(dateString: string): string {
   }
 }
 
-export function RecentLeadsCard({ recentLeads }: RecentLeadsCardProps) {
-  return (
-    <Card className="border shadow-sm lg:col-span-2">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium">Recent Leads</CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin/leads" className="text-xs">
-              View all <ChevronRight className="h-3 w-3 ml-1" />
-            </Link>
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {recentLeads && recentLeads.length > 0 ? (
-          <div className="space-y-3">
-            {recentLeads.map((lead) => (
-              <div key={lead.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <span className="text-xs font-medium">{lead.name?.charAt(0)?.toUpperCase() || "?"}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{lead.name || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {lead.email_verified && (
-                    <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
-                      Verified
-                    </Badge>
-                  )}
-                  <span className="text-xs text-muted-foreground">{formatTimeAgo(lead.created_at)}</span>
-                </div>
-              </div>
-            ))}
+const RecentLeadsCard = forwardRef<HTMLDivElement, RecentLeadsCardProps>(
+  function RecentLeadsCard({ recentLeads }, ref) {
+    return (
+      <Card ref={ref} className="border shadow-sm lg:col-span-2">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-medium">Recent Leads</CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/leads" className="text-xs">
+                View all <ChevronRight className="h-3 w-3 ml-1" />
+              </Link>
+            </Button>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">No recent leads</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+        </CardHeader>
+        <CardContent>
+          {recentLeads && recentLeads.length > 0 ? (
+            <div className="space-y-3">
+              {recentLeads.map((lead) => (
+                <div key={lead.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <span className="text-xs font-medium">{lead.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{lead.name || "Unknown"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {lead.email_verified && (
+                      <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
+                        Verified
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">{formatTimeAgo(lead.created_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">No recent leads</p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+);
+
+RecentLeadsCard.displayName = "RecentLeadsCard";
+
+export { RecentLeadsCard };
