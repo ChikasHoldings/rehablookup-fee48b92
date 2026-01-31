@@ -112,6 +112,7 @@ import ProviderHelpPage from "./pages/provider/Help";
 import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
 import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
 import ProviderAddLocation from "./pages/provider/AddLocation";
+import ProviderListingPreview from "./pages/provider/ListingPreview";
 
 import ProviderBillingPage from "./pages/provider/Billing";
 import ProviderPlacementNetworkPage from "./pages/provider/PlacementNetwork";
@@ -266,6 +267,7 @@ const App = () => (
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
               <Route path="add-location" element={<ProviderAddLocation />} />
+              <Route path="listing/preview/:slug" element={<ProviderListingPreview />} />
               <Route path="choose-plan" element={<Navigate to="/provider/dashboard" replace />} />
             </Route>
             
