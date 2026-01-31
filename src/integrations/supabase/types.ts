@@ -3391,6 +3391,39 @@ export type Database = {
           },
         ]
       }
+      purchased_listing_slots: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          price_cents: number
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          price_cents?: number
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          price_cents?: number
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rate_limit_log: {
         Row: {
           action_type: string
@@ -4384,6 +4417,7 @@ export type Database = {
           zip_code: string
         }[]
       }
+      get_purchased_slot_count: { Args: { p_user_id: string }; Returns: number }
       get_unlocked_lead_data: {
         Args: { p_facility_id: string; p_lead_id: string }
         Returns: {

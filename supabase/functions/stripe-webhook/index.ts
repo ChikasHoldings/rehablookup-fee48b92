@@ -59,17 +59,68 @@ serve(async (req) => {
 
     // ==========================================
     // Handle checkout.session.completed
-    // Handles: Credit purchases & Pro subscriptions
+    // Handles: Credit purchases, Pro subscriptions, Additional listing slots
     // ==========================================
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const metadataType = session.metadata?.type;
+      const purchaseType = session.metadata?.purchase_type;
       
       logStep("Checkout session completed", { 
         mode: session.mode, 
         type: metadataType,
+        purchaseType,
         customerId: session.customer 
       });
+
+      // ADDITIONAL LISTING SLOT PURCHASE
+      if (session.mode === "payment" && purchaseType === "additional_listing_slot") {
+        const userId = session.metadata?.user_id;
+        
+        if (userId) {
+          logStep("Processing additional listing slot purchase", { userId, sessionId: session.id });
+
+          // Update the pending record to completed
+          const { error: updateError } = await supabaseAdmin
+            .from("purchased_listing_slots")
+            .update({
+              status: "completed",
+              stripe_payment_intent_id: session.payment_intent as string,
+              completed_at: new Date().toISOString(),
+            })
+            .eq("stripe_checkout_session_id", session.id)
+            .eq("user_id", userId);
+
+          if (updateError) {
+            logStep("Error updating listing slot purchase", { error: updateError.message });
+          } else {
+            logStep("Listing slot purchase completed successfully");
+
+            // Get user's facility for notification
+            const { data: facilities } = await supabaseAdmin
+              .from("facilities")
+              .select("id")
+              .eq("user_id", userId)
+              .limit(1);
+
+            const facilityId = facilities?.[0]?.id || null;
+
+            // Create provider notification
+            await supabaseAdmin.from("provider_notifications").insert({
+              user_id: userId,
+              facility_id: facilityId,
+              type: "listing_slot_purchased",
+              title: "Additional Listing Slot Purchased",
+              message: "You can now add one more facility listing to your account.",
+              metadata: { session_id: session.id },
+            });
+          }
+        }
+        
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       // CREDIT PURCHASE FULFILLMENT
       if (session.mode === "payment" && metadataType === "credit_purchase") {

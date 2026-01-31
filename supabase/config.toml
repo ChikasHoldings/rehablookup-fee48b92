@@ -282,3 +282,6 @@ verify_jwt = false
 
 [functions.track-request-help]
 verify_jwt = false
+
+[functions.purchase-listing-slot]
+verify_jwt = false
