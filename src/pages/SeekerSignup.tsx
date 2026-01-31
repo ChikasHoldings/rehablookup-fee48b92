@@ -186,213 +186,265 @@ export default function SeekerSignup() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 flex items-center justify-center px-4 pb-8">
-          <div className="w-full max-w-md">
-            <div className="bg-card rounded-xl border border-border p-6 sm:p-8 space-y-6">
-              {/* Header */}
-              <div className="text-center space-y-1">
-                <h1 className="text-xl font-bold text-foreground">Create Account</h1>
-                <p className="text-sm text-muted-foreground">
-                  Save facilities and track your search
-                </p>
-              </div>
-
-              <form onSubmit={handleSignup} className="space-y-4">
-                {/* Name Fields */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="firstName" className="text-sm">First Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="firstName"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="First"
-                        className="h-10 pl-10"
-                        autoComplete="given-name"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="lastName" className="text-sm">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Last"
-                      className="h-10"
-                      autoComplete="family-name"
-                    />
-                  </div>
-                </div>
-                
-                {/* Email */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-sm">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <EmailInput
-                      id="email"
-                      value={email}
-                      onChange={setEmail}
-                      placeholder="you@example.com"
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                
-                {/* Phone */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-sm">Phone</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                    <PhoneInput
-                      id="phone"
-                      value={phone}
-                      onChange={setPhone}
-                      placeholder="(555) 123-4567"
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                
-                {/* Location */}
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Location</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={zipcode}
-                        onChange={(e) => setZipcode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                        placeholder="Zip"
-                        className="h-10 pl-10"
-                        maxLength={5}
-                      />
-                    </div>
-                    <Input
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="City"
-                      className="h-10"
-                      disabled={zipcodeLookup.isLoading}
-                    />
-                    <Input
-                      value={state}
-                      onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
-                      placeholder="State"
-                      className="h-10"
-                      disabled={zipcodeLookup.isLoading}
-                      maxLength={2}
-                    />
-                  </div>
-                  {zipcodeLookup.isLoading && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Looking up...
-                    </p>
-                  )}
-                  {zipcodeLookup.data && (
-                    <p className="text-xs text-green-600 flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3" />
-                      {zipcodeLookup.data.city}, {zipcodeLookup.data.stateAbbr}
-                    </p>
-                  )}
-                </div>
-                
-                {/* Password */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="password" className="text-sm">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="h-10 pl-10 pr-10"
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {password && <PasswordStrengthIndicator password={password} showRequirements={false} />}
-                </div>
-                
-                {/* Confirm Password */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="confirmPassword" className="text-sm">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type={showPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="h-10 pl-10"
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  {confirmPassword && password !== confirmPassword && (
-                    <p className="text-xs text-destructive">Passwords do not match</p>
-                  )}
-                  {confirmPassword && password === confirmPassword && confirmPassword.length >= 6 && (
-                    <p className="text-xs text-green-600 flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3" />
-                      Passwords match
-                    </p>
-                  )}
-                </div>
-                
-                <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    'Create Account'
-                  )}
-                </Button>
-              </form>
-              
-              <p className="text-xs text-muted-foreground text-center">
-                By creating an account, you agree to our{' '}
-                <Link to="/terms" className="underline hover:text-foreground">Terms</Link>
-                {' '}and{' '}
-                <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
-              </p>
-              
-              {/* Sign In Link */}
-              <div className="pt-4 border-t border-border text-center">
-                <p className="text-sm text-muted-foreground">
-                  Already have an account?{' '}
-                  <Link to="/auth" className="text-primary font-medium hover:underline">
-                    Sign in
-                  </Link>
-                </p>
-              </div>
+        <div className="flex-1 flex">
+          {/* Left Panel - Branding (Desktop) */}
+          <div className="hidden lg:flex lg:w-1/2 xl:w-[45%] bg-primary p-12 items-center justify-center relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
             </div>
             
-            {/* Provider Link */}
-            <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Are you a treatment provider?{' '}
-                <Link to="/provider-login" className="text-primary font-medium hover:underline">
-                  Sign in here
-                </Link>
+            <div className="relative max-w-md text-white">
+              <h1 className="text-4xl xl:text-5xl font-display font-bold mb-6">
+                Start Your Journey
+              </h1>
+              <p className="text-lg text-white/80 mb-8">
+                Create your free account to save facilities, track your search progress, and connect with treatment centers.
               </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-white/90">
+                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Save Your Favorites</p>
+                    <p className="text-sm text-white/70">Bookmark facilities to review later</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-white/90">
+                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Request Information</p>
+                    <p className="text-sm text-white/70">Connect directly with treatment centers</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-white/90">
+                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Concierge Service</p>
+                    <p className="text-sm text-white/70">Get personalized placement assistance</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </main>
+
+          {/* Right Panel - Form */}
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
+            <div className="w-full max-w-md">
+              {/* Mobile/Tablet Container */}
+              <div className="lg:bg-transparent lg:border-0 lg:shadow-none lg:p-0 bg-card border border-border rounded-xl shadow-sm p-5 sm:p-6">
+                {/* Mobile Header */}
+                <div className="lg:hidden text-center mb-6">
+                  <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Create Account</h1>
+                  <p className="text-sm text-muted-foreground mt-1">Save facilities and track your search</p>
+                </div>
+
+                {/* Desktop Header */}
+                <div className="hidden lg:block mb-8">
+                  <h2 className="text-2xl font-display font-bold text-foreground">Create your account</h2>
+                  <p className="text-muted-foreground mt-1">Fill in the details below to get started</p>
+                </div>
+
+                <form onSubmit={handleSignup} className="space-y-4">
+                  {/* Name Fields */}
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="firstName" className="text-sm">First Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="firstName"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder="First"
+                          className="h-10 sm:h-11 pl-10"
+                          autoComplete="given-name"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="lastName" className="text-sm">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Last"
+                        className="h-10 sm:h-11"
+                        autoComplete="family-name"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-sm">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <EmailInput
+                        id="email"
+                        value={email}
+                        onChange={setEmail}
+                        placeholder="you@example.com"
+                        className="pl-10 h-10 sm:h-11"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Phone */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone" className="text-sm">Phone</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                      <PhoneInput
+                        id="phone"
+                        value={phone}
+                        onChange={setPhone}
+                        placeholder="(555) 123-4567"
+                        className="pl-10 h-10 sm:h-11"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Location */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Location</Label>
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                      <div className="relative">
+                        <MapPin className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
+                        <Input
+                          value={zipcode}
+                          onChange={(e) => setZipcode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                          placeholder="Zip"
+                          className="h-10 sm:h-11 pl-8 sm:pl-10 text-sm"
+                          maxLength={5}
+                        />
+                      </div>
+                      <Input
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="City"
+                        className="h-10 sm:h-11 text-sm"
+                        disabled={zipcodeLookup.isLoading}
+                      />
+                      <Input
+                        value={state}
+                        onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
+                        placeholder="ST"
+                        className="h-10 sm:h-11 text-sm"
+                        disabled={zipcodeLookup.isLoading}
+                        maxLength={2}
+                      />
+                    </div>
+                    {zipcodeLookup.isLoading && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Looking up...
+                      </p>
+                    )}
+                    {zipcodeLookup.data && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        {zipcodeLookup.data.city}, {zipcodeLookup.data.stateAbbr}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Password */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-sm">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-10 sm:h-11 pl-10 pr-10"
+                        autoComplete="new-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {password && <PasswordStrengthIndicator password={password} showRequirements={false} />}
+                  </div>
+                  
+                  {/* Confirm Password */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmPassword" className="text-sm">Confirm Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-10 sm:h-11 pl-10"
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    {confirmPassword && password !== confirmPassword && (
+                      <p className="text-xs text-destructive">Passwords do not match</p>
+                    )}
+                    {confirmPassword && password === confirmPassword && confirmPassword.length >= 6 && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        Passwords match
+                      </p>
+                    )}
+                  </div>
+                  
+                  <Button type="submit" className="w-full h-10 sm:h-11" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      'Create Account'
+                    )}
+                  </Button>
+                </form>
+                
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  By creating an account, you agree to our{' '}
+                  <Link to="/terms" className="underline hover:text-foreground">Terms</Link>
+                  {' '}and{' '}
+                  <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
+                </p>
+                
+                {/* Divider */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card lg:bg-background px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
+                
+                {/* Provider Link */}
+                <Link to="/provider-signup" className="block">
+                  <Button variant="outline" className="w-full h-10 sm:h-11 text-sm">
+                    List Your Treatment Facility
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
