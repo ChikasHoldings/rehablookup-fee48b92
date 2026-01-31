@@ -9,14 +9,6 @@ export {
   getLeadPriority 
 } from './advancedScoring';
 
-// Re-export legacy function for backwards compatibility
-import { calculateBaseScore } from './baseScoring';
-import type { LeadScoringInput, LeadScore } from './types';
-
-export function calculateLeadScoreLegacy(lead: LeadScoringInput): LeadScore {
-  return calculateBaseScore(lead);
-}
-
 // Score color utilities
 export function getScoreColor(grade: 'A' | 'B' | 'C' | 'D'): {
   bg: string;

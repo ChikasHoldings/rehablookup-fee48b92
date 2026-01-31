@@ -14,12 +14,6 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp } from "lucide-react";
 
-// Re-export advanced components
-export { 
-  AdvancedLeadScoreBadge, 
-  useAdvancedLeadScore, 
-  useQuickLeadScore 
-} from "./AdvancedLeadScoreBadge";
 
 interface LeadScoreBadgeProps {
   lead: LeadScoringInput;
