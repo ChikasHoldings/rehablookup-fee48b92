@@ -5,6 +5,7 @@ import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import {
   Search,
   Users as UsersIcon,
+  Mail,
   Phone,
   MapPin,
   Calendar,
@@ -197,34 +198,69 @@ export default function AdminSeekers() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Inline Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Users</h1>
-          <p className="text-muted-foreground">View and manage seeker user accounts</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-          <div className="flex items-center gap-2">
-            <UsersIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Total:</span>
-            <span className="font-semibold tabular-nums">{isLoading ? "..." : totalCount}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            <span className="text-muted-foreground">Verified:</span>
-            <span className="font-semibold text-green-600 tabular-nums">{isLoading ? "..." : verifiedCount}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-blue-500" />
-            <span className="text-muted-foreground">This Month:</span>
-            <span className="font-semibold text-blue-600 tabular-nums">{isLoading ? "..." : thisMonthCount}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-purple-500" />
-            <span className="text-muted-foreground">Inquiries:</span>
-            <span className="font-semibold text-purple-600 tabular-nums">{activityStats?.inquiries ?? "..."}</span>
-          </div>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Seekers</h1>
+        <p className="text-muted-foreground">View and manage seeker user accounts</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="relative overflow-hidden border-l-4 border-l-primary">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Seekers</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : totalCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <UsersIcon className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-l-4 border-l-green-500">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Phone Verified</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : verifiedCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">New This Month</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : thisMonthCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-l-4 border-l-purple-500">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Inquiries</p>
+                <p className="text-3xl font-bold">{activityStats ? activityStats.inquiries : <Skeleton className="h-9 w-12" />}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <MessageSquare className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
