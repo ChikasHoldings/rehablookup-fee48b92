@@ -56,10 +56,16 @@ const getNotificationIcon = (type: string) => {
     case "provider_signup":
       return <UserPlus className="h-5 w-5 text-blue-500" />;
     case "payment_failed":
+    case "payment_delinquent":
+    case "placement_payment_failed":
       return <CreditCard className="h-5 w-5 text-red-500" />;
     case "subscription_alert":
     case "subscription_change":
       return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+    case "new_subscription":
+      return <CreditCard className="h-5 w-5 text-green-500" />;
+    case "subscription_cancelled":
+      return <CreditCard className="h-5 w-5 text-orange-500" />;
     case "facility_approved":
       return <Building2 className="h-5 w-5 text-green-500" />;
     case "new_lead":
@@ -67,16 +73,26 @@ const getNotificationIcon = (type: string) => {
     case "lead_assigned":
       return <Users className="h-5 w-5 text-indigo-500" />;
     case "system":
+    case "welcome":
       return <Bell className="h-5 w-5 text-slate-500" />;
     case "email":
       return <Mail className="h-5 w-5 text-cyan-500" />;
     case "brute_force":
+    case "brute_force_alert":
     case "login_alert":
     case "security_event":
-      return <AlertTriangle className="h-5 w-5 text-red-600" />;
+    case "security_block":
+    case "security_unblock":
+      return <ShieldAlert className="h-5 w-5 text-red-600" />;
     case "churn_alert":
     case "at_risk_provider":
+    case "provider_health":
       return <AlertTriangle className="h-5 w-5 text-orange-500" />;
+    case "new_review":
+    case "review_disputed":
+      return <Eye className="h-5 w-5 text-purple-500" />;
+    case "flagged_image":
+      return <AlertTriangle className="h-5 w-5 text-amber-600" />;
     default:
       return <Bell className="h-5 w-5 text-muted-foreground" />;
   }
@@ -87,10 +103,16 @@ const getNotificationBadge = (type: string) => {
     case "provider_signup":
       return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">New Provider</Badge>;
     case "payment_failed":
+    case "payment_delinquent":
+    case "placement_payment_failed":
       return <Badge variant="destructive">Payment Failed</Badge>;
     case "subscription_alert":
     case "subscription_change":
       return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Subscription</Badge>;
+    case "new_subscription":
+      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">New Subscription</Badge>;
+    case "subscription_cancelled":
+      return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Cancelled</Badge>;
     case "facility_approved":
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
     case "new_lead":
@@ -98,16 +120,27 @@ const getNotificationBadge = (type: string) => {
     case "lead_assigned":
       return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">Lead Assigned</Badge>;
     case "system":
+    case "welcome":
       return <Badge variant="secondary">System</Badge>;
     case "email":
       return <Badge variant="outline" className="bg-cyan-50 text-cyan-700 border-cyan-200">Email</Badge>;
     case "brute_force":
+    case "brute_force_alert":
     case "login_alert":
     case "security_event":
+    case "security_block":
+    case "security_unblock":
       return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-300">Security</Badge>;
     case "churn_alert":
     case "at_risk_provider":
+    case "provider_health":
       return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">At Risk</Badge>;
+    case "new_review":
+      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">New Review</Badge>;
+    case "review_disputed":
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Review Dispute</Badge>;
+    case "flagged_image":
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Flagged Image</Badge>;
     default:
       return <Badge variant="secondary">Notification</Badge>;
   }
@@ -135,6 +168,7 @@ export default function AdminNotifications() {
     markAllAsRead: markAllUserAsRead,
     deleteNotification: deleteUserNotification,
     deleteAll: deleteAllUser,
+    refetch: refetchUser,
   } = useAdminUserNotifications();
 
   const [activeTab, setActiveTab] = useState<"all" | "global" | "personal">("all");
@@ -243,28 +277,41 @@ export default function AdminNotifications() {
     }
     
     // Type-based routing
-    if (notification.type === "provider_signup") {
-      return "/admin/providers?status=pending";
+    switch (notification.type) {
+      case "provider_signup":
+        return "/admin/providers?status=pending";
+      case "payment_failed":
+      case "payment_delinquent":
+      case "placement_payment_failed":
+      case "subscription_change":
+      case "new_subscription":
+      case "subscription_cancelled":
+      case "churn_alert":
+      case "at_risk_provider":
+      case "provider_health":
+        return "/admin/subscriptions";
+      case "new_lead":
+      case "lead_assigned":
+        return metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads";
+      case "facility_approved":
+      case "flagged_image":
+        return "/admin/providers";
+      case "brute_force":
+      case "brute_force_alert":
+      case "login_alert":
+      case "security_event":
+      case "security_block":
+      case "security_unblock":
+        return "/admin/security-logs";
+      case "new_review":
+      case "review_disputed":
+        return "/admin/reviews";
+      case "welcome":
+      case "system":
+        return "/admin/settings";
+      default:
+        return null;
     }
-    if (notification.type === "payment_failed" || notification.type === "subscription_change") {
-      return "/admin/subscriptions";
-    }
-    if (notification.type === "new_lead" || notification.type === "lead_assigned") {
-      return metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads";
-    }
-    if (notification.type === "facility_approved") {
-      return "/admin/providers";
-    }
-    if (notification.type === "brute_force" || notification.type === "login_alert" || notification.type === "security_event") {
-      return "/admin/security-logs";
-    }
-    if (notification.type === "churn_alert" || notification.type === "at_risk_provider") {
-      return "/admin/subscriptions";
-    }
-    if (notification.type === "flagged_image") {
-      return "/admin/providers";
-    }
-    return null;
   };
 
   const handleNotificationClick = (notification: typeof allNotifications[0], link: string | null) => {
@@ -291,7 +338,10 @@ export default function AdminNotifications() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => refetchGlobal()}
+            onClick={() => {
+              refetchGlobal();
+              refetchUser();
+            }}
             disabled={isLoading}
           >
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
@@ -363,7 +413,7 @@ export default function AdminNotifications() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">
-              {allNotifications.filter((n) => n.type === "payment_failed").length}
+              {allNotifications.filter((n) => ["payment_failed", "payment_delinquent", "placement_payment_failed"].includes(n.type)).length}
             </div>
             <p className="text-xs text-muted-foreground">
               Failed payments
@@ -377,7 +427,7 @@ export default function AdminNotifications() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {allNotifications.filter((n) => ["brute_force", "login_alert", "security_event"].includes(n.type)).length}
+              {allNotifications.filter((n) => ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"].includes(n.type)).length}
             </div>
             <p className="text-xs text-muted-foreground">
               Security events
