@@ -94,33 +94,55 @@ export function AdminUserPermissionsDialog({
     if (!user) return;
 
     try {
+      const promises: Promise<any>[] = [];
+      
       // Update role if changed
       if (adminRole !== user.admin_role) {
-        await manageAdminUser({
-          action: "update_role",
-          targetUserId: user.user_id,
-          newRole: adminRole,
-        });
+        promises.push(
+          manageAdminUser({
+            action: "update_role",
+            targetUserId: user.user_id,
+            newRole: adminRole,
+          })
+        );
       }
 
-      // Update permissions
-      await manageAdminUser({
-        action: "update_permissions",
-        targetUserId: user.user_id,
-        permissions,
-      });
+      // Only update permissions if they actually changed
+      const permissionsChanged = Object.keys(permissions).some(
+        key => permissions[key] !== user.permissions[key]
+      ) || Object.keys(user.permissions).some(
+        key => permissions[key] !== user.permissions[key]
+      );
+
+      if (permissionsChanged) {
+        promises.push(
+          manageAdminUser({
+            action: "update_permissions",
+            targetUserId: user.user_id,
+            permissions,
+          })
+        );
+      }
 
       // Update MFA skip if changed
       if (mfaSkip !== user.mfa_skip) {
-        await manageAdminUser({
-          action: "toggle_mfa_skip",
-          targetUserId: user.user_id,
-        });
+        promises.push(
+          manageAdminUser({
+            action: "toggle_mfa_skip",
+            targetUserId: user.user_id,
+          })
+        );
+      }
+
+      // Execute all changes in parallel
+      if (promises.length > 0) {
+        await Promise.all(promises);
       }
 
       onOpenChange(false);
     } catch (error) {
-      // Error handled by mutation
+      // Error handled by mutation - toast shown
+      console.error("[AdminUserPermissionsDialog] Save failed:", error);
     }
   };
 
