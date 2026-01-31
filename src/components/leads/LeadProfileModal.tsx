@@ -31,6 +31,13 @@ import {
   Heart,
   UserCheck,
   Zap,
+  Briefcase,
+  Medal,
+  Scale,
+  Brain,
+  History,
+  Target,
+  Users,
 } from "lucide-react";
 import {
   Dialog,
@@ -684,107 +691,263 @@ export function LeadProfileModal({
 
               {/* Intake Details Tab */}
               <TabsContent value="intake" className="p-6 space-y-6 mt-0">
-                {/* Intake Summary Cards */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {/* Who Seeking Help */}
-                  <div className="p-4 rounded-xl bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                        <Heart className="h-4 w-4 text-violet-600" />
+                {/* Demographics Section */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    Demographics & Background
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {/* Who Seeking Help */}
+                    <div className="p-4 rounded-xl bg-muted/50 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                          <Heart className="h-4 w-4 text-violet-600" />
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Seeking Help For
+                        </span>
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Seeking Help For
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {lead.who_seeking_help === "self"
-                        ? "Themselves"
-                        : lead.who_seeking_help === "loved-one"
-                        ? "A Loved One"
-                        : "Not specified"}
-                    </p>
-                  </div>
-
-                  {/* Urgency */}
-                  <div className={`p-4 rounded-xl border ${getUrgencyColor(lead.urgency)}`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded-lg bg-current/10 flex items-center justify-center">
-                        <AlertTriangle className="h-4 w-4" />
-                      </div>
-                      <span className="text-xs font-medium uppercase tracking-wide">
-                        Timeline
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold">{formatUrgency(lead.urgency)}</p>
-                  </div>
-
-                  {/* Level of Care */}
-                  <div className="p-4 rounded-xl bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                        <Stethoscope className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Level of Care
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">{formatLevelOfCare(lead.level_of_care)}</p>
-                  </div>
-
-                  {/* Insurance */}
-                  <div className="p-4 rounded-xl bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                        <CreditCard className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Insurance
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {formatInsurance(lead.insurance_type)}
-                    </p>
-                    {lead.insurance_provider && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Provider: {lead.insurance_provider}
+                      <p className="text-sm font-semibold text-foreground">
+                        {lead.who_seeking_help === "self"
+                          ? "Themselves"
+                          : lead.who_seeking_help === "loved-one"
+                          ? "A Loved One"
+                          : "Not specified"}
                       </p>
+                    </div>
+
+                    {/* Relationship to Patient */}
+                    {lead.relationship_to_patient && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                            <Users className="h-4 w-4 text-pink-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Relationship
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {lead.relationship_to_patient === "self" ? "Self (Patient)" : lead.relationship_to_patient.replace(/-/g, ' ')}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Age Range */}
+                    {lead.age_range && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Age Range
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {lead.age_range} years old
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Gender */}
+                    {lead.gender && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                            <User className="h-4 w-4 text-purple-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Gender
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {lead.gender === "prefer-not-say" ? "Prefer not to say" : lead.gender}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Location */}
+                    {(lead.location_city_state || lead.location_zip) && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                            <MapPin className="h-4 w-4 text-teal-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Location
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {lead.location_city_state || lead.location_zip}
+                        </p>
+                        {lead.location_zip && lead.location_city_state && (
+                          <p className="text-xs text-muted-foreground mt-1">ZIP: {lead.location_zip}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Employment Status */}
+                    {lead.employment_status && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-slate-500/10 flex items-center justify-center">
+                            <Briefcase className="h-4 w-4 text-slate-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Employment
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {lead.employment_status.replace(/-/g, ' ')}
+                        </p>
+                      </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Dual Diagnosis */}
-                  <div className="p-4 rounded-xl bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
-                        <Activity className="h-4 w-4 text-pink-600" />
+                {/* Treatment Details Section */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-primary" />
+                    Treatment Details
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {/* Urgency */}
+                    <div className={`p-4 rounded-xl border ${getUrgencyColor(lead.urgency)}`}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-8 w-8 rounded-lg bg-current/10 flex items-center justify-center">
+                          <AlertTriangle className="h-4 w-4" />
+                        </div>
+                        <span className="text-xs font-medium uppercase tracking-wide">
+                          Timeline
+                        </span>
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Mental Health
-                      </span>
+                      <p className="text-sm font-semibold">{formatUrgency(lead.urgency)}</p>
                     </div>
-                    <p className="text-sm font-semibold text-foreground capitalize">
-                      {lead.dual_diagnosis === "not-sure"
-                        ? "Uncertain"
-                        : lead.dual_diagnosis === "yes"
-                        ? "Co-occurring Concern"
-                        : lead.dual_diagnosis === "no"
-                        ? "No Concern Indicated"
-                        : "Not specified"}
-                    </p>
-                  </div>
 
-                  {/* Budget */}
-                  <div className="p-4 rounded-xl bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                        <CreditCard className="h-4 w-4 text-amber-600" />
+                    {/* Readiness Level */}
+                    {lead.readiness_level && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                            <Target className="h-4 w-4 text-green-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Readiness
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {lead.readiness_level === "ready-now" ? "Ready to Start Now" :
+                           lead.readiness_level === "considering" ? "Seriously Considering" :
+                           lead.readiness_level === "researching" ? "Early Research" :
+                           lead.readiness_level === "helping-someone" ? "Helping Someone Else" :
+                           lead.readiness_level.replace(/-/g, ' ')}
+                        </p>
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Budget Preference
-                      </span>
+                    )}
+
+                    {/* Level of Care */}
+                    <div className="p-4 rounded-xl bg-muted/50 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <Stethoscope className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Level of Care
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">{formatLevelOfCare(lead.level_of_care)}</p>
                     </div>
-                    <p className="text-sm font-semibold text-foreground capitalize">
-                      {lead.budget_preference || "Not specified"}
-                    </p>
+
+                    {/* Previous Treatment */}
+                    {lead.previous_treatment && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                            <History className="h-4 w-4 text-amber-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Previous Treatment
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {lead.previous_treatment === "none" ? "No Previous Treatment" :
+                           lead.previous_treatment === "once" ? "One Time Before" :
+                           lead.previous_treatment === "multiple" ? "Multiple Experiences" :
+                           lead.previous_treatment === "currently-in" ? "Currently in Treatment" :
+                           lead.previous_treatment.replace(/-/g, ' ')}
+                        </p>
+                        {lead.previous_treatment_details && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {lead.previous_treatment_details}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Dual Diagnosis */}
+                    <div className="p-4 rounded-xl bg-muted/50 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                          <Brain className="h-4 w-4 text-pink-600" />
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Dual Diagnosis
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground capitalize">
+                        {lead.dual_diagnosis === "not-sure"
+                          ? "Uncertain"
+                          : lead.dual_diagnosis === "yes"
+                          ? "Co-occurring Concern"
+                          : lead.dual_diagnosis === "no"
+                          ? "No Concern Indicated"
+                          : "Not specified"}
+                      </p>
+                    </div>
+
+                    {/* Veteran Status */}
+                    {lead.veteran_status && lead.veteran_status !== "none" && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                            <Medal className="h-4 w-4 text-red-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Military Status
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {lead.veteran_status === "veteran" ? "Veteran" :
+                           lead.veteran_status === "active-duty" ? "Active Duty Military" :
+                           lead.veteran_status === "family-of-veteran" ? "Family of Veteran" :
+                           lead.veteran_status.replace(/-/g, ' ')}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Legal Involvement */}
+                    {lead.legal_involvement && lead.legal_involvement !== "none" && (
+                      <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                            <Scale className="h-4 w-4 text-amber-600" />
+                          </div>
+                          <span className="text-xs font-medium text-amber-700 uppercase tracking-wide">
+                            Legal Involvement
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-amber-800 capitalize">
+                          {lead.legal_involvement === "court-ordered" ? "Court Ordered" :
+                           lead.legal_involvement === "drug-court" ? "Drug Court Participant" :
+                           lead.legal_involvement === "probation" ? "On Probation/Parole" :
+                           lead.legal_involvement === "pending" ? "Pending Legal Matters" :
+                           lead.legal_involvement.replace(/-/g, ' ')}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -807,6 +970,74 @@ export function LeadProfileModal({
                   </div>
                 )}
 
+                {/* Co-occurring Conditions */}
+                {lead.co_occurring_conditions && lead.co_occurring_conditions.length > 0 && (
+                  <div className="p-4 rounded-xl bg-pink-50 border border-pink-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Brain className="h-4 w-4 text-pink-600" />
+                      <span className="text-xs font-medium text-pink-700 uppercase tracking-wide">
+                        Co-occurring Conditions
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {lead.co_occurring_conditions.map((condition, idx) => (
+                        <Badge key={idx} variant="outline" className="capitalize border-pink-300 text-pink-700 bg-pink-50">
+                          {condition === "ptsd" ? "PTSD/Trauma" : 
+                           condition === "adhd" ? "ADHD" : 
+                           condition.replace(/-/g, ' ')}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Insurance & Budget Section */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-primary" />
+                    Insurance & Budget
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {/* Insurance */}
+                    <div className="p-4 rounded-xl bg-muted/50 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                          <CreditCard className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Insurance Type
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {formatInsurance(lead.insurance_type)}
+                      </p>
+                      {lead.insurance_provider && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Provider: {lead.insurance_provider}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Budget */}
+                    <div className="p-4 rounded-xl bg-muted/50 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                          <CreditCard className="h-4 w-4 text-amber-600" />
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Budget Preference
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground capitalize">
+                        {lead.budget_preference === "low" ? "Budget-conscious" :
+                         lead.budget_preference === "medium" ? "Moderate" :
+                         lead.budget_preference === "flexible" ? "Flexible / Cost not a concern" :
+                         lead.budget_preference || "Not specified"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Special Requirements */}
                 {lead.special_needs && lead.special_needs.length > 0 && (
                   <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
@@ -822,6 +1053,68 @@ export function LeadProfileModal({
                           {need.replace(/-/g, ' ')}
                         </Badge>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact Preferences */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-primary" />
+                    Contact Preferences
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {/* Preferred Contact Method */}
+                    <div className="p-4 rounded-xl bg-muted/50 border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          {lead.preferred_contact === "call" ? (
+                            <Phone className="h-4 w-4 text-blue-600" />
+                          ) : (
+                            <Mail className="h-4 w-4 text-blue-600" />
+                          )}
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Preferred Contact
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground capitalize">
+                        {lead.preferred_contact === "call" ? "Phone Call" : "Email"}
+                      </p>
+                    </div>
+
+                    {/* Best Time to Call */}
+                    {lead.best_time_to_call && (
+                      <div className="p-4 rounded-xl bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                            <Clock className="h-4 w-4 text-orange-600" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Best Time to Call
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-foreground capitalize">
+                          {lead.best_time_to_call === "morning" ? "Morning (8am-12pm)" :
+                           lead.best_time_to_call === "afternoon" ? "Afternoon (12pm-5pm)" :
+                           lead.best_time_to_call === "evening" ? "Evening (5pm-8pm)" :
+                           lead.best_time_to_call === "anytime" ? "Anytime" :
+                           lead.best_time_to_call.replace(/-/g, ' ')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Message */}
+                {lead.message && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                      Message from {firstName}
+                    </h3>
+                    <div className="p-4 rounded-xl bg-muted/30 border text-sm leading-relaxed whitespace-pre-wrap">
+                      "{lead.message}"
                     </div>
                   </div>
                 )}
