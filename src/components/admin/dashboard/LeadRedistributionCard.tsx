@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Share2, Timer, Clock, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,13 +14,14 @@ interface LeadRedistributionCardProps {
   redistStats?: RedistStats;
 }
 
-export function LeadRedistributionCard({ redistStats }: LeadRedistributionCardProps) {
+export const LeadRedistributionCard = forwardRef<HTMLDivElement, LeadRedistributionCardProps>(
+  function LeadRedistributionCard({ redistStats }, ref) {
   if (!redistStats || (redistStats.exclusive === 0 && redistStats.extended === 0 && redistStats.expired === 0)) {
     return null;
   }
 
   return (
-    <Card className="border shadow-sm">
+    <Card ref={ref} className="border shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div>
@@ -66,4 +68,6 @@ export function LeadRedistributionCard({ redistStats }: LeadRedistributionCardPr
       </CardContent>
     </Card>
   );
-}
+});
+
+LeadRedistributionCard.displayName = "LeadRedistributionCard";

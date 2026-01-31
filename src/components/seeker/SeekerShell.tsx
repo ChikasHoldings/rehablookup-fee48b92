@@ -88,8 +88,8 @@ export function SeekerShell() {
         setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
-      } catch (error) {
-        console.error('Auth check error:', error);
+      } catch {
+        // Auth check failed silently
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -135,8 +135,7 @@ export function SeekerShell() {
         description: "You've been successfully logged out.",
       });
       navigate("/", { replace: true });
-    } catch (err) {
-      console.error("Logout exception:", err);
+    } catch {
       toast({
         title: "Logout failed",
         description: "An unexpected error occurred.",
