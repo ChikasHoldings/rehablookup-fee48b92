@@ -19,7 +19,7 @@ interface PreviewState {
 
 export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLandingPageProps) {
   const { facilities, isLoading } = useProviderFacilities();
-  const { limit, used, canAddMore, planTier, isLoading: limitsLoading } = useFacilityLimits();
+  const { limit, used, canAddMore, canPurchaseSlot, planTier, isLoading: limitsLoading } = useFacilityLimits();
   const { setSelectedFacility } = useSelectedFacility();
   
   // Preview modal state
@@ -95,6 +95,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
             used={used}
             limit={limit}
             planTier={planTier}
+            canPurchaseSlot={canPurchaseSlot}
             onAddClick={handleAddClick}
           />
         </div>
