@@ -4418,6 +4418,13 @@ export type Database = {
         }[]
       }
       get_purchased_slot_count: { Args: { p_user_id: string }; Returns: number }
+      get_seeker_emails_for_admin: {
+        Args: never
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       get_unlocked_lead_data: {
         Args: { p_facility_id: string; p_lead_id: string }
         Returns: {
