@@ -575,6 +575,7 @@ export function LeadProfileModal({
                       </span>
                     </div>
                     <p className="text-sm font-medium">{formatUrgency(lead.urgency)}</p>
+                  </div>
                 </div>
 
                 {/* Message */}
