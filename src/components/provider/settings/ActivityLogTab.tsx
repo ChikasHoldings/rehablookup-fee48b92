@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, formatDistanceToNow } from "date-fns";
 import { LogIn, LogOut, Key, User, Bell, Shield, Trash2, Activity, Monitor, Smartphone } from "lucide-react";
-
 interface ActivityLogEntry {
   id: string;
   user_id: string;
@@ -82,7 +81,7 @@ const parseUserAgent = (userAgent: string | null) => {
   return { device, browser };
 };
 
-export function ActivityLogTab() {
+export const ActivityLogTab = forwardRef<HTMLDivElement>((_, ref) => {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -196,4 +195,6 @@ export function ActivityLogTab() {
       </CardContent>
     </Card>
   );
-}
+});
+
+ActivityLogTab.displayName = "ActivityLogTab";
