@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   CheckCircle,
-  XCircle,
   Star,
   Shield,
   Ban,
@@ -12,7 +11,6 @@ import {
   CreditCard,
   FileText,
   Eye,
-  UserPlus,
   RefreshCw,
   AlertTriangle,
   Clock,
@@ -72,36 +70,10 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
         });
       }
 
-      // Fetch lead routing logs for this facility
-      const { data: routingLogs } = await supabase
-        .from("lead_routing_logs")
-        .select("*")
-        .eq("assigned_provider_id", facilityId)
-        .order("created_at", { ascending: false })
-        .limit(30);
-
-      if (routingLogs) {
-        routingLogs.forEach((log) => {
-          events.push({
-            id: `routing-${log.id}`,
-            type: "lead_routing",
-            title: "Lead Assigned",
-            description: log.assignment_reason || "Lead auto-assigned to this provider",
-            timestamp: log.created_at,
-            icon: UserPlus,
-            iconColor: "text-emerald-500",
-            metadata: {
-              plan_tier: log.plan_tier,
-              routing_source: log.routing_source,
-            },
-          });
-        });
-      }
-
       // Fetch leads for this facility
       const { data: leads } = await supabase
         .from("leads")
-        .select("id, name, email, status, source, created_at, qualified")
+        .select("id, name, email, status, source, created_at")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(30);
@@ -111,11 +83,11 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
           events.push({
             id: `lead-${lead.id}`,
             type: "lead_received",
-            title: lead.qualified ? "Qualified Lead Received" : "Direct Lead Received",
+            title: "Inquiry Received",
             description: `${lead.name} submitted via ${lead.source || "direct"}`,
             timestamp: lead.created_at,
             icon: Users,
-            iconColor: lead.qualified ? "text-emerald-500" : "text-blue-500",
+            iconColor: "text-blue-500",
             metadata: {
               lead_name: lead.name,
               lead_email: lead.email,
@@ -259,16 +231,6 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
                     {/* Metadata badges */}
                     {event.metadata && Object.keys(event.metadata).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {event.type === "lead_routing" && event.metadata.plan_tier && (
-                          <Badge variant="outline" className="text-xs">
-                            {String(event.metadata.plan_tier)} tier
-                          </Badge>
-                        )}
-                        {event.type === "lead_routing" && event.metadata.routing_source && (
-                          <Badge variant="secondary" className="text-xs">
-                            {String(event.metadata.routing_source)}
-                          </Badge>
-                        )}
                         {event.type === "lead_received" && event.metadata.source && (
                           <Badge variant="outline" className="text-xs">
                             {String(event.metadata.source)}
