@@ -16,7 +16,6 @@ interface ProfileInformationCardProps {
   userEmail: string;
   profile: {
     avatar_url: string | null;
-    display_name: string | null;
     first_name?: string | null;
     last_name?: string | null;
   } | null;
@@ -33,13 +32,15 @@ export function ProfileInformationCard({
   const queryClient = useQueryClient();
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
-  const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
 
-  const initials = profile?.display_name?.slice(0, 2).toUpperCase() || 
-                   userEmail?.slice(0, 2).toUpperCase() || "AD";
+  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Admin User";
+  const initials = profile?.first_name && profile?.last_name
+    ? `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase()
+    : profile?.first_name?.slice(0, 2).toUpperCase() || 
+      userEmail?.slice(0, 2).toUpperCase() || "AD";
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -145,7 +146,6 @@ export function ProfileInformationCard({
         .update({ 
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
-          display_name: displayName.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq("user_id", userId);
@@ -159,7 +159,7 @@ export function ProfileInformationCard({
         actionType: AdminAuditActions.PROFILE_NAME_UPDATED,
         targetType: "admin_profile",
         targetId: userId,
-        details: { firstName: firstName.trim(), lastName: lastName.trim(), displayName: displayName.trim() },
+        details: { firstName: firstName.trim(), lastName: lastName.trim() },
       });
 
       toast({
@@ -194,7 +194,7 @@ export function ProfileInformationCard({
             <Avatar className="h-24 w-24 ring-2 ring-border ring-offset-2 ring-offset-background" key={avatarKey}>
               <AvatarImage 
                 src={profile?.avatar_url || undefined} 
-                alt={profile?.display_name || "Admin"} 
+                alt={fullName} 
               />
               <AvatarFallback className="bg-amber-100 text-amber-600 text-xl font-semibold">
                 {initials}
@@ -216,7 +216,7 @@ export function ProfileInformationCard({
             </label>
           </div>
           <div className="space-y-1">
-            <p className="font-medium text-lg">{profile?.display_name || "Admin User"}</p>
+            <p className="font-medium text-lg">{fullName}</p>
             <p className="text-sm text-muted-foreground">{userEmail}</p>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Camera className="h-3 w-3" />
@@ -250,17 +250,6 @@ export function ProfileInformationCard({
                 maxLength={50}
               />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
-            <Input
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Enter display name (shown in header)"
-              maxLength={50}
-            />
-            <p className="text-xs text-muted-foreground">This name appears in the header dropdown</p>
           </div>
           <Button 
             onClick={handleUpdateProfile} 

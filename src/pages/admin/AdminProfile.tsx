@@ -437,7 +437,6 @@ export default function AdminProfile() {
           userEmail={userData.email}
           profile={profile ? {
             avatar_url: profile.avatar_url,
-            display_name: profile.display_name,
             first_name: profile.first_name,
             last_name: profile.last_name,
           } : null}
