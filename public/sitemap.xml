@@ -8,7 +8,7 @@
   <!-- Homepage - Highest Priority -->
   <url>
     <loc>https://rehablookup.com/</loc>
-    <lastmod>2025-12-22</lastmod>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -40,8 +40,8 @@
   </url>
   
   <url>
-    <loc>https://rehablookup.com/request-help</loc>
-    <lastmod>2025-12-22</lastmod>
+    <loc>https://rehablookup.com/concierge</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.95</priority>
   </url>

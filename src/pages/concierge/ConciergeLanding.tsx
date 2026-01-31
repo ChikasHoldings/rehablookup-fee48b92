@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { 
@@ -66,13 +66,16 @@ export default function ConciergeLanding() {
 
   return (
     <>
-      <Helmet>
-        <title>Concierge Placement Service | RehabLookup</title>
-        <meta 
-          name="description" 
-          content="Get personalized help finding the right treatment program. Our concierge service matches you with best-fit rehab centers for just $29." 
-        />
-      </Helmet>
+      <SEO
+        title="Concierge Placement Service"
+        description="Get personalized help finding the right treatment program. Our concierge service matches you with best-fit rehab centers for just $29."
+        canonical="/concierge"
+        keywords={["treatment placement", "rehab concierge", "addiction treatment matching", "personalized rehab help"]}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Concierge", url: "/concierge" },
+        ]}
+      />
       
       <div className="min-h-screen flex flex-col bg-background">
         <PublicHeader />

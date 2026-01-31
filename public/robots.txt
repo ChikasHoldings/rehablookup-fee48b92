@@ -200,6 +200,29 @@ Disallow: /provider-signup
 Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Redirect pages - block to prevent duplicate content
+Disallow: /request-help
+Disallow: /request-help?*
+Disallow: /placement-help
+Disallow: /my-account
+Disallow: /auth
+
+# Account pages - require authentication, no SEO value
+Disallow: /account/
+Disallow: /account/*
+
+# Concierge transactional pages - not for search
+Disallow: /concierge/intake
+Disallow: /concierge/thank-you
+Disallow: /concierge/create-password
+
+# Ad landing pages - typically excluded from organic search
+Disallow: /lp/
 
 # Internal API endpoints
 Disallow: /api/
