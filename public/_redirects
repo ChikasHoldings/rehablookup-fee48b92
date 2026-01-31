@@ -1,0 +1,20 @@
+# Netlify redirects for SEO canonicalization
+# Last updated: 2026-01-31
+
+# Force trailing slash removal (301 permanent redirect)
+# This ensures all URLs resolve to non-trailing-slash versions
+# Note: This rule uses regex to catch all paths with trailing slashes
+/*/ /:splat 301!
+
+# Force HTTPS and www normalization (if needed)
+# http://rehablookup.com/* https://rehablookup.com/:splat 301!
+# http://www.rehablookup.com/* https://rehablookup.com/:splat 301!
+# https://www.rehablookup.com/* https://rehablookup.com/:splat 301!
+
+# Redirect old/deprecated URLs to canonical versions
+/request-help /concierge 301
+/placement-help /concierge 301
+/my-account /account 301
+
+# Handle SPA routing - serve index.html for all routes
+/* /index.html 200
