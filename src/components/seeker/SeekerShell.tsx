@@ -16,7 +16,7 @@ interface SeekerProfile {
 
 export function SeekerShell() {
   // Redirect providers to their panel - they shouldn't access seeker routes
-  useProviderRedirect();
+  const { isProvider, isLoading: isProviderCheckLoading } = useProviderRedirect();
   
   const mainContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
@@ -132,7 +132,17 @@ export function SeekerShell() {
   // Get display name - prefer first name, fall back to display name or email
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
-  if (isLoading) {
+  // Show loading while checking provider status or auth
+  if (isProviderCheckLoading || isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If user is a provider, don't render seeker shell (redirect is happening)
+  if (isProvider) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
