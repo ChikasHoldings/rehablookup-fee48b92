@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Settings, Loader2, ShieldCheck, ShieldAlert, ShieldOff } from "lucide-react";
+import { 
+  Settings, 
+  Loader2, 
+  ShieldAlert, 
+  Briefcase, 
+  HeadphonesIcon, 
+  Heart,
+  ShieldOff 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -24,10 +32,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   useAdminUserManagement, 
   AdminUser, 
-  AdminRole, 
+  AdminRoleType, 
   ADMIN_PERMISSIONS, 
-  ROLE_DEFAULTS 
+  ROLE_DEFAULTS,
+  ADMIN_ROLE_CONFIG 
 } from "@/hooks/useAdminUserManagement";
+import { cn } from "@/lib/utils";
+
+const ROLE_ICONS: Record<AdminRoleType, React.ElementType> = {
+  super_admin: ShieldAlert,
+  manager: Briefcase,
+  customer_rep: HeadphonesIcon,
+  advisor: Heart,
+};
 
 interface AdminUserPermissionsDialogProps {
   open: boolean;
@@ -42,28 +59,25 @@ export function AdminUserPermissionsDialog({
 }: AdminUserPermissionsDialogProps) {
   const { manageAdminUser, isManaging } = useAdminUserManagement();
   
-  const [role, setRole] = useState<AdminRole>("moderator");
+  const [adminRole, setAdminRole] = useState<AdminRoleType>("customer_rep");
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [mfaSkip, setMfaSkip] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     if (user) {
-      const primaryRole = user.roles.includes("admin") ? "admin" : "moderator";
-      setRole(primaryRole);
+      setAdminRole(user.admin_role);
       setMfaSkip(user.mfa_skip || false);
       
       // Merge defaults with user permissions
-      const merged = { ...ROLE_DEFAULTS[primaryRole], ...user.permissions };
+      const merged = { ...ROLE_DEFAULTS[user.admin_role], ...user.permissions };
       setPermissions(merged);
       setHasChanges(false);
     }
   }, [user]);
 
-  const handleRoleChange = async (newRole: AdminRole) => {
-    if (!user) return;
-    
-    setRole(newRole);
+  const handleRoleChange = async (newRole: AdminRoleType) => {
+    setAdminRole(newRole);
     setPermissions(ROLE_DEFAULTS[newRole]);
     setHasChanges(true);
   };
@@ -81,12 +95,11 @@ export function AdminUserPermissionsDialog({
 
     try {
       // Update role if changed
-      const currentRole = user.roles.includes("admin") ? "admin" : "moderator";
-      if (role !== currentRole) {
+      if (adminRole !== user.admin_role) {
         await manageAdminUser({
           action: "update_role",
           targetUserId: user.user_id,
-          newRole: role,
+          newRole: adminRole,
         });
       }
 
@@ -122,23 +135,30 @@ export function AdminUserPermissionsDialog({
     (user.first_name?.[0] || "") + (user.last_name?.[0] || "") || 
     user.email.slice(0, 2).toUpperCase();
 
+  const roleConfig = ADMIN_ROLE_CONFIG[adminRole];
+  const RoleIcon = ROLE_ICONS[adminRole];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Edit User Permissions
+            Edit Role & Permissions
           </DialogTitle>
           <DialogDescription>
-            Modify role and page-level access for this admin user.
+            Modify role and page-level access for this staff member.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
           <Avatar className="h-12 w-12">
             <AvatarImage src={user.avatar_url || undefined} />
-            <AvatarFallback className="bg-slate-200 text-slate-700 font-medium">
+            <AvatarFallback className={cn(
+              "font-medium",
+              ADMIN_ROLE_CONFIG[user.admin_role].bgColor,
+              ADMIN_ROLE_CONFIG[user.admin_role].color
+            )}>
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -149,7 +169,7 @@ export function AdminUserPermissionsDialog({
           <div className="ml-auto">
             <Badge 
               variant="secondary"
-              className={user.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+              className={user.status === "active" ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}
             >
               {user.status}
             </Badge>
@@ -165,42 +185,47 @@ export function AdminUserPermissionsDialog({
 
           <TabsContent value="role" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>User Role</Label>
-              <Select value={role} onValueChange={(v) => handleRoleChange(v as AdminRole)}>
+              <Label>Staff Role</Label>
+              <Select value={adminRole} onValueChange={(v) => handleRoleChange(v as AdminRoleType)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">
+                  <SelectItem value="super_admin">
                     <div className="flex items-center gap-2">
                       <ShieldAlert className="h-4 w-4 text-amber-500" />
                       <span>Super Admin - Full access</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="moderator">
+                  <SelectItem value="manager">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-blue-500" />
-                      <span>Moderator - Limited access</span>
+                      <Briefcase className="h-4 w-4 text-blue-500" />
+                      <span>Manager - Operations</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="customer_rep">
+                    <div className="flex items-center gap-2">
+                      <HeadphonesIcon className="h-4 w-4 text-emerald-500" />
+                      <span>Customer Rep - Support</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="advisor">
+                    <div className="flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-purple-500" />
+                      <span>Advisor - Concierge</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="bg-muted/50 rounded-lg p-4">
+            <div className={cn("rounded-lg p-4 border", roleConfig.bgColor, roleConfig.borderColor)}>
               <div className="flex items-start gap-3">
-                {role === "admin" ? (
-                  <ShieldAlert className="h-5 w-5 text-amber-500 mt-0.5" />
-                ) : (
-                  <ShieldCheck className="h-5 w-5 text-blue-500 mt-0.5" />
-                )}
+                <RoleIcon className={cn("h-5 w-5 mt-0.5", roleConfig.iconColor)} />
                 <div>
-                  <p className="font-medium">{role === "admin" ? "Super Admin" : "Moderator"}</p>
+                  <p className={cn("font-medium", roleConfig.color)}>{roleConfig.label}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {role === "admin" 
-                      ? "Full access to all admin features including user management, system settings, and audit logs."
-                      : "Limited access for content moderation and provider support. Cannot manage users or access system settings."
-                    }
+                    {roleConfig.description}
                   </p>
                 </div>
               </div>
@@ -212,29 +237,31 @@ export function AdminUserPermissionsDialog({
               Customize which sections of the admin panel this user can access.
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
               {Object.entries(ADMIN_PERMISSIONS).map(([key, { label, description }]) => {
-                const isSuperAdminOnly = key === "users";
-                const isDisabled = role === "admin" || (isSuperAdminOnly && role === "moderator");
+                const isSuperAdminOnly = key === "users" || key === "settings" || key === "audit_log" || key === "security_logs";
+                const isSuperAdmin = adminRole === "super_admin";
+                const isDisabled = isSuperAdmin || (isSuperAdminOnly && !isSuperAdmin);
                 
                 return (
                   <div
                     key={key}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border",
                       isDisabled ? "bg-muted/30" : "bg-card"
-                    }`}
+                    )}
                   >
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <Label className="font-medium">{label}</Label>
+                        <Label className="font-medium text-sm">{label}</Label>
                         {isSuperAdminOnly && (
-                          <Badge variant="outline" className="text-xs">Super Admin only</Badge>
+                          <Badge variant="outline" className="text-[10px]">Super Admin only</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">{description}</p>
                     </div>
                     <Switch
-                      checked={role === "admin" ? true : permissions[key] || false}
+                      checked={adminRole === "super_admin" ? true : permissions[key] || false}
                       onCheckedChange={() => togglePermission(key)}
                       disabled={isDisabled}
                     />
@@ -257,7 +284,7 @@ export function AdminUserPermissionsDialog({
                     <Label className="font-medium">Skip 2FA Enforcement</Label>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    When enabled, this user will not be required to set up two-factor authentication on login.
+                    When enabled, this user will not be required to set up two-factor authentication.
                   </p>
                 </div>
                 <Switch
@@ -272,8 +299,7 @@ export function AdminUserPermissionsDialog({
               {mfaSkip && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <p className="text-sm text-amber-800">
-                    <strong>Warning:</strong> Skipping 2FA enforcement reduces account security. 
-                    Only use this for accounts that require special access or during initial setup.
+                    <strong>Warning:</strong> Skipping 2FA enforcement reduces account security.
                   </p>
                 </div>
               )}

@@ -6,7 +6,7 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/providers": () => import("@/pages/admin/AdminProviders"),
   "/admin/leads": () => import("@/pages/admin/AdminLeads"),
   "/admin/subscriptions": () => import("@/pages/admin/AdminSubscriptions"),
-  "/admin/users": () => import("@/pages/admin/AdminUsers"),
+  "/admin/users": () => import("@/pages/admin/AdminStaff"),
   "/admin/seekers": () => import("@/pages/admin/AdminSeekers"),
   "/admin/audit-log": () => import("@/pages/admin/AdminAuditLog"),
   "/admin/security-logs": () => import("@/pages/admin/AdminSecurityLogs"),

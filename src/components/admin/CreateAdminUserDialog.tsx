@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { UserPlus, ShieldCheck, ShieldAlert, Loader2, Copy, Check, Eye, EyeOff } from "lucide-react";
+import { 
+  UserPlus, 
+  ShieldAlert, 
+  Briefcase, 
+  HeadphonesIcon, 
+  Heart,
+  Loader2, 
+  Copy, 
+  Check, 
+  Eye, 
+  EyeOff 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,10 +36,19 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   useAdminUserManagement, 
-  AdminRole, 
+  AdminRoleType, 
   ADMIN_PERMISSIONS, 
-  ROLE_DEFAULTS 
+  ROLE_DEFAULTS,
+  ADMIN_ROLE_CONFIG 
 } from "@/hooks/useAdminUserManagement";
+import { cn } from "@/lib/utils";
+
+const ROLE_ICONS: Record<AdminRoleType, React.ElementType> = {
+  super_admin: ShieldAlert,
+  manager: Briefcase,
+  customer_rep: HeadphonesIcon,
+  advisor: Heart,
+};
 
 interface CreateAdminUserDialogProps {
   open: boolean;
@@ -41,14 +61,14 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
   const [step, setStep] = useState<"form" | "success">("form");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<AdminRole>("moderator");
-  const [permissions, setPermissions] = useState<Record<string, boolean>>(ROLE_DEFAULTS.moderator);
+  const [adminRole, setAdminRole] = useState<AdminRoleType>("customer_rep");
+  const [permissions, setPermissions] = useState<Record<string, boolean>>(ROLE_DEFAULTS.customer_rep);
   const [tempPassword, setTempPassword] = useState("");
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleRoleChange = (newRole: AdminRole) => {
-    setRole(newRole);
+  const handleRoleChange = (newRole: AdminRoleType) => {
+    setAdminRole(newRole);
     setPermissions(ROLE_DEFAULTS[newRole]);
   };
 
@@ -69,7 +89,7 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
       const result = await createAdminUser({
         email: email.trim(),
         displayName: displayName.trim(),
-        role,
+        adminRole,
         permissions,
       });
 
@@ -93,12 +113,15 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
     setStep("form");
     setEmail("");
     setDisplayName("");
-    setRole("moderator");
-    setPermissions(ROLE_DEFAULTS.moderator);
+    setAdminRole("customer_rep");
+    setPermissions(ROLE_DEFAULTS.customer_rep);
     setTempPassword("");
     setCopied(false);
     onOpenChange(false);
   };
+
+  const roleConfig = ADMIN_ROLE_CONFIG[adminRole];
+  const RoleIcon = ROLE_ICONS[adminRole];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -108,10 +131,10 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5" />
-                Create Admin User
+                Add Staff Member
               </DialogTitle>
               <DialogDescription>
-                Create a new admin user with specific role and permissions. They will receive an email with login credentials.
+                Create a new admin staff member with specific role and permissions.
               </DialogDescription>
             </DialogHeader>
 
@@ -123,7 +146,7 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
 
               <TabsContent value="details" className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name *</Label>
+                  <Label htmlFor="displayName">Full Name *</Label>
                   <Input
                     id="displayName"
                     placeholder="John Smith"
@@ -148,26 +171,44 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
 
                 <div className="space-y-2">
                   <Label>Role *</Label>
-                  <Select value={role} onValueChange={(v) => handleRoleChange(v as AdminRole)}>
+                  <Select value={adminRole} onValueChange={(v) => handleRoleChange(v as AdminRoleType)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">
+                      <SelectItem value="super_admin">
                         <div className="flex items-center gap-2">
                           <ShieldAlert className="h-4 w-4 text-amber-500" />
                           <div>
                             <span className="font-medium">Super Admin</span>
-                            <span className="text-muted-foreground ml-2">- Full access</span>
+                            <span className="text-muted-foreground ml-2 text-xs">- Full access</span>
                           </div>
                         </div>
                       </SelectItem>
-                      <SelectItem value="moderator">
+                      <SelectItem value="manager">
                         <div className="flex items-center gap-2">
-                          <ShieldCheck className="h-4 w-4 text-blue-500" />
+                          <Briefcase className="h-4 w-4 text-blue-500" />
                           <div>
-                            <span className="font-medium">Moderator</span>
-                            <span className="text-muted-foreground ml-2">- Limited access</span>
+                            <span className="font-medium">Manager</span>
+                            <span className="text-muted-foreground ml-2 text-xs">- Operations</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="customer_rep">
+                        <div className="flex items-center gap-2">
+                          <HeadphonesIcon className="h-4 w-4 text-emerald-500" />
+                          <div>
+                            <span className="font-medium">Customer Rep</span>
+                            <span className="text-muted-foreground ml-2 text-xs">- Support</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="advisor">
+                        <div className="flex items-center gap-2">
+                          <Heart className="h-4 w-4 text-purple-500" />
+                          <div>
+                            <span className="font-medium">Placement Advisor</span>
+                            <span className="text-muted-foreground ml-2 text-xs">- Concierge</span>
                           </div>
                         </div>
                       </SelectItem>
@@ -175,21 +216,14 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
                   </Select>
                 </div>
 
-                <Card className="bg-muted/50">
+                <Card className={cn("border", roleConfig.borderColor, roleConfig.bgColor)}>
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-3">
-                      {role === "admin" ? (
-                        <ShieldAlert className="h-5 w-5 text-amber-500 mt-0.5" />
-                      ) : (
-                        <ShieldCheck className="h-5 w-5 text-blue-500 mt-0.5" />
-                      )}
+                      <RoleIcon className={cn("h-5 w-5 mt-0.5", roleConfig.iconColor)} />
                       <div>
-                        <p className="font-medium">{role === "admin" ? "Super Admin" : "Moderator"}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {role === "admin" 
-                            ? "Full access to all admin features including user management and system settings."
-                            : "Limited access for content moderation and provider support. Cannot manage users or system settings."
-                          }
+                        <p className={cn("font-medium", roleConfig.color)}>{roleConfig.label}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {roleConfig.description}
                         </p>
                       </div>
                     </div>
@@ -199,35 +233,37 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
 
               <TabsContent value="permissions" className="space-y-4 mt-4">
                 <p className="text-sm text-muted-foreground">
-                  Customize which sections of the admin panel this user can access.
-                  {role === "admin" && (
+                  Customize page access for this user.
+                  {adminRole === "super_admin" && (
                     <Badge variant="secondary" className="ml-2">Super Admin has all permissions</Badge>
                   )}
                 </p>
 
-                <div className="space-y-3">
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                   {Object.entries(ADMIN_PERMISSIONS).map(([key, { label, description }]) => {
-                    const isSuperAdminOnly = key === "users";
-                    const isDisabled = role === "admin" || (isSuperAdminOnly && role === "moderator");
+                    const isSuperAdminOnly = key === "users" || key === "settings" || key === "audit_log" || key === "security_logs";
+                    const isSuperAdmin = adminRole === "super_admin";
+                    const isDisabled = isSuperAdmin || (isSuperAdminOnly && !isSuperAdmin);
                     
                     return (
                       <div
                         key={key}
-                        className={`flex items-center justify-between p-3 rounded-lg border ${
+                        className={cn(
+                          "flex items-center justify-between p-3 rounded-lg border",
                           isDisabled ? "bg-muted/30" : "bg-card"
-                        }`}
+                        )}
                       >
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <Label className="font-medium">{label}</Label>
+                            <Label className="font-medium text-sm">{label}</Label>
                             {isSuperAdminOnly && (
-                              <Badge variant="outline" className="text-xs">Super Admin only</Badge>
+                              <Badge variant="outline" className="text-[10px]">Super Admin only</Badge>
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">{description}</p>
                         </div>
                         <Switch
-                          checked={role === "admin" ? true : permissions[key] || false}
+                          checked={adminRole === "super_admin" ? true : permissions[key] || false}
                           onCheckedChange={() => togglePermission(key)}
                           disabled={isDisabled}
                         />
@@ -260,9 +296,9 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-green-600">
+              <DialogTitle className="flex items-center gap-2 text-emerald-600">
                 <Check className="h-5 w-5" />
-                Admin User Created Successfully
+                Staff Member Created
               </DialogTitle>
               <DialogDescription>
                 The user has been created and an invitation email has been sent.
@@ -303,7 +339,7 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
                       size="icon"
                       onClick={handleCopyPassword}
                     >
-                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>

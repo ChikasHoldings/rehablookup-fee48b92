@@ -127,7 +127,7 @@ const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions")
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
-const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminStaff"));
 const AdminSeekers = lazy(() => import("./pages/admin/AdminSeekers"));
 
 const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));

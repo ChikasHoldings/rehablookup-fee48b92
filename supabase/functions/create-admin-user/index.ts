@@ -10,7 +10,7 @@ const corsHeaders = {
 interface CreateAdminUserRequest {
   email: string;
   displayName: string;
-  role: "admin" | "moderator";
+  adminRole: "super_admin" | "manager" | "customer_rep" | "advisor";
   permissions: Record<string, boolean>;
 }
 
@@ -59,9 +59,9 @@ serve(async (req) => {
     }
 
     const body: CreateAdminUserRequest = await req.json();
-    const { email, displayName, role, permissions } = body;
+    const { email, displayName, adminRole, permissions } = body;
 
-    console.log("[CREATE-ADMIN-USER] Creating admin user:", { email, displayName, role });
+    console.log("[CREATE-ADMIN-USER] Creating admin user:", { email, displayName, adminRole });
 
     // Generate temporary password
     const tempPassword = generateTempPassword();
@@ -100,10 +100,10 @@ serve(async (req) => {
       // Continue anyway, profile can be created later
     }
 
-    // Assign the role
+    // Assign admin role in user_roles table
     const { error: roleError } = await supabase.from("user_roles").insert({
       user_id: userId,
-      role: role,
+      role: "admin",
     });
 
     if (roleError) {
@@ -111,10 +111,11 @@ serve(async (req) => {
       throw new Error("Failed to assign role");
     }
 
-    // Create admin profile with temp password info
+    // Create admin profile with specific admin_role and temp password info
     const { error: adminProfileError } = await supabase.from("admin_user_profiles").insert({
       user_id: userId,
       display_name: displayName,
+      admin_role: adminRole,
       status: "pending_password_reset",
       force_password_change: true,
       temp_password_expires_at: tempPasswordExpiry.toISOString(),
@@ -151,7 +152,7 @@ serve(async (req) => {
       details: {
         email,
         display_name: displayName,
-        role,
+        admin_role: adminRole,
         permissions,
       },
     });
@@ -198,7 +199,7 @@ serve(async (req) => {
               </p>
               
               <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
-                An admin account has been created for you on the RehabLookup platform. You have been assigned the <strong style="color: #1a1a1a;">${role === "admin" ? "Administrator" : "Moderator"}</strong> role.
+                An admin account has been created for you on the RehabLookup platform. You have been assigned the <strong style="color: #1a1a1a;">${adminRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong> role.
               </p>
               
               <!-- Credentials Box -->
