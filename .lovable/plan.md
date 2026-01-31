@@ -1,36 +1,34 @@
-
-# Lead Redistribution & Reminder System
+# Lead Redistribution & Reminder System ✅ IMPLEMENTED
 
 ## Overview
 
-Implement an automated lead monetization recovery system where facilities receive reminders at **6h, 12h, and 24h** after lead submission. After **24 hours**, if the lead remains unlocked, it gets redistributed to **2-3 nearby facilities** at a **$15 unlock price** - without any visible indication that it's a redistributed lead.
+Automated lead monetization recovery system where facilities receive reminders at **6h, 12h, and 24h** after lead submission. After **24 hours**, if the lead remains unlocked, it gets redistributed to **2-3 nearby facilities** at a **$15 unlock price** - without any visible indication that it's a redistributed lead.
 
 ---
 
-## System Flow
+## Implementation Status: COMPLETE
 
-```text
-LEAD LIFECYCLE
-──────────────────────────────────────────────────────────────────
- [0h]      [6h]       [12h]      [24h]       [72h]
-   │         │          │          │           │
-   ▼         ▼          ▼          ▼           ▼
- Lead    Reminder   Reminder   Exclusive   Extended
-Created   #1 Sent    #2 Sent   Expires &   Window
-                     + Final   Redistributed Expires
-                     Warning
+### ✅ Database Schema
+- Added columns to `leads`: `exclusive_until`, `extended_until`, `redistribution_status`, `original_facility_id`, reminder timestamps
+- Created `lead_distributions` table for tracking redistributed lead access
+- Added platform_settings for configurable windows and pricing
 
-├─── EXCLUSIVE PHASE ───┼──── EXTENDED PHASE ────┤
-│    ($39-49 pricing)   │    ($15 for new        │
-│    1 facility only    │    2-3 facilities)     │
-└───────────────────────┴────────────────────────┘
-```
+### ✅ Edge Functions  
+- `send-unlock-reminders`: Hourly cron sends 6h/12h/24h reminder emails
+- `process-lead-redistribution`: Hourly cron redistributes expired leads to 2-3 nearby facilities
 
----
+### ✅ Cron Jobs Scheduled
+- `send-unlock-reminders` runs at minute 0 of every hour
+- `process-lead-redistribution` runs at minute 0 of every hour
 
-## Technical Implementation
+### ✅ Provider Queries Updated
+- Inquiries page now includes redistributed leads from `lead_distributions`
+- Centralized analytics includes redistributed leads
+- No visual distinction between original and redistributed leads
 
-### 1. Database Schema Changes
+### ✅ Pricing Logic
+- Original facility: Normal pricing ($39-$49)
+- Redistributed facilities: $15 flat rate (from platform_settings)
 
 **Add columns to `leads` table:**
 
