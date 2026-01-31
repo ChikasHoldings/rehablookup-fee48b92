@@ -188,6 +188,7 @@ serve(async (req) => {
       created: new Date(activeSubscription.created * 1000).toISOString(),
       plan,
       monthly_amount: monthlyAmount,
+      pause_collection: activeSubscription.pause_collection || null,
     } : null;
 
     // Build customer data

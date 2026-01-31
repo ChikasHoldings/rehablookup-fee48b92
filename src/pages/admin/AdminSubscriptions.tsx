@@ -216,7 +216,7 @@ export default function AdminSubscriptions() {
     queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
   }, [queryClient]);
 
-  // Real-time subscriptions for facilities, leads, and retention changes - always active
+  // Real-time subscriptions for facilities, leads, lead unlocks, and retention changes - always active
   useEffect(() => {
     const facilitiesChannel = supabase
       .channel("admin-subscriptions-facilities-realtime")
@@ -234,13 +234,26 @@ export default function AdminSubscriptions() {
       )
       .subscribe();
 
+    // Real-time for lead unlocks (providers paying to unlock leads)
+    const leadUnlocksChannel = supabase
+      .channel("admin-subscriptions-lead-unlocks-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "lead_unlocks" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
+          queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
+        }
+      )
+      .subscribe();
+
+    // Real-time for new leads received (affects at-risk calculations)
     const leadsChannel = supabase
       .channel("admin-subscriptions-leads-realtime")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "leads" },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
           queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
         }
       )
@@ -273,6 +286,7 @@ export default function AdminSubscriptions() {
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(leadUnlocksChannel);
       supabase.removeChannel(leadsChannel);
       supabase.removeChannel(alertsChannel);
       supabase.removeChannel(activityChannel);
@@ -315,7 +329,7 @@ export default function AdminSubscriptions() {
     },
   });
 
-  // Fetch lead counts
+  // Fetch lead unlock counts (leads actually paid for, not just received)
   const { data: leadCounts, error: leadCountsError } = useQuery({
     queryKey: ["admin-subscription-lead-counts"],
     queryFn: async () => {
@@ -324,14 +338,14 @@ export default function AdminSubscriptions() {
       startOfMonth.setHours(0, 0, 0, 0);
 
       const { data } = await supabase
-        .from("leads")
+        .from("lead_unlocks")
         .select("facility_id")
         .gte("created_at", startOfMonth.toISOString());
 
       const counts: Record<string, number> = {};
-      data?.forEach((lead) => {
-        if (lead.facility_id) {
-          counts[lead.facility_id] = (counts[lead.facility_id] || 0) + 1;
+      data?.forEach((unlock) => {
+        if (unlock.facility_id) {
+          counts[unlock.facility_id] = (counts[unlock.facility_id] || 0) + 1;
         }
       });
       return counts;
@@ -821,12 +835,12 @@ export default function AdminSubscriptions() {
                                   <TooltipTrigger asChild>
                                     <div className="flex items-center gap-2 cursor-default" onClick={(e) => e.stopPropagation()}>
                                       <span className="text-sm text-muted-foreground">
-                                        {sub.leads_used} unlocked
+                                        {sub.leads_used} this month
                                       </span>
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>{sub.leads_used} leads unlocked total</p>
+                                    <p>{sub.leads_used} leads unlocked this month</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TableCell>

@@ -455,8 +455,8 @@ export function SubscriptionDetailModal({
                               <User className="h-5 w-5 text-amber-600" />
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Leads Unlocked</p>
-                              <p className="font-medium">{subscription.leads_used} total</p>
+                              <p className="text-sm text-muted-foreground">Leads Unlocked This Month</p>
+                              <p className="font-medium">{subscription.leads_used}</p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 Up to {subscription.location_limit} facilities
                               </p>
