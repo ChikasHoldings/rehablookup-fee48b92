@@ -520,10 +520,6 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                           </span>
                         </div>
                         <div className="flex justify-between items-start">
-                          <span className="text-muted-foreground">Display Name</span>
-                          <span className="font-medium text-right max-w-[60%]">{user.display_name || 'Not set'}</span>
-                        </div>
-                        <div className="flex justify-between items-start">
                           <span className="text-muted-foreground">Email</span>
                           <span className="font-medium text-right max-w-[60%] break-all">{email || 'Not available'}</span>
                         </div>
