@@ -56,12 +56,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadScoreBadge } from "./LeadScoreBadge";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";
-import { calculateLeadScore } from "@/lib/leadScoring";
 import { getLeadDisplayInfo, maskLeadName } from "@/lib/leadMasking";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
@@ -260,19 +258,11 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
   const formatUrgency = (u: string | null) => ({ immediate: "Immediate", "within-week": "This Week", "within-month": "This Month", researching: "Researching" }[u || ""] || u || "—");
   const formatLevel = (l: string | null) => ({ detox: "Detox", residential: "Residential", php: "PHP", iop: "IOP", outpatient: "Outpatient", "not-sure": "Not Sure" }[l || ""] || l || "—");
   const formatInsurance = (t: string | null) => ({ ppo: "PPO/Private", medicaid: "Medicaid", medicare: "Medicare", "self-pay": "Self-Pay", "not-sure": "Not Sure" }[t || ""] || t || "—");
-  
-  const leadScore = calculateLeadScore(lead);
-  const gradeAccentColor = {
-    A: "border-l-green-500 bg-green-50/30",
-    B: "border-l-blue-500 bg-blue-50/30",
-    C: "border-l-amber-500 bg-amber-50/30",
-    D: "border-l-slate-400 bg-slate-50/30",
-  }[leadScore.grade];
 
   return (
     <div className="flex-1 flex flex-col bg-background min-h-0 overflow-hidden">
       {/* Header */}
-      <div className={cn("flex-shrink-0 border-b border-l-4", gradeAccentColor)}>
+      <div className="flex-shrink-0 border-b">
         {/* Top row: Avatar, Name, Actions */}
         <div className="p-4 pb-3 flex items-center gap-3">
           <div className={cn(
@@ -381,7 +371,6 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
         
         {/* Badges row */}
         <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
-          <LeadScoreBadge lead={lead} size="sm" />
           {lead.email_verified && (
             <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50/80 h-6 text-xs px-2 font-medium">
               <ShieldCheck className="h-3 w-3" />

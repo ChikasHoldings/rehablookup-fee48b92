@@ -17,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, type LeadStatus } from "./LeadStatusBadge";
-import { LeadScoreBadge } from "./LeadScoreBadge";
 import { maskLeadName } from "@/lib/leadMasking";
 import type { Lead } from "./LeadDetailPanel";
 
@@ -294,9 +293,6 @@ export const MobileLeadCard = memo(function MobileLeadCard({
                   This Week
                 </Badge>
               )}
-              
-              {/* Score Badge */}
-              <LeadScoreBadge lead={lead} size="sm" />
               
               {/* Indicators */}
               {lead.email_verified && (

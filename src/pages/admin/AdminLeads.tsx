@@ -74,11 +74,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/leadScoring";
 import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
-import { RoutingLogsTable } from "@/components/admin/RoutingLogsTable";
-import { LeadOverrideDialog } from "@/components/admin/LeadOverrideDialog";
-import { LeadReassignDialog } from "@/components/admin/LeadReassignDialog";
 import { cn } from "@/lib/utils";
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
@@ -180,54 +176,6 @@ type Facility = {
 };
 
 const ITEMS_PER_PAGE = 20;
-
-// Lead Score Badge Component
-function LeadScoreBadge({ lead }: { lead: Lead }) {
-  const scoringInput: LeadScoringInput = {
-    insurance_type: lead.insurance_type,
-    urgency: lead.urgency,
-    level_of_care: lead.level_of_care,
-    email_verified: lead.email_verified,
-    preferred_contact: lead.preferred_contact,
-    message: lead.message,
-    who_seeking_help: lead.who_seeking_help,
-    dual_diagnosis: lead.dual_diagnosis,
-    primary_substance: lead.primary_substance,
-  };
-
-  const score = useMemo(() => calculateLeadScore(scoringInput), [lead]);
-  const colors = getScoreColor(score.grade);
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${colors.bg} ${colors.text} ${colors.border} border`}>
-            <span>{score.grade}</span>
-            <span className="opacity-75">{score.total}</span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="w-64 p-3">
-          <div className="space-y-2">
-            <p className="font-semibold text-sm">Lead Score Breakdown</p>
-            <div className="space-y-1 text-xs">
-              {score.factors.map((factor) => (
-                <div key={factor.label} className="flex justify-between">
-                  <span className="text-muted-foreground">{factor.label}</span>
-                  <span className="font-medium">+{factor.points}/{factor.maxPoints}</span>
-                </div>
-              ))}
-            </div>
-            <div className="border-t pt-2 flex justify-between font-semibold text-sm">
-              <span>Total</span>
-              <span>{score.total}/100</span>
-            </div>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 // Status Badge Component
 function StatusBadge({ status }: { status: string }) {
@@ -754,28 +702,10 @@ export default function AdminLeads() {
     refetchOnWindowFocus: true,
   });
 
-  // Filter leads by score grade on client side
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
-    if (scoreFilter === "all") return leads;
-    
-    return leads.filter((lead) => {
-      if (!lead) return false;
-      const scoringInput: LeadScoringInput = {
-        insurance_type: lead.insurance_type,
-        urgency: lead.urgency,
-        level_of_care: lead.level_of_care,
-        email_verified: lead.email_verified,
-        preferred_contact: lead.preferred_contact,
-        message: lead.message,
-        who_seeking_help: lead.who_seeking_help,
-        dual_diagnosis: lead.dual_diagnosis,
-        primary_substance: lead.primary_substance,
-      };
-      const score = calculateLeadScore(scoringInput);
-      return score.grade === scoreFilter;
-    });
-  }, [leads, scoreFilter]);
+    return leads;
+  }, [leads]);
 
   const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
@@ -1392,7 +1322,7 @@ export default function AdminLeads() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <LeadScoreBadge lead={lead} />
+                              <StatusBadge status={lead.status} />
                             </TableCell>
                             <TableCell>
                               {lead.qualified ? (
@@ -1851,9 +1781,6 @@ export default function AdminLeads() {
         </TabsContent>
       </Tabs>
 
-      {/* Routing Logs (Collapsible) */}
-      <RoutingLogsTable />
-
       {/* Lead Profile Modal (Read-only for admin) */}
       <LeadProfileModal
         lead={selectedLead}
@@ -1861,21 +1788,6 @@ export default function AdminLeads() {
         onOpenChange={setShowProfileModal}
         isAdmin
         facilities={facilities || []}
-      />
-
-      {/* Lead Override Dialog */}
-      <LeadOverrideDialog
-        lead={selectedLead}
-        open={showOverrideDialog}
-        onOpenChange={setShowOverrideDialog}
-      />
-
-      {/* Lead Reassign Dialog */}
-      <LeadReassignDialog
-        lead={selectedLead}
-        currentFacility={selectedLead?.facility_id ? facilitiesMap.get(selectedLead.facility_id) || null : null}
-        open={showReassignDialog}
-        onOpenChange={setShowReassignDialog}
       />
     </div>
   );

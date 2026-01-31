@@ -5,7 +5,7 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/analytics": () => import("@/pages/admin/AdminAnalytics"),
   "/admin/providers": () => import("@/pages/admin/AdminProviders"),
   "/admin/leads": () => import("@/pages/admin/AdminLeads"),
-  "/admin/lead-routing": () => import("@/pages/admin/AdminLeadRouting"),
+  
   "/admin/subscriptions": () => import("@/pages/admin/AdminSubscriptions"),
   "/admin/featured": () => import("@/pages/admin/AdminFeatured"),
   "/admin/credentials": () => import("@/pages/admin/AdminCredentials"),
@@ -25,8 +25,8 @@ const adjacentPagesMap: Record<string, string[]> = {
   "/admin/dashboard": ["/admin/analytics", "/admin/providers", "/admin/leads"],
   "/admin/analytics": ["/admin", "/admin/providers", "/admin/leads"],
   "/admin/providers": ["/admin", "/admin/leads", "/admin/subscriptions"],
-  "/admin/leads": ["/admin/providers", "/admin/lead-routing", "/admin"],
-  "/admin/lead-routing": ["/admin/leads", "/admin/providers"],
+  "/admin/leads": ["/admin/providers", "/admin"],
+  
   "/admin/subscriptions": ["/admin/providers", "/admin/featured", "/admin"],
   "/admin/featured": ["/admin/subscriptions", "/admin/providers"],
   "/admin/credentials": ["/admin/providers", "/admin/flagged-images"],
