@@ -1,271 +1,199 @@
 
-# Concierge Placement Service - Full E2E Audit Report
+# Lead Qualification, Routing & Scoring System Cleanup
 
-## Executive Summary
-
-After thorough code review of all layers (frontend, backend, database), the **Concierge Placement Service is 95% Production Ready**. The system architecture is comprehensive with proper payment flows, matching algorithms, and notification systems. A few refinements are identified below.
+## Overview
+This plan removes the complex lead qualification, routing, and scoring system since the new monetization model is simplified to:
+1. **Direct Inquiry**: Seeker submits inquiry from facility profile → goes directly to that facility (no routing/scoring needed)
+2. **Concierge Service**: Paid placement service for users who want help finding the right facility
 
 ---
 
-## Architecture Overview
+## What Will Be Removed
 
-```text
-                                    SEEKER FLOW
-+------------------+     +------------------------+     +------------------+
-|  Public Landing  | --> | create-concierge-checkout | --> | Stripe Checkout  |
-|  /concierge      |     | ($29 payment)          |     | (payment)        |
-+------------------+     +------------------------+     +------------------+
-                                                               |
-                                                               v
-+------------------+     +------------------------+     +------------------+
-|  /account/       | <-- | submit-concierge-intake | <-- | verify-concierge |
-|  concierge       |     | (saves to DB)          |     | -payment         |
-+------------------+     +------------------------+     +------------------+
-                                                               |
-                                    ADMIN FLOW                 v
-+------------------+     +------------------------+     +------------------+
-| AdminConcierge   | --> | match-concierge-intake | --> | send-concierge-  |
-| (case review)    |     | (scoring algorithm)    |     | introduction     |
-+------------------+     +------------------------+     +------------------+
-                                                               |
-                                    PROVIDER FLOW              v
-+------------------+     +------------------------+     +------------------+
-| PlacementNetwork | --> | confirm-placement      | --> | charge-placement |
-| (provider panel) |     | (dual confirmation)    |     | -fee ($1,200)    |
-+------------------+     +------------------------+     +------------------+
+### Backend (Edge Functions)
+
+| Function | Purpose | Action |
+|----------|---------|--------|
+| `reroute-stale-leads` | Re-routes unactioned leads to other providers | **DELETE** |
+| `send-followup-reminders` | 24/48/72h follow-up reminders based on lead status | **DELETE** |
+
+### Frontend Components
+
+| Component | Location | Action |
+|-----------|----------|--------|
+| `AdminLeadRouting.tsx` | `src/pages/admin/` | **DELETE** |
+| `RoutingLogsTable.tsx` | `src/components/admin/` | **DELETE** |
+| `LeadDeliveryHealthCheck.tsx` | `src/components/admin/` | **DELETE** |
+| `LeadOverrideDialog.tsx` | `src/components/admin/` | **DELETE** |
+| `LeadReassignDialog.tsx` | `src/components/admin/` | **DELETE** |
+| `LeadScoreBadge.tsx` | `src/components/provider/leads/` | **DELETE** |
+| `LeadConversionAnalytics.tsx` | `src/components/provider/leads/` | **DELETE** |
+
+### Scoring System (Full Removal)
+
+| File/Directory | Action |
+|----------------|--------|
+| `src/lib/scoring/` directory (6 files) | **DELETE** |
+| `src/lib/leadScoring.ts` | **DELETE** |
+
+---
+
+## Files Requiring Updates
+
+### 1. App.tsx
+- Remove `AdminLeadRouting` lazy import
+- Remove `/admin/lead-routing` route
+
+### 2. Admin Sidebar (`AdminSidebar.tsx`)
+- Remove "Lead Routing" nav item from Leads group
+- Simplify Leads group to single item (no dropdown needed)
+
+### 3. Admin Dashboard (`AdminDashboard.tsx`)
+- Remove `LeadDeliveryHealthCheck` import and component
+- Remove related stats fetching
+
+### 4. Admin Leads Page (`AdminLeads.tsx`)
+- Remove scoring badge display
+- Remove `RoutingLogsTable` import and component
+- Remove `LeadOverrideDialog` and `LeadReassignDialog`
+- Remove qualification/routing filters and columns
+- Simplify to show leads as direct inquiries
+
+### 5. Provider Lead Detail Components
+- `LeadDetailPanel.tsx`: Remove scoring badge and qualification status displays
+- `LeadDetailDrawer.tsx`: Remove scoring components
+
+### 6. Lead Profile Modal (`LeadProfileModal.tsx`)
+- Remove scoring imports and displays
+
+### 7. Provider Activity Timeline (`ProviderActivityTimeline.tsx`)
+- Remove lead routing log fetching
+- Simplify lead event types
+
+### 8. Data Health Monitor (`DataHealthMonitor.tsx`)
+- Remove `lead_routing_logs` table monitoring
+
+### 9. Admin Prefetch (`adminPrefetch.ts`)
+- Remove lead-routing page references
+
+### 10. Admin Auth Hook (`useAdminAuth.ts`)
+- Remove lead-routing permission mapping
+
+### 11. Supabase Config (`config.toml`)
+- Remove `reroute-stale-leads` entry
+- Remove `send-followup-reminders` entry
+- Remove `submit-direct-lead` entry (already deleted folder but config entry remains)
+
+---
+
+## Edge Function Simplification
+
+### `submit-qualified-lead` → Rename to `submit-lead-inquiry`
+Current: 2000+ lines with complex routing, scoring, provider eligibility checks
+After: Simple direct submission to specified facility
+
+**Simplified Logic:**
+1. Validate required fields
+2. Check for spam/duplicates
+3. Insert lead record with `facility_id` from request
+4. Send confirmation email to seeker
+5. Send notification to facility
+6. Return success
+
+Remove:
+- All scoring weight constants
+- Provider eligibility checking
+- Provider capacity tracking
+- Auto-assignment logic
+- Fairness scoring algorithms
+- Plan tier priority logic
+
+---
+
+## Database Considerations
+
+The `lead_routing_logs` table will become orphaned. This is acceptable as:
+- Historical data preserved for analytics
+- No new entries will be created
+- Table can be archived/dropped later if needed
+
+Fields that become unused on `leads` table:
+- `qualified` - Will always be `true` for new leads (direct submissions)
+- `qualification_reason` - No longer populated
+- `assignment_status` - No longer used (direct assignment)
+- `assignment_reason` - No longer used
+
+---
+
+## Summary of Deletions
+
+```
+Edge Functions to DELETE:
+├── supabase/functions/reroute-stale-leads/
+├── supabase/functions/send-followup-reminders/
+
+Frontend Pages to DELETE:
+├── src/pages/admin/AdminLeadRouting.tsx
+
+Admin Components to DELETE:
+├── src/components/admin/RoutingLogsTable.tsx
+├── src/components/admin/LeadDeliveryHealthCheck.tsx
+├── src/components/admin/LeadOverrideDialog.tsx
+├── src/components/admin/LeadReassignDialog.tsx
+
+Provider Components to DELETE:
+├── src/components/provider/leads/LeadScoreBadge.tsx
+├── src/components/provider/leads/LeadConversionAnalytics.tsx
+
+Scoring Library to DELETE:
+├── src/lib/scoring/ (entire directory)
+│   ├── advancedScoring.ts
+│   ├── baseScoring.ts
+│   ├── facilityMatch.ts
+│   ├── index.ts
+│   ├── qualityMetrics.ts
+│   └── types.ts
+├── src/lib/leadScoring.ts
 ```
 
 ---
 
-## Components Audit (By Layer)
+## Files to Update
 
-### Seeker-Side Components (Status: 100% Complete)
+1. **Routing/Navigation** (3 files)
+   - `src/App.tsx`
+   - `src/components/admin/AdminSidebar.tsx`
+   - `src/lib/adminPrefetch.ts`
 
-| Component | Location | Status | Notes |
-|-----------|----------|--------|-------|
-| Landing Page | `/concierge` | OK | Full marketing page with CTAs |
-| Public Intake | `/concierge/intake` | OK | 6-step form with payment |
-| Authenticated Hub | `/account/concierge` | OK | Case timeline, matches, messaging |
-| Inline Intake | `ConciergeInlineIntake.tsx` | OK | 4-step simplified flow for logged-in users |
-| Payment Recovery | `ConciergePaymentRecovery.tsx` | OK | Handles orphaned payments |
-| Messaging | `ConciergeMessaging.tsx` | OK | Realtime threads with facilities/advisors |
-| Tours | `ConciergeToursList.tsx` | OK | Request, propose, confirm lifecycle |
-| Facility Cards | `MatchedFacilityCard.tsx` | OK | Dismissal, tour request, details |
-| Confirmation | `ConfirmAdmissionModal.tsx` | OK | Seeker-side dual confirmation |
-| Feedback | `FeedbackForm.tsx` | OK | Rating + feedback (idempotent) |
+2. **Admin Panel** (4 files)
+   - `src/pages/admin/AdminDashboard.tsx`
+   - `src/pages/admin/AdminLeads.tsx`
+   - `src/components/admin/DataHealthMonitor.tsx`
+   - `src/components/admin/ProviderActivityTimeline.tsx`
 
-### Provider-Side Components (Status: 100% Complete)
+3. **Provider Panel** (2 files)
+   - `src/components/provider/leads/LeadDetailPanel.tsx`
+   - `src/components/provider/leads/LeadDetailDrawer.tsx`
 
-| Component | Location | Status | Notes |
-|-----------|----------|--------|-------|
-| Placement Network | `/provider/placement-network` | OK | Full dashboard with tabs |
-| Readiness Checklist | `PlacementReadinessChecklist.tsx` | OK | 4-step onboarding |
-| Terms Modal | `PlacementTermsModal.tsx` | OK | Digital agreement v1.0 |
-| Payment Method | `AddPaymentMethodModal.tsx` | OK | Card/ACH setup |
-| Care Types Modal | `CareTypesModal.tsx` | OK | Service selection |
-| Introduction Cards | `IntroductionCard.tsx` | OK | Respond to cases |
-| Provider Messages | `ConciergeMessages.tsx` | OK | Messaging with seekers |
-| Pending Count Badge | `usePendingConciergeCount.ts` | OK | Sidebar notification |
+4. **Shared Components** (1 file)
+   - `src/components/leads/LeadProfileModal.tsx`
 
-### Admin-Side Components (Status: 100% Complete)
+5. **Hooks** (1 file)
+   - `src/hooks/useAdminAuth.ts`
 
-| Component | Location | Status | Notes |
-|-----------|----------|--------|-------|
-| Concierge Cases | `/admin/concierge` | OK | Case list with filters |
-| Placements Dashboard | `/admin/placements` | OK | Legacy placement_cases table |
-| Detail Sheet | `ConciergeDetailSheet.tsx` | OK | 7-tab comprehensive view |
-| Intake Tab | `ConciergeIntakeTab.tsx` | OK | Full intake data display |
-| Matching Tab | `ConciergeMatchingTab.tsx` | OK | Run algorithm, view scores |
-| Introductions Tab | `ConciergeIntroductionsTab.tsx` | OK | Send/manage intros |
-| Messages Tab | `MessagesTab.tsx` | OK | Admin messaging |
-| Tours Tab | `ToursTab.tsx` | OK | Tour management |
-| Invoice Management | `InvoiceManagementTab.tsx` | OK | Billing actions |
-| Actions Tab | `ConciergeActionsTab.tsx` | OK | Status changes, close case |
+6. **Config** (1 file)
+   - `supabase/config.toml`
+
+7. **Edge Function** (1 file - major simplification)
+   - `supabase/functions/submit-qualified-lead/index.ts`
 
 ---
 
-## Edge Functions Audit
+## Post-Cleanup Result
 
-### Core Payment Functions (Status: 100% Complete)
-
-| Function | Lines | Status | Purpose |
-|----------|-------|--------|---------|
-| `create-concierge-checkout` | 114 | OK | Stripe checkout session ($29) |
-| `verify-concierge-payment` | 96 | OK | Payment verification |
-| `submit-concierge-intake` | 333 | OK | Intake persistence with idempotency |
-| `charge-placement-fee` | 365 | OK | Provider billing ($1,200 flat / 8% commission) |
-
-### Matching & Routing Functions (Status: 100% Complete)
-
-| Function | Lines | Status | Purpose |
-|----------|-------|--------|---------|
-| `match-concierge-intake` | 415 | OK | 7-factor scoring algorithm (100 points) |
-| `send-concierge-introduction` | 279 | OK | Provider introduction emails |
-| `auto-status-transition` | 185 | OK | Lifecycle state machine |
-| `confirm-placement` | 230 | OK | Dual confirmation + fee trigger |
-
-### Notification Functions (Status: 100% Complete)
-
-| Function | Lines | Status | Purpose |
-|----------|-------|--------|---------|
-| `send-concierge-notifications` | 841 | OK | 8 notification types (email + in-app) |
-| `send-tour-notifications` | - | OK | Tour lifecycle notifications |
-| `send-message-notifications` | - | OK | New message alerts |
-
-### Admin Functions (Status: 100% Complete)
-
-| Function | Lines | Status | Purpose |
-|----------|-------|--------|---------|
-| `admin-manage-invoice` | 358 | OK | Waive, override, retry, remind |
-
----
-
-## Database Tables (Concierge-Related)
-
-| Table | Purpose | RLS |
-|-------|---------|-----|
-| `concierge_inquiries` | Main case records | Yes |
-| `concierge_introductions` | Facility-case links | Yes |
-| `concierge_threads` | Messaging threads | Yes |
-| `concierge_messages` | Thread messages | Yes |
-| `concierge_tour_requests` | Tour lifecycle | Yes |
-| `concierge_case_events` | Audit trail | Yes |
-| `concierge_rejected_facilities` | Seeker dismissals | Yes |
-| `placement_invoices` | Provider billing | Yes |
-| `placement_fee_events` | Billing audit | Yes |
-| `provider_payment_methods` | ACH/Card storage | Yes |
-
----
-
-## Payment Flows Verification
-
-### Seeker Payment ($29)
-
-```text
-1. User clicks "Get Started" on /concierge or /account/concierge
-2. create-concierge-checkout creates Stripe Checkout session
-3. User completes payment on Stripe
-4. Redirect to success URL with session_id
-5. verify-concierge-payment confirms payment
-6. submit-concierge-intake creates concierge_inquiries record
-7. send-concierge-notifications sends intake_received
-```
-
-**Status: 100% Functional** - Idempotency keys prevent duplicates
-
-### Provider Billing ($1,200 / Commission)
-
-```text
-1. Both seeker and provider confirm placement
-2. confirm-placement triggers charge-placement-fee
-3. Check for Pro subscription (20% discount)
-4. Charge stored payment method OR create invoice
-5. Update placement_invoices table
-6. send-concierge-notifications sends invoice_paid/invoice_issued
-```
-
-**Status: 100% Functional** - Commission cap at $1,500
-
----
-
-## Matching Algorithm Details
-
-The `match-concierge-intake` function uses a 100-point scoring system:
-
-| Factor | Max Points | Logic |
-|--------|------------|-------|
-| Location | 35 | Same state (35), adjacent (25), willing to travel (15) |
-| Care Type | 25 | Exact match (25), has care types (8) |
-| Insurance | 20 | Match (20), "most insurance" (15), unknown (10) |
-| Availability | 8 | Open (8), limited (4) |
-| Gender | 5 | Match or co-ed (5), partial (3), mismatch (0) |
-| Age | 4 | Match or "all ages" (4), mismatch (0) |
-| Specializations | 3 | Detox match (1.5), dual diagnosis (1.5) |
-
-**Top 3 matches are selected and stored in `matched_facility_ids`**
-
----
-
-## Status State Machine
-
-```text
-new → reviewing → matching → matched → introductions_sent → in_contact → placed
-                                                                    ↓
-                                                                 closed
-```
-
-**Transitions handled by `auto-status-transition` function**
-
----
-
-## Issues Identified
-
-### Issue 1: AdminPlacements Uses Legacy Table
-
-**Location**: `src/pages/admin/AdminPlacements.tsx`
-
-**Problem**: This page queries `placement_cases` table which appears to be a legacy/parallel system to `concierge_inquiries`. This could cause confusion.
-
-**Recommendation**: Verify if `placement_cases` is still needed or should be deprecated in favor of `concierge_inquiries` for unified case management.
-
-### Issue 2: Duplicate Admin Pages
-
-The admin panel has both:
-- `/admin/concierge` - Uses `concierge_inquiries` table
-- `/admin/placements` - Uses `placement_cases` table
-
-**Recommendation**: Consolidate into a single admin interface or clearly differentiate purposes.
-
-### Issue 3: Missing SMS Notifications (Non-Critical)
-
-While SMS is set up via Twilio (`send-sms-notification`), the concierge notification functions primarily use email. SMS notifications for critical events (provider interested, tour proposed) could increase engagement.
-
-**Recommendation**: Add SMS fallback for time-sensitive notifications in `send-concierge-notifications`.
-
----
-
-## Verification Checklist
-
-| Feature | Status | Tested |
-|---------|--------|--------|
-| Seeker can pay $29 and submit intake | OK | Via Stripe |
-| Intake data persists correctly | OK | Idempotent |
-| Admin can view and manage cases | OK | 7-tab sheet |
-| Admin can run matching algorithm | OK | 7-factor scoring |
-| Admin can send introductions | OK | Email + in-app |
-| Provider receives introduction notification | OK | Email + badge |
-| Provider can respond (interested/not interested) | OK | Updates DB |
-| Messaging between seeker/provider/admin | OK | Realtime |
-| Tour request lifecycle | OK | Full CRUD |
-| Seeker can confirm admission | OK | Updates DB |
-| Provider can confirm placement | OK | Triggers billing |
-| Dual confirmation triggers fee | OK | Stripe charge |
-| Pro discount applied correctly | OK | 20% off |
-| Invoice management (waive/override/retry) | OK | Admin actions |
-| Case events logged to audit trail | OK | Full history |
-
----
-
-## Conclusion
-
-The Concierge Placement Service is **PRODUCTION READY** with comprehensive coverage:
-
-| Area | Completion |
-|------|------------|
-| Seeker Intake & Payment | 100% |
-| Matching Algorithm | 100% |
-| Provider Network | 100% |
-| Messaging System | 100% |
-| Tours Module | 100% |
-| Admin Oversight | 100% |
-| Provider Billing | 100% |
-| Email Notifications | 100% |
-| In-App Notifications | 100% |
-| Audit Trail | 100% |
-
-**Minor Recommendations**:
-1. Clarify relationship between `placement_cases` and `concierge_inquiries` tables
-2. Consider adding SMS for time-sensitive notifications
-3. Consolidate admin pages if `placement_cases` is truly legacy
-
-**No TODOs, No Placeholders, No Silent Failures in Active Code Paths.**
+After this cleanup:
+- **Inquiries flow directly** from facility profile to that facility
+- **No automated routing** between providers
+- **No lead scoring** or qualification gates
+- **Simplified admin view** showing all inquiries without routing complexity
+- **Concierge service** remains for users wanting guided placement help
