@@ -71,6 +71,7 @@ export function useUserRole(): UserRoleResult {
 
   useEffect(() => {
     let mounted = true;
+    let isInitializing = true; // Flag to track initial load vs ongoing changes
 
     const determineRole = async (uid: string): Promise<UserRole> => {
       try {
@@ -114,32 +115,7 @@ export function useUserRole(): UserRoleResult {
       }
     };
 
-    // Listener for ONGOING auth changes (does NOT control isLoading)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!mounted) return;
-
-        if (!session?.user) {
-          setIsAuthenticated(false);
-          setUserId(null);
-          setRole(null);
-          // Don't set isLoading here - let initial load handle it
-          return;
-        }
-
-        setIsAuthenticated(true);
-        setUserId(session.user.id);
-        
-        // Fire and forget - don't await, don't set loading
-        determineRole(session.user.id).then((userRole) => {
-          if (mounted) {
-            setRole(userRole);
-          }
-        });
-      }
-    );
-
-    // INITIAL load (controls isLoading)
+    // INITIAL load (controls isLoading) - must run before onAuthStateChange processes events
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -165,10 +141,38 @@ export function useUserRole(): UserRoleResult {
         console.error("[useUserRole] Error checking session:", error);
       } finally {
         if (mounted) {
+          isInitializing = false; // Mark initialization complete
           setIsLoading(false);
         }
       }
     };
+
+    // Listener for ONGOING auth changes (does NOT control isLoading)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        
+        // Skip processing during initial load - initializeAuth handles it
+        if (isInitializing) return;
+
+        if (!session?.user) {
+          setIsAuthenticated(false);
+          setUserId(null);
+          setRole(null);
+          return;
+        }
+
+        setIsAuthenticated(true);
+        setUserId(session.user.id);
+        
+        // Fire and forget for ongoing changes
+        determineRole(session.user.id).then((userRole) => {
+          if (mounted) {
+            setRole(userRole);
+          }
+        });
+      }
+    );
 
     initializeAuth();
 
