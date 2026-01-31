@@ -1,6 +1,5 @@
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useUserRole, getPortalHome } from "@/hooks/useUserRole";
+import { useLocation, Navigate } from "react-router-dom";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface PublicRouteGuardProps {
   children: React.ReactNode;
@@ -28,52 +27,14 @@ const PROVIDER_ALLOWED_ROUTES = [
 
 /**
  * Wrapper component for public routes that redirects authenticated admins
- * and providers to their respective portals. This ensures strict separation
- * between public website and admin/provider experiences.
+ * and providers to their respective portals. Uses declarative Navigate
+ * component for reliable redirects.
  * 
  * Seekers CAN access public routes (they're regular users browsing).
  */
 export function PublicRouteGuard({ children }: PublicRouteGuardProps) {
   const { role, isLoading, isAuthenticated } = useUserRole();
-  const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    // Skip if still loading or in iframe
-    if (isLoading) return;
-    if (typeof window !== "undefined" && window.self !== window.top) return;
-
-    // Not authenticated - allow public access
-    if (!isAuthenticated || !role) return;
-
-    const currentPath = location.pathname;
-
-    // Allow legal/universal pages for everyone
-    if (ALWAYS_ALLOWED_ROUTES.some(route => currentPath.startsWith(route))) {
-      return;
-    }
-
-    // Check role-specific restrictions
-    if (role === "admin") {
-      // Admins cannot access ANY public routes except legal pages
-      // Redirect to admin portal
-      navigate("/admin", { replace: true });
-      return;
-    }
-
-    if (role === "provider") {
-      // Providers can access provider-specific public pages
-      if (PROVIDER_ALLOWED_ROUTES.some(route => currentPath.startsWith(route))) {
-        return;
-      }
-      
-      // Block all other public routes
-      navigate("/provider/dashboard", { replace: true });
-      return;
-    }
-
-    // Seekers can access all public routes - no redirect needed
-  }, [role, isLoading, isAuthenticated, location.pathname, navigate]);
 
   // Show loading while checking role
   if (isLoading) {
@@ -84,21 +45,37 @@ export function PublicRouteGuard({ children }: PublicRouteGuardProps) {
     );
   }
 
-  // If user is admin or provider (not seeker), show loading during redirect
-  if (isAuthenticated && (role === "admin" || role === "provider")) {
-    const currentPath = location.pathname;
-    const isAllowedRoute = 
-      ALWAYS_ALLOWED_ROUTES.some(r => currentPath.startsWith(r)) ||
-      (role === "provider" && PROVIDER_ALLOWED_ROUTES.some(r => currentPath.startsWith(r)));
-    
-    if (!isAllowedRoute) {
-      return (
-        <div className="h-screen flex items-center justify-center bg-background">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      );
-    }
+  // Skip redirect logic in iframe (preview functionality)
+  if (typeof window !== "undefined" && window.self !== window.top) {
+    return <>{children}</>;
   }
 
+  // Not authenticated - allow public access
+  if (!isAuthenticated || !role) {
+    return <>{children}</>;
+  }
+
+  const currentPath = location.pathname;
+
+  // Allow legal/universal pages for everyone
+  if (ALWAYS_ALLOWED_ROUTES.some(route => currentPath.startsWith(route))) {
+    return <>{children}</>;
+  }
+
+  // Admin redirect - use Navigate component for reliable redirect
+  if (role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  // Provider redirect
+  if (role === "provider") {
+    // Allow provider-specific public pages
+    if (PROVIDER_ALLOWED_ROUTES.some(route => currentPath.startsWith(route))) {
+      return <>{children}</>;
+    }
+    return <Navigate to="/provider/dashboard" replace />;
+  }
+
+  // Seekers can access all public routes
   return <>{children}</>;
 }
