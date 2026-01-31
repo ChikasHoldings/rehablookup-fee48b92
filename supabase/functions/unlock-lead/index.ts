@@ -4,7 +4,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+// Production logging with request ID
+const generateRequestId = () => crypto.randomUUID().slice(0, 8);
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[UNLOCK-LEAD] [${requestId}] ${step}${detailsStr}`);
 };
 
 // Unlock pricing per inquiry type (in cents) - defaults if admin settings not found
@@ -48,8 +55,11 @@ async function getUnlockPricing(supabase: any): Promise<{
 }
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+  logStep(requestId, "Request received", { method: req.method });
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
@@ -77,9 +87,11 @@ serve(async (req) => {
     }
 
     const { leadId, facilityId, paymentMethod = 'credits' } = await req.json();
+    logStep(requestId, "Processing unlock request", { leadId, facilityId, paymentMethod });
 
     if (!leadId || !facilityId) {
-      return new Response(JSON.stringify({ error: "Missing leadId or facilityId" }), {
+      logStep(requestId, "Missing required fields");
+      return new Response(JSON.stringify({ error: "Missing leadId or facilityId", requestId }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -100,7 +112,8 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingUnlock) {
-      return new Response(JSON.stringify({ error: "Lead already unlocked" }), {
+      logStep(requestId, "Lead already unlocked", { existingUnlockId: existingUnlock.id });
+      return new Response(JSON.stringify({ error: "Lead already unlocked", requestId }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -114,23 +127,34 @@ serve(async (req) => {
       .single();
 
     if (!facility || facility.user_id !== user.id) {
-      return new Response(JSON.stringify({ error: "Facility not found or unauthorized" }), {
+      logStep(requestId, "Facility access denied", { facilityId, userId: user.id });
+      return new Response(JSON.stringify({ error: "Facility not found or unauthorized", requestId }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Fetch the lead to get inquiry_type and redistribution status
-    const { data: leadData } = await supabaseAdmin
+    const { data: leadData, error: leadError } = await supabaseAdmin
       .from("leads")
-      .select("inquiry_type, redistribution_status, original_facility_id")
+      .select("inquiry_type, redistribution_status, original_facility_id, facility_id")
       .eq("id", leadId)
       .single();
+
+    if (leadError || !leadData) {
+      logStep(requestId, "Lead not found", { leadId, error: leadError?.message });
+      return new Response(JSON.stringify({ error: "Lead not found", requestId }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const inquiryType = leadData?.inquiry_type || 'request_info';
     const isRedistributed = leadData?.redistribution_status === 'extended' && 
       leadData?.original_facility_id && 
       leadData.original_facility_id !== facilityId;
+    
+    logStep(requestId, "Lead data fetched", { inquiryType, isRedistributed, redistStatus: leadData?.redistribution_status });
 
     // If redistributed, verify facility has access via lead_distributions
     if (isRedistributed) {
@@ -357,9 +381,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Error in unlock-lead:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
+    logStep(requestId, "ERROR - Unhandled exception", { error: message });
+    return new Response(JSON.stringify({ error: "Failed to unlock lead", requestId }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
