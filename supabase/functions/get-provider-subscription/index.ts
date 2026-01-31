@@ -130,12 +130,11 @@ serve(async (req) => {
     const customerId = customer.id;
     logStep("Found Stripe customer", { customerId });
 
-    // Get subscriptions (all statuses to build timeline)
+    // Get subscriptions (all statuses to build timeline) - avoid deep expand
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
       limit: 10,
-      expand: ["data.items.data.price.product"],
     });
 
     // Get payment intents
@@ -157,12 +156,22 @@ serve(async (req) => {
     let monthlyAmount = 0;
 
     if (activeSubscription) {
-      const priceData = activeSubscription.items.data[0]?.price;
-      const productId = priceData?.product as string;
-      monthlyAmount = (priceData?.unit_amount || 0) / 100;
+      const priceId = activeSubscription.items.data[0]?.price?.id;
+      let productId: string | null = null;
+      
+      // Fetch price with product expansion separately to avoid deep nesting
+      if (priceId) {
+        try {
+          const price = await stripe.prices.retrieve(priceId, { expand: ["product"] });
+          productId = typeof price.product === "string" ? price.product : (price.product as any)?.id;
+          monthlyAmount = (price.unit_amount || 0) / 100;
+        } catch (e) {
+          logStep("Could not fetch price details", { priceId, error: String(e) });
+        }
+      }
       
       // All paid subscriptions are now "Pro"
-      if (PRO_PRODUCT_IDS.includes(productId) || productId) {
+      if (productId && (PRO_PRODUCT_IDS.includes(productId) || productId)) {
         plan = "pro";
         planName = "Pro";
       }
