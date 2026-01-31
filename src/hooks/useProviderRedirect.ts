@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
  * Hook that redirects authenticated providers away from public/seeker routes
  * to their provider panel. This enforces separation between provider and public experiences.
  * 
+ * Provider detection is based on having a profile in the `profiles` table (provider profiles).
+ * 
  * Skips redirect check when:
  * - Page is loaded in an iframe (for preview functionality)
  * - User is on provider or admin routes
@@ -38,14 +40,14 @@ export function useProviderRedirect(options: { enabled?: boolean } = {}) {
           return;
         }
 
-        // Check if user has any facilities (is a provider)
-        const { data: facilities } = await supabase
-          .from("facilities")
+        // Check if user has a provider profile (profiles table is for providers only)
+        const { data: profile } = await supabase
+          .from("profiles")
           .select("id")
           .eq("user_id", session.user.id)
-          .limit(1);
+          .maybeSingle();
 
-        const userIsProvider = facilities && facilities.length > 0;
+        const userIsProvider = !!profile;
         setIsProvider(userIsProvider);
 
         // If user is a provider and on a public/seeker route, redirect to provider panel

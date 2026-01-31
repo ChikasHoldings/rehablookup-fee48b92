@@ -74,6 +74,15 @@ export function useSeekerAuth() {
   }, [fetchProfile]);
 
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
+    // Check if email is already registered as a provider
+    const { data: isProvider } = await supabase.rpc('is_email_provider', { p_email: email });
+    if (isProvider) {
+      return { 
+        data: null, 
+        error: new Error('This email is registered as a facility provider. Please use the provider login or use a different email.') 
+      };
+    }
+
     const redirectUrl = `${window.location.origin}/`;
     const displayName = firstName && lastName 
       ? `${firstName} ${lastName}`.trim() 
@@ -91,6 +100,28 @@ export function useSeekerAuth() {
         }
       }
     });
+    
+    // If signup successful, explicitly create seeker profile and role
+    if (!error && data.user) {
+      try {
+        // Create seeker profile
+        await supabase.from('seeker_profiles').insert({
+          user_id: data.user.id,
+          display_name: displayName,
+          first_name: firstName || null,
+          last_name: lastName || null
+        });
+        
+        // Create seeker role
+        await supabase.from('user_roles').insert({
+          user_id: data.user.id,
+          role: 'seeker'
+        });
+      } catch (profileError) {
+        console.error('Error creating seeker profile:', profileError);
+        // Non-blocking - user is still signed up
+      }
+    }
     
     return { data, error };
   };

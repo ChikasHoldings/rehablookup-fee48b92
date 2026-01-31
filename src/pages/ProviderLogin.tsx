@@ -318,6 +318,18 @@ export default function ProviderLogin() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
+      // Check if email is registered as a seeker (not a provider)
+      const { data: isSeeker } = await supabase.rpc('is_email_seeker', { p_email: normalizedEmail });
+      if (isSeeker) {
+        toast({
+          title: "Wrong Account Type",
+          description: "This email is registered as a personal account, not a facility provider. Please use the seeker login.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Check if email or IP is blocked and rate limited using edge function
       const { data: preCheckResult, error: preCheckError } = await supabase.functions.invoke('log-login-attempt', {
         body: {
