@@ -202,9 +202,9 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Leads used:</span>{" "}
+                        <span className="text-muted-foreground">Leads this month:</span>{" "}
                         <span className={provider.leadsUsed < 3 ? "text-amber-600 font-medium" : ""}>
-                          {provider.leadsUsed}/{provider.leadLimit}
+                          {provider.leadsUsed}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
