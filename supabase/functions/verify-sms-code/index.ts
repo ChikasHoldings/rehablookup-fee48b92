@@ -3,28 +3,69 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[SMS-VERIFICATION-VERIFY] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  const requestId = crypto.randomUUID().slice(0, 8);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { phone, code, userId, userType } = await req.json();
+    logStep("Function started", { requestId });
 
-    if (!phone || !code) {
+    // Validate environment
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      logStep("Missing Supabase credentials", { requestId });
       return new Response(
-        JSON.stringify({ error: "Phone and code are required" }),
+        JSON.stringify({ error: "Server configuration error", requestId }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse request
+    let body: { phone?: string; code?: string; userId?: string; userType?: string };
+    try {
+      body = await req.json();
+    } catch {
+      logStep("Invalid JSON body", { requestId });
+      return new Response(
+        JSON.stringify({ error: "Invalid request body", requestId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const { phone, code, userId, userType } = body;
+
+    if (!phone || !code) {
+      logStep("Missing required fields", { requestId, hasPhone: !!phone, hasCode: !!code });
+      return new Response(
+        JSON.stringify({ error: "Phone and code are required", requestId }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate code format (6 digits)
+    if (!/^\d{6}$/.test(code)) {
+      logStep("Invalid code format", { requestId });
+      return new Response(
+        JSON.stringify({ error: "Invalid code format. Must be 6 digits.", requestId }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    logStep("Processing verification", { requestId, userType: userType || "unknown", hasUserId: !!userId });
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Find the verification code
@@ -39,24 +80,26 @@ serve(async (req) => {
       .maybeSingle();
 
     if (fetchError) {
-      console.error("Error fetching verification code:", fetchError);
+      logStep("Error fetching verification code", { requestId, error: fetchError.message });
       return new Response(
-        JSON.stringify({ error: "Failed to verify code" }),
+        JSON.stringify({ error: "Failed to verify code", requestId }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!verificationCode) {
+      logStep("No valid verification code found", { requestId });
       return new Response(
-        JSON.stringify({ error: "No valid verification code found. Please request a new one." }),
+        JSON.stringify({ error: "No valid verification code found. Please request a new one.", requestId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Check max attempts (5 attempts allowed)
     if (verificationCode.attempts >= 5) {
+      logStep("Too many failed attempts", { requestId, attempts: verificationCode.attempts });
       return new Response(
-        JSON.stringify({ error: "Too many failed attempts. Please request a new code." }),
+        JSON.stringify({ error: "Too many failed attempts. Please request a new code.", requestId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -70,13 +113,17 @@ serve(async (req) => {
     // Verify the code
     if (verificationCode.code !== code) {
       const remainingAttempts = 4 - verificationCode.attempts;
+      logStep("Invalid code provided", { requestId, remainingAttempts });
       return new Response(
         JSON.stringify({ 
-          error: `Invalid code. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining.` : 'Please request a new code.'}` 
+          error: `Invalid code. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining.` : 'Please request a new code.'}`,
+          requestId
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    logStep("Code verified successfully", { requestId });
 
     // Mark code as verified
     await supabase
@@ -99,7 +146,9 @@ serve(async (req) => {
           .eq("user_id", userId);
 
         if (updateError) {
-          console.error("Error updating seeker profile:", updateError);
+          logStep("Error updating seeker profile", { requestId, error: updateError.message });
+        } else {
+          logStep("Seeker profile updated", { requestId });
         }
       } else if (userType === "provider") {
         const { error: updateError } = await supabase
@@ -112,33 +161,40 @@ serve(async (req) => {
           .eq("user_id", userId);
 
         if (updateError) {
-          console.error("Error updating provider profile:", updateError);
+          logStep("Error updating provider profile", { requestId, error: updateError.message });
+        } else {
+          logStep("Provider profile updated", { requestId });
         }
       }
     }
 
     // Clean up old verification codes for this phone
-    await supabase
+    const { error: cleanupError } = await supabase
       .from("phone_verification_codes")
       .delete()
       .eq("phone", phone)
       .neq("id", verificationCode.id);
 
-    console.log("Phone verified successfully:", phone);
+    if (cleanupError) {
+      logStep("Error cleaning up old codes", { requestId, error: cleanupError.message });
+    }
+
+    logStep("Verification complete", { requestId });
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Phone number verified successfully",
-        verified: true
+        verified: true,
+        requestId
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Error in verify-sms-code:", error);
+    logStep("Unexpected error", { requestId, error: error instanceof Error ? error.message : "Unknown error" });
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", requestId }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
