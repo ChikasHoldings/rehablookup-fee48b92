@@ -1247,333 +1247,202 @@ export default function ProviderSettingsPage() {
           </TabsContent>
 
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="mt-6 space-y-6">
+          <TabsContent value="notifications" className="mt-6">
             {isLoadingNotifications ? (
               <div className="space-y-4">
                 <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-32 w-full" />
               </div>
             ) : (
-              <>
-                {/* Lead Notification Frequency */}
+              <div className="space-y-6">
+                {/* Lead Notifications - Consolidated Card */}
                 <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      Lead Email Delivery
-                    </CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold">Lead Notifications</CardTitle>
                     <CardDescription className="text-sm">
-                      Choose how often you want to receive lead notification emails
+                      Configure how and when you receive lead alerts
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <RadioGroup 
-                      value={leadNotificationFrequency} 
-                      onValueChange={(value) => setLeadNotificationFrequency(value as typeof leadNotificationFrequency)}
-                      className="space-y-3"
-                    >
-                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="instant" id="instant" />
-                        <Label htmlFor="instant" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">Instant</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">Get notified immediately when you receive a new lead</p>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="daily_digest" id="daily_digest" />
-                        <Label htmlFor="daily_digest" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">Daily Digest</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">Receive a summary of all leads once per day</p>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="weekly_digest" id="weekly_digest" />
-                        <Label htmlFor="weekly_digest" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">Weekly Digest</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">Receive a weekly summary with all leads</p>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="none" id="none" />
-                        <Label htmlFor="none" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">None</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">Don't send lead notification emails (still visible in dashboard)</p>
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                    
-                    {(leadNotificationFrequency === 'daily_digest' || leadNotificationFrequency === 'weekly_digest') && (
-                      <div className="pt-4 border-t border-border">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-sm font-medium">Delivery Time</Label>
-                            <p className="text-xs text-muted-foreground mt-0.5">When should we send your digest?</p>
+                  <CardContent className="space-y-5">
+                    {/* Email Frequency */}
+                    <div>
+                      <Label className="text-sm font-medium mb-3 block">Email Delivery Frequency</Label>
+                      <RadioGroup 
+                        value={leadNotificationFrequency} 
+                        onValueChange={(value) => setLeadNotificationFrequency(value as typeof leadNotificationFrequency)}
+                        className="grid grid-cols-2 sm:grid-cols-4 gap-2"
+                      >
+                        {[
+                          { value: "instant", label: "Instant" },
+                          { value: "daily_digest", label: "Daily" },
+                          { value: "weekly_digest", label: "Weekly" },
+                          { value: "none", label: "Off" },
+                        ].map((opt) => (
+                          <div key={opt.value} className="flex items-center space-x-2 p-2.5 rounded-md border border-border hover:bg-muted/50 transition-colors">
+                            <RadioGroupItem value={opt.value} id={opt.value} />
+                            <Label htmlFor={opt.value} className="flex-1 cursor-pointer text-sm">{opt.label}</Label>
                           </div>
-                          <Select value={digestTime} onValueChange={setDigestTime}>
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="06:00">6:00 AM</SelectItem>
-                              <SelectItem value="07:00">7:00 AM</SelectItem>
-                              <SelectItem value="08:00">8:00 AM</SelectItem>
-                              <SelectItem value="09:00">9:00 AM</SelectItem>
-                              <SelectItem value="10:00">10:00 AM</SelectItem>
-                              <SelectItem value="12:00">12:00 PM</SelectItem>
-                              <SelectItem value="17:00">5:00 PM</SelectItem>
-                              <SelectItem value="18:00">6:00 PM</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        ))}
+                      </RadioGroup>
+                    </div>
+
+                    {/* Digest Time - Only show if digest is selected */}
+                    {(leadNotificationFrequency === 'daily_digest' || leadNotificationFrequency === 'weekly_digest') && (
+                      <div className="flex items-center justify-between pt-2 border-t border-border">
+                        <div>
+                          <p className="text-sm font-medium">Delivery Time</p>
+                          <p className="text-xs text-muted-foreground">When to send your digest</p>
                         </div>
+                        <Select value={digestTime} onValueChange={setDigestTime}>
+                          <SelectTrigger className="w-28 h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["06:00", "07:00", "08:00", "09:00", "10:00", "12:00", "14:00", "18:00"].map((time) => (
+                              <SelectItem key={time} value={time}>{time}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
+
+                    {/* Notification Types */}
+                    <div className="pt-3 border-t border-border space-y-0">
+                      <Label className="text-sm font-medium mb-3 block">What to notify</Label>
+                      {[
+                        { checked: notifyNewLeads, onChange: setNotifyNewLeads, label: "New Leads", desc: "When a new lead is available" },
+                        { checked: notifyLeadStatusChanges, onChange: setNotifyLeadStatusChanges, label: "Status Changes", desc: "When lead status updates" },
+                        { checked: notifyLeadLimitWarnings, onChange: setNotifyLeadLimitWarnings, label: "Low Balance", desc: "When credits are running low" },
+                        { checked: notifyFacilityViews, onChange: setNotifyFacilityViews, label: "Profile Views", desc: "Weekly view summary" },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between py-2.5">
+                          <div>
+                            <p className="text-sm font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{item.desc}</p>
+                          </div>
+                          <Switch checked={item.checked} onCheckedChange={item.onChange} />
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
 
-                {/* Event Types to Notify */}
+                {/* Other Channels - Consolidated */}
                 <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-muted-foreground" />
-                      Event Types
-                    </CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold">Other Channels</CardTitle>
                     <CardDescription className="text-sm">
-                      Choose which events you want to be notified about
+                      Additional notification methods and preferences
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-0">
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">New Leads</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          When someone submits a request through your profile
-                        </p>
+                    {/* SMS */}
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <Smartphone className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">SMS Lead Alerts</p>
+                          <p className="text-xs text-muted-foreground">Text message for new leads</p>
+                        </div>
                       </div>
-                      <Switch
-                        checked={notifyNewLeads}
-                        onCheckedChange={setNotifyNewLeads}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Lead Status Changes</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          When a lead's status is updated (contacted, converted, etc.)
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notifyLeadStatusChanges}
-                        onCheckedChange={setNotifyLeadStatusChanges}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Credit Balance Alerts</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          When your credit balance is running low
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notifyLeadLimitWarnings}
-                        onCheckedChange={setNotifyLeadLimitWarnings}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Facility Views</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Weekly summary of how many people viewed your profile
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notifyFacilityViews}
-                        onCheckedChange={setNotifyFacilityViews}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Other Email Notifications */}
-                <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      Other Emails
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      Additional email notifications
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-0">
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Weekly Performance Digest</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Summary of your facility's performance metrics
-                        </p>
-                      </div>
-                      <Switch
-                        checked={emailWeeklyDigest}
-                        onCheckedChange={setEmailWeeklyDigest}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Product Updates</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          New features, improvements, and platform news
-                        </p>
-                      </div>
-                      <Switch
-                        checked={emailProductUpdates}
-                        onCheckedChange={setEmailProductUpdates}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* SMS Notifications */}
-                <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold flex items-center gap-2">
-                      <Smartphone className="h-4 w-4 text-muted-foreground" />
-                      SMS Notifications
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      Text message alerts for urgent updates
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Lead Alerts via SMS</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Receive a text message when you get a new lead
-                        </p>
-                      </div>
-                      <Switch
-                        checked={smsLeadAlerts}
-                        onCheckedChange={setSmsLeadAlerts}
-                        disabled={!profile?.phone}
-                      />
+                      <Switch checked={smsLeadAlerts} onCheckedChange={setSmsLeadAlerts} disabled={!profile?.phone} />
                     </div>
                     {!profile?.phone && (
-                      <div className="mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          Add a phone number in your profile to enable SMS notifications
-                        </p>
-                      </div>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 pb-3 pl-7">
+                        Add a phone number in Profile to enable SMS
+                      </p>
                     )}
-                  </CardContent>
-                </Card>
-
-                {/* Browser Notifications */}
-                <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-muted-foreground" />
-                      Browser Notifications
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      Desktop push notifications while using the platform
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Push Notifications</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Get real-time browser notifications for new leads
-                        </p>
-                      </div>
-                      <Switch
-                        checked={browserNotifications}
-                        onCheckedChange={setBrowserNotifications}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Follow-up Reminders */}
-                <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      Follow-up Reminders
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      Configure how lead follow-up reminders work
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between py-2">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Enable Follow-up Reminders</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Get reminded to follow up on leads you haven't contacted
-                        </p>
-                      </div>
-                      <Switch
-                        checked={followupRemindersEnabled}
-                        onCheckedChange={setFollowupRemindersEnabled}
-                      />
-                    </div>
                     
-                    {followupRemindersEnabled && (
-                      <div className="pt-2 border-t border-border">
-                        <div className="space-y-3">
-                          <div>
-                            <Label className="text-sm font-medium">Default Snooze Duration</Label>
-                            <p className="text-xs text-muted-foreground mt-0.5 mb-3">
-                              When you snooze a lead reminder, how long should it wait?
-                            </p>
-                          </div>
-                          <RadioGroup 
-                            value={defaultSnoozeDuration} 
-                            onValueChange={setDefaultSnoozeDuration}
-                            className="grid grid-cols-2 gap-2"
-                          >
-                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                              <RadioGroupItem value="4_hours" id="snooze_4h" />
-                              <Label htmlFor="snooze_4h" className="flex-1 cursor-pointer">
-                                <span className="text-sm font-medium">4 hours</span>
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                              <RadioGroupItem value="1_day" id="snooze_1d" />
-                              <Label htmlFor="snooze_1d" className="flex-1 cursor-pointer">
-                                <span className="text-sm font-medium">1 day</span>
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                              <RadioGroupItem value="3_days" id="snooze_3d" />
-                              <Label htmlFor="snooze_3d" className="flex-1 cursor-pointer">
-                                <span className="text-sm font-medium">3 days</span>
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                              <RadioGroupItem value="1_week" id="snooze_1w" />
-                              <Label htmlFor="snooze_1w" className="flex-1 cursor-pointer">
-                                <span className="text-sm font-medium">1 week</span>
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-2">
-                            <BellOff className="h-3 w-3" />
-                            Snoozed leads won't trigger follow-up reminders until the duration passes
-                          </p>
+                    <Separator />
+                    
+                    {/* Browser */}
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <Bell className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Browser Notifications</p>
+                          <p className="text-xs text-muted-foreground">Desktop push alerts</p>
                         </div>
                       </div>
-                    )}
+                      <Switch checked={browserNotifications} onCheckedChange={setBrowserNotifications} />
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* Weekly Digest */}
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Weekly Digest</p>
+                          <p className="text-xs text-muted-foreground">Performance summary email</p>
+                        </div>
+                      </div>
+                      <Switch checked={emailWeeklyDigest} onCheckedChange={setEmailWeeklyDigest} />
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* Product Updates */}
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Product Updates</p>
+                          <p className="text-xs text-muted-foreground">New features and news</p>
+                        </div>
+                      </div>
+                      <Switch checked={emailProductUpdates} onCheckedChange={setEmailProductUpdates} />
+                    </div>
                   </CardContent>
                 </Card>
 
-                {/* Save Notification Preferences */}
-                <div className="flex justify-end">
+                {/* Follow-up Reminders - Compact */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base font-semibold">Follow-up Reminders</CardTitle>
+                        <CardDescription className="text-sm">
+                          Get reminded about uncontacted leads
+                        </CardDescription>
+                      </div>
+                      <Switch checked={followupRemindersEnabled} onCheckedChange={setFollowupRemindersEnabled} />
+                    </div>
+                  </CardHeader>
+                  {followupRemindersEnabled && (
+                    <CardContent className="pt-0">
+                      <div className="pt-3 border-t border-border">
+                        <Label className="text-sm font-medium mb-2 block">Default Snooze Duration</Label>
+                        <RadioGroup 
+                          value={defaultSnoozeDuration} 
+                          onValueChange={setDefaultSnoozeDuration}
+                          className="grid grid-cols-4 gap-2"
+                        >
+                          {[
+                            { value: "4_hours", label: "4h" },
+                            { value: "1_day", label: "1d" },
+                            { value: "3_days", label: "3d" },
+                            { value: "1_week", label: "1w" },
+                          ].map((opt) => (
+                            <div key={opt.value} className="flex items-center justify-center p-2 rounded-md border border-border hover:bg-muted/50 transition-colors">
+                              <RadioGroupItem value={opt.value} id={`snooze_${opt.value}`} className="sr-only" />
+                              <Label 
+                                htmlFor={`snooze_${opt.value}`} 
+                                className={`cursor-pointer text-sm font-medium ${defaultSnoozeDuration === opt.value ? 'text-primary' : ''}`}
+                              >
+                                {opt.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                {/* Save Button */}
+                <div className="flex justify-end pt-2">
                   <Button 
                     size="sm" 
                     className="gap-2"
@@ -1598,7 +1467,7 @@ export default function ProviderSettingsPage() {
                     )}
                   </Button>
                 </div>
-              </>
+              </div>
             )}
           </TabsContent>
 
