@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, forwardRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useTheme } from "next-themes";
@@ -84,30 +84,36 @@ interface PlatformSetting {
   updated_by: string | null;
 }
 
-const SettingRow = ({ icon, title, description, children, comingSoon }: SettingRowProps) => (
-  <div className={cn(
-    "flex items-center justify-between py-4",
-    comingSoon && "opacity-60"
-  )}>
-    <div className="flex items-start gap-3">
-      <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
-        {icon}
-      </div>
-      <div>
-        <div className="flex items-center gap-2">
-          <p className="font-medium">{title}</p>
-          {comingSoon && (
-            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-          )}
+const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(
+  ({ icon, title, description, children, comingSoon }, ref) => (
+    <div 
+      ref={ref}
+      className={cn(
+        "flex items-center justify-between py-4",
+        comingSoon && "opacity-60"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+          {icon}
         </div>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="font-medium">{title}</p>
+            {comingSoon && (
+              <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="shrink-0 ml-4">
+        {children}
       </div>
     </div>
-    <div className="shrink-0 ml-4">
-      {children}
-    </div>
-  </div>
+  )
 );
+SettingRow.displayName = "SettingRow";
 
 const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warning"; label: string }) => {
   const config = {
