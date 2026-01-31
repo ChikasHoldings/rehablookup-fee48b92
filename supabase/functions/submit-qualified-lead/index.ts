@@ -423,7 +423,12 @@ serve(async (req) => {
       );
     }
 
-    // Insert lead
+    // Calculate expiry timestamps
+    const now = new Date();
+    const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+    const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000); // 72 hours total
+
+    // Insert lead with redistribution fields
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
@@ -444,7 +449,12 @@ serve(async (req) => {
         who_seeking_help: data.whoSeekingHelp || null,
         source: data.source || "facility_profile",
         status: "new",
-        assigned_at: new Date().toISOString(),
+        assigned_at: now.toISOString(),
+        // Redistribution fields
+        original_facility_id: data.facilityId,
+        exclusive_until: exclusiveUntil.toISOString(),
+        extended_until: extendedUntil.toISOString(),
+        redistribution_status: "exclusive",
       })
       .select("id")
       .single();
@@ -458,6 +468,18 @@ serve(async (req) => {
     }
 
     log(requestId, "INFO", "Lead inserted", { leadId: lead.id });
+
+    // Create initial distribution record for original facility
+    await supabase
+      .from("lead_distributions")
+      .insert({
+        lead_id: lead.id,
+        facility_id: data.facilityId,
+        is_original: true,
+        distributed_at: now.toISOString(),
+        notification_sent: true, // Original facility gets separate notification
+        notification_sent_at: now.toISOString(),
+      });
 
     // Send emails
     const firstName = data.name.split(" ")[0];

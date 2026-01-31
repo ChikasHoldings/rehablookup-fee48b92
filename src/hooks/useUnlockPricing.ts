@@ -8,6 +8,7 @@ interface UnlockPricing {
   request_info: { base: number; pro: number };
   request_callback: { base: number; pro: number };
   proDiscountPercent: number;
+  redistributedPrice: number;
 }
 
 // Default prices in cents
@@ -16,6 +17,7 @@ const DEFAULT_PRICES = {
   request_callback: 4900,  // $49.00
 };
 const DEFAULT_PRO_DISCOUNT = 20;
+const DEFAULT_REDISTRIBUTED_PRICE = 1500; // $15.00
 
 export function useUnlockPricing(facilityId?: string) {
   const { data: proStatus } = useProStatus(facilityId);
@@ -29,11 +31,13 @@ export function useUnlockPricing(facilityId?: string) {
         .in("setting_key", [
           "unlock_price_request_info",
           "unlock_price_request_callback",
-          "pro_discount_percent"
+          "pro_discount_percent",
+          "redistributed_unlock_price"
         ]);
 
       const prices = { ...DEFAULT_PRICES };
       let proDiscountPercent = DEFAULT_PRO_DISCOUNT;
+      let redistributedPrice = DEFAULT_REDISTRIBUTED_PRICE;
 
       if (settings) {
         for (const setting of settings) {
@@ -44,16 +48,19 @@ export function useUnlockPricing(facilityId?: string) {
             prices.request_callback = value?.cents ?? DEFAULT_PRICES.request_callback;
           } else if (setting.setting_key === "pro_discount_percent") {
             proDiscountPercent = value?.value ?? DEFAULT_PRO_DISCOUNT;
+          } else if (setting.setting_key === "redistributed_unlock_price") {
+            redistributedPrice = value?.cents ?? DEFAULT_REDISTRIBUTED_PRICE;
           }
         }
       }
 
-      return { prices, proDiscountPercent };
+      return { prices, proDiscountPercent, redistributedPrice };
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const prices = pricing?.prices ?? DEFAULT_PRICES;
+  const redistributedPrice = pricing?.redistributedPrice ?? DEFAULT_REDISTRIBUTED_PRICE;
   const proDiscountPercent = proStatus?.isPro 
     ? (proStatus.unlockDiscountPercent ?? pricing?.proDiscountPercent ?? DEFAULT_PRO_DISCOUNT)
     : 0;
@@ -72,11 +79,26 @@ export function useUnlockPricing(facilityId?: string) {
       pro: calculateProPrice(prices.request_callback),
     },
     proDiscountPercent,
+    redistributedPrice,
   };
 
+  // Get price for original leads (with Pro discount if applicable)
   const getPrice = (inquiryType: InquiryType): number => {
     const priceInfo = unlockPricing[inquiryType];
     return proStatus?.isPro ? priceInfo.pro : priceInfo.base;
+  };
+
+  // Get price for redistributed leads (flat $15, no discounts)
+  const getRedistributedPrice = (): number => {
+    return redistributedPrice;
+  };
+
+  // Get price based on whether lead is redistributed or original
+  const getPriceForLead = (inquiryType: InquiryType, isRedistributed: boolean): number => {
+    if (isRedistributed) {
+      return redistributedPrice;
+    }
+    return getPrice(inquiryType);
   };
 
   const getBasePrice = (inquiryType: InquiryType): number => {
@@ -91,7 +113,10 @@ export function useUnlockPricing(facilityId?: string) {
     pricing: unlockPricing,
     isPro: proStatus?.isPro ?? false,
     proDiscountPercent,
+    redistributedPrice,
     getPrice,
+    getRedistributedPrice,
+    getPriceForLead,
     getBasePrice,
     formatPrice,
     isLoading,

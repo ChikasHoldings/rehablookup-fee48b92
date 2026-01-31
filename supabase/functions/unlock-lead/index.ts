@@ -120,17 +120,49 @@ serve(async (req) => {
       });
     }
 
-    // Fetch the lead to get inquiry_type
+    // Fetch the lead to get inquiry_type and redistribution status
     const { data: leadData } = await supabaseAdmin
       .from("leads")
-      .select("inquiry_type")
+      .select("inquiry_type, redistribution_status, original_facility_id")
       .eq("id", leadId)
       .single();
 
     const inquiryType = leadData?.inquiry_type || 'request_info';
+    const isRedistributed = leadData?.redistribution_status === 'extended' && 
+      leadData?.original_facility_id && 
+      leadData.original_facility_id !== facilityId;
+
+    // If redistributed, verify facility has access via lead_distributions
+    if (isRedistributed) {
+      const { data: distribution } = await supabaseAdmin
+        .from("lead_distributions")
+        .select("id")
+        .eq("lead_id", leadId)
+        .eq("facility_id", facilityId)
+        .maybeSingle();
+
+      if (!distribution) {
+        return new Response(JSON.stringify({ error: "You don't have access to this lead" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Fetch dynamic pricing from admin settings
     const { prices, proDiscountPercent: adminDiscountPercent } = await getUnlockPricing(supabaseAdmin);
+
+    // Get redistributed price from settings
+    let redistributedPrice = 1500; // Default $15
+    const { data: redistPriceSetting } = await supabaseAdmin
+      .from("platform_settings")
+      .select("setting_value")
+      .eq("setting_key", "redistributed_unlock_price")
+      .maybeSingle();
+    
+    if (redistPriceSetting) {
+      redistributedPrice = (redistPriceSetting.setting_value as { cents: number })?.cents ?? 1500;
+    }
 
     // Check Pro status for discount
     const { data: proSubscription } = await supabaseAdmin
@@ -142,13 +174,25 @@ serve(async (req) => {
 
     const isPro = proSubscription && 
       (!proSubscription.current_period_end || new Date(proSubscription.current_period_end) > new Date());
-    // Use provider's custom discount if set, otherwise use admin default
-    const discountPercent = isPro ? (proSubscription.unlock_discount_percent ?? adminDiscountPercent) : 0;
     
-    // Calculate final price based on inquiry type
-    const basePrice = prices[inquiryType] ?? prices.request_info;
-    const discountAmount = discountPercent > 0 ? Math.round(basePrice * discountPercent / 100) : 0;
-    const unlockPrice = basePrice - discountAmount;
+    // For redistributed leads, use flat $15 price (no discounts)
+    // For original leads, use normal pricing with Pro discount
+    let basePrice: number;
+    let discountPercent = 0;
+    let discountAmount = 0;
+    let unlockPrice: number;
+
+    if (isRedistributed) {
+      // Redistributed leads: flat $15, no discounts
+      basePrice = redistributedPrice;
+      unlockPrice = redistributedPrice;
+    } else {
+      // Original leads: normal pricing with Pro discount
+      basePrice = prices[inquiryType] ?? prices.request_info;
+      discountPercent = isPro ? (proSubscription.unlock_discount_percent ?? adminDiscountPercent) : 0;
+      discountAmount = discountPercent > 0 ? Math.round(basePrice * discountPercent / 100) : 0;
+      unlockPrice = basePrice - discountAmount;
+    }
 
     let stripePaymentIntentId: string | null = null;
 
@@ -283,6 +327,13 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Update lead_distributions to mark as unlocked
+    await supabaseAdmin
+      .from("lead_distributions")
+      .update({ unlocked_at: new Date().toISOString() })
+      .eq("lead_id", leadId)
+      .eq("facility_id", facilityId);
 
     // Fetch the lead with full details
     const { data: lead } = await supabaseAdmin

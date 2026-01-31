@@ -12,6 +12,7 @@ import {
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useUnlockPricing, type InquiryType } from "@/hooks/useUnlockPricing";
+import { useLeadAccess } from "@/hooks/useLeadAccess";
 import { InquiryTypeBadge, getInquiryTypeLabel } from "./InquiryTypeBadge";
 import { cn } from "@/lib/utils";
 
@@ -41,12 +42,18 @@ export function UnlockLeadButton({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { unlockLead, isUnlocking, isLeadUnlocked } = useLeadUnlocks(facilityId);
   const { balance } = useProviderCredits(facilityId);
-  const { getPrice, getBasePrice, formatPrice, isPro, proDiscountPercent } = useUnlockPricing(facilityId);
+  const { getPriceForLead, getBasePrice, formatPrice, isPro, proDiscountPercent, getRedistributedPrice } = useUnlockPricing(facilityId);
+  const { isRedistributed } = useLeadAccess(leadId, facilityId);
 
   // Calculate price with dynamic pricing
   const type = (inquiryType || 'request_info') as InquiryType;
-  const finalPrice = getPrice(type);
-  const basePrice = getBasePrice(type);
+  
+  // For redistributed leads, use flat $15 price; for original leads, use normal pricing
+  const finalPrice = isRedistributed ? getRedistributedPrice() : getPriceForLead(type, false);
+  const basePrice = isRedistributed ? getRedistributedPrice() : getBasePrice(type);
+  
+  // No Pro discount shown for redistributed leads
+  const effectiveDiscountPercent = isRedistributed ? 0 : proDiscountPercent;
   const hasEnoughCredits = balance >= finalPrice;
 
   // If already unlocked, don't show button
@@ -61,8 +68,8 @@ export function UnlockLeadButton({
       return;
     }
 
-    // Calculate discount saved for Pro toast message
-    const discountSaved = isPro ? (basePrice - finalPrice) : 0;
+    // Calculate discount saved for Pro toast message (only for non-redistributed leads)
+    const discountSaved = (!isRedistributed && isPro) ? (basePrice - finalPrice) : 0;
 
     await unlockLead.mutateAsync({
       leadId,
@@ -75,7 +82,8 @@ export function UnlockLeadButton({
   };
 
   const priceDisplay = formatPrice(finalPrice);
-  const originalPriceDisplay = isPro ? formatPrice(basePrice) : null;
+  // Only show original price strikethrough for non-redistributed leads with Pro discount
+  const originalPriceDisplay = (!isRedistributed && isPro) ? formatPrice(basePrice) : null;
 
   if (variant === "compact") {
     return (
@@ -158,20 +166,20 @@ export function UnlockLeadButton({
         )}
       </Button>
 
-      <UnlockConfirmDialog
-        open={showConfirmDialog}
-        onOpenChange={setShowConfirmDialog}
-        leadName={leadName}
-        inquiryType={type}
-        cityState={cityState}
-        finalPrice={finalPrice}
-        originalPrice={isPro ? basePrice : null}
-        discountPercent={proDiscountPercent}
-        hasEnoughCredits={hasEnoughCredits}
-        currentBalance={balance}
-        onConfirm={handleUnlock}
-        isLoading={isUnlocking}
-      />
+        <UnlockConfirmDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          leadName={leadName}
+          inquiryType={type}
+          cityState={cityState}
+          finalPrice={finalPrice}
+          originalPrice={(!isRedistributed && isPro) ? basePrice : null}
+          discountPercent={effectiveDiscountPercent}
+          hasEnoughCredits={hasEnoughCredits}
+          currentBalance={balance}
+          onConfirm={handleUnlock}
+          isLoading={isUnlocking}
+        />
     </>
   );
 }
