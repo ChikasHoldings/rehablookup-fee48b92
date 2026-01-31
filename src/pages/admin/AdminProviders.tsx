@@ -37,17 +37,19 @@ import {
   ZoomIn,
   Award,
   History,
-  Gauge,
   Trash2,
+  Handshake,
+  Wallet,
+  LayoutList,
+  Plus,
 } from "lucide-react";
 import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
-import { ManageLeadCapDialog } from "@/components/admin/ManageLeadCapDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -79,7 +81,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -122,11 +123,10 @@ type Facility = {
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
-  lead_limit_override: number | null;
   slug: string | null;
   user_id: string;
-  bonus_leads?: number;
-  leads_reset_at?: string | null;
+  concierge_network_opted_in: boolean | null;
+  concierge_terms_accepted_at: string | null;
 };
 
 type Lead = {
@@ -162,33 +162,19 @@ type Accreditation = {
   created_at: string | null;
 };
 
-type SubscriptionData = {
-  plan: string;
-  plan_name: string;
-  subscribed: boolean;
-  subscription: {
-    id: string;
-    status: string;
-    current_period_start: string;
-    current_period_end: string;
-    cancel_at_period_end: boolean;
-  } | null;
-  payment_history: Array<{
-    id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    created: string;
-    invoice_pdf: string | null;
-    description: string;
-  }>;
+type ProSubscription = {
+  id: string;
+  facility_id: string;
+  status: string;
+  unlock_discount_percent: number;
+  current_period_end: string | null;
 };
 
 const ITEMS_PER_PAGE = 15;
 
 export default function AdminProviders() {
   const queryClient = useQueryClient();
-  const { logError, logInfo } = useAdminErrorHandler("AdminProviders");
+  const { logError } = useAdminErrorHandler("AdminProviders");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
@@ -218,19 +204,16 @@ export default function AdminProviders() {
   const [deleteWithUser, setDeleteWithUser] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Lead cap management state
-  const [showLeadCapDialog, setShowLeadCapDialog] = useState(false);
-  const [leadCapProvider, setLeadCapProvider] = useState<Facility | null>(null);
-
   // Invalidate all provider queries for real-time updates
   const invalidateProviderQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
     queryClient.invalidateQueries({ queryKey: ["admin-providers-status-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
     queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
   }, [queryClient]);
 
-  // Real-time subscriptions - always active
+  // Real-time subscriptions
   useEffect(() => {
     const facilitiesChannel = supabase
       .channel("admin-providers-facilities")
@@ -239,6 +222,17 @@ export default function AdminProviders() {
         { event: "*", schema: "public", table: "facilities" },
         () => {
           invalidateProviderQueries();
+        }
+      )
+      .subscribe();
+
+    const proChannel = supabase
+      .channel("admin-pro-subscriptions")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pro_subscriptions" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
         }
       )
       .subscribe();
@@ -257,6 +251,7 @@ export default function AdminProviders() {
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(proChannel);
       supabase.removeChannel(leadsChannel);
     };
   }, [invalidateProviderQueries, queryClient]);
@@ -265,21 +260,23 @@ export default function AdminProviders() {
   const { data: statusCounts } = useQuery({
     queryKey: ["admin-providers-status-counts"],
     queryFn: async () => {
-      console.log('[AdminProviders] Fetching status counts...');
       try {
-        const [allResult, approvedResult, pendingResult, suspendedResult] = await Promise.all([
+        const [allResult, approvedResult, pendingResult, suspendedResult, proResult, placementResult] = await Promise.all([
           supabase.from("facilities").select("id", { count: "exact", head: true }),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
+          supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).eq("concierge_network_opted_in", true),
         ]);
 
-        console.log('[AdminProviders] Status counts:', { all: allResult.count, approved: approvedResult.count, pending: pendingResult.count });
         return {
           all: allResult.count || 0,
           approved: approvedResult.count || 0,
           pending: pendingResult.count || 0,
           suspended: suspendedResult.count || 0,
+          pro: proResult.count || 0,
+          placement: placementResult.count || 0,
         };
       } catch (error) {
         logError("fetch_status_counts", error);
@@ -290,11 +287,27 @@ export default function AdminProviders() {
     refetchOnWindowFocus: true,
   });
 
+  // Fetch Pro subscriptions for badge display
+  const { data: proSubscriptions } = useQuery({
+    queryKey: ["admin-pro-subscriptions"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pro_subscriptions")
+        .select("*")
+        .eq("status", "active");
+      
+      const map: Record<string, ProSubscription> = {};
+      data?.forEach(sub => {
+        map[sub.facility_id] = sub;
+      });
+      return map;
+    },
+  });
+
   // Fetch providers with pagination and filtering
   const { data: providers, isLoading } = useQuery({
     queryKey: ["admin-providers", activeTab, searchQuery, currentPage],
     queryFn: async () => {
-      console.log('[AdminProviders] Fetching providers...', { activeTab, searchQuery, currentPage });
       try {
         const from = (currentPage - 1) * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
@@ -311,6 +324,22 @@ export default function AdminProviders() {
           query = query.eq("status", "pending");
         } else if (activeTab === "suspended") {
           query = query.eq("suspended", true);
+        } else if (activeTab === "pro") {
+          // Filter by pro subscriptions - need to get facility IDs first
+          const { data: proFacilities } = await supabase
+            .from("pro_subscriptions")
+            .select("facility_id")
+            .eq("status", "active");
+          const proIds = proFacilities?.map(p => p.facility_id) || [];
+          if (proIds.length === 0) return [];
+          query = supabase
+            .from("facilities")
+            .select("*")
+            .in("id", proIds)
+            .order("created_at", { ascending: false })
+            .range(from, to);
+        } else if (activeTab === "placement") {
+          query = query.eq("concierge_network_opted_in", true);
         }
 
         if (searchQuery) {
@@ -319,7 +348,6 @@ export default function AdminProviders() {
 
         const { data, error } = await query;
         if (error) throw error;
-        console.log('[AdminProviders] Loaded', data?.length || 0, 'providers');
         return data as Facility[];
       } catch (error) {
         logError("fetch_providers", error, { activeTab, searchQuery, currentPage });
@@ -342,6 +370,14 @@ export default function AdminProviders() {
         query = query.eq("status", "pending");
       } else if (activeTab === "suspended") {
         query = query.eq("suspended", true);
+      } else if (activeTab === "pro") {
+        const { data: proFacilities } = await supabase
+          .from("pro_subscriptions")
+          .select("facility_id")
+          .eq("status", "active");
+        return proFacilities?.length || 0;
+      } else if (activeTab === "placement") {
+        query = query.eq("concierge_network_opted_in", true);
       }
 
       if (searchQuery) {
@@ -386,18 +422,58 @@ export default function AdminProviders() {
     enabled: !!selectedProvider?.user_id,
   });
 
-  // Fetch subscription data for selected provider
-  const { data: subscriptionData, isLoading: isLoadingSubscription } = useQuery({
-    queryKey: ["admin-provider-subscription", selectedProvider?.user_id],
+  // Fetch all facilities for selected provider's user
+  const { data: providerFacilities } = useQuery({
+    queryKey: ["admin-provider-facilities", selectedProvider?.user_id],
     queryFn: async () => {
-      if (!selectedProvider?.user_id) return null;
-      const { data, error } = await supabase.functions.invoke("get-provider-subscription", {
-        body: { userId: selectedProvider.user_id },
-      });
-      if (error) throw error;
-      return data as SubscriptionData;
+      if (!selectedProvider?.user_id) return [];
+      const { data } = await supabase
+        .from("facilities")
+        .select("*")
+        .eq("user_id", selectedProvider.user_id)
+        .order("created_at", { ascending: false });
+      return data as Facility[];
     },
     enabled: !!selectedProvider?.user_id && showDetailDialog,
+  });
+
+  // Fetch credit balance for provider
+  const { data: creditBalance } = useQuery({
+    queryKey: ["admin-provider-credits", selectedProvider?.user_id],
+    queryFn: async () => {
+      if (!selectedProvider?.user_id) return 0;
+      const { data } = await supabase
+        .from("credit_transactions")
+        .select("amount_cents, transaction_type")
+        .eq("provider_id", selectedProvider.user_id);
+      
+      let balance = 0;
+      data?.forEach(tx => {
+        if (tx.transaction_type === "purchase" || tx.transaction_type === "refund" || tx.transaction_type === "admin_credit") {
+          balance += tx.amount_cents;
+        } else if (tx.transaction_type === "unlock" || tx.transaction_type === "placement_fee") {
+          balance -= tx.amount_cents;
+        }
+      });
+      return balance;
+    },
+    enabled: !!selectedProvider?.user_id && showDetailDialog,
+  });
+
+  // Fetch Pro subscription for selected provider
+  const { data: selectedProviderPro } = useQuery({
+    queryKey: ["admin-provider-pro", selectedProvider?.id],
+    queryFn: async () => {
+      if (!selectedProvider?.id) return null;
+      const { data } = await supabase
+        .from("pro_subscriptions")
+        .select("*")
+        .eq("facility_id", selectedProvider.id)
+        .eq("status", "active")
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!selectedProvider?.id && showDetailDialog,
   });
 
   // Fetch leads for selected provider
@@ -446,6 +522,32 @@ export default function AdminProviders() {
     enabled: !!selectedProvider?.id && showDetailDialog,
   });
 
+  // Fetch placement introductions count
+  const { data: placementStats } = useQuery({
+    queryKey: ["admin-provider-placement-stats", selectedProvider?.id],
+    queryFn: async () => {
+      if (!selectedProvider?.id) return { introductions: 0, placements: 0 };
+      
+      const [introResult, placementResult] = await Promise.all([
+        supabase
+          .from("concierge_introductions")
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", selectedProvider.id),
+        supabase
+          .from("concierge_engagements")
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", selectedProvider.id)
+          .eq("status", "placed"),
+      ]);
+
+      return {
+        introductions: introResult.count || 0,
+        placements: placementResult.count || 0,
+      };
+    },
+    enabled: !!selectedProvider?.id && showDetailDialog,
+  });
+
   // Update provider mutation
   const updateProvider = useMutation({
     mutationFn: async ({
@@ -457,7 +559,6 @@ export default function AdminProviders() {
       updates: Partial<Facility>;
       actionType: string;
     }) => {
-      // Get facility info before update for approval email
       const { data: facility } = await supabase
         .from("facilities")
         .select("name, user_id, status")
@@ -467,7 +568,6 @@ export default function AdminProviders() {
       const { error } = await supabase.from("facilities").update(updates).eq("id", id);
       if (error) throw error;
 
-      // If status changed to approved, send approval email directly
       if (updates.status === "approved" && facility && facility.status !== "approved") {
         try {
           await supabase.functions.invoke("send-approval-email", {
@@ -479,11 +579,9 @@ export default function AdminProviders() {
           });
         } catch (emailError) {
           console.error("Failed to send approval email:", emailError);
-          // Non-blocking - continue even if email fails
         }
       }
 
-      // Log admin action (non-blocking - don't fail the main operation if audit fails)
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
@@ -533,7 +631,6 @@ export default function AdminProviders() {
       
       if (error) throw error;
 
-      // Log admin action
       if (user?.id && selectedProvider?.id) {
         await supabase.from("admin_audit_log").insert({
           admin_user_id: user.id,
@@ -607,7 +704,6 @@ export default function AdminProviders() {
       
       if (error) throw error;
 
-      // Log admin action
       await supabase.from("admin_audit_log").insert({
         admin_user_id: user.id,
         action_type: "flag_image",
@@ -616,7 +712,6 @@ export default function AdminProviders() {
         details: { image_url: flagImageUrl, image_type: flagImageType, reason: flagReason },
       });
 
-      // Send email notification to provider
       const providerEmail = providerProfile?.email || selectedProvider.email;
       const providerName = providerProfile?.first_name || selectedProvider.name;
       
@@ -745,7 +840,7 @@ export default function AdminProviders() {
     } else if (confirmAction.action === "delete") {
       setIsDeleting(true);
       try {
-        const { data, error } = await supabase.functions.invoke("admin-delete-provider", {
+        const { error } = await supabase.functions.invoke("admin-delete-provider", {
           body: {
             facilityId: confirmAction.provider.id,
             deleteUser: deleteWithUser,
@@ -803,15 +898,6 @@ export default function AdminProviders() {
     return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Rejected</Badge>;
   };
 
-  const getPlanBadge = (plan: string) => {
-    // Map legacy tier names to Pro
-    const normalizedPlan = plan?.toLowerCase() || '';
-    if (normalizedPlan === "pro" || normalizedPlan === "featured" || normalizedPlan === "professional") {
-      return <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1"><Crown className="h-3 w-3" />Pro</Badge>;
-    }
-    return <Badge variant="secondary" className="gap-1">Free</Badge>;
-  };
-
   const getLeadStatusBadge = (status: string) => {
     switch (status) {
       case "new":
@@ -832,21 +918,19 @@ export default function AdminProviders() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Provider Management</h1>
-        <p className="text-muted-foreground">Manage and monitor all facility providers</p>
+        <p className="text-muted-foreground">Manage facilities, subscriptions, and placement network</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="border-l-4 border-l-primary">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Providers</p>
+                <p className="text-xs text-muted-foreground">Total Facilities</p>
                 <p className="text-2xl font-bold">{statusCounts?.all || 0}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
+              <Building2 className="h-5 w-5 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -855,12 +939,10 @@ export default function AdminProviders() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Approved</p>
+                <p className="text-xs text-muted-foreground">Approved</p>
                 <p className="text-2xl font-bold text-emerald-600">{statusCounts?.approved || 0}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-emerald-500" />
-              </div>
+              <CheckCircle className="h-5 w-5 text-emerald-500" />
             </div>
           </CardContent>
         </Card>
@@ -869,12 +951,10 @@ export default function AdminProviders() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pending Review</p>
+                <p className="text-xs text-muted-foreground">Pending</p>
                 <p className="text-2xl font-bold text-amber-600">{statusCounts?.pending || 0}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-amber-500" />
-              </div>
+              <Clock className="h-5 w-5 text-amber-500" />
             </div>
           </CardContent>
         </Card>
@@ -883,12 +963,34 @@ export default function AdminProviders() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Suspended</p>
+                <p className="text-xs text-muted-foreground">Suspended</p>
                 <p className="text-2xl font-bold text-destructive">{statusCounts?.suspended || 0}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
-                <Ban className="h-5 w-5 text-destructive" />
+              <Ban className="h-5 w-5 text-destructive" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-amber-400">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Pro Subscribers</p>
+                <p className="text-2xl font-bold text-amber-600">{statusCounts?.pro || 0}</p>
               </div>
+              <Crown className="h-5 w-5 text-amber-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-500">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Placement Network</p>
+                <p className="text-2xl font-bold text-purple-600">{statusCounts?.placement || 0}</p>
+              </div>
+              <Handshake className="h-5 w-5 text-purple-500" />
             </div>
           </CardContent>
         </Card>
@@ -897,22 +999,26 @@ export default function AdminProviders() {
       {/* Tabs and Search */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full sm:w-auto">
-          <TabsList className="grid w-full sm:w-auto grid-cols-4 h-10">
-            <TabsTrigger value="all" className="gap-1.5 text-xs sm:text-sm">
+          <TabsList className="grid w-full sm:w-auto grid-cols-6 h-10">
+            <TabsTrigger value="all" className="text-xs">
               All
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{statusCounts?.all || 0}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="approved" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="approved" className="text-xs">
               Approved
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-emerald-100 text-emerald-700">{statusCounts?.approved || 0}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="pending" className="text-xs">
               Pending
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-amber-100 text-amber-700">{statusCounts?.pending || 0}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="suspended" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="suspended" className="text-xs">
               Suspended
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-red-100 text-red-700">{statusCounts?.suspended || 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="pro" className="text-xs gap-1">
+              <Crown className="h-3 w-3" />
+              Pro
+            </TabsTrigger>
+            <TabsTrigger value="placement" className="text-xs gap-1">
+              <Handshake className="h-3 w-3" />
+              Placement
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -946,128 +1052,138 @@ export default function AdminProviders() {
             </div>
           ) : providers && providers.length > 0 ? (
             <div className="divide-y">
-              {providers.map((provider) => (
-                <div
-                  key={provider.id}
-                  className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
-                  onClick={() => openProviderDetail(provider)}
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="relative">
-                      <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
-                        <AvatarImage src={provider.logo_url || undefined} />
-                        <AvatarFallback className="bg-primary/5 text-primary font-semibold">
-                          {provider.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-1 -right-1">
-                        {getStatusIcon(provider)}
+              {providers.map((provider) => {
+                const isPro = !!proSubscriptions?.[provider.id];
+                const isPlacement = provider.concierge_network_opted_in;
+                
+                return (
+                  <div
+                    key={provider.id}
+                    className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
+                    onClick={() => openProviderDetail(provider)}
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="relative">
+                        <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                          <AvatarImage src={provider.logo_url || undefined} />
+                          <AvatarFallback className="bg-primary/5 text-primary font-semibold">
+                            {provider.name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-1 -right-1">
+                          {getStatusIcon(provider)}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                            {provider.name}
+                          </p>
+                          {provider.verified && (
+                            <BadgeCheck className="h-4 w-4 text-blue-500 shrink-0" />
+                          )}
+                          {provider.featured && (
+                            <Star className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />
+                          )}
+                          {isPro && (
+                            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs h-5 px-1.5">
+                              <Crown className="h-3 w-3 mr-0.5" />
+                              Pro
+                            </Badge>
+                          )}
+                          {isPlacement && (
+                            <Badge variant="outline" className="text-purple-600 border-purple-200 text-xs h-5 px-1.5">
+                              <Handshake className="h-3 w-3 mr-0.5" />
+                              Placement
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {provider.city}, {provider.state}
+                          </span>
+                          <span className="hidden sm:flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {leadCounts?.[provider.id] || 0} leads
+                          </span>
+                          <span className="hidden md:flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDistanceToNow(new Date(provider.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                          {provider.name}
-                        </p>
-                        {provider.verified && (
-                          <BadgeCheck className="h-4 w-4 text-blue-500 shrink-0" />
-                        )}
-                        {provider.featured && (
-                          <Star className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {provider.city}, {provider.state}
-                        </span>
-                        <span className="hidden sm:flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {leadCounts?.[provider.id] || 0} leads
-                        </span>
-                        <span className="hidden md:flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDistanceToNow(new Date(provider.created_at), { addSuffix: true })}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      {getStatusBadge(provider)}
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={() => openProviderDetail(provider)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          {provider.slug && (
+                            <DropdownMenuItem onClick={() => window.open(`/center/${provider.slug}`, "_blank")}>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              View Public Profile
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          
+                          {provider.status === "pending" && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(provider.id, "approved")} className="text-emerald-600">
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Approve Provider
+                            </DropdownMenuItem>
+                          )}
+                          {provider.status === "approved" && !provider.suspended && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(provider.id, "pending")} className="text-amber-600">
+                              <Clock className="h-4 w-4 mr-2" />
+                              Set to Pending
+                            </DropdownMenuItem>
+                          )}
+                          
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleToggleVerified(provider.id, provider.verified)}>
+                            <Shield className="h-4 w-4 mr-2" />
+                            {provider.verified ? "Remove Verification" : "Mark as Verified"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleFeatured(provider.id, provider.featured)}>
+                            <Star className="h-4 w-4 mr-2" />
+                            {provider.featured ? "Remove Featured" : "Mark as Featured"}
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuSeparator />
+                          {provider.suspended ? (
+                            <DropdownMenuItem onClick={() => handleReactivate(provider)} className="text-emerald-600">
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Reactivate Provider
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => handleSuspend(provider)} className="text-destructive">
+                              <Ban className="h-4 w-4 mr-2" />
+                              Suspend Provider
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDelete(provider)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Provider
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    {getStatusBadge(provider)}
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenuItem onClick={() => openProviderDetail(provider)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        {provider.slug && (
-                          <DropdownMenuItem onClick={() => window.open(`/center/${provider.slug}`, "_blank")}>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            View Public Profile
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        
-                        {provider.status === "pending" && (
-                          <DropdownMenuItem onClick={() => handleStatusChange(provider.id, "approved")} className="text-emerald-600">
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Approve Provider
-                          </DropdownMenuItem>
-                        )}
-                        {provider.status === "approved" && !provider.suspended && (
-                          <DropdownMenuItem onClick={() => handleStatusChange(provider.id, "pending")} className="text-amber-600">
-                            <Clock className="h-4 w-4 mr-2" />
-                            Set to Pending
-                          </DropdownMenuItem>
-                        )}
-                        
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleToggleVerified(provider.id, provider.verified)}>
-                          <Shield className="h-4 w-4 mr-2" />
-                          {provider.verified ? "Remove Verification" : "Mark as Verified"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleFeatured(provider.id, provider.featured)}>
-                          <Star className="h-4 w-4 mr-2" />
-                          {provider.featured ? "Remove Featured" : "Mark as Featured"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          setLeadCapProvider(provider);
-                          setShowLeadCapDialog(true);
-                        }}>
-                          <Gauge className="h-4 w-4 mr-2" />
-                          Manage Lead Cap
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuSeparator />
-                        {provider.suspended ? (
-                          <DropdownMenuItem onClick={() => handleReactivate(provider)} className="text-emerald-600">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Reactivate Provider
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => handleSuspend(provider)} className="text-destructive">
-                            <Ban className="h-4 w-4 mr-2" />
-                            Suspend Provider
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDelete(provider)} className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Provider
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -1154,7 +1270,18 @@ export default function AdminProviders() {
                 </DialogDescription>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   {selectedProvider && getStatusBadge(selectedProvider)}
-                  {subscriptionData && getPlanBadge(subscriptionData.plan)}
+                  {selectedProviderPro && (
+                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1">
+                      <Crown className="h-3 w-3" />
+                      Pro
+                    </Badge>
+                  )}
+                  {selectedProvider?.concierge_network_opted_in && (
+                    <Badge variant="outline" className="text-purple-600 border-purple-300 gap-1">
+                      <Handshake className="h-3 w-3" />
+                      Placement Network
+                    </Badge>
+                  )}
                   <Badge variant="outline">{selectedProvider?.facility_type}</Badge>
                 </div>
               </div>
@@ -1168,6 +1295,11 @@ export default function AdminProviders() {
                   <Eye className="h-4 w-4 mr-2" />
                   Overview
                 </TabsTrigger>
+                <TabsTrigger value="facilities" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <LayoutList className="h-4 w-4 mr-2" />
+                  Facilities
+                  <Badge variant="secondary" className="ml-2 h-5">{providerFacilities?.length || 0}</Badge>
+                </TabsTrigger>
                 <TabsTrigger value="leads" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
                   <Inbox className="h-4 w-4 mr-2" />
                   Leads
@@ -1177,9 +1309,9 @@ export default function AdminProviders() {
                   <History className="h-4 w-4 mr-2" />
                   Activity
                 </TabsTrigger>
-                <TabsTrigger value="subscription" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Subscription
+                <TabsTrigger value="billing" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <Wallet className="h-4 w-4 mr-2" />
+                  Billing
                 </TabsTrigger>
                 <TabsTrigger value="contact" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
                   <Send className="h-4 w-4 mr-2" />
@@ -1241,6 +1373,42 @@ export default function AdminProviders() {
 
                 <Separator />
 
+                {/* Account Summary Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <Wallet className="h-5 w-5 mx-auto mb-2 text-emerald-500" />
+                      <p className="text-2xl font-bold text-emerald-600">
+                        ${((creditBalance || 0) / 100).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Credit Balance</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <LayoutList className="h-5 w-5 mx-auto mb-2 text-primary" />
+                      <p className="text-2xl font-bold">{providerFacilities?.length || 0}</p>
+                      <p className="text-xs text-muted-foreground">Facilities</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <Users className="h-5 w-5 mx-auto mb-2 text-blue-500" />
+                      <p className="text-2xl font-bold">{leadCounts?.[selectedProvider?.id || ""] || 0}</p>
+                      <p className="text-xs text-muted-foreground">Total Leads</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <Handshake className="h-5 w-5 mx-auto mb-2 text-purple-500" />
+                      <p className="text-2xl font-bold">{placementStats?.placements || 0}</p>
+                      <p className="text-xs text-muted-foreground">Placements</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Separator />
+
                 {/* Contact Information */}
                 <div>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -1286,11 +1454,7 @@ export default function AdminProviders() {
                     <Building2 className="h-4 w-4" />
                     Facility Details
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="p-3 bg-muted/50 rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground">Total Leads</p>
-                      <p className="text-xl font-bold text-primary">{leadCounts?.[selectedProvider?.id || ""] || 0}</p>
-                    </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div className="p-3 bg-muted/50 rounded-lg text-center">
                       <p className="text-xs text-muted-foreground">Bed Count</p>
                       <p className="text-xl font-bold">{selectedProvider?.bed_count || "N/A"}</p>
@@ -1300,8 +1464,8 @@ export default function AdminProviders() {
                       <p className="text-lg font-semibold capitalize">{selectedProvider?.gender_served || "All"}</p>
                     </div>
                     <div className="p-3 bg-muted/50 rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground">Lead Limit</p>
-                      <p className="text-xl font-bold">{selectedProvider?.lead_limit_override || "Default"}</p>
+                      <p className="text-xs text-muted-foreground">Facility Type</p>
+                      <p className="text-lg font-semibold">{selectedProvider?.facility_type}</p>
                     </div>
                   </div>
                 </div>
@@ -1319,7 +1483,7 @@ export default function AdminProviders() {
                         </Badge>
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Verify claimed accreditations by checking the boxes below. Verified badges will display on the provider's public profile.
+                        Verify claimed accreditations by checking the boxes below.
                       </p>
                       <div className="space-y-3">
                         {providerAccreditations.map((accreditation) => (
@@ -1597,6 +1761,79 @@ export default function AdminProviders() {
                 </div>
               </TabsContent>
 
+              {/* Facilities Tab */}
+              <TabsContent value="facilities" className="p-6 m-0 data-[state=inactive]:hidden">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">All Facilities ({providerFacilities?.length || 0})</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Owned by this provider account
+                    </p>
+                  </div>
+                  
+                  {providerFacilities && providerFacilities.length > 0 ? (
+                    <div className="space-y-3">
+                      {providerFacilities.map((facility) => {
+                        const facilityPro = proSubscriptions?.[facility.id];
+                        return (
+                          <Card key={facility.id} className={cn(
+                            "transition-colors",
+                            facility.id === selectedProvider?.id && "ring-2 ring-primary"
+                          )}>
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage src={facility.logo_url || undefined} />
+                                    <AvatarFallback>{facility.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-medium">{facility.name}</p>
+                                      {facility.verified && <BadgeCheck className="h-4 w-4 text-blue-500" />}
+                                      {facilityPro && (
+                                        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs">
+                                          <Crown className="h-3 w-3 mr-0.5" />
+                                          Pro
+                                        </Badge>
+                                      )}
+                                      {facility.concierge_network_opted_in && (
+                                        <Badge variant="outline" className="text-purple-600 border-purple-200 text-xs">
+                                          <Handshake className="h-3 w-3 mr-0.5" />
+                                          Placement
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      {facility.city}, {facility.state} • {facility.facility_type}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {getStatusBadge(facility)}
+                                  {facility.slug && (
+                                    <Button size="sm" variant="ghost" asChild>
+                                      <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="h-4 w-4" />
+                                      </a>
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Building2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No facilities found</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
               {/* Leads Tab */}
               <TabsContent value="leads" className="p-6 m-0 data-[state=inactive]:hidden">
                 {isLoadingLeads ? (
@@ -1668,115 +1905,119 @@ export default function AdminProviders() {
                 )}
               </TabsContent>
 
-              {/* Subscription Tab */}
-              <TabsContent value="subscription" className="p-6 space-y-6 m-0 data-[state=inactive]:hidden">
-                {isLoadingSubscription ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-48 w-full" />
-                  </div>
-                ) : subscriptionData ? (
-                  <>
-                    {/* Current Plan */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <CreditCard className="h-5 w-5" />
-                          Current Plan
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            {getPlanBadge(subscriptionData.plan)}
-                            <div>
-                              <p className="font-semibold">{subscriptionData.plan_name}</p>
-                              {subscriptionData.subscription ? (
-                                <p className="text-sm text-muted-foreground">
-                                  Renews {format(new Date(subscriptionData.subscription.current_period_end), "PPP")}
-                                  {subscriptionData.subscription.cancel_at_period_end && (
-                                    <span className="text-destructive ml-2">(Cancels at period end)</span>
-                                  )}
-                                </p>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">Free plan - no active subscription</p>
-                              )}
-                            </div>
-                          </div>
-                          <Badge variant={subscriptionData.subscribed ? "default" : "secondary"}>
-                            {subscriptionData.subscribed ? "Active" : "Inactive"}
+              {/* Billing Tab */}
+              <TabsContent value="billing" className="p-6 space-y-6 m-0 data-[state=inactive]:hidden">
+                {/* Pro Subscription Status */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-amber-500" />
+                      Pro Subscription
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedProviderPro ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                            <Crown className="h-3 w-3 mr-1" />
+                            Pro Active
                           </Badge>
+                          <div>
+                            <p className="font-semibold">$399/month</p>
+                            {selectedProviderPro.current_period_end && (
+                              <p className="text-sm text-muted-foreground">
+                                Renews {format(new Date(selectedProviderPro.current_period_end), "PPP")}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                        <Badge className="bg-emerald-100 text-emerald-700">
+                          {selectedProviderPro.unlock_discount_percent}% Discount
+                        </Badge>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-muted-foreground">No active Pro subscription</p>
+                        <p className="text-sm text-muted-foreground mt-1">Free tier - pay-per-unlock model</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-                    {/* Payment History */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Receipt className="h-5 w-5" />
-                          Payment History
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {subscriptionData.payment_history && subscriptionData.payment_history.length > 0 ? (
-                          <div className="border rounded-lg overflow-hidden">
-                            <Table>
-                              <TableHeader>
-                                <TableRow className="bg-muted/50">
-                                  <TableHead>Date</TableHead>
-                                  <TableHead>Description</TableHead>
-                                  <TableHead>Amount</TableHead>
-                                  <TableHead>Status</TableHead>
-                                  <TableHead></TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {subscriptionData.payment_history.map((payment) => (
-                                  <TableRow key={payment?.id || Math.random()}>
-                                    <TableCell>
-                                      {payment?.created ? format(new Date(payment.created), "MMM d, yyyy") : "N/A"}
-                                    </TableCell>
-                                    <TableCell>{payment?.description || "N/A"}</TableCell>
-                                    <TableCell>
-                                      <span className="font-medium">
-                                        ${(payment?.amount ?? 0).toFixed(2)} {(payment?.currency || "usd").toUpperCase()}
-                                      </span>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Badge variant={payment?.status === "paid" ? "default" : "secondary"} className={payment?.status === "paid" ? "bg-emerald-100 text-emerald-700" : ""}>
-                                        {payment?.status || "unknown"}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                      {payment?.invoice_pdf && (
-                                        <Button size="sm" variant="ghost" asChild>
-                                          <a href={payment.invoice_pdf} target="_blank" rel="noopener noreferrer">
-                                            <Download className="h-4 w-4" />
-                                          </a>
-                                        </Button>
-                                      )}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
+                {/* Credit Balance */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-emerald-500" />
+                      Credit Balance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-3xl font-bold text-emerald-600">
+                          ${((creditBalance || 0) / 100).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Available for lead unlocks</p>
+                      </div>
+                      {(creditBalance || 0) < 5000 && (
+                        <Badge variant="destructive" className="gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Low Balance
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Placement Network Status */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Handshake className="h-5 w-5 text-purple-500" />
+                      Placement Network
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedProvider?.concierge_network_opted_in ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="text-purple-600 border-purple-300 gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Opted In
+                          </Badge>
+                          {selectedProvider.concierge_terms_accepted_at && (
+                            <p className="text-sm text-muted-foreground">
+                              Agreement signed {format(new Date(selectedProvider.concierge_terms_accepted_at), "PPP")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-3 bg-muted/50 rounded-lg text-center">
+                            <p className="text-2xl font-bold">{placementStats?.introductions || 0}</p>
+                            <p className="text-xs text-muted-foreground">Introductions</p>
                           </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            <DollarSign className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                            <p className="text-muted-foreground">No payment history</p>
+                          <div className="p-3 bg-muted/50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-purple-600">{placementStats?.placements || 0}</p>
+                            <p className="text-xs text-muted-foreground">Placements</p>
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </>
-                ) : (
-                  <div className="text-center py-12">
-                    <CreditCard className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                    <p className="text-muted-foreground">Unable to load subscription data</p>
-                  </div>
-                )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          <p><strong>Fee Structure:</strong></p>
+                          <ul className="list-disc list-inside mt-1 space-y-1">
+                            <li>Flat fee: ${selectedProviderPro ? "960" : "1,200"} {selectedProviderPro && <span className="text-emerald-600">(Pro discount)</span>}</li>
+                            <li>Commission: {selectedProviderPro ? "6.4%" : "8%"} of first month (max $1,500)</li>
+                          </ul>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-muted-foreground">Not opted into Placement Network</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Contact Tab */}
@@ -1922,7 +2163,7 @@ export default function AdminProviders() {
               Flag Inappropriate Image
             </DialogTitle>
             <DialogDescription>
-              Flag this image for review. The provider will be notified that their image has been flagged.
+              Flag this image for review. The provider will be notified.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -2005,13 +2246,13 @@ export default function AdminProviders() {
                 {confirmAction?.action === "suspend" && (
                   <p>
                     Are you sure you want to suspend <strong>{confirmAction.provider.name}</strong>?
-                    Their listing will be hidden from search results and they will not receive any leads.
+                    Their listing will be hidden from search results.
                   </p>
                 )}
                 {confirmAction?.action === "reactivate" && (
                   <p>
                     Reactivate <strong>{confirmAction?.provider.name}</strong>?
-                    Their listing will be visible again and they can receive leads.
+                    Their listing will be visible again.
                   </p>
                 )}
                 {confirmAction?.action === "delete" && (
@@ -2021,15 +2262,8 @@ export default function AdminProviders() {
                       <strong>{confirmAction.provider.name}</strong>?
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      This will permanently remove the facility and all associated data including:
+                      This will permanently remove the facility and all associated data.
                     </p>
-                    <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                      <li>All leads and lead history</li>
-                      <li>Reviews and ratings</li>
-                      <li>Staff profiles</li>
-                      <li>Analytics and interaction data</li>
-                      <li>All facility settings and documents</li>
-                    </ul>
                     <div className="flex items-center space-x-2 pt-2">
                       <Checkbox
                         id="deleteUser"
@@ -2078,13 +2312,6 @@ export default function AdminProviders() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Lead Cap Management Dialog */}
-      <ManageLeadCapDialog
-        open={showLeadCapDialog}
-        onOpenChange={setShowLeadCapDialog}
-        facility={leadCapProvider}
-      />
     </div>
   );
 }
