@@ -212,6 +212,20 @@ Disallow: /placement-help
 Disallow: /my-account
 Disallow: /auth
 
+# Duplicate treatment routes (redirects to canonical versions)
+Disallow: /treatment-types/drug-addiction$
+Disallow: /treatment-types/dual-diagnosis$
+
+# Short insurance URLs (redirects to canonical versions)
+Disallow: /insurance/aetna$
+Disallow: /insurance/bcbs$
+Disallow: /insurance/cigna$
+Disallow: /insurance/humana$
+Disallow: /insurance/kaiser$
+Disallow: /insurance/medicare$
+Disallow: /insurance/medicaid$
+Disallow: /insurance/united-healthcare$
+
 # Account pages - require authentication, no SEO value
 Disallow: /account/
 Disallow: /account/*

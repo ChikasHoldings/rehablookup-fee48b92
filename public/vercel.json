@@ -3,6 +3,56 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/treatment-types/drug-addiction",
+      "destination": "/treatment-types/drug-addiction-treatment",
+      "permanent": true
+    },
+    {
+      "source": "/treatment-types/dual-diagnosis",
+      "destination": "/treatment-types/dual-diagnosis-treatment",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/aetna",
+      "destination": "/insurance/aetna-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/bcbs",
+      "destination": "/insurance/bcbs-treatment",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/cigna",
+      "destination": "/insurance/cigna-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/humana",
+      "destination": "/insurance/humana-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/kaiser",
+      "destination": "/insurance/kaiser-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/medicare",
+      "destination": "/insurance/medicare-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/medicaid",
+      "destination": "/insurance/medicaid-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/insurance/united-healthcare",
+      "destination": "/insurance/united-healthcare-rehab",
+      "permanent": true
+    },
+    {
       "source": "/request-help",
       "destination": "/concierge",
       "permanent": true

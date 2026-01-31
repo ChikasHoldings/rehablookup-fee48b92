@@ -170,6 +170,7 @@ export default function ConciergeCreatePassword() {
       <>
         <Helmet>
           <title>Create Account | RehabLookup</title>
+          <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         <div className="min-h-screen flex flex-col bg-background">
           <PublicHeader />

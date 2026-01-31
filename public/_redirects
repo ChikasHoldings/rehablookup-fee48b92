@@ -11,6 +11,20 @@
 # http://www.rehablookup.com/* https://rehablookup.com/:splat 301!
 # https://www.rehablookup.com/* https://rehablookup.com/:splat 301!
 
+# Redirect duplicate treatment type routes to canonical versions
+/treatment-types/drug-addiction /treatment-types/drug-addiction-treatment 301
+/treatment-types/dual-diagnosis /treatment-types/dual-diagnosis-treatment 301
+
+# Redirect insurance short URLs to canonical versions (prevent soft 404s)
+/insurance/aetna /insurance/aetna-rehab 301
+/insurance/bcbs /insurance/bcbs-treatment 301
+/insurance/cigna /insurance/cigna-rehab 301
+/insurance/humana /insurance/humana-rehab 301
+/insurance/kaiser /insurance/kaiser-rehab 301
+/insurance/medicare /insurance/medicare-rehab 301
+/insurance/medicaid /insurance/medicaid-rehab 301
+/insurance/united-healthcare /insurance/united-healthcare-rehab 301
+
 # Redirect old/deprecated URLs to canonical versions
 /request-help /concierge 301
 /placement-help /concierge 301
