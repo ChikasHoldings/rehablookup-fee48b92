@@ -950,79 +950,38 @@ export default function AdminProviders() {
         <p className="text-muted-foreground">Manage facilities, subscriptions, and placement network</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Total Facilities</p>
-                <p className="text-2xl font-bold">{statusCounts?.all || 0}</p>
-              </div>
-              <Building2 className="h-5 w-5 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-emerald-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold text-emerald-600">{statusCounts?.approved || 0}</p>
-              </div>
-              <CheckCircle className="h-5 w-5 text-emerald-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold text-amber-600">{statusCounts?.pending || 0}</p>
-              </div>
-              <Clock className="h-5 w-5 text-amber-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-destructive">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Suspended</p>
-                <p className="text-2xl font-bold text-destructive">{statusCounts?.suspended || 0}</p>
-              </div>
-              <Ban className="h-5 w-5 text-destructive" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-400">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Pro Subscribers</p>
-                <p className="text-2xl font-bold text-amber-600">{statusCounts?.pro || 0}</p>
-              </div>
-              <Crown className="h-5 w-5 text-amber-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Placement Network</p>
-                <p className="text-2xl font-bold text-purple-600">{statusCounts?.placement || 0}</p>
-              </div>
-              <Handshake className="h-5 w-5 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Compact Stats Bar */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 bg-muted/30 rounded-lg border text-sm">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Total:</span>
+          <span className="font-semibold tabular-nums">{statusCounts?.all || 0}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <CheckCircle className="h-4 w-4 text-emerald-500" />
+          <span className="text-muted-foreground">Approved:</span>
+          <span className="font-semibold text-emerald-600 tabular-nums">{statusCounts?.approved || 0}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-amber-500" />
+          <span className="text-muted-foreground">Pending:</span>
+          <span className="font-semibold text-amber-600 tabular-nums">{statusCounts?.pending || 0}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Ban className="h-4 w-4 text-destructive" />
+          <span className="text-muted-foreground">Suspended:</span>
+          <span className="font-semibold text-destructive tabular-nums">{statusCounts?.suspended || 0}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Crown className="h-4 w-4 text-amber-500" />
+          <span className="text-muted-foreground">Pro:</span>
+          <span className="font-semibold text-amber-600 tabular-nums">{statusCounts?.pro || 0}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-purple-500" />
+          <span className="text-muted-foreground">Placement:</span>
+          <span className="font-semibold text-purple-600 tabular-nums">{statusCounts?.placement || 0}</span>
+        </div>
       </div>
 
       {/* Tabs and Search */}

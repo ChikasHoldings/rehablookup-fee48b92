@@ -853,62 +853,29 @@ export default function AdminLeads() {
             Leads are automatically qualified and assigned to providers
           </p>
         </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.totalNew}</p>
-                <p className="text-xs text-muted-foreground">New Leads</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-50">
-                <Bot className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.autoAssigned}</p>
-                <p className="text-xs text-muted-foreground">Auto-Assigned</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-50">
-                <Zap className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.highPriority}</p>
-                <p className="text-xs text-muted-foreground">High Priority</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-50">
-                <TrendingUp className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.qualified}</p>
-                <p className="text-xs text-muted-foreground">Qualified</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Inline Quick Stats */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-blue-500" />
+            <span className="text-muted-foreground">New:</span>
+            <span className="font-semibold text-blue-600 tabular-nums">{stats.totalNew}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Bot className="h-4 w-4 text-green-500" />
+            <span className="text-muted-foreground">Auto-Assigned:</span>
+            <span className="font-semibold text-green-600 tabular-nums">{stats.autoAssigned}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-red-500" />
+            <span className="text-muted-foreground">High Priority:</span>
+            <span className="font-semibold text-red-600 tabular-nums">{stats.highPriority}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            <span className="text-muted-foreground">Qualified:</span>
+            <span className="font-semibold text-emerald-600 tabular-nums">{stats.qualified}</span>
+          </div>
+        </div>
       </div>
 
       {/* Exclusivity Distribution Card */}
