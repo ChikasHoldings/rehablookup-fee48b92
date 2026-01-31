@@ -42,7 +42,7 @@ export function CreditBalanceWidget({
           </div>
           
           <Button asChild size="sm" className="gap-1.5">
-            <Link to="/provider/credits">
+            <Link to="/provider/billing">
               <Plus className="h-4 w-4" />
               Add Credits
             </Link>

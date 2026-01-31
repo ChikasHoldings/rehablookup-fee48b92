@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { 
   Wallet, 
   Plus, 
@@ -31,9 +32,6 @@ import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
 
@@ -52,10 +50,11 @@ const PRO_BENEFITS = [
 ];
 
 export default function ProviderBillingPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
-  const { balanceFormatted, transactions, isLoading } = useProviderCredits(facilityId);
-  const { data: proStatus } = useProStatus();
+  const { balanceFormatted, transactions, isLoading, refetch: refetchCredits } = useProviderCredits(facilityId);
+  const { data: proStatus, refetch: refetchProStatus } = useProStatus();
   const { 
     paymentMethods: allPaymentMethods, 
     isLoading: paymentMethodsLoading,
@@ -70,6 +69,44 @@ export default function ProviderBillingPage() {
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+
+  // Handle success/cancel URL params from Stripe checkout
+  useEffect(() => {
+    const proSuccess = searchParams.get("pro_success");
+    const proCanceled = searchParams.get("pro_canceled");
+    const creditsSuccess = searchParams.get("credits_success");
+    const creditsCanceled = searchParams.get("credits_canceled");
+
+    if (proSuccess === "true") {
+      toast.success("Pro subscription activated! You now have 20% off all lead unlocks.", { duration: 6000 });
+      refetchProStatus();
+      // Clear the URL params
+      searchParams.delete("pro_success");
+      setSearchParams(searchParams, { replace: true });
+    }
+
+    if (proCanceled === "true") {
+      toast.info("Pro upgrade was cancelled.");
+      searchParams.delete("pro_canceled");
+      setSearchParams(searchParams, { replace: true });
+    }
+
+    if (creditsSuccess === "true") {
+      const amount = searchParams.get("amount");
+      const formattedAmount = amount ? `$${(parseInt(amount, 10) / 100).toFixed(0)}` : "";
+      toast.success(`${formattedAmount} credits added to your account!`, { duration: 5000 });
+      refetchCredits();
+      searchParams.delete("credits_success");
+      searchParams.delete("amount");
+      setSearchParams(searchParams, { replace: true });
+    }
+
+    if (creditsCanceled === "true") {
+      toast.info("Credit purchase was cancelled.");
+      searchParams.delete("credits_canceled");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, refetchCredits, refetchProStatus]);
 
   const handlePurchase = async (amountCents: number) => {
     if (!facilityId) {

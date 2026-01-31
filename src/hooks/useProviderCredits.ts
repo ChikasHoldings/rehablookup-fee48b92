@@ -96,7 +96,7 @@ export function useProviderCredits(facilityId?: string) {
           duration: 8000,
           action: {
             label: "Add Credits",
-            onClick: () => window.location.href = "/provider/credits?purchase_credits=true",
+            onClick: () => window.location.href = "/provider/billing",
           },
         }
       );

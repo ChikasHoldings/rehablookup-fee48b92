@@ -139,7 +139,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
       navigate("/provider/inquiries");
     } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
-      navigate("/provider/credits");
+      navigate("/provider/billing");
     } else if (notification.type === "listing_approved") {
       navigate("/provider/listing");
     } else if (notification.type === "system") {
@@ -508,9 +508,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/provider/credits" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
+                  <Link to="/provider/billing" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Credits & Payments</span>
+                    <span className="text-sm">Billing</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

@@ -106,7 +106,7 @@ function NotificationItem({
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
       navigate("/provider/inquiries");
     } else if (notification.type === "subscription_updated" || notification.type === "low_credits_warning" || notification.type === "lead_limit_warning") {
-      navigate("/provider/credits");
+      navigate("/provider/billing");
     } else if (notification.type === "listing_approved") {
       navigate("/provider/listing");
     }
