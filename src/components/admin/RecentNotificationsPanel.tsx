@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +60,7 @@ const getNotificationBadge = (type: string) => {
   return config[type] || config.system;
 };
 
-export function RecentNotificationsPanel() {
+export const RecentNotificationsPanel = forwardRef<HTMLDivElement>(function RecentNotificationsPanel(_, ref) {
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -160,7 +160,7 @@ export function RecentNotificationsPanel() {
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
 
   return (
-    <Card>
+    <Card ref={ref}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -270,4 +270,4 @@ export function RecentNotificationsPanel() {
       </CardContent>
     </Card>
   );
-}
+});

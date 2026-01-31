@@ -278,3 +278,6 @@ verify_jwt = false
 
 [functions.process-lead-redistribution]
 verify_jwt = false
+
+[functions.cleanup-orphan-storage]
+verify_jwt = true

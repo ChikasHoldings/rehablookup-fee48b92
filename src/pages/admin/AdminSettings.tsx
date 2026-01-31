@@ -2432,19 +2432,24 @@ export default function AdminSettings() {
                             <AlertDialogAction
                               onClick={async () => {
                                 toast.info("Scanning for orphaned files...");
-                                // Log the action
-                                await logAdminAction({
-                                  actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
-                                  targetType: "storage",
-                                  details: { action: "orphan_cleanup_initiated" }
-                                });
-                                // In production, this would call an edge function
-                                setTimeout(() => {
-                                  toast.success("Storage cleanup complete", {
-                                    description: "No orphaned files found"
-                                  });
+                                try {
+                                  const { data, error } = await supabase.functions.invoke("cleanup-orphan-storage");
+                                  if (error) throw error;
+                                  
+                                  if (data.deleted_count > 0) {
+                                    toast.success("Storage cleanup complete", {
+                                      description: `Deleted ${data.deleted_count} orphaned files`
+                                    });
+                                  } else {
+                                    toast.success("Storage cleanup complete", {
+                                      description: "No orphaned files found"
+                                    });
+                                  }
                                   refetchStorage();
-                                }, 2000);
+                                } catch (error) {
+                                  const errMsg = error instanceof Error ? error.message : "Cleanup failed";
+                                  toast.error("Storage cleanup failed", { description: errMsg });
+                                }
                               }}
                               className="bg-amber-600 hover:bg-amber-700"
                             >
