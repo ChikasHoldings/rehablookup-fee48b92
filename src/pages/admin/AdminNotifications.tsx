@@ -3,12 +3,11 @@ import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -27,11 +26,9 @@ import {
   Eye,
   Users,
   RefreshCw,
-  Filter,
   Search,
   Mail,
   Clock,
-  Loader2,
   ShieldAlert,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
@@ -325,40 +322,39 @@ export default function AdminNotifications() {
     }
   };
 
+  const paymentIssuesCount = allNotifications.filter((n) => ["payment_failed", "payment_delinquent", "placement_payment_failed"].includes(n.type)).length;
+  const securityAlertsCount = allNotifications.filter((n) => ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"].includes(n.type)).length;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-muted-foreground">
-            System notifications and alerts
-          </p>
-        </div>
+    <div className="space-y-4">
+      {/* Compact Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-xl font-semibold">Notifications</h1>
         <div className="flex items-center gap-2">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm" 
             onClick={() => {
               refetchGlobal();
               refetchUser();
             }}
             disabled={isLoading}
+            className="h-8"
           >
-            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-            Refresh
+            <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
           </Button>
           {totalUnreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
-              <CheckCheck className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="h-8 text-xs">
+              <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
               Mark All Read
             </Button>
           )}
           {allNotifications.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear All
+                <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  Clear
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -380,134 +376,102 @@ export default function AdminNotifications() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Notifications</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{allNotifications.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {globalNotifications.length} global, {userNotifications.length} personal
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unread</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">{totalUnreadCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Requiring attention
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Payment Issues</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {allNotifications.filter((n) => ["payment_failed", "payment_delinquent", "placement_payment_failed"].includes(n.type)).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Failed payments
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Alerts</CardTitle>
-            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {allNotifications.filter((n) => ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"].includes(n.type)).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Security events
-            </p>
-          </CardContent>
-        </Card>
+      {/* Compact Summary Bar */}
+      <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg border text-sm overflow-x-auto">
+        <Button
+          variant={filter === "all" ? "secondary" : "ghost"}
+          size="sm"
+          className="h-7 px-3 text-xs font-medium shrink-0"
+          onClick={() => setFilter("all")}
+        >
+          <Bell className="h-3.5 w-3.5 mr-1.5" />
+          All
+          <Badge variant="outline" className="ml-1.5 h-5 px-1.5 text-[10px]">{allNotifications.length}</Badge>
+        </Button>
+        <Button
+          variant={filter === "unread" ? "secondary" : "ghost"}
+          size="sm"
+          className="h-7 px-3 text-xs font-medium shrink-0"
+          onClick={() => setFilter("unread")}
+        >
+          <Eye className="h-3.5 w-3.5 mr-1.5" />
+          Unread
+          {totalUnreadCount > 0 && (
+            <Badge className="ml-1.5 h-5 px-1.5 text-[10px] bg-primary">{totalUnreadCount}</Badge>
+          )}
+        </Button>
+        <div className="h-4 w-px bg-border mx-1 shrink-0" />
+        <Button
+          variant={typeFilter === "payment_failed" ? "secondary" : "ghost"}
+          size="sm"
+          className="h-7 px-3 text-xs font-medium shrink-0"
+          onClick={() => setTypeFilter(typeFilter === "payment_failed" ? "all" : "payment_failed")}
+        >
+          <CreditCard className="h-3.5 w-3.5 mr-1.5 text-destructive" />
+          Payments
+          {paymentIssuesCount > 0 && (
+            <Badge variant="destructive" className="ml-1.5 h-5 px-1.5 text-[10px]">{paymentIssuesCount}</Badge>
+          )}
+        </Button>
+        <Button
+          variant={typeFilter === "security_event" ? "secondary" : "ghost"}
+          size="sm"
+          className="h-7 px-3 text-xs font-medium shrink-0"
+          onClick={() => setTypeFilter(typeFilter === "security_event" ? "all" : "security_event")}
+        >
+          <ShieldAlert className="h-3.5 w-3.5 mr-1.5 text-red-600" />
+          Security
+          {securityAlertsCount > 0 && (
+            <Badge className="ml-1.5 h-5 px-1.5 text-[10px] bg-red-600">{securityAlertsCount}</Badge>
+          )}
+        </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search notifications..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "unread")}>
-                <SelectTrigger className="w-[130px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="unread">Unread</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {notificationTypes.map(type => (
-                    <SelectItem key={type} value={type}>
-                      {type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList>
-          <TabsTrigger value="all" className="gap-2">
-            All
-            <Badge variant="secondary" className="ml-1">{allNotifications.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="global" className="gap-2">
-            Global
-            <Badge variant="secondary" className="ml-1">{globalNotifications.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="personal" className="gap-2">
-            Personal
-            <Badge variant="secondary" className="ml-1">{userNotifications.length}</Badge>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="mt-4">
-          <NotificationList
-            notifications={filteredNotifications}
-            isLoading={isLoading}
-            onMarkAsRead={handleMarkAsRead}
-            onDelete={handleDelete}
-            onNotificationClick={handleNotificationClick}
-            getNotificationLink={getNotificationLink}
+      {/* Search + Tabs in compact row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search notifications..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 h-8 text-sm"
           />
-        </TabsContent>
-      </Tabs>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="h-8 w-[140px] text-xs">
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {notificationTypes.map(type => (
+                <SelectItem key={type} value={type}>
+                  {type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="h-8">
+              <TabsTrigger value="all" className="h-7 px-2.5 text-xs">All</TabsTrigger>
+              <TabsTrigger value="global" className="h-7 px-2.5 text-xs">Global</TabsTrigger>
+              <TabsTrigger value="personal" className="h-7 px-2.5 text-xs">Personal</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Notification List */}
+      <NotificationList
+        notifications={filteredNotifications}
+        isLoading={isLoading}
+        onMarkAsRead={handleMarkAsRead}
+        onDelete={handleDelete}
+        onNotificationClick={handleNotificationClick}
+        getNotificationLink={getNotificationLink}
+      />
     </div>
   );
 }
