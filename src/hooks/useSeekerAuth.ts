@@ -41,36 +41,71 @@ export function useSeekerAuth() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+    let initialized = false;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer Supabase calls with setTimeout
+          // Defer Supabase calls with setTimeout to avoid deadlock
           setTimeout(() => {
-            fetchProfile(session.user.id);
+            if (mounted) fetchProfile(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setIsSeeker(false);
         }
+        
+        // Only set loading false after initial check
+        if (initialized) return;
+        initialized = true;
         setIsLoading(false);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
         fetchProfile(session.user.id);
       }
-      setIsLoading(false);
+      
+      if (!initialized) {
+        initialized = true;
+        setIsLoading(false);
+      }
+    }).catch((error) => {
+      console.error("[useSeekerAuth] Error getting session:", error);
+      if (mounted && !initialized) {
+        initialized = true;
+        setIsLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    // Safety timeout
+    const timeoutId = setTimeout(() => {
+      if (mounted && !initialized) {
+        console.warn("[useSeekerAuth] Auth initialization timed out");
+        initialized = true;
+        setIsLoading(false);
+      }
+    }, 5000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, [fetchProfile]);
 
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
