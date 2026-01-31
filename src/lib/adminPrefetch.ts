@@ -5,7 +5,6 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/analytics": () => import("@/pages/admin/AdminAnalytics"),
   "/admin/providers": () => import("@/pages/admin/AdminProviders"),
   "/admin/leads": () => import("@/pages/admin/AdminLeads"),
-  
   "/admin/subscriptions": () => import("@/pages/admin/AdminSubscriptions"),
   "/admin/featured": () => import("@/pages/admin/AdminFeatured"),
   "/admin/credentials": () => import("@/pages/admin/AdminCredentials"),
@@ -17,6 +16,9 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/settings": () => import("@/pages/admin/AdminSettings"),
   "/admin/notifications": () => import("@/pages/admin/AdminNotifications"),
   "/admin/profile": () => import("@/pages/admin/AdminProfile"),
+  "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
+  "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
+  "/admin/placement-revenue": () => import("@/pages/admin/PlacementRevenueDashboard"),
 };
 
 // Adjacent pages to prefetch based on current page (ordered by priority)
@@ -26,7 +28,6 @@ const adjacentPagesMap: Record<string, string[]> = {
   "/admin/analytics": ["/admin", "/admin/providers", "/admin/leads"],
   "/admin/providers": ["/admin", "/admin/leads", "/admin/subscriptions"],
   "/admin/leads": ["/admin/providers", "/admin"],
-  
   "/admin/subscriptions": ["/admin/providers", "/admin/featured", "/admin"],
   "/admin/featured": ["/admin/subscriptions", "/admin/providers"],
   "/admin/credentials": ["/admin/providers", "/admin/flagged-images"],
@@ -38,6 +39,9 @@ const adjacentPagesMap: Record<string, string[]> = {
   "/admin/settings": ["/admin/profile", "/admin"],
   "/admin/notifications": ["/admin", "/admin/settings"],
   "/admin/profile": ["/admin/settings", "/admin"],
+  "/admin/reviews": ["/admin/providers", "/admin/flagged-images"],
+  "/admin/concierge": ["/admin", "/admin/placement-revenue"],
+  "/admin/placement-revenue": ["/admin/concierge", "/admin/subscriptions"],
 };
 
 // Track already prefetched routes to avoid duplicate fetches
