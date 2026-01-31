@@ -80,8 +80,6 @@ function PaymentFormContent({
         setIsLoading(true);
         setError(null);
         
-        console.log("[PaymentForm] Requesting SetupIntent for facility:", facilityId);
-        
         const { data, error: invokeError } = await supabase.functions.invoke("setup-provider-payment-method", {
           body: { facilityId },
         });
@@ -89,21 +87,14 @@ function PaymentFormContent({
         if (!isMounted) return;
 
         if (invokeError) {
-          console.error("[PaymentForm] SetupIntent error:", invokeError);
           throw new Error(invokeError.message || "Failed to initialize payment setup");
         }
 
         if (data?.error) {
-          console.error("[PaymentForm] SetupIntent API error:", data.error);
           throw new Error(data.error);
         }
 
         if (data?.clientSecret) {
-          console.log("[PaymentForm] SetupIntent received:", { 
-            hasSecret: !!data.clientSecret, 
-            customerId: data.customerId,
-            facilityName: data.facilityName 
-          });
           setClientSecret(data.clientSecret);
           setCustomerId(data.customerId);
           // Pre-populate account holder name from facility name
@@ -116,7 +107,6 @@ function PaymentFormContent({
         }
       } catch (err: any) {
         if (isMounted) {
-          console.error("[PaymentForm] Setup error:", err);
           setError(err.message || "Failed to initialize payment setup");
         }
       } finally {
@@ -134,8 +124,6 @@ function PaymentFormContent({
   }, [facilityId]);
 
   const savePaymentMethod = useCallback(async (paymentMethodId: string, isPendingVerification: boolean = false) => {
-    console.log("[PaymentForm] Saving payment method:", paymentMethodId, { isPendingVerification });
-    
     const { data, error: saveError } = await supabase.functions.invoke("save-provider-payment-method", {
       body: {
         facilityId,
@@ -145,16 +133,12 @@ function PaymentFormContent({
     });
 
     if (saveError) {
-      console.error("[PaymentForm] Save error:", saveError);
       throw new Error(saveError.message || "Failed to save payment method");
     }
 
     if (data?.error) {
-      console.error("[PaymentForm] Save API error:", data.error);
       throw new Error(data.error);
     }
-
-    console.log("[PaymentForm] Payment method saved:", data);
     
     queryClient.invalidateQueries({ queryKey: ["provider-payment-methods"] });
     queryClient.invalidateQueries({ queryKey: ["facility-concierge"] });
@@ -169,8 +153,6 @@ function PaymentFormContent({
   ): Promise<VerificationResult> => {
     const status = setupIntent?.status;
     const nextAction = setupIntent?.next_action;
-    
-    console.log(`[PaymentForm] ${stage} - SetupIntent status:`, status, 'next_action:', nextAction?.type);
 
     switch (status) {
       case 'requires_payment_method':
@@ -231,7 +213,6 @@ function PaymentFormContent({
   // Handle ACH with Financial Connections
   const handleACHSubmit = async () => {
     if (!stripe || !clientSecret) {
-      console.error("[PaymentForm] ACH submit - missing stripe or clientSecret");
       return;
     }
 
@@ -245,8 +226,6 @@ function PaymentFormContent({
     setVerificationStatus(null);
 
     try {
-      console.log("[PaymentForm] Starting Financial Connections flow with name:", accountHolderName);
-      
       // Use Financial Connections to collect bank account
       const { error: collectError, setupIntent } = await stripe.collectBankAccountForSetup({
         clientSecret,
@@ -261,7 +240,6 @@ function PaymentFormContent({
       });
 
       if (collectError) {
-        console.error("[PaymentForm] Financial Connections error:", collectError);
         throw new Error(collectError.message);
       }
 
@@ -270,12 +248,9 @@ function PaymentFormContent({
 
       // If we need confirmation, proceed with confirmUsBankAccountSetup
       if (result.status === 'processing' && setupIntent?.status === 'requires_confirmation') {
-        console.log("[PaymentForm] Confirming US bank account setup");
-        
         const { error: confirmError, setupIntent: confirmedIntent } = await stripe.confirmUsBankAccountSetup(clientSecret);
         
         if (confirmError) {
-          console.error("[PaymentForm] Confirmation error:", confirmError);
           throw new Error(confirmError.message);
         }
 
@@ -296,13 +271,11 @@ function PaymentFormContent({
         onSuccess?.();
       } else if (result.status === 'cancelled') {
         // User cancelled - no error, just reset state
-        console.log("[PaymentForm] User cancelled bank connection");
       } else if (result.status === 'failed') {
         throw new Error(result.message || "Failed to connect bank account");
       }
 
     } catch (err: any) {
-      console.error("[PaymentForm] ACH error:", err);
       setError(err.message || "Failed to connect bank account");
     } finally {
       setIsConnectingBank(false);
@@ -313,7 +286,6 @@ function PaymentFormContent({
   const handleCardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements || !clientSecret) {
-      console.error("[PaymentForm] Card submit - missing dependencies");
       return;
     }
 
@@ -326,8 +298,6 @@ function PaymentFormContent({
       if (!cardElement) {
         throw new Error("Card element not found");
       }
-
-      console.log("[PaymentForm] Confirming card setup");
       
       const { error: stripeError, setupIntent } = await stripe.confirmCardSetup(clientSecret, {
         payment_method: {
@@ -336,8 +306,6 @@ function PaymentFormContent({
       });
 
       if (stripeError) {
-        console.error("[PaymentForm] Card setup error:", stripeError);
-        
         // Provide more user-friendly error messages
         let errorMessage = stripeError.message;
         if (stripeError.code === 'card_declined') {
@@ -351,8 +319,6 @@ function PaymentFormContent({
         throw new Error(errorMessage);
       }
 
-      console.log("[PaymentForm] Card SetupIntent status:", setupIntent?.status);
-
       if (setupIntent?.status === 'succeeded' && setupIntent?.payment_method) {
         const saveResult = await savePaymentMethod(setupIntent.payment_method as string);
         toast.success(`${saveResult?.cardBrand || 'Card'} saved successfully!`);
@@ -364,7 +330,6 @@ function PaymentFormContent({
         throw new Error("Failed to save card. Please try again.");
       }
     } catch (err: any) {
-      console.error("[PaymentForm] Card error:", err);
       setError(err.message || "Failed to save payment method");
     } finally {
       setIsSubmitting(false);
@@ -592,18 +557,15 @@ export function AddPaymentMethodModal({
       setStripeError(null);
 
       try {
-        console.log("[AddPaymentMethodModal] Fetching Stripe config...");
         const { data, error } = await supabase.functions.invoke("setup-provider-payment-method", {
           body: { facilityId },
         });
 
         if (error) {
-          console.error("[AddPaymentMethodModal] Setup error:", error);
           throw new Error(error.message || "Failed to initialize payment setup");
         }
 
         if (data?.error) {
-          console.error("[AddPaymentMethodModal] API error:", data.error);
           throw new Error(data.error);
         }
 
@@ -611,11 +573,9 @@ export function AddPaymentMethodModal({
           throw new Error("Stripe is not configured. Please contact support.");
         }
 
-        console.log("[AddPaymentMethodModal] Stripe key received, initializing...");
         const stripe = loadStripe(data.publishableKey);
         setStripePromise(stripe);
       } catch (err: any) {
-        console.error("[AddPaymentMethodModal] Init error:", err);
         setStripeError(err.message || "Failed to initialize payment system");
       } finally {
         setIsLoadingStripe(false);

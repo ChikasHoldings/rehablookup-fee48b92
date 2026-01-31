@@ -186,8 +186,6 @@ export function useProviderReviews() {
       return { error: authError || new Error('Not authenticated') };
     }
 
-    console.log('[submitResponse] Submitting response:', { reviewId, facilityId: review.facility_id, userId: user.id });
-
     const { data, error } = await supabase
       .from('review_responses')
       .insert({
@@ -200,11 +198,8 @@ export function useProviderReviews() {
       .single();
 
     if (error) {
-      console.error('[submitResponse] Insert error:', error);
       return { data: null, error };
     }
-
-    console.log('[submitResponse] Response created:', data);
 
     // Notify seeker about response
     supabase.functions.invoke('send-review-notification', {
@@ -222,8 +217,6 @@ export function useProviderReviews() {
   }, [reviews, fetchReviews]);
 
   const updateResponse = useCallback(async (responseId: string, responseText: string) => {
-    console.log('[updateResponse] Updating response:', responseId);
-    
     const { data, error } = await supabase
       .from('review_responses')
       .update({ response_text: responseText.trim() })
@@ -232,29 +225,23 @@ export function useProviderReviews() {
       .single();
 
     if (error) {
-      console.error('[updateResponse] Error:', error);
       return { data: null, error };
     }
 
-    console.log('[updateResponse] Response updated successfully');
     fetchReviews();
     return { data, error: null };
   }, [fetchReviews]);
 
   const deleteResponse = useCallback(async (responseId: string) => {
-    console.log('[deleteResponse] Deleting response:', responseId);
-    
     const { error } = await supabase
       .from('review_responses')
       .delete()
       .eq('id', responseId);
 
     if (error) {
-      console.error('[deleteResponse] Error:', error);
       return { error };
     }
 
-    console.log('[deleteResponse] Response deleted successfully');
     fetchReviews();
     return { error: null };
   }, [fetchReviews]);

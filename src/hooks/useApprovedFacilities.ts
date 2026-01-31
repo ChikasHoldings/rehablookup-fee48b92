@@ -67,10 +67,8 @@ export const useFeaturedFacilityIds = () => {
     queryKey: ["featured-facility-ids"],
     queryFn: async (): Promise<FeaturedFacilitiesResponse> => {
       try {
-        console.log("[useFeaturedFacilityIds] Fetching Pro facilities...");
         const { data, error } = await supabase.functions.invoke("get-featured-facilities");
         if (error) {
-          console.error("Error fetching Pro facilities:", error);
           return { proFacilityIds: [], homepageFeaturedIds: [] };
         }
         
@@ -89,7 +87,6 @@ export const useFeaturedFacilityIds = () => {
           // Ignore storage errors
         }
         
-        console.log("[useFeaturedFacilityIds] Loaded", result.proFacilityIds.length, "Pro facilities,", result.homepageFeaturedIds.length, "homepage featured");
         return result;
       } catch (err) {
         console.error("Failed to fetch Pro facility IDs:", err);
@@ -184,7 +181,6 @@ export const useApprovedFacilities = () => {
   const facilitiesQuery = useQuery({
     queryKey: ["approved-facilities-base"],
     queryFn: async () => {
-      console.log("[useApprovedFacilities] Fetching facilities...");
       // Use public_facilities view which excludes sensitive fields like admin_notes
       const { data: facilitiesData, error: facilitiesError } = await supabase
         .from("public_facilities")
@@ -234,8 +230,6 @@ export const useApprovedFacilities = () => {
       (reviewsResult.data || []).forEach(r => {
         reviewsMap.set(r.facility_id, { rating: r.google_rating, count: r.google_review_count });
       });
-
-      console.log("[useApprovedFacilities] Loaded", facilitiesData?.length || 0, "facilities");
       
       return (facilitiesData || []).map(f => ({
         ...f,
