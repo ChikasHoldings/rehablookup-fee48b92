@@ -262,11 +262,11 @@ const ForProviders = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="h-[280px] sm:h-[320px] lg:h-[360px] overflow-hidden">
+                  <div className="p-2 sm:p-3">
                     <img 
                       src={providerDashboardScreenshot} 
                       alt="Provider Dashboard showing analytics, inquiries, and recent leads"
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-auto rounded-sm shadow-sm"
                     />
                   </div>
                 </div>
