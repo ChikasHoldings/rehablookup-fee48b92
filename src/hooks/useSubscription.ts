@@ -135,7 +135,7 @@ export const PLAN_DETAILS = {
     features: [
       "Up to 5 facility listings",
       "20% off lead unlocks",
-      "20% off Concierge placement fees",
+      "Placement fee: $800 (save $200)",
       "Featured homepage placement",
       "Priority search ranking",
       "Pro badge on profile",

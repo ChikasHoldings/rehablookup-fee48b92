@@ -1237,11 +1237,10 @@ export function ProviderDetailModal({
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        <p><strong>Fee Structure:</strong></p>
-                        <ul className="list-disc list-inside mt-1 space-y-1">
-                          <li>Flat fee: ${selectedProviderPro ? "960" : "1,200"} {selectedProviderPro && <span className="text-emerald-600">(Pro discount)</span>}</li>
-                          <li>Commission: {selectedProviderPro ? "6.4%" : "8%"} of first month (max $1,500)</li>
-                        </ul>
+                        <p><strong>Placement Fee:</strong></p>
+                        <p className="mt-1">
+                          ${selectedProviderPro ? "800" : "1,000"} per placement {selectedProviderPro && <span className="text-emerald-600">(Pro: save $200)</span>}
+                        </p>
                       </div>
                     </div>
                   ) : (

@@ -34,8 +34,8 @@ interface ProviderConfirmPlacementModalProps {
 // Fee structure
 const PLACEMENT_FEES = {
   flat_fee: {
-    standard: 120000, // $1,200 in cents
-    pro: 96000, // $960 (20% off)
+    standard: 100000, // $1,000 in cents
+    pro: 80000, // $800 (20% off)
   },
 };
 
@@ -153,7 +153,7 @@ export function ProviderConfirmPlacementModal({
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Due within 14 days of confirmation. Commission cap: $1,500 max.
+              Due within 14 days of confirmation
             </p>
           </div>
 

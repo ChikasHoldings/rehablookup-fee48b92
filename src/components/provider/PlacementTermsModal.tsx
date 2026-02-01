@@ -124,25 +124,14 @@ export function PlacementTermsModal({
                   Placement Fee Structure
                 </h3>
                 <div className="pl-8 space-y-3">
-                  <p className="text-sm text-muted-foreground">Provider agrees to pay the following fees upon confirmed placement:</p>
+                  <p className="text-sm text-muted-foreground">Provider agrees to pay the following flat fee upon confirmed placement:</p>
                   
-                  <div className="grid gap-3">
-                    <div className="p-3 bg-muted/30 rounded-lg border">
-                      <h4 className="font-medium text-sm mb-1">Flat Fee Option</h4>
-                      <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
-                        <li>• Standard Rate: <strong className="text-foreground">$1,200</strong> per placement</li>
-                        <li>• Pro Subscribers: <strong className="text-foreground">$960</strong> per placement (20% discount)</li>
-                      </ul>
-                    </div>
-                    
-                    <div className="p-3 bg-muted/30 rounded-lg border">
-                      <h4 className="font-medium text-sm mb-1">Commission Option</h4>
-                      <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
-                        <li>• Standard Rate: <strong className="text-foreground">8%</strong> of first month's treatment cost</li>
-                        <li>• Pro Subscribers: <strong className="text-foreground">6.4%</strong> of first month's treatment cost</li>
-                        <li>• Commission Cap: Maximum of <strong className="text-foreground">$1,500</strong> per placement</li>
-                      </ul>
-                    </div>
+                  <div className="p-3 bg-muted/30 rounded-lg border">
+                    <h4 className="font-medium text-sm mb-1">Placement Fee</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
+                      <li>• Standard Rate: <strong className="text-foreground">$1,000</strong> per placement</li>
+                      <li>• Pro Subscribers: <strong className="text-foreground">$800</strong> per placement (20% discount)</li>
+                    </ul>
                   </div>
                 </div>
               </section>

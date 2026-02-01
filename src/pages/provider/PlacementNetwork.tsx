@@ -54,8 +54,7 @@ import {
 
 // Placement fee structure
 const PLACEMENT_FEES = {
-  flat_fee: { standard: 1200, pro: 960 },
-  commission: { standard: "8%", pro: "6.4%", cap: 1500 },
+  flat_fee: { standard: 1000, pro: 800 },
 };
 
 const CARE_TYPES = [
@@ -743,34 +742,20 @@ export default function ProviderPlacementNetworkPage() {
                   <CardDescription className="text-xs sm:text-sm">You only pay when a placement is confirmed by both parties</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div className="p-3 sm:p-4 rounded-xl border bg-muted/30">
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Flat Fee</p>
-                      <p className="text-xl sm:text-2xl font-bold">
-                        ${proSubscription ? PLACEMENT_FEES.flat_fee.pro : PLACEMENT_FEES.flat_fee.standard}
+                  <div className="p-3 sm:p-4 rounded-xl border bg-muted/30">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Flat Fee Per Placement</p>
+                    <p className="text-xl sm:text-2xl font-bold">
+                      ${proSubscription ? PLACEMENT_FEES.flat_fee.pro.toLocaleString() : PLACEMENT_FEES.flat_fee.standard.toLocaleString()}
+                    </p>
+                    {proSubscription ? (
+                      <Badge variant="outline" className="mt-2 border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-[10px] sm:text-xs">
+                        Pro: Save $200
+                      </Badge>
+                    ) : (
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
+                        Pro: ${PLACEMENT_FEES.flat_fee.pro.toLocaleString()} <span className="text-primary">(save $200)</span>
                       </p>
-                      {proSubscription ? (
-                        <Badge variant="outline" className="mt-2 border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-[10px] sm:text-xs">
-                          Pro: 20% off
-                        </Badge>
-                      ) : (
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
-                          Pro: ${PLACEMENT_FEES.flat_fee.pro} <span className="text-primary">(save $240)</span>
-                        </p>
-                      )}
-                    </div>
-                    <div className="p-3 sm:p-4 rounded-xl border bg-muted/30">
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Commission</p>
-                      <p className="text-xl sm:text-2xl font-bold">
-                        {proSubscription ? PLACEMENT_FEES.commission.pro : PLACEMENT_FEES.commission.standard}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">of 1st mo. (max ${PLACEMENT_FEES.commission.cap})</p>
-                      {!proSubscription && (
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          Pro: {PLACEMENT_FEES.commission.pro} <span className="text-primary">(20% off)</span>
-                        </p>
-                      )}
-                    </div>
+                    )}
                   </div>
 
                   {/* When charged FAQ */}
