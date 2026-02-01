@@ -280,7 +280,7 @@ const App = () => (
             {/* Static Pages */}
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
-            <Route path="/resources/:slug" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
+            <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
             <Route path="/insurance/aetna" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
             <Route path="/insurance/bcbs" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
