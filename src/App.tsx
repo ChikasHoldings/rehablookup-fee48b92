@@ -319,6 +319,10 @@ const App = () => (
             {/* Provider Routes */}
             <Route path="/for-providers" element={<PublicRouteGuard><ForProviders /></PublicRouteGuard>} />
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
+            <Route path="/provider-signup" element={<ProviderSignup />} />
+            <Route path="/provider-login" element={<ProviderLogin />} />
+            <Route path="/provider-faq" element={<ProviderFAQ />} />
+            <Route path="/provider-support" element={<ProviderSupport />} />
             <Route path="/provider/login" element={<ProviderLogin />} />
             <Route path="/provider/forgot-password" element={<ProviderForgotPassword />} />
             <Route path="/provider/reset-password" element={<ProviderResetPassword />} />

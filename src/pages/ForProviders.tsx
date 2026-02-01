@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import {
   Building2,
   Users,
@@ -37,6 +39,7 @@ import testimonialJennifer from "@/assets/testimonials/testimonial-jennifer.jpg"
 const ForProviders = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Header />
       <SEO
         title="List Your Rehab Center Free | RehabLookup for Providers"
         description="List your treatment center for free on RehabLookup. Connect with families actively seeking care and grow your admissions."
@@ -502,6 +505,7 @@ const ForProviders = () => {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };
