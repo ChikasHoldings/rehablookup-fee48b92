@@ -264,7 +264,7 @@ const ForProviders = () => {
                   <img 
                     src={providerDashboardScreenshot} 
                     alt="Provider Dashboard showing analytics, inquiries, and recent leads"
-                    className="w-full h-auto"
+                    className="w-full h-auto min-h-[280px] sm:min-h-[360px] lg:min-h-[420px] object-cover object-top"
                   />
                 </div>
                 {/* Decorative elements - hidden on mobile */}
