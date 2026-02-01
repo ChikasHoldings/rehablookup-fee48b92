@@ -211,26 +211,30 @@ const ForProviders = () => {
         {/* Value Proposition with Image */}
         <section className="py-16 md:py-24 bg-muted/30 border-y border-border">
           <div className="container px-5 md:px-6">
-            <div className="grid gap-12 lg:grid-cols-2 items-center max-w-6xl mx-auto">
-              <div>
-                <p className="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Why RehabLookup</p>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-                  Connect With Families Ready for Treatment
-                </h2>
-                <p className="text-muted-foreground mb-8 leading-relaxed">
-                  Unlike lead aggregators that share contacts with multiple facilities, our inquiries come directly from families who found your specific listing and expressed genuine interest in your program.
-                </p>
-                
-                <div className="space-y-4">
+            {/* Centered Section Header */}
+            <div className="text-center mb-12 max-w-3xl mx-auto">
+              <p className="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Why RehabLookup</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                Connect With Families Ready for Treatment
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Unlike lead aggregators that share contacts with multiple facilities, our inquiries come directly from families who found your specific listing and expressed genuine interest in your program.
+              </p>
+            </div>
+
+            <div className="grid gap-10 lg:gap-16 lg:grid-cols-2 items-stretch max-w-6xl mx-auto">
+              {/* Features List */}
+              <div className="flex flex-col justify-center">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
                   {[
                     { icon: Target, title: "High Intent Inquiries", desc: "Families actively seeking treatment, not cold prospects" },
                     { icon: Eye, title: "Maximum Visibility", desc: "Get discovered in search results and state directories" },
-                    { icon: Zap, title: "Instant Notifications", desc: "Real time alerts when families show interest" },
+                    { icon: Zap, title: "Instant Notifications", desc: "Real-time alerts when families show interest" },
                     { icon: BarChart3, title: "Analytics Dashboard", desc: "Track views, inquiries, and conversion metrics" },
                     { icon: Heart, title: "Quality Matches", desc: "Connect with families who fit your program" },
                   ].map((item) => (
-                    <div key={item.title} className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                    <div key={item.title} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-sm transition-all">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 shrink-0">
                         <item.icon className="h-5 w-5 text-primary" />
                       </div>
                       <div>
@@ -242,8 +246,8 @@ const ForProviders = () => {
                 </div>
               </div>
               
-              <div className="relative h-full flex items-center">
-                {/* Browser mockup frame */}
+              {/* Dashboard Preview */}
+              <div className="relative flex items-center">
                 <div className="w-full bg-card rounded-xl shadow-2xl border border-border overflow-hidden">
                   {/* Browser header */}
                   <div className="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border">
@@ -255,11 +259,10 @@ const ForProviders = () => {
                     <div className="flex-1 mx-4">
                       <div className="bg-background/80 rounded-md px-3 py-1.5 text-xs text-muted-foreground flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                        <span className="truncate">rehabookup.com/provider/dashboard</span>
+                        <span className="truncate">rehablookup.com/provider/dashboard</span>
                       </div>
                     </div>
                   </div>
-                  {/* Screenshot */}
                   <img 
                     src={providerDashboardScreenshot} 
                     alt="Provider Dashboard showing analytics, inquiries, and recent leads"
