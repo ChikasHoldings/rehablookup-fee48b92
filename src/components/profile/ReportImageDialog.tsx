@@ -90,7 +90,7 @@ export const ReportImageDialog = forwardRef<HTMLDivElement, ReportImageDialogPro
           <div className="relative aspect-video rounded-lg overflow-hidden bg-muted border">
             <img
               src={imageUrl}
-              alt="Image to report"
+              alt="Facility image being reported for review"
               className="w-full h-full object-contain"
             />
           </div>

@@ -184,7 +184,7 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
                       : "opacity-50 hover:opacity-75"
                   )}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={img} alt={`${facilityName} - Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
