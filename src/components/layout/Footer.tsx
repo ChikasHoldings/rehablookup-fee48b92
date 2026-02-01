@@ -82,6 +82,8 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
               src="/logo.png" 
               alt="RehabLookup" 
               className="h-7 w-auto"
+              width={134}
+              height={28}
               loading="lazy"
             />
           </Link>
@@ -285,6 +287,8 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                   src="/logo.png" 
                   alt="RehabLookup" 
                   className="h-10 w-auto"
+                  width={191}
+                  height={40}
                   loading="lazy"
                 />
               </Link>

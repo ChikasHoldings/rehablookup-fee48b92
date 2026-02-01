@@ -300,12 +300,17 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative z-10">
-        {/* Background Image - preloaded for LCP */}
-        <link rel="preload" as="image" href={heroImage} />
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
+      <section className="relative z-10 overflow-hidden">
+        {/* Background Image - using img for better LCP */}
+        <img 
+          src={heroImage}
+          alt=""
+          role="presentation"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          width={1920}
+          height={1080}
+          fetchPriority="high"
+          decoding="async"
         />
         
         {/* Dark overlay for text readability */}
@@ -408,35 +413,35 @@ const Index = () => {
                   <div className="flex gap-4 md:gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory md:grid md:grid-cols-5 md:overflow-visible md:pb-0 lg:gap-6">
                     {/* Aetna */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/aetna.svg" alt="Aetna" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/aetna.svg" alt="Aetna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Anthem */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/anthem.svg" alt="Anthem" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/anthem.svg" alt="Anthem" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* BCBS */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Cigna */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/cigna.svg" alt="Cigna" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/cigna.svg" alt="Cigna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Humana */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/humana.svg" alt="Humana" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/humana.svg" alt="Humana" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Kaiser */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Medicare */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicare.svg" alt="Medicare" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/medicare.svg" alt="Medicare" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Medicaid */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicaid.svg" alt="Medicaid" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/medicaid.svg" alt="Medicaid" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Optum */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
@@ -444,7 +449,7 @@ const Index = () => {
                     </div>
                     {/* Tricare */}
                     <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/tricare.svg" alt="TRICARE" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <img src="/insurance-logos/tricare.svg" alt="TRICARE" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                   {/* Scroll hint for mobile */}
