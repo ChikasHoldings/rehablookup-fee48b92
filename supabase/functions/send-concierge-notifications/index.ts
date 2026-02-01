@@ -717,7 +717,7 @@ async function sendInvoiceIssuedEmail(
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Fee Type:</td>
-                  <td style="padding: 8px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${feeType === 'commission' ? 'Commission' : 'Flat Fee'}</td>
+                  <td style="padding: 8px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">Flat Fee</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Due Date:</td>
