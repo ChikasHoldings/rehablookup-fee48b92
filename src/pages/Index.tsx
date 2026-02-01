@@ -301,13 +301,13 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative z-10 overflow-hidden">
+      <section className="relative z-10 overflow-hidden min-h-[400px] sm:min-h-[450px] md:min-h-[480px]">
         {/* Background Image - using img for better LCP */}
         <img 
           src={heroImage}
           alt=""
           role="presentation"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-cover object-[center_30%] sm:object-center"
           width={1920}
           height={1080}
           fetchPriority="high"
