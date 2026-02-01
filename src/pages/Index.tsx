@@ -301,24 +301,27 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative z-10 overflow-hidden min-h-[360px] sm:min-h-[340px] md:min-h-0">
+      <section className="relative z-10 overflow-hidden">
         {/* Background Image - using img for better LCP */}
-        <img 
-          src={heroImage}
-          alt=""
-          role="presentation"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-          width={1920}
-          height={1080}
-          fetchPriority="high"
-          decoding="async"
-        />
+        <div className="absolute inset-0 w-full h-full">
+          <img 
+            src={heroImage}
+            alt=""
+            role="presentation"
+            className="w-full h-full object-cover object-center scale-100 sm:scale-100"
+            style={{ minHeight: '100%', minWidth: '100%' }}
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+            decoding="async"
+          />
+        </div>
         
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
 
         {/* Content */}
-        <div className="container relative py-20 sm:py-16 md:py-14 lg:py-16">
+        <div className="container relative py-12 md:py-14 lg:py-16">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
