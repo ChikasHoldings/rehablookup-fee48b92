@@ -58,14 +58,6 @@ const SearchResultCardSkeleton: React.FC = () => {
           <Skeleton className="h-5 w-18 rounded-md" />
         </div>
 
-        {/* Insurance Preview */}
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-5 w-16 rounded" />
-          <Skeleton className="h-5 w-20 rounded" />
-          <Skeleton className="h-5 w-14 rounded" />
-        </div>
-
         {/* Actions Footer */}
         <div className="flex items-center gap-2 mt-auto">
           <Skeleton className="h-10 w-28 rounded-lg" />
