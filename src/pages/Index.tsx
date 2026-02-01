@@ -301,7 +301,7 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative z-10 overflow-hidden">
+      <section className="relative z-10 overflow-hidden min-h-[280px] sm:min-h-[260px] md:min-h-0">
         {/* Background Image - using img for better LCP */}
         <img 
           src={heroImage}
@@ -318,7 +318,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
 
         {/* Content */}
-        <div className="container relative py-12 md:py-14 lg:py-16">
+        <div className="container relative py-16 sm:py-14 md:py-14 lg:py-16">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
