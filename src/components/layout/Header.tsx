@@ -158,7 +158,7 @@ export function Header({
 
           {/* CTA & Mobile Toggle */}
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-3">
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
