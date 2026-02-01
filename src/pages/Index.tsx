@@ -907,6 +907,62 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Placement Service */}
+      <section className="py-12 md:py-16 lg:py-20 bg-accent/5 border-y border-accent/10 relative overflow-hidden">
+        {/* Decorative background pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        
+        <div className="container relative">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
+            {/* Left side - Content */}
+            <div className="text-center md:text-left">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
+                <Heart className="h-4 w-4 text-accent fill-accent/30" />
+                <span className="text-sm font-semibold text-accent">Placement Service</span>
+              </div>
+              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+                Overwhelmed by Options?
+                <span className="block text-accent mt-1">Let Us Help.</span>
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Our specialists personally match you with verified treatment centers based on your insurance, location, and unique needs.
+              </p>
+              <Link to="/concierge">
+                <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
+                  Get Matched
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Right side - Visual steps */}
+            <div className="space-y-3">
+              {[
+                { icon: ClipboardList, title: "Tell Us Your Needs", desc: "Share your situation, preferences, and insurance" },
+                { icon: Users, title: "We Find Matches", desc: "Our team reviews programs that fit your criteria" },
+                { icon: Phone, title: "Get Connected", desc: "We introduce you directly to the best options" },
+              ].map((step, idx) => (
+                <div 
+                  key={step.title}
+                  className="flex items-start gap-4 bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    <step.icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
+                      <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Resources / Blog Section */}
       <section className="py-10 md:py-12 lg:py-20">
         <div className="container">
@@ -1021,62 +1077,6 @@ const Index = () => {
             title="Find Treatment Near You" 
             variant="nearme"
           />
-        </div>
-      </section>
-
-      {/* Free Placement Service - Distinct from CTA */}
-      <section className="py-12 md:py-16 lg:py-20 bg-accent/5 border-t border-accent/10 relative overflow-hidden">
-        {/* Decorative background pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-        
-        <div className="container relative">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
-            {/* Left side - Content */}
-            <div className="text-center md:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
-                <Heart className="h-4 w-4 text-accent fill-accent/30" />
-                <span className="text-sm font-semibold text-accent">Placement Service</span>
-              </div>
-              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-                Overwhelmed by Options?
-                <span className="block text-accent mt-1">Let Us Help.</span>
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Our specialists personally match you with verified treatment centers based on your insurance, location, and unique needs.
-              </p>
-              <Link to="/concierge">
-                <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
-                  Get Matched
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Right side - Visual steps */}
-            <div className="space-y-3">
-              {[
-                { icon: ClipboardList, title: "Tell Us Your Needs", desc: "Share your situation, preferences, and insurance" },
-                { icon: Users, title: "We Find Matches", desc: "Our team reviews programs that fit your criteria" },
-                { icon: Phone, title: "Get Connected", desc: "We introduce you directly to the best options" },
-              ].map((step, idx) => (
-                <div 
-                  key={step.title}
-                  className="flex items-start gap-4 bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                    <step.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
-                      <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
