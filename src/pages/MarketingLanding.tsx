@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Shield, Clock, Phone, CheckCircle2, Star, Heart, Users } from "lucide-react";
+import { Shield, Clock, Phone, CheckCircle2, Star, Heart } from "lucide-react";
 import { LeadIntakeForm } from "@/components/lead-intake";
+import { LeadIntakeFormData } from "@/components/lead-intake/types";
 import { MarketingLeadSuccess } from "@/components/marketing/MarketingLeadSuccess";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface MatchedFacility {
   id: string;
@@ -17,10 +19,10 @@ interface MatchedFacility {
 
 export default function MarketingLanding() {
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
   const [matchedFacilities, setMatchedFacilities] = useState<MatchedFacility[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // UTM parameters
   const utmSource = searchParams.get("utm_source") || undefined;
@@ -30,8 +32,7 @@ export default function MarketingLanding() {
   const utmContent = searchParams.get("utm_content") || undefined;
 
   // Custom submit handler that uses marketing lead endpoint
-  const handleMarketingSubmit = async (formData: Record<string, unknown>) => {
-    setIsSubmitting(true);
+  const handleMarketingSubmit = async (formData: LeadIntakeFormData) => {
     try {
       const { data, error } = await supabase.functions.invoke("submit-marketing-lead", {
         body: {
@@ -69,11 +70,14 @@ export default function MarketingLanding() {
       setLeadId(data.leadId);
       setMatchedFacilities(data.matchedFacilities || []);
       setSubmitted(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Marketing lead submission failed:", err);
+      toast({
+        title: "Submission failed",
+        description: err.message || "Please try again",
+        variant: "destructive",
+      });
       throw err;
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -156,6 +160,7 @@ export default function MarketingLanding() {
             {/* Lead Intake Form */}
             <div className="bg-white rounded-2xl shadow-xl border border-border/50 overflow-hidden">
               <LeadIntakeForm
+                onCustomSubmit={handleMarketingSubmit}
                 renderSuccess={() => null}
               />
             </div>

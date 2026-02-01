@@ -19,9 +19,10 @@ const log = (requestId: string, level: "INFO" | "WARN" | "ERROR", message: strin
 };
 
 // ============ ZIP TO STATE MAPPING ============
+// Uses full state names to match database values
 const ZIP_TO_STATE: Record<string, string> = {
-  "0": "MA", "1": "NY", "2": "VA", "3": "FL", "4": "MI", 
-  "5": "TX", "6": "IL", "7": "TX", "8": "CO", "9": "CA"
+  "0": "Massachusetts", "1": "New York", "2": "Virginia", "3": "Florida", "4": "Michigan", 
+  "5": "Texas", "6": "Illinois", "7": "Texas", "8": "Colorado", "9": "California"
 };
 
 function getStateFromZip(zip: string): string | null {
