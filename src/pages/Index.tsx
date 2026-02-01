@@ -1046,7 +1046,7 @@ const Index = () => {
               </p>
               <Link to="/concierge">
                 <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
-                  Get Your Free Match
+                  Get Matched
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
