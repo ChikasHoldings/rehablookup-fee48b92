@@ -69,7 +69,6 @@ export default function InpatientRehabNearMe() {
     abbr: string;
     slug: string;
   } | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
@@ -99,28 +98,18 @@ export default function InpatientRehabNearMe() {
       });
   }, [approvedFacilities, stateData]);
 
-  const handleGetLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
-
-    setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const closest = getClosestState(position.coords.latitude, position.coords.longitude);
-        if (closest) {
-          setUserLocation(closest);
-        }
-        setIsLoadingLocation(false);
-      },
-      () => setIsLoadingLocation(false),
-      { timeout: 10000 }
-    );
-  }, []);
-
   useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      handleGetLocation();
+    if (!stateSlug && !userLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const closest = getClosestState(position.coords.latitude, position.coords.longitude);
+          if (closest) setUserLocation(closest);
+        },
+        () => {},
+        { timeout: 10000 }
+      );
     }
-  }, [stateSlug, userLocation, handleGetLocation]);
+  }, [stateSlug, userLocation]);
 
   const faqs = getInpatientRehabFAQs(stateData ? { state: stateData.name } : undefined);
 
@@ -187,9 +176,6 @@ export default function InpatientRehabNearMe() {
         treatmentType="Inpatient Rehabilitation"
         location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
         facilityCount={facilities.length}
-        showGeolocation={!stateSlug}
-        onGetLocation={handleGetLocation}
-        isLoadingLocation={isLoadingLocation}
       />
 
       <LocalSignalsSection

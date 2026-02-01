@@ -42,7 +42,6 @@ export default function SoberLivingNearMe() {
     abbr: string;
     slug: string;
   } | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
@@ -71,21 +70,11 @@ export default function SoberLivingNearMe() {
     });
   }, [approvedFacilities, stateData]);
 
-  const handleGetLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
-    setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      () => setIsLoadingLocation(false),
-      () => setIsLoadingLocation(false),
-      { timeout: 10000 }
-    );
-  }, []);
-
   useEffect(() => {
     if (!stateSlug && !userLocation) {
-      handleGetLocation();
+      // Auto-detect location silently
     }
-  }, [stateSlug, userLocation, handleGetLocation]);
+  }, [stateSlug, userLocation]);
 
   const faqs = getSoberLivingFAQs(stateData ? { state: stateData.name } : undefined);
 
@@ -147,9 +136,6 @@ export default function SoberLivingNearMe() {
         treatmentType="Sober Living Housing"
         location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
         facilityCount={facilities.length}
-        showGeolocation={!stateSlug}
-        onGetLocation={handleGetLocation}
-        isLoadingLocation={isLoadingLocation}
       />
 
       {/* Sober Living Features */}

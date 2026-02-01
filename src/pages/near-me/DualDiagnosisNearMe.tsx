@@ -46,7 +46,6 @@ export default function DualDiagnosisNearMe() {
     abbr: string;
     slug: string;
   } | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
@@ -76,28 +75,18 @@ export default function DualDiagnosisNearMe() {
       });
   }, [approvedFacilities, stateData]);
 
-  const handleGetLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
-
-    setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const closest = getClosestState(position.coords.latitude, position.coords.longitude);
-        if (closest) {
-          setUserLocation(closest);
-        }
-        setIsLoadingLocation(false);
-      },
-      () => setIsLoadingLocation(false),
-      { timeout: 10000 }
-    );
-  }, []);
-
   useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      handleGetLocation();
+    if (!stateSlug && !userLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const closest = getClosestState(position.coords.latitude, position.coords.longitude);
+          if (closest) setUserLocation(closest);
+        },
+        () => {},
+        { timeout: 10000 }
+      );
     }
-  }, [stateSlug, userLocation, handleGetLocation]);
+  }, [stateSlug, userLocation]);
 
   const faqs = getDualDiagnosisNearMeFAQs(stateData ? { state: stateData.name } : undefined);
 
@@ -164,9 +153,6 @@ export default function DualDiagnosisNearMe() {
         treatmentType="Dual Diagnosis Treatment"
         location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
         facilityCount={facilities.length}
-        showGeolocation={!stateSlug}
-        onGetLocation={handleGetLocation}
-        isLoadingLocation={isLoadingLocation}
       />
 
       <LocalSignalsSection
