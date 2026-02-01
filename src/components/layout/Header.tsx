@@ -174,7 +174,7 @@ export function Header({
               ) : (
                 <>
                   <PrefetchLink to="/provider-signup">
-                    <Button size="sm" variant="ghost" className="h-8 text-sm">
+                    <Button size="sm" variant="outline" className="h-8 text-sm">
                       List Facility
                     </Button>
                   </PrefetchLink>
@@ -372,7 +372,7 @@ export function Header({
                     </Button>
                   </PrefetchLink>
                   <PrefetchLink to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50">
+                    <Button variant="outline" className="w-full h-11 text-sm rounded-xl">
                       List Facility
                     </Button>
                   </PrefetchLink>
