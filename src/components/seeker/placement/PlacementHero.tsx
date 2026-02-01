@@ -42,7 +42,7 @@ export function PlacementHero({ onGetStarted }: PlacementHeroProps) {
             <span>Personalized Placement Service</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl lg:text-4xl">
             Find Your Perfect
             <span className="block text-primary mt-1">Treatment Center</span>
           </h1>

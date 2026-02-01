@@ -98,7 +98,7 @@ const RehabCenters = () => {
         <MedicalPatternBackground />
         <div className="container relative z-10">
           <div className="mb-6 text-center">
-            <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem]">
+            <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Treatment Centers
             </h1>
             <p className="mt-3 text-sm md:text-base text-white/90 max-w-lg mx-auto leading-relaxed">
