@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
+    const { data: ticketData, error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
       source: 'provider_support',
       sender_name: name,
       sender_email: email,
@@ -80,13 +80,32 @@ const handler = async (req: Request): Promise<Response> => {
       category: topicLabel,
       subject: `Provider Support: ${topicLabel}`,
       message: message,
-    });
+    }).select('id').single();
 
     if (ticketError) {
       console.error("[SEND-PROVIDER-SUPPORT] Failed to create support ticket:", ticketError);
-      // Don't fail the request, just log the error - email will still be sent
     } else {
       console.log("[SEND-PROVIDER-SUPPORT] Support ticket created successfully");
+      
+      // Notify all admins with support permission
+      const { data: adminUsers } = await supabaseAdmin
+        .from('admin_user_profiles')
+        .select('user_id')
+        .eq('status', 'active');
+      
+      if (adminUsers && adminUsers.length > 0) {
+        const notifications = adminUsers.map(admin => ({
+          user_id: admin.user_id,
+          type: 'support_ticket',
+          title: 'New Provider Support Request',
+          message: `${name} needs help with ${topicLabel}`,
+          link: `/admin/support?ticket=${ticketData?.id}`,
+          metadata: { ticket_id: ticketData?.id, source: 'provider_support' }
+        }));
+        
+        await supabaseAdmin.from('admin_user_notifications').insert(notifications);
+        console.log("[SEND-PROVIDER-SUPPORT] Admin notifications created");
+      }
     }
 
     const emailHtml = `
