@@ -222,23 +222,28 @@ const ForProviders = () => {
               </p>
             </div>
 
-            <div className="grid gap-8 lg:gap-12 lg:grid-cols-2 items-center max-w-6xl mx-auto">
-              {/* Features List - 2x2 Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { icon: Target, title: "High Intent", desc: "Direct inquiries from families" },
-                  { icon: Eye, title: "Visibility", desc: "Found in search & directories" },
-                  { icon: Zap, title: "Instant Alerts", desc: "Real-time notifications" },
-                  { icon: BarChart3, title: "Analytics", desc: "Track your performance" },
-                ].map((item) => (
-                  <div key={item.title} className="p-4 rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-sm transition-all text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
-                      <item.icon className="h-5 w-5 text-primary" />
+            <div className="grid gap-10 lg:gap-16 lg:grid-cols-2 items-stretch max-w-6xl mx-auto">
+              {/* Features List */}
+              <div className="flex flex-col justify-center">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                  {[
+                    { icon: Target, title: "High Intent Inquiries", desc: "Families actively seeking treatment, not cold prospects" },
+                    { icon: Eye, title: "Maximum Visibility", desc: "Get discovered in search results and state directories" },
+                    { icon: Zap, title: "Instant Notifications", desc: "Real-time alerts when families show interest" },
+                    { icon: BarChart3, title: "Analytics Dashboard", desc: "Track views, inquiries, and conversion metrics" },
+                    { icon: Heart, title: "Quality Matches", desc: "Connect with families who fit your program" },
+                  ].map((item) => (
+                    <div key={item.title} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-sm transition-all">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                        <item.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{item.title}</h3>
+                        <p className="text-sm text-muted-foreground">{item.desc}</p>
+                      </div>
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">{item.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
               
               {/* Dashboard Preview */}
