@@ -14,6 +14,7 @@ import {
   ChevronDown,
   UserPlus,
   MessageSquare,
+  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
@@ -53,6 +54,7 @@ const navEntries: NavEntry[] = [
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
+  { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support" },
   {
     icon: Settings,
     label: "Settings",

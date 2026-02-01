@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,6 +71,28 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("[SEND-CONTACT-FORM] Processing:", { name, email, subject });
 
     const subjectLabel = subjectLabels[subject] || subject;
+
+    // Store ticket in database for Admin Support Inbox
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const { error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
+      source: 'public_contact',
+      sender_name: name,
+      sender_email: email,
+      category: subjectLabel,
+      subject: `Contact Form: ${subjectLabel}`,
+      message: message,
+    });
+
+    if (ticketError) {
+      console.error("[SEND-CONTACT-FORM] Failed to create support ticket:", ticketError);
+      // Don't fail the request, just log the error - email will still be sent
+    } else {
+      console.log("[SEND-CONTACT-FORM] Support ticket created successfully");
+    }
 
     const emailHtml = `
 <!DOCTYPE html>
