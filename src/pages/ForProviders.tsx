@@ -88,13 +88,6 @@ const ForProviders = () => {
 
           {/* Content */}
           <div className="container relative py-16 md:py-20 lg:py-24">
-            {/* Breadcrumb */}
-            <nav className="mb-5 flex items-center justify-center gap-2 text-sm text-white/70">
-              <Link to="/" className="hover:text-white transition-colors">Home</Link>
-              <span className="text-white/50">/</span>
-              <span className="text-white font-medium">For Providers</span>
-            </nav>
-            
             <div className="mx-auto max-w-3xl text-center">
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">
