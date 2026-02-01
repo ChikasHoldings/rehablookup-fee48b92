@@ -209,7 +209,7 @@ export default function ProviderSignup() {
   };
 
   const nextStep = () => {
-    if (currentStep < 8) {
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
     }
@@ -482,6 +482,7 @@ export default function ProviderSignup() {
             facilityName: formData.facilityName,
             providerEmail: formData.email,
             providerFirstName: formData.firstName,
+            selectedPlan: "free",
           },
         });
       } catch (welcomeError) {
@@ -1321,7 +1322,7 @@ export default function ProviderSignup() {
             {/* Already have account */}
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/provider-login" className="text-primary hover:underline font-medium">
+              <Link to="/login" className="text-primary hover:underline font-medium">
                 Sign in
               </Link>
             </p>

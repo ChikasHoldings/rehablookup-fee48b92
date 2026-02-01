@@ -82,8 +82,8 @@ export function useProviderRedirect(options: { enabled?: boolean } = {}) {
           
           // Allow certain public routes even for providers
           const allowedPaths = [
-            "/provider-login",
-            "/provider-signup", 
+            "/login",
+            "/provider-signup",
             "/provider-forgot-password",
             "/provider-reset-password",
             "/provider-support",

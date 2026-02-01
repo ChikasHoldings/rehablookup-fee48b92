@@ -21,7 +21,7 @@ const PORTAL_CONFIG = {
   provider: {
     homeRoute: "/provider/dashboard",
     allowedPrefixes: ["/provider"],
-    loginRoute: "/provider-login",
+    loginRoute: "/login",
   },
   seeker: {
     homeRoute: "/account",
@@ -35,7 +35,6 @@ const PORTAL_CONFIG = {
 const PUBLIC_AUTH_ROUTES = [
   "/login",
   "/forgot-password",
-  "/provider-login",
   "/provider-signup",
   "/provider-forgot-password",
   "/provider-reset-password",
@@ -230,7 +229,7 @@ export function useRoleBasedRedirect() {
     if (!isAuthenticated) {
       // Block admin and provider routes
       if (currentPath.startsWith("/admin") || currentPath.startsWith("/provider")) {
-        return { shouldBlock: true, redirectTo: currentPath.startsWith("/admin") ? "/admin-login" : "/provider-login" };
+        return { shouldBlock: true, redirectTo: currentPath.startsWith("/admin") ? "/admin-login" : "/login" };
       }
       return { shouldBlock: false, redirectTo: null };
     }

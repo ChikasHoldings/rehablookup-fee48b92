@@ -120,7 +120,7 @@ export default function ProviderResetPassword() {
 
         // Redirect to login after 2 seconds
         setTimeout(() => {
-          navigate("/provider-login");
+          navigate("/login");
         }, 2000);
       }
     } catch (error: any) {
@@ -182,7 +182,7 @@ export default function ProviderResetPassword() {
                   Request New Link
                 </Button>
               </Link>
-              <Link to="/provider-login" className="block mt-3">
+              <Link to="/login" className="block mt-3">
                 <Button variant="ghost" className="w-full h-10 text-sm">
                   Back to Sign In
                 </Button>
@@ -308,7 +308,7 @@ export default function ProviderResetPassword() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Remember your password?{" "}
-              <Link to="/provider-login" className="text-primary hover:underline font-medium">
+              <Link to="/login" className="text-primary hover:underline font-medium">
                 Sign in
               </Link>
             </p>

@@ -178,7 +178,7 @@ export default function AddLocationPage() {
           title: "Authentication Error",
           description: "Please log in again to continue.",
         });
-        navigate("/provider-login");
+        navigate("/login");
         return;
       }
 
