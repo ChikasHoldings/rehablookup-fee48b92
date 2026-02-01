@@ -246,9 +246,9 @@ const ForProviders = () => {
               
               {/* Dashboard Preview */}
               <div className="relative flex items-center order-1 lg:order-2">
-                <div className="w-full bg-card rounded-lg sm:rounded-xl shadow-xl sm:shadow-2xl border border-border overflow-hidden">
+                <div className="w-full bg-card rounded-lg sm:rounded-xl shadow-xl sm:shadow-2xl border border-border overflow-hidden flex flex-col">
                   {/* Browser header */}
-                  <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-3 bg-muted/50 border-b border-border">
+                  <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-3 bg-muted/50 border-b border-border shrink-0">
                     <div className="flex gap-1 sm:gap-1.5">
                       <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-destructive/60" />
                       <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-500/60" />
@@ -261,11 +261,13 @@ const ForProviders = () => {
                       </div>
                     </div>
                   </div>
-                  <img 
-                    src={providerDashboardScreenshot} 
-                    alt="Provider Dashboard showing analytics, inquiries, and recent leads"
-                    className="w-full h-auto"
-                  />
+                  <div className="lg:h-[420px] overflow-hidden">
+                    <img 
+                      src={providerDashboardScreenshot} 
+                      alt="Provider Dashboard showing analytics, inquiries, and recent leads"
+                      className="w-full h-full object-cover object-top"
+                    />
+                  </div>
                 </div>
                 {/* Decorative elements - hidden on mobile */}
                 <div className="hidden sm:block absolute -bottom-6 -right-6 w-32 h-32 bg-primary/15 rounded-full blur-3xl -z-10" />
