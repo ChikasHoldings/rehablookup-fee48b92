@@ -301,7 +301,7 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative z-10 overflow-hidden">
+      <section className="relative z-10">
         {/* Background Image - using img for better LCP */}
         <img 
           src={heroImage}
