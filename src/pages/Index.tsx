@@ -809,7 +809,7 @@ const Index = () => {
               <div className="mt-5 md:mt-6">
                 <Link to="/about">
                   <Button variant="hero-light" size="sm" className="gap-2">
-                    Learn More
+                    About Our Mission
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </Link>
