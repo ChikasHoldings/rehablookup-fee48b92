@@ -1035,7 +1035,7 @@ const Index = () => {
             <div className="text-center md:text-left">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
                 <Heart className="h-4 w-4 text-accent fill-accent/30" />
-                <span className="text-sm font-semibold text-accent">Free Placement Service</span>
+                <span className="text-sm font-semibold text-accent">Placement Service</span>
               </div>
               <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
                 Overwhelmed by Options?
