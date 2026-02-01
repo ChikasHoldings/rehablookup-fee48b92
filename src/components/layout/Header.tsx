@@ -24,7 +24,7 @@ export interface HeaderProps {
 const defaultNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
   { href: "/insurance", label: "Insurance" },
-  { href: "/resources", label: "Resources" },
+  { href: "/account/concierge", label: "Concierge" },
   { href: "/for-providers", label: "For Providers" },
 ];
 
@@ -33,7 +33,7 @@ const navIcons: Record<string, React.ElementType> = {
   "/rehab-centers": MapPin,
   "/treatment-types": Building2,
   "/insurance": Shield,
-  "/resources": BookOpen,
+  "/account/concierge": Heart,
   "/for-providers": Building2,
   "/about": Info,
   "/contact": Phone,
