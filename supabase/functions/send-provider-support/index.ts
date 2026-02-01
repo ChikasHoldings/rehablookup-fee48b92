@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,7 @@ interface ProviderSupportRequest {
   email: string;
   topic: string;
   message: string;
+  userId?: string;
 }
 
 const topicLabels: Record<string, string> = {
@@ -40,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body: ProviderSupportRequest = await req.json();
-    const { name, email, topic, message } = body;
+    const { name, email, topic, message, userId } = body;
 
     // Validate required fields
     if (!name || !email || !topic || !message) {
@@ -63,6 +65,29 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("[SEND-PROVIDER-SUPPORT] Processing request:", { name, email, topic });
 
     const topicLabel = topicLabels[topic] || topic;
+
+    // Store ticket in database for Admin Support Inbox
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const { error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
+      source: 'provider_support',
+      sender_name: name,
+      sender_email: email,
+      sender_user_id: userId || null,
+      category: topicLabel,
+      subject: `Provider Support: ${topicLabel}`,
+      message: message,
+    });
+
+    if (ticketError) {
+      console.error("[SEND-PROVIDER-SUPPORT] Failed to create support ticket:", ticketError);
+      // Don't fail the request, just log the error - email will still be sent
+    } else {
+      console.log("[SEND-PROVIDER-SUPPORT] Support ticket created successfully");
+    }
 
     const emailHtml = `
 <!DOCTYPE html>

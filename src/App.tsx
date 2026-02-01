@@ -156,6 +156,7 @@ const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
 const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementRevenueDashboard"));
+const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -378,6 +379,7 @@ const App = () => (
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="concierge" element={<AdminConcierge />} />
               <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
+              <Route path="support" element={<AdminSupport />} />
             </Route>
             
             {/* 404 */}

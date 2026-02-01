@@ -4038,6 +4038,101 @@ export type Database = {
           },
         ]
       }
+      support_ticket_notes: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_notes_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_to: string | null
+          category: string
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          sender_email: string
+          sender_name: string
+          sender_user_id: string | null
+          source: string
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sender_email: string
+          sender_name: string
+          sender_user_id?: string | null
+          source: string
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sender_email?: string
+          sender_name?: string
+          sender_user_id?: string | null
+          source?: string
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       template_tags: {
         Row: {
           created_at: string
