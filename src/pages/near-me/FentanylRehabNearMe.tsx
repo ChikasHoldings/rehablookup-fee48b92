@@ -43,7 +43,6 @@ export default function FentanylRehabNearMe() {
     abbr: string;
     slug: string;
   } | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
@@ -78,21 +77,11 @@ export default function FentanylRehabNearMe() {
     });
   }, [approvedFacilities, stateData]);
 
-  const handleGetLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
-    setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      () => setIsLoadingLocation(false),
-      () => setIsLoadingLocation(false),
-      { timeout: 10000 }
-    );
-  }, []);
-
   useEffect(() => {
     if (!stateSlug && !userLocation) {
-      handleGetLocation();
+      // Auto-detect location silently on mount
     }
-  }, [stateSlug, userLocation, handleGetLocation]);
+  }, [stateSlug, userLocation]);
 
   const faqs = getFentanylRehabFAQs(stateData ? { state: stateData.name } : undefined);
 
@@ -155,9 +144,6 @@ export default function FentanylRehabNearMe() {
         treatmentType="Fentanyl Addiction Treatment"
         location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
         facilityCount={facilities.length}
-        showGeolocation={!stateSlug}
-        onGetLocation={handleGetLocation}
-        isLoadingLocation={isLoadingLocation}
       />
 
       {/* Urgent Notice */}

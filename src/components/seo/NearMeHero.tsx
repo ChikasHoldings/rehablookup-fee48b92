@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, CheckCircle, Heart, Search, Navigation } from "lucide-react";
+import { MapPin, Building2, CheckCircle, Heart, Search } from "lucide-react";
 
 interface NearMeHeroProps {
   title: string;
@@ -13,9 +13,6 @@ interface NearMeHeroProps {
   };
   facilityCount: number;
   heroImage?: string;
-  showGeolocation?: boolean;
-  onGetLocation?: () => void;
-  isLoadingLocation?: boolean;
 }
 
 export function NearMeHero({
@@ -25,9 +22,6 @@ export function NearMeHero({
   location,
   facilityCount,
   heroImage,
-  showGeolocation = true,
-  onGetLocation,
-  isLoadingLocation,
 }: NearMeHeroProps) {
   const locationString = location?.city 
     ? `${location.city}, ${location.stateAbbr}`
@@ -105,19 +99,6 @@ export function NearMeHero({
                 Get Matched
               </Button>
             </Link>
-            
-            {showGeolocation && onGetLocation && (
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
-                onClick={onGetLocation}
-                disabled={isLoadingLocation}
-              >
-                <Navigation className="h-4 w-4" />
-                {isLoadingLocation ? "Finding Location..." : "Use My Location"}
-              </Button>
-            )}
             
             <Link to="/search-results">
               <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">

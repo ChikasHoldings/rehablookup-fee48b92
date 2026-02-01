@@ -42,7 +42,6 @@ export default function LuxuryRehabNearMe() {
     abbr: string;
     slug: string;
   } | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
@@ -73,21 +72,11 @@ export default function LuxuryRehabNearMe() {
     });
   }, [approvedFacilities, stateData]);
 
-  const handleGetLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
-    setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      () => setIsLoadingLocation(false),
-      () => setIsLoadingLocation(false),
-      { timeout: 10000 }
-    );
-  }, []);
-
   useEffect(() => {
     if (!stateSlug && !userLocation) {
-      handleGetLocation();
+      // Auto-detect location silently on mount
     }
-  }, [stateSlug, userLocation, handleGetLocation]);
+  }, [stateSlug, userLocation]);
 
   const faqs = getLuxuryRehabFAQs(stateData ? { state: stateData.name } : undefined);
 
@@ -150,9 +139,6 @@ export default function LuxuryRehabNearMe() {
         treatmentType="Luxury Addiction Treatment"
         location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
         facilityCount={facilities.length}
-        showGeolocation={!stateSlug}
-        onGetLocation={handleGetLocation}
-        isLoadingLocation={isLoadingLocation}
       />
 
       {/* Luxury Features */}
