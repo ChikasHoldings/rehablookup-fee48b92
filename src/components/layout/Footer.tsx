@@ -32,8 +32,11 @@ const resources = [
 
 // Company/Provider links
 const providerLinks = [
-  { name: "List Your Facility", path: "/for-providers" },
+  { name: "Why List With Us", path: "/for-providers" },
   { name: "Provider Resources", path: "/provider-resources" },
+  { name: "Provider FAQ", path: "/provider-faq" },
+  { name: "Provider Support", path: "/provider-support" },
+  { name: "List Your Facility", path: "/provider-signup" },
   { name: "Provider Login", path: "/login?type=provider" },
 ];
 
