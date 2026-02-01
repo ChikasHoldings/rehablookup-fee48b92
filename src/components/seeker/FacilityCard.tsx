@@ -164,16 +164,16 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
               <button
                 onClick={handleFavoriteClick}
                 className={cn(
-                  "p-1.5 sm:p-2 rounded-lg border transition-all duration-200 shrink-0",
+                  "p-1 rounded-md transition-all duration-200 shrink-0",
                   showRemoveButton
-                    ? "bg-rose-50 border-rose-200 text-rose-500 hover:bg-rose-100"
+                    ? "text-rose-500 hover:text-rose-600"
                     : isFavorite(facility.id)
-                      ? "bg-rose-50 border-rose-200 text-rose-500"
-                      : "bg-secondary/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
+                      ? "text-rose-500"
+                      : "text-muted-foreground hover:text-rose-500"
                 )}
                 aria-label={showRemoveButton ? "Remove from saved" : isFavorite(facility.id) ? "Remove from favorites" : "Add to favorites"}
               >
-                <Heart className={cn("h-4 w-4", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
+                <Heart className={cn("h-5 w-5", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
               </button>
             </div>
 
@@ -214,7 +214,8 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
             <div className="mt-auto pt-1">
               <Link to={facilityLink}>
                 <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 text-xs group/btn">
-                  View Details
+                  <span className="sm:hidden">Request Info</span>
+                  <span className="hidden sm:inline">Request Information</span>
                   <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
                 </Button>
               </Link>
