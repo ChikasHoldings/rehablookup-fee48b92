@@ -202,7 +202,7 @@ const OutpatientPrograms = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Get Matched
@@ -491,7 +491,7 @@ const OutpatientPrograms = () => {
               Our specialists can help you find the right outpatient program while balancing your responsibilities.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Get Matched

@@ -1732,7 +1732,7 @@ const ArticleDetail = () => {
                 <p className="text-sm text-white/80 mb-5 leading-relaxed">
                   Our specialists are available 24/7 to help you find the right treatment center.
                 </p>
-                <Link to="/account/concierge">
+                <Link to="/concierge">
                   <Button variant="secondary" className="w-full gap-2 bg-white text-primary hover:bg-white/90">
                     Get Matched
                     <ArrowRight className="h-4 w-4" />
@@ -1823,7 +1823,7 @@ const ArticleDetail = () => {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/account/concierge">
+                <Link to="/concierge">
                   <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10">
                     Get Matched
                   </Button>

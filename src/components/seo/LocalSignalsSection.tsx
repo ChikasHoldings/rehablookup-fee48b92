@@ -74,7 +74,7 @@ export function LocalSignalsSection({
             )}
 
             <div className="mt-6">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button className="gap-2">
                   <Heart className="h-4 w-4" />
                   Get Matched

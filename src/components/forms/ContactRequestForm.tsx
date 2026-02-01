@@ -18,7 +18,7 @@ export function ContactRequestForm({ centerName }: ContactRequestFormProps) {
 
   const handleGetHelp = () => {
     analytics.ctaClick("Get Matched", "contact_form");
-    navigate("/account/concierge");
+    navigate("/concierge");
   };
 
   return (

@@ -986,7 +986,7 @@ const Index = () => {
                 { name: "All Locations", href: "/locations" },
                 { name: "Cost Estimator", href: "/cost-estimator" },
                 { name: "Provider Resources", href: "/provider-resources" },
-                { name: "Concierge Service", href: "/account/concierge" },
+                { name: "Concierge Service", href: "/concierge" },
                 { name: "Search Centers", href: "/search-results" },
               ].map((link) => (
                 <Link
@@ -1033,7 +1033,7 @@ const Index = () => {
             <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
               Our specialists can help match you with verified treatment centers based on your specific needs, insurance, and preferences — at no cost to you.
             </p>
-            <Link to="/account/concierge">
+            <Link to="/concierge">
               <Button size="lg" className="gap-2">
                 Get Matched
                 <ArrowRight className="h-4 w-4" />
@@ -1056,7 +1056,7 @@ const Index = () => {
                 Connect with verified treatment centers or list your facility in our directory.
               </p>
               <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
-                <Link to="/account/concierge">
+                <Link to="/concierge">
                   <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
                     <Heart className="h-4 w-4" />
                     Get Matched

@@ -252,8 +252,8 @@ const App = () => (
             <Route path="/faith-based-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
-            <Route path="/request-help" element={<Navigate to="/account/concierge" replace />} />
-            <Route path="/placement-help" element={<Navigate to="/account/concierge" replace />} />
+            <Route path="/request-help" element={<Navigate to="/concierge" replace />} />
+            <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
             
             {/* Concierge Placement Routes (Paid Service) */}
             <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />

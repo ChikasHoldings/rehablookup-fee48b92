@@ -84,7 +84,7 @@ const StateDrugAddiction = () => {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" variant="secondary">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Phone className="mr-2 h-4 w-4" />
                 Get Matched
               </Link>
@@ -210,7 +210,7 @@ const StateDrugAddiction = () => {
             Insurance verification is free and confidential.
           </p>
           <Button asChild size="lg" variant="secondary">
-            <Link to="/account/concierge">
+            <Link to="/concierge">
               <Phone className="mr-2 h-4 w-4" />
               Get Matched
             </Link>

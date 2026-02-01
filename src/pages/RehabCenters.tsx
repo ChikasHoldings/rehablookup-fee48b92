@@ -342,7 +342,7 @@ const RehabCenters = () => {
             </div>
             
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="sm" className="w-full gap-2 sm:w-auto">
                   <Heart className="h-4 w-4" />
                   Get Matched

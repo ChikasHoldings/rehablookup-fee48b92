@@ -97,7 +97,7 @@ export function NearMeHero({
 
           {/* CTAs */}
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <Link to="/account/concierge">
+            <Link to="/concierge">
               <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                 <Heart className="h-4 w-4" />
                 Get Matched

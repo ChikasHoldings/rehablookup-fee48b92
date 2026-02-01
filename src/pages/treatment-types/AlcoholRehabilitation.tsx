@@ -195,7 +195,7 @@ const AlcoholRehabilitation = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Get Matched
@@ -310,7 +310,7 @@ const AlcoholRehabilitation = () => {
             </div>
 
             <div className="mt-8 text-center">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Phone className="h-4 w-4" />
                   Get a Free Assessment
@@ -442,7 +442,7 @@ const AlcoholRehabilitation = () => {
               Our specialists can help you find the right alcohol treatment program for your needs.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Get Matched

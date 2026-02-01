@@ -329,7 +329,7 @@ const HowItWorks = () => {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/account/concierge">
+                <Link to="/concierge">
                   <Button variant="outline" size="default" className="gap-2 font-semibold">
                     <MessageSquare className="h-4 w-4" />
                     Concierge Service

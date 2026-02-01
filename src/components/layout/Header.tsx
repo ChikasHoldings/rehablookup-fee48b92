@@ -56,7 +56,7 @@ const navIcons: Record<string, React.ElementType> = {
 
 export function Header({ 
   navLinks = defaultNavLinks, 
-  ctaLink = "/account/concierge",
+  ctaLink = "/concierge",
   ctaLabel = "Get Matched",
   variant = "default"
 }: HeaderProps) {

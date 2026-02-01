@@ -128,7 +128,7 @@ export function LeadIntakeSuccess({ facilityName, firstName }: LeadIntakeSuccess
 
         {/* Actions - Enhanced */}
         <div className="space-y-3">
-          <Link to="/account/concierge">
+          <Link to="/concierge">
             <Button className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 group">
               <HeartHandshake className="mr-2 h-4 w-4" />
               Try Concierge Service
