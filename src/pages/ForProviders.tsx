@@ -242,15 +242,33 @@ const ForProviders = () => {
                 </div>
               </div>
               
-              <div className="relative">
-                <img 
-                  src={providerDashboardScreenshot} 
-                  alt="Provider Dashboard showing analytics, inquiries, and recent leads"
-                  className="rounded-xl shadow-2xl border border-border w-full"
-                />
+              <div className="relative h-full flex items-center">
+                {/* Browser mockup frame */}
+                <div className="w-full bg-card rounded-xl shadow-2xl border border-border overflow-hidden">
+                  {/* Browser header */}
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-destructive/60" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                    </div>
+                    <div className="flex-1 mx-4">
+                      <div className="bg-background/80 rounded-md px-3 py-1.5 text-xs text-muted-foreground flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                        <span className="truncate">rehabookup.com/provider/dashboard</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Screenshot */}
+                  <img 
+                    src={providerDashboardScreenshot} 
+                    alt="Provider Dashboard showing analytics, inquiries, and recent leads"
+                    className="w-full h-auto"
+                  />
+                </div>
                 {/* Decorative elements */}
-                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl -z-10" />
-                <div className="absolute -top-4 -left-4 w-32 h-32 bg-accent/10 rounded-full blur-2xl -z-10" />
+                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/15 rounded-full blur-3xl -z-10" />
+                <div className="absolute -top-6 -left-6 w-40 h-40 bg-accent/15 rounded-full blur-3xl -z-10" />
               </div>
             </div>
           </div>
