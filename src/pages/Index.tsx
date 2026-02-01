@@ -326,7 +326,7 @@ const Index = () => {
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/90 animate-fade-in max-w-lg mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
+            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
               Compare verified treatment centers and check your insurance coverage.
             </p>
 
