@@ -219,7 +219,7 @@ function ModalSuccessView({
               >
                 <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
                   {nearby.logo_url ? (
-                    <img src={nearby.logo_url} alt="" className="h-full w-full object-contain p-1" />
+                    <img src={nearby.logo_url} alt={`${nearby.name} logo`} className="h-full w-full object-contain p-1" />
                   ) : (
                     <span className="font-semibold text-sm text-muted-foreground">
                       {getInitials(nearby.name)}
@@ -445,7 +445,7 @@ export function RequestInfoModal({
               isPro ? "bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200/50" : "bg-muted"
             )}>
               {facility.logo_url ? (
-                <img src={facility.logo_url} alt="" className="h-full w-full object-contain p-1" />
+                <img src={facility.logo_url} alt={`${facility.name} logo`} className="h-full w-full object-contain p-1" />
               ) : (
                 <Building2 className={cn("h-4 w-4", isPro ? "text-amber-600" : "text-muted-foreground")} />
               )}

@@ -55,7 +55,7 @@ export function ImagePreviewDialog({ imageUrl, onClose }: ImagePreviewDialogProp
           {imageUrl && (
             <img
               src={imageUrl}
-              alt="Preview"
+              alt="Full-size facility image preview"
               className="w-full max-h-[80vh] object-contain"
             />
           )}
@@ -101,7 +101,7 @@ export function FlagImageDialog({
             <div className="flex justify-center">
               <img
                 src={imageUrl}
-                alt="Image to flag"
+                alt="Facility image being flagged for review"
                 className="max-w-48 max-h-48 object-contain rounded-lg border"
               />
             </div>
