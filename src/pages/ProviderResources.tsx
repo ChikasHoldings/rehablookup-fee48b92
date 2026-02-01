@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Header } from "@/components/layout/Header";
+
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { SEO } from "@/components/SEO";
@@ -30,7 +30,7 @@ import {
   Award,
   Sparkles,
 } from "lucide-react";
-import { providerNavLinks } from "@/data/providerNavLinks";
+
 
 const resources = [
   {
@@ -170,12 +170,6 @@ export default function ProviderResources() {
         ]}
       />
       
-      <Header
-        navLinks={providerNavLinks}
-        ctaLink="/provider-login"
-        ctaLabel="Provider Login"
-        variant="provider"
-      />
       
       <main className="flex-1">
         {/* Hero Section - Light Background, Streamlined */}
