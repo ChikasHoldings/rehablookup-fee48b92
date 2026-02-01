@@ -225,7 +225,7 @@ const ForProviders = () => {
             <div className="grid gap-10 lg:gap-16 lg:grid-cols-2 items-stretch max-w-6xl mx-auto">
               {/* Features List */}
               <div className="flex flex-col justify-center">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                   {[
                     { icon: Target, title: "High Intent Inquiries", desc: "Families actively seeking treatment, not cold prospects" },
                     { icon: Eye, title: "Maximum Visibility", desc: "Get discovered in search results and state directories" },
@@ -233,13 +233,13 @@ const ForProviders = () => {
                     { icon: BarChart3, title: "Analytics Dashboard", desc: "Track views, inquiries, and conversion metrics" },
                     { icon: Heart, title: "Quality Matches", desc: "Connect with families who fit your program" },
                   ].map((item) => (
-                    <div key={item.title} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-border hover:shadow-sm transition-all">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                        <item.icon className="h-5 w-5 text-primary" />
+                    <div key={item.title} className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border/50 hover:border-border hover:shadow-sm transition-all">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                        <item.icon className="h-4 w-4 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground">{item.desc}</p>
+                        <h3 className="font-medium text-sm text-foreground">{item.title}</h3>
+                        <p className="text-xs text-muted-foreground">{item.desc}</p>
                       </div>
                     </div>
                   ))}
