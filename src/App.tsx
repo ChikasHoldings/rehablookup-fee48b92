@@ -11,6 +11,7 @@ import { PageLoading } from "@/components/ui/page-loading";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
+import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
 // Eagerly load all public pages for instant navigation
 import Index from "./pages/Index";
@@ -166,12 +167,13 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+  <GlobalErrorBoundary>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         <ScrollToTop />
         <TrailingSlashRedirect />
         <CookieConsentBanner />
@@ -368,6 +370,7 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
   </HelmetProvider>
+  </GlobalErrorBoundary>
 );
 
 export default App;
