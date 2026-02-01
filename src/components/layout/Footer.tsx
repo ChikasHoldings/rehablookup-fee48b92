@@ -69,9 +69,9 @@ const LinkedInIcon = forwardRef<SVGSVGElement, SVGProps<SVGSVGElement>>((props, 
 ));
 LinkedInIcon.displayName = "LinkedInIcon";
 
-export function Footer() {
+export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Footer(_props, ref) {
   return (
-    <footer className="border-t border-border bg-footer">
+    <footer ref={ref} className="border-t border-border bg-footer">
       {/* Mobile: Luxury Stacked Layout */}
       <div className="md:hidden">
         {/* Centered Brand Section */}
@@ -468,4 +468,4 @@ export function Footer() {
       </div>
     </footer>
   );
-}
+});

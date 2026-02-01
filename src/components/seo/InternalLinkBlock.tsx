@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { statesData } from "@/data/locationSeoData";
 
@@ -40,13 +41,13 @@ const nearMePages = [
   { name: "Outpatient Near Me", slug: "/outpatient-near-me" },
 ];
 
-export function InternalLinkBlock({
+export const InternalLinkBlock = forwardRef<HTMLDivElement, InternalLinkBlockProps>(function InternalLinkBlock({
   title,
   variant = "states",
   limit,
   className = "",
   currentPath,
-}: InternalLinkBlockProps) {
+}, ref) {
   let links: { name: string; slug: string }[] = [];
   let defaultTitle = "";
 
@@ -78,7 +79,7 @@ export function InternalLinkBlock({
     .slice(0, limit || links.length);
 
   return (
-    <div className={`${className}`}>
+    <div ref={ref} className={`${className}`}>
       <h3 className="text-lg font-semibold text-foreground mb-4">
         {title || defaultTitle}
       </h3>
@@ -95,7 +96,7 @@ export function InternalLinkBlock({
       </div>
     </div>
   );
-}
+});
 
 // Compact version for sidebars
 export function InternalLinkList({
