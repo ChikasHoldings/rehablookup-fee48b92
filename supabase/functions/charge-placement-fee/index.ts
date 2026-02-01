@@ -16,15 +16,11 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
   console.log(`[CHARGE-PLACEMENT-FEE] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// Placement fee structure
+// Placement fee structure - flat fee only
 const PLACEMENT_FEES = {
   flat_fee: {
-    standard: 120000, // $1,200 in cents
-    pro_discount: 20, // 20% off for pro subscribers
-  },
-  commission: {
-    standard_percent: 8,
-    pro_percent: 6.4,
+    standard: 100000, // $1,000 in cents
+    pro: 80000, // $800 in cents (20% off)
   },
 };
 
@@ -117,34 +113,13 @@ serve(async (req) => {
       .maybeSingle();
 
     const hasPro = !!proSub;
-    const discountPercent = hasPro ? PLACEMENT_FEES.flat_fee.pro_discount : 0;
+    const discountPercent = hasPro ? 20 : 0;
 
-    // Calculate fee
-    let feeCents: number;
-    const actualFeeType = feeType || 'flat_fee';
+    // Calculate fee - flat fee only
+    const feeCents = hasPro ? PLACEMENT_FEES.flat_fee.pro : PLACEMENT_FEES.flat_fee.standard;
+    const actualFeeType = 'flat_fee';
 
-    // Commission cap: $1,500 maximum
-    const COMMISSION_CAP_CENTS = 150000;
-
-    if (actualFeeType === 'commission' && firstMonthCost) {
-      const commissionRate = hasPro 
-        ? PLACEMENT_FEES.commission.pro_percent 
-        : PLACEMENT_FEES.commission.standard_percent;
-      feeCents = Math.round(firstMonthCost * (commissionRate / 100));
-      
-      // Apply commission cap
-      if (feeCents > COMMISSION_CAP_CENTS) {
-        logStep(requestId, "Commission capped", { originalFee: feeCents, cappedFee: COMMISSION_CAP_CENTS });
-        feeCents = COMMISSION_CAP_CENTS;
-      }
-    } else {
-      feeCents = PLACEMENT_FEES.flat_fee.standard;
-      if (hasPro) {
-        feeCents = Math.round(feeCents * (1 - discountPercent / 100));
-      }
-    }
-
-    logStep(requestId, "Fee calculated", { feeCents, feeType: actualFeeType, hasPro });
+    logStep(requestId, "Fee calculated", { feeCents, feeType: actualFeeType, hasPro, discountPercent });
 
     // Get provider's default payment method
     const { data: paymentMethod, error: pmError } = await supabase
