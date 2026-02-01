@@ -2,12 +2,26 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User } from "lucide-react";
+import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFavorites } from "@/hooks/useFavorites";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+// Provider dropdown links
+const providerDropdownLinks = [
+  { href: "/for-providers", label: "Why List With Us" },
+  { href: "/provider-resources", label: "Resources" },
+  { href: "/provider-faq", label: "FAQ" },
+  { href: "/provider-support", label: "Support" },
+];
 
 export interface NavLink {
   href: string;
@@ -47,29 +61,13 @@ export function Header({
   variant = "default"
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   // Use unified role system - only show "My Account" for seekers (not admin/provider)
   const { role, isLoading: roleLoading, isAuthenticated } = useUserRole();
   const isSeekerLoggedIn = isAuthenticated && role === "seeker";
   const { favoritesCount } = useFavorites();
-
-  useEffect(() => {
-    if (variant === "provider") {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setIsLoggedIn(!!session);
-      });
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          setIsLoggedIn(!!session);
-        }
-      );
-
-      return () => subscription.unsubscribe();
-    }
-  }, [variant]);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -82,29 +80,16 @@ export function Header({
     };
   }, [mobileMenuOpen]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login?type=provider");
-  };
-
   return (
     <>
-      <header className={cn(
-        "sticky top-0 z-50 w-full border-b",
-        variant === "provider" 
-          ? "bg-primary border-primary/20" 
-          : "bg-background border-border"
-      )}>
+      <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
         <div className="container flex h-14 md:h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img 
               src="/logo.png"
               alt="RehabLookup" 
-              className={cn(
-                "h-7 md:h-9 w-auto",
-                variant === "provider" && "brightness-0 invert"
-              )}
+              className="h-7 md:h-9 w-auto"
               loading="eager"
               decoding="async"
             />
@@ -115,19 +100,42 @@ export function Header({
             {navLinks.map((link) => {
               const isActive = location.pathname === link.href || 
                 (link.href !== "/" && location.pathname.startsWith(link.href));
-              const isForProviders = link.href === "/for-providers" && variant === "default";
+              const isForProviders = link.href === "/for-providers";
               
+              // For Providers dropdown
               if (isForProviders) {
                 return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </a>
+                  <DropdownMenu key={link.href} open={providerDropdownOpen} onOpenChange={setProviderDropdownOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={cn(
+                          "flex items-center gap-1 px-3.5 py-2 text-sm font-medium transition-colors",
+                          isActive || location.pathname.startsWith("/provider")
+                            ? "text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {link.label}
+                        <ChevronDown className={cn(
+                          "h-3.5 w-3.5 transition-transform duration-200",
+                          providerDropdownOpen && "rotate-180"
+                        )} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      {providerDropdownLinks.map((dropdownLink) => (
+                        <DropdownMenuItem key={dropdownLink.href} asChild>
+                          <PrefetchLink
+                            to={dropdownLink.href}
+                            className="w-full cursor-pointer"
+                            onClick={() => setProviderDropdownOpen(false)}
+                          >
+                            {dropdownLink.label}
+                          </PrefetchLink>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 );
               }
               
@@ -137,15 +145,9 @@ export function Header({
                   to={link.href}
                   className={cn(
                     "px-3.5 py-2 text-sm font-medium transition-colors",
-                    variant === "provider" ? (
-                      isActive
-                        ? "text-white"
-                        : "text-white/70 hover:text-white"
-                    ) : (
-                      isActive
-                        ? "text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )
+                    isActive
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {link.label}
@@ -156,71 +158,35 @@ export function Header({
 
           {/* CTA & Mobile Toggle */}
           <div className="flex items-center gap-3">
-            {variant === "provider" ? (
-              <>
-                {isLoggedIn ? (
-                  <div className="hidden sm:flex items-center gap-2">
-                    <Link to="/provider-dashboard">
-                      <Button size="sm" variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-sm">
-                        Dashboard
-                      </Button>
-                    </Link>
-                    <Button 
-                      size="sm" 
-                      onClick={handleLogout} 
-                      variant="ghost"
-                      className="gap-1.5 text-white/80 hover:text-white hover:bg-white/10 h-8 text-sm"
-                    >
-                      <LogOut className="h-3.5 w-3.5" />
-                      Sign Out
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="hidden sm:flex items-center gap-2">
-                    <Link to="/login?type=provider">
-                      <Button size="sm" variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-sm">
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link to="/provider-signup">
-                      <Button size="sm" className="bg-white text-primary hover:bg-white/90 h-8 text-sm">
-                        Get Started
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="hidden sm:flex items-center gap-2">
-                {!roleLoading && isSeekerLoggedIn ? (
-                  <PrefetchLink to="/account">
-                    <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
-                      <User className="h-4 w-4" />
-                      My Account
-                      {favoritesCount > 0 && (
-                        <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
-                          {favoritesCount > 9 ? '9+' : favoritesCount}
-                        </span>
-                      )}
+            <div className="hidden sm:flex items-center gap-2">
+              {!roleLoading && isSeekerLoggedIn ? (
+                <PrefetchLink to="/account">
+                  <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
+                    <User className="h-4 w-4" />
+                    My Account
+                    {favoritesCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                        {favoritesCount > 9 ? '9+' : favoritesCount}
+                      </span>
+                    )}
+                  </Button>
+                </PrefetchLink>
+              ) : (
+                <>
+                  <PrefetchLink to="/provider-signup">
+                    <Button size="sm" className="h-8 text-sm">
+                      List Facility
                     </Button>
                   </PrefetchLink>
-                ) : (
-                  <>
-                    <PrefetchLink to="/signup">
-                      <Button size="sm" className="h-8 text-sm">
-                        Sign Up
-                      </Button>
-                    </PrefetchLink>
-                    <PrefetchLink to="/login">
-                      <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5">
-                        <User className="h-4 w-4" />
-                        Sign In
-                      </Button>
-                    </PrefetchLink>
-                  </>
-                )}
-              </div>
-            )}
+                  <PrefetchLink to="/login">
+                    <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5">
+                      <User className="h-4 w-4" />
+                      Sign In
+                    </Button>
+                  </PrefetchLink>
+                </>
+              )}
+            </div>
             <button
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-md md:hidden transition-colors",
@@ -296,7 +262,7 @@ export function Header({
               <div className="space-y-1">
                 {navLinks.map((link, index) => {
                   const isActive = location.pathname === link.href;
-                  const isForProviders = link.href === "/for-providers" && variant === "default";
+                  const isForProviders = link.href === "/for-providers";
                   const Icon = navIcons[link.href] || ChevronRight;
                   const delay = 150 + index * 40;
                   
@@ -318,19 +284,48 @@ export function Header({
                     </>
                   );
                   
+                  // For Providers with sub-links
                   if (isForProviders) {
+                    const isProviderActive = location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider");
                     return (
-                      <a
-                        key={link.href}
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={linkClasses}
-                        style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
-                      >
-                        {content}
-                      </a>
+                      <div key={link.href}>
+                        <PrefetchLink
+                          to={link.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={cn(
+                            linkClasses,
+                            isProviderActive && "bg-primary/10 text-primary"
+                          )}
+                          style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
+                        >
+                          <Icon className={cn(
+                            "h-5 w-5 shrink-0",
+                            isProviderActive ? "text-primary" : "text-muted-foreground"
+                          )} />
+                          <span>{link.label}</span>
+                        </PrefetchLink>
+                        {/* Provider sub-links */}
+                        <div className="ml-8 mt-1 space-y-1">
+                          {providerDropdownLinks.slice(1).map((subLink, subIndex) => (
+                            <PrefetchLink
+                              key={subLink.href}
+                              to={subLink.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={cn(
+                                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                                location.pathname === subLink.href
+                                  ? "text-primary"
+                                  : "text-muted-foreground hover:text-foreground",
+                                mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+                              )}
+                              style={{ transitionDelay: mobileMenuOpen ? `${delay + 30 + subIndex * 20}ms` : '0ms' }}
+                            >
+                              <ChevronRight className="h-3.5 w-3.5" />
+                              {subLink.label}
+                            </PrefetchLink>
+                          ))}
+                        </div>
+                      </div>
                     );
                   }
                   
@@ -355,73 +350,35 @@ export function Header({
             "border-t border-border/30 p-5 bg-gradient-to-t from-muted/40 to-transparent transition-all duration-500 delay-600",
             mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}>
-            {variant === "provider" ? (
-              <>
-                {isLoggedIn ? (
-                  <div className="space-y-2.5">
-                    <Link to="/provider-dashboard" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button variant="outline" className="w-full h-12 text-sm font-medium rounded-xl border-border/60 hover:border-primary/50 hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
-                        Dashboard
-                      </Button>
-                    </Link>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full h-11 text-sm gap-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50" 
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign Out
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    <Link to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30">
-                        Get Started
-                      </Button>
-                    </Link>
-                    <Link to="/login?type=provider" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50">
-                        Sign In
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="space-y-3">
-                {!roleLoading && isSeekerLoggedIn ? (
-                  <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
-                      <User className="h-4 w-4" />
-                      My Account
-                      {favoritesCount > 0 && (
-                        <span className="absolute top-2 right-3 h-5 w-5 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
-                          {favoritesCount > 9 ? '9+' : favoritesCount}
-                        </span>
-                      )}
+            <div className="space-y-3">
+              {!roleLoading && isSeekerLoggedIn ? (
+                <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
+                  <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
+                    <User className="h-4 w-4" />
+                    My Account
+                    {favoritesCount > 0 && (
+                      <span className="absolute top-2 right-3 h-5 w-5 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                        {favoritesCount > 9 ? '9+' : favoritesCount}
+                      </span>
+                    )}
+                  </Button>
+                </PrefetchLink>
+              ) : (
+                <div className="space-y-2.5">
+                  <PrefetchLink to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
+                    <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30">
+                      List Facility
                     </Button>
                   </PrefetchLink>
-                ) : (
-                  <div className="space-y-2.5">
-                    <PrefetchLink to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50 gap-2">
-                        <User className="h-4 w-4" />
-                        Sign In
-                      </Button>
-                    </PrefetchLink>
-                    <PrefetchLink to="/signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30">
-                        Sign Up
-                      </Button>
-                    </PrefetchLink>
-                  </div>
-                )}
-              </div>
-            )}
+                  <PrefetchLink to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
+                    <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50 gap-2">
+                      <User className="h-4 w-4" />
+                      Sign In
+                    </Button>
+                  </PrefetchLink>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
