@@ -111,7 +111,7 @@ export function Header({
                     <DropdownMenuTrigger asChild>
                       <button
                         className={cn(
-                          "flex items-center gap-1 px-3.5 py-2 text-sm font-medium transition-colors",
+                          "flex items-center gap-1 px-3.5 py-2 text-[15px] font-medium transition-colors",
                           isActive || location.pathname.startsWith("/provider")
                             ? "text-foreground"
                             : "text-muted-foreground hover:text-foreground"
@@ -146,7 +146,7 @@ export function Header({
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "px-3.5 py-2 text-sm font-medium transition-colors",
+                    "px-3.5 py-2 text-[15px] font-medium transition-colors",
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
