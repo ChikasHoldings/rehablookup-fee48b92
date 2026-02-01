@@ -311,7 +311,7 @@ export function emailParagraph(content: string): string {
 }
 
 /**
- * Pro provider insights box (replaces featuredInsightsBox)
+ * Pro provider insights box
  */
 export function proInsightsBox(content: string): string {
   return `
@@ -326,20 +326,6 @@ export function proInsightsBox(content: string): string {
                 </tr>
               </table>
 `;
-}
-
-/**
- * @deprecated Use proInsightsBox instead - kept for backward compatibility
- */
-export function featuredInsightsBox(content: string): string {
-  return proInsightsBox(content);
-}
-
-/**
- * @deprecated Use proInsightsBox instead - kept for backward compatibility
- */
-export function professionalInfoBox(content: string): string {
-  return proInsightsBox(content);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,15 +12,19 @@ interface MultiSelectDropdownProps {
   maxDisplayed?: number;
 }
 
-export function MultiSelectDropdown({
-  options,
-  selected,
-  onChange,
-  placeholder,
-  icon,
-  label,
-  maxDisplayed = 2,
-}: MultiSelectDropdownProps) {
+export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdownProps>(
+  function MultiSelectDropdown(
+    {
+      options,
+      selected,
+      onChange,
+      placeholder,
+      icon,
+      label,
+      maxDisplayed = 2,
+    },
+    ref
+  ) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +60,7 @@ export function MultiSelectDropdown({
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={ref || dropdownRef} className="relative">
       {label && (
         <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
           {icon}
@@ -142,4 +146,4 @@ export function MultiSelectDropdown({
       )}
     </div>
   );
-}
+});
