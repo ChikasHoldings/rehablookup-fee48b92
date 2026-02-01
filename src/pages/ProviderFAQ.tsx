@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import {
   Accordion,
   AccordionContent,
@@ -203,6 +205,7 @@ export default function ProviderFAQ() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Header />
       <SEO
         title="Provider FAQ - Common Questions for Treatment Centers"
         description="Find answers to frequently asked questions about listing your treatment center on RehabLookup. Learn about verification, leads, billing, and more."
@@ -398,6 +401,7 @@ export default function ProviderFAQ() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

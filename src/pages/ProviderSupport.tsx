@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import {
   Select,
   SelectContent,
@@ -98,7 +100,7 @@ export default function ProviderSupport() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-
+      <Header />
       <main className="flex-1">
         {/* Hero */}
         <section className="border-b border-border/50 py-10 md:py-14">
@@ -290,6 +292,7 @@ export default function ProviderSupport() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

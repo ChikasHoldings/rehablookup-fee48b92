@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { Button } from "@/components/ui/button";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import {
   Accordion,
   AccordionContent,
@@ -156,6 +158,7 @@ const optimizationTips = [
 export default function ProviderResources() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Header />
       <SEO
         title="Provider Resources - Tools & Guides for Treatment Centers"
         description="Access guides, tutorials, and resources to maximize your treatment center's visibility on RehabLookup. Learn best practices for listing optimization."
@@ -432,6 +435,7 @@ export default function ProviderResources() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }
