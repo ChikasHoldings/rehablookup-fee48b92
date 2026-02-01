@@ -166,7 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
         // SMS to facility
         const facilityPhone = tour.facility?.concierge_admissions_phone;
         if (facilityPhone) {
-          const smsMessage = `RehabLookup: New tour request from ${emailData.seekerName}. Type: ${tour.tour_type}. View in provider dashboard: https://rehablookup.lovable.app/provider/concierge`;
+          const smsMessage = `RehabLookup: New tour request from ${emailData.seekerName}. Type: ${tour.tour_type}. View in provider dashboard: https://rehablookup.com/provider/concierge`;
           const smsSent = await sendSMS(facilityPhone, smsMessage);
           results.facilitySMS = smsSent;
         }
@@ -231,7 +231,7 @@ const handler = async (req: Request): Promise<Response> => {
         // SMS to seeker
         if (userPhone) {
           const proposedTime = formatDateTime(tour.proposed_datetime);
-          const smsMessage = `RehabLookup: ${emailData.facilityName} proposed tour for ${proposedTime}. Confirm here: https://rehablookup.lovable.app/account/concierge`;
+          const smsMessage = `RehabLookup: ${emailData.facilityName} proposed tour for ${proposedTime}. Confirm here: https://rehablookup.com/account/concierge`;
           const smsSent = await sendSMS(userPhone, smsMessage);
           results.userSMS = smsSent;
         }
@@ -386,7 +386,7 @@ const handler = async (req: Request): Promise<Response> => {
 
           // SMS to seeker
           if (userPhone) {
-            const smsMessage = `RehabLookup: Unfortunately, ${emailData.facilityName} had to reschedule. View other options: https://rehablookup.lovable.app/account/concierge`;
+            const smsMessage = `RehabLookup: Unfortunately, ${emailData.facilityName} had to reschedule. View other options: https://rehablookup.com/account/concierge`;
             await sendSMS(userPhone, smsMessage);
           }
 

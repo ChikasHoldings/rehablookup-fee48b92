@@ -172,7 +172,7 @@ serve(async (req) => {
     }
 
     // Create checkout session
-    const origin = req.headers.get("origin") || "https://rehablookup.lovable.app";
+    const origin = req.headers.get("origin") || "https://rehablookup.com";
     
     logStep(requestId, "Creating checkout session", { 
       customerId: customerId || "new", 
