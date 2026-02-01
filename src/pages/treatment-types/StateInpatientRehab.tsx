@@ -111,12 +111,12 @@ const StateInpatientRehab = () => {
       {/* Hero Section */}
       <section className="bg-primary py-12 md:py-16">
         <div className="container">
-          <nav className="mb-5 flex items-center gap-2 text-sm text-white/70 flex-wrap">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+          <nav className="mb-5 flex items-center gap-2 text-sm leading-none flex-wrap">
+            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
             <span className="text-white/50">/</span>
-            <Link to="/treatment-types" className="hover:text-white transition-colors">Treatment Types</Link>
+            <Link to="/treatment-types" className="text-white/70 hover:text-white transition-colors">Treatment Types</Link>
             <span className="text-white/50">/</span>
-            <Link to="/treatment-types/residential-inpatient" className="hover:text-white transition-colors">Inpatient Rehab</Link>
+            <Link to="/treatment-types/residential-inpatient" className="text-white/70 hover:text-white transition-colors">Inpatient Rehab</Link>
             <span className="text-white/50">/</span>
             <span className="text-white font-medium">{stateName}</span>
           </nav>

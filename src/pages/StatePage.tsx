@@ -245,10 +245,10 @@ const StatePage = () => {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
         <div className="container relative z-10 py-10 md:py-14">
-          <nav className="mb-5 flex items-center gap-2 text-sm text-white/70">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+          <nav className="mb-5 flex items-center gap-2 text-sm leading-none">
+            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
             <span className="text-white/50">/</span>
-            <Link to="/rehab-centers" className="hover:text-white transition-colors">Find Rehab</Link>
+            <Link to="/rehab-centers" className="text-white/70 hover:text-white transition-colors">Find Rehab</Link>
             <span className="text-white/50">/</span>
             <span className="text-white font-medium">{stateData.name}</span>
           </nav>

@@ -409,8 +409,8 @@ export default function Insurance() {
       <section className="bg-primary py-10 md:py-12">
         <div className="container">
           {/* Breadcrumb */}
-          <nav className="mb-5 flex items-center justify-center gap-2 text-sm text-white/70">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+          <nav className="mb-5 flex items-center justify-center gap-2 text-sm leading-none">
+            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
             <span className="text-white/50">/</span>
             <span className="text-white font-medium">Insurance Coverage</span>
           </nav>
