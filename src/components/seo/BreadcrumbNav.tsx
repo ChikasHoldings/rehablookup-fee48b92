@@ -43,9 +43,9 @@ export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
       {/* Visual breadcrumb navigation */}
       <nav 
         aria-label="Breadcrumb" 
-        className={`flex items-center text-sm text-muted-foreground ${className}`}
+        className={`flex items-center justify-center text-sm text-muted-foreground ${className}`}
       >
-        <ol className="flex items-center flex-wrap gap-1" itemScope itemType="https://schema.org/BreadcrumbList">
+        <ol className="flex items-center gap-1 whitespace-nowrap" itemScope itemType="https://schema.org/BreadcrumbList">
           <li 
             className="flex items-center" 
             itemProp="itemListElement" 
