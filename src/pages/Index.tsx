@@ -11,7 +11,6 @@ import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSke
 import { supabase } from "@/integrations/supabase/client";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import heroImage from "@/assets/hero-recovery.jpg";
-import heroImageMobile from "@/assets/hero-recovery-mobile.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
   Carousel,
@@ -303,20 +302,17 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="relative z-10 overflow-hidden">
-        {/* Background Image - responsive with picture element */}
-        <picture>
-          <source media="(min-width: 768px)" srcSet={heroImage} />
-          <img 
-            src={heroImageMobile}
-            alt=""
-            role="presentation"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-            width={1024}
-            height={1024}
-            fetchPriority="high"
-            decoding="async"
-          />
-        </picture>
+        {/* Background Image - using img for better LCP */}
+        <img 
+          src={heroImage}
+          alt=""
+          role="presentation"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          width={1920}
+          height={1080}
+          fetchPriority="high"
+          decoding="async"
+        />
         
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
