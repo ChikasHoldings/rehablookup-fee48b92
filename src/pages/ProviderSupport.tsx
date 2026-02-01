@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Header } from "@/components/layout/Header";
+
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { useState } from "react";
@@ -24,7 +24,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
-import { providerNavLinks } from "@/data/providerNavLinks";
+
 
 const supportTopics = [
   { value: "listing", label: "Listing & Profile" },
@@ -101,12 +101,6 @@ export default function ProviderSupport() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header
-        navLinks={providerNavLinks}
-        ctaLink="/provider-login"
-        ctaLabel="Provider Login"
-        variant="provider"
-      />
 
       <main className="flex-1">
         {/* Hero */}

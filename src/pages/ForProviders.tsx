@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { SEO } from "@/components/SEO";
@@ -72,8 +71,6 @@ const ForProviders = () => {
           { name: "For Providers", url: "/for-providers" },
         ]}
       />
-      
-      <Header />
       
       <main className="flex-1">
         {/* Hero Section - Image background like homepage */}
