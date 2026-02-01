@@ -13,131 +13,135 @@ import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
-// Eagerly load all public pages for instant navigation
+// Eagerly load homepage for instant LCP
 import Index from "./pages/Index";
-import RehabCenters from "./pages/RehabCenters";
-import SearchResults from "./pages/SearchResults";
-import StatePage from "./pages/StatePage";
-import CityPage from "./pages/CityPage";
-import Locations from "./pages/Locations";
-import TreatmentCenterProfile from "./pages/TreatmentCenterProfile";
-import CenterProfile from "./pages/CenterProfile";
-import TreatmentTypes from "./pages/TreatmentTypes";
-import DrugAddictionTreatment from "./pages/treatment-types/DrugAddictionTreatment";
-import StateDrugAddiction from "./pages/treatment-types/StateDrugAddiction";
-import CityDrugAddiction from "./pages/treatment-types/CityDrugAddiction";
-import AlcoholRehabilitation from "./pages/treatment-types/AlcoholRehabilitation";
-import StateAlcoholRehab from "./pages/treatment-types/StateAlcoholRehab";
-import CityAlcoholRehab from "./pages/treatment-types/CityAlcoholRehab";
-import DualDiagnosisTreatment from "./pages/treatment-types/DualDiagnosisTreatment";
-import ResidentialInpatient from "./pages/treatment-types/ResidentialInpatient";
-import OutpatientPrograms from "./pages/treatment-types/OutpatientPrograms";
-import HolisticTherapy from "./pages/treatment-types/HolisticTherapy";
-import DetoxPrograms from "./pages/treatment-types/DetoxPrograms";
-import StateDetoxPrograms from "./pages/treatment-types/StateDetoxPrograms";
-import CityDetoxPrograms from "./pages/treatment-types/CityDetoxPrograms";
-import StateInpatientRehab from "./pages/treatment-types/StateInpatientRehab";
-import CityInpatientRehab from "./pages/treatment-types/CityInpatientRehab";
-import StateOutpatientPrograms from "./pages/treatment-types/StateOutpatientPrograms";
-import CityOutpatientPrograms from "./pages/treatment-types/CityOutpatientPrograms";
-import StateDualDiagnosis from "./pages/treatment-types/StateDualDiagnosis";
-import CityDualDiagnosis from "./pages/treatment-types/CityDualDiagnosis";
-import HowItWorks from "./pages/HowItWorks";
-import ForProviders from "./pages/ForProviders";
-import ProviderResources from "./pages/ProviderResources";
-import ProviderLogin from "./pages/ProviderLogin";
-import ProviderForgotPassword from "./pages/ProviderForgotPassword";
-import ProviderResetPassword from "./pages/ProviderResetPassword";
-import ProviderSupport from "./pages/ProviderSupport";
-import ProviderFAQ from "./pages/ProviderFAQ";
-import ProviderSignup from "./pages/ProviderSignup";
-
-// Concierge Placement (Paid Service)
-import ConciergeLanding from "./pages/concierge/ConciergeLanding";
-import ConciergeIntake from "./pages/concierge/ConciergeIntake";
-import ConciergeThankYou from "./pages/concierge/ConciergeThankYou";
-import ConciergeCreatePassword from "./pages/concierge/ConciergeCreatePassword";
-import AdLanding from "./pages/AdLanding";
-import SocialLanding from "./pages/SocialLanding";
-import Resources from "./pages/Resources";
-import Insurance from "./pages/Insurance";
-import AetnaRehab from "./pages/insurance/AetnaRehab";
-import BCBSTreatment from "./pages/insurance/BCBSTreatment";
-import CignaRehab from "./pages/insurance/CignaRehab";
-import UnitedHealthcareRehab from "./pages/insurance/UnitedHealthcareRehab";
-import HumanaRehab from "./pages/insurance/HumanaRehab";
-import KaiserRehab from "./pages/insurance/KaiserRehab";
-import MedicareRehab from "./pages/insurance/MedicareRehab";
-import MedicaidRehab from "./pages/insurance/MedicaidRehab";
-import AnthemRehab from "./pages/insurance/AnthemRehab";
-import CostEstimator from "./pages/CostEstimator";
-import ArticleDetail from "./pages/ArticleDetail";
-import FAQ from "./pages/FAQ";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
-import SeekerAuth from "./pages/SeekerAuth";
-import SeekerSignup from "./pages/SeekerSignup";
-import ResetPassword from "./pages/ResetPassword";
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import { SeekerShell } from "./components/seeker/SeekerShell";
-import SeekerHome from "./pages/seeker/SeekerHome";
-import SeekerRequests from "./pages/seeker/SeekerRequests";
-import SeekerSaved from "./pages/seeker/SeekerSaved";
-import SeekerReviews from "./pages/seeker/SeekerReviews";
-import SeekerSettings from "./pages/seeker/SeekerSettings";
-import SeekerNotifications from "./pages/seeker/SeekerNotifications";
-import SeekerNotificationPreferences from "./pages/seeker/SeekerNotificationPreferences";
-import SeekerFacilityProfile from "./pages/seeker/SeekerFacilityProfile";
-import SeekerSearch from "./pages/seeker/SeekerSearch";
-import SeekerHelp from "./pages/seeker/SeekerHelp";
-import SeekerConcierge from "./pages/seeker/SeekerConcierge";
 
-// Near Me SEO Pages
-import DrugRehabNearMe from "./pages/near-me/DrugRehabNearMe";
-import AlcoholRehabNearMe from "./pages/near-me/AlcoholRehabNearMe";
-import DetoxNearMe from "./pages/near-me/DetoxNearMe";
-import DualDiagnosisNearMe from "./pages/near-me/DualDiagnosisNearMe";
-import InpatientRehabNearMe from "./pages/near-me/InpatientRehabNearMe";
-import OutpatientNearMe from "./pages/near-me/OutpatientNearMe";
-import FreeRehabNearMe from "./pages/near-me/FreeRehabNearMe";
-import LuxuryRehabNearMe from "./pages/near-me/LuxuryRehabNearMe";
-import WomensRehabNearMe from "./pages/near-me/WomensRehabNearMe";
-import MensRehabNearMe from "./pages/near-me/MensRehabNearMe";
-import FentanylRehabNearMe from "./pages/near-me/FentanylRehabNearMe";
-import SoberLivingNearMe from "./pages/near-me/SoberLivingNearMe";
-import TeenRehabNearMe from "./pages/near-me/TeenRehabNearMe";
-import VeteransRehabNearMe from "./pages/near-me/VeteransRehabNearMe";
-import MedicaidRehabNearMe from "./pages/near-me/MedicaidRehabNearMe";
-import CourtOrderedRehabNearMe from "./pages/near-me/CourtOrderedRehabNearMe";
-import SuboxoneClinicNearMe from "./pages/near-me/SuboxoneClinicNearMe";
-import MethadoneClinicNearMe from "./pages/near-me/MethadoneClinicNearMe";
-import OutpatientRehabNearMe from "./pages/near-me/OutpatientRehabNearMe";
-import DualDiagnosisRehabNearMe from "./pages/near-me/DualDiagnosisRehabNearMe";
-import FaithBasedRehabNearMe from "./pages/near-me/FaithBasedRehabNearMe";
-// Provider Panel - eagerly load for instant navigation
-import { ProviderShell } from "./components/provider/ProviderShell";
-import ProviderDashboardPage from "./pages/provider/Dashboard";
-import ProviderListingPage from "./pages/provider/MyListings";
-import ProviderInquiriesPage from "./pages/provider/Inquiries";
-import ProviderReviewsPage from "./pages/provider/Reviews";
-import ProviderAnalyticsPage from "./pages/provider/Analytics";
-import ProviderCreditsPage from "./pages/provider/Credits";
-import ProviderSettingsPage from "./pages/provider/Settings";
-import ProviderNotificationsPage from "./pages/provider/Notifications";
-import ProviderHelpPage from "./pages/provider/Help";
-import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
-import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
-import ProviderAddLocation from "./pages/provider/AddLocation";
+// Lazy load all other public pages for reduced initial bundle
+const RehabCenters = lazy(() => import("./pages/RehabCenters"));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
+const StatePage = lazy(() => import("./pages/StatePage"));
+const CityPage = lazy(() => import("./pages/CityPage"));
+const Locations = lazy(() => import("./pages/Locations"));
+const TreatmentCenterProfile = lazy(() => import("./pages/TreatmentCenterProfile"));
+const CenterProfile = lazy(() => import("./pages/CenterProfile"));
+const TreatmentTypes = lazy(() => import("./pages/TreatmentTypes"));
+const DrugAddictionTreatment = lazy(() => import("./pages/treatment-types/DrugAddictionTreatment"));
+const StateDrugAddiction = lazy(() => import("./pages/treatment-types/StateDrugAddiction"));
+const CityDrugAddiction = lazy(() => import("./pages/treatment-types/CityDrugAddiction"));
+const AlcoholRehabilitation = lazy(() => import("./pages/treatment-types/AlcoholRehabilitation"));
+const StateAlcoholRehab = lazy(() => import("./pages/treatment-types/StateAlcoholRehab"));
+const CityAlcoholRehab = lazy(() => import("./pages/treatment-types/CityAlcoholRehab"));
+const DualDiagnosisTreatment = lazy(() => import("./pages/treatment-types/DualDiagnosisTreatment"));
+const ResidentialInpatient = lazy(() => import("./pages/treatment-types/ResidentialInpatient"));
+const OutpatientPrograms = lazy(() => import("./pages/treatment-types/OutpatientPrograms"));
+const HolisticTherapy = lazy(() => import("./pages/treatment-types/HolisticTherapy"));
+const DetoxPrograms = lazy(() => import("./pages/treatment-types/DetoxPrograms"));
+const StateDetoxPrograms = lazy(() => import("./pages/treatment-types/StateDetoxPrograms"));
+const CityDetoxPrograms = lazy(() => import("./pages/treatment-types/CityDetoxPrograms"));
+const StateInpatientRehab = lazy(() => import("./pages/treatment-types/StateInpatientRehab"));
+const CityInpatientRehab = lazy(() => import("./pages/treatment-types/CityInpatientRehab"));
+const StateOutpatientPrograms = lazy(() => import("./pages/treatment-types/StateOutpatientPrograms"));
+const CityOutpatientPrograms = lazy(() => import("./pages/treatment-types/CityOutpatientPrograms"));
+const StateDualDiagnosis = lazy(() => import("./pages/treatment-types/StateDualDiagnosis"));
+const CityDualDiagnosis = lazy(() => import("./pages/treatment-types/CityDualDiagnosis"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const ForProviders = lazy(() => import("./pages/ForProviders"));
+const ProviderResources = lazy(() => import("./pages/ProviderResources"));
+const ProviderLogin = lazy(() => import("./pages/ProviderLogin"));
+const ProviderForgotPassword = lazy(() => import("./pages/ProviderForgotPassword"));
+const ProviderResetPassword = lazy(() => import("./pages/ProviderResetPassword"));
+const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
+const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
+const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
 
-import ProviderBillingPage from "./pages/provider/Billing";
-import ProviderPlacementNetworkPage from "./pages/provider/PlacementNetwork";
+// Concierge Placement (Paid Service) - lazy load
+const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding"));
+const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
+const ConciergeThankYou = lazy(() => import("./pages/concierge/ConciergeThankYou"));
+const ConciergeCreatePassword = lazy(() => import("./pages/concierge/ConciergeCreatePassword"));
+const AdLanding = lazy(() => import("./pages/AdLanding"));
+const SocialLanding = lazy(() => import("./pages/SocialLanding"));
+const Resources = lazy(() => import("./pages/Resources"));
+const Insurance = lazy(() => import("./pages/Insurance"));
+const AetnaRehab = lazy(() => import("./pages/insurance/AetnaRehab"));
+const BCBSTreatment = lazy(() => import("./pages/insurance/BCBSTreatment"));
+const CignaRehab = lazy(() => import("./pages/insurance/CignaRehab"));
+const UnitedHealthcareRehab = lazy(() => import("./pages/insurance/UnitedHealthcareRehab"));
+const HumanaRehab = lazy(() => import("./pages/insurance/HumanaRehab"));
+const KaiserRehab = lazy(() => import("./pages/insurance/KaiserRehab"));
+const MedicareRehab = lazy(() => import("./pages/insurance/MedicareRehab"));
+const MedicaidRehab = lazy(() => import("./pages/insurance/MedicaidRehab"));
+const AnthemRehab = lazy(() => import("./pages/insurance/AnthemRehab"));
+const CostEstimator = lazy(() => import("./pages/CostEstimator"));
+const ArticleDetail = lazy(() => import("./pages/ArticleDetail"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const SeekerAuth = lazy(() => import("./pages/SeekerAuth"));
+const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 
-// Admin Panel - eagerly load shell, lazy load pages (shell handles its own Suspense)
-import { AdminShell } from "./components/admin/AdminShell";
+// Seeker pages - lazy load
+const SeekerShell = lazy(() => import("./components/seeker/SeekerShell").then(m => ({ default: m.SeekerShell })));
+const SeekerHome = lazy(() => import("./pages/seeker/SeekerHome"));
+const SeekerRequests = lazy(() => import("./pages/seeker/SeekerRequests"));
+const SeekerSaved = lazy(() => import("./pages/seeker/SeekerSaved"));
+const SeekerReviews = lazy(() => import("./pages/seeker/SeekerReviews"));
+const SeekerSettings = lazy(() => import("./pages/seeker/SeekerSettings"));
+const SeekerNotifications = lazy(() => import("./pages/seeker/SeekerNotifications"));
+const SeekerNotificationPreferences = lazy(() => import("./pages/seeker/SeekerNotificationPreferences"));
+const SeekerFacilityProfile = lazy(() => import("./pages/seeker/SeekerFacilityProfile"));
+const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
+const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
+const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
+
+// Near Me SEO Pages - lazy load
+const DrugRehabNearMe = lazy(() => import("./pages/near-me/DrugRehabNearMe"));
+const AlcoholRehabNearMe = lazy(() => import("./pages/near-me/AlcoholRehabNearMe"));
+const DetoxNearMe = lazy(() => import("./pages/near-me/DetoxNearMe"));
+const DualDiagnosisNearMe = lazy(() => import("./pages/near-me/DualDiagnosisNearMe"));
+const InpatientRehabNearMe = lazy(() => import("./pages/near-me/InpatientRehabNearMe"));
+const OutpatientNearMe = lazy(() => import("./pages/near-me/OutpatientNearMe"));
+const FreeRehabNearMe = lazy(() => import("./pages/near-me/FreeRehabNearMe"));
+const LuxuryRehabNearMe = lazy(() => import("./pages/near-me/LuxuryRehabNearMe"));
+const WomensRehabNearMe = lazy(() => import("./pages/near-me/WomensRehabNearMe"));
+const MensRehabNearMe = lazy(() => import("./pages/near-me/MensRehabNearMe"));
+const FentanylRehabNearMe = lazy(() => import("./pages/near-me/FentanylRehabNearMe"));
+const SoberLivingNearMe = lazy(() => import("./pages/near-me/SoberLivingNearMe"));
+const TeenRehabNearMe = lazy(() => import("./pages/near-me/TeenRehabNearMe"));
+const VeteransRehabNearMe = lazy(() => import("./pages/near-me/VeteransRehabNearMe"));
+const MedicaidRehabNearMe = lazy(() => import("./pages/near-me/MedicaidRehabNearMe"));
+const CourtOrderedRehabNearMe = lazy(() => import("./pages/near-me/CourtOrderedRehabNearMe"));
+const SuboxoneClinicNearMe = lazy(() => import("./pages/near-me/SuboxoneClinicNearMe"));
+const MethadoneClinicNearMe = lazy(() => import("./pages/near-me/MethadoneClinicNearMe"));
+const OutpatientRehabNearMe = lazy(() => import("./pages/near-me/OutpatientRehabNearMe"));
+const DualDiagnosisRehabNearMe = lazy(() => import("./pages/near-me/DualDiagnosisRehabNearMe"));
+const FaithBasedRehabNearMe = lazy(() => import("./pages/near-me/FaithBasedRehabNearMe"));
+
+// Provider Panel - lazy load
+const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
+const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
+const ProviderListingPage = lazy(() => import("./pages/provider/MyListings"));
+const ProviderInquiriesPage = lazy(() => import("./pages/provider/Inquiries"));
+const ProviderReviewsPage = lazy(() => import("./pages/provider/Reviews"));
+const ProviderAnalyticsPage = lazy(() => import("./pages/provider/Analytics"));
+const ProviderCreditsPage = lazy(() => import("./pages/provider/Credits"));
+const ProviderSettingsPage = lazy(() => import("./pages/provider/Settings"));
+const ProviderNotificationsPage = lazy(() => import("./pages/provider/Notifications"));
+const ProviderHelpPage = lazy(() => import("./pages/provider/Help"));
+const ProviderKnowledgeBasePage = lazy(() => import("./pages/provider/KnowledgeBase"));
+const ProviderImageGuidelines = lazy(() => import("./pages/provider/ImageGuidelines"));
+const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
+const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
+const ProviderPlacementNetworkPage = lazy(() => import("./pages/provider/PlacementNetwork"));
+
+// Admin Panel - lazy load
+const AdminShell = lazy(() => import("./components/admin/AdminShell").then(m => ({ default: m.AdminShell })));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
@@ -148,10 +152,8 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminStaff"));
 const AdminSeekers = lazy(() => import("./pages/admin/AdminSeekers"));
-
 const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
-
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
@@ -254,26 +256,52 @@ const App = () => (
             <Route path="/faith-based-rehab-near-me" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/faith-based-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             
+            {/* Concierge Placement Routes */}
+            <Route path="/request-help" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
+            <Route path="/request-help/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
+            <Route path="/request-help/thank-you" element={<PublicRouteGuard><ConciergeThankYou /></PublicRouteGuard>} />
+            <Route path="/request-help/create-password" element={<PublicRouteGuard><ConciergeCreatePassword /></PublicRouteGuard>} />
+            
+            {/* Treatment center profile pages */}
+            <Route path="/treatment-centers/:slug" element={<PublicRouteGuard><TreatmentCenterProfile /></PublicRouteGuard>} />
+            
+            {/* Legacy center URLs redirect */}
+            <Route path="/centers/:slug" element={<Navigate to="/center/:slug" replace />} />
+            
+            {/* Ad Landing Pages */}
+            <Route path="/ads/:slug" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
+            <Route path="/go/:slug" element={<PublicRouteGuard><SocialLanding /></PublicRouteGuard>} />
+            
+            {/* Static Pages */}
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
-            <Route path="/request-help" element={<Navigate to="/concierge" replace />} />
-            <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
+            <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
+            <Route path="/resources/:slug" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
+            <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
+            <Route path="/insurance/aetna" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/bcbs" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
+            <Route path="/insurance/cigna" element={<PublicRouteGuard><CignaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/united-healthcare" element={<PublicRouteGuard><UnitedHealthcareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/humana" element={<PublicRouteGuard><HumanaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/kaiser" element={<PublicRouteGuard><KaiserRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/medicare" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/medicaid" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/anthem" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
+            <Route path="/cost-estimator" element={<PublicRouteGuard><CostEstimator /></PublicRouteGuard>} />
+            <Route path="/faq" element={<PublicRouteGuard><FAQ /></PublicRouteGuard>} />
+            <Route path="/about" element={<PublicRouteGuard><About /></PublicRouteGuard>} />
+            <Route path="/contact" element={<PublicRouteGuard><Contact /></PublicRouteGuard>} />
+            <Route path="/privacy-policy" element={<PublicRouteGuard><PrivacyPolicy /></PublicRouteGuard>} />
+            <Route path="/terms-of-service" element={<PublicRouteGuard><TermsOfService /></PublicRouteGuard>} />
             
-            {/* Concierge Placement Routes (Paid Service) */}
-            <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
-            <Route path="/concierge/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
-            <Route path="/concierge/thank-you" element={<PublicRouteGuard><ConciergeThankYou /></PublicRouteGuard>} />
-            <Route path="/concierge/create-password" element={<PublicRouteGuard><ConciergeCreatePassword /></PublicRouteGuard>} />
-            
-            <Route path="/lp/treatment" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
-            <Route path="/lp/social" element={<PublicRouteGuard><SocialLanding /></PublicRouteGuard>} />
-            <Route path="/auth" element={<Navigate to="/login?type=seeker" replace />} />
+            {/* Seeker Authentication */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/signup" element={<PublicRouteGuard><SeekerSignup /></PublicRouteGuard>} />
-            <Route path="/reset-password" element={<PublicRouteGuard><ResetPassword /></PublicRouteGuard>} />
+            <Route path="/seeker/auth" element={<SeekerAuth />} />
+            <Route path="/seeker/signup" element={<SeekerSignup />} />
+            <Route path="/seeker/reset-password" element={<ResetPassword />} />
             
-            {/* Seeker Account Routes - Nested under seeker shell */}
-            <Route path="/account" element={<SeekerShell />}>
+            {/* Seeker Panel */}
+            <Route path="/my-account" element={<SeekerShell />}>
               <Route index element={<SeekerHome />} />
               <Route path="requests" element={<SeekerRequests />} />
               <Route path="saved" element={<SeekerSaved />} />
@@ -281,95 +309,71 @@ const App = () => (
               <Route path="settings" element={<SeekerSettings />} />
               <Route path="notifications" element={<SeekerNotifications />} />
               <Route path="notification-preferences" element={<SeekerNotificationPreferences />} />
-              <Route path="facility/:slug" element={<SeekerFacilityProfile />} />
+              <Route path="facility/:facilityId" element={<SeekerFacilityProfile />} />
               <Route path="search" element={<SeekerSearch />} />
               <Route path="help" element={<SeekerHelp />} />
               <Route path="concierge" element={<SeekerConcierge />} />
+              <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
             </Route>
-            <Route path="/my-account" element={<Navigate to="/account" replace />} />
-            <Route path="/for-providers" element={<Layout><ForProviders /></Layout>} />
-            <Route path="/provider-resources" element={<Layout><ProviderResources /></Layout>} />
-            <Route path="/provider-login" element={<Navigate to="/login?type=provider" replace />} />
-            <Route path="/provider-forgot-password" element={<ProviderForgotPassword />} />
-            <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
-            <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
-            <Route path="/provider-support" element={<Layout><ProviderSupport /></Layout>} />
-            <Route path="/provider-faq" element={<Layout><ProviderFAQ /></Layout>} />
-            <Route path="/provider-signup" element={<ProviderSignup />} />
             
-            {/* Provider Panel Routes - Nested under persistent shell */}
-            <Route path="/provider-dashboard" element={<Navigate to="/provider/dashboard" replace />} />
-            <Route path="/provider/listing/preview/:slug" element={<Navigate to="/provider/listing" replace />} />
+            {/* Provider Routes */}
+            <Route path="/for-providers" element={<PublicRouteGuard><ForProviders /></PublicRouteGuard>} />
+            <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
+            <Route path="/provider/login" element={<ProviderLogin />} />
+            <Route path="/provider/forgot-password" element={<ProviderForgotPassword />} />
+            <Route path="/provider/reset-password" element={<ProviderResetPassword />} />
+            <Route path="/provider/support" element={<ProviderSupport />} />
+            <Route path="/provider/faq" element={<ProviderFAQ />} />
+            <Route path="/provider/signup" element={<ProviderSignup />} />
+            
+            {/* Provider Panel Routes */}
             <Route path="/provider" element={<ProviderShell />}>
+              <Route index element={<Navigate to="/provider/dashboard" replace />} />
               <Route path="dashboard" element={<ProviderDashboardPage />} />
-              <Route path="listing" element={<ProviderListingPage />} />
+              <Route path="listings" element={<ProviderListingPage />} />
+              <Route path="add-location" element={<ProviderAddLocation />} />
               <Route path="inquiries" element={<ProviderInquiriesPage />} />
-              <Route path="leads" element={<Navigate to="/provider/inquiries" replace />} />
-              <Route path="billing" element={<ProviderBillingPage />} />
-              <Route path="credits" element={<Navigate to="/provider/billing" replace />} />
-              <Route path="pro-upgrade" element={<Navigate to="/provider/billing?tab=pro" replace />} />
-              <Route path="unlock-history" element={<Navigate to="/provider/settings?tab=unlock-history" replace />} />
-              <Route path="placement-network" element={<ProviderPlacementNetworkPage />} />
-              <Route path="placement" element={<Navigate to="/provider/placement-network" replace />} />
-              <Route path="concierge" element={<Navigate to="/provider/placement-network" replace />} />
-              <Route path="billing-history" element={<Navigate to="/provider/placement-network?tab=billing" replace />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
+              <Route path="credits" element={<ProviderCreditsPage />} />
+              <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="notifications" element={<ProviderNotificationsPage />} />
               <Route path="help" element={<ProviderHelpPage />} />
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
-              <Route path="add-location" element={<ProviderAddLocation />} />
-              <Route path="choose-plan" element={<Navigate to="/provider/dashboard" replace />} />
+              <Route path="placement-network" element={<ProviderPlacementNetworkPage />} />
             </Route>
-            
-            {/* Admin Panel Routes - Nested under admin shell */}
-            <Route path="/admin-login" element={<AdminLogin />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminShell />}>
-              <Route index element={<AdminDashboard />} />
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="providers" element={<AdminProviders />} />
               <Route path="leads" element={<AdminLeads />} />
-              <Route path="subscriptions" element={<AdminSubscriptions />} />
-              <Route path="users" element={<AdminUsers />} />
               <Route path="seekers" element={<AdminSeekers />} />
+              <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
+              <Route path="settings" element={<AdminSettings />} />
+              <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="profile" element={<AdminProfile />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="security-logs" element={<AdminSecurityLogs />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="concierge" element={<AdminConcierge />} />
               <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
-              <Route path="settings" element={<AdminSettings />} />
-              <Route path="notifications" element={<AdminNotifications />} />
-              <Route path="profile" element={<AdminProfile />} />
             </Route>
             
-            <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
-            <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
-            <Route path="/insurance/aetna-rehab" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/bcbs-treatment" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
-            <Route path="/insurance/cigna-rehab" element={<PublicRouteGuard><CignaRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/united-healthcare-rehab" element={<PublicRouteGuard><UnitedHealthcareRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/humana-rehab" element={<PublicRouteGuard><HumanaRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/kaiser-rehab" element={<PublicRouteGuard><KaiserRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/medicare-rehab" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/medicaid-rehab" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/anthem-rehab" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
-            <Route path="/cost-estimator" element={<PublicRouteGuard><CostEstimator /></PublicRouteGuard>} />
-            <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
-            <Route path="/faq" element={<PublicRouteGuard><FAQ /></PublicRouteGuard>} />
-            <Route path="/about" element={<PublicRouteGuard><About /></PublicRouteGuard>} />
-            <Route path="/contact" element={<PublicRouteGuard><Contact /></PublicRouteGuard>} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
+            {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-  </HelmetProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   </GlobalErrorBoundary>
 );
 

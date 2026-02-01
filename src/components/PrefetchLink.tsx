@@ -3,13 +3,24 @@ import { forwardRef, useCallback } from "react";
 
 // Route to lazy import mapping for prefetching (only for lazy-loaded routes)
 const routePrefetchMap: Record<string, () => Promise<unknown>> = {
+  // Public routes (lazy loaded)
+  "/rehab-centers": () => import("@/pages/RehabCenters"),
+  "/search-results": () => import("@/pages/SearchResults"),
+  "/locations": () => import("@/pages/Locations"),
+  "/treatment-types": () => import("@/pages/TreatmentTypes"),
+  "/request-help": () => import("@/pages/concierge/ConciergeLanding"),
+  "/how-it-works": () => import("@/pages/HowItWorks"),
+  "/for-providers": () => import("@/pages/ForProviders"),
+  "/insurance": () => import("@/pages/Insurance"),
+  "/about": () => import("@/pages/About"),
+  "/contact": () => import("@/pages/Contact"),
+  "/faq": () => import("@/pages/FAQ"),
   // Provider panel routes (lazy loaded)
   "/provider/dashboard": () => import("@/pages/provider/Dashboard"),
   "/provider/listing": () => import("@/pages/provider/MyListings"),
   "/provider/inquiries": () => import("@/pages/provider/Inquiries"),
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
   "/provider/credits": () => import("@/pages/provider/Credits"),
-  "/provider/pro-upgrade": () => import("@/pages/provider/ProUpgrade"),
   "/provider/placement": () => import("@/pages/provider/PlacementNetwork"),
   "/provider/settings": () => import("@/pages/provider/Settings"),
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
