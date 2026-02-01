@@ -262,7 +262,7 @@ const ForProviders = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="lg:h-[420px] overflow-hidden">
+                  <div className="h-[280px] sm:h-[320px] lg:h-[360px] overflow-hidden">
                     <img 
                       src={providerDashboardScreenshot} 
                       alt="Provider Dashboard showing analytics, inquiries, and recent leads"
