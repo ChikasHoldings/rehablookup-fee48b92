@@ -112,10 +112,12 @@ const HowItWorks = () => {
         
         <div className="container relative">
           {/* Breadcrumb */}
-          <nav className="mb-5 flex items-center justify-center gap-2 text-sm leading-none whitespace-nowrap">
-            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-            <span className="text-white/50">/</span>
-            <span className="text-white font-medium">How It Works</span>
+          <nav className="mb-5 text-center">
+            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
+              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
+              <span className="text-white/50">/</span>
+              <span className="text-white font-medium">How It Works</span>
+            </span>
           </nav>
           
           <div className="mx-auto max-w-2xl text-center">
