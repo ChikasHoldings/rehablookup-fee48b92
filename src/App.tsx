@@ -79,7 +79,6 @@ const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const SeekerAuth = lazy(() => import("./pages/SeekerAuth"));
 const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Login = lazy(() => import("./pages/Login"));
@@ -302,9 +301,8 @@ const App = () => (
             {/* Seeker Authentication */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/seeker/auth" element={<SeekerAuth />} />
             <Route path="/seeker/signup" element={<SeekerSignup />} />
-            <Route path="/signup" element={<Navigate to="/seeker/auth?tab=signup" replace />} />
+            <Route path="/signup" element={<Navigate to="/seeker/signup" replace />} />
             <Route path="/seeker/reset-password" element={<ResetPassword />} />
             
             {/* Seeker Panel - /account is canonical */}
