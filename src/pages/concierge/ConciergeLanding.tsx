@@ -6,7 +6,6 @@ import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import conciergeHeroImage from "@/assets/concierge-hero.jpg";
 import { 
   CheckCircle,
   Shield,
@@ -15,14 +14,12 @@ import {
   ArrowRight,
   Star,
   Users,
-  Phone,
   MessageCircle,
   Sparkles,
   BadgeCheck,
   Building2,
   Heart,
   Zap,
-  Lock,
   Calendar
 } from "lucide-react";
 
@@ -136,16 +133,11 @@ export default function ConciergeLanding() {
         
         <main className="flex-1">
           {/* Hero Section */}
-          <section className="relative overflow-hidden bg-muted/30">
-            {/* Background Image - Subtle */}
-            <div className="absolute inset-0 opacity-20">
-              <img 
-                src={conciergeHeroImage} 
-                alt="" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
+          <section className="relative overflow-hidden">
+            {/* Background with subtle pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-muted/30" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_50%)]" />
+            <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC40Ij48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzLTItMi00LTItNCAwLTQgMiAwIDIgMiA0IDIgNHMyLTIgNC0yIDQgMCA0LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')]" />
             
             <div className="container relative mx-auto px-4 py-12 md:py-16 lg:py-20">
               <div className="max-w-3xl mx-auto text-center">
@@ -197,8 +189,10 @@ export default function ConciergeLanding() {
           </section>
           
           {/* Social Proof Stats Bar */}
-          <section className="py-8 bg-muted/50 border-y">
-            <div className="container mx-auto px-4">
+          <section className="py-8 relative overflow-hidden border-y border-border/50">
+            <div className="absolute inset-0 bg-gradient-to-r from-muted/60 via-muted/40 to-muted/60" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.04),transparent_70%)]" />
+            <div className="container relative mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
                 {STATS.map((stat, index) => (
                   <div key={index} className="text-center">
