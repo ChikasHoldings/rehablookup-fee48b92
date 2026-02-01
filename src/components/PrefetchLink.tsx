@@ -8,7 +8,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/search-results": () => import("@/pages/SearchResults"),
   "/locations": () => import("@/pages/Locations"),
   "/treatment-types": () => import("@/pages/TreatmentTypes"),
-  "/request-help": () => import("@/pages/concierge/ConciergeLanding"),
+  "/concierge": () => import("@/pages/concierge/ConciergeLanding"),
   "/how-it-works": () => import("@/pages/HowItWorks"),
   "/for-providers": () => import("@/pages/ForProviders"),
   "/insurance": () => import("@/pages/Insurance"),

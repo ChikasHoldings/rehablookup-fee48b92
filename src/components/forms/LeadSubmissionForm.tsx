@@ -12,7 +12,7 @@ interface LeadSubmissionFormProps {
  * LeadSubmissionForm - Redirects to unified lead intake form
  * 
  * This component has been deprecated in favor of the unified Lead Intake Engine.
- * It now displays a CTA that redirects users to /request-help with facility context.
+ * It now displays a CTA that redirects users to /concierge with facility context.
  */
 export function LeadSubmissionForm({ facilityId, facilityName }: LeadSubmissionFormProps) {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ export function LeadSubmissionForm({ facilityId, facilityName }: LeadSubmissionF
       facilityName: encodeURIComponent(facilityName),
       source: "provider_profile",
     });
-    navigate(`/request-help?${params.toString()}`);
+    navigate(`/concierge?${params.toString()}`);
   };
 
   return (
