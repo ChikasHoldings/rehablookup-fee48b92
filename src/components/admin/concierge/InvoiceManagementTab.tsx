@@ -476,7 +476,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                     {matchedFacilities.find((f: any) => f.id === selectedFacilityForCharge)?.name}
                   </p>
                   <p className="text-muted-foreground mt-1">
-                    <strong>Fee:</strong> $1,200 (or $960 with Pro discount)
+                    <strong>Fee:</strong> $1,000 (or $800 with Pro discount)
                   </p>
                 </div>
                 <AlertDialogFooter>
