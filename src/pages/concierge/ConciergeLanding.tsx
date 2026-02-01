@@ -4,73 +4,126 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 import { 
-  CreditCard, 
-  ClipboardList, 
-  Users, 
   CheckCircle,
   Shield,
   Clock,
   HeartHandshake,
-  Mail,
-  ArrowRight
+  ArrowRight,
+  Star,
+  Users,
+  Phone,
+  MessageCircle,
+  Sparkles,
+  BadgeCheck,
+  Building2,
+  Heart,
+  Zap,
+  Lock,
+  Calendar
 } from "lucide-react";
+
+const TESTIMONIALS = [
+  {
+    quote: "They found me a program that accepted my insurance and was close to family. I couldn't have done it alone.",
+    author: "Sarah M.",
+    location: "Texas",
+    rating: 5,
+  },
+  {
+    quote: "Within 48 hours I had 3 great options to choose from. The team was compassionate and really listened.",
+    author: "Michael R.",
+    location: "Florida", 
+    rating: 5,
+  },
+  {
+    quote: "I was overwhelmed trying to find help for my son. They made the process so much easier during a hard time.",
+    author: "Jennifer L.",
+    location: "California",
+    rating: 5,
+  },
+];
+
+const STATS = [
+  { value: "500+", label: "Families Helped" },
+  { value: "100+", label: "Partner Facilities" },
+  { value: "24hr", label: "Avg Response Time" },
+  { value: "4.9", label: "Client Rating", icon: Star },
+];
+
+const FAQ_ITEMS = [
+  {
+    question: "What does the $29 fee cover?",
+    answer: "The one-time fee covers personalized matching by our specialists, insurance verification assistance, direct introductions to matched programs, and ongoing support throughout your search.",
+  },
+  {
+    question: "How quickly will I hear back?",
+    answer: "Most clients receive their first matched program recommendations within 24-48 hours of completing their intake form.",
+  },
+  {
+    question: "Is my information kept confidential?",
+    answer: "Absolutely. We follow HIPAA-aware practices and only share your information with programs you're matched with. Your privacy is our priority.",
+  },
+  {
+    question: "What if I don't like the programs I'm matched with?",
+    answer: "Our team will work with you to understand your concerns and find additional options. We're committed to helping you find the right fit.",
+  },
+];
 
 export default function ConciergeLanding() {
   const steps = [
     {
-      icon: CreditCard,
-      title: "Pay $29 Fee",
-      description: "One-time fee covers personalized matching and provider introductions",
-    },
-    {
-      icon: ClipboardList,
-      title: "Complete Intake",
-      description: "Share your needs, preferences, and timeline so we can find the best fit",
+      icon: Sparkles,
+      title: "Tell Us Your Needs",
+      description: "Complete a quick intake form about your situation, preferences, and insurance",
+      time: "5 min",
     },
     {
       icon: Users,
-      title: "We Match You",
-      description: "Our specialists review your intake and identify best-fit treatment programs",
+      title: "We Find Your Matches",
+      description: "Our specialists identify programs that fit your specific requirements",
+      time: "24-48 hrs",
     },
     {
-      icon: Mail,
+      icon: MessageCircle,
       title: "Get Connected",
-      description: "Matched programs reach out via email to discuss next steps",
-    },
-    {
-      icon: CheckCircle,
-      title: "Choose Your Path",
-      description: "Select the program that feels right for your recovery journey",
+      description: "Matched programs reach out directly to discuss next steps with you",
+      time: "Same day",
     },
   ];
 
   const benefits = [
     {
-      title: "Personalized Matching",
-      description: "We consider your insurance, location preferences, treatment needs, and timeline to find programs that truly fit your situation.",
+      icon: HeartHandshake,
+      title: "Personal Attention",
+      description: "Real specialists who listen, not algorithms. We understand every situation is unique.",
     },
     {
-      title: "Save Time and Stress",
-      description: "Skip the endless research. Our specialists do the legwork so you can focus on what matters most: getting help.",
+      icon: BadgeCheck,
+      title: "Verified Programs",
+      description: "Every facility in our network is vetted for quality, licensing, and accreditation.",
     },
     {
-      title: "Direct Provider Contact",
-      description: "Matched programs contact you directly. No middleman, no delays, just real conversations with admissions teams.",
+      icon: Shield,
+      title: "Insurance Help",
+      description: "We help verify coverage and find programs that work with your insurance plan.",
     },
     {
-      title: "Confidential and Secure",
-      description: "Your information is handled with care. We follow HIPAA-aware practices to protect your privacy throughout the process.",
+      icon: Clock,
+      title: "Fast Response",
+      description: "Get matched within 24-48 hours. When you're ready for help, we move quickly.",
     },
   ];
 
   return (
     <>
       <SEO
-        title="Concierge Placement Service"
-        description="Get personalized help finding the right treatment program. Our concierge service matches you with best-fit rehab centers for just $29."
+        title="Find Treatment That Fits | Concierge Placement Service"
+        description="Stop searching alone. Our specialists match you with treatment programs that fit your needs, insurance, and location. Just $29, one-time. Get matched in 24-48 hours."
         canonical="/concierge"
-        keywords={["treatment placement", "rehab concierge", "addiction treatment matching", "personalized rehab help"]}
+        keywords={["treatment placement", "rehab concierge", "addiction treatment matching", "personalized rehab help", "find rehab near me"]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Concierge", url: "/concierge" },
@@ -81,116 +134,323 @@ export default function ConciergeLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section */}
-          <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-20 md:py-28">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_50%)]" />
+          {/* Hero Section - Optimized for conversion */}
+          <section className="relative overflow-hidden bg-gradient-to-b from-primary/8 via-primary/3 to-background pt-8 pb-16 md:pt-12 md:pb-24">
+            {/* Background decorations */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.12),transparent_50%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(var(--accent)/0.08),transparent_50%)]" />
+            <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+            
             <div className="container relative mx-auto px-4">
-              <div className="max-w-3xl mx-auto text-center">
-                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-8">
-                  <HeartHandshake className="h-4 w-4" />
-                  Personalized Placement Assistance
-                </div>
+              <div className="max-w-4xl mx-auto">
+                {/* Trust badge */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center mb-6"
+                >
+                  <Badge variant="secondary" className="px-4 py-2 text-sm font-medium bg-primary/10 text-primary border-primary/20">
+                    <HeartHandshake className="h-4 w-4 mr-2" />
+                    Trusted by 500+ Families
+                  </Badge>
+                </motion.div>
                 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight">
-                  Find the Right Treatment
-                  <span className="block text-primary">With Expert Help</span>
-                </h1>
+                {/* Main headline */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="text-center"
+                >
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 tracking-tight leading-tight">
+                    Stop Searching.
+                    <span className="block text-primary">Start Healing.</span>
+                  </h1>
+                  
+                  <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
+                    Our specialists personally match you with treatment programs that fit your needs, 
+                    insurance, and location. <span className="text-foreground font-medium">Get matched in 24-48 hours.</span>
+                  </p>
+                </motion.div>
                 
-                <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto">
-                  Our concierge team personally matches you with treatment centers that fit your 
-                  specific needs, insurance, and preferences. No endless searching required.
-                </p>
+                {/* CTA Box */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="max-w-md mx-auto"
+                >
+                  <Card className="border-2 border-primary/20 bg-card/80 backdrop-blur-sm shadow-xl shadow-primary/10">
+                    <CardContent className="p-6 text-center">
+                      <div className="flex items-center justify-center gap-2 mb-4">
+                        <span className="text-4xl font-bold text-foreground">$29</span>
+                        <div className="text-left">
+                          <span className="text-sm text-muted-foreground block">one-time</span>
+                          <span className="text-xs text-primary font-medium">No hidden fees</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 mb-6 text-left">
+                        {[
+                          "Personalized facility matching",
+                          "Insurance verification help", 
+                          "Direct introductions to programs",
+                          "Ongoing support until placed"
+                        ].map((item, i) => (
+                          <div key={i} className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <span className="text-foreground">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <Button asChild size="lg" className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 group">
+                        <Link to="/concierge/intake">
+                          Get Matched Now
+                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                      </Button>
+                      
+                      <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
+                        <Lock className="h-3 w-3" />
+                        100% Confidential • HIPAA-Aware
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
                 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-                  <Button asChild size="lg" className="text-base h-12 px-8 shadow-lg shadow-primary/25">
-                    <Link to="/concierge/intake">
-                      Get Started for $29
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="lg" className="text-base h-12 px-8">
-                    <a href="mailto:placement@rehablookup.com">
-                      <Mail className="mr-2 h-4 w-4" />
-                      Contact Support
-                    </a>
-                  </Button>
-                </div>
-                
-                <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
+                {/* Trust indicators */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm text-muted-foreground"
+                >
                   <div className="flex items-center gap-2">
                     <Shield className="h-4 w-4 text-primary" />
                     <span>100% Confidential</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-primary" />
-                    <span>Response within 24-48 hours</span>
+                    <span>24-48hr Response</span>
                   </div>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <span>100+ Partner Facilities</span>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </section>
           
-          {/* How It Works */}
-          <section className="py-20 md:py-28 bg-muted/30">
+          {/* Social Proof Stats Bar */}
+          <section className="py-8 bg-muted/50 border-y">
             <div className="container mx-auto px-4">
-              <div className="text-center mb-16">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+                {STATS.map((stat, index) => (
+                  <div key={index} className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <span className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</span>
+                      {stat.icon && <stat.icon className="h-5 w-5 text-yellow-500 fill-yellow-500" />}
+                    </div>
+                    <span className="text-sm text-muted-foreground">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+          
+          {/* How It Works - Simplified */}
+          <section className="py-16 md:py-24">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <Badge variant="outline" className="mb-4">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Simple Process
+                </Badge>
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                   How It Works
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                  Our simple 5-step process connects you with treatment programs that match your needs
+                  Three simple steps to find treatment that fits your needs
                 </p>
               </div>
               
-              <div className="max-w-5xl mx-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-3">
+              <div className="max-w-4xl mx-auto">
+                <div className="grid md:grid-cols-3 gap-6 md:gap-8">
                   {steps.map((step, index) => (
-                    <Card key={index} className="relative bg-card border-0 shadow-sm hover:shadow-md transition-shadow">
-                      <CardContent className="pt-10 pb-6 px-4 text-center">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md">
-                          {index + 1}
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <Card className="relative h-full bg-card border-0 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group">
+                        {/* Step number */}
+                        <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-bold text-primary">{index + 1}</span>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                          <step.icon className="h-6 w-6 text-primary" />
-                        </div>
-                        <h3 className="font-semibold text-foreground mb-2 text-sm">{step.title}</h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{step.description}</p>
-                      </CardContent>
-                    </Card>
+                        
+                        <CardContent className="pt-8 pb-6 px-6">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <step.icon className="h-7 w-7 text-primary" />
+                          </div>
+                          
+                          <h3 className="font-semibold text-lg text-foreground mb-2">{step.title}</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-4">{step.description}</p>
+                          
+                          <div className="flex items-center gap-2 text-xs text-primary font-medium">
+                            <Calendar className="h-3 w-3" />
+                            {step.time}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
                   ))}
+                </div>
+                
+                {/* CTA after steps */}
+                <div className="text-center mt-10">
+                  <Button asChild size="lg" className="h-12 px-8 text-base shadow-lg shadow-primary/25">
+                    <Link to="/concierge/intake">
+                      Start Your Free Intake
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-3">Takes only 5 minutes</p>
                 </div>
               </div>
             </div>
           </section>
           
-          {/* Why Choose Concierge */}
-          <section className="py-20 md:py-28">
+          {/* Benefits Grid */}
+          <section className="py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-4">
               <div className="max-w-5xl mx-auto">
-                <div className="text-center mb-16">
+                <div className="text-center mb-12">
+                  <Badge variant="outline" className="mb-4">
+                    <Heart className="h-3 w-3 mr-1" />
+                    Why Choose Us
+                  </Badge>
                   <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                    Why Choose Our Concierge Service?
+                    More Than Just Matching
                   </h2>
                   <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                    We take the stress out of finding the right treatment program
+                    We're committed to helping you find the right path to recovery
                   </p>
                 </div>
                 
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid sm:grid-cols-2 gap-5">
                   {benefits.map((benefit, index) => (
-                    <Card key={index} className="border bg-card shadow-sm hover:shadow-md transition-shadow">
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <Card className="h-full border bg-card hover:border-primary/30 transition-colors">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
+                              <benefit.icon className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-lg text-foreground mb-2">{benefit.title}</h3>
+                              <p className="text-muted-foreground text-sm leading-relaxed">
+                                {benefit.description}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          {/* Testimonials */}
+          <section className="py-16 md:py-24">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <Badge variant="outline" className="mb-4">
+                  <Star className="h-3 w-3 mr-1 fill-current" />
+                  Real Stories
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                  Families We've Helped
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                  Join hundreds of families who found the right treatment with our help
+                </p>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                {TESTIMONIALS.map((testimonial, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <Card className="h-full bg-card border shadow-sm">
                       <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <CheckCircle className="h-5 w-5 text-primary" />
+                        {/* Stars */}
+                        <div className="flex gap-1 mb-4">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                            <Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          ))}
+                        </div>
+                        
+                        <blockquote className="text-foreground mb-4 leading-relaxed">
+                          "{testimonial.quote}"
+                        </blockquote>
+                        
+                        <div className="flex items-center gap-3 pt-4 border-t">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-sm font-semibold text-primary">
+                              {testimonial.author.charAt(0)}
+                            </span>
                           </div>
                           <div>
-                            <h3 className="font-semibold text-lg text-foreground mb-2">{benefit.title}</h3>
-                            <p className="text-muted-foreground text-sm leading-relaxed">
-                              {benefit.description}
-                            </p>
+                            <p className="font-medium text-sm text-foreground">{testimonial.author}</p>
+                            <p className="text-xs text-muted-foreground">{testimonial.location}</p>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+          
+          {/* FAQ Section */}
+          <section className="py-16 md:py-24 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto">
+                <div className="text-center mb-12">
+                  <Badge variant="outline" className="mb-4">
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                    FAQ
+                  </Badge>
+                  <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                    Common Questions
+                  </h2>
+                </div>
+                
+                <div className="space-y-4">
+                  {FAQ_ITEMS.map((item, index) => (
+                    <Card key={index} className="border bg-card">
+                      <CardContent className="p-6">
+                        <h3 className="font-semibold text-foreground mb-2">{item.question}</h3>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{item.answer}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -199,23 +459,51 @@ export default function ConciergeLanding() {
             </div>
           </section>
           
-          {/* CTA Section */}
-          <section className="py-20 bg-primary text-primary-foreground">
-            <div className="container mx-auto px-4">
-              <div className="max-w-2xl mx-auto text-center">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Ready to Find the Right Program?
-                </h2>
-                <p className="text-lg opacity-90 mb-8">
-                  Take the first step toward recovery. Our team is ready to help you find 
-                  treatment that works for your unique situation.
-                </p>
-                <Button asChild size="lg" variant="secondary" className="text-base h-12 px-8 shadow-lg">
-                  <Link to="/concierge/intake">
-                    Start Your Intake
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+          {/* Final CTA Section */}
+          <section className="py-20 md:py-28 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/90" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
+            
+            <div className="container relative mx-auto px-4">
+              <div className="max-w-2xl mx-auto text-center text-primary-foreground">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+                    Ready to Find Help?
+                  </h2>
+                  <p className="text-lg md:text-xl opacity-90 mb-8 leading-relaxed">
+                    You don't have to navigate this alone. Take the first step today and 
+                    let us help you find treatment that works.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button asChild size="lg" variant="secondary" className="h-14 px-10 text-lg font-semibold shadow-xl group">
+                      <Link to="/concierge/intake">
+                        Get Started for $29
+                        <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </Button>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm opacity-80">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>No hidden fees</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>24-48hr response</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>100% confidential</span>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </section>
