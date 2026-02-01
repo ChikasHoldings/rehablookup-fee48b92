@@ -135,60 +135,58 @@ export default function ConciergeLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section - Clean & Focused */}
-          <section className="relative overflow-hidden min-h-[85vh] flex items-center">
-            {/* Background Image */}
-            <div className="absolute inset-0">
+          {/* Hero Section */}
+          <section className="relative overflow-hidden bg-muted/30">
+            {/* Background Image - Subtle */}
+            <div className="absolute inset-0 opacity-20">
               <img 
                 src={conciergeHeroImage} 
-                alt="Path to recovery" 
+                alt="" 
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-background/98 via-background/90 to-background/75" />
             </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
             
-            <div className="container relative mx-auto px-4 py-16 md:py-24">
-              <div className="max-w-2xl">
+            <div className="container relative mx-auto px-4 py-12 md:py-16 lg:py-20">
+              <div className="max-w-3xl mx-auto text-center">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Badge variant="secondary" className="mb-6 px-3 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20">
+                  <Badge className="mb-5 px-3 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20">
                     <HeartHandshake className="h-4 w-4 mr-2" />
                     Personalized Placement Service
                   </Badge>
                   
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight leading-[1.1]">
-                    Find the Right
-                    <span className="text-primary"> Treatment</span>
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 tracking-tight">
+                    Find the Right Treatment
                   </h1>
                   
-                  <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-xl">
+                  <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
                     Our specialists match you with programs that fit your needs, insurance, and location. 
-                    <span className="text-foreground font-medium"> Get matched in 24-48 hours.</span>
+                    Get matched in 24-48 hours for just <span className="text-foreground font-semibold">$29</span>.
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
-                    <Button asChild size="lg" className="h-14 px-8 text-base font-semibold shadow-xl shadow-primary/20 group">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+                    <Button asChild size="lg" className="h-12 px-8 text-base font-semibold shadow-lg group">
                       <Link to="/concierge/intake">
-                        Get Started — $29
-                        <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                        Get Started Now
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>
-                    <span className="text-sm text-muted-foreground">One-time fee • No hidden costs</span>
                   </div>
                   
-                  <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
                       <Shield className="h-4 w-4 text-primary" />
-                      <span>100% Confidential</span>
+                      <span>Confidential</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Clock className="h-4 w-4 text-primary" />
                       <span>24-48hr Response</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Building2 className="h-4 w-4 text-primary" />
                       <span>100+ Facilities</span>
                     </div>
