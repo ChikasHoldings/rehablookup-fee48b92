@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Footer } from "@/components/layout/Footer";
-import { BackToTop } from "@/components/ui/back-to-top";
 import { SEO } from "@/components/SEO";
 import {
   Building2,
@@ -504,9 +502,6 @@ const ForProviders = () => {
           </div>
         </section>
       </main>
-      
-      <Footer />
-      <BackToTop />
     </div>
   );
 };

@@ -1,7 +1,4 @@
 import { Link } from "react-router-dom";
-
-import { Footer } from "@/components/layout/Footer";
-import { BackToTop } from "@/components/ui/back-to-top";
 import { SEO } from "@/components/SEO";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { Button } from "@/components/ui/button";
@@ -435,9 +432,6 @@ export default function ProviderResources() {
           </div>
         </section>
       </main>
-      
-      <Footer />
-      <BackToTop />
     </div>
   );
 }

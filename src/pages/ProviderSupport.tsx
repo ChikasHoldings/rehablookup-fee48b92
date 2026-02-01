@@ -3,9 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-import { Footer } from "@/components/layout/Footer";
-import { BackToTop } from "@/components/ui/back-to-top";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -293,9 +290,6 @@ export default function ProviderSupport() {
           </div>
         </section>
       </main>
-      
-      <Footer />
-      <BackToTop />
     </div>
   );
 }

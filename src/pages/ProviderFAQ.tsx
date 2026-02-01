@@ -1,7 +1,5 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Footer } from "@/components/layout/Footer";
-import { BackToTop } from "@/components/ui/back-to-top";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -400,9 +398,6 @@ export default function ProviderFAQ() {
           </div>
         </section>
       </main>
-
-      <Footer />
-      <BackToTop />
     </div>
   );
 }
