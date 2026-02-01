@@ -307,7 +307,7 @@ const Index = () => {
           src={heroImage}
           alt=""
           role="presentation"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-cover object-[center_35%] sm:object-[center_40%] md:object-center"
           width={1920}
           height={1080}
           fetchPriority="high"
