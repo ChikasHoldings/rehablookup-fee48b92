@@ -32,7 +32,7 @@ import {
 import providerHero from "@/assets/provider-hero.jpg";
 import providerTeam from "@/assets/provider-team.jpg";
 import providerFacility from "@/assets/provider-facility.jpg";
-import providerDashboardMockup from "@/assets/provider-dashboard-mockup.jpg";
+import providerDashboardScreenshot from "@/assets/provider-dashboard-screenshot.png";
 import testimonialSarah from "@/assets/testimonials/testimonial-sarah.jpg";
 import testimonialMichael from "@/assets/testimonials/testimonial-michael.jpg";
 import testimonialJennifer from "@/assets/testimonials/testimonial-jennifer.jpg";
@@ -244,10 +244,13 @@ const ForProviders = () => {
               
               <div className="relative">
                 <img 
-                  src={providerDashboardMockup} 
-                  alt="Provider Dashboard showing analytics and inquiries"
-                  className="rounded-xl shadow-xl border border-border w-full"
+                  src={providerDashboardScreenshot} 
+                  alt="Provider Dashboard showing analytics, inquiries, and recent leads"
+                  className="rounded-xl shadow-2xl border border-border w-full"
                 />
+                {/* Decorative elements */}
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl -z-10" />
+                <div className="absolute -top-4 -left-4 w-32 h-32 bg-accent/10 rounded-full blur-2xl -z-10" />
               </div>
             </div>
           </div>
