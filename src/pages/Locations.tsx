@@ -98,6 +98,13 @@ const Locations = () => {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
         <div className="container relative">
+          {/* Breadcrumb */}
+          <nav className="mb-5 flex items-center justify-center gap-2 text-sm text-white/70">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-white font-medium">Locations</span>
+          </nav>
+          
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm border border-white/10">
               <Map className="h-4 w-4" />

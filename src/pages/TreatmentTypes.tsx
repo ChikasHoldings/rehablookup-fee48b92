@@ -26,6 +26,7 @@ import {
   Shield,
   MapPin,
   Navigation,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -269,6 +270,13 @@ const TreatmentTypes = () => {
       {/* Streamlined Hero */}
       <section className="bg-primary py-10 md:py-12">
         <div className="container">
+          {/* Breadcrumb */}
+          <nav className="mb-5 flex items-center justify-center gap-2 text-sm text-white/70">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-white font-medium">Treatment Types</span>
+          </nav>
+          
           <div className="mx-auto max-w-2xl text-center">
             <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Treatment Programs
