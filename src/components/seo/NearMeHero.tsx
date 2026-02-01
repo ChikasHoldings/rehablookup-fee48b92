@@ -47,18 +47,20 @@ export function NearMeHero({
       
       <div className="container relative z-10 py-10 md:py-14 lg:py-16">
         {/* Breadcrumb navigation */}
-        <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm text-white/70" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-white transition-colors">Home</Link>
-          <span>/</span>
-          <Link to="/treatment-types" className="hover:text-white transition-colors">Treatment</Link>
-          <span>/</span>
-          <span className="text-white font-medium speakable-headline">{treatmentType}</span>
-          {location?.state && (
-            <>
-              <span>/</span>
-              <span className="text-white font-medium">{locationString}</span>
-            </>
-          )}
+        <nav className="mb-5 text-center" aria-label="Breadcrumb">
+          <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
+            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
+            <span className="text-white/50">/</span>
+            <Link to="/treatment-types" className="text-white/70 hover:text-white transition-colors">Treatment</Link>
+            <span className="text-white/50">/</span>
+            <span className="text-white font-medium speakable-headline">{treatmentType}</span>
+            {location?.state && (
+              <>
+                <span className="text-white/50">/</span>
+                <span className="text-white font-medium">{locationString}</span>
+              </>
+            )}
+          </span>
         </nav>
 
         <div className="max-w-3xl">
