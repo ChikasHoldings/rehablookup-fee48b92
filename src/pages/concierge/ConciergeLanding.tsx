@@ -189,9 +189,8 @@ export default function ConciergeLanding() {
           </section>
           
           {/* Social Proof Stats Bar */}
-          <section className="py-8 relative overflow-hidden border-y border-border/50">
-            <div className="absolute inset-0 bg-gradient-to-r from-muted/60 via-muted/40 to-muted/60" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.04),transparent_70%)]" />
+          <section className="py-8 relative overflow-hidden bg-primary/10 border-y border-primary/20">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.08),transparent_60%)]" />
             <div className="container relative mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
                 {STATS.map((stat, index) => (
