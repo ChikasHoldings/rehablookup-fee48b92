@@ -191,7 +191,7 @@ export default function ProviderResources() {
                 Access comprehensive guides, video tutorials, and tools to maximize your facility's visibility and connect with more families.
               </p>
               <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
-                <Link to="/provider-login" className="w-full sm:w-auto">
+                <Link to="/login" className="w-full sm:w-auto">
                   <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
                     Access Dashboard
                     <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
@@ -337,7 +337,7 @@ export default function ProviderResources() {
                     </p>
                     
                     <div className="space-y-3">
-                      <Link to="/provider-login" className="block">
+                      <Link to="/login" className="block">
                         <Button size="lg" className="w-full gap-2 h-12 rounded-xl text-base font-semibold shadow-md">
                           Upgrade Your Plan
                           <ArrowRight className="h-4 w-4" />
@@ -424,7 +424,7 @@ export default function ProviderResources() {
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link to="/provider-login">
+                  <Link to="/login">
                     <Button variant="outline" size="default">
                       Sign In
                     </Button>

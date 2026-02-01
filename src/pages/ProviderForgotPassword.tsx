@@ -146,7 +146,7 @@ export default function ProviderForgotPassword() {
                   {isLoading ? "Sending..." : "Resend Email"}
                 </Button>
                 
-                <Link to="/provider-login" className="block">
+                <Link to="/login" className="block">
                   <Button variant="ghost" className="w-full h-10 text-sm">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Sign In
@@ -222,7 +222,7 @@ export default function ProviderForgotPassword() {
                 {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
               </Button>
 
-              <Link to="/provider-login" className="block">
+              <Link to="/login" className="block">
                 <Button variant="ghost" className="w-full h-10 text-sm">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Sign In

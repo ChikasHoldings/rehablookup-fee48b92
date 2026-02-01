@@ -150,9 +150,9 @@ export default function SeekerAuth() {
             />
           </Link>
           <Button variant="outline" size="sm" className="text-xs sm:text-sm" asChild>
-            <Link to="/provider-login">
-              <span className="hidden sm:inline">{activeTab === 'login' ? 'Login for Facility Owners' : 'List Your Facility'}</span>
-              <span className="sm:hidden">{activeTab === 'login' ? 'For Facilities' : 'List Facility'}</span>
+            <Link to="/provider-signup">
+              <span className="hidden sm:inline">{activeTab === 'login' ? 'List Your Facility' : 'List Your Facility'}</span>
+              <span className="sm:hidden">{activeTab === 'login' ? 'List Facility' : 'List Facility'}</span>
             </Link>
           </Button>
         </header>
