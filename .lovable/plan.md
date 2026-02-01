@@ -1,234 +1,404 @@
 
-# Admin Support Inbox Implementation Plan
+# Marketing Lead Capture & Monetization System
 
 ## Overview
-Build a lightweight Admin Support Inbox to centralize and manage support messages from public website contact forms, seeker panel, and provider panel. This enables assignment coordination among 3-5 staff members and provides basic status tracking.
+Build a complete lead capture pipeline optimized for paid advertising that:
+1. Captures leads via a polished landing page
+2. Shows matched facilities with one-click inquiry
+3. Stores leads for admin management
+4. Automatically sends Concierge upsell emails after 12-24 hours
 
 ## Architecture
 
 ```text
-+------------------+     +------------------+     +-------------------+
-| Contact Forms    |     | Edge Functions   |     | support_tickets   |
-| - Public Website |---->| - send-contact   |---->| Database Table    |
-| - Provider Panel |     | - send-provider  |     | (stores + emails) |
-| - Seeker Panel   |     | - send-seeker    |     +-------------------+
-+------------------+     +------------------+             |
-                                                          v
-                                                +-------------------+
-                                                | Admin Support     |
-                                                | Inbox Page        |
-                                                | - List View       |
-                                                | - Assignment      |
-                                                | - Status Tracking |
-                                                +-------------------+
++------------------+     +----------------------+     +-------------------+
+| Ad Landing Page  |     | submit-marketing-lead|     | marketing_leads   |
+| /lp/convert      |---->| Edge Function        |---->| Database Table    |
+| (Lead Intake)    |     | (Store + Match)      |     +-------------------+
++------------------+     +----------------------+             |
+                                   |                           |
+                                   v                           v
+                         +----------------------+     +-------------------+
+                         | Matching Success     |     | Admin Marketing   |
+                         | Page with Facilities |     | Dashboard         |
+                         +----------------------+     +-------------------+
+                                   |
+                                   | (One-Click Request)
+                                   v
+                         +----------------------+     +-------------------+
+                         | submit-qualified-lead|     | leads table       |
+                         | (Normal Lead Flow)   |---->| (Normal pricing)  |
+                         +----------------------+     +-------------------+
+                                                              |
+                                                              | (After 12-24hrs if no request)
+                                                              v
+                                                      +-------------------+
+                                                      | send-marketing-   |
+                                                      | followup          |
+                                                      | (Concierge Email) |
+                                                      +-------------------+
 ```
+
+---
 
 ## Database Schema
 
-### New Table: `support_tickets`
+### New Table: `marketing_leads`
+
 ```sql
-CREATE TABLE public.support_tickets (
+CREATE TABLE public.marketing_leads (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   
-  -- Source tracking
-  source text NOT NULL CHECK (source IN ('public_contact', 'provider_support', 'seeker_support')),
+  -- Contact Info
+  first_name text NOT NULL,
+  last_name text NOT NULL,
+  email text NOT NULL,
+  phone text NOT NULL,
+  preferred_contact text DEFAULT 'phone',
   
-  -- Sender info
-  sender_name text NOT NULL,
-  sender_email text NOT NULL,
-  sender_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  -- Clinical Data (from intake form)
+  urgency text,
+  who_seeking_help text,
+  location_zip text,
+  location_city_state text,
+  level_of_care text,
+  insurance_type text,
+  insurance_provider text,
+  primary_substance text[],
+  dual_diagnosis text,
+  age_range text,
+  gender text,
+  previous_treatment text,
+  co_occurring_conditions text[],
+  employment_status text,
+  message text,
   
-  -- Content
-  category text NOT NULL,
-  subject text,
-  message text NOT NULL,
+  -- Tracking
+  source text NOT NULL DEFAULT 'marketing',
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  utm_term text,
+  utm_content text,
+  landing_page text,
   
-  -- Assignment & Status
-  status text NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'open', 'in_progress', 'resolved', 'closed')),
-  priority text NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
-  assigned_to uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  assigned_at timestamptz,
-  assigned_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  -- Facility Matching
+  matched_facility_ids uuid[] DEFAULT '{}',
+  facilities_requested uuid[] DEFAULT '{}',
   
-  -- Resolution
-  resolved_at timestamptz,
-  resolved_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  resolution_notes text,
+  -- Follow-up Status
+  followup_email_sent boolean DEFAULT false,
+  followup_email_sent_at timestamptz,
+  converted_to_concierge boolean DEFAULT false,
+  converted_at timestamptz,
+  
+  -- Status
+  status text DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'converted', 'lost')),
+  admin_notes text,
   
   -- Timestamps
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
--- Index for common queries
-CREATE INDEX idx_support_tickets_status ON support_tickets(status);
-CREATE INDEX idx_support_tickets_assigned_to ON support_tickets(assigned_to);
-CREATE INDEX idx_support_tickets_created_at ON support_tickets(created_at DESC);
+-- Indexes
+CREATE INDEX idx_marketing_leads_created_at ON marketing_leads(created_at DESC);
+CREATE INDEX idx_marketing_leads_status ON marketing_leads(status);
+CREATE INDEX idx_marketing_leads_followup ON marketing_leads(followup_email_sent, created_at);
+CREATE INDEX idx_marketing_leads_email ON marketing_leads(email);
 
 -- Enable RLS
-ALTER TABLE support_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketing_leads ENABLE ROW LEVEL SECURITY;
 
--- Admin-only access policy
-CREATE POLICY "Admins can manage support tickets"
-  ON support_tickets FOR ALL
+-- Admin-only access
+CREATE POLICY "Admins can manage marketing leads"
+  ON marketing_leads FOR ALL
   TO authenticated
   USING (public.user_is_admin(auth.uid()));
+
+-- Trigger for updated_at
+CREATE TRIGGER update_marketing_leads_updated_at
+  BEFORE UPDATE ON marketing_leads
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
 ```
 
-### New Table: `support_ticket_notes` (Internal comments)
-```sql
-CREATE TABLE public.support_ticket_notes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  ticket_id uuid REFERENCES support_tickets(id) ON DELETE CASCADE NOT NULL,
-  author_id uuid REFERENCES auth.users(id) ON DELETE SET NULL NOT NULL,
-  content text NOT NULL,
-  created_at timestamptz DEFAULT now() NOT NULL
-);
+---
 
-ALTER TABLE support_ticket_notes ENABLE ROW LEVEL SECURITY;
+## Edge Functions
 
-CREATE POLICY "Admins can manage ticket notes"
-  ON support_ticket_notes FOR ALL
-  TO authenticated
-  USING (public.user_is_admin(auth.uid()));
-```
+### 1. `submit-marketing-lead/index.ts`
 
-## Edge Function Updates
+**Purpose**: Store marketing lead and return matched facilities
 
-### 1. Update `send-contact-form/index.ts`
-Add database insert before sending email:
+**Key Logic**:
+- Store lead data in `marketing_leads` table
+- Find 3-5 matching facilities based on:
+  - Same state as lead's ZIP code
+  - Matching level of care (if specified)
+  - Approved and not suspended status
+  - Prioritize Pro subscribers
+- Return matched facility data for display
+- Send confirmation email to lead
+
+**Returns**:
 ```typescript
-// After validation, before sending email:
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-);
-
-await supabaseAdmin.from('support_tickets').insert({
-  source: 'public_contact',
-  sender_name: name,
-  sender_email: email,
-  category: subject,
-  message: message,
-});
+{
+  success: true,
+  leadId: "uuid",
+  matchedFacilities: [
+    { id, name, city, state, logoUrl, facilityType, phone }
+  ]
+}
 ```
 
-### 2. Update `send-provider-support/index.ts`
-Same pattern - insert ticket before sending emails.
+### 2. `request-facility-from-marketing/index.ts`
 
-### 3. Create `send-seeker-support/index.ts` (if needed)
-New edge function for seeker panel support requests with same dual-write pattern.
+**Purpose**: Create a real lead when user clicks "Request Info" on a matched facility
+
+**Key Logic**:
+- Fetch marketing lead data by ID
+- Call existing `submit-qualified-lead` logic to create lead in `leads` table
+- Update `marketing_leads.facilities_requested` array
+- Facility receives normal notification and pricing applies ($39-$49)
+- Standard 24hr exclusivity + redistribution logic applies
+
+### 3. `send-marketing-followup/index.ts` (Cron-triggered)
+
+**Purpose**: Send Concierge upsell email 12-24 hours after submission
+
+**Key Logic**:
+- Query marketing leads where:
+  - `followup_email_sent = false`
+  - `created_at` is between 12-24 hours ago
+  - `facilities_requested` is empty (no engagement)
+- Send polished follow-up email:
+  - "Did you find what you were looking for?"
+  - Highlight Concierge benefits ($29 one-time)
+  - Direct CTA to `/concierge/intake`
+- Update `followup_email_sent = true`
+
+**Cron Schedule**: Every hour
+```sql
+SELECT cron.schedule(
+  'marketing-followup-emails',
+  '0 * * * *',  -- Every hour
+  $$
+  SELECT net.http_post(
+    url:='https://[project].supabase.co/functions/v1/send-marketing-followup',
+    headers:='{"Authorization": "Bearer [anon_key]"}'::jsonb
+  );
+  $$
+);
+```
+
+---
 
 ## Frontend Components
 
-### 1. New Admin Page: `src/pages/admin/AdminSupport.tsx`
+### 1. Landing Page: `src/pages/MarketingLanding.tsx`
 
-**Features:**
-- Unified ticket list with filtering (status, source, assignee, date range)
-- Search by sender name/email or message content
-- Quick status badges with color coding
-- Assignment dropdown in list view
-- Click-to-open ticket detail modal
+**Route**: `/lp/convert`
 
-**UI Layout:**
+**Design Elements**:
+- Minimal header (logo only, no navigation)
+- Trust badges above fold (Confidential, Free Service, 24hr Response)
+- Social proof stats bar
+- Embedded `LeadIntakeForm` with custom success handler
+- Testimonials section
+- FAQ accordion
+- Emergency hotline notice
+- Mobile-optimized, fast-loading
+
+**Key Features**:
+- UTM parameter capture from URL
+- Custom `renderSuccess` prop for facility matching display
+- No exit links to maximize conversion
+
+### 2. Success Component: `src/components/marketing/MarketingLeadSuccess.tsx`
+
+**Design**:
 ```text
 +------------------------------------------------------------------+
-| Support Inbox                              [Filter] [Search]      |
-+------------------------------------------------------------------+
-| Status: All | New (5) | Open | In Progress | Resolved            |
-+------------------------------------------------------------------+
-| Source      | From          | Category    | Assignee  | Created  |
-|-------------|---------------|-------------|-----------|----------|
-| Provider    | John D.       | Billing     | [Avatar]  | 2h ago   |
-| Public      | Jane S.       | General     | Unassigned| 5h ago   |
-| Seeker      | Mike R.       | Technical   | [Avatar]  | 1d ago   |
+| Success! We found [3-5] treatment centers near you               |
+|                                                                  |
+| +------------+  +------------+  +------------+                   |
+| | Facility 1 |  | Facility 2 |  | Facility 3 |                   |
+| | Logo       |  | Logo       |  | Logo       |                   |
+| | Name       |  | Name       |  | Name       |                   |
+| | City, ST   |  | City, ST   |  | City, ST   |                   |
+| |[Request]   |  |[Request]   |  |[Request]   |                   |
+| +------------+  +------------+  +------------+                   |
+|                                                                  |
+| Want personalized help? Try our Concierge Service ($29)          |
+| [Get Expert Help →]                                              |
 +------------------------------------------------------------------+
 ```
 
-### 2. Ticket Detail Modal: `src/components/admin/SupportTicketModal.tsx`
+**Features**:
+- Card grid showing matched facilities
+- One-click "Request Info" button per facility
+- Toast confirmation on request
+- Concierge service CTA at bottom
+- Mobile-responsive grid
 
-**Features:**
-- Full message view with sender details
-- Status change dropdown
-- Priority selector
-- Assignment selector (with admin staff list)
-- Internal notes thread
-- "Reply via Email" link (opens mailto:)
-- Activity timeline showing status changes
+### 3. Admin Page: `src/pages/admin/AdminMarketing.tsx`
 
-### 3. Sidebar Update: `src/components/admin/AdminSidebar.tsx`
-Add "Support" nav item under Settings group or as standalone:
-```typescript
-{ to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support" }
-```
+**Route**: `/admin/marketing`
 
-### 4. Permission Addition
-Add `support` permission to admin permissions system for role-based access.
+**Features**:
+- Summary stats cards (Total, Converted, Pending Follow-up)
+- Data table with columns:
+  - Name, Email, Phone (full visibility)
+  - Location, Source/UTM
+  - Facilities Requested count
+  - Follow-up Status
+  - Created At
+- Filters: Status, Date Range, Source
+- Search by name/email
+- Click to view full lead details modal
+- Export to CSV
+
+### 4. Follow-up Email Template
+
+**Subject**: "Still looking for treatment help? We can help."
+
+**Content**:
+- Personalized greeting
+- "Did the facilities we suggested work out?"
+- Highlight Concierge benefits:
+  - Personal matching specialist
+  - Insurance verification help
+  - Direct introductions to programs
+- Clear CTA: "Get Expert Help - Just $29"
+- SAMHSA helpline in footer
+
+---
 
 ## File Changes Summary
 
 | File | Action | Description |
 |------|--------|-------------|
-| `supabase/migrations/xxx.sql` | Create | New tables + RLS policies |
-| `supabase/functions/send-contact-form/index.ts` | Modify | Add database insert |
-| `supabase/functions/send-provider-support/index.ts` | Modify | Add database insert |
-| `src/pages/admin/AdminSupport.tsx` | Create | Main support inbox page |
-| `src/components/admin/SupportTicketModal.tsx` | Create | Ticket detail modal |
-| `src/components/admin/AdminSidebar.tsx` | Modify | Add Support nav item |
-| `src/components/admin/AdminShell.tsx` | Modify | Add mobile nav entry |
-| `src/App.tsx` | Modify | Add route for /admin/support |
+| `supabase/migrations/xxx.sql` | Create | New `marketing_leads` table + indexes |
+| `supabase/functions/submit-marketing-lead/index.ts` | Create | Store lead + match facilities |
+| `supabase/functions/request-facility-from-marketing/index.ts` | Create | Convert to real lead |
+| `supabase/functions/send-marketing-followup/index.ts` | Create | Concierge upsell email |
+| `src/pages/MarketingLanding.tsx` | Create | Ad landing page |
+| `src/components/marketing/MarketingLeadSuccess.tsx` | Create | Facility matching success |
+| `src/pages/admin/AdminMarketing.tsx` | Create | Admin dashboard |
+| `src/components/admin/AdminSidebar.tsx` | Modify | Add Marketing nav item |
+| `src/App.tsx` | Modify | Add routes |
+| `supabase/config.toml` | Modify | Register new edge functions |
 
-## Technical Details
-
-### Query Hooks
-```typescript
-// useAdminSupportTickets.ts
-const { data: tickets } = useQuery({
-  queryKey: ['admin-support-tickets', filters],
-  queryFn: () => supabase
-    .from('support_tickets')
-    .select(`
-      *,
-      assigned_admin:admin_user_profiles!assigned_to(display_name, avatar_url)
-    `)
-    .order('created_at', { ascending: false })
-});
-```
-
-### Assignment Mutation
-```typescript
-const assignTicket = useMutation({
-  mutationFn: async ({ ticketId, assigneeId }) => {
-    await supabase.from('support_tickets').update({
-      assigned_to: assigneeId,
-      assigned_at: new Date().toISOString(),
-      assigned_by: currentUserId,
-      status: 'open', // Auto-change from 'new' when assigned
-    }).eq('id', ticketId);
-    
-    // Log to admin_audit_log
-    await supabase.from('admin_audit_log').insert({
-      admin_user_id: currentUserId,
-      action: 'support_ticket_assigned',
-      target_type: 'support_ticket',
-      target_id: ticketId,
-      metadata: { assignee_id: assigneeId }
-    });
-  }
-});
-```
+---
 
 ## Implementation Order
 
-1. **Phase 1: Database** - Create tables and RLS policies
-2. **Phase 2: Edge Functions** - Update to dual-write (email + database)
-3. **Phase 3: Admin Page** - Build list view with filters
-4. **Phase 4: Detail Modal** - Assignment workflow and notes
-5. **Phase 5: Navigation** - Add sidebar entry and routing
+**Phase 1: Database**
+- Create `marketing_leads` table with all columns
+- Add RLS policies for admin access
 
-## Future Enhancements (Post-Launch)
-- Response templates for common issues
-- SLA tracking and alerts
-- Basic analytics (avg response time, resolution rate)
-- Canned responses directly from modal
-- Email threading integration
+**Phase 2: Edge Functions**
+- Build `submit-marketing-lead` with facility matching
+- Build `request-facility-from-marketing` integration
+- Build `send-marketing-followup` with email template
+
+**Phase 3: Landing Page**
+- Create `MarketingLanding.tsx` page
+- Build `MarketingLeadSuccess.tsx` component
+- Integrate with `LeadIntakeForm`
+
+**Phase 4: Admin Dashboard**
+- Create `AdminMarketing.tsx` page
+- Add sidebar navigation entry
+- Add route in App.tsx
+
+**Phase 5: Automation**
+- Set up cron job for follow-up emails
+- Test end-to-end flow
+
+---
+
+## Revenue Flow
+
+```text
+Lead submits form on /lp/convert
+         |
+         v
+    Matched with 3-5 facilities
+         |
+    +----+----+
+    |         |
+    v         v
+Clicks     No action
+"Request"     |
+    |         | (12-24hrs later)
+    v         v
+Normal    Follow-up
+Lead      Email sent
+($39-49)      |
+    |         v
+    |    User clicks
+    |    Concierge CTA
+    |         |
+    |         v
+    |    Pays $29
+    |         |
+    v         v
+REVENUE   REVENUE
+```
+
+---
+
+## Key Technical Details
+
+### Facility Matching Logic
+```typescript
+// Query nearby facilities in same state
+const { data: facilities } = await supabase
+  .from("facilities")
+  .select("id, name, city, state, logo_url, facility_type")
+  .eq("state", leadState)
+  .eq("status", "approved")
+  .neq("suspended", true)
+  .limit(10);
+
+// Shuffle and take 3-5
+const shuffled = facilities.sort(() => Math.random() - 0.5);
+return shuffled.slice(0, Math.min(5, shuffled.length));
+```
+
+### Follow-up Email Query
+```typescript
+// Find leads needing follow-up (12-24hrs old, no requests)
+const cutoffStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+const cutoffEnd = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+const { data: leads } = await supabase
+  .from("marketing_leads")
+  .select("*")
+  .eq("followup_email_sent", false)
+  .gte("created_at", cutoffStart.toISOString())
+  .lte("created_at", cutoffEnd.toISOString())
+  .eq("facilities_requested", "{}");
+```
+
+### One-Click Request Integration
+When a user clicks "Request Info", the system:
+1. Fetches the marketing lead data
+2. Creates entry in `leads` table with that facility
+3. Triggers normal facility notification
+4. Standard unlock pricing applies ($39-49)
+5. 24hr exclusivity window starts
+
+---
+
+## Security Considerations
+
+- Marketing leads table has admin-only RLS
+- Email verification from original `LeadIntakeForm` is preserved
+- No PII exposed in client-side responses (only facility public data)
+- Follow-up emails include unsubscribe option
+- Rate limiting on lead submission
+
+This system ensures maximum monetization of every ad visitor while providing genuine value through facility matching and follow-up support.
