@@ -5,17 +5,6 @@ import "./index.css";
 import { initPerformanceOptimizations } from "./lib/performanceUtils";
 import { initSecurity } from "./lib/httpsRedirect";
 
-// Suppress benign React Router ref warnings
-const originalWarn = console.warn;
-console.warn = (...args) => {
-  if (
-    typeof args[0] === "string" &&
-    args[0].includes("Function components cannot be given refs")
-  ) {
-    return;
-  }
-  originalWarn.apply(console, args);
-};
 
 // Initialize security (HTTPS enforcement)
 initSecurity();
