@@ -33,15 +33,38 @@ export default function SeekerSignup() {
   // Zipcode lookup
   const zipcodeLookup = useZipcodeLookup();
   
-  // Check if already authenticated
+  // Check if already authenticated with verified email - redirect seamlessly
   useEffect(() => {
+    let mounted = true;
+    
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/account');
+      if (!mounted) return;
+      
+      if (session?.user?.email_confirmed_at) {
+        // User is verified - redirect to their dashboard
+        navigate('/account', { replace: true });
       }
     };
+    
     checkAuth();
+    
+    // Listen for auth state changes (e.g., after email verification)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        
+        // Handle successful email verification
+        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+          navigate('/account', { replace: true });
+        }
+      }
+    );
+    
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
   
   // Auto-fill city/state when zipcode changes

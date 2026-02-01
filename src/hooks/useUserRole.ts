@@ -41,6 +41,8 @@ const PUBLIC_AUTH_ROUTES = [
   "/admin-login",
   "/auth",
   "/signup",
+  "/seeker/signup",
+  "/seeker/reset-password",
   "/reset-password",
 ];
 
