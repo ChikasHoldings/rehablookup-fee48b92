@@ -26,8 +26,7 @@
 /insurance/united-healthcare /insurance/united-healthcare-rehab 301
 
 # Redirect old/deprecated URLs to canonical versions
-/request-help /concierge 301
-/placement-help /concierge 301
+# Note: /request-help and /placement-help redirects are handled in React Router
 /my-account /account 301
 
 # Handle SPA routing - serve index.html for all routes

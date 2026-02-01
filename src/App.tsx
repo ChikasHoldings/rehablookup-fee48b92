@@ -255,11 +255,18 @@ const App = () => (
             <Route path="/faith-based-rehab-near-me" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/faith-based-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             
-            {/* Concierge Placement Routes */}
-            <Route path="/request-help" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
-            <Route path="/request-help/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
-            <Route path="/request-help/thank-you" element={<PublicRouteGuard><ConciergeThankYou /></PublicRouteGuard>} />
-            <Route path="/request-help/create-password" element={<PublicRouteGuard><ConciergeCreatePassword /></PublicRouteGuard>} />
+            {/* Concierge Placement Routes - /concierge is canonical */}
+            <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
+            <Route path="/concierge/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
+            <Route path="/concierge/thank-you" element={<PublicRouteGuard><ConciergeThankYou /></PublicRouteGuard>} />
+            <Route path="/concierge/create-password" element={<PublicRouteGuard><ConciergeCreatePassword /></PublicRouteGuard>} />
+            
+            {/* Legacy concierge redirects */}
+            <Route path="/request-help" element={<Navigate to="/concierge" replace />} />
+            <Route path="/request-help/intake" element={<Navigate to="/concierge/intake" replace />} />
+            <Route path="/request-help/thank-you" element={<Navigate to="/concierge/thank-you" replace />} />
+            <Route path="/request-help/create-password" element={<Navigate to="/concierge/create-password" replace />} />
+            <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
             
             {/* Treatment center profile pages */}
             <Route path="/treatment-centers/:slug" element={<PublicRouteGuard><TreatmentCenterProfile /></PublicRouteGuard>} />
@@ -299,8 +306,8 @@ const App = () => (
             <Route path="/seeker/signup" element={<SeekerSignup />} />
             <Route path="/seeker/reset-password" element={<ResetPassword />} />
             
-            {/* Seeker Panel */}
-            <Route path="/my-account" element={<SeekerShell />}>
+            {/* Seeker Panel - /account is canonical */}
+            <Route path="/account" element={<SeekerShell />}>
               <Route index element={<SeekerHome />} />
               <Route path="requests" element={<SeekerRequests />} />
               <Route path="saved" element={<SeekerSaved />} />
@@ -314,6 +321,9 @@ const App = () => (
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
             </Route>
+            
+            {/* Legacy /my-account redirect */}
+            <Route path="/my-account/*" element={<Navigate to="/account" replace />} />
             
             {/* Provider Routes */}
             <Route path="/for-providers" element={<PublicRouteGuard><ForProviders /></PublicRouteGuard>} />
@@ -334,6 +344,7 @@ const App = () => (
               <Route index element={<Navigate to="/provider/dashboard" replace />} />
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="listings" element={<ProviderListingPage />} />
+              <Route path="listing" element={<Navigate to="/provider/listings" replace />} />
               <Route path="add-location" element={<ProviderAddLocation />} />
               <Route path="inquiries" element={<ProviderInquiriesPage />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
@@ -357,6 +368,7 @@ const App = () => (
               <Route path="leads" element={<AdminLeads />} />
               <Route path="seekers" element={<AdminSeekers />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
+              <Route path="featured" element={<Navigate to="/admin/subscriptions?tab=featured" replace />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="notifications" element={<AdminNotifications />} />

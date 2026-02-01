@@ -314,7 +314,7 @@ const CityDrugAddiction = () => {
         ]}
         insuranceLinks={[
           { title: "Insurance Guide", href: "/insurance" },
-          { title: "Verify Coverage", href: "/request-help" },
+          { title: "Verify Coverage", href: "/concierge" },
         ]}
       />
     </Layout>
