@@ -96,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Insert into support_tickets table (dual-write)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
+    const { data: ticketData, error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
       source: 'provider_support',
       sender_name: providerName,
       sender_email: providerEmail,
@@ -104,13 +104,32 @@ const handler = async (req: Request): Promise<Response> => {
       category: categoryLabel,
       subject: subject,
       message: `Facility: ${facilityInfo}\n\n${message}`,
-    });
+    }).select('id').single();
 
     if (ticketError) {
       console.error("[SEND-SUPPORT-REQUEST] Failed to create ticket:", ticketError);
-      // Continue with email even if ticket creation fails
     } else {
       console.log("[SEND-SUPPORT-REQUEST] Support ticket created successfully");
+      
+      // Notify all admins
+      const { data: adminUsers } = await supabaseAdmin
+        .from('admin_user_profiles')
+        .select('user_id')
+        .eq('status', 'active');
+      
+      if (adminUsers && adminUsers.length > 0) {
+        const notifications = adminUsers.map(admin => ({
+          user_id: admin.user_id,
+          type: 'support_ticket',
+          title: 'New Provider Support Request',
+          message: `${providerName} (${facilityInfo}) needs help with ${categoryLabel}`,
+          link: `/admin/support?ticket=${ticketData?.id}`,
+          metadata: { ticket_id: ticketData?.id, source: 'provider_support' }
+        }));
+        
+        await supabaseAdmin.from('admin_user_notifications').insert(notifications);
+        console.log("[SEND-SUPPORT-REQUEST] Admin notifications created");
+      }
     }
 
     const emailHtml = `
