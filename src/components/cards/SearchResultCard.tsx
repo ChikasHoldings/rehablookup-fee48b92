@@ -260,8 +260,16 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               </div>
             )}
 
-            {/* Top-right icons: Favorite + Years */}
-            <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
+            {/* Top-right icons: Favorite + Years (horizontal) */}
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+              {/* Years badge */}
+              {yearsInBusiness && yearsInBusiness > 0 && (
+                <div className="flex items-center gap-1 bg-amber-500/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-md">
+                  <Clock className="h-2.5 w-2.5 text-amber-100" aria-hidden="true" />
+                  <span className="text-[9px] font-semibold text-white">{yearsInBusiness}+ yrs</span>
+                </div>
+              )}
+
               {/* Favorite button */}
               <button
                 onClick={(e) => {
@@ -281,14 +289,6 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               >
                 <Heart className={cn("h-6 w-6", isFavorite(center.id) && "fill-current")} aria-hidden="true" />
               </button>
-
-              {/* Years badge */}
-              {yearsInBusiness && yearsInBusiness > 0 && (
-                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-md">
-                  <Clock className="h-2.5 w-2.5 text-blue-600" aria-hidden="true" />
-                  <span className="text-[9px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
-                </div>
-              )}
             </div>
 
             {/* Logo overlay */}
