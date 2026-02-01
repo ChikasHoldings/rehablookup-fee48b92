@@ -97,13 +97,6 @@ const RehabCenters = () => {
       <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/95 to-primary/85 py-10 md:py-14">
         <MedicalPatternBackground />
         <div className="container relative z-10">
-          {/* Breadcrumb */}
-          <nav className="mb-5 flex items-center justify-center gap-2 text-sm text-white/70">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
-            <span className="text-white/50">/</span>
-            <span className="text-white font-medium">Find Rehab</span>
-          </nav>
-          
           <div className="mb-6 text-center">
             <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Treatment Centers
