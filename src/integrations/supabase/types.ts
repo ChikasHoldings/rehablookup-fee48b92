@@ -2487,6 +2487,129 @@ export type Database = {
           },
         ]
       }
+      marketing_leads: {
+        Row: {
+          admin_notes: string | null
+          age_range: string | null
+          co_occurring_conditions: string[] | null
+          converted_at: string | null
+          converted_to_concierge: boolean | null
+          created_at: string
+          dual_diagnosis: string | null
+          email: string
+          employment_status: string | null
+          facilities_requested: string[] | null
+          first_name: string
+          followup_email_sent: boolean | null
+          followup_email_sent_at: string | null
+          gender: string | null
+          id: string
+          insurance_provider: string | null
+          insurance_type: string | null
+          landing_page: string | null
+          last_name: string
+          level_of_care: string | null
+          location_city_state: string | null
+          location_zip: string | null
+          matched_facility_ids: string[] | null
+          message: string | null
+          phone: string
+          preferred_contact: string | null
+          previous_treatment: string | null
+          primary_substance: string[] | null
+          source: string
+          status: string | null
+          updated_at: string
+          urgency: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          who_seeking_help: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          age_range?: string | null
+          co_occurring_conditions?: string[] | null
+          converted_at?: string | null
+          converted_to_concierge?: boolean | null
+          created_at?: string
+          dual_diagnosis?: string | null
+          email: string
+          employment_status?: string | null
+          facilities_requested?: string[] | null
+          first_name: string
+          followup_email_sent?: boolean | null
+          followup_email_sent_at?: string | null
+          gender?: string | null
+          id?: string
+          insurance_provider?: string | null
+          insurance_type?: string | null
+          landing_page?: string | null
+          last_name: string
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
+          matched_facility_ids?: string[] | null
+          message?: string | null
+          phone: string
+          preferred_contact?: string | null
+          previous_treatment?: string | null
+          primary_substance?: string[] | null
+          source?: string
+          status?: string | null
+          updated_at?: string
+          urgency?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          who_seeking_help?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          age_range?: string | null
+          co_occurring_conditions?: string[] | null
+          converted_at?: string | null
+          converted_to_concierge?: boolean | null
+          created_at?: string
+          dual_diagnosis?: string | null
+          email?: string
+          employment_status?: string | null
+          facilities_requested?: string[] | null
+          first_name?: string
+          followup_email_sent?: boolean | null
+          followup_email_sent_at?: string | null
+          gender?: string | null
+          id?: string
+          insurance_provider?: string | null
+          insurance_type?: string | null
+          landing_page?: string | null
+          last_name?: string
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
+          matched_facility_ids?: string[] | null
+          message?: string | null
+          phone?: string
+          preferred_contact?: string | null
+          previous_treatment?: string | null
+          primary_substance?: string[] | null
+          source?: string
+          status?: string | null
+          updated_at?: string
+          urgency?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          who_seeking_help?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           browser_notifications: boolean
