@@ -112,6 +112,33 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                 </div>
               )}
               
+              {/* Top-right icons: Favorite + Years */}
+              <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1.5">
+                {/* Favorite button */}
+                <button
+                  onClick={handleFavoriteClick}
+                  className={cn(
+                    "transition-all duration-200",
+                    showRemoveButton
+                      ? "text-rose-500 hover:text-rose-600"
+                      : isFavorite(facility.id)
+                        ? "text-rose-500"
+                        : "text-white/80 hover:text-rose-500 drop-shadow-md"
+                  )}
+                  aria-label={showRemoveButton ? "Remove from saved" : isFavorite(facility.id) ? "Remove from favorites" : "Add to favorites"}
+                >
+                  <Heart className={cn("h-6 w-6", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
+                </button>
+
+                {/* Years badge */}
+                {yearsInBusiness && yearsInBusiness > 0 && (
+                  <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm">
+                    <Clock className="h-2.5 w-2.5 text-blue-600" />
+                    <span className="text-[9px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
+                  </div>
+                )}
+              </div>
+
               {/* Logo overlay */}
               <div className="absolute bottom-2 left-2 z-10">
                 <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-card shadow-md">
@@ -132,23 +159,13 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                   )}
                 </div>
               </div>
-
-              {/* Years badge */}
-              {yearsInBusiness && yearsInBusiness > 0 && (
-                <div className="absolute bottom-2 right-2 z-10">
-                  <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm">
-                    <Clock className="h-2.5 w-2.5 text-blue-600" />
-                    <span className="text-[9px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Content Section */}
           <div className="flex flex-1 flex-col p-3 sm:p-4 min-w-0">
             {/* Header row */}
-            <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-start gap-3 mb-2">
               <div className="flex-1 min-w-0">
                 <Link to={facilityLink}>
                   <h3 className="font-display text-sm sm:text-base font-bold leading-tight truncate mb-1 group-hover:text-primary transition-colors">
@@ -160,21 +177,6 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                   <span className="font-medium truncate">{facility.city}, {facility.state}</span>
                 </div>
               </div>
-
-              <button
-                onClick={handleFavoriteClick}
-                className={cn(
-                  "p-1 rounded-md transition-all duration-200 shrink-0",
-                  showRemoveButton
-                    ? "text-rose-500 hover:text-rose-600"
-                    : isFavorite(facility.id)
-                      ? "text-rose-500"
-                      : "text-muted-foreground hover:text-rose-500"
-                )}
-                aria-label={showRemoveButton ? "Remove from saved" : isFavorite(facility.id) ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Heart className={cn("h-5 w-5", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
-              </button>
             </div>
 
             {/* Badges */}
@@ -214,8 +216,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
             <div className="mt-auto pt-1">
               <Link to={facilityLink}>
                 <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 text-xs group/btn">
-                  <span className="sm:hidden">Request Info</span>
-                  <span className="hidden sm:inline">Request Information</span>
+                  View Details
                   <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
                 </Button>
               </Link>
