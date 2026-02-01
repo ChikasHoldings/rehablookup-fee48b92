@@ -303,19 +303,16 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative z-10 overflow-hidden">
         {/* Background Image - using img for better LCP */}
-        <div className="absolute inset-0 w-full h-full">
-          <img 
-            src={heroImage}
-            alt=""
-            role="presentation"
-            className="w-full h-full object-cover object-center scale-100 sm:scale-100"
-            style={{ minHeight: '100%', minWidth: '100%' }}
-            width={1920}
-            height={1080}
-            fetchPriority="high"
-            decoding="async"
-          />
-        </div>
+        <img 
+          src={heroImage}
+          alt=""
+          role="presentation"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          width={1920}
+          height={1080}
+          fetchPriority="high"
+          decoding="async"
+        />
         
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
