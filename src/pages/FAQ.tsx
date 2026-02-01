@@ -547,7 +547,7 @@ const FAQ = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3 ml-8 md:ml-0">
-                <Link to="/account/concierge">
+                <Link to="/concierge">
                   <Button size="sm" className="h-9 gap-2 text-sm font-semibold px-4">
                     <Heart className="h-4 w-4" />
                     Get Matched

@@ -75,11 +75,7 @@ export function SeekerShell() {
     }
   }, [role, isRoleLoading, navigate]);
 
-  // Routes that are publicly accessible without authentication
-  const PUBLIC_SEEKER_ROUTES = ["/account/concierge"];
-  const isPublicRoute = PUBLIC_SEEKER_ROUTES.some(route => location.pathname.startsWith(route));
-
-  // Auth check - redirect unauthenticated users to login (except for public routes)
+  // Auth check - redirect unauthenticated users to login for all seeker panel routes
   useEffect(() => {
     let isMounted = true;
     
@@ -93,8 +89,8 @@ export function SeekerShell() {
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
 
-        // Redirect to login if not authenticated and not on a public route
-        if (!session && !isPublicRoute) {
+        // Redirect to login if not authenticated
+        if (!session) {
           navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
           return;
         }
@@ -118,8 +114,8 @@ export function SeekerShell() {
         setUserId(session?.user?.id || null);
         setIsLoading(false);
 
-        // Redirect to login if signed out and not on a public route
-        if (event === "SIGNED_OUT" && !isPublicRoute) {
+        // Redirect to login if signed out
+        if (event === "SIGNED_OUT") {
           navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
         }
       }
@@ -129,7 +125,7 @@ export function SeekerShell() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname, isPublicRoute]);
+  }, [navigate, location.pathname]);
 
   const handleLogout = useCallback(async () => {
     try {

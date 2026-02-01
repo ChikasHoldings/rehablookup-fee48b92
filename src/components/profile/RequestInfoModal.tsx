@@ -88,10 +88,10 @@ function CapacityWarning({
   const handleFindAvailable = () => {
     trackCapacityEvent("capacity_find_available_clicked", facility.id, {
       facilityName: facility.name,
-      destination: "/account/concierge",
+      destination: "/concierge",
     });
     onOpenChange(false);
-    navigate("/account/concierge");
+    navigate("/concierge");
   };
 
   const handleBrowseOther = () => {
@@ -398,7 +398,7 @@ export function RequestInfoModal({
     trackAnalyticsEvent("concierge_conversion", facility.id, {
       fromFacilityName: facility.name,
     });
-    navigate("/account/concierge");
+    navigate("/concierge");
     onOpenChange(false);
   };
 

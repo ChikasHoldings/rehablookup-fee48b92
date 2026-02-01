@@ -135,7 +135,7 @@ const CityAlcoholRehab = () => {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" variant="secondary">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Phone className="mr-2 h-4 w-4" />
                 Get Matched
               </Link>
@@ -260,7 +260,7 @@ const CityAlcoholRehab = () => {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button asChild size="lg" variant="secondary">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Phone className="mr-2 h-4 w-4" />
                 Get Matched
               </Link>

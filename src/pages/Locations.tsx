@@ -340,7 +340,7 @@ const Locations = () => {
               insurance coverage, and specific recovery needs.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Get Matched

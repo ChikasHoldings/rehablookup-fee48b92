@@ -588,7 +588,7 @@ const TreatmentTypes = () => {
               Our specialists can help you find the right treatment program. Free and confidential.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 font-semibold">
                   <Heart className="h-4 w-4" />
                   Get Matched

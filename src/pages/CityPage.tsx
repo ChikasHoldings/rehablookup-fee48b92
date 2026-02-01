@@ -349,7 +349,7 @@ const CityPage = () => {
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                   <Heart className="h-4 w-4" />
                   Get Matched
@@ -442,7 +442,7 @@ const CityPage = () => {
                 <Link to={`/rehab-centers/${stateData.slug}`}>
                   <Button variant="outline">View All {stateData.name} Centers</Button>
                 </Link>
-                <Link to="/account/concierge">
+                <Link to="/concierge">
                   <Button>Get Matched</Button>
                 </Link>
               </div>
@@ -679,7 +679,7 @@ const CityPage = () => {
               insurance coverage, and preferences.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/account/concierge">
+              <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Get Matched

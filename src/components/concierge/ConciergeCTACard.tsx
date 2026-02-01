@@ -51,7 +51,7 @@ export function ConciergeCTACard({ className, compact = false }: ConciergeCTACar
           </div>
         )}
 
-        <Link to="/account/concierge">
+        <Link to="/concierge">
           <Button 
             size={compact ? "sm" : "default"}
             className={cn(

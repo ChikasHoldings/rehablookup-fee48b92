@@ -911,7 +911,7 @@ const Resources = () => {
                 Our specialists are available 24/7 to answer your questions and help you find the right treatment path.
               </p>
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link to="/account/concierge" className="w-full sm:w-auto">
+                <Link to="/concierge" className="w-full sm:w-auto">
                   <Button size="lg" className="gap-2 w-full sm:w-auto h-12 text-base rounded-xl shadow-lg">
                     <Heart className="h-5 w-5" />
                     Concierge Service
