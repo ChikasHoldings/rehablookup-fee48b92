@@ -1,25 +1,30 @@
-import { useRef, useEffect } from "react";
+import { useRef, useState } from "react";
 import { SingleQuestionFlow } from "./SingleQuestionFlow";
 import { LeadIntakeSuccess } from "./LeadIntakeSuccess";
 import { useLeadIntakeForm } from "./useLeadIntakeForm";
 import { LeadFormErrorBoundary } from "./LeadFormErrorBoundary";
+import { LeadIntakeFormData } from "./types";
 
 interface LeadIntakeFormProps {
   className?: string;
   /** Custom success component to render after form submission */
   renderSuccess?: (props: { firstName: string; facilityName?: string | null }) => React.ReactNode;
+  /** Custom submit handler - when provided, replaces the default submission logic */
+  onCustomSubmit?: (formData: LeadIntakeFormData) => Promise<void>;
 }
 
-export function LeadIntakeForm({ className, renderSuccess }: LeadIntakeFormProps) {
+export function LeadIntakeForm({ className, renderSuccess, onCustomSubmit }: LeadIntakeFormProps) {
   const formSectionRef = useRef<HTMLDivElement>(null);
+  const [customSubmitting, setCustomSubmitting] = useState(false);
+  const [customSubmitted, setCustomSubmitted] = useState(false);
   
   const {
     formData,
     updateFormData,
     facilityName,
-    isSubmitting,
-    isSubmitted,
-    handleSubmit,
+    isSubmitting: defaultSubmitting,
+    isSubmitted: defaultSubmitted,
+    handleSubmit: defaultHandleSubmit,
     // Email verification
     codeSent,
     isSendingCode,
@@ -35,6 +40,25 @@ export function LeadIntakeForm({ className, renderSuccess }: LeadIntakeFormProps
     resetEmailVerification,
     checkEmailAlreadyVerified,
   } = useLeadIntakeForm();
+
+  // Determine which submission state to use
+  const isSubmitting = onCustomSubmit ? customSubmitting : defaultSubmitting;
+  const isSubmitted = onCustomSubmit ? customSubmitted : defaultSubmitted;
+
+  // Handle submit - use custom handler if provided
+  const handleSubmit = async () => {
+    if (onCustomSubmit) {
+      setCustomSubmitting(true);
+      try {
+        await onCustomSubmit(formData);
+        setCustomSubmitted(true);
+      } finally {
+        setCustomSubmitting(false);
+      }
+    } else {
+      await defaultHandleSubmit();
+    }
+  };
 
   if (isSubmitted) {
     if (renderSuccess) {
