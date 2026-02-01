@@ -39,7 +39,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
-import { providerNavLinks } from "@/data/providerNavLinks";
+
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 
 const getBrowserInfo = (): { browser: string; os: string; device: string } => {
@@ -621,12 +621,7 @@ export default function ProviderSignup() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header
-        navLinks={providerNavLinks}
-        ctaLink="/provider-login"
-        ctaLabel="Provider Login"
-        variant="provider"
-      />
+      <Header />
 
       <main className="flex-1 py-8 md:py-16">
         <div className="container px-4 md:px-6">
