@@ -17,6 +17,7 @@ import {
   Heart,
   Globe,
   Headphones,
+  ChevronRight,
 } from "lucide-react";
 
 const contactMethods = [
@@ -103,17 +104,26 @@ const Contact = () => {
           <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
         </div>
         
-        <div className="container text-center relative">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
-            <MessageSquare className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium text-primary-foreground">Get In Touch</span>
+        <div className="container relative">
+          {/* Breadcrumb */}
+          <nav className="mb-5 flex items-center justify-center gap-2 text-sm text-white/70">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-white font-medium">Contact</span>
+          </nav>
+          
+          <div className="text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+              <MessageSquare className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Get In Touch</span>
+            </div>
+            <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+              Contact Us for Addiction Treatment Help
+            </h1>
+            <p className="text-base text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-lg">
+              Have questions about finding treatment? We're here to help.
+            </p>
           </div>
-          <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
-            Contact Us for Addiction Treatment Help
-          </h1>
-          <p className="text-base text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-lg">
-            Have questions about finding treatment? We're here to help.
-          </p>
         </div>
       </section>
 

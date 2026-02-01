@@ -19,7 +19,8 @@ import {
   Lock,
   Stethoscope,
   DollarSign,
-  Building2
+  Building2,
+  ChevronRight,
 } from "lucide-react";
 
 interface FAQItem {
@@ -333,6 +334,13 @@ const FAQ = () => {
         </div>
         
         <div className="container relative">
+          {/* Breadcrumb */}
+          <nav className="mb-5 flex items-center gap-2 text-sm text-white/70">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-white font-medium">FAQ</span>
+          </nav>
+          
           <div className="mx-auto max-w-2xl text-center">
             <h1 className="mb-3 text-2xl font-bold text-primary-foreground md:text-3xl">
               Addiction Treatment FAQ

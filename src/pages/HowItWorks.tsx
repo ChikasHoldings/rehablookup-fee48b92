@@ -14,6 +14,7 @@ import {
   Star,
   MessageSquare,
   ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import step1Image from "@/assets/how-it-works/step-1-search.png";
 import step2Image from "@/assets/how-it-works/step-2-compare.png";
@@ -110,6 +111,13 @@ const HowItWorks = () => {
         </div>
         
         <div className="container relative">
+          {/* Breadcrumb */}
+          <nav className="mb-5 flex items-center justify-center gap-2 text-sm text-white/70">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-white font-medium">How It Works</span>
+          </nav>
+          
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
               <CheckCircle className="h-4 w-4 text-accent" />
