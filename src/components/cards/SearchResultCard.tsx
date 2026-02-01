@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
-import { useState, useCallback, memo, useRef, useEffect } from "react";
+import { useState, useCallback, memo, useRef, useEffect, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 
@@ -94,10 +94,11 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export const SearchResultCard = memo(function SearchResultCard({ center, featured }: SearchResultCardProps) {
+export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardProps>(function SearchResultCard({ center, featured }, ref) {
   const [logoError, setLogoError] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
-  const cardRef = useRef<HTMLElement>(null);
+  const internalRef = useRef<HTMLElement>(null);
+  const cardRef = ref || internalRef;
   const hasTrackedImpression = useRef(false);
   const { trackImpression } = useProviderEventTracking();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -149,12 +150,13 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
       { threshold: 0.5 }
     );
 
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
+    const currentRef = typeof cardRef === 'function' ? null : cardRef?.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => observer.disconnect();
-  }, [center.isFromDatabase, center.id, trackImpression]);
+  }, [center.isFromDatabase, center.id, trackImpression, cardRef]);
 
   const handleFeaturedClick = useCallback(async () => {
     if (showFeaturedBadge && center.isFromDatabase && center.id) {
@@ -170,7 +172,7 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
 
   return (
     <article
-      ref={cardRef}
+      ref={typeof cardRef === 'function' ? cardRef : cardRef}
       aria-label={`${center.name} treatment center in ${center.city}, ${center.state}${center.verified ? ', verified provider' : ''}${showFeaturedBadge ? ', featured' : ''}`}
       className={cn(
         "group relative overflow-hidden rounded-xl border bg-card transition-all duration-300",
@@ -258,6 +260,37 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
               </div>
             )}
 
+            {/* Top-right icons: Favorite + Years */}
+            <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
+              {/* Favorite button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(center.id);
+                }}
+                className={cn(
+                  "transition-all duration-200 drop-shadow-lg",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded",
+                  isFavorite(center.id)
+                    ? "text-rose-500"
+                    : "text-white/90 hover:text-rose-500"
+                )}
+                aria-label={isFavorite(center.id) ? `Remove ${center.name} from favorites` : `Add ${center.name} to favorites`}
+                aria-pressed={isFavorite(center.id)}
+              >
+                <Heart className={cn("h-6 w-6", isFavorite(center.id) && "fill-current")} aria-hidden="true" />
+              </button>
+
+              {/* Years badge */}
+              {yearsInBusiness && yearsInBusiness > 0 && (
+                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-md">
+                  <Clock className="h-2.5 w-2.5 text-blue-600" aria-hidden="true" />
+                  <span className="text-[9px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
+                </div>
+              )}
+            </div>
+
             {/* Logo overlay */}
             <div className="absolute bottom-3 left-3 z-10">
               <div 
@@ -292,23 +325,13 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
                 )}
               </div>
             </div>
-
-            {/* Years in business badge on image */}
-            {yearsInBusiness && yearsInBusiness > 0 && (
-              <div className="absolute bottom-3 right-3 z-10">
-                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-2 py-1 shadow-md">
-                  <Clock className="h-3 w-3 text-blue-600" aria-hidden="true" />
-                  <span className="text-[10px] font-semibold text-blue-700">{yearsInBusiness}+ Years in business</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
         {/* Content Section */}
         <div className="flex flex-1 flex-col p-3 md:p-4">
           {/* Header Row */}
-          <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex items-start gap-3 mb-2">
             <div className="flex-1 min-w-0">
               <h3 className={cn(
                 "font-display text-base lg:text-lg font-bold leading-tight line-clamp-1 mb-1.5",
@@ -326,39 +349,6 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
                 )} aria-hidden="true" />
                 <span className="font-medium">{center.city}, {center.state}</span>
               </div>
-            </div>
-
-            {/* Save Button & Years Badge */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleFavorite(center.id);
-                }}
-                className={cn(
-                  "p-2 rounded-lg border transition-all duration-200",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                  isFavorite(center.id)
-                    ? "bg-rose-50 border-rose-200 text-rose-500"
-                    : "bg-secondary/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
-                )}
-                aria-label={isFavorite(center.id) ? `Remove ${center.name} from favorites` : `Add ${center.name} to favorites`}
-                aria-pressed={isFavorite(center.id)}
-              >
-                <Heart className={cn("h-4 w-4", isFavorite(center.id) && "fill-current")} aria-hidden="true" />
-              </button>
-              {yearsInBusiness && yearsInBusiness > 0 && (
-                <div className={cn(
-                  "flex flex-col items-center px-2.5 py-1 rounded-lg",
-                  showFeaturedBadge 
-                    ? "bg-amber-100 text-amber-700" 
-                    : "bg-primary/10 text-primary"
-                )}>
-                  <span className="font-bold text-sm">{yearsInBusiness}+</span>
-                  <span className="text-[9px] font-medium uppercase tracking-wide">Years</span>
-                </div>
-              )}
             </div>
           </div>
 
@@ -436,27 +426,6 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
             )}
           </div>
 
-          {/* Insurance Preview */}
-          {hasInsurance && center.insuranceAccepted.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap mb-3 pb-2 border-b border-border/50" role="list" aria-label="Accepted insurance providers">
-              <span className="text-[10px] text-muted-foreground font-medium">Accepts:</span>
-              {center.insuranceAccepted.slice(0, 3).map((ins) => (
-                <span 
-                  key={ins}
-                  className="inline-flex items-center gap-1 text-[10px] text-foreground bg-secondary/60 px-2 py-0.5 rounded"
-                  role="listitem"
-                >
-                  <CheckCircle className="h-2.5 w-2.5 text-emerald-500" aria-hidden="true" />
-                  {ins}
-                </span>
-              ))}
-              {center.insuranceAccepted.length > 3 && (
-                <span className="text-[10px] text-muted-foreground">
-                  +{center.insuranceAccepted.length - 3} more insurance providers
-                </span>
-              )}
-            </div>
-          )}
 
           {/* Actions Footer */}
           <div className="flex items-center gap-2 mt-auto">
@@ -477,27 +446,25 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
                     : "shadow-md hover:shadow-lg"
                 )}
               >
-                Request Information
+                <span className="md:hidden">Request Info</span>
+                <span className="hidden md:inline">Request Information</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
               </Button>
             </Link>
             <Link 
-              to={`${detailsUrl}?inquiry=callback`}
-              state={{ fromSearch: true, inquiryType: 'request_callback' }}
+              to={detailsUrl}
               onClick={handleFeaturedClick}
-              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-lg"
-              aria-label={`Request callback from ${center.name}`}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+              aria-label={`View details for ${center.name}`}
             >
               <Button 
                 size="default"
                 variant="outline"
                 tabIndex={-1}
-                className={cn(
-                  "h-10 text-sm font-semibold gap-2 rounded-lg group/btn border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950",
-                )}
+                className="h-10 text-sm font-semibold gap-2 rounded-lg group/btn"
               >
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                Callback
+                View Details
+                <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
               </Button>
             </Link>
           </div>
@@ -505,4 +472,4 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
       </div>
     </article>
   );
-});
+}));
