@@ -798,7 +798,6 @@ const Index = () => {
                   "Transparent program information",
                   "No hidden fees or referrals",
                   "Confidential communication",
-                  "24/7 support available",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2 md:gap-2.5">
                     <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-accent" />
