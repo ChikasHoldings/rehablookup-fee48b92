@@ -31,6 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!resendApiKey) {
@@ -92,6 +93,25 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     const categoryLabel = categoryLabels[category] || category;
+
+    // Insert into support_tickets table (dual-write)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
+      source: 'provider_support',
+      sender_name: providerName,
+      sender_email: providerEmail,
+      sender_user_id: user.id,
+      category: categoryLabel,
+      subject: subject,
+      message: `Facility: ${facilityInfo}\n\n${message}`,
+    });
+
+    if (ticketError) {
+      console.error("[SEND-SUPPORT-REQUEST] Failed to create ticket:", ticketError);
+      // Continue with email even if ticket creation fails
+    } else {
+      console.log("[SEND-SUPPORT-REQUEST] Support ticket created successfully");
+    }
 
     const emailHtml = `
 <!DOCTYPE html>
