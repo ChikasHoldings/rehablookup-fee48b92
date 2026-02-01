@@ -10,6 +10,7 @@ import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { PageLoading } from "@/components/ui/page-loading";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
+import { Layout } from "@/components/layout/Layout";
 
 // Eagerly load all public pages for instant navigation
 import Index from "./pages/Index";
@@ -284,14 +285,14 @@ const App = () => (
               <Route path="concierge" element={<SeekerConcierge />} />
             </Route>
             <Route path="/my-account" element={<Navigate to="/account" replace />} />
-            <Route path="/for-providers" element={<ForProviders />} />
-            <Route path="/provider-resources" element={<ProviderResources />} />
+            <Route path="/for-providers" element={<Layout><ForProviders /></Layout>} />
+            <Route path="/provider-resources" element={<Layout><ProviderResources /></Layout>} />
             <Route path="/provider-login" element={<Navigate to="/login?type=provider" replace />} />
             <Route path="/provider-forgot-password" element={<ProviderForgotPassword />} />
             <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
             <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
-            <Route path="/provider-support" element={<ProviderSupport />} />
-            <Route path="/provider-faq" element={<ProviderFAQ />} />
+            <Route path="/provider-support" element={<Layout><ProviderSupport /></Layout>} />
+            <Route path="/provider-faq" element={<Layout><ProviderFAQ /></Layout>} />
             <Route path="/provider-signup" element={<ProviderSignup />} />
             
             {/* Provider Panel Routes - Nested under persistent shell */}
