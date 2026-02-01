@@ -90,6 +90,8 @@ export function Header({
               src="/logo.png"
               alt="RehabLookup" 
               className="h-7 md:h-9 w-auto"
+              width={134}
+              height={28}
               loading="eager"
               decoding="async"
             />
