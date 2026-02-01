@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Home } from "lucide-react";
+import { Home } from "lucide-react";
 
 export interface BreadcrumbItem {
   label: string;
@@ -71,7 +71,7 @@ export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
               itemScope 
               itemType="https://schema.org/ListItem"
             >
-              <ChevronRight className="h-3.5 w-3.5 mx-1 text-muted-foreground/50" />
+              <span className="mx-1 text-muted-foreground/50">/</span>
               {item.href ? (
                 <Link 
                   to={item.href} 

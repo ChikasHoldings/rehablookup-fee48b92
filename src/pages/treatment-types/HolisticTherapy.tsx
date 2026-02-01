@@ -163,11 +163,11 @@ const HolisticTherapy = () => {
       <section className="bg-primary py-12 md:py-16">
         <div className="container">
           {/* Breadcrumbs */}
-          <nav className="mb-6 flex items-center gap-2 text-sm text-primary-foreground/70">
+          <nav className="mb-6 flex items-center justify-center gap-2 text-sm text-primary-foreground/70">
             <Link to="/" className="hover:text-primary-foreground transition-colors">Home</Link>
-            <ChevronRight className="h-4 w-4" />
+            <span className="text-primary-foreground/50">/</span>
             <Link to="/treatment-types" className="hover:text-primary-foreground transition-colors">Treatment Types</Link>
-            <ChevronRight className="h-4 w-4" />
+            <span className="text-primary-foreground/50">/</span>
             <span className="text-primary-foreground">Holistic Therapy</span>
           </nav>
 

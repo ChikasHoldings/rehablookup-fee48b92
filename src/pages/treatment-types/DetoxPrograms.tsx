@@ -174,9 +174,9 @@ const DetoxPrograms = () => {
         <div className="container">
           <nav className="mb-5 flex items-center gap-2 text-sm text-white/70">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
-            <ChevronRight className="h-4 w-4" />
+            <span className="text-white/50">/</span>
             <Link to="/treatment-types" className="hover:text-white transition-colors">Treatment Types</Link>
-            <ChevronRight className="h-4 w-4" />
+            <span className="text-white/50">/</span>
             <span className="text-white font-medium">Detox Programs</span>
           </nav>
 
