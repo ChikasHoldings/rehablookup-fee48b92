@@ -142,7 +142,7 @@ serve(async (req) => {
     const emails: Array<{ to: string; subject: string; html: string }> = [];
     let smsRecipient: { phone: string; message: string } | null = null;
 
-    const portalLink = "https://rehablookup.lovable.app/account/concierge";
+    const portalLink = "https://rehablookup.com/account/concierge";
 
     switch (payload.notificationType) {
       case "message_to_seeker": {
