@@ -60,23 +60,23 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <!-- Preconnect to important origins (fonts, API, CDN, Stripe) -->
+    <!-- Preconnect to important origins (fonts, API, Stripe) - establish early connections -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://plckxokpyiubuekvodtc.supabase.co" crossorigin />
     <link rel="preconnect" href="https://js.stripe.com" crossorigin />
     
-    <!-- DNS prefetch for external resources -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-    <link rel="dns-prefetch" href="https://plckxokpyiubuekvodtc.supabase.co" />
-    <link rel="dns-prefetch" href="https://js.stripe.com" />
+    <!-- DNS prefetch for secondary resources -->
     <link rel="dns-prefetch" href="https://m.stripe.network" />
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     
-    <!-- Preload critical resources for LCP optimization -->
+    <!-- Preload critical resources for instant LCP -->
     <link rel="preload" as="image" href="/logo.png" fetchpriority="high" type="image/png" />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" />
+    
+    <!-- Load fonts with display=swap for instant text rendering -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" /></noscript>
     
     <!-- Modulepreload for faster JS parsing -->
     <link rel="modulepreload" href="/src/main.tsx" />
