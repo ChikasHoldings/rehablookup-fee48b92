@@ -3772,6 +3772,33 @@ export type Database = {
         }
         Relationships: []
       }
+      prerender_cache: {
+        Row: {
+          cached_at: string
+          created_at: string
+          html: string
+          id: string
+          path: string
+          status_code: number
+        }
+        Insert: {
+          cached_at?: string
+          created_at?: string
+          html: string
+          id?: string
+          path: string
+          status_code?: number
+        }
+        Update: {
+          cached_at?: string
+          created_at?: string
+          html?: string
+          id?: string
+          path?: string
+          status_code?: number
+        }
+        Relationships: []
+      }
       pro_subscriptions: {
         Row: {
           canceled_at: string | null

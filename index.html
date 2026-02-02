@@ -275,76 +275,330 @@
 
   <body>
     <div id="root" class="js-loading">
-      <!-- Noscript fallback for search engines and users without JavaScript -->
+      <!-- SEO Content for Crawlers - Route-Specific Semantic Content -->
       <noscript>
         <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px; font-family: 'Inter', sans-serif;">
-          <header style="text-align: center; margin-bottom: 40px;">
-            <h1 style="font-size: 2.5rem; color: #1B365D; margin-bottom: 16px;">RehabLookup - Find Addiction Treatment Centers</h1>
-            <p style="font-size: 1.125rem; color: #555; max-width: 600px; margin: 0 auto;">Search and compare verified addiction treatment centers near you. Find detox, inpatient, outpatient, and dual diagnosis programs.</p>
-          </header>
           
-          <nav style="margin-bottom: 40px; text-align: center;">
-            <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 16px;">Browse Treatment Options</h2>
-            <ul style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
-              <li><a href="/rehab-centers" style="color: #2563eb; text-decoration: underline;">Find Rehab Centers</a></li>
-              <li><a href="/treatment-types" style="color: #2563eb; text-decoration: underline;">Treatment Types</a></li>
-              <li><a href="/insurance" style="color: #2563eb; text-decoration: underline;">Insurance Coverage</a></li>
-              <li><a href="/locations" style="color: #2563eb; text-decoration: underline;">Browse by Location</a></li>
-              <li><a href="/request-help" style="color: #2563eb; text-decoration: underline;">Get Help Now</a></li>
-            </ul>
+          <!-- ===== HOMEPAGE CONTENT ===== -->
+          <article id="seo-homepage" itemscope itemtype="https://schema.org/WebPage">
+            <header style="text-align: center; margin-bottom: 40px;">
+              <h1 style="font-size: 2.5rem; color: #1B365D; margin-bottom: 16px;">Find Trusted Addiction Treatment Centers Near You</h1>
+              <p style="font-size: 1.25rem; color: #555; max-width: 700px; margin: 0 auto;">RehabLookup connects individuals and families with 15,000+ verified drug and alcohol rehabilitation centers across all 50 states. Search by location, treatment type, or insurance to find the right program for your recovery journey.</p>
+            </header>
+            
+            <section style="margin-bottom: 40px; padding: 24px; background: #f8fafc; border-radius: 12px;">
+              <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 16px;">Why Choose RehabLookup?</h2>
+              <ul style="list-style: disc; padding-left: 24px; color: #333; line-height: 1.8;">
+                <li><strong>Verified Facilities:</strong> Every treatment center is verified for licensing, accreditation, and quality of care</li>
+                <li><strong>Insurance Verification:</strong> Instantly check if your insurance covers treatment at specific facilities</li>
+                <li><strong>24/7 Support:</strong> Confidential help available around the clock via our concierge placement service</li>
+                <li><strong>Free Service:</strong> Our directory and matching services are completely free for individuals seeking help</li>
+                <li><strong>Comprehensive Search:</strong> Filter by treatment type, location, amenities, and specialized programs</li>
+              </ul>
+            </section>
+          </article>
+
+          <!-- ===== FOR PROVIDERS PAGE CONTENT ===== -->
+          <article id="seo-for-providers" itemscope itemtype="https://schema.org/Service" style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <header>
+              <h1 style="font-size: 2rem; color: #1B365D; margin-bottom: 16px;">List Your Treatment Center on RehabLookup</h1>
+              <p style="font-size: 1.125rem; color: #555; max-width: 700px;">Join 2,000+ addiction treatment providers reaching families actively seeking help. Grow your census with qualified, intent-driven leads from people ready to start treatment.</p>
+            </header>
+            
+            <section style="margin: 32px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 16px;">Provider Benefits</h2>
+              <ul style="list-style: none; padding: 0;">
+                <li style="padding: 12px 0; border-bottom: 1px solid #eee;"><strong>Qualified Leads:</strong> Connect with individuals and families actively searching for treatment programs</li>
+                <li style="padding: 12px 0; border-bottom: 1px solid #eee;"><strong>Featured Placement:</strong> Stand out with premium positioning in search results</li>
+                <li style="padding: 12px 0; border-bottom: 1px solid #eee;"><strong>Concierge Network:</strong> Receive pre-qualified placement cases matched to your facility's specialties</li>
+                <li style="padding: 12px 0; border-bottom: 1px solid #eee;"><strong>Analytics Dashboard:</strong> Track views, inquiries, and conversion metrics in real-time</li>
+                <li style="padding: 12px 0; border-bottom: 1px solid #eee;"><strong>Review Management:</strong> Showcase patient testimonials and respond to feedback</li>
+                <li style="padding: 12px 0;"><strong>Insurance Verification:</strong> Integrated insurance checking for faster admissions</li>
+              </ul>
+            </section>
+            
+            <section style="margin: 32px 0; padding: 24px; background: #1B365D; color: white; border-radius: 12px;">
+              <h2 style="font-size: 1.25rem; margin-bottom: 12px;">Ready to Grow Your Facility?</h2>
+              <p style="margin-bottom: 16px;">Create your free provider account today. List your first facility in minutes and start receiving qualified inquiries.</p>
+              <a href="/provider-signup" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Create Provider Account</a>
+            </section>
+          </article>
+
+          <!-- ===== CONCIERGE PAGE CONTENT ===== -->
+          <article id="seo-concierge" itemscope itemtype="https://schema.org/Service" style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <header>
+              <h1 style="font-size: 2rem; color: #1B365D; margin-bottom: 16px;">Concierge Placement Service - Personalized Treatment Matching</h1>
+              <p style="font-size: 1.125rem; color: #555; max-width: 700px;">Let our placement specialists find the perfect treatment center for your unique situation. We handle insurance verification, facility matching, and admissions coordination so you can focus on recovery.</p>
+            </header>
+            
+            <section style="margin: 32px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 16px;">How Our Concierge Service Works</h2>
+              <ol style="padding-left: 24px; line-height: 2;">
+                <li><strong>Complete Your Intake:</strong> Share your treatment needs, insurance information, and preferences</li>
+                <li><strong>Get Matched:</strong> Our specialists identify facilities that match your clinical needs and budget</li>
+                <li><strong>Review Options:</strong> Compare matched facilities with detailed information about programs and amenities</li>
+                <li><strong>Coordinate Admission:</strong> We handle scheduling, insurance verification, and travel arrangements</li>
+                <li><strong>Start Treatment:</strong> Begin your recovery journey at a facility perfectly suited to your needs</li>
+              </ol>
+            </section>
+            
+            <section style="margin: 32px 0; padding: 24px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0;">
+              <h2 style="font-size: 1.25rem; color: #166534; margin-bottom: 12px;">Why Use Our Concierge Service?</h2>
+              <ul style="list-style: disc; padding-left: 24px; color: #333;">
+                <li>Free insurance verification and benefits check</li>
+                <li>Access to facilities not listed in public directories</li>
+                <li>Personalized matching based on clinical needs</li>
+                <li>Coordination of travel and logistics</li>
+                <li>24/7 support throughout the admissions process</li>
+              </ul>
+            </section>
+          </article>
+
+          <!-- ===== PRIVACY POLICY CONTENT ===== -->
+          <article id="seo-privacy-policy" itemscope itemtype="https://schema.org/WebPage" style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <header>
+              <h1 style="font-size: 2rem; color: #1B365D; margin-bottom: 8px;">Privacy Policy</h1>
+              <p style="color: #666; font-size: 0.875rem;">Last Updated: February 2, 2026</p>
+            </header>
+            
+            <section style="margin: 24px 0;">
+              <p style="line-height: 1.8; color: #333;">RehabLookup ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website rehablookup.com and use our services.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">Information We Collect</h2>
+              <h3 style="font-size: 1rem; color: #333; margin: 16px 0 8px;">Personal Information</h3>
+              <p style="line-height: 1.8; color: #333;">When you use our services, we may collect personal information including: name, email address, phone number, insurance information, treatment preferences, and location data. This information is collected when you submit inquiry forms, create accounts, or contact our support team.</p>
+              
+              <h3 style="font-size: 1rem; color: #333; margin: 16px 0 8px;">Automatically Collected Information</h3>
+              <p style="line-height: 1.8; color: #333;">We automatically collect certain information when you visit our website, including IP address, browser type, operating system, referring URLs, and pages visited. We use cookies and similar tracking technologies to enhance your experience.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">How We Use Your Information</h2>
+              <ul style="list-style: disc; padding-left: 24px; line-height: 1.8; color: #333;">
+                <li>To connect you with appropriate treatment facilities</li>
+                <li>To verify insurance coverage and benefits</li>
+                <li>To communicate with you about your inquiries</li>
+                <li>To improve our website and services</li>
+                <li>To comply with legal obligations</li>
+                <li>To detect and prevent fraud</li>
+              </ul>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">Information Sharing</h2>
+              <p style="line-height: 1.8; color: #333;">We share your information with treatment facilities only when you submit an inquiry or request placement assistance. We do not sell your personal information to third parties. We may share information with service providers who assist in operating our website and with law enforcement when required by law.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">Your Rights</h2>
+              <p style="line-height: 1.8; color: #333;">You have the right to access, correct, or delete your personal information. You may opt out of marketing communications at any time. California residents have additional rights under the CCPA. To exercise your rights, contact us at privacy@rehablookup.com.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">Data Security</h2>
+              <p style="line-height: 1.8; color: #333;">We implement industry-standard security measures to protect your information, including encryption, secure servers, and access controls. However, no method of transmission over the Internet is 100% secure.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">Contact Us</h2>
+              <p style="line-height: 1.8; color: #333;">If you have questions about this Privacy Policy, please contact us at: privacy@rehablookup.com</p>
+            </section>
+          </article>
+
+          <!-- ===== TERMS OF SERVICE CONTENT ===== -->
+          <article id="seo-terms-of-service" itemscope itemtype="https://schema.org/WebPage" style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <header>
+              <h1 style="font-size: 2rem; color: #1B365D; margin-bottom: 8px;">Terms of Service</h1>
+              <p style="color: #666; font-size: 0.875rem;">Last Updated: February 2, 2026</p>
+            </header>
+            
+            <section style="margin: 24px 0;">
+              <p style="line-height: 1.8; color: #333;">Welcome to RehabLookup. By accessing or using our website and services, you agree to be bound by these Terms of Service. Please read them carefully before using our platform.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">1. Service Description</h2>
+              <p style="line-height: 1.8; color: #333;">RehabLookup is a directory and matching service that connects individuals seeking addiction treatment with treatment facilities. We are NOT a treatment provider. We do not provide medical advice, diagnosis, or treatment. The facilities listed on our platform are independent entities, and we do not endorse or guarantee their services.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">2. User Responsibilities</h2>
+              <p style="line-height: 1.8; color: #333;">Users must provide accurate information when submitting inquiries. You agree not to misuse our services, attempt to gain unauthorized access, or interfere with the proper functioning of our website. Users must be at least 18 years old or have parental consent to use our services.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">3. Provider Terms</h2>
+              <p style="line-height: 1.8; color: #333;">Treatment providers listing on RehabLookup must maintain valid licensing and accreditation. Providers agree to respond to inquiries professionally and in compliance with all applicable laws, including HIPAA. Misrepresentation of services or facilities may result in removal from our platform.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">4. Limitation of Liability</h2>
+              <p style="line-height: 1.8; color: #333;">RehabLookup provides information on an "as is" basis. We make no warranties regarding the accuracy, completeness, or reliability of information provided by treatment facilities. We are not liable for any damages arising from your use of our services or interactions with treatment providers.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">5. Intellectual Property</h2>
+              <p style="line-height: 1.8; color: #333;">All content on RehabLookup, including text, graphics, logos, and software, is our property or licensed to us. You may not reproduce, distribute, or create derivative works without our written permission.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">6. Governing Law</h2>
+              <p style="line-height: 1.8; color: #333;">These Terms are governed by the laws of the State of Delaware. Any disputes shall be resolved in the courts of Delaware.</p>
+            </section>
+          </article>
+
+          <!-- ===== ABOUT US CONTENT ===== -->
+          <article id="seo-about" itemscope itemtype="https://schema.org/AboutPage" style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <header>
+              <h1 style="font-size: 2rem; color: #1B365D; margin-bottom: 16px;">About RehabLookup</h1>
+              <p style="font-size: 1.125rem; color: #555;">Our Mission: Making quality addiction treatment accessible to everyone who needs it.</p>
+            </header>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">Who We Are</h2>
+              <p style="line-height: 1.8; color: #333;">RehabLookup was founded with a simple goal: to help people find the right addiction treatment without the confusion, stigma, or frustration that often accompanies the search. Our team includes recovery advocates, healthcare professionals, and technology experts united by a commitment to making treatment accessible.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">What We Do</h2>
+              <p style="line-height: 1.8; color: #333;">We maintain the most comprehensive directory of addiction treatment centers in the United States, with over 15,000 verified facilities. Our platform helps individuals and families compare treatment options, verify insurance coverage, and connect with facilities that match their specific needs. Our concierge placement service provides personalized assistance for those who need extra support navigating the treatment landscape.</p>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 12px;">Our Values</h2>
+              <ul style="list-style: disc; padding-left: 24px; line-height: 1.8; color: #333;">
+                <li><strong>Transparency:</strong> We provide honest, accurate information without hidden agendas</li>
+                <li><strong>Compassion:</strong> We treat every person seeking help with dignity and respect</li>
+                <li><strong>Quality:</strong> We only list verified, licensed treatment facilities</li>
+                <li><strong>Accessibility:</strong> Our core services are free for individuals seeking treatment</li>
+              </ul>
+            </section>
+          </article>
+
+          <!-- ===== CONTACT PAGE CONTENT ===== -->
+          <article id="seo-contact" itemscope itemtype="https://schema.org/ContactPage" style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <header>
+              <h1 style="font-size: 2rem; color: #1B365D; margin-bottom: 16px;">Contact RehabLookup</h1>
+              <p style="font-size: 1.125rem; color: #555;">We're here to help. Reach out to our team for assistance with finding treatment, provider inquiries, or general questions.</p>
+            </header>
+            
+            <section style="margin: 24px 0; display: grid; gap: 24px;">
+              <div style="padding: 20px; background: #f8fafc; border-radius: 8px;">
+                <h2 style="font-size: 1.125rem; color: #1B365D; margin-bottom: 8px;">For Individuals Seeking Help</h2>
+                <p style="color: #333; margin-bottom: 8px;">24/7 confidential support available</p>
+                <p style="color: #333;"><strong>Email:</strong> help@rehablookup.com</p>
+              </div>
+              
+              <div style="padding: 20px; background: #f8fafc; border-radius: 8px;">
+                <h2 style="font-size: 1.125rem; color: #1B365D; margin-bottom: 8px;">For Treatment Providers</h2>
+                <p style="color: #333; margin-bottom: 8px;">Listing inquiries, account support, and partnership opportunities</p>
+                <p style="color: #333;"><strong>Email:</strong> providers@rehablookup.com</p>
+              </div>
+              
+              <div style="padding: 20px; background: #f8fafc; border-radius: 8px;">
+                <h2 style="font-size: 1.125rem; color: #1B365D; margin-bottom: 8px;">General Inquiries</h2>
+                <p style="color: #333; margin-bottom: 8px;">Media, partnerships, and other inquiries</p>
+                <p style="color: #333;"><strong>Email:</strong> info@rehablookup.com</p>
+              </div>
+            </section>
+          </article>
+
+          <!-- ===== HOW IT WORKS CONTENT ===== -->
+          <article id="seo-how-it-works" itemscope itemtype="https://schema.org/HowTo" style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <header>
+              <h1 style="font-size: 2rem; color: #1B365D; margin-bottom: 16px;">How RehabLookup Works</h1>
+              <p style="font-size: 1.125rem; color: #555;">Finding the right treatment center doesn't have to be overwhelming. Here's how our platform helps you every step of the way.</p>
+            </header>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 16px;">For Individuals & Families</h2>
+              <ol style="padding-left: 24px; line-height: 2; color: #333;">
+                <li><strong>Search:</strong> Enter your location and filter by treatment type, insurance, amenities, and more</li>
+                <li><strong>Compare:</strong> Review detailed facility profiles, photos, services, and verified reviews</li>
+                <li><strong>Verify Insurance:</strong> Instantly check if your insurance is accepted at specific facilities</li>
+                <li><strong>Connect:</strong> Submit inquiries directly to facilities or use our concierge service for personalized help</li>
+                <li><strong>Get Help:</strong> Our team is available 24/7 to answer questions and provide guidance</li>
+              </ol>
+            </section>
+            
+            <section style="margin: 24px 0;">
+              <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 16px;">For Treatment Providers</h2>
+              <ol style="padding-left: 24px; line-height: 2; color: #333;">
+                <li><strong>Create Account:</strong> Sign up for a free provider account in minutes</li>
+                <li><strong>Build Your Profile:</strong> Add your facility details, photos, services, and insurance accepted</li>
+                <li><strong>Get Verified:</strong> Complete our verification process to earn a verified badge</li>
+                <li><strong>Receive Leads:</strong> Connect with qualified individuals seeking treatment</li>
+                <li><strong>Grow Your Census:</strong> Use analytics to track performance and optimize your listing</li>
+              </ol>
+            </section>
+          </article>
+
+          <!-- ===== NAVIGATION HUB ===== -->
+          <nav style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 40px;">
+            <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 20px;">Browse Our Directory</h2>
+            
+            <section style="margin-bottom: 32px;">
+              <h3 style="font-size: 1.125rem; color: #333; margin-bottom: 12px;">Treatment Types</h3>
+              <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+                <li><a href="/treatment-types/detox-programs" style="display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Medical Detox Programs</a></li>
+                <li><a href="/treatment-types/residential-inpatient" style="display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Inpatient Rehabilitation</a></li>
+                <li><a href="/treatment-types/outpatient-programs" style="display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Outpatient Programs</a></li>
+                <li><a href="/treatment-types/dual-diagnosis-treatment" style="display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Dual Diagnosis Treatment</a></li>
+                <li><a href="/treatment-types/alcohol-rehabilitation" style="display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Alcohol Rehabilitation</a></li>
+                <li><a href="/treatment-types/drug-addiction-treatment" style="display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Drug Addiction Treatment</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 style="font-size: 1.125rem; color: #333; margin-bottom: 12px;">Find Treatment Near You</h3>
+              <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+                <li><a href="/drug-rehab-near-me" style="color: #2563eb;">Drug Rehab Near Me</a></li>
+                <li><a href="/alcohol-rehab-near-me" style="color: #2563eb;">Alcohol Rehab Near Me</a></li>
+                <li><a href="/detox-near-me" style="color: #2563eb;">Detox Centers Near Me</a></li>
+                <li><a href="/inpatient-rehab-near-me" style="color: #2563eb;">Inpatient Rehab Near Me</a></li>
+                <li><a href="/outpatient-near-me" style="color: #2563eb;">Outpatient Programs Near Me</a></li>
+                <li><a href="/dual-diagnosis-near-me" style="color: #2563eb;">Dual Diagnosis Near Me</a></li>
+                <li><a href="/free-rehab-near-me" style="color: #2563eb;">Free Rehab Near Me</a></li>
+                <li><a href="/luxury-rehab-near-me" style="color: #2563eb;">Luxury Rehab Centers</a></li>
+                <li><a href="/womens-rehab-near-me" style="color: #2563eb;">Women's Rehab Near Me</a></li>
+                <li><a href="/mens-rehab-near-me" style="color: #2563eb;">Men's Rehab Near Me</a></li>
+                <li><a href="/fentanyl-rehab-near-me" style="color: #2563eb;">Fentanyl Addiction Treatment</a></li>
+                <li><a href="/sober-living-near-me" style="color: #2563eb;">Sober Living Near Me</a></li>
+                <li><a href="/veterans-rehab-near-me" style="color: #2563eb;">Veterans Rehab Near Me</a></li>
+                <li><a href="/teen-rehab-near-me" style="color: #2563eb;">Teen Rehab Near Me</a></li>
+                <li><a href="/suboxone-clinic-near-me" style="color: #2563eb;">Suboxone Clinic Near Me</a></li>
+                <li><a href="/methadone-clinic-near-me" style="color: #2563eb;">Methadone Clinic Near Me</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 style="font-size: 1.125rem; color: #333; margin-bottom: 12px;">Insurance Coverage</h3>
+              <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
+                <li><a href="/insurance/aetna-rehab" style="color: #2563eb;">Aetna Rehab Coverage</a></li>
+                <li><a href="/insurance/bcbs-treatment" style="color: #2563eb;">Blue Cross Blue Shield</a></li>
+                <li><a href="/insurance/cigna-rehab" style="color: #2563eb;">Cigna Rehab Coverage</a></li>
+                <li><a href="/insurance/united-healthcare-rehab" style="color: #2563eb;">United Healthcare</a></li>
+                <li><a href="/insurance/humana-rehab" style="color: #2563eb;">Humana Coverage</a></li>
+                <li><a href="/insurance/kaiser-rehab" style="color: #2563eb;">Kaiser Permanente</a></li>
+                <li><a href="/insurance/medicaid-rehab" style="color: #2563eb;">Medicaid Rehab</a></li>
+                <li><a href="/insurance/medicare-rehab" style="color: #2563eb;">Medicare Rehab</a></li>
+              </ul>
+            </section>
           </nav>
 
-          <section style="margin-bottom: 40px;">
-            <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 20px;">Treatment Types</h2>
-            <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-              <li><a href="/treatment-types/detox-programs" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Medical Detox Programs</a></li>
-              <li><a href="/treatment-types/residential-inpatient" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Inpatient Rehabilitation</a></li>
-              <li><a href="/treatment-types/outpatient-programs" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Outpatient Programs</a></li>
-              <li><a href="/treatment-types/dual-diagnosis-treatment" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Dual Diagnosis Treatment</a></li>
-              <li><a href="/treatment-types/alcohol-rehabilitation" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Alcohol Rehabilitation</a></li>
-              <li><a href="/treatment-types/drug-addiction-treatment" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Drug Addiction Treatment</a></li>
-            </ul>
-          </section>
-
-          <section style="margin-bottom: 40px;">
-            <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 20px;">Find Treatment Near You</h2>
-            <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-              <li><a href="/drug-rehab-near-me" style="color: #2563eb;">Drug Rehab Near Me</a></li>
-              <li><a href="/alcohol-rehab-near-me" style="color: #2563eb;">Alcohol Rehab Near Me</a></li>
-              <li><a href="/detox-near-me" style="color: #2563eb;">Detox Centers Near Me</a></li>
-              <li><a href="/inpatient-rehab-near-me" style="color: #2563eb;">Inpatient Rehab Near Me</a></li>
-              <li><a href="/outpatient-near-me" style="color: #2563eb;">Outpatient Programs Near Me</a></li>
-              <li><a href="/dual-diagnosis-near-me" style="color: #2563eb;">Dual Diagnosis Near Me</a></li>
-              <li><a href="/free-rehab-near-me" style="color: #2563eb;">Free Rehab Near Me</a></li>
-              <li><a href="/luxury-rehab-near-me" style="color: #2563eb;">Luxury Rehab Centers</a></li>
-              <li><a href="/womens-rehab-near-me" style="color: #2563eb;">Women's Rehab Near Me</a></li>
-              <li><a href="/mens-rehab-near-me" style="color: #2563eb;">Men's Rehab Near Me</a></li>
-              <li><a href="/fentanyl-rehab-near-me" style="color: #2563eb;">Fentanyl Addiction Treatment</a></li>
-              <li><a href="/sober-living-near-me" style="color: #2563eb;">Sober Living Near Me</a></li>
-            </ul>
-          </section>
-
-          <section style="margin-bottom: 40px;">
-            <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 20px;">Insurance Coverage</h2>
-            <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
-              <li><a href="/insurance/aetna" style="color: #2563eb;">Aetna Coverage</a></li>
-              <li><a href="/insurance/bcbs" style="color: #2563eb;">Blue Cross Blue Shield</a></li>
-              <li><a href="/insurance/cigna" style="color: #2563eb;">Cigna Coverage</a></li>
-              <li><a href="/insurance/united-healthcare" style="color: #2563eb;">United Healthcare</a></li>
-              <li><a href="/insurance/humana" style="color: #2563eb;">Humana Coverage</a></li>
-              <li><a href="/insurance/kaiser" style="color: #2563eb;">Kaiser Permanente</a></li>
-              <li><a href="/insurance/medicaid" style="color: #2563eb;">Medicaid</a></li>
-              <li><a href="/insurance/medicare" style="color: #2563eb;">Medicare</a></li>
-            </ul>
-          </section>
-
-          <footer style="border-top: 1px solid #e5e5e5; padding-top: 20px; text-align: center; color: #666;">
+          <!-- ===== FOOTER ===== -->
+          <footer style="border-top: 1px solid #e5e5e5; padding-top: 24px; margin-top: 40px; text-align: center; color: #666;">
             <p>© 2026 RehabLookup. All rights reserved.</p>
-            <nav style="margin-top: 12px;">
-              <a href="/about" style="color: #2563eb; margin: 0 8px;">About Us</a>
-              <a href="/contact" style="color: #2563eb; margin: 0 8px;">Contact</a>
-              <a href="/privacy-policy" style="color: #2563eb; margin: 0 8px;">Privacy Policy</a>
-              <a href="/terms-of-service" style="color: #2563eb; margin: 0 8px;">Terms of Service</a>
+            <p style="font-size: 0.875rem; margin-top: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">RehabLookup is a directory service connecting individuals with addiction treatment facilities. We are not a treatment provider and do not provide medical advice.</p>
+            <nav style="margin-top: 16px;">
+              <a href="/about" style="color: #2563eb; margin: 0 12px;">About Us</a>
+              <a href="/contact" style="color: #2563eb; margin: 0 12px;">Contact</a>
+              <a href="/for-providers" style="color: #2563eb; margin: 0 12px;">For Providers</a>
+              <a href="/privacy-policy" style="color: #2563eb; margin: 0 12px;">Privacy Policy</a>
+              <a href="/terms-of-service" style="color: #2563eb; margin: 0 12px;">Terms of Service</a>
+              <a href="/resources" style="color: #2563eb; margin: 0 12px;">Resources</a>
             </nav>
           </footer>
         </div>

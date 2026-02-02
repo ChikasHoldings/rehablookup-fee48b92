@@ -294,6 +294,9 @@ verify_jwt = false
 [functions.prerender-for-bots]
 verify_jwt = false
 
+[functions.detect-and-prerender]
+verify_jwt = false
+
 [functions.create-international-checkout]
 verify_jwt = false
 
