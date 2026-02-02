@@ -16,6 +16,7 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useProStatus } from "@/hooks/useProStatus";
 import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
+import { usePendingInternationalCount } from "@/hooks/usePendingInternationalCount";
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
 
 interface ProviderSidebarProps {
@@ -38,8 +39,12 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const { selectedFacility } = useSelectedFacility();
   const { balanceFormatted } = useProviderCredits(selectedFacility?.id);
   const { data: proStatus } = useProStatus();
-  const { count: pendingConciergeCount } = usePendingConciergeCount(selectedFacility?.id);
+  const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
+  const { count: pendingInternationalCount } = usePendingInternationalCount(selectedFacility?.id);
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
+
+  // Combined placement count for badge
+  const totalPlacementCount = pendingDomesticCount + pendingInternationalCount;
 
   return (
     <div className="flex flex-col h-full">
@@ -51,9 +56,9 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             const isInquiriesItem = item.href === "/provider/inquiries";
             const isPlacementItem = item.href === "/provider/placement-network";
             const showInquiriesBadge = isInquiriesItem && pendingInquiriesCount > 0;
-            const showPlacementBadge = isPlacementItem && pendingConciergeCount > 0;
+            const showPlacementBadge = isPlacementItem && totalPlacementCount > 0;
             const showBadge = showInquiriesBadge || showPlacementBadge;
-            const badgeCount = isInquiriesItem ? pendingInquiriesCount : pendingConciergeCount;
+            const badgeCount = isInquiriesItem ? pendingInquiriesCount : totalPlacementCount;
             const badgeLabel = isInquiriesItem ? "new" : "pending";
             
             return (
