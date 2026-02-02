@@ -322,23 +322,23 @@ export default function ProviderDashboardPage() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         
         {/* Main Grid Layout - No full-width sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 md:gap-5">
           
           {/* Left Column - Header & Main Content */}
-          <div className="lg:col-span-8 space-y-3 sm:space-y-4">
+          <div className="lg:col-span-8 space-y-3 sm:space-y-4 md:space-y-5">
             
             {/* Header Card */}
             <Card>
-              <CardContent className="p-4 sm:p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardContent className="p-4 sm:p-5 md:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    <p className="text-xs md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
                       {format(new Date(), "EEEE, MMM d")}
                     </p>
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
                       {userName ? `Welcome, ${userName}` : "Dashboard"}
                     </h1>
                     {facility && (
@@ -375,7 +375,7 @@ export default function ProviderDashboardPage() {
             </Card>
 
             {/* Metrics Row */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <MetricCard
                 title="Views"
                 value={viewsCount}

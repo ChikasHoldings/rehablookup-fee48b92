@@ -272,19 +272,19 @@ export default function ProviderInquiriesPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex-shrink-0 px-4 md:px-6 py-4 border-b bg-card">
+      <div className="flex-shrink-0 px-4 md:px-6 lg:px-8 py-4 md:py-5 border-b bg-card">
         <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-3 md:gap-4 min-w-0">
             {isMobile && mobileView === 'detail' && (
               <Button variant="ghost" size="icon" className="h-8 w-8 -ml-2" onClick={handleBackToList}>
                 <ChevronLeft className="h-5 w-5" />
               </Button>
             )}
             <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
                 {isMobile && mobileView === 'detail' ? 'Inquiry Details' : 'Inquiries'}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm md:text-base text-muted-foreground">
                 Manage and respond to treatment inquiries
               </p>
             </div>
@@ -294,15 +294,15 @@ export default function ProviderInquiriesPage() {
 
       {/* Filters */}
       {(!isMobile || mobileView === 'list') && (
-        <div className="flex-shrink-0 px-4 md:px-6 py-3 border-b bg-muted/30">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[200px] max-w-xs">
+        <div className="flex-shrink-0 px-4 md:px-6 lg:px-8 py-3 md:py-4 border-b bg-muted/30">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <div className="relative flex-1 min-w-[200px] max-w-xs md:max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by location, care type..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 bg-background"
+                className="pl-9 h-9 md:h-10 bg-background"
               />
             </div>
             
@@ -350,7 +350,7 @@ export default function ProviderInquiriesPage() {
         {(!isMobile || mobileView === 'list') && (
           <div className={cn(
             "flex flex-col border-r bg-card overflow-hidden",
-            isMobile ? "w-full" : "w-[380px] flex-shrink-0"
+            isMobile ? "w-full" : "w-[340px] md:w-[380px] lg:w-[420px] flex-shrink-0"
           )}>
             <div className="flex-1 overflow-auto">
               {isLoading ? (
