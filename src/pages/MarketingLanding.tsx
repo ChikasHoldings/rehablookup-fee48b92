@@ -103,9 +103,9 @@ export default function MarketingLanding() {
       <div className="min-h-screen bg-background">
         {/* Minimal Header */}
         <header className="bg-white/95 backdrop-blur-md border-b border-border/30 sticky top-0 z-50 shadow-sm">
-          <div className="container mx-auto px-4 py-3 flex justify-center">
+          <div className="container mx-auto px-4 py-4 flex justify-center">
             <div className="flex items-center gap-2">
-              <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
               <span className="text-base sm:text-lg font-bold text-foreground">RehabLookup</span>
             </div>
           </div>
