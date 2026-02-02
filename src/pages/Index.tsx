@@ -350,30 +350,22 @@ const Index = () => {
 
       {/* Trust Bar */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
-        <div className="container py-4 md:py-5">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-10 lg:gap-x-14">
+        <div className="container py-3 md:py-5">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-10 lg:gap-x-14">
             <div className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
-                <CheckCircle className="h-4 w-4 text-accent" />
-              </div>
+              <CheckCircle className="h-4 w-4 text-accent shrink-0" />
               <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">Verified Facilities</span>
             </div>
             <div className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
-                <Users className="h-4 w-4 text-accent" />
-              </div>
+              <Users className="h-4 w-4 text-accent shrink-0" />
               <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">15,000+ Centers</span>
             </div>
             <div className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
-                <Clock className="h-4 w-4 text-accent" />
-              </div>
-              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">24/7 Confidential Help</span>
+              <Clock className="h-4 w-4 text-accent shrink-0" />
+              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">24/7 Help</span>
             </div>
             <div className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
-                <Phone className="h-4 w-4 text-accent" />
-              </div>
+              <Phone className="h-4 w-4 text-accent shrink-0" />
               <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">Free Insurance Check</span>
             </div>
           </div>
