@@ -668,27 +668,14 @@ const CenterProfile = () => {
 
             {/* Action Buttons - Responsive for all screens */}
             <div className="flex flex-col sm:flex-row items-stretch gap-3 border-t border-border/50 px-4 py-4 md:px-6 bg-card">
-              {showContactDetails ? (
-                <a 
-                  href={`tel:${facility.phone}`}
-                  onClick={() => trackInteraction("call")}
-                  className="flex-1"
-                >
-                  <Button size="lg" className="w-full gap-2 h-12 text-base font-semibold shadow-md">
-                    <Phone className="h-5 w-5" />
-                    Call Now
-                  </Button>
-                </a>
-              ) : (
-                <Button 
-                  size="lg" 
-                  className="flex-1 gap-2 h-12 text-base font-semibold shadow-md"
-                  onClick={() => setRequestModalOpen(true)}
-                >
-                  <Phone className="h-5 w-5" />
-                  Request Call
-                </Button>
-              )}
+              <Button 
+                size="lg" 
+                className="flex-1 gap-2 h-12 text-base font-semibold shadow-md"
+                onClick={() => setRequestModalOpen(true)}
+              >
+                <Phone className="h-5 w-5" />
+                Request Call
+              </Button>
               <Button 
                 variant="outline" 
                 size="lg"
