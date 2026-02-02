@@ -62,6 +62,7 @@ const ConciergeCreatePassword = lazy(() => import("./pages/concierge/ConciergeCr
 
 // International Placement (Global Clients) - lazy load
 const InternationalLanding = lazy(() => import("./pages/international/InternationalLanding"));
+const InternationalApplication = lazy(() => import("./pages/international/InternationalApplication"));
 const InternationalIntake = lazy(() => import("./pages/international/InternationalIntake"));
 const InternationalThankYou = lazy(() => import("./pages/international/InternationalThankYou"));
 const AdLanding = lazy(() => import("./pages/AdLanding"));
@@ -279,7 +280,8 @@ const App = () => (
             
             {/* International Placement Routes */}
             <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
-            <Route path="/international/intake" element={<PublicRouteGuard><InternationalIntake /></PublicRouteGuard>} />
+            <Route path="/international/apply" element={<PublicRouteGuard><InternationalApplication /></PublicRouteGuard>} />
+            <Route path="/international/intake" element={<Navigate to="/international/apply" replace />} />
             <Route path="/international/thank-you" element={<PublicRouteGuard><InternationalThankYou /></PublicRouteGuard>} />
             <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
             
