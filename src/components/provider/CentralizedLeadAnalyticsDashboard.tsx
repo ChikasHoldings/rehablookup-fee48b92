@@ -217,7 +217,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
               </div>
               <div>
                 <CardTitle className="text-base">Information Requests</CardTitle>
-                <CardDescription className="text-xs">Seekers wanting more info</CardDescription>
+                <CardDescription className="text-xs">Prospective patients wanting more info</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -225,7 +225,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-bold text-foreground">{Math.round(analytics.totalLeads * 0.6)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Seekers wanting more info</p>
+                <p className="text-xs text-muted-foreground mt-1">Prospective patients wanting more info</p>
               </div>
               <Badge variant="secondary" className="text-xs">
                 ~60% of inquiries
@@ -241,7 +241,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
               </div>
               <div>
                 <CardTitle className="text-base">Callback Requests</CardTitle>
-                <CardDescription className="text-xs">Seekers wanting a call back</CardDescription>
+                <CardDescription className="text-xs">Families wanting a call back</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -249,7 +249,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-bold text-foreground">{Math.round(analytics.totalLeads * 0.4)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Seekers wanting a call back</p>
+                <p className="text-xs text-muted-foreground mt-1">Families wanting a call back</p>
               </div>
               <Badge variant="secondary" className="text-xs">
                 ~40% of inquiries
@@ -556,8 +556,8 @@ function EmptyAnalytics({ hasApprovedListing }: { hasApprovedListing: boolean })
         <h3 className="text-lg font-semibold text-foreground mb-2">No Inquiry Data Yet</h3>
         <p className="text-sm text-muted-foreground max-w-md mb-4">
           {hasApprovedListing 
-            ? "Your listing is live! Once seekers start submitting inquiries, you'll see detailed analytics here including trends, conversion rates, and more."
-            : "Once seekers start submitting inquiries to your facility, you'll see detailed analytics here including trends, conversion rates, and more."
+            ? "Your listing is live! Once prospective patients start submitting inquiries, you'll see detailed analytics here including trends, conversion rates, and more."
+            : "Once prospective patients start submitting inquiries to your facility, you'll see detailed analytics here including trends, conversion rates, and more."
           }
         </p>
         <Button variant="outline" asChild>

@@ -107,8 +107,8 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isPro 
-                    ? "Seekers can call you directly or visit your website" 
-                    : "Seekers contact you through inquiry requests"}
+                    ? "Prospective patients and families can call you directly or visit your website" 
+                    : "Prospective patients contact you through inquiry requests"}
                 </p>
               </div>
             </div>
@@ -218,7 +218,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
               value={periodInquiries}
               icon={MessageSquare}
               trend={inquiryGrowth}
-              subtitle="Seekers requesting contact"
+              subtitle="Prospective patients requesting contact"
               iconBg="bg-green-500/10"
               iconColor="text-green-600"
             />
@@ -418,7 +418,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
                 <div>
                   <p className="font-semibold text-foreground">Upgrade to Pro for Direct Contact</p>
                   <p className="text-sm text-muted-foreground">
-                    Enable seekers to call you directly and visit your website
+                    Enable prospective patients and families to call you directly and visit your website
                   </p>
                 </div>
               </div>
