@@ -219,7 +219,7 @@ export default function InternationalLanding() {
                     <CardContent className="p-6">
                       <div className="mb-5">
                         <h2 className="text-lg font-semibold text-foreground mb-1">Start Your Placement</h2>
-                        <p className="text-sm text-muted-foreground">One-time $299 fee • Refunded on admission</p>
+                        <p className="text-sm text-muted-foreground">One-time fee • Refunded on admission</p>
                       </div>
 
                       <form onSubmit={handleSubmit} className="space-y-4">
@@ -297,7 +297,7 @@ export default function InternationalLanding() {
                         >
                           {isLoading ? "Processing..." : (
                             <>
-                              Start Placement – $299
+                              Start Placement
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </>
                           )}
