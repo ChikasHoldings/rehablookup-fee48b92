@@ -219,124 +219,118 @@ export function Header({
         </div>
       </header>
 
-      {/* Luxury Mobile Menu Overlay */}
+      {/* Super Menu - Full Screen Overlay */}
       <div 
         className={cn(
-          "fixed inset-0 z-[100] md:hidden transition-all duration-500 ease-out",
+          "fixed inset-0 z-[100] md:hidden transition-all duration-300",
           mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
-        onClick={() => setMobileMenuOpen(false)}
       >
-        {/* Gradient backdrop with blur */}
-        <div className={cn(
-          "absolute inset-0 bg-gradient-to-br from-foreground/20 via-foreground/30 to-foreground/40 backdrop-blur-md transition-all duration-500",
-          mobileMenuOpen ? "opacity-100" : "opacity-0"
-        )} />
-      </div>
-
-      {/* Luxury Slide Menu Panel */}
-      <div 
-        className={cn(
-          "fixed top-0 right-0 z-[101] h-full w-[320px] max-w-[85vw] md:hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
-          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
-        {/* Glass morphism background */}
-        <div className="absolute inset-0 bg-background border-l border-border/40 shadow-2xl shadow-foreground/10" />
+        {/* Clean backdrop */}
+        <div 
+          className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
+        />
         
-        {/* Decorative accent line with glow */}
-        <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-primary via-primary/30 to-transparent">
-          <div className="absolute top-0 left-0 w-4 h-32 bg-gradient-to-r from-primary/20 to-transparent blur-xl" />
-        </div>
-        
-        {/* Content container */}
-        <div className="relative h-full flex flex-col">
-          {/* Elegant Menu Header */}
-          <div className={cn(
-            "flex items-center justify-between px-6 h-16 border-b border-border/30 transition-all duration-500 delay-100",
-            mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
-          )}>
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
-                <span className="text-primary-foreground font-display font-bold text-sm">R</span>
-              </div>
-              <span className="font-display text-base font-semibold tracking-tight text-foreground">Menu</span>
-            </div>
+        {/* Super Menu Panel */}
+        <div 
+          className={cn(
+            "absolute inset-x-0 top-0 bg-background transition-all duration-400 ease-out overflow-hidden",
+            mobileMenuOpen ? "max-h-[90vh] opacity-100" : "max-h-0 opacity-0"
+          )}
+        >
+          {/* Menu Header */}
+          <div className="flex items-center justify-between px-4 h-14 border-b border-border">
+            <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+              <img 
+                src="/logo.png"
+                alt="RehabLookup" 
+                className="h-8 w-auto"
+              />
+            </Link>
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted hover:scale-105 active:scale-95 transition-all duration-200"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
             >
-              <X className="h-4.5 w-4.5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Menu Content with refined spacing */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* Menu Content */}
+          <div className="overflow-y-auto max-h-[calc(90vh-56px)] overscroll-contain">
+            {/* Quick Actions */}
+            <div className="px-4 py-4 border-b border-border/50">
+              <div className="grid grid-cols-2 gap-3">
+                <PrefetchLink 
+                  to="/rehab-centers" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Search className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Find Rehab</span>
+                </PrefetchLink>
+                <PrefetchLink 
+                  to="/concierge" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-accent/5 hover:bg-accent/10 transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Heart className="h-5 w-5 text-accent" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Concierge</span>
+                </PrefetchLink>
+              </div>
+            </div>
+
             {/* Primary Navigation */}
-            <nav className="px-5 pt-6 pb-4">
+            <nav className="px-4 py-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">Navigate</p>
               <div className="space-y-1">
-                {navLinks.map((link, index) => {
-                  const isActive = location.pathname === link.href;
+                {navLinks.map((link) => {
+                  const isActive = location.pathname === link.href || 
+                    (link.href !== "/" && location.pathname.startsWith(link.href));
                   const isForProviders = link.href === "/for-providers";
                   const Icon = navIcons[link.href] || ChevronRight;
-                  const delay = 150 + index * 40;
                   
-                  const linkClasses = cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground hover:bg-muted active:scale-[0.98]",
-                    mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
-                  );
-
-                  const content = (
-                    <>
-                      <Icon className={cn(
-                        "h-5 w-5 shrink-0",
-                        isActive ? "text-primary" : "text-muted-foreground"
-                      )} />
-                      <span>{link.label}</span>
-                    </>
-                  );
+                  // Skip concierge and find rehab since they're in quick actions
+                  if (link.href === "/rehab-centers" || link.href === "/concierge") return null;
                   
-                  // For Providers with sub-links
                   if (isForProviders) {
                     const isProviderActive = location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider");
                     return (
-                      <div key={link.href}>
+                      <div key={link.href} className="space-y-1">
                         <PrefetchLink
                           to={link.href}
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
-                            linkClasses,
-                            isProviderActive && "bg-primary/10 text-primary"
+                            "flex items-center justify-between rounded-lg px-3 py-3 text-[15px] font-medium transition-colors",
+                            isProviderActive
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground hover:bg-muted"
                           )}
-                          style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
                         >
-                          <Icon className={cn(
-                            "h-5 w-5 shrink-0",
-                            isProviderActive ? "text-primary" : "text-muted-foreground"
-                          )} />
-                          <span>{link.label}</span>
+                          <div className="flex items-center gap-3">
+                            <Icon className={cn("h-5 w-5", isProviderActive ? "text-primary" : "text-muted-foreground")} />
+                            <span>{link.label}</span>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </PrefetchLink>
-                        {/* Provider sub-links */}
-                        <div className="ml-8 mt-1 space-y-1">
-                          {providerDropdownLinks.slice(1).map((subLink, subIndex) => (
+                        <div className="ml-8 pl-3 border-l-2 border-border space-y-0.5">
+                          {providerDropdownLinks.slice(1).map((subLink) => (
                             <PrefetchLink
                               key={subLink.href}
                               to={subLink.href}
                               onClick={() => setMobileMenuOpen(false)}
                               className={cn(
-                                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                                "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
                                 location.pathname === subLink.href
-                                  ? "text-primary"
-                                  : "text-muted-foreground hover:text-foreground",
-                                mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+                                  ? "text-primary font-medium"
+                                  : "text-muted-foreground hover:text-foreground"
                               )}
-                              style={{ transitionDelay: mobileMenuOpen ? `${delay + 30 + subIndex * 20}ms` : '0ms' }}
                             >
-                              <ChevronRight className="h-3.5 w-3.5" />
                               {subLink.label}
                             </PrefetchLink>
                           ))}
@@ -350,26 +344,67 @@ export function Header({
                       key={link.href}
                       to={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={linkClasses}
-                      style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
+                      className={cn(
+                        "flex items-center justify-between rounded-lg px-3 py-3 text-[15px] font-medium transition-colors",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground hover:bg-muted"
+                      )}
                     >
-                      {content}
+                      <div className="flex items-center gap-3">
+                        <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")} />
+                        <span>{link.label}</span>
+                      </div>
                     </PrefetchLink>
                   );
                 })}
               </div>
             </nav>
-          </div>
 
-          {/* Premium CTA Footer */}
-          <div className={cn(
-            "border-t border-border/30 p-5 bg-gradient-to-t from-muted/40 to-transparent transition-all duration-500 delay-600",
-            mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          )}>
-            <div className="space-y-3">
+            {/* Secondary Links */}
+            <div className="px-4 py-4 border-t border-border/50">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">Resources</p>
+              <div className="grid grid-cols-2 gap-2">
+                <PrefetchLink 
+                  to="/about" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <Info className="h-4 w-4" />
+                  About Us
+                </PrefetchLink>
+                <PrefetchLink 
+                  to="/contact" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <Phone className="h-4 w-4" />
+                  Contact
+                </PrefetchLink>
+                <PrefetchLink 
+                  to="/faq" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  FAQ
+                </PrefetchLink>
+                <PrefetchLink 
+                  to="/blog" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Blog
+                </PrefetchLink>
+              </div>
+            </div>
+
+            {/* CTA Footer */}
+            <div className="px-4 py-5 bg-muted/30 border-t border-border/50">
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
-                  <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
+                  <Button variant="outline" className="w-full h-12 text-sm font-medium rounded-lg gap-2 relative">
                     <User className="h-4 w-4" />
                     My Account
                     {favoritesCount > 0 && (
@@ -380,15 +415,15 @@ export function Header({
                   </Button>
                 </PrefetchLink>
               ) : (
-                <div className="space-y-2.5">
-                  <PrefetchLink to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 gap-2">
+                <div className="flex gap-3">
+                  <PrefetchLink to="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                    <Button className="w-full h-12 text-sm font-medium rounded-lg gap-2">
                       <User className="h-4 w-4" />
                       Sign In
                     </Button>
                   </PrefetchLink>
-                  <PrefetchLink to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button variant="outline" className="w-full h-11 text-sm rounded-xl">
+                  <PrefetchLink to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                    <Button variant="outline" className="w-full h-12 text-sm font-medium rounded-lg">
                       List Facility
                     </Button>
                   </PrefetchLink>
