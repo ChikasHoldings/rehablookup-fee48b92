@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Crown, Briefcase, Lock, Brain, Sparkles, Shield } from "lucide-react";
+import { Crown, Briefcase, Lock, Brain, Sparkles, Shield, Wine, Pill, Star } from "lucide-react";
 
 const categories = [
   {
@@ -24,8 +24,29 @@ const categories = [
     color: "text-purple-500"
   },
   {
+    title: "Celebrity Rehab",
+    slug: "celebrity-rehab-usa",
+    icon: Star,
+    description: "Ultra-private treatment for celebrities, athletes, and public figures with maximum security.",
+    color: "text-yellow-500"
+  },
+  {
+    title: "Alcohol Rehab USA",
+    slug: "alcohol-rehab-usa",
+    icon: Wine,
+    description: "Specialized alcohol addiction treatment with medical detox and evidence-based therapies.",
+    color: "text-rose-500"
+  },
+  {
+    title: "Drug Rehab USA",
+    slug: "drug-rehab-usa",
+    icon: Pill,
+    description: "Comprehensive drug addiction programs for opioids, stimulants, and prescription medications.",
+    color: "text-orange-500"
+  },
+  {
     title: "Dual Diagnosis",
-    slug: "dual-diagnosis-treatment-usa",
+    slug: "dual-diagnosis-usa",
     icon: Brain,
     description: "Integrated treatment for co-occurring mental health conditions alongside addiction.",
     color: "text-green-500"

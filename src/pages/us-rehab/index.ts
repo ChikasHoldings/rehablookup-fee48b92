@@ -8,3 +8,12 @@ export { default as ExecutiveRehabUSA } from './ExecutiveRehabUSA';
 export { default as PrivateRehabAmerica } from './PrivateRehabAmerica';
 export { default as InternationalPatients } from './InternationalPatients';
 export { default as MalibuRehabCenters } from './MalibuRehabCenters';
+// Country-specific pages
+export { default as RehabUSAFromUK } from './RehabUSAFromUK';
+export { default as RehabUSAFromUAE } from './RehabUSAFromUAE';
+export { default as RehabUSAFromAustralia } from './RehabUSAFromAustralia';
+// Treatment-specific pages
+export { default as AlcoholRehabUSA } from './AlcoholRehabUSA';
+export { default as DrugRehabUSA } from './DrugRehabUSA';
+export { default as DualDiagnosisUSA } from './DualDiagnosisUSA';
+export { default as CelebrityRehabUSA } from './CelebrityRehabUSA';
