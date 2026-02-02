@@ -92,7 +92,7 @@ export function StepReviewSubmit({
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Your payment was canceled. Your intake data is saved. 
-            Click "Pay $29 to Submit" when you're ready to continue.
+            Click "Pay to Submit" when you're ready to continue.
           </AlertDescription>
         </Alert>
       )}
@@ -226,7 +226,7 @@ export function StepReviewSubmit({
                 ) : (
                   <>
                     <Lock className="mr-2 h-4 w-4" />
-                    Pay $29 to Submit
+                    Pay to Submit
                   </>
                 )}
               </Button>
