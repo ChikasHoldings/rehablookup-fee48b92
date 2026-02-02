@@ -134,34 +134,68 @@ export function InternationalCandidatesTab() {
     );
   }
 
+  const acceptedCount = respondedMatches.filter((m) => m.status === "accepted").length;
+  const declinedCount = respondedMatches.filter((m) => m.status === "declined").length;
+
   return (
     <div className="space-y-6">
       {/* International Placements Header */}
-      <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+      <Card className="bg-gradient-to-r from-violet-500/5 to-violet-600/10 border-violet-500/20">
         <CardContent className="py-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Globe className="h-6 w-6 text-primary" />
+            <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0">
+              <Globe className="h-6 w-6 text-violet-600" />
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-semibold">International Client Placements</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                These are pre-screened international clients seeking treatment in the United States. 
-                They've already paid a commitment fee and completed our intake process.
+                Pre-screened international clients seeking treatment in the United States.
+                They've paid a commitment fee and completed our intake process.
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-2xl font-bold text-primary">$4,500</p>
+              <p className="text-2xl font-bold text-violet-600">$4,500</p>
               <p className="text-xs text-muted-foreground">per confirmed admission</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-3">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Globe className="h-4 w-4 text-amber-500" />
+              <span className="text-2xl font-bold">{pendingMatches.length}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Pending Review</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+              <span className="text-2xl font-bold">{acceptedCount}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Accepted</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <XCircle className="h-4 w-4 text-muted-foreground" />
+              <span className="text-2xl font-bold">{declinedCount}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Declined</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Pending Invitations */}
       <div>
         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Globe className="h-5 w-5 text-primary" />
+          <Globe className="h-5 w-5 text-violet-500" />
           Pending Candidates
           {pendingMatches.length > 0 && (
             <Badge variant="destructive">{pendingMatches.length} new</Badge>
@@ -206,7 +240,7 @@ export function InternationalCandidatesTab() {
                         className="capitalize"
                       >
                         {match.status === "accepted" ? (
-                          <><CheckCircle className="h-3 w-3 mr-1" /> Interested</>
+                          <><CheckCircle className="h-3 w-3 mr-1" /> Accepted</>
                         ) : (
                           <><XCircle className="h-3 w-3 mr-1" /> Declined</>
                         )}
