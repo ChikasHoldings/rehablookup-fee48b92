@@ -270,18 +270,9 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                 </div>
               </div>
 
-              {/* Matched Facilities */}
+              {/* Matched Facilities with Status */}
               {caseData.matched_facility_ids && caseData.matched_facility_ids.length > 0 && (
-                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Building2 className="h-4 w-4" /> Matched Facilities ({caseData.matched_facility_ids.length})
-                  </h4>
-                  <div className="text-sm text-muted-foreground">
-                    {caseData.accepted_facility_id && (
-                      <span className="text-green-600 font-medium">Facility accepted case</span>
-                    )}
-                  </div>
-                </div>
+                <FacilityMatchesSection caseId={caseData.id} matchedIds={caseData.matched_facility_ids} />
               )}
 
               {/* Facility Fee Status */}
@@ -629,5 +620,79 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// Sub-component to display facility matches with statuses
+function FacilityMatchesSection({ caseId, matchedIds }: { caseId: string; matchedIds: string[] }) {
+  const { data: matches } = useQuery({
+    queryKey: ["international-case-matches", caseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("international_case_facility_matches")
+        .select(`
+          *,
+          facilities (id, name, city, state)
+        `)
+        .eq("case_id", caseId);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: facilitiesData } = useQuery({
+    queryKey: ["facilities-by-ids", matchedIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name, city, state")
+        .in("id", matchedIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: matchedIds.length > 0,
+  });
+
+  const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+    invited: { label: "Invited", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+    accepted: { label: "Interested", className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+    declined: { label: "Declined", className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" },
+  };
+
+  return (
+    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <h4 className="font-medium mb-3 flex items-center gap-2">
+        <Building2 className="h-4 w-4" /> Invited Facilities ({matchedIds.length})
+      </h4>
+      <div className="space-y-2">
+        {matchedIds.map((facId) => {
+          const match = matches?.find((m) => m.facility_id === facId);
+          const facility = match?.facilities || facilitiesData?.find((f) => f.id === facId);
+          const status = match?.status || "invited";
+          const statusConfig = STATUS_BADGE[status] || STATUS_BADGE.invited;
+
+          return (
+            <div key={facId} className="flex items-center justify-between text-sm bg-white dark:bg-gray-900 rounded px-3 py-2">
+              <div>
+                <span className="font-medium">{facility?.name || "Unknown Facility"}</span>
+                {facility?.city && (
+                  <span className="text-muted-foreground ml-2">
+                    {facility.city}, {facility.state}
+                  </span>
+                )}
+              </div>
+              <Badge className={statusConfig.className} variant="outline">
+                {statusConfig.label}
+              </Badge>
+            </div>
+          );
+        })}
+      </div>
+      {matches?.some((m) => m.status === "accepted") && (
+        <p className="text-sm text-green-600 font-medium mt-3">
+          ✓ One or more facilities have expressed interest
+        </p>
+      )}
+    </div>
   );
 }

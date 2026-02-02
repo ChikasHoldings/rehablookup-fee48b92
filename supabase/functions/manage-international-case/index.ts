@@ -461,6 +461,31 @@ serve(async (req) => {
 
         if (caseError || !caseData) throw new Error("Case not found");
 
+        // Get facility info to get provider IDs
+        const { data: facilitiesData, error: facError } = await supabase
+          .from("facilities")
+          .select("id, user_id, name")
+          .in("id", facilityIds);
+
+        if (facError) throw facError;
+
+        // Create match records for each facility
+        const matchRecords = facilitiesData?.map(f => ({
+          case_id: caseId,
+          facility_id: f.id,
+          provider_id: f.user_id,
+          status: "invited",
+          invited_at: new Date().toISOString(),
+        })) || [];
+
+        if (matchRecords.length > 0) {
+          const { error: matchError } = await supabase
+            .from("international_case_facility_matches")
+            .upsert(matchRecords, { onConflict: "case_id,facility_id" });
+
+          if (matchError) throw matchError;
+        }
+
         // Update case with matched facilities
         const { error } = await supabase
           .from("international_placement_cases")
@@ -480,6 +505,7 @@ serve(async (req) => {
           actor_type: "admin",
           event_data: { 
             facility_ids: facilityIds,
+            facility_names: facilitiesData?.map(f => f.name),
             count: facilityIds.length,
           },
         });
