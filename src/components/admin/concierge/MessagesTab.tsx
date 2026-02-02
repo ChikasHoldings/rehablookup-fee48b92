@@ -177,9 +177,12 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
   if (!selectedThread) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          View and participate in conversations for this case.
-        </p>
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm">
+          <p className="font-medium text-blue-800 dark:text-blue-400">Admin Coordination Hub</p>
+          <p className="text-blue-700 dark:text-blue-500 text-xs mt-1">
+            Communicate with seekers as their advisor. All facility coordination goes through you.
+          </p>
+        </div>
         
         {threads && threads.length > 0 ? (
           <div className="space-y-2">

@@ -43,9 +43,17 @@ export function ToursTab({ caseData }: ToursTabProps) {
 
   if (!tours || tours.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-        <p className="text-muted-foreground">No tour requests for this case</p>
+      <div className="space-y-4">
+        <div className="bg-muted/50 border rounded-lg p-3 text-sm">
+          <p className="font-medium">Tour Coordination (Admin View)</p>
+          <p className="text-muted-foreground text-xs mt-1">
+            Tours are coordinated by admins only. Self-serve tour requests are disabled in Placement.
+          </p>
+        </div>
+        <div className="text-center py-8">
+          <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No tour requests for this case</p>
+        </div>
       </div>
     );
   }
