@@ -112,7 +112,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
           {/* Email with elegant styling */}
           <a 
             href="mailto:help@rehablookup.com" 
-            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-muted/30 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-muted/30 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
           >
             <Mail className="h-4 w-4" />
             help@rehablookup.com
@@ -124,7 +124,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
           {/* Locations */}
           <details className="group">
             <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
-              <h4 className="text-sm font-semibold text-foreground">Locations</h4>
+              <h4 className="text-[15px] font-semibold text-foreground">Locations</h4>
               <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -137,7 +137,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                   <li key={item.path}>
                     <Link 
                       to={item.path} 
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -146,7 +146,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                 <li>
                   <Link 
                     to="/locations" 
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                    className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-primary/80 transition-colors font-medium"
                   >
                     View All States
                     <ArrowUpRight className="h-3.5 w-3.5" />
@@ -159,7 +159,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
           {/* Treatment */}
           <details className="group">
             <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
-              <h4 className="text-sm font-semibold text-foreground">Treatment Types</h4>
+              <h4 className="text-[15px] font-semibold text-foreground">Treatment Types</h4>
               <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -172,7 +172,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                   <li key={item.path}>
                     <Link 
                       to={item.path} 
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -181,7 +181,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                 <li>
                   <Link 
                     to="/treatment-types" 
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                    className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-primary/80 transition-colors font-medium"
                   >
                     View All
                     <ArrowUpRight className="h-3.5 w-3.5" />
@@ -194,7 +194,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
           {/* Resources */}
           <details className="group">
             <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
-              <h4 className="text-sm font-semibold text-foreground">Resources</h4>
+              <h4 className="text-[15px] font-semibold text-foreground">Resources</h4>
               <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -207,7 +207,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                   <li key={item.path}>
                     <Link 
                       to={item.path} 
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -220,7 +220,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
           {/* For Providers */}
           <details className="group">
             <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
-              <h4 className="text-sm font-semibold text-foreground">For Providers</h4>
+              <h4 className="text-[15px] font-semibold text-foreground">For Providers</h4>
               <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -233,7 +233,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                   <li key={item.path}>
                     <Link 
                       to={item.path} 
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -250,21 +250,21 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
             <div className="flex items-center gap-6">
               <Link 
                 to="/privacy-policy" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 Privacy Policy
               </Link>
               <span className="text-border">•</span>
               <Link 
                 to="/terms-of-service" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 Terms of Service
               </Link>
               <span className="text-border">•</span>
               <Link 
                 to="/contact" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 Contact
               </Link>

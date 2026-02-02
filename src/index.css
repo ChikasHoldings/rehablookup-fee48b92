@@ -149,10 +149,19 @@
 
   html {
     scroll-behavior: smooth;
+    /* Improved mobile base font size for legibility */
+    font-size: 16px;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    /* Slightly larger base line-height for mobile readability */
+    line-height: 1.6;
+  }
+
+  /* Mobile-first typography improvements */
+  p {
+    @apply text-[15px] leading-relaxed md:text-base;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -160,15 +169,15 @@
   }
 
   h1 {
-    @apply tracking-tight;
+    @apply tracking-tight text-[1.625rem] md:text-3xl lg:text-4xl;
   }
 
   h2 {
-    @apply tracking-tight;
+    @apply tracking-tight text-xl md:text-2xl lg:text-3xl;
   }
 
   h3 {
-    @apply tracking-[-0.01em];
+    @apply tracking-[-0.01em] text-lg md:text-xl;
   }
 
   h4, h5, h6 {
