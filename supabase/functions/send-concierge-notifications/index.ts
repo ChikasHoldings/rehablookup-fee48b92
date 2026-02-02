@@ -564,6 +564,13 @@ async function sendProviderConfirmedEmail(
     }).select('id').single();
     
     if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
+
+    // SMS notification to seeker
+    await sendSeekerSmsNotification(
+      supabase,
+      inquiry.user_id,
+      `RehabLookup: Great news! ${facility.name} has confirmed your placement. Check your dashboard for next steps.`
+    );
   }
 }
 
@@ -671,6 +678,13 @@ async function sendPlacementCompleteEmails(
       link: '/account/concierge',
       metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
     });
+
+    // SMS notification to seeker
+    await sendSeekerSmsNotification(
+      supabase,
+      inquiry.user_id,
+      `RehabLookup: 🎉 Congratulations! Your placement with ${facility.name} is complete. We're rooting for your recovery journey!`
+    );
   }
 
   await supabase.from('provider_notifications').insert({
@@ -851,7 +865,7 @@ async function sendInvoicePaidEmail(
 }
 
 // ============================================================================
-// SMS NOTIFICATION HELPER
+// SMS NOTIFICATION HELPERS
 // ============================================================================
 
 async function sendProviderSmsNotification(
@@ -879,7 +893,7 @@ async function sendProviderSmsNotification(
       .maybeSingle();
 
     if (!notifPrefs?.sms_lead_alerts) {
-      logStep("SMS alerts not enabled for user", { userId: userId.slice(0, 8) });
+      logStep("SMS alerts not enabled for provider", { userId: userId.slice(0, 8) });
       return false;
     }
 
@@ -891,7 +905,7 @@ async function sendProviderSmsNotification(
       .maybeSingle();
 
     if (!profile?.phone || !profile.phone_verified) {
-      logStep("No verified phone for user", { userId: userId.slice(0, 8) });
+      logStep("No verified phone for provider", { userId: userId.slice(0, 8) });
       return false;
     }
 
@@ -913,15 +927,93 @@ async function sendProviderSmsNotification(
     });
 
     if (response.ok) {
-      logStep("SMS notification sent successfully", { userId: userId.slice(0, 8), type: notificationType });
+      logStep("Provider SMS notification sent successfully", { userId: userId.slice(0, 8), type: notificationType });
       return true;
     } else {
       const errorText = await response.text();
-      logStep("SMS notification failed", { error: errorText.slice(0, 100) });
+      logStep("Provider SMS notification failed", { error: errorText.slice(0, 100) });
       return false;
     }
   } catch (error) {
-    logStep("SMS notification error", { error: error instanceof Error ? error.message : String(error) });
+    logStep("Provider SMS notification error", { error: error instanceof Error ? error.message : String(error) });
+    return false;
+  }
+}
+
+async function sendSeekerSmsNotification(
+  supabase: any,
+  userId: string,
+  message: string
+): Promise<boolean> {
+  try {
+    // Check if seeker has verified phone in seeker_profiles
+    const { data: seekerProfile } = await supabase
+      .from("seeker_profiles")
+      .select("phone, phone_verified")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!seekerProfile?.phone || !seekerProfile.phone_verified) {
+      logStep("No verified phone for seeker", { userId: userId.slice(0, 8) });
+      return false;
+    }
+
+    // Format phone to E.164
+    let phone = seekerProfile.phone.replace(/\D/g, "");
+    if (phone.length === 10) {
+      phone = `+1${phone}`;
+    } else if (phone.length === 11 && phone.startsWith("1")) {
+      phone = `+${phone}`;
+    } else if (!phone.startsWith("+")) {
+      phone = `+${phone}`;
+    }
+
+    // Validate phone format
+    const phoneRegex = /^\+1\d{10}$/;
+    if (!phoneRegex.test(phone)) {
+      logStep("Invalid seeker phone format", { userId: userId.slice(0, 8) });
+      return false;
+    }
+
+    // Send SMS directly via Twilio
+    const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+      logStep("Twilio credentials not configured for seeker SMS");
+      return false;
+    }
+
+    // Truncate message to SMS limit
+    const truncatedMessage = message.length > 160 ? message.substring(0, 157) + "..." : message;
+
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+    const authHeader = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+
+    const response = await fetch(twilioUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${authHeader}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        To: phone,
+        From: twilioPhoneNumber,
+        Body: truncatedMessage,
+      }),
+    });
+
+    if (response.ok) {
+      logStep("Seeker SMS sent successfully", { userId: userId.slice(0, 8) });
+      return true;
+    } else {
+      const errorText = await response.text();
+      logStep("Seeker SMS failed", { error: errorText.slice(0, 100) });
+      return false;
+    }
+  } catch (error) {
+    logStep("Seeker SMS error", { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }
