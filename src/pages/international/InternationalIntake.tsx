@@ -145,23 +145,24 @@ export default function InternationalIntake() {
 
     setIsLoading(true);
     try {
+      // Normalize keys to snake_case for backend consistency
       const intakeData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
         phone: formData.countryCode && formData.phoneNumber 
           ? `${formData.countryCode} ${formData.phoneNumber}`
           : "",
         country: formData.country,
-        preferredLanguage: formData.preferredLanguage,
-        seekingFor: formData.seekingFor,
-        primaryConcern: formData.primaryConcern === "Other" 
+        preferred_language: formData.preferredLanguage,
+        seeking_for: formData.seekingFor,
+        primary_concern: formData.primaryConcern === "Other" 
           ? formData.primaryConcernOther 
           : formData.primaryConcern,
         urgency: formData.urgency,
-        budgetRange: formData.budgetRange,
-        rehabStyle: formData.rehabStyle,
-        willingToTravel: formData.willingToTravel,
+        budget_range: formData.budgetRange,
+        rehab_style: formData.rehabStyle,
+        willing_to_travel: formData.willingToTravel,
         notes: formData.notes
       };
 

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
@@ -7,19 +6,23 @@ import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PreCheckoutForm } from "@/components/international/PreCheckoutForm";
 import { 
   Clock,
   Shield,
   Building2,
   Plane,
-  ArrowRight,
   Phone,
   ChevronDown,
   ChevronUp,
   Globe,
-  Users,
   CheckCircle2,
-  Briefcase
+  Briefcase,
+  Lock,
+  Sparkles,
+  Timer,
+  Users,
+  MapPin
 } from "lucide-react";
 
 const TRUST_FEATURES = [
@@ -42,6 +45,29 @@ const TRUST_FEATURES = [
     icon: Plane, 
     title: "Travel Coordination",
     description: "We help coordinate intake timing and travel logistics"
+  },
+];
+
+const WHY_US_TREATMENT = [
+  {
+    icon: Lock,
+    title: "Complete Privacy",
+    description: "US private rehabs operate independently with no government reporting. Your treatment stays completely confidential."
+  },
+  {
+    icon: Timer,
+    title: "Immediate Admission",
+    description: "No waiting lists. Premium US facilities can admit patients within days, not months."
+  },
+  {
+    icon: Sparkles,
+    title: "Luxury & Executive Care",
+    description: "World-class amenities, private rooms, gourmet meals, and concierge-level service."
+  },
+  {
+    icon: Users,
+    title: "Specialized Treatment",
+    description: "Dual-diagnosis, trauma-focused, holistic, and evidence-based programs unavailable elsewhere."
   },
 ];
 
@@ -86,27 +112,32 @@ const FAQ_ITEMS = [
   },
 ];
 
+const TRUST_STATS = [
+  { value: "50+", label: "Countries Served" },
+  { value: "200+", label: "US Facilities" },
+  { value: "24hr", label: "Response Time" },
+];
+
 export default function InternationalLanding() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleStartPlacement = async () => {
+  const handleStartPlacement = async (data: { name: string; email: string; phone: string; country: string }) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-international-checkout", {
+      const { data: response, error } = await supabase.functions.invoke("create-international-checkout", {
         body: {
-          name: "International Client",
-          email: "",
-          phone: "",
-          country: "International",
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          country: data.country,
         },
       });
 
       if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
+      if (response?.url) {
+        window.location.href = response.url;
       }
     } catch (err) {
       console.error("Checkout error:", err);
@@ -134,9 +165,10 @@ export default function InternationalLanding() {
         
         <main className="flex-1">
           {/* Hero Section */}
-          <section className="relative bg-primary/[0.03] border-b">
-            <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32">
-              <div className="max-w-3xl mx-auto text-center">
+          <section className="relative bg-gradient-to-b from-primary/5 to-background border-b">
+            <div className="container mx-auto px-4 py-16 md:py-24 lg:py-28">
+              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
+                {/* Left: Value Proposition */}
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -148,47 +180,122 @@ export default function InternationalLanding() {
                   </div>
                   
                   <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-tight tracking-tight">
-                    Access Quality Treatment in the United States
+                    Your Gateway to<br />
+                    <span className="text-primary">American Rehab</span>
                   </h1>
                   
-                  <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
-                    Private placement coordination for international clients. We match you with vetted U.S. treatment centers and manage the entire admissions process.
+                  <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                    Skip the confusion. Skip the scams. We connect international clients directly with verified U.S. treatment centers—handling everything from matching to admission.
                   </p>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <Button 
-                      size="lg" 
-                      className="h-12 px-8 font-semibold min-w-[200px]"
-                      onClick={handleStartPlacement}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Processing..." : "Start Placement — $299"}
-                      {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="h-12 px-6"
-                      asChild
-                    >
-                      <a href="tel:+18005551234">
-                        <Phone className="mr-2 h-4 w-4" />
-                        Speak with an Advisor
-                      </a>
-                    </Button>
+                  <ul className="space-y-3 mb-8">
+                    {[
+                      "Access 200+ vetted luxury & executive programs",
+                      "No waiting lists—admission within days",
+                      "Complete privacy and confidentiality",
+                      "Fee refunded upon confirmed admission",
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm">
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="h-12 px-6"
+                    asChild
+                  >
+                    <a href="tel:+18005551234">
+                      <Phone className="mr-2 h-4 w-4" />
+                      Speak with an Advisor
+                    </a>
+                  </Button>
+                </motion.div>
+
+                {/* Right: Pre-Checkout Form */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
+                  <div className="bg-background border rounded-xl shadow-lg p-6 md:p-8">
+                    <div className="text-center mb-6">
+                      <h2 className="text-xl font-semibold text-foreground mb-2">
+                        Start Your Placement
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Complete this form to begin. You'll be redirected to secure payment.
+                      </p>
+                    </div>
+                    
+                    <PreCheckoutForm 
+                      onSubmit={handleStartPlacement}
+                      isLoading={isLoading}
+                    />
                   </div>
-                  
-                  <p className="text-sm text-muted-foreground mt-4">
-                    Fee refunded upon confirmed admission
-                  </p>
                 </motion.div>
               </div>
             </div>
           </section>
 
-          {/* Trust Features */}
-          <section className="py-16 md:py-20 border-b">
+          {/* Trust Stats Bar */}
+          <section className="py-8 bg-primary/5 border-b">
             <div className="container mx-auto px-4">
+              <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+                {TRUST_STATS.map((stat, i) => (
+                  <div key={i} className="text-center">
+                    <p className="text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Why US Treatment */}
+          <section className="py-16 md:py-24 border-b">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  Why Choose U.S. Treatment?
+                </h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  The United States has the largest private rehab system in the world—offering what government-run programs in other countries simply cannot.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
+                {WHY_US_TREATMENT.map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    className="bg-background border rounded-lg p-6"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <item.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Trust Features */}
+          <section className="py-16 md:py-20 bg-muted/30 border-b">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  How We Help
+                </h2>
+              </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                 {TRUST_FEATURES.map((feature, index) => (
                   <motion.div
@@ -211,7 +318,7 @@ export default function InternationalLanding() {
           </section>
 
           {/* How It Works */}
-          <section className="py-16 md:py-24 bg-muted/30">
+          <section className="py-16 md:py-24 border-b">
             <div className="container mx-auto px-4">
               <div className="text-center mb-12">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
@@ -240,11 +347,6 @@ export default function InternationalLanding() {
                         <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
                         <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                       </div>
-                      {index < STEPS.length - 1 && (
-                        <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-                          <ArrowRight className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
                     </motion.div>
                   ))}
                 </div>
@@ -253,7 +355,7 @@ export default function InternationalLanding() {
           </section>
 
           {/* Who We Serve */}
-          <section className="py-16 md:py-24 border-b">
+          <section className="py-16 md:py-24 bg-muted/30 border-b">
             <div className="container mx-auto px-4">
               <div className="max-w-4xl mx-auto">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -278,7 +380,7 @@ export default function InternationalLanding() {
                       ))}
                     </ul>
                   </div>
-                  <div className="bg-muted/30 border rounded-lg p-8">
+                  <div className="bg-background border rounded-lg p-8">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Briefcase className="h-6 w-6 text-primary" />
@@ -304,11 +406,9 @@ export default function InternationalLanding() {
                     </ul>
                     <Button 
                       className="w-full h-11 font-semibold"
-                      onClick={handleStartPlacement}
-                      disabled={isLoading}
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                      {isLoading ? "Processing..." : "Begin Placement Process"}
-                      {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+                      Start Application Above
                     </Button>
                   </div>
                 </div>
@@ -317,7 +417,7 @@ export default function InternationalLanding() {
           </section>
 
           {/* FAQ */}
-          <section className="py-16 md:py-24 bg-muted/30">
+          <section className="py-16 md:py-24 border-b">
             <div className="container mx-auto px-4">
               <div className="text-center mb-10">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
@@ -356,7 +456,7 @@ export default function InternationalLanding() {
           </section>
 
           {/* Bottom CTA */}
-          <section className="py-16 md:py-20 border-t">
+          <section className="py-16 md:py-20 bg-primary/5">
             <div className="container mx-auto px-4 text-center">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
                 Ready to Find the Right Program?
@@ -367,11 +467,9 @@ export default function InternationalLanding() {
               <Button 
                 size="lg" 
                 className="h-12 px-8 font-semibold"
-                onClick={handleStartPlacement}
-                disabled={isLoading}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               >
-                {isLoading ? "Processing..." : "Start Placement — $299"}
-                {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+                Start Application
               </Button>
             </div>
           </section>
