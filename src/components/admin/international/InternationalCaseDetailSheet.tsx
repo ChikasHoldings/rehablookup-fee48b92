@@ -72,6 +72,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([]);
   const [selectedFacilityForAccept, setSelectedFacilityForAccept] = useState("");
   const [refundType, setRefundType] = useState<"refunded" | "credited">("refunded");
+  const [admissionRefundChoice, setAdmissionRefundChoice] = useState<"refund" | "credit">("refund");
   const [newNote, setNewNote] = useState("");
   const [searchFacility, setSearchFacility] = useState("");
   
@@ -192,7 +193,13 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
 
   const handleConfirmAdmission = () => {
     if (!caseData?.accepted_facility_id) return;
-    manageCaseMutation.mutate({ action: "confirm_admission", data: { facilityId: caseData.accepted_facility_id } });
+    manageCaseMutation.mutate({ 
+      action: "confirm_admission", 
+      data: { 
+        facilityId: caseData.accepted_facility_id,
+        clientFeeResolution: admissionRefundChoice, // 'refund' or 'credit'
+      } 
+    });
   };
 
   const handleRefund = () => {
@@ -310,8 +317,8 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                     </Button>
                   )}
                   {caseData.accepted_facility_id && caseData.status !== "admitted" && (
-                    <Button size="sm" variant="default" onClick={handleConfirmAdmission} disabled={manageCaseMutation.isPending}>
-                      <Building2 className="h-3.5 w-3.5 mr-1" /> Confirm Admission & Invoice
+                    <Button size="sm" variant="default" onClick={() => setActionDialog("admission")} disabled={manageCaseMutation.isPending}>
+                      <Building2 className="h-3.5 w-3.5 mr-1" /> Confirm Admission
                     </Button>
                   )}
                   {caseData.payment_status === "paid" && !caseData.refund_type && (
@@ -588,7 +595,75 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
         </DialogContent>
       </Dialog>
 
-      {/* Refund Dialog */}
+      {/* Confirm Admission Dialog - with Refund/Credit choice */}
+      <Dialog open={actionDialog === "admission"} onOpenChange={() => setActionDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Admission</DialogTitle>
+            <DialogDescription>
+              This will mark the case as admitted, create a $4,500 facility invoice, and process the client's $299 fee.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-sm font-medium mb-1">Admitting Facility</p>
+              <p className="text-sm text-muted-foreground">
+                {facilities?.find(f => f.id === caseData.accepted_facility_id)?.name || "Selected facility"}
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Client Fee Resolution ($299)</Label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                  <input
+                    type="radio"
+                    name="clientFeeResolution"
+                    value="refund"
+                    checked={admissionRefundChoice === "refund"}
+                    onChange={() => setAdmissionRefundChoice("refund")}
+                    className="h-4 w-4 text-primary"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">Refund $299</p>
+                    <p className="text-xs text-muted-foreground">Process refund to client's original payment method via Stripe</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                  <input
+                    type="radio"
+                    name="clientFeeResolution"
+                    value="credit"
+                    checked={admissionRefundChoice === "credit"}
+                    onChange={() => setAdmissionRefundChoice("credit")}
+                    className="h-4 w-4 text-primary"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">Credit $299</p>
+                    <p className="text-xs text-muted-foreground">Mark as credited for future services (no Stripe refund)</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                This action will also create a $4,500 facility invoice
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActionDialog(null)}>Cancel</Button>
+            <Button onClick={handleConfirmAdmission} disabled={manageCaseMutation.isPending}>
+              {manageCaseMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Confirm Admission
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Standalone Refund Dialog (for cases already admitted without resolution) */}
       <Dialog open={actionDialog === "refund"} onOpenChange={() => setActionDialog(null)}>
         <DialogContent>
           <DialogHeader>
