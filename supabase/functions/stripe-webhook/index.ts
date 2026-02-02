@@ -80,6 +80,80 @@ serve(async (req) => {
         customerId: session.customer 
       });
 
+      // INTERNATIONAL PLACEMENT PAYMENT
+      if (session.mode === "payment" && metadataType === "international_placement") {
+        const clientEmail = session.metadata?.client_email || session.customer_email;
+        const clientName = session.metadata?.client_name;
+        const clientCountry = session.metadata?.client_country;
+        const userId = session.metadata?.user_id || null;
+        const paymentIntentId = session.payment_intent as string;
+
+        logStep("Processing international placement payment", { 
+          sessionId: session.id, 
+          email: clientEmail,
+          paymentIntentId 
+        });
+
+        // Check if payment already processed (idempotency)
+        const { data: existingPayment } = await supabaseAdmin
+          .from("international_payments")
+          .select("id, status")
+          .eq("stripe_checkout_session_id", session.id)
+          .maybeSingle();
+
+        if (existingPayment?.status === "succeeded") {
+          logStep("Payment already processed, skipping", { paymentId: existingPayment.id });
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Upsert payment record
+        const { error: paymentError } = await supabaseAdmin
+          .from("international_payments")
+          .upsert({
+            id: existingPayment?.id,
+            user_id: userId || null,
+            email: clientEmail || "",
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: paymentIntentId,
+            amount_cents: 29900,
+            currency: "USD",
+            status: "succeeded",
+            client_name: clientName,
+            client_country: clientCountry,
+            metadata: {
+              stripe_customer_id: session.customer,
+              idempotency_key: session.metadata?.idempotency_key,
+            },
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "stripe_checkout_session_id" });
+
+        if (paymentError) {
+          logStep("Error updating payment record", { error: paymentError.message });
+        } else {
+          logStep("International payment recorded successfully");
+        }
+
+        // Create admin notification
+        await supabaseAdmin.from("admin_notifications").insert({
+          type: "international_payment",
+          title: "New International Placement Payment",
+          message: `${clientName} from ${clientCountry} paid $299 for international placement`,
+          metadata: {
+            session_id: session.id,
+            payment_intent_id: paymentIntentId,
+            client_name: clientName,
+            client_email: clientEmail,
+            client_country: clientCountry,
+          },
+        });
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // ADDITIONAL LISTING SLOT PURCHASE
       if (session.mode === "payment" && purchaseType === "additional_listing_slot") {
         const userId = session.metadata?.user_id;
@@ -701,6 +775,59 @@ serve(async (req) => {
             message: `Payment failed for ${invoice.facilities?.name || 'Unknown'} - $${(invoice.amount_cents / 100).toFixed(2)}`,
             metadata: { invoice_id: invoiceId, facility_id: invoice.facility_id, amount_cents: invoice.amount_cents },
           });
+        }
+      }
+    }
+
+    // ==========================================
+    // Handle charge.refunded (international payments)
+    // ==========================================
+    if (event.type === "charge.refunded") {
+      const charge = event.data.object as Stripe.Charge;
+      const paymentIntentId = charge.payment_intent as string;
+      
+      if (paymentIntentId) {
+        logStep("Processing refund", { chargeId: charge.id, paymentIntentId });
+
+        // Check if this is an international payment
+        const { data: intlPayment } = await supabaseAdmin
+          .from("international_payments")
+          .select("id, email, client_name")
+          .eq("stripe_payment_intent_id", paymentIntentId)
+          .maybeSingle();
+
+        if (intlPayment) {
+          logStep("Refunding international payment", { paymentId: intlPayment.id });
+
+          const { error: updateError } = await supabaseAdmin
+            .from("international_payments")
+            .update({
+              status: "refunded",
+              updated_at: new Date().toISOString(),
+              metadata: {
+                refund_id: charge.refunds?.data[0]?.id,
+                refunded_at: new Date().toISOString(),
+              },
+            })
+            .eq("id", intlPayment.id);
+
+          if (updateError) {
+            logStep("Error updating payment to refunded", { error: updateError.message });
+          } else {
+            logStep("International payment marked as refunded");
+
+            // Create admin notification
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "international_refund",
+              title: "International Payment Refunded",
+              message: `Refunded $299 to ${intlPayment.client_name} (${intlPayment.email})`,
+              metadata: {
+                payment_id: intlPayment.id,
+                charge_id: charge.id,
+                payment_intent_id: paymentIntentId,
+              },
+            });
+          }
         }
       }
     }

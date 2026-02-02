@@ -28,6 +28,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     // Try to get authenticated user from request
     let authenticatedUserId: string | null = null;
@@ -75,7 +76,7 @@ serve(async (req) => {
       logStep("Found existing customer", { customerId });
     }
 
-    // Generate idempotency key
+    // Generate idempotency key based on email and timestamp (allows retry within reasonable window)
     const idempotencyKey = `intl_placement_${email}_${Date.now()}`;
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
@@ -93,6 +94,7 @@ serve(async (req) => {
       success_url: `${origin}/international/intake?session_id={CHECKOUT_SESSION_ID}&payment=success`,
       cancel_url: `${origin}/international?canceled=true`,
       metadata: {
+        type: "international_placement",
         service: "international_placement",
         client_name: name,
         client_email: email,
@@ -103,6 +105,7 @@ serve(async (req) => {
       },
       payment_intent_data: {
         metadata: {
+          type: "international_placement",
           service: "international_placement",
           email: email,
           client_name: name,
@@ -117,6 +120,47 @@ serve(async (req) => {
       url: session.url,
       userId: authenticatedUserId 
     });
+
+    // Create pending payment record
+    if (supabaseUrl && supabaseServiceKey) {
+      try {
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+        
+        // Check for existing payment with same session to ensure idempotency
+        const { data: existing } = await supabaseAdmin
+          .from("international_payments")
+          .select("id")
+          .eq("stripe_checkout_session_id", session.id)
+          .maybeSingle();
+
+        if (!existing) {
+          const { error: insertError } = await supabaseAdmin
+            .from("international_payments")
+            .insert({
+              user_id: authenticatedUserId,
+              email: email,
+              stripe_checkout_session_id: session.id,
+              amount_cents: 29900,
+              currency: "USD",
+              status: "pending",
+              client_name: name,
+              client_country: country,
+              metadata: {
+                phone: phone || null,
+                idempotency_key: idempotencyKey,
+              },
+            });
+
+          if (insertError) {
+            logStep("Warning: Failed to create payment record", { error: insertError.message });
+          } else {
+            logStep("Pending payment record created");
+          }
+        }
+      } catch (dbErr) {
+        logStep("Warning: DB operation failed", { error: String(dbErr) });
+      }
+    }
 
     return new Response(
       JSON.stringify({ 

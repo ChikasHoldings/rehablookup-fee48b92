@@ -2058,6 +2058,54 @@ export type Database = {
           },
         ]
       }
+      international_payments: {
+        Row: {
+          amount_cents: number
+          client_country: string | null
+          client_name: string | null
+          created_at: string
+          currency: string
+          email: string
+          id: string
+          metadata: Json | null
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          client_country?: string | null
+          client_name?: string | null
+          created_at?: string
+          currency?: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          client_country?: string | null
+          client_name?: string | null
+          created_at?: string
+          currency?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       international_placement_cases: {
         Row: {
           accepted_facility_id: string | null
