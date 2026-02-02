@@ -27,8 +27,10 @@ import {
   AlertCircle,
   CreditCard,
   Filter,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import { InternationalCaseDetailSheet } from "@/components/admin/international/InternationalCaseDetailSheet";
 
 type CaseStatus = 'new' | 'reviewing' | 'matching' | 'matched' | 'introductions_sent' | 'in_contact' | 'admitted' | 'closed' | 'all';
@@ -303,10 +305,18 @@ export default function AdminInternational() {
             <p className="text-sm text-muted-foreground">Manage global client placements and facility invoices</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { refetchCases(); refetchInvoices(); }}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link to="/admin/international/agreement">
+            <Button variant="outline" size="sm">
+              <FileText className="h-4 w-4 mr-2" />
+              Partner Agreement
+            </Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => { refetchCases(); refetchInvoices(); }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
