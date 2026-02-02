@@ -1,347 +1,242 @@
 
+# International SEO Strategy: Capturing Global Search Traffic
 
-# International Placement System - Complete Restructure
+## Executive Summary
+Create a comprehensive network of SEO-optimized landing pages targeting foreigners searching for US-based addiction treatment. This mirrors the successful "near-me" page architecture but focuses on international search intent keywords like "best rehab in America," "luxury rehab California for foreigners," etc.
 
-## Overview
-This plan completely restructures the International Placement system with a premium design, comprehensive intake form capturing all placement-critical data, and clear provider visibility.
+## Target Keyword Categories
+
+### Tier 1: High-Volume Primary Keywords
+| Keyword | Monthly Search Volume (Est.) |
+|---------|------------------------------|
+| best rehab in USA | 8,100 |
+| rehab centers in America | 5,400 |
+| luxury rehab California | 4,400 |
+| American rehab for foreigners | 2,900 |
+| US addiction treatment for international patients | 1,900 |
+| private rehab United States | 1,600 |
+
+### Tier 2: Location-Specific Keywords
+- luxury rehab Florida
+- celebrity rehab California
+- best rehab Malibu
+- Arizona rehab resorts
+- executive rehab New York
+
+### Tier 3: Treatment-Specific International Keywords
+- detox centers USA for foreigners
+- alcohol rehab America international
+- dual diagnosis treatment United States
+- private drug rehab America
 
 ---
 
-## 1. Landing Page Redesign (`InternationalLanding.tsx`)
+## Implementation Plan
 
-### Remove
-- `PreCheckoutForm` component from hero section
-- All price references from buttons ("$299")
-- Payment-first flow
+### Phase 1: International SEO Landing Page Directory
+Create a new directory `src/pages/us-rehab/` with SEO-optimized pages:
 
-### Add
-- Full-width hero with premium imagery using Unsplash
-- Clear "Start Application" CTA (no price visible)
-- Trust indicators with actual imagery
-- Enhanced visual hierarchy
-
-### New Hero Structure
 ```text
-+--------------------------------------------------+
-|  [Full-width hero image: luxury US facility]      |
-|                                                   |
-|   Your Gateway to American Rehab                  |
-|   Expert placement into America's finest          |
-|   treatment centers                               |
-|                                                   |
-|   [ Start Your Application ]  [ Call an Advisor ] |
-|                                                   |
-|   50+ Countries • 200+ Centers • 24hr Response    |
-+--------------------------------------------------+
+/us-rehab/                              → Main hub page
+/us-rehab/best-rehab-usa                → Primary keyword page
+/us-rehab/luxury-rehab-california       → State-specific luxury
+/us-rehab/luxury-rehab-florida          → State-specific luxury
+/us-rehab/luxury-rehab-arizona          → State-specific luxury
+/us-rehab/executive-rehab-new-york      → Executive treatment
+/us-rehab/malibu-rehab-centers          → Premium destination
+/us-rehab/private-rehab-america         → Privacy-focused page
+/us-rehab/rehab-for-international       → Foreigners-specific
 ```
 
----
+### Phase 2: Page Structure (Template)
 
-## 2. Complete Multi-Step Intake Wizard
+Each page will include:
 
-### NEW Route: `/international/apply`
+1. **SEO Metadata**
+   - Title optimized for target keyword
+   - Meta description with CTA
+   - Canonical URLs
+   - hreflang tags for multi-language signals
+   - FAQPage schema, Service schema
 
-Create a sleek, one-question-at-a-time wizard that captures ALL data needed for successful placement.
+2. **Hero Section**
+   - H1 with primary keyword
+   - Trust signals (countries served, response time)
+   - Prominent CTA to `/international/apply`
 
-### Form Steps (10 steps total)
+3. **Content Sections**
+   - "Why Choose US Treatment" (privacy, quality, immediate admission)
+   - Location/Treatment highlights
+   - Facility listings (filtered by state/type)
+   - FAQ section with international-specific questions
+   - Process overview
 
-| Step | Title | Fields |
-|------|-------|--------|
-| 1 | Contact Info | First name, Last name |
-| 2 | Email | Email address |
-| 3 | Phone | International phone |
-| 4 | Location | Country, Preferred language |
-| 5 | About the Patient | Who needs help, Age range, Gender |
-| 6 | **Level of Care** | Detox, Inpatient, PHP, IOP, Sober Living, Not sure |
-| 7 | Clinical Details | Primary concern, Co-occurring conditions, Previous treatment |
-| 8 | Preferences | Budget, Rehab style (Luxury/Executive/Standard), Duration |
-| 9 | Special Requirements | Amenities, Gender-specific, LGBTQ+, Faith-based |
-| 10 | Review & Pay | Summary + "Continue to Payment - $299" |
+4. **Internal Linking**
+   - Links to `/international` placement service
+   - Cross-links to related state pages
+   - Links to treatment type pages
 
-### Missing Fields Being Added
+### Phase 3: Hub Page Structure
 
-**Level of Care (CRITICAL)**
-```typescript
-const LEVEL_OF_CARE_OPTIONS = [
-  { value: "detox", label: "Medical Detox" },
-  { value: "inpatient", label: "Inpatient / Residential" },
-  { value: "php", label: "Partial Hospitalization (PHP)" },
-  { value: "iop", label: "Intensive Outpatient (IOP)" },
-  { value: "sober-living", label: "Sober Living / Extended Care" },
-  { value: "not-sure", label: "Not sure — I need guidance" },
-];
-```
-
-**Age Range**
-```typescript
-const AGE_RANGE_OPTIONS = [
-  { value: "18-25", label: "18-25 years old" },
-  { value: "26-35", label: "26-35 years old" },
-  { value: "36-45", label: "36-45 years old" },
-  { value: "46-55", label: "46-55 years old" },
-  { value: "56+", label: "56+ years old" },
-];
-```
-
-**Gender**
-```typescript
-const GENDER_OPTIONS = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "non-binary", label: "Non-binary" },
-  { value: "prefer-not-say", label: "Prefer not to say" },
-];
-```
-
-**Previous Treatment**
-```typescript
-const PREVIOUS_TREATMENT_OPTIONS = [
-  { value: "none", label: "No previous treatment" },
-  { value: "once", label: "Been to treatment once" },
-  { value: "multiple", label: "Multiple treatment attempts" },
-];
-```
-
-**Co-occurring Conditions**
-```typescript
-const CO_OCCURRING_OPTIONS = [
-  { value: "anxiety", label: "Anxiety" },
-  { value: "depression", label: "Depression" },
-  { value: "ptsd", label: "PTSD / Trauma" },
-  { value: "bipolar", label: "Bipolar Disorder" },
-  { value: "eating-disorder", label: "Eating Disorder" },
-  { value: "none", label: "None / Not sure" },
-];
-```
-
-**Treatment Duration**
-```typescript
-const DURATION_OPTIONS = [
-  { value: "30-days", label: "30 days" },
-  { value: "60-days", label: "60 days" },
-  { value: "90-days", label: "90 days" },
-  { value: "6-months", label: "6+ months (extended care)" },
-  { value: "flexible", label: "Flexible / Need guidance" },
-];
-```
-
-**Special Requirements / Amenities**
-```typescript
-const AMENITY_OPTIONS = [
-  { value: "private-room", label: "Private room" },
-  { value: "gym-fitness", label: "Gym / Fitness facilities" },
-  { value: "spa-wellness", label: "Spa / Wellness services" },
-  { value: "holistic", label: "Holistic therapies" },
-  { value: "equine", label: "Equine therapy" },
-  { value: "ocean-view", label: "Ocean/mountain views" },
-  { value: "women-only", label: "Women only program" },
-  { value: "men-only", label: "Men only program" },
-  { value: "lgbtq", label: "LGBTQ+ friendly" },
-  { value: "faith-based", label: "Faith-based program" },
-];
-```
-
-### Design Specifications
-- Animated progress bar at top (0-100%)
-- Framer Motion slide transitions between steps
-- Large, touch-friendly inputs
-- One focus area per step
-- Back/Next navigation
-- Final step shows complete summary + $299 payment button
-
----
-
-## 3. Updated Form Data Structure
-
-```typescript
-interface InternationalIntakeData {
-  // Contact
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  country: string;
-  preferred_language: string;
-  
-  // Patient Demographics
-  seeking_for: 'self' | 'loved-one';
-  age_range: string;
-  gender: string;
-  
-  // Level of Care (NEW - CRITICAL)
-  level_of_care: string;
-  
-  // Clinical
-  primary_concern: string;
-  co_occurring_conditions: string[];
-  previous_treatment: string;
-  
-  // Preferences
-  budget_range: string;
-  rehab_style: string;  // standard, luxury, executive, vip
-  treatment_duration: string;
-  willing_to_travel: string;
-  
-  // Special Requirements (NEW)
-  amenities: string[];
-  special_requirements: string;
-  
-  // Notes
-  notes: string;
-}
-```
-
----
-
-## 4. Enhanced Thank You Page
-
-### Premium Design Elements
-- Full-page layout with confetti animation on load
-- Large success checkmark with pulse animation
-- Email verification status/prompt section
-- Clear timeline visualization
-- Track case CTA to user portal
-- Professional contact information
-
-### Email Verification Flow
+**Main Hub (`/us-rehab/`):**
 ```text
-+--------------------------------------------------+
-|  [✓ Success Animation]                            |
-|                                                   |
-|  Application Submitted!                           |
-|                                                   |
-|  ⚠️ Please verify your email                      |
-|  [We sent a verification link to xxx@email.com]   |
-|                                                   |
-|  [Resend Verification Email]                      |
-|                                                   |
-|  WHAT'S NEXT                                      |
-|  1. Verify your email ←                           |
-|  2. Advisor reviews your case (within 24hrs)      |
-|  3. Receive matched facility options              |
-|  4. Confirm placement & travel                    |
-|                                                   |
-|  [Track Your Case]  [Return Home]                 |
-+--------------------------------------------------+
+├── Hero: "Find Treatment in the United States"
+├── Search by State (top destinations)
+│   ├── California, Florida, Arizona, New York, Texas
+├── Search by Treatment Type
+│   ├── Luxury, Executive, Private, Dual Diagnosis
+├── Why International Clients Choose US Treatment
+├── Countries We Serve (visual trust section)
+├── FAQ for International Patients
+└── CTA: Start Your Placement
 ```
+
+### Phase 4: State-Specific Pages
+
+Create dedicated pages for top rehab destination states:
+
+| State | URL Slug | Target Keywords |
+|-------|----------|-----------------|
+| California | `/us-rehab/california` | rehab California, Malibu rehab, LA treatment |
+| Florida | `/us-rehab/florida` | Florida rehab, Miami treatment, South Florida |
+| Arizona | `/us-rehab/arizona` | Arizona rehab, Sedona treatment, desert rehab |
+| New York | `/us-rehab/new-york` | NYC rehab, executive treatment NY |
+| Texas | `/us-rehab/texas` | Texas rehab, Houston treatment |
+| Colorado | `/us-rehab/colorado` | Colorado rehab, mountain treatment |
+
+### Phase 5: Specialty Pages
+
+| Page | URL | Target Intent |
+|------|-----|---------------|
+| Best Rehab USA | `/us-rehab/best-rehab-usa` | Generic quality seekers |
+| Luxury Rehab America | `/us-rehab/luxury-rehab-america` | High-end clients |
+| Private Rehab USA | `/us-rehab/private-rehab-usa` | Privacy-focused |
+| Executive Rehab USA | `/us-rehab/executive-rehab-usa` | Business professionals |
+| Celebrity Rehab USA | `/us-rehab/celebrity-rehab-usa` | High-profile clients |
+| Rehab for Foreigners | `/us-rehab/international-patients` | Explicit international intent |
 
 ---
 
-## 5. Provider Tab Restructure
+## Technical Implementation
 
-### Current State (PlacementNetwork.tsx)
+### New Files to Create
+
+```text
+src/pages/us-rehab/
+├── USRehabHub.tsx                    # Main hub page
+├── BestRehabUSA.tsx                  # Primary keyword page
+├── LuxuryRehabAmerica.tsx            # Luxury-focused
+├── LuxuryRehabCalifornia.tsx         # CA luxury
+├── LuxuryRehabFlorida.tsx            # FL luxury
+├── LuxuryRehabArizona.tsx            # AZ luxury
+├── ExecutiveRehabUSA.tsx             # Executive treatment
+├── PrivateRehabAmerica.tsx           # Privacy-focused
+├── InternationalPatients.tsx         # Foreigners page
+├── MalibuRehabCenters.tsx            # Malibu destination
+└── components/
+    ├── InternationalHero.tsx         # Reusable hero
+    ├── CountriesServed.tsx           # Trust visual
+    └── InternationalFAQ.tsx          # Reusable FAQ
+```
+
+### Route Configuration (App.tsx)
+
 ```tsx
-<TabsTrigger value="introductions">Intros</TabsTrigger>
-<TabsTrigger value="international">Int'l</TabsTrigger>
+// International SEO Routes
+<Route path="/us-rehab" element={<USRehabHub />} />
+<Route path="/us-rehab/best-rehab-usa" element={<BestRehabUSA />} />
+<Route path="/us-rehab/luxury-rehab-america" element={<LuxuryRehabAmerica />} />
+<Route path="/us-rehab/luxury-rehab-california" element={<LuxuryRehabCalifornia />} />
+<Route path="/us-rehab/luxury-rehab-florida" element={<LuxuryRehabFlorida />} />
+<Route path="/us-rehab/luxury-rehab-arizona" element={<LuxuryRehabArizona />} />
+<Route path="/us-rehab/executive-rehab" element={<ExecutiveRehabUSA />} />
+<Route path="/us-rehab/private-rehab-america" element={<PrivateRehabAmerica />} />
+<Route path="/us-rehab/international-patients" element={<InternationalPatients />} />
+<Route path="/us-rehab/malibu-rehab" element={<MalibuRehabCenters />} />
+<Route path="/us-rehab/:stateSlug" element={<USRehabState />} />
 ```
 
-### New State
-```tsx
-<TabsTrigger value="domestic" className="font-semibold">
-  <MapPin className="h-4 w-4 mr-1.5" />
-  <span>Domestic</span>
-  {domesticCount > 0 && <Badge>{domesticCount}</Badge>}
-</TabsTrigger>
-<TabsTrigger value="international" className="font-semibold">
-  <Globe className="h-4 w-4 mr-1.5" />
-  <span>International</span>
-  {internationalCount > 0 && <Badge>{internationalCount}</Badge>}
-</TabsTrigger>
+### Sitemap Updates
+
+Add all new URLs to `public/sitemap.xml`:
+```xml
+<!-- International SEO Pages -->
+<url>
+  <loc>https://rehablookup.com/us-rehab</loc>
+  <priority>0.9</priority>
+</url>
+<url>
+  <loc>https://rehablookup.com/us-rehab/best-rehab-usa</loc>
+  <priority>0.9</priority>
+</url>
+<!-- ... all other pages -->
 ```
 
-### Tab Layout (7 tabs → clearer labels)
-```text
-[Domestic] [International] [Messages] [Tours] [Profile] [Billing] [History]
-```
+### Prerender Configuration
 
-- Bold, legible text
-- Icons + full words (not abbreviations)
-- Badge counts on both placement types
-
----
-
-## 6. Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/pages/international/InternationalApplication.tsx` | Multi-step intake wizard page |
-| `src/components/international/steps/StepContact.tsx` | Name inputs |
-| `src/components/international/steps/StepEmail.tsx` | Email input |
-| `src/components/international/steps/StepPhone.tsx` | International phone |
-| `src/components/international/steps/StepLocation.tsx` | Country & language |
-| `src/components/international/steps/StepPatient.tsx` | Who, age, gender |
-| `src/components/international/steps/StepLevelOfCare.tsx` | Care level selection |
-| `src/components/international/steps/StepClinical.tsx` | Concern, conditions, history |
-| `src/components/international/steps/StepPreferences.tsx` | Budget, style, duration |
-| `src/components/international/steps/StepAmenities.tsx` | Special requirements |
-| `src/components/international/steps/StepReview.tsx` | Summary + payment |
-| `src/components/international/IntakeProgress.tsx` | Progress bar component |
-
----
-
-## 7. Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/international/InternationalLanding.tsx` | Remove form, add imagery, polish design, add "Start Application" CTA |
-| `src/pages/international/InternationalThankYou.tsx` | Premium design, email verification, confetti |
-| `src/pages/provider/PlacementNetwork.tsx` | Rename tabs to "Domestic" / "International" |
-| `src/App.tsx` | Add route `/international/apply` |
-| `src/components/international/PreCheckoutForm.tsx` | Delete (no longer needed) |
-| `src/pages/international/InternationalIntake.tsx` | Deprecate (redirect to /apply) |
-
----
-
-## 8. Route Structure
-
-```text
-/international              → Landing page (redesigned, no form)
-/international/apply        → Multi-step intake wizard (NEW)
-/international/intake       → Redirect to /apply (deprecated)
-/international/thank-you    → Enhanced thank you page
+Update `supabase/functions/prerender-for-bots/index.ts` to include:
+```ts
+if (path.startsWith('/us-rehab')) return true;
 ```
 
 ---
 
-## 9. Data Flow
+## Content Strategy
+
+### FAQ Topics for Each Page
+1. How do international patients pay for US treatment?
+2. Do US rehabs accept patients without US insurance?
+3. What visa do I need for treatment in America?
+4. How long can I stay in the US for rehab?
+5. Will my treatment be confidential?
+6. How do I get from the airport to the facility?
+7. Can family members visit during treatment?
+8. What languages do US rehabs support?
+
+### Trust Signals to Include
+- "50+ Countries Served"
+- "24-Hour Response Time"
+- "200+ Vetted US Facilities"
+- "100% Confidential Placement"
+- Country flags visual (UK, UAE, Australia, Germany, etc.)
+
+---
+
+## Internal Linking Strategy
 
 ```text
-1. User visits /international (landing page)
-2. Clicks "Start Application" → navigates to /international/apply
-3. Completes 10-step wizard (data stored in React state)
-4. Final step shows summary + "Continue to Payment - $299"
-5. On submit: call edge function with complete intake data
-6. Edge function creates pending case + Stripe session
-7. User redirected to Stripe checkout
-8. On success: redirected to /international/thank-you
-9. Thank you page prompts email verification
+Homepage
+  └── US Treatment (Header nav)
+       └── /us-rehab (Hub)
+            ├── /us-rehab/california
+            ├── /us-rehab/best-rehab-usa
+            └── /international/apply (CTA)
+
+/international (Current landing)
+  └── Cross-link to /us-rehab/* pages
+
+Footer
+  └── "US Treatment Access" → /us-rehab
 ```
 
 ---
 
-## 10. Provider View Updates
+## Deliverables Summary
 
-When providers view international candidates, they will now see:
-- Level of care needed
-- Age range
-- Gender
-- Previous treatment history
-- Co-occurring conditions
-- Treatment duration preference
-- Special requirements/amenities
-
-This gives facilities the complete picture needed to make acceptance decisions.
+| Item | Count |
+|------|-------|
+| New SEO landing pages | 12-15 |
+| Reusable components | 3 |
+| Route additions | 12+ |
+| Sitemap entries | 15+ |
+| FAQ schemas | 15+ |
 
 ---
 
-## Summary
+## Expected Outcomes
 
-This restructure delivers:
-
-1. **Premium Landing Page** - No price on CTAs, professional imagery, enterprise feel
-2. **Complete Intake Data** - Level of care, age, gender, treatment history, amenities
-3. **Sleek Form Experience** - One-at-a-time wizard with smooth animations
-4. **Payment After Form** - Serious applicants complete full form before paying
-5. **Enhanced Thank You** - Email verification + clear next steps
-6. **Clear Provider Tabs** - "Domestic" and "International" with full labels
+- **Traffic Capture**: Target 15,000+ monthly international searches
+- **Conversion Path**: Every page funnels to `/international/apply`
+- **SEO Authority**: Establish topical authority for "US rehab for foreigners"
+- **Revenue Impact**: Higher-value international placements ($4,500/admission)
 
