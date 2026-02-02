@@ -30,7 +30,7 @@ export default function InternationalThankYou() {
               </h1>
               
               <p className="text-muted-foreground mb-6">
-                Thank you for completing your intake. Our international placement team will review your information and contact you within 48 hours.
+                Thank you for completing your intake. Your dedicated placement advisor will reach out within 24 hours.
               </p>
 
               <div className="bg-muted/30 rounded-lg p-4 mb-6 text-left">
@@ -70,7 +70,10 @@ export default function InternationalThankYou() {
                 </div>
               </div>
 
-              <div className="mt-8">
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Button asChild>
+                  <Link to="/account/international">Track Your Case</Link>
+                </Button>
                 <Button asChild variant="outline">
                   <Link to="/">Return to Homepage</Link>
                 </Button>

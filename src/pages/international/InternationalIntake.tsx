@@ -11,32 +11,66 @@ import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Globe, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
+import { InternationalPhoneInput } from "@/components/ui/international-phone-input";
+import { CheckCircle, Globe, Loader2, AlertTriangle } from "lucide-react";
 
-const LEVEL_OF_CARE_OPTIONS = [
-  "Detox",
-  "Residential / Inpatient",
-  "Partial Hospitalization (PHP)",
-  "Intensive Outpatient (IOP)",
-  "Outpatient",
-  "Sober Living",
-  "Not sure",
+const COUNTRY_OPTIONS = [
+  "Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria", "Bangladesh",
+  "Belgium", "Brazil", "Canada", "Chile", "China", "Colombia", "Czech Republic", "Denmark",
+  "Egypt", "Finland", "France", "Germany", "Greece", "Hong Kong", "Hungary", "India",
+  "Indonesia", "Ireland", "Israel", "Italy", "Japan", "Jordan", "Kenya", "Kuwait",
+  "Lebanon", "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand", "Nigeria",
+  "Norway", "Oman", "Pakistan", "Peru", "Philippines", "Poland", "Portugal", "Qatar",
+  "Romania", "Russia", "Saudi Arabia", "Singapore", "South Africa", "South Korea", "Spain",
+  "Sweden", "Switzerland", "Taiwan", "Thailand", "Turkey", "UAE", "Ukraine",
+  "United Kingdom", "Venezuela", "Vietnam", "Other"
 ];
 
-const TIMELINE_OPTIONS = [
-  "Immediate (within days)",
-  "Within 1-2 weeks",
-  "Within 1 month",
-  "Flexible / Planning ahead",
+const LANGUAGE_OPTIONS = [
+  "English", "Spanish", "Portuguese", "French", "German", "Italian", "Arabic",
+  "Mandarin", "Cantonese", "Japanese", "Korean", "Russian", "Hindi", "Other"
+];
+
+const PRIMARY_CONCERN_OPTIONS = [
+  "Alcohol addiction",
+  "Opioid addiction (heroin, fentanyl, prescription)",
+  "Cocaine / stimulant addiction",
+  "Prescription drug addiction",
+  "Cannabis dependency",
+  "Polysubstance use",
+  "Process addiction (gambling, sex, gaming)",
+  "Mental health (depression, anxiety, trauma)",
+  "Dual diagnosis (substance + mental health)",
+  "Other"
+];
+
+const URGENCY_OPTIONS = [
+  { value: "immediate", label: "Immediate (within days)" },
+  { value: "1-2-weeks", label: "Within 1-2 weeks" },
+  { value: "30-days", label: "Within 30 days" },
+  { value: "flexible", label: "Flexible / Planning ahead" }
 ];
 
 const BUDGET_OPTIONS = [
-  "Insurance coverage",
-  "Private pay - under $30,000/month",
-  "Private pay - $30,000-60,000/month",
-  "Private pay - $60,000+/month",
-  "Need financing options",
-  "Unsure / Need guidance",
+  { value: "under-10k", label: "Under $10,000/month" },
+  { value: "10k-25k", label: "$10,000 - $25,000/month" },
+  { value: "25k-50k", label: "$25,000 - $50,000/month" },
+  { value: "50k-100k", label: "$50,000 - $100,000/month" },
+  { value: "100k-plus", label: "$100,000+/month" },
+  { value: "need-guidance", label: "Need guidance on budget" }
+];
+
+const REHAB_STYLE_OPTIONS = [
+  { value: "standard", label: "Standard clinical program" },
+  { value: "luxury", label: "Luxury / Resort-style" },
+  { value: "executive", label: "Executive (work-friendly)" },
+  { value: "discreet-vip", label: "Discreet VIP / High-profile" }
+];
+
+const TRAVEL_OPTIONS = [
+  { value: "yes", label: "Yes, ready to travel" },
+  { value: "no", label: "No, prefer virtual options" },
+  { value: "need-guidance", label: "Need guidance on travel" }
 ];
 
 export default function InternationalIntake() {
@@ -50,46 +84,41 @@ export default function InternationalIntake() {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
   const [paymentVerified, setPaymentVerified] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   
   const [formData, setFormData] = useState({
-    // Personal
+    firstName: "",
+    lastName: "",
+    email: "",
+    countryCode: "",
+    phoneNumber: "",
+    country: "",
+    preferredLanguage: "English",
     seekingFor: "self",
-    patientAge: "",
-    patientGender: "",
-    
-    // Treatment needs
     primaryConcern: "",
-    levelOfCare: "",
-    substanceHistory: "",
-    mentalHealthConcerns: "",
-    
-    // Location preferences
-    preferredStates: "",
-    specialRequirements: "",
-    
-    // Timeline & Budget
-    timeline: "",
+    primaryConcernOther: "",
+    urgency: "",
     budgetRange: "",
-    insuranceDetails: "",
-    
-    // Travel
-    hasValidPassport: "yes",
-    visaAssistanceNeeded: "unsure",
-    travelCompanion: "",
-    
-    // Additional
-    additionalNotes: "",
+    rehabStyle: "",
+    willingToTravel: "",
+    notes: ""
   });
 
   useEffect(() => {
-    const verifyPayment = async () => {
+    const verifyPaymentAndGetUser = async () => {
       if (!sessionId) {
         setIsVerifying(false);
         return;
       }
 
       try {
-        // Simple verification - the edge function will create/update the case
+        // Get current user email if logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          setUserEmail(user.email);
+          setFormData(prev => ({ ...prev, email: user.email || "" }));
+        }
+        
         setPaymentVerified(paymentSuccess);
       } catch (err) {
         console.error("Payment verification error:", err);
@@ -98,7 +127,7 @@ export default function InternationalIntake() {
       }
     };
 
-    verifyPayment();
+    verifyPaymentAndGetUser();
   }, [sessionId, paymentSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,10 +145,30 @@ export default function InternationalIntake() {
 
     setIsLoading(true);
     try {
+      const intakeData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.countryCode && formData.phoneNumber 
+          ? `${formData.countryCode} ${formData.phoneNumber}`
+          : "",
+        country: formData.country,
+        preferredLanguage: formData.preferredLanguage,
+        seekingFor: formData.seekingFor,
+        primaryConcern: formData.primaryConcern === "Other" 
+          ? formData.primaryConcernOther 
+          : formData.primaryConcern,
+        urgency: formData.urgency,
+        budgetRange: formData.budgetRange,
+        rehabStyle: formData.rehabStyle,
+        willingToTravel: formData.willingToTravel,
+        notes: formData.notes
+      };
+
       const { data, error } = await supabase.functions.invoke("submit-international-intake", {
         body: {
           sessionId,
-          intakeData: formData,
+          intakeData,
         },
       });
 
@@ -127,7 +176,7 @@ export default function InternationalIntake() {
 
       toast({
         title: "Intake Submitted",
-        description: "Your information has been received. An advisor will contact you within 48 hours.",
+        description: "Your information has been received. An advisor will contact you within 24 hours.",
       });
 
       navigate("/international/thank-you");
@@ -190,7 +239,7 @@ export default function InternationalIntake() {
         <PublicHeader />
         
         <main className="flex-1 py-8 md:py-12">
-          <div className="container mx-auto px-4 max-w-3xl">
+          <div className="container mx-auto px-4 max-w-2xl">
             {/* Success Banner */}
             <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
               <div className="flex items-center gap-3">
@@ -212,262 +261,234 @@ export default function InternationalIntake() {
                     International Placement
                   </Badge>
                 </div>
-                <CardTitle>Treatment Intake Form</CardTitle>
+                <CardTitle>Placement Intake Form</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   This information helps us match you with appropriate US facilities. All responses are confidential.
                 </p>
               </CardHeader>
               
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-8">
-                  {/* Who is treatment for */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Contact Information */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground border-b pb-2">About the Patient</h3>
+                    <h3 className="font-semibold text-foreground border-b pb-2">Contact Information</h3>
                     
-                    <div>
-                      <Label>Who is seeking treatment? *</Label>
-                      <select
-                        value={formData.seekingFor}
-                        onChange={(e) => setFormData({ ...formData, seekingFor: e.target.value })}
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm mt-1"
-                        required
-                      >
-                        <option value="self">Myself</option>
-                        <option value="family">Family member</option>
-                        <option value="friend">Friend</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <Label>Patient Age *</Label>
+                        <Label htmlFor="firstName">First Name *</Label>
                         <Input
-                          type="number"
-                          min="13"
-                          max="100"
-                          value={formData.patientAge}
-                          onChange={(e) => setFormData({ ...formData, patientAge: e.target.value })}
-                          placeholder="Age"
+                          id="firstName"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                           required
                         />
                       </div>
                       <div>
-                        <Label>Patient Gender *</Label>
+                        <Label htmlFor="lastName">Last Name *</Label>
+                        <Input
+                          id="lastName"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Phone (International) *</Label>
+                      <InternationalPhoneInput
+                        countryCode={formData.countryCode}
+                        phoneNumber={formData.phoneNumber}
+                        onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+                        onPhoneNumberChange={(num) => setFormData({ ...formData, phoneNumber: num })}
+                        required
+                      />
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="country">Country *</Label>
                         <select
-                          value={formData.patientGender}
-                          onChange={(e) => setFormData({ ...formData, patientGender: e.target.value })}
+                          id="country"
+                          value={formData.country}
+                          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                           className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                           required
                         >
-                          <option value="">Select...</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="non-binary">Non-binary</option>
-                          <option value="prefer-not-say">Prefer not to say</option>
+                          <option value="">Select country...</option>
+                          {COUNTRY_OPTIONS.map((country) => (
+                            <option key={country} value={country}>{country}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor="preferredLanguage">Preferred Language</Label>
+                        <select
+                          id="preferredLanguage"
+                          value={formData.preferredLanguage}
+                          onChange={(e) => setFormData({ ...formData, preferredLanguage: e.target.value })}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          {LANGUAGE_OPTIONS.map((lang) => (
+                            <option key={lang} value={lang}>{lang}</option>
+                          ))}
                         </select>
                       </div>
                     </div>
                   </div>
 
-                  {/* Treatment Needs */}
+                  {/* Treatment Details */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground border-b pb-2">Treatment Needs</h3>
+                    <h3 className="font-semibold text-foreground border-b pb-2">Treatment Details</h3>
                     
                     <div>
-                      <Label>Primary Concern *</Label>
-                      <Textarea
+                      <Label htmlFor="seekingFor">Who needs help? *</Label>
+                      <select
+                        id="seekingFor"
+                        value={formData.seekingFor}
+                        onChange={(e) => setFormData({ ...formData, seekingFor: e.target.value })}
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        required
+                      >
+                        <option value="self">Myself</option>
+                        <option value="loved-one">A loved one (family/friend)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="primaryConcern">Primary Substance / Issue *</Label>
+                      <select
+                        id="primaryConcern"
                         value={formData.primaryConcern}
                         onChange={(e) => setFormData({ ...formData, primaryConcern: e.target.value })}
-                        placeholder="Describe the main reason for seeking treatment..."
-                        rows={3}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Preferred Level of Care *</Label>
-                      <select
-                        value={formData.levelOfCare}
-                        onChange={(e) => setFormData({ ...formData, levelOfCare: e.target.value })}
                         className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                         required
                       >
-                        <option value="">Select...</option>
-                        {LEVEL_OF_CARE_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
+                        <option value="">Select primary concern...</option>
+                        {PRIMARY_CONCERN_OPTIONS.map((concern) => (
+                          <option key={concern} value={concern}>{concern}</option>
                         ))}
                       </select>
+                      {formData.primaryConcern === "Other" && (
+                        <Input
+                          className="mt-2"
+                          placeholder="Please specify..."
+                          value={formData.primaryConcernOther}
+                          onChange={(e) => setFormData({ ...formData, primaryConcernOther: e.target.value })}
+                          required
+                        />
+                      )}
                     </div>
 
                     <div>
-                      <Label>Substance Use History (if applicable)</Label>
-                      <Textarea
-                        value={formData.substanceHistory}
-                        onChange={(e) => setFormData({ ...formData, substanceHistory: e.target.value })}
-                        placeholder="Substances used, duration, frequency..."
-                        rows={2}
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Mental Health Concerns</Label>
-                      <Textarea
-                        value={formData.mentalHealthConcerns}
-                        onChange={(e) => setFormData({ ...formData, mentalHealthConcerns: e.target.value })}
-                        placeholder="Any diagnosed conditions, medications..."
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Location & Timeline */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground border-b pb-2">Location & Timeline</h3>
-                    
-                    <div>
-                      <Label>Preferred US States/Regions</Label>
-                      <Input
-                        value={formData.preferredStates}
-                        onChange={(e) => setFormData({ ...formData, preferredStates: e.target.value })}
-                        placeholder="e.g., California, Florida, or 'No preference'"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Timeline *</Label>
+                      <Label htmlFor="urgency">Urgency *</Label>
                       <select
-                        value={formData.timeline}
-                        onChange={(e) => setFormData({ ...formData, timeline: e.target.value })}
+                        id="urgency"
+                        value={formData.urgency}
+                        onChange={(e) => setFormData({ ...formData, urgency: e.target.value })}
                         className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                         required
                       >
-                        <option value="">Select...</option>
-                        {TIMELINE_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
+                        <option value="">Select timeline...</option>
+                        {URGENCY_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
                     </div>
-
-                    <div>
-                      <Label>Special Requirements</Label>
-                      <Textarea
-                        value={formData.specialRequirements}
-                        onChange={(e) => setFormData({ ...formData, specialRequirements: e.target.value })}
-                        placeholder="Dietary needs, accessibility, language, religious preferences..."
-                        rows={2}
-                      />
-                    </div>
                   </div>
 
-                  {/* Budget & Insurance */}
+                  {/* Preferences */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground border-b pb-2">Budget & Payment</h3>
+                    <h3 className="font-semibold text-foreground border-b pb-2">Preferences</h3>
                     
                     <div>
-                      <Label>Budget Range *</Label>
+                      <Label htmlFor="budgetRange">Budget Range (USD per month) *</Label>
                       <select
+                        id="budgetRange"
                         value={formData.budgetRange}
                         onChange={(e) => setFormData({ ...formData, budgetRange: e.target.value })}
                         className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                         required
                       >
-                        <option value="">Select...</option>
+                        <option value="">Select budget range...</option>
                         {BUDGET_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
                     </div>
 
                     <div>
-                      <Label>Insurance Details (if applicable)</Label>
-                      <Textarea
-                        value={formData.insuranceDetails}
-                        onChange={(e) => setFormData({ ...formData, insuranceDetails: e.target.value })}
-                        placeholder="Insurance provider, policy details, or international coverage..."
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Travel */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground border-b pb-2">Travel Information</h3>
-                    
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Valid Passport?</Label>
-                        <select
-                          value={formData.hasValidPassport}
-                          onChange={(e) => setFormData({ ...formData, hasValidPassport: e.target.value })}
-                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                        >
-                          <option value="yes">Yes</option>
-                          <option value="no">No</option>
-                          <option value="expired">Expired / Needs renewal</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label>Visa Assistance Needed?</Label>
-                        <select
-                          value={formData.visaAssistanceNeeded}
-                          onChange={(e) => setFormData({ ...formData, visaAssistanceNeeded: e.target.value })}
-                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                        >
-                          <option value="yes">Yes</option>
-                          <option value="no">No - Already have visa</option>
-                          <option value="unsure">Not sure</option>
-                        </select>
-                      </div>
+                      <Label htmlFor="rehabStyle">Preferred Rehab Style *</Label>
+                      <select
+                        id="rehabStyle"
+                        value={formData.rehabStyle}
+                        onChange={(e) => setFormData({ ...formData, rehabStyle: e.target.value })}
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        required
+                      >
+                        <option value="">Select style...</option>
+                        {REHAB_STYLE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>
-                      <Label>Travel Companion</Label>
-                      <Input
-                        value={formData.travelCompanion}
-                        onChange={(e) => setFormData({ ...formData, travelCompanion: e.target.value })}
-                        placeholder="Will someone accompany the patient? (relationship)"
-                      />
+                      <Label htmlFor="willingToTravel">Willing to travel to U.S.? *</Label>
+                      <select
+                        id="willingToTravel"
+                        value={formData.willingToTravel}
+                        onChange={(e) => setFormData({ ...formData, willingToTravel: e.target.value })}
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        required
+                      >
+                        <option value="">Select...</option>
+                        {TRAVEL_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
                   {/* Additional Notes */}
                   <div>
-                    <Label>Additional Notes</Label>
+                    <Label htmlFor="notes">Additional Notes</Label>
                     <Textarea
-                      value={formData.additionalNotes}
-                      onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                      placeholder="Anything else we should know..."
-                      rows={3}
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Any additional information that would help us find the right facility..."
+                      rows={4}
                     />
                   </div>
 
                   {/* Disclaimer */}
                   <div className="bg-muted/30 border rounded-lg p-4">
                     <p className="text-xs text-muted-foreground">
-                      <strong>Disclaimer:</strong> RehabLookup provides placement coordination services only. 
-                      We do not provide medical advice, diagnosis, or treatment. All medical decisions are made 
-                      by licensed professionals at partner facilities. By submitting this form, you consent to 
-                      sharing this information with potential treatment facilities for placement purposes.
+                      By submitting this form, you consent to our team contacting you regarding treatment options. 
+                      Your information is kept strictly confidential and will only be shared with facilities you approve.
                     </p>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    size="lg" 
-                    className="w-full h-12"
-                    disabled={isLoading}
-                  >
+                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                     {isLoading ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Submitting...
                       </>
                     ) : (
-                      <>
-                        Submit Intake Form
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
+                      "Submit Intake"
                     )}
                   </Button>
                 </form>
