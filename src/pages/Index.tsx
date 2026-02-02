@@ -870,12 +870,12 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Testimonials Grid - 1 col mobile, 2 col tablet, 3 col desktop */}
-          <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Testimonials - Horizontal scroll on mobile, grid on larger screens */}
+          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-3 md:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {testimonials.map((testimonial) => (
               <div
                 key={testimonial.name}
-                className="rounded-xl border border-border bg-card p-4 md:p-5"
+                className="flex-shrink-0 w-[280px] sm:w-auto snap-center rounded-xl border border-border bg-card p-4 md:p-5 transition-transform hover:scale-[1.02]"
               >
                 {/* Rating */}
                 <div className="mb-2 md:mb-3 flex gap-0.5">
@@ -886,7 +886,7 @@ const Index = () => {
                 
                 {/* Quote */}
                 <blockquote className="mb-3 md:mb-4">
-                  <p className="text-xs md:text-sm text-foreground leading-relaxed">
+                  <p className="text-xs md:text-sm text-foreground leading-relaxed line-clamp-4 sm:line-clamp-none">
                     "{testimonial.quote}"
                   </p>
                 </blockquote>
@@ -902,6 +902,13 @@ const Index = () => {
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+          
+          {/* Scroll indicator for mobile */}
+          <div className="flex justify-center gap-1.5 mt-3 sm:hidden">
+            {testimonials.map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/30" />
             ))}
           </div>
         </div>
