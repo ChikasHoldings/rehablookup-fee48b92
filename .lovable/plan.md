@@ -45,9 +45,9 @@ Enhance `prerender-for-bots/index.ts`:
 - Implement HTML caching (1-24 hour TTL)
 - Return meaningful fallback HTML on errors
 
-### Phase 4: Routing Updates
+### Phase 4: Routing Updates ✅ COMPLETE
 
-Update `public/_redirects` to prioritize static/prerendered content for known SEO paths before the SPA fallback.
+Updated `public/_redirects` with documentation explaining the bot detection flow. Edge functions handle prerendering at runtime.
 
 ---
 

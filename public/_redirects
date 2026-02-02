@@ -29,5 +29,14 @@
 # Note: /request-help and /placement-help redirects are handled in React Router
 /my-account /account 301
 
+# =============================================================================
+# SEO PRERENDERING: Bot requests are handled by edge functions
+# The detect-and-prerender edge function intercepts bot User-Agents and
+# proxies them to prerender-for-bots for server-rendered HTML.
+# 
+# For Netlify/Vercel deployments without edge function support at the CDN level,
+# the index.html contains route-specific <noscript> content as fallback.
+# =============================================================================
+
 # Handle SPA routing - serve index.html for all routes
 /* /index.html 200
