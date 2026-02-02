@@ -66,12 +66,8 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
   const isPro = proStatus?.isPro || false;
   const hasApprovedListing = facilities.some(f => f.status === "approved");
 
-  if (isLoading) {
+  if (isLoading || !analytics) {
     return <AnalyticsSkeleton />;
-  }
-
-  if (!analytics || analytics.totalLeads === 0) {
-    return <EmptyAnalytics hasApprovedListing={hasApprovedListing} />;
   }
 
   const conversionRate = analytics.totalLeads > 0 
@@ -368,51 +364,60 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={analytics.statusBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    dataKey="count"
-                    nameKey="status"
-                  >
-                    {analytics.statusBreakdown.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={STATUS_COLORS[entry.status] || COLORS[index % COLORS.length]}
-                        stroke="hsl(var(--background))"
-                        strokeWidth={2}
+            {analytics.statusBreakdown.length > 0 ? (
+              <>
+                <div className="h-[180px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={analytics.statusBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        paddingAngle={3}
+                        dataKey="count"
+                        nameKey="status"
+                      >
+                        {analytics.statusBreakdown.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={STATUS_COLORS[entry.status] || COLORS[index % COLORS.length]}
+                            stroke="hsl(var(--background))"
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: "hsl(var(--card))", 
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        }}
+                        formatter={(value: number, name: string) => [`${value} inquiries (${analytics.statusBreakdown.find(s => s.status === name)?.percentage || 0}%)`, name]}
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
-                    formatter={(value: number, name: string) => [`${value} inquiries (${analytics.statusBreakdown.find(s => s.status === name)?.percentage || 0}%)`, name]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2 justify-center">
-              {analytics.statusBreakdown.map((entry) => (
-                <Badge 
-                  key={entry.status} 
-                  variant="outline" 
-                  className={`text-[10px] px-2 py-0.5 ${STATUS_BG_COLORS[entry.status] || ""}`}
-                >
-                  {entry.status}: {entry.count}
-                </Badge>
-              ))}
-            </div>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2 justify-center">
+                  {analytics.statusBreakdown.map((entry) => (
+                    <Badge 
+                      key={entry.status} 
+                      variant="outline" 
+                      className={`text-[10px] px-2 py-0.5 ${STATUS_BG_COLORS[entry.status] || ""}`}
+                    >
+                      {entry.status}: {entry.count}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-[180px] flex flex-col items-center justify-center text-muted-foreground">
+                <PieChartIcon className="h-12 w-12 mb-2 opacity-20" />
+                <p className="text-sm">No inquiry data yet</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
