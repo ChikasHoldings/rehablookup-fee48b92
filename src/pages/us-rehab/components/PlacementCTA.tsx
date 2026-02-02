@@ -54,17 +54,6 @@ export const PlacementCTA = ({
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
-            <Button 
-              asChild 
-              variant="outline" 
-              size="lg" 
-              className="bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 py-6"
-            >
-              <a href="tel:+1-888-555-0123" className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
-                Call Now
-              </a>
-            </Button>
           </div>
 
           {/* Trust */}

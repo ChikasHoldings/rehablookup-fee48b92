@@ -988,12 +988,6 @@ const SearchResults = () => {
                       Get Matched
                     </Button>
                   </Link>
-                  <Link to="/contact">
-                    <Button size="lg" variant="outline" className="gap-2">
-                      <Phone className="h-5 w-5" />
-                      Call Now
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </div>
