@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { initPerformanceOptimizations } from "./lib/performanceUtils";
 import { initSecurity } from "./lib/httpsRedirect";
-
+import { warmQueryCache } from "./lib/queryClient";
 
 // Initialize security (HTTPS enforcement)
 initSecurity();
@@ -31,4 +31,12 @@ if (root) {
   root.classList.add("js-loaded");
 }
 
+// Render app
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Warm up query cache after initial render for faster navigations
+if (document.readyState === "complete") {
+  warmQueryCache();
+} else {
+  window.addEventListener("load", warmQueryCache, { once: true });
+}
