@@ -156,20 +156,24 @@ function RedistributionBadge({ status, exclusiveUntil, extendedUntil }: {
     ? formatDistanceToNow(new Date(extendedUntil), { addSuffix: true })
     : null;
 
+  const badgeElement = (
+    <Badge variant="outline" className={cn(className, "gap-1 cursor-default")}>
+      {icon}
+      {label}
+    </Badge>
+  );
+
+  if (!timeLeft) return badgeElement;
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge variant="outline" className={cn(className, "gap-1")}>
-            {icon}
-            {label}
-          </Badge>
+          <span className="inline-flex">{badgeElement}</span>
         </TooltipTrigger>
-        {timeLeft && (
-          <TooltipContent>
-            <p>Expires {timeLeft}</p>
-          </TooltipContent>
-        )}
+        <TooltipContent>
+          <p>Expires {timeLeft}</p>
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
