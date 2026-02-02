@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Users } from "lucide-react";
+import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Users, Globe, Flag } from "lucide-react";
 import { format } from "date-fns";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
 import { ConciergeStatsCharts } from "@/components/admin/ConciergeStatsCharts";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
+import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
 
 type CaseStatus = 'new' | 'reviewing' | 'matching' | 'matched' | 'introductions_sent' | 'in_contact' | 'placed' | 'closed' | 'all';
 
@@ -27,7 +28,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 export default function AdminConcierge() {
-  const [activeTab, setActiveTab] = useState("cases");
+  const [activeTab, setActiveTab] = useState("domestic");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
@@ -45,6 +46,19 @@ export default function AdminConcierge() {
       }
 
       const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch admin staff for advisor display
+  const { data: adminStaff } = useQuery({
+    queryKey: ["admin-staff-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("admin_user_profiles")
+        .select("user_id, first_name, last_name, display_name")
+        .eq("status", "active");
       if (error) throw error;
       return data;
     },
@@ -93,6 +107,19 @@ export default function AdminConcierge() {
     },
   });
 
+  // Fetch international cases count
+  const { data: internationalCount } = useQuery({
+    queryKey: ["admin-international-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("international_placement_cases")
+        .select("id", { count: "exact", head: true })
+        .not("status", "eq", "closed");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   const filteredCases = cases?.filter((c) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -109,6 +136,12 @@ export default function AdminConcierge() {
     setStatusFilter(status as CaseStatus);
   };
 
+  const getAdvisorName = (advisorId: string | null) => {
+    if (!advisorId) return "—";
+    const advisor = adminStaff?.find(a => a.user_id === advisorId);
+    return advisor ? (advisor.display_name || `${advisor.first_name} ${advisor.last_name}`) : "—";
+  };
+
   return (
     <div className="space-y-5">
       {/* Page Header */}
@@ -118,8 +151,8 @@ export default function AdminConcierge() {
             <HeartHandshake className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Concierge Management</h1>
-            <p className="text-sm text-muted-foreground">Manage cases, network providers, and billing</p>
+            <h1 className="text-xl font-semibold tracking-tight">Placement Command Center</h1>
+            <p className="text-sm text-muted-foreground">Manage domestic & international placements, network providers, and billing</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -130,14 +163,23 @@ export default function AdminConcierge() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
-          <TabsTrigger value="cases" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Cases
+        <TabsList className="grid w-full grid-cols-4 max-w-lg">
+          <TabsTrigger value="domestic" className="flex items-center gap-2">
+            <Flag className="h-4 w-4" />
+            Domestic
+          </TabsTrigger>
+          <TabsTrigger value="international" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Intl
+            {internationalCount ? (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {internationalCount}
+              </Badge>
+            ) : null}
           </TabsTrigger>
           <TabsTrigger value="providers" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
-            Providers
+            Network
             {networkCount ? (
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
                 {networkCount}
@@ -150,8 +192,8 @@ export default function AdminConcierge() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Cases Tab */}
-        <TabsContent value="cases" className="space-y-4">
+        {/* Domestic Cases Tab */}
+        <TabsContent value="domestic" className="space-y-4">
           {/* Pipeline Stats */}
           <ConciergeStatsCharts 
             stats={stats} 
@@ -172,7 +214,7 @@ export default function AdminConcierge() {
                 />
               </div>
               <span className="text-sm text-muted-foreground">
-                {filteredCases?.length || 0} cases
+                {filteredCases?.length || 0} domestic cases
               </span>
             </div>
             <div className="p-4">
@@ -189,8 +231,8 @@ export default function AdminConcierge() {
                         <th className="pb-3 font-medium">Contact</th>
                         <th className="pb-3 font-medium">Care Type</th>
                         <th className="pb-3 font-medium">Location</th>
-                        <th className="pb-3 font-medium">Payment</th>
                         <th className="pb-3 font-medium">Status</th>
+                        <th className="pb-3 font-medium">Advisor</th>
                         <th className="pb-3 font-medium">Matches</th>
                         <th className="pb-3 font-medium">Date</th>
                       </tr>
@@ -211,11 +253,13 @@ export default function AdminConcierge() {
                           <td className="py-3">
                             {c.desired_location_state || c.preferred_state || "Any"}
                           </td>
-                          <td className="py-3">{c.payment_type || "Not specified"}</td>
                           <td className="py-3">
                             <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
                               {STATUS_CONFIG[c.status]?.label || c.status}
                             </Badge>
+                          </td>
+                          <td className="py-3 text-sm text-muted-foreground">
+                            {getAdvisorName(c.assigned_advisor_id)}
                           </td>
                           <td className="py-3">
                             <div className="flex items-center gap-1">
@@ -238,6 +282,11 @@ export default function AdminConcierge() {
           </Card>
         </TabsContent>
 
+        {/* International Cases Tab */}
+        <TabsContent value="international">
+          <InternationalCasesTab />
+        </TabsContent>
+
         {/* Network Providers Tab */}
         <TabsContent value="providers">
           <NetworkProvidersTab />
@@ -249,7 +298,7 @@ export default function AdminConcierge() {
         </TabsContent>
       </Tabs>
 
-      {/* Detail Sheet */}
+      {/* Detail Sheet for Domestic Cases */}
       <ConciergeDetailSheet
         caseData={selectedCase}
         open={!!selectedCaseId}
