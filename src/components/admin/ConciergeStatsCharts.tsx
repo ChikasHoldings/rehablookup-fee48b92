@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { forwardRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 interface ConciergeStatsChartsProps {
@@ -18,7 +18,8 @@ const PIPELINE_STAGES = [
   { key: "closed", label: "Closed", color: "bg-muted-foreground" },
 ];
 
-export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: ConciergeStatsChartsProps) {
+export const ConciergeStatsCharts = forwardRef<HTMLDivElement, ConciergeStatsChartsProps>(
+  function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }, ref) {
   const totalCases = useMemo(() => {
     if (!stats) return 0;
     return Object.values(stats).reduce((sum, val) => sum + val, 0);
@@ -40,7 +41,7 @@ export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: Con
   }, [placedCount, closedCount]);
 
   return (
-    <div className="bg-card border rounded-lg">
+    <div ref={ref} className="bg-card border rounded-lg">
       {/* Summary Row */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-6">
@@ -109,4 +110,6 @@ export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: Con
       </div>
     </div>
   );
-}
+});
+
+ConciergeStatsCharts.displayName = "ConciergeStatsCharts";
