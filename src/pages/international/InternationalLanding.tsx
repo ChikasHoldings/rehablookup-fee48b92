@@ -10,7 +10,6 @@ import {
   Shield,
   Building2,
   Plane,
-  Phone,
   ChevronDown,
   ChevronUp,
   Globe,
@@ -20,9 +19,9 @@ import {
   Timer,
   Users,
   ArrowRight,
-  Star,
-  MapPin
 } from "lucide-react";
+import internationalHeroImg from "@/assets/international-hero.jpg";
+import internationalTherapyImg from "@/assets/international-therapy.jpg";
 
 const TRUST_FEATURES = [
   { 
@@ -138,8 +137,8 @@ export default function InternationalLanding() {
             {/* Background with refined overlay */}
             <div className="absolute inset-0 z-0">
               <img
-                src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=1920&auto=format&fit=crop"
-                alt="Luxury treatment facility"
+                src={internationalHeroImg}
+                alt="Professional treatment center therapy lounge"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--background))] via-[hsl(var(--background)/0.9)] to-[hsl(var(--background)/0.3)]" />
@@ -266,8 +265,8 @@ export default function InternationalLanding() {
                   transition={{ duration: 0.5 }}
                 >
                   <img
-                    src="https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=800&auto=format&fit=crop"
-                    alt="Luxury rehab facility pool and grounds"
+                    src={internationalTherapyImg}
+                    alt="Professional therapy consultation session"
                     className="rounded-2xl shadow-2xl w-full"
                   />
                 </motion.div>
