@@ -197,7 +197,7 @@ export default function SeekerSignup() {
         <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
           <div className="container h-14 flex items-center justify-between">
             <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="RehabLookup" className="h-7 md:h-8 w-auto" />
+              <img src="/logo.png" alt="RehabLookup" className="h-8 md:h-9 w-auto" />
             </Link>
             <div className="text-sm text-muted-foreground">
               <span className="hidden sm:inline">Already have an account?{" "}</span>
