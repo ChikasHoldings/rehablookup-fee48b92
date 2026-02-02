@@ -1,4 +1,4 @@
-import { memo, forwardRef } from "react";
+import { memo, forwardRef, Ref } from "react";
 import { Link } from "react-router-dom";
 import {
   Building2,
@@ -114,15 +114,16 @@ const CHART_COLORS = {
   muted: "hsl(var(--muted-foreground))",
 };
 
-export function DashboardKPICards({
-  revenueStats,
-  providerStats,
-  leadStats,
-  weeklyTrends,
-  loadingRevenue,
-  loadingProviders,
-  loadingLeads,
-}: DashboardKPICardsProps) {
+export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsProps>(
+  function DashboardKPICards({
+    revenueStats,
+    providerStats,
+    leadStats,
+    weeklyTrends,
+    loadingRevenue,
+    loadingProviders,
+    loadingLeads,
+  }, ref) {
   // Action items: pending providers + new (unprocessed) leads
   const actionItemsCount = (providerStats?.pending || 0) + (leadStats?.newLeads || 0);
   
@@ -130,7 +131,7 @@ export function DashboardKPICards({
   const totalMonthlyRevenue = (revenueStats?.monthlyRevenue || 0) + ((leadStats?.unlockRevenueMonth || 0) / 100);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div ref={ref} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {/* Revenue - Combined from Stripe + Lead Unlocks */}
       <Card className="border-0 bg-primary text-primary-foreground shadow-md overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -249,4 +250,6 @@ export function DashboardKPICards({
       </Card>
     </div>
   );
-}
+});
+
+DashboardKPICards.displayName = "DashboardKPICards";

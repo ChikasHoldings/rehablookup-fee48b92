@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import {
   PieChart as PieChartIcon,
 } from "lucide-react";
@@ -61,14 +62,15 @@ interface DashboardChartsSectionProps {
   loadingBreakdown: boolean;
 }
 
-export function DashboardChartsSection({
-  providerStats,
-  leadStats,
-  subscriptionBreakdown,
-  loadingProviders,
-  loadingLeads,
-  loadingBreakdown,
-}: DashboardChartsSectionProps) {
+export const DashboardChartsSection = forwardRef<HTMLDivElement, DashboardChartsSectionProps>(
+  function DashboardChartsSection({
+    providerStats,
+    leadStats,
+    subscriptionBreakdown,
+    loadingProviders,
+    loadingLeads,
+    loadingBreakdown,
+  }, ref) {
   // Provider status data for bar chart - updated for Free/Pro model
   const providerStatusData = [
     { name: "Approved", value: providerStats?.approved || 0, fill: CHART_COLORS.success },
@@ -238,4 +240,6 @@ export function DashboardChartsSection({
       </Card>
     </div>
   );
-}
+});
+
+DashboardChartsSection.displayName = "DashboardChartsSection";
