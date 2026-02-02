@@ -133,8 +133,8 @@ export default function InternationalLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section - Premium Full-Screen */}
-          <section className="relative min-h-[100svh] flex flex-col">
+          {/* Hero Section - Fits Viewport with Trust Bar */}
+          <section className="relative h-[calc(100svh-64px)] flex flex-col">
             {/* Background with refined overlay */}
             <div className="absolute inset-0 z-0">
               <img
@@ -142,87 +142,77 @@ export default function InternationalLanding() {
                 alt="Luxury treatment facility"
                 className="w-full h-full object-cover"
               />
-              {/* Multi-layer gradient for depth */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--background))] via-[hsl(var(--background)/0.85)] to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--background))] via-transparent to-transparent opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--background))] via-[hsl(var(--background)/0.9)] to-[hsl(var(--background)/0.3)]" />
             </div>
 
-            {/* Main Content */}
+            {/* Main Content - Centered */}
             <div className="relative z-10 flex-1 flex items-center">
-              <div className="container mx-auto px-4 py-16 md:py-20">
-                <div className="grid lg:grid-cols-2 gap-12 items-center">
-                  {/* Left: Content */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
+              <div className="container mx-auto px-6 lg:px-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="max-w-2xl"
+                >
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
+                    <Globe className="h-4 w-4" />
+                    International Placement Services
+                  </div>
+                  
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-[1.1] tracking-tight">
+                    Your Gateway to
+                    <span className="block text-primary">American Rehab</span>
+                  </h1>
+                  
+                  <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-xl">
+                    Expert placement into America's finest treatment centers. We handle everything—from matching to admission—so you can focus on recovery.
+                  </p>
+
+                  <Button 
+                    size="lg" 
+                    className="h-14 px-10 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 mb-10"
+                    asChild
                   >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
-                      <Globe className="h-4 w-4" />
-                      International Placement Services
-                    </div>
-                    
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-[1.1] tracking-tight">
-                      Your Gateway to
-                      <span className="block text-primary mt-1">American Rehab</span>
-                    </h1>
-                    
-                    <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-lg">
-                      Expert placement into America's finest treatment centers. We handle everything—from matching to admission—so you can focus on recovery.
-                    </p>
+                    <Link to="/international/apply">
+                      Start Your Application
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
 
-                    <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                      <Button 
-                        size="lg" 
-                        className="h-14 px-10 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-0.5"
-                        asChild
+                  {/* Trust Stats */}
+                  <div className="flex gap-10 lg:gap-14">
+                    {TRUST_STATS.map((stat, i) => (
+                      <motion.div 
+                        key={i} 
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
                       >
-                        <Link to="/international/apply">
-                          Start Your Application
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
-                      </Button>
-                    </div>
-
-                    {/* Trust Stats - Bold & Prominent */}
-                    <div className="flex gap-8 md:gap-12">
-                      {TRUST_STATS.map((stat, i) => (
-                        <motion.div 
-                          key={i} 
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
-                          className="text-left"
-                        >
-                          <p className="text-3xl md:text-4xl font-bold text-primary tracking-tight">{stat.value}</p>
-                          <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-
-                  {/* Right: Visual element placeholder - helps balance the layout */}
-                  <div className="hidden lg:block" />
-                </div>
+                        <p className="text-3xl lg:text-4xl font-bold text-primary">{stat.value}</p>
+                        <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
             </div>
 
-            {/* Trust Bar - Anchored at bottom */}
+            {/* Trust Bar - Dark Background */}
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="relative z-10 border-t border-border/50 bg-background/95 backdrop-blur-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="relative z-10 bg-foreground"
             >
-              <div className="container mx-auto px-4 py-5">
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+              <div className="container mx-auto px-6 lg:px-8 py-4">
+                <div className="flex flex-wrap justify-center gap-x-10 gap-y-2">
                   {[
                     "200+ Vetted Luxury Programs",
-                    "Immediate Admission Available",
-                    "Complete Privacy Guaranteed",
+                    "Immediate Admission",
+                    "Complete Privacy",
                     "Fee Refunded on Admission",
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2.5 text-sm font-medium text-foreground/80">
+                    <div key={i} className="flex items-center gap-2 text-sm font-medium text-background">
                       <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                       <span>{item}</span>
                     </div>
