@@ -59,32 +59,32 @@ export function StepPreferences({ data, onChange }: StepPreferencesProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="space-y-5 md:space-y-6"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1.5 md:mb-2">
           Treatment Preferences
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Help us find the perfect fit for your needs
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-lg mx-auto space-y-5 md:space-y-6">
         {/* Budget Range */}
         <div>
-          <Label className="text-sm font-medium mb-3 flex items-center gap-2">
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-primary" />
             Budget Range
           </Label>
-          <div className="grid gap-2">
+          <div className="grid gap-1.5 md:gap-2">
             {BUDGET_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => onChange({ ...data, budget_range: opt.value })}
                 className={cn(
-                  "px-4 py-3 rounded-lg border text-sm font-medium transition-all text-left",
+                  "px-3 md:px-4 py-2.5 md:py-3 rounded-lg border text-xs md:text-sm font-medium transition-all text-left",
                   data.budget_range === opt.value
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                     : "border-border hover:border-primary/50"
@@ -98,32 +98,32 @@ export function StepPreferences({ data, onChange }: StepPreferencesProps) {
 
         {/* Rehab Style */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Program Style</Label>
-          <div className="grid gap-3">
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Program Style</Label>
+          <div className="grid gap-2.5 md:gap-3">
             {REHAB_STYLE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => onChange({ ...data, rehab_style: opt.value })}
                 className={cn(
-                  "flex items-start gap-4 p-4 rounded-lg border text-left transition-all",
+                  "flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border text-left transition-all",
                   data.rehab_style === opt.value
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                     : "border-border hover:border-primary/50"
                 )}
               >
                 <div className={cn(
-                  "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+                  "w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center shrink-0",
                   data.rehab_style === opt.value ? "bg-primary/10" : "bg-muted"
                 )}>
                   <opt.icon className={cn(
-                    "h-5 w-5",
+                    "h-4 w-4 md:h-5 md:w-5",
                     data.rehab_style === opt.value ? "text-primary" : "text-muted-foreground"
                   )} />
                 </div>
-                <div>
-                  <p className="font-medium text-foreground">{opt.label}</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">{opt.description}</p>
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground text-sm md:text-base">{opt.label}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5 line-clamp-2">{opt.description}</p>
                 </div>
               </button>
             ))}
@@ -132,7 +132,7 @@ export function StepPreferences({ data, onChange }: StepPreferencesProps) {
 
         {/* Duration */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Preferred Duration</Label>
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Preferred Duration</Label>
           <div className="flex flex-wrap gap-2">
             {DURATION_OPTIONS.map((opt) => (
               <button
@@ -140,7 +140,7 @@ export function StepPreferences({ data, onChange }: StepPreferencesProps) {
                 type="button"
                 onClick={() => onChange({ ...data, treatment_duration: opt.value })}
                 className={cn(
-                  "px-4 py-2.5 rounded-full border text-sm font-medium transition-all",
+                  "px-3 md:px-4 py-2 md:py-2.5 rounded-full border text-xs md:text-sm font-medium transition-all",
                   data.treatment_duration === opt.value
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border hover:border-primary/50 text-foreground"

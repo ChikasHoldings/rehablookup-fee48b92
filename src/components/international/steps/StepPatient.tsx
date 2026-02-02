@@ -34,40 +34,40 @@ export function StepPatient({ data, onChange }: StepPatientProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="space-y-5 md:space-y-6"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1.5 md:mb-2">
           Tell us about the patient
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           This helps us find the right programs
         </p>
       </div>
 
-      <div className="max-w-md mx-auto space-y-6">
+      <div className="max-w-md mx-auto space-y-5 md:space-y-6">
         {/* Who needs help */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Who needs treatment?</Label>
-          <div className="grid grid-cols-2 gap-3">
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Who needs treatment?</Label>
+          <div className="grid grid-cols-2 gap-2.5 md:gap-3">
             {SEEKING_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => onChange({ ...data, seeking_for: opt.value })}
                 className={cn(
-                  "p-4 rounded-lg border text-left transition-all",
+                  "p-3 md:p-4 rounded-lg border text-left transition-all",
                   data.seeking_for === opt.value
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                     : "border-border hover:border-primary/50"
                 )}
               >
                 <opt.icon className={cn(
-                  "h-5 w-5 mb-2",
+                  "h-4 w-4 md:h-5 md:w-5 mb-1.5 md:mb-2",
                   data.seeking_for === opt.value ? "text-primary" : "text-muted-foreground"
                 )} />
-                <p className="font-medium text-foreground text-sm">{opt.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
+                <p className="font-medium text-foreground text-xs md:text-sm">{opt.label}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 line-clamp-2">{opt.description}</p>
               </button>
             ))}
           </div>
@@ -75,7 +75,7 @@ export function StepPatient({ data, onChange }: StepPatientProps) {
 
         {/* Age Range */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Age Range</Label>
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Age Range</Label>
           <div className="flex flex-wrap gap-2">
             {AGE_RANGE_OPTIONS.map((opt) => (
               <button
@@ -83,7 +83,7 @@ export function StepPatient({ data, onChange }: StepPatientProps) {
                 type="button"
                 onClick={() => onChange({ ...data, age_range: opt.value })}
                 className={cn(
-                  "px-4 py-2.5 rounded-full border text-sm font-medium transition-all",
+                  "px-3 md:px-4 py-2 md:py-2.5 rounded-full border text-xs md:text-sm font-medium transition-all",
                   data.age_range === opt.value
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border hover:border-primary/50 text-foreground"
@@ -97,7 +97,7 @@ export function StepPatient({ data, onChange }: StepPatientProps) {
 
         {/* Gender */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Gender</Label>
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Gender</Label>
           <div className="flex flex-wrap gap-2">
             {GENDER_OPTIONS.map((opt) => (
               <button
@@ -105,7 +105,7 @@ export function StepPatient({ data, onChange }: StepPatientProps) {
                 type="button"
                 onClick={() => onChange({ ...data, gender: opt.value })}
                 className={cn(
-                  "px-4 py-2.5 rounded-full border text-sm font-medium transition-all",
+                  "px-3 md:px-4 py-2 md:py-2.5 rounded-full border text-xs md:text-sm font-medium transition-all",
                   data.gender === opt.value
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border hover:border-primary/50 text-foreground"
