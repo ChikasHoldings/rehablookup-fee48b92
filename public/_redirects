@@ -1,5 +1,5 @@
 # Netlify redirects for SEO canonicalization
-# Last updated: 2026-01-31
+# Last updated: 2026-02-02
 
 # Force trailing slash removal (301 permanent redirect)
 # This ensures all URLs resolve to non-trailing-slash versions
