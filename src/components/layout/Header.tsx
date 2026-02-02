@@ -87,14 +87,14 @@ export function Header({
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
         <div className="container flex h-14 md:h-16 items-center justify-between gap-3 md:gap-4 lg:gap-6">
-          {/* Logo - Left aligned */}
-          <Link to="/" className="flex items-center shrink-0">
+          {/* Logo - Left aligned with fixed height container to prevent layout shift */}
+          <Link to="/" className="flex items-center shrink-0 h-8 md:h-9">
             <img 
               src="/logo.png"
               alt="RehabLookup" 
-              className="h-7 sm:h-8 md:h-9 w-auto"
+              className="h-full w-auto"
               width={134}
-              height={32}
+              height={36}
               loading="eager"
               decoding="async"
             />
