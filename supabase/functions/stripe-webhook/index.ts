@@ -832,6 +832,115 @@ serve(async (req) => {
       }
     }
 
+    // ==========================================
+    // Handle invoice.paid for International Facility Invoices
+    // ==========================================
+    if (event.type === "invoice.paid") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const invoiceId = invoice.metadata?.invoice_id;
+      const invoiceType = invoice.metadata?.type;
+
+      if (invoiceType === "international_placement_fee" && invoiceId) {
+        logStep("International facility invoice paid", { invoiceId, stripeInvoiceId: invoice.id });
+
+        const { error: updateError } = await supabaseAdmin
+          .from("international_facility_invoices")
+          .update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            stripe_payment_intent_id: invoice.payment_intent as string,
+          })
+          .eq("id", invoiceId);
+
+        if (updateError) {
+          logStep("Error updating invoice to paid", { error: updateError.message });
+        } else {
+          // Update case status
+          const { data: dbInvoice } = await supabaseAdmin
+            .from("international_facility_invoices")
+            .select("case_id")
+            .eq("id", invoiceId)
+            .single();
+
+          if (dbInvoice?.case_id) {
+            await supabaseAdmin
+              .from("international_placement_cases")
+              .update({ facility_fee_status: "paid" })
+              .eq("id", dbInvoice.case_id);
+
+            await supabaseAdmin.from("international_case_events").insert({
+              case_id: dbInvoice.case_id,
+              event_type: "facility_fee_paid",
+              actor_type: "system",
+              event_data: { 
+                invoice_id: invoiceId,
+                stripe_invoice_id: invoice.id,
+                amount_paid: invoice.amount_paid,
+              },
+            });
+          }
+
+          // Create admin notification
+          await supabaseAdmin.from("admin_notifications").insert({
+            type: "international_invoice_paid",
+            title: "International Invoice Paid",
+            message: `Facility paid $${(invoice.amount_paid / 100).toLocaleString()} for international placement`,
+            metadata: {
+              invoice_id: invoiceId,
+              stripe_invoice_id: invoice.id,
+              case_id: invoice.metadata?.case_id,
+            },
+          });
+
+          logStep("International facility invoice marked as paid");
+        }
+      }
+    }
+
+    // ==========================================
+    // Handle invoice.payment_failed for International Facility Invoices  
+    // ==========================================
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const invoiceType = invoice.metadata?.type;
+      const invoiceId = invoice.metadata?.invoice_id;
+
+      if (invoiceType === "international_placement_fee" && invoiceId) {
+        logStep("International facility invoice payment failed", { invoiceId });
+
+        await supabaseAdmin
+          .from("international_facility_invoices")
+          .update({ status: "uncollectible" })
+          .eq("id", invoiceId);
+
+        const { data: dbInvoice } = await supabaseAdmin
+          .from("international_facility_invoices")
+          .select("case_id")
+          .eq("id", invoiceId)
+          .single();
+
+        if (dbInvoice?.case_id) {
+          await supabaseAdmin.from("international_case_events").insert({
+            case_id: dbInvoice.case_id,
+            event_type: "facility_invoice_payment_failed",
+            actor_type: "system",
+            event_data: { invoice_id: invoiceId, stripe_invoice_id: invoice.id },
+          });
+        }
+
+        await supabaseAdmin.from("admin_notifications").insert({
+          type: "international_invoice_failed",
+          title: "International Invoice Payment Failed",
+          message: `Payment failed for international placement invoice`,
+          metadata: {
+            invoice_id: invoiceId,
+            stripe_invoice_id: invoice.id,
+            case_id: invoice.metadata?.case_id,
+          },
+        });
+      }
+    }
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
