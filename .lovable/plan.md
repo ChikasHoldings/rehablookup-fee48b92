@@ -1,91 +1,140 @@
 
-# Provider Panel Deep Audit - COMPLETED ✅
+# Provider & Seeker Panel Deep Audit - COMPLETED ✅
 
 ## Executive Summary
-All critical notification gaps have been fixed. SMS and in-app notifications are now fully wired.
+All critical notification gaps have been fixed for both Provider and Seeker panels. SMS and in-app notifications are now fully wired.
 
 ---
 
-## COMPLETED FIXES
+## PROVIDER PANEL FIXES ✅
 
-### ✅ 1. SMS Notifications on Lead Submission - FIXED
+### ✅ 1. SMS Notifications on Lead Submission
 **File**: `supabase/functions/submit-qualified-lead/index.ts`
 
 Added:
 - Check `notification_preferences.sms_lead_alerts` for provider
 - Verify provider has `phone_verified` in profiles table
-- Call `send-sms-notification` with lead details (name, city, level of care, urgency)
+- Call `send-sms-notification` with lead details
 
-### ✅ 2. In-App Provider Notifications on Lead Submission - FIXED
+### ✅ 2. In-App Provider Notifications on Lead Submission
 **File**: `supabase/functions/submit-qualified-lead/index.ts`
 
 Added:
 - Insert record into `provider_notifications` table after successful lead creation
 - Includes: user_id, facility_id, type='new_lead', title, message with masked info
-- Metadata includes: lead_id, inquiry_type, urgency, level_of_care
 
-### ✅ 3. Placement Network SMS Notifications - FIXED
+### ✅ 3. Placement Network SMS Notifications
 **File**: `supabase/functions/send-concierge-notifications/index.ts`
 
-Added helper function `sendProviderSmsNotification()` that:
-- Checks provider's SMS preferences
-- Verifies phone is verified
-- Sends SMS via `send-sms-notification` function
+Added `sendProviderSmsNotification()` helper for:
+- Seeker confirmed admission
+- Placement complete
 
-SMS triggers added for:
-- Seeker confirmed admission (seeker_confirmed type)
+---
+
+## SEEKER PANEL FIXES ✅
+
+### ✅ 4. Seeker SMS Notifications for Placement Events
+**File**: `supabase/functions/send-concierge-notifications/index.ts`
+
+Added `sendSeekerSmsNotification()` helper that:
+- Checks `seeker_profiles` for `phone_verified`
+- Sends SMS directly via Twilio
+- Triggered on key placement events
+
+SMS triggers added for seekers:
+- Provider confirmed placement (provider_confirmed type)
 - Placement complete (placement_complete type)
+
+### ✅ 5. Seeker In-App Notifications - Already Working
+The following already create seeker_notifications:
+- `intake_received` - Request received confirmation
+- `matches_found` - Facilities matched
+- `provider_interested` - Facility wants to connect
+- `provider_confirmed` - Placement confirmed by facility
+- `placement_complete` - Full placement complete
 
 ---
 
 ## VERIFICATION STATUS
 
 ### Edge Functions - All Deployed ✅
-| Function | Status | Verified |
-|----------|--------|----------|
-| submit-qualified-lead | Deployed | ✅ Responds with validation |
-| send-sms-notification | Deployed | ✅ Ready to send |
-| send-concierge-notifications | Deployed | ✅ Responds with validation |
+| Function | Status | Provider SMS | Seeker SMS |
+|----------|--------|--------------|------------|
+| submit-qualified-lead | ✅ | ✅ | N/A |
+| send-sms-notification | ✅ | ✅ | N/A |
+| send-concierge-notifications | ✅ | ✅ | ✅ |
 
 ### Database Tables - Verified ✅
 | Table | Status |
 |-------|--------|
-| provider_notifications | Exists, has correct schema |
-| notification_preferences | Has sms_lead_alerts column |
-| profiles | Has phone_verified column |
+| provider_notifications | Working |
+| seeker_notifications | Working |
+| notification_preferences | Working (providers) |
+| profiles | Has phone_verified (providers) |
+| seeker_profiles | Has phone_verified (seekers) |
 
 ---
 
 ## NOTIFICATION FLOW SUMMARY
 
-### Lead Submission Flow:
-1. Lead submitted via form → `submit-qualified-lead` edge function
-2. Lead record created in `leads` table
-3. Email sent via `send-lead-email`
-4. **NEW**: SMS sent if provider has `sms_lead_alerts` enabled + verified phone
-5. **NEW**: In-app notification created in `provider_notifications`
-6. Provider sees notification in bell icon (real-time via `useProviderNotifications`)
+### Lead Submission Flow (Provider):
+1. Lead submitted → `submit-qualified-lead`
+2. Email sent via `send-lead-email`
+3. **SMS sent** if provider has SMS enabled + verified phone
+4. **In-app notification** created in `provider_notifications`
 
-### Placement Confirmation Flow:
-1. Admin confirms placement → `confirm-placement` edge function
-2. Calls `send-concierge-notifications` with type='placement_complete'
-3. Email sent to seeker and provider
-4. **NEW**: SMS sent to provider if enabled
+### Placement Flow (Both):
+1. Admin matches facilities → emails to seeker + providers
+2. Provider confirms → **SMS to seeker** + in-app notification
+3. Placement complete → **SMS to both** + in-app notifications to both
+
+---
+
+## SEEKER PANEL STATUS
+
+### Pages - All Working ✅
+| Page | Status |
+|------|--------|
+| SeekerHome | ✅ Nearby facilities with filters |
+| SeekerSearch | ✅ Full search functionality |
+| SeekerConcierge | ✅ Placement hub with status tracking |
+| SeekerRequests | ✅ Request history |
+| SeekerSaved | ✅ Saved facilities |
+| SeekerSettings | ✅ Profile management |
+| SeekerNotifications | ✅ Notification center |
+| SeekerNotificationPreferences | ✅ Preference toggles |
+| SeekerReviews | ✅ Review management |
+
+### Hooks - All Working ✅
+| Hook | Status |
+|------|--------|
+| useSeekerAuth | ✅ Auth with profile creation |
+| useSeekerNotifications | ✅ Real-time with sound |
+| useFacilityReviews | ✅ Review CRUD |
 
 ---
 
 ## WHAT'S FULLY WORKING
 
+### Provider Panel:
 ✅ Lead submission with email, SMS, and in-app notifications
-✅ Email notifications to providers and seekers
-✅ SMS notifications to providers with verified phones
-✅ In-app notifications (bell icon) for new leads
 ✅ Credit/unlock system
 ✅ Pro subscription management
 ✅ Real-time data syncing
-✅ Analytics dashboards (engagement & leads)
+✅ Analytics dashboards
 ✅ Billing and payment flows
 ✅ Placement network with SMS alerts
+
+### Seeker Panel:
+✅ Facility search and browsing
+✅ Save facilities
+✅ Help request submission
+✅ Concierge/placement service with full tracking
+✅ In-app notifications (real-time with sound)
+✅ **SMS alerts for placement confirmations**
+✅ Review submission and management
+✅ Notification preferences
 
 ---
 
