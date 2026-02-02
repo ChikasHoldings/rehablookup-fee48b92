@@ -73,7 +73,7 @@ const faqCategories: FAQCategory[] = [
   },
   {
     id: "matching-privacy",
-    name: "Matching & Privacy",
+    name: "Placement & Privacy",
     icon: Lock,
     description: "How we connect you with care",
     faqs: [

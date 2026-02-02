@@ -86,7 +86,7 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">Matching Algorithm</h3>
+              <h3 className="font-medium">Treatment Placement Engine</h3>
               <p className="text-sm text-muted-foreground">
                 {caseData.matched_at
                   ? `Last run: ${new Date(caseData.matched_at).toLocaleString()}`
@@ -100,17 +100,17 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
               {isRunning ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Matching...
+                  Placing...
                 </>
               ) : caseData.matched_at ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Re-run Matching
+                  Re-run Placement
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Run Matching
+                  Run Placement
                 </>
               )}
             </Button>
@@ -123,7 +123,7 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Building2 className="h-4 w-4" />
-            Matched Facilities ({matchedFacilities?.length || 0})
+            Placement Options ({matchedFacilities?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent className="py-2">
@@ -131,7 +131,7 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
             <div className="text-center py-4 text-muted-foreground">Loading...</div>
           ) : !matchedFacilities?.length ? (
             <div className="text-center py-4 text-muted-foreground">
-              No matches yet. Run the matching algorithm to find suitable facilities.
+              No matches yet. Run the placement engine to find suitable facilities.
             </div>
           ) : (
             <div className="space-y-3">
@@ -198,7 +198,7 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
       {/* Matching Criteria Summary */}
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm font-medium">Matching Criteria Used</CardTitle>
+          <CardTitle className="text-sm font-medium">Placement Criteria Used</CardTitle>
         </CardHeader>
         <CardContent className="py-2 text-sm">
           <div className="grid grid-cols-2 gap-2">

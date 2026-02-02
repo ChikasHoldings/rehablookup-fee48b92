@@ -175,7 +175,7 @@ export function MarketingLeadSuccess({ leadId, matchedFacilities }: MarketingLea
             Want Personalized Help?
           </h2>
           <p className="text-violet-700 mb-6 max-w-xl mx-auto">
-            Our Concierge team provides one-on-one matching, insurance verification, and direct introductions to programs — all for a one-time $29 fee.
+            Our Concierge team provides personalized treatment placement, insurance verification, and direct introductions to programs — all for a one-time $29 fee.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button

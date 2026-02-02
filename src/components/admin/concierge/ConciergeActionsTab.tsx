@@ -42,8 +42,8 @@ interface ConciergeActionsTabProps {
 const STATUS_OPTIONS = [
   { value: "new", label: "New" },
   { value: "reviewing", label: "Reviewing" },
-  { value: "matching", label: "Matching" },
-  { value: "matched", label: "Matched" },
+  { value: "matching", label: "Placing" },
+  { value: "matched", label: "Facilities Found" },
   { value: "introductions_sent", label: "Introductions Sent" },
   { value: "in_contact", label: "In Contact" },
   { value: "placed", label: "Placed" },

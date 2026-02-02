@@ -29,8 +29,8 @@ type CaseStatus = 'new' | 'reviewing' | 'matching' | 'matched' | 'introductions_
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   new: { label: "New", variant: "default" },
   reviewing: { label: "Reviewing", variant: "secondary" },
-  matching: { label: "Matching", variant: "secondary" },
-  matched: { label: "Matched", variant: "outline" },
+  matching: { label: "Placing", variant: "secondary" },
+  matched: { label: "Facilities Found", variant: "outline" },
   introductions_sent: { label: "Intros Sent", variant: "outline" },
   in_contact: { label: "In Contact", variant: "secondary" },
   admitted: { label: "Admitted", variant: "default" },
