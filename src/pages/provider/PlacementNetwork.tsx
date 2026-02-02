@@ -21,6 +21,8 @@ import {
   Trash2,
   ExternalLink,
   Settings,
+  MessageSquare,
+  CalendarDays,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,8 @@ import {
   PlacementBenefits,
   PlacementJoinCTA,
   IntroductionCard,
+  PlacementMessagesTab,
+  PlacementToursTab,
 } from "@/components/provider/placement-network";
 
 // Placement fee structure
@@ -465,27 +469,35 @@ export default function ProviderPlacementNetworkPage() {
         ) : (
           /* Opted-In View */
           <Tabs defaultValue="introductions" className="space-y-4 sm:space-y-6">
-            <TabsList className="w-full grid grid-cols-4 h-10 sm:h-11">
-              <TabsTrigger value="introductions" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3 relative">
+            <TabsList className="w-full grid grid-cols-6 h-10 sm:h-11">
+              <TabsTrigger value="introductions" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 relative">
                 <Bell className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">Introductions</span>
+                <span className="hidden lg:inline">Intros</span>
                 {pendingIntroductions.length > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 sm:relative sm:top-0 sm:right-0 sm:ml-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-[10px]">
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 lg:relative lg:top-0 lg:right-0 lg:ml-1 h-4 lg:h-5 min-w-4 lg:min-w-5 px-1 lg:px-1.5 text-[9px] lg:text-[10px]">
                     {pendingIntroductions.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="profile" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3">
+              <TabsTrigger value="messages" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
+                <MessageSquare className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Messages</span>
+              </TabsTrigger>
+              <TabsTrigger value="tours" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
+                <CalendarDays className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Tours</span>
+              </TabsTrigger>
+              <TabsTrigger value="profile" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
                 <Settings className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">Profile</span>
+                <span className="hidden lg:inline">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="billing" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3">
+              <TabsTrigger value="billing" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
                 <CreditCard className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">Billing</span>
+                <span className="hidden lg:inline">Billing</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3">
+              <TabsTrigger value="history" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
                 <Building2 className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">Placements</span>
+                <span className="hidden lg:inline">Placed</span>
               </TabsTrigger>
             </TabsList>
 
@@ -563,6 +575,16 @@ export default function ProviderPlacementNetworkPage() {
                       ))}
                   </div>
                 )}
+            </TabsContent>
+
+            {/* Messages Tab */}
+            <TabsContent value="messages" className="space-y-4">
+              <PlacementMessagesTab facilityId={selectedFacility?.id || ""} />
+            </TabsContent>
+
+            {/* Tours Tab */}
+            <TabsContent value="tours" className="space-y-4">
+              <PlacementToursTab facilityId={selectedFacility?.id || ""} />
             </TabsContent>
 
             {/* Profile Tab */}
