@@ -75,6 +75,7 @@ function shouldPrerender(path: string): boolean {
   if (path.startsWith('/resources/') && path.split('/').length === 3) return true;
   if (path.endsWith('-near-me') && path.startsWith('/')) return true;
   if (path.startsWith('/center/')) return true;
+  if (path.startsWith('/us-rehab')) return true;
   
   return false;
 }
