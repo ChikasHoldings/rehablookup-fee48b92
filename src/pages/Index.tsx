@@ -301,7 +301,7 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative z-10">
+      <section className="relative z-10 bg-primary">
         {/* Background Image - using img for better LCP */}
         <img 
           src={heroImage}
@@ -311,7 +311,8 @@ const Index = () => {
           width={1920}
           height={1080}
           fetchPriority="high"
-          decoding="async"
+          loading="eager"
+          decoding="sync"
         />
         
         {/* Dark overlay for text readability */}
