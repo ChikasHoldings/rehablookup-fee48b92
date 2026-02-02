@@ -7,11 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   MapPin, 
   ExternalLink, 
-  CalendarDays, 
   ThumbsDown,
   CheckCircle,
   Building2,
-  Loader2
+  Loader2,
+  HeadphonesIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,6 @@ const FACILITY_TYPE_LABELS: Record<string, string> = {
 export function PlacementMatchCard({ 
   facility, 
   isPlaced,
-  onRequestTour,
   onDismiss,
   isDismissing 
 }: PlacementMatchCardProps) {
@@ -97,7 +96,7 @@ export function PlacementMatchCard({
             </div>
           </div>
           
-          {/* Actions */}
+          {/* Actions - View Profile only, no direct contact */}
           <div className="flex items-center gap-2 px-4 pb-4 pt-0">
             <Button 
               variant="outline" 
@@ -111,17 +110,12 @@ export function PlacementMatchCard({
               </Link>
             </Button>
             
-            {onRequestTour && !isPlaced && (
-              <Button 
-                variant="default" 
-                size="sm" 
-                className="flex-1 gap-1.5"
-                onClick={onRequestTour}
-              >
-                <CalendarDays className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Request Tour</span>
-                <span className="sm:hidden">Tour</span>
-              </Button>
+            {/* Coordinator message */}
+            {!isPlaced && (
+              <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground gap-1">
+                <HeadphonesIcon className="h-3.5 w-3.5" />
+                <span>Advisor coordinating</span>
+              </div>
             )}
             
             {onDismiss && !isPlaced && (

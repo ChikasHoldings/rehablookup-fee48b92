@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { Save, XCircle, Loader2, History } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
+import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
@@ -103,6 +104,9 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
 
   return (
     <div className="space-y-4">
+      {/* Admin Confirm Placement - ONLY admins can confirm */}
+      <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
+
       {/* Status Update */}
       <Card>
         <CardHeader className="py-3">

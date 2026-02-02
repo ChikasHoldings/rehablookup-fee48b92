@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Clock, CheckCircle2, UserCheck } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Loader2, DollarSign, MapPin, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ProviderConfirmPlacementModal } from "@/components/provider/ProviderConfirmPlacementModal";
 import { format } from "date-fns";
 
 interface IntroductionCardProps {
@@ -24,141 +22,131 @@ export function IntroductionCard({
   showConfirmButton = false,
   hasPro = false,
 }: IntroductionCardProps) {
-  const [notes, setNotes] = useState("");
-  const [showNotes, setShowNotes] = useState(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
   const inquiry = introduction.concierge_inquiries;
 
-  const seekerConfirmed = inquiry?.seeker_confirmed;
+  // Generate anonymized Case ID
+  const caseId = `Case #${inquiry?.id?.slice(0, 8).toUpperCase() || introduction.id.slice(0, 8).toUpperCase()}`;
+
+  // Format care level for display
+  const formatCareLevel = (level: string | null) => {
+    if (!level) return "Not specified";
+    return level.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  // Format payment type for display
+  const formatPayment = (type: string | null) => {
+    if (!type) return "Not specified";
+    return type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  // Format urgency for display
+  const formatUrgency = (urgency: string | null) => {
+    if (!urgency) return "Flexible";
+    const labels: Record<string, string> = {
+      immediate: "Immediate",
+      within_week: "Within 1 Week",
+      within_month: "Within 1 Month",
+      flexible: "Flexible",
+    };
+    return labels[urgency] || urgency.replace(/_/g, " ");
+  };
+
+  const handleAccept = () => {
+    setIsAccepting(true);
+    onRespond("interested");
+  };
+
+  const handleDecline = () => {
+    setIsDeclining(true);
+    onRespond("not_available");
+  };
 
   return (
-    <>
-      <Card className={showConfirmButton 
-        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20" 
-        : "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20"
-      }>
-        <CardContent className="p-5 space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              {showConfirmButton ? (
-                <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-100 dark:bg-emerald-950/50 mb-2">
-                  <UserCheck className="h-3 w-3 mr-1" />
-                  Seeker Confirmed Admission
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-100 dark:bg-amber-950/50 mb-2">
-                  <Clock className="h-3 w-3 mr-1" />
-                  New Introduction
-                </Badge>
-              )}
-              <h3 className="font-semibold text-foreground">
-                {inquiry?.user_name || `Case #${inquiry?.id?.slice(0, 8).toUpperCase()}`}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Received {format(new Date(introduction.created_at), "MMM d 'at' h:mm a")}
+    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+      <CardContent className="p-5 space-y-4">
+        {/* Header with Case ID */}
+        <div className="flex items-start justify-between">
+          <div>
+            <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-100 dark:bg-amber-950/50 mb-2">
+              <Clock className="h-3 w-3 mr-1" />
+              Awaiting Response
+            </Badge>
+            <h3 className="font-semibold text-foreground text-lg">
+              {caseId}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Received {format(new Date(introduction.created_at), "MMM d 'at' h:mm a")}
+            </p>
+          </div>
+        </div>
+
+        {/* Anonymized Case Details */}
+        <div className="bg-background/50 rounded-lg p-4 space-y-3 border">
+          <div className="grid sm:grid-cols-2 gap-3 text-sm">
+            <div className="space-y-1">
+              <span className="text-muted-foreground text-xs uppercase tracking-wide">Level of Care</span>
+              <p className="font-medium">{formatCareLevel(inquiry?.level_of_care)}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground text-xs uppercase tracking-wide">Payment</span>
+              <p className="font-medium">{formatPayment(inquiry?.payment_type)}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground text-xs uppercase tracking-wide">Urgency</span>
+              <p className="font-medium">{formatUrgency(inquiry?.timeline_urgency)}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground text-xs uppercase tracking-wide">Location Preference</span>
+              <p className="font-medium flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                {inquiry?.preferred_state || "Flexible"}
               </p>
             </div>
           </div>
+        </div>
 
-          {/* Case Details */}
-          <div className="grid sm:grid-cols-2 gap-3 text-sm">
-            <div className="space-y-1">
-              <span className="text-muted-foreground">Level of Care:</span>
-              <p className="font-medium capitalize">{inquiry?.level_of_care?.replace(/_/g, " ") || "—"}</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-muted-foreground">Payment:</span>
-              <p className="font-medium capitalize">{inquiry?.payment_type?.replace(/_/g, " ") || "—"}</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-muted-foreground">Urgency:</span>
-              <p className="font-medium capitalize">{inquiry?.timeline_urgency?.replace(/_/g, " ") || "—"}</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-muted-foreground">Location:</span>
-              <p className="font-medium">{inquiry?.preferred_state || "Flexible"}</p>
-            </div>
+        {/* Fee Notice */}
+        <div className="bg-muted/50 rounded-lg p-3 text-sm flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+          <div>
+            <p className="text-muted-foreground">
+              <strong className="text-foreground">Placement fee applies</strong> only if admission is confirmed by both parties. 
+              {hasPro ? " Pro discount: $800" : " Standard: $1,000"}
+            </p>
           </div>
+        </div>
 
-          {/* Show seeker confirmation status */}
-          {seekerConfirmed && !showConfirmButton && (
-            <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-100 dark:bg-emerald-950/30 rounded-lg p-3 border border-emerald-200 dark:border-emerald-800">
+        {/* Action Buttons - Accept or Decline ONLY */}
+        <div className="flex gap-3 pt-2">
+          <Button
+            className="flex-1 gap-2"
+            onClick={handleAccept}
+            disabled={isResponding}
+          >
+            {isAccepting && isResponding ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
               <CheckCircle2 className="h-4 w-4" />
-              Seeker has confirmed they were admitted
-            </div>
-          )}
-
-          {/* Response Actions or Confirm Action */}
-          {showConfirmButton ? (
-            <Button onClick={() => setConfirmModalOpen(true)} className="w-full gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              Confirm Placement
-            </Button>
-          ) : (
-            <>
-              {showNotes && (
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Any notes about your availability or the case..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    rows={2}
-                    className="resize-none"
-                  />
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => onRespond("interested", notes)}
-                  disabled={isResponding}
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-1" />
-                  Interested
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    if (!showNotes) {
-                      setShowNotes(true);
-                    } else {
-                      onRespond("limited", notes);
-                    }
-                  }}
-                  disabled={isResponding}
-                >
-                  Limited Availability
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onRespond("not_available")}
-                  disabled={isResponding}
-                >
-                  Not Available
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Confirm Placement Modal */}
-      {inquiry && (
-        <ProviderConfirmPlacementModal
-          open={confirmModalOpen}
-          onOpenChange={setConfirmModalOpen}
-          inquiry={{
-            id: inquiry.id,
-            user_name: inquiry.user_name,
-            seeker_confirmed: inquiry.seeker_confirmed,
-          }}
-          facilityId={facilityId}
-          hasPro={hasPro}
-        />
-      )}
-    </>
+            )}
+            Accept Candidate
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 gap-2"
+            onClick={handleDecline}
+            disabled={isResponding}
+          >
+            {isDeclining && isResponding ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <XCircle className="h-4 w-4" />
+            )}
+            Decline
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
