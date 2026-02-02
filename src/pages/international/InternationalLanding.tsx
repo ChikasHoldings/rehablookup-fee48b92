@@ -169,24 +169,14 @@ export default function InternationalLanding() {
                   <div className="flex flex-col sm:flex-row gap-4 mb-8">
                     <Button 
                       size="lg" 
-                      className="h-14 px-8 text-base font-semibold"
+                      variant="outline"
+                      className="h-14 px-8 text-base font-semibold border-2 border-primary text-primary hover:bg-primary/10"
                       asChild
                     >
                       <Link to="/international/apply">
                         Start Your Application
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </Link>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="h-14 px-6 text-base"
-                      asChild
-                    >
-                      <a href="tel:+18005551234">
-                        <Phone className="mr-2 h-5 w-5" />
-                        Speak with an Advisor
-                      </a>
                     </Button>
                   </div>
 
@@ -437,18 +427,17 @@ export default function InternationalLanding() {
                 <p className="text-muted-foreground max-w-xl mx-auto mb-8">
                   Take the first step towards accessing world-class treatment in the United States. Our advisors are standing by to help.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" className="h-14 px-8 text-base font-semibold" asChild>
+                <div className="flex justify-center">
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className="h-14 px-8 text-base font-semibold border-2 border-primary text-primary hover:bg-primary/10" 
+                    asChild
+                  >
                     <Link to="/international/apply">
                       Start Your Application
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
-                  </Button>
-                  <Button variant="outline" size="lg" className="h-14 px-6 text-base" asChild>
-                    <a href="tel:+18005551234">
-                      <Phone className="mr-2 h-5 w-5" />
-                      Call Now
-                    </a>
                   </Button>
                 </div>
               </motion.div>
