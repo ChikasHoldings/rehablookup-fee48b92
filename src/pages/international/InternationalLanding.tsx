@@ -173,7 +173,7 @@ export default function InternationalLanding() {
                     asChild
                   >
                     <Link to="/international/apply">
-                      Start Your Application
+                      Find Treatment
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>
@@ -298,7 +298,7 @@ export default function InternationalLanding() {
                   <div className="mt-8">
                     <Button asChild size="lg">
                       <Link to="/international/apply">
-                        Start Your Application
+                        Find Treatment
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
@@ -442,7 +442,7 @@ export default function InternationalLanding() {
                   asChild
                 >
                   <Link to="/international/apply">
-                    Start Your Application
+                    Find Treatment
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
