@@ -35,14 +35,10 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
     return <EngagementSkeleton />;
   }
 
-  // Calculate merged "Listing Views" = impressions + profile views
-  const periodListingViews = (analytics?.periodImpressions || 0) + (analytics?.periodProfileViews || 0);
-  const totalListingViews = (analytics?.totalImpressions || 0) + (analytics?.totalProfileViews || 0);
-  
-  // Calculate growth for merged views
-  const listingViewsGrowth = analytics?.impressionGrowth !== undefined && analytics?.profileViewGrowth !== undefined
-    ? Math.round((analytics.impressionGrowth + analytics.profileViewGrowth) / 2)
-    : 0;
+  // Use values directly from hook (now sourced from facility_views)
+  const periodListingViews = analytics?.periodListingViews || 0;
+  const totalListingViews = analytics?.totalListingViews || 0;
+  const listingViewsGrowth = analytics?.listingViewGrowth || 0;
 
   const hasData = analytics && (
     totalListingViews > 0 || 
@@ -56,19 +52,9 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
 
   const hasMultipleFacilities = analytics.facilityBreakdown.length > 1;
 
-  // Merge daily trends for chart
-  const mergedDailyTrends = analytics.dailyTrends.map(day => ({
-    ...day,
-    listingViews: day.impressions + day.profileViews,
-  }));
-
-  // Calculate conversion rates with merged views
-  const viewToCallRate = periodListingViews > 0 
-    ? Math.round((analytics.periodClickToCalls / periodListingViews) * 100) 
-    : 0;
-  const viewToWebsiteRate = periodListingViews > 0 
-    ? Math.round((analytics.periodWebsiteClicks / periodListingViews) * 100) 
-    : 0;
+  // Calculate conversion rates
+  const viewToCallRate = analytics.viewToCallRate || 0;
+  const viewToWebsiteRate = analytics.viewToWebsiteRate || 0;
   const totalEngagementRate = periodListingViews > 0
     ? Math.round(((analytics.periodClickToCalls + analytics.periodWebsiteClicks) / periodListingViews) * 100)
     : 0;
@@ -91,31 +77,28 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {analytics.facilityBreakdown.map((facility) => {
-                const facilityViews = facility.impressions + facility.profileViews;
-                return (
-                  <div
-                    key={facility.facilityId}
-                    className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                  >
-                    <p className="font-medium text-sm text-foreground truncate mb-2">{facility.facilityName}</p>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <Eye className="h-3 w-3 text-primary" />
-                        <span className="text-muted-foreground">{facilityViews} views</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="h-3 w-3 text-green-600" />
-                        <span className="text-muted-foreground">{facility.clickToCalls} calls</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Globe className="h-3 w-3 text-blue-600" />
-                        <span className="text-muted-foreground">{facility.websiteClicks} clicks</span>
-                      </div>
+              {analytics.facilityBreakdown.map((facility) => (
+                <div
+                  key={facility.facilityId}
+                  className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="font-medium text-sm text-foreground truncate mb-2">{facility.facilityName}</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <Eye className="h-3 w-3 text-primary" />
+                      <span className="text-muted-foreground">{facility.listingViews} views</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="h-3 w-3 text-green-600" />
+                      <span className="text-muted-foreground">{facility.clickToCalls} calls</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Globe className="h-3 w-3 text-blue-600" />
+                      <span className="text-muted-foreground">{facility.websiteClicks} clicks</span>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -207,7 +190,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
       )}
 
       {/* Daily Trends Chart */}
-      {mergedDailyTrends.length > 0 && (
+      {analytics.dailyTrends.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -241,7 +224,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mergedDailyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={analytics.dailyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="listingViewsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
