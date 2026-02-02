@@ -421,32 +421,31 @@ export default function InternationalLanding() {
           </section>
 
           {/* Final CTA */}
-          <section className="py-16 md:py-20 bg-gradient-to-br from-primary/10 to-primary/5">
-            <div className="container mx-auto px-4 text-center">
+          <section className="py-16 md:py-24">
+            <div className="container mx-auto px-4">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4 }}
+                className="max-w-4xl mx-auto bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-10 md:p-14 text-center shadow-xl"
               >
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-4">
                   Ready to Begin Your Recovery Journey?
                 </h2>
-                <p className="text-muted-foreground max-w-xl mx-auto mb-8">
+                <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
                   Take the first step towards accessing world-class treatment in the United States. Our advisors are standing by to help.
                 </p>
-                <div className="flex justify-center">
-                  <Button 
-                    size="lg" 
-                    className="h-12 px-8 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" 
-                    asChild
-                  >
-                    <Link to="/international/apply">
-                      Start Your Application
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
-                </div>
+                <Button 
+                  size="lg" 
+                  className="h-12 px-8 text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg" 
+                  asChild
+                >
+                  <Link to="/international/apply">
+                    Start Your Application
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
               </motion.div>
             </div>
           </section>
