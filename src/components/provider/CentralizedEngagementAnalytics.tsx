@@ -20,9 +20,12 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { type DateRange } from "@/hooks/useLeadAnalytics";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface CentralizedEngagementAnalyticsProps {
   dateRange?: DateRange;
@@ -30,6 +33,9 @@ interface CentralizedEngagementAnalyticsProps {
 
 export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagementAnalyticsProps) {
   const { data: analytics, isLoading } = useCentralizedEngagementAnalytics(dateRange);
+  const { facilities } = useProviderFacilities();
+
+  const hasApprovedListing = facilities.some(f => f.status === "approved");
 
   if (isLoading) {
     return <EngagementSkeleton />;
@@ -47,7 +53,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
   );
 
   if (!hasData) {
-    return <EmptyEngagement />;
+    return <EmptyEngagement hasApprovedListing={hasApprovedListing} />;
   }
 
   const hasMultipleFacilities = analytics.facilityBreakdown.length > 1;
@@ -363,7 +369,7 @@ function EngagementSkeleton() {
   );
 }
 
-function EmptyEngagement() {
+function EmptyEngagement({ hasApprovedListing }: { hasApprovedListing: boolean }) {
   return (
     <Card className="py-12">
       <CardContent className="flex flex-col items-center justify-center text-center">
@@ -371,10 +377,17 @@ function EmptyEngagement() {
           <TrendingUp className="h-8 w-8 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-semibold text-foreground mb-2">No Engagement Data Yet</h3>
-        <p className="text-sm text-muted-foreground max-w-md">
-          Once your listings start receiving views and interactions, you'll see detailed 
-          engagement analytics here including listing views, calls, and website clicks.
+        <p className="text-sm text-muted-foreground max-w-md mb-4">
+          {hasApprovedListing
+            ? "Your listing is live! Once it starts receiving views and interactions, you'll see detailed engagement analytics here."
+            : "Once your listings start receiving views and interactions, you'll see detailed engagement analytics here including listing views, calls, and website clicks."
+          }
         </p>
+        <Button variant="outline" asChild>
+          <Link to={hasApprovedListing ? "/provider/dashboard" : "/provider/listings"}>
+            {hasApprovedListing ? "View Dashboard" : "Complete Your Listing"}
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   );
