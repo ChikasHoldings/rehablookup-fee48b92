@@ -69,8 +69,11 @@ interface ProviderStats {
   total: number;
   approved: number;
   pending: number;
-  featured: number;
-  verified: number;
+  suspended: number;
+  pro: number;
+  placement: number;
+  featured?: number;
+  verified?: number;
 }
 
 interface LeadStats {
@@ -79,7 +82,11 @@ interface LeadStats {
   verified: number;
   verificationRate: number;
   newLeads: number;
-  assigned: number;
+  unlockedMonth: number;
+  unlockedAll: number;
+  unlockRevenueMonth: number;
+  unlockRate: number;
+  assigned?: number;
 }
 
 interface WeeklyTrends {
@@ -116,23 +123,27 @@ export function DashboardKPICards({
   loadingProviders,
   loadingLeads,
 }: DashboardKPICardsProps) {
+  // Action items: pending providers + new (unprocessed) leads
   const actionItemsCount = (providerStats?.pending || 0) + (leadStats?.newLeads || 0);
+  
+  // Calculate total revenue: Stripe revenue + lead unlock revenue this month
+  const totalMonthlyRevenue = (revenueStats?.monthlyRevenue || 0) + ((leadStats?.unlockRevenueMonth || 0) / 100);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* Revenue */}
+      {/* Revenue - Combined from Stripe + Lead Unlocks */}
       <Card className="border-0 bg-primary text-primary-foreground shadow-md overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <CardTitle className="text-sm font-medium opacity-90 truncate pr-2">Monthly Revenue</CardTitle>
           <DollarSign className="h-4 w-4 opacity-70 shrink-0" />
         </CardHeader>
         <CardContent className="min-h-[60px]">
-          {loadingRevenue ? (
+          {loadingRevenue || loadingLeads ? (
             <Skeleton className="h-8 w-24 bg-white/20" />
           ) : (
             <>
               <div className="text-2xl font-bold truncate">
-                ${revenueStats?.monthlyRevenue?.toLocaleString() || "0"}
+                ${totalMonthlyRevenue?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || "0"}
               </div>
               <p className="text-xs opacity-70 mt-1 flex items-center gap-1 truncate">
                 {revenueStats?.percentChange && revenueStats.percentChange >= 0 ? (
@@ -144,22 +155,34 @@ export function DashboardKPICards({
                   {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last month
                 </span>
               </p>
+              {leadStats?.unlockRevenueMonth ? (
+                <p className="text-[10px] opacity-60 mt-0.5">
+                  Incl. ${(leadStats.unlockRevenueMonth / 100).toLocaleString()} lead unlocks
+                </p>
+              ) : null}
             </>
           )}
         </CardContent>
       </Card>
 
-      {/* Providers */}
+      {/* Providers - Show Pro/Placement breakdown */}
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Total Providers</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Providers</CardTitle>
           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
         </CardHeader>
         <CardContent className="pb-0 min-h-[40px]">
           {loadingProviders ? (
             <Skeleton className="h-8 w-20" />
           ) : (
-            <div className="text-2xl font-bold tabular-nums">{providerStats?.total?.toLocaleString()}</div>
+            <>
+              <div className="text-2xl font-bold tabular-nums">{providerStats?.total?.toLocaleString()}</div>
+              <div className="flex gap-2 text-[10px] text-muted-foreground mt-0.5">
+                <span className="text-success">{providerStats?.pro || 0} Pro</span>
+                <span>•</span>
+                <span className="text-info">{providerStats?.placement || 0} Placement</span>
+              </div>
+            </>
           )}
         </CardContent>
         {weeklyTrends?.providers && (
@@ -169,10 +192,10 @@ export function DashboardKPICards({
         )}
       </Card>
 
-      {/* Leads */}
+      {/* Leads - Show unlock metrics */}
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Total Leads</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Leads</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground shrink-0" />
         </CardHeader>
         <CardContent className="pb-0 min-h-[40px]">
@@ -181,7 +204,11 @@ export function DashboardKPICards({
           ) : (
             <>
               <div className="text-2xl font-bold tabular-nums">{leadStats?.totalAll?.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground truncate">{leadStats?.totalMonth?.toLocaleString()} this month</p>
+              <div className="flex gap-2 text-[10px] text-muted-foreground mt-0.5">
+                <span>{leadStats?.totalMonth?.toLocaleString()} this month</span>
+                <span>•</span>
+                <span className="text-success">{leadStats?.unlockedMonth || 0} unlocked</span>
+              </div>
             </>
           )}
         </CardContent>

@@ -32,8 +32,11 @@ interface ProviderStats {
   total: number;
   approved: number;
   pending: number;
-  featured: number;
-  verified: number;
+  suspended: number;
+  pro: number;
+  placement: number;
+  featured?: number;
+  verified?: number;
 }
 
 interface LeadStats {
@@ -42,7 +45,11 @@ interface LeadStats {
   verified: number;
   verificationRate: number;
   newLeads: number;
-  assigned: number;
+  unlockedMonth: number;
+  unlockedAll: number;
+  unlockRevenueMonth: number;
+  unlockRate: number;
+  assigned?: number;
 }
 
 interface DashboardChartsSectionProps {
@@ -62,19 +69,19 @@ export function DashboardChartsSection({
   loadingLeads,
   loadingBreakdown,
 }: DashboardChartsSectionProps) {
-  // Provider status data for bar chart
+  // Provider status data for bar chart - updated for Free/Pro model
   const providerStatusData = [
     { name: "Approved", value: providerStats?.approved || 0, fill: CHART_COLORS.success },
     { name: "Pending", value: providerStats?.pending || 0, fill: CHART_COLORS.warning },
-    { name: "Featured", value: providerStats?.featured || 0, fill: CHART_COLORS.accent },
-    { name: "Verified", value: providerStats?.verified || 0, fill: CHART_COLORS.info },
+    { name: "Pro", value: providerStats?.pro || 0, fill: CHART_COLORS.accent },
+    { name: "Placement", value: providerStats?.placement || 0, fill: CHART_COLORS.info },
   ];
 
-  // Lead funnel data
+  // Lead funnel data - updated for unlock-based monetization
   const leadFunnelData = [
-    { name: "Total", value: leadStats?.totalMonth || 0, fill: CHART_COLORS.muted },
+    { name: "Leads", value: leadStats?.totalMonth || 0, fill: CHART_COLORS.muted },
     { name: "Verified", value: leadStats?.verified || 0, fill: CHART_COLORS.info },
-    { name: "Assigned", value: leadStats?.assigned || 0, fill: CHART_COLORS.success },
+    { name: "Unlocked", value: leadStats?.unlockedMonth || 0, fill: CHART_COLORS.success },
   ];
 
   return (
@@ -154,8 +161,13 @@ export function DashboardChartsSection({
           )}
           <div className="mt-2 pt-2 border-t flex justify-between text-xs text-muted-foreground">
             <span>Verification: {leadStats?.verificationRate || 0}%</span>
-            <span>Assigned: {leadStats?.totalMonth ? Math.round((leadStats.assigned / leadStats.totalMonth) * 100) : 0}%</span>
+            <span>Unlock Rate: {leadStats?.unlockRate || 0}%</span>
           </div>
+          {leadStats?.unlockRevenueMonth ? (
+            <div className="mt-1 text-xs text-success font-medium">
+              ${(leadStats.unlockRevenueMonth / 100).toLocaleString()} unlock revenue this month
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

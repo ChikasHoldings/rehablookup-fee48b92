@@ -155,28 +155,33 @@ export function SuperAdminDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch providers stats
+  // Fetch providers stats with Pro/Placement breakdown
   const { data: providerStats, isLoading: loadingProviders } = useQuery({
     queryKey: ["admin-provider-stats"],
     queryFn: async () => {
-      const [total, approved, pending, featured, verified] = await Promise.all([
+      const [total, approved, pending, suspended, proSubs, placementFacilities] = await Promise.all([
         supabase.from("facilities").select("*", { count: "exact", head: true }),
         supabase.from("facilities").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("facilities").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("featured", true),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("verified", true),
+        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("suspended", true),
+        supabase.from("pro_subscriptions").select("*", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("concierge_inquiries").select("placed_facility_id", { count: "exact", head: true }).not("placed_facility_id", "is", null).eq("placement_confirmed", true),
       ]);
       return {
         total: total.count || 0,
         approved: approved.count || 0,
         pending: pending.count || 0,
-        featured: featured.count || 0,
-        verified: verified.count || 0,
+        suspended: suspended.count || 0,
+        pro: proSubs.count || 0,
+        placement: placementFacilities.count || 0,
+        // Legacy fields for backwards compat
+        featured: proSubs.count || 0,
+        verified: approved.count || 0,
       };
     },
   });
 
-  // Fetch leads stats
+  // Fetch leads stats with unlock/revenue metrics
   const { data: leadStats, isLoading: loadingLeads } = useQuery({
     queryKey: ["admin-lead-stats"],
     queryFn: async () => {
@@ -184,13 +189,18 @@ export function SuperAdminDashboard() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const [totalMonth, totalAll, verified, newLeads, assigned] = await Promise.all([
+      const [totalMonth, totalAll, verified, newLeads, unlocksMonth, unlocksAll, unlockRevenueMonth] = await Promise.all([
         supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("*", { count: "exact", head: true }),
         supabase.from("leads").select("*", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("*", { count: "exact", head: true }).eq("status", "new"),
-        supabase.from("leads").select("*", { count: "exact", head: true }).not("facility_id", "is", null),
+        supabase.from("lead_unlocks").select("*", { count: "exact", head: true }).gte("unlocked_at", startOfMonth.toISOString()),
+        supabase.from("lead_unlocks").select("*", { count: "exact", head: true }),
+        supabase.from("lead_unlocks").select("unlock_price_cents").gte("unlocked_at", startOfMonth.toISOString()),
       ]);
+
+      // Calculate unlock revenue for this month
+      const monthlyUnlockRevenue = unlockRevenueMonth.data?.reduce((sum, u) => sum + (u.unlock_price_cents || 0), 0) || 0;
 
       return {
         totalMonth: totalMonth.count || 0,
@@ -198,7 +208,13 @@ export function SuperAdminDashboard() {
         verified: verified.count || 0,
         verificationRate: totalMonth.count ? Math.round(((verified.count || 0) / totalMonth.count) * 100) : 0,
         newLeads: newLeads.count || 0,
-        assigned: assigned.count || 0,
+        unlockedMonth: unlocksMonth.count || 0,
+        unlockedAll: unlocksAll.count || 0,
+        unlockRevenueMonth: monthlyUnlockRevenue,
+        // Unlock rate = unlocks this month / leads this month
+        unlockRate: totalMonth.count ? Math.round(((unlocksMonth.count || 0) / totalMonth.count) * 100) : 0,
+        // Legacy field
+        assigned: unlocksAll.count || 0,
       };
     },
   });
