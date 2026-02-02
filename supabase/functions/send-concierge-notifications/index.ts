@@ -499,6 +499,11 @@ async function sendSeekerConfirmedEmail(
   }).select('id').single();
   
   if (notif) results.push({ recipient: facility.user_id, notificationId: notif.id });
+
+  // SMS notification to provider
+  await sendProviderSmsNotification(supabase, facility.user_id, "general", {
+    customMessage: `RehabLookup: ${inquiry.user_name.split(' ')[0]} confirmed admission at ${facility.name}. Please confirm placement in your dashboard.`,
+  });
 }
 
 async function sendProviderConfirmedEmail(
@@ -675,6 +680,11 @@ async function sendPlacementCompleteEmails(
     message: `Placement for ${inquiry.user_name} is confirmed. Invoice will be generated.`,
     metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
   });
+
+  // SMS notification to provider
+  await sendProviderSmsNotification(supabase, facility.user_id, "general", {
+    customMessage: `RehabLookup: Placement complete! ${inquiry.user_name.split(' ')[0]} admitted to ${facility.name}. Invoice will be generated.`,
+  });
 }
 
 async function sendInvoiceIssuedEmail(
@@ -838,4 +848,80 @@ async function sendInvoicePaidEmail(
   }).select('id').single();
   
   if (notif) results.push({ recipient: facility.user_id, notificationId: notif.id });
+}
+
+// ============================================================================
+// SMS NOTIFICATION HELPER
+// ============================================================================
+
+async function sendProviderSmsNotification(
+  supabase: any,
+  userId: string,
+  notificationType: "new_lead" | "lead_status" | "lead_limit_warning" | "subscription_alert" | "general",
+  data: {
+    leadName?: string;
+    leadCity?: string;
+    levelOfCare?: string;
+    urgency?: string;
+    facilityName?: string;
+    usedLeads?: number;
+    leadLimit?: number;
+    customMessage?: string;
+    alertType?: string;
+  }
+): Promise<boolean> {
+  try {
+    // Check if provider has SMS alerts enabled
+    const { data: notifPrefs } = await supabase
+      .from("notification_preferences")
+      .select("sms_lead_alerts")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!notifPrefs?.sms_lead_alerts) {
+      logStep("SMS alerts not enabled for user", { userId: userId.slice(0, 8) });
+      return false;
+    }
+
+    // Check if phone is verified
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("phone, phone_verified")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!profile?.phone || !profile.phone_verified) {
+      logStep("No verified phone for user", { userId: userId.slice(0, 8) });
+      return false;
+    }
+
+    // Call SMS notification function
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        userId,
+        notificationType,
+        data,
+      }),
+    });
+
+    if (response.ok) {
+      logStep("SMS notification sent successfully", { userId: userId.slice(0, 8), type: notificationType });
+      return true;
+    } else {
+      const errorText = await response.text();
+      logStep("SMS notification failed", { error: errorText.slice(0, 100) });
+      return false;
+    }
+  } catch (error) {
+    logStep("SMS notification error", { error: error instanceof Error ? error.message : String(error) });
+    return false;
+  }
 }

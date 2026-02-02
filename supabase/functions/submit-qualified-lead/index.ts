@@ -528,6 +528,79 @@ serve(async (req) => {
       }
     }
 
+    // ========== SMS NOTIFICATION ==========
+    // Check if provider has SMS alerts enabled and has verified phone
+    try {
+      const { data: notifPrefs } = await supabase
+        .from("notification_preferences")
+        .select("sms_lead_alerts")
+        .eq("user_id", facility.user_id)
+        .maybeSingle();
+
+      if (notifPrefs?.sms_lead_alerts) {
+        const { data: providerProfile } = await supabase
+          .from("profiles")
+          .select("phone, phone_verified")
+          .eq("user_id", facility.user_id)
+          .maybeSingle();
+
+        if (providerProfile?.phone && providerProfile.phone_verified) {
+          log(requestId, "INFO", "Triggering SMS notification for provider");
+          
+          // Call SMS notification function
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          
+          await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({
+              userId: facility.user_id,
+              notificationType: "new_lead",
+              data: {
+                leadName: maskLeadName(data.name),
+                leadCity: data.locationCityState?.split(",")[0]?.trim() || null,
+                levelOfCare: data.levelOfCare,
+                urgency: data.urgency,
+                facilityName: facility.name,
+              },
+            }),
+          });
+          
+          log(requestId, "INFO", "SMS notification triggered");
+        }
+      }
+    } catch (smsError) {
+      log(requestId, "WARN", "Failed to send SMS notification", { error: String(smsError) });
+      // Don't fail the whole request if SMS fails
+    }
+
+    // ========== IN-APP NOTIFICATION ==========
+    // Create provider notification for real-time bell icon updates
+    try {
+      await supabase.from("provider_notifications").insert({
+        user_id: facility.user_id,
+        facility_id: facility.id,
+        type: "new_lead",
+        title: "New Inquiry Received",
+        message: `${maskLeadName(data.name)} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}`,
+        metadata: {
+          lead_id: lead.id,
+          urgency: data.urgency,
+          level_of_care: data.levelOfCare,
+          source: data.source || "facility_profile",
+        },
+        read: false,
+      });
+      log(requestId, "INFO", "In-app notification created");
+    } catch (notifError) {
+      log(requestId, "WARN", "Failed to create in-app notification", { error: String(notifError) });
+      // Don't fail the whole request if notification fails
+    }
+
     log(requestId, "INFO", "Inquiry submitted successfully", { leadId: lead.id, facilityName: facility.name });
 
     return new Response(
