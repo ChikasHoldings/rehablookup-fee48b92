@@ -66,18 +66,7 @@ import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, T
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
 import { Separator } from "@/components/ui/separator";
-
-// Source label mapping
-const SOURCE_LABELS: Record<string, string> = {
-  direct: "Direct",
-  request_help: "Request Help",
-  provider_profile_direct: "Provider Profile",
-  request_info_modal: "Request Info Modal",
-  social_landing: "Social Ads",
-  ads_landing: "Google Ads",
-  organic: "Organic",
-  referral: "Referral",
-};
+import { SOURCE_LABELS, formatSourceLabel } from "@/lib/sourceLabels";
 
 const SOURCE_COLORS = [
   "hsl(221, 83%, 53%)", // blue
@@ -463,7 +452,7 @@ export default function AdminLeads() {
 
       return Object.entries(counts)
         .map(([source, count], index) => ({
-          name: SOURCE_LABELS[source] || source,
+          name: formatSourceLabel(source),
           value: count,
           source,
           color: SOURCE_COLORS[index % SOURCE_COLORS.length],
@@ -998,7 +987,7 @@ export default function AdminLeads() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {SOURCE_LABELS[lead.source || "direct"] || lead.source || "Direct"}
+                            {formatSourceLabel(lead.source)}
                           </Badge>
                         </TableCell>
                         <TableCell>

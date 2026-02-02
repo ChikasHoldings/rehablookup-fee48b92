@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { formatSourceLabel } from "@/lib/sourceLabels";
 
 type ActivityEvent = {
   id: string;
@@ -84,7 +85,7 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
             id: `lead-${lead.id}`,
             type: "lead_received",
             title: "Inquiry Received",
-            description: `${lead.name} submitted via ${lead.source || "direct"}`,
+            description: `${lead.name} submitted via ${formatSourceLabel(lead.source)}`,
             timestamp: lead.created_at,
             icon: Users,
             iconColor: "text-blue-500",

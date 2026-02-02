@@ -61,6 +61,7 @@ import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";
 import { getLeadDisplayInfo, maskLeadName } from "@/lib/leadMasking";
+import { formatSourceLabel } from "@/lib/sourceLabels";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 
@@ -1004,7 +1005,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Source</span>
                   <span className="font-medium text-foreground">
-                    {lead.source === "Request Help Page" ? "Qualified Lead Form" : (lead.source?.replace(/_/g, ' ') || "Direct Inquiry")}
+                    {formatSourceLabel(lead.source)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

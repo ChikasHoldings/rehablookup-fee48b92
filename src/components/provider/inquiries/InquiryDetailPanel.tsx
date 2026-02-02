@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { maskLeadName, maskEmail, maskPhone } from "@/lib/leadMasking";
+import { formatSourceLabel } from "@/lib/sourceLabels";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
 
@@ -256,7 +257,7 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
               <DetailRow icon={User} label="Seeking Help For" value={inquiry.who_seeking_help} />
             )}
             {inquiry.source && (
-              <DetailRow icon={ExternalLink} label="Source" value={inquiry.source} />
+              <DetailRow icon={ExternalLink} label="Source" value={formatSourceLabel(inquiry.source)} />
             )}
             <DetailRow 
               icon={Calendar} 
