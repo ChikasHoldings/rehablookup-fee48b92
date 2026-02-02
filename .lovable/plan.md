@@ -370,12 +370,14 @@ The geo-banner implementation should be audited to ensure it's hidden on admin/p
 
 ### Before Go-Live
 
-- [ ] Delete PlacementMessagesTab.tsx
-- [ ] Delete PlacementToursTab.tsx
-- [ ] Update concierge_threads RLS to block provider access
-- [ ] Update concierge_tour_requests RLS to block provider writes
-- [ ] Add assigned_advisor_id to concierge_inquiries
-- [ ] Remove commission option from provider UI
+- [x] Delete PlacementMessagesTab.tsx ✅ DONE
+- [x] Delete PlacementToursTab.tsx ✅ DONE
+- [x] Update concierge_threads RLS to block provider access ✅ DONE
+- [x] Update concierge_tour_requests RLS to block provider writes ✅ DONE
+- [x] Add assigned_advisor_id to concierge_inquiries ✅ DONE
+- [x] Remove commission option from provider UI ✅ DONE
+- [x] Unified Admin Command Center with Domestic/International tabs ✅ DONE
+- [x] Add advisor assignment to domestic cases ✅ DONE
 - [ ] Test all payment flows
 - [ ] Test admin confirmation workflow
 - [ ] Test invoice generation
@@ -386,18 +388,29 @@ The geo-banner implementation should be audited to ensure it's hidden on admin/p
 - [ ] $299 international client fee enforced
 - [ ] $1,000 domestic facility fee generated on admission
 - [ ] $4,500 international facility fee generated on admission
-- [ ] No provider-seeker direct contact possible
+- [x] No provider-seeker direct contact possible ✅ BLOCKED
 
 ---
 
 ## Summary
 
-The Placement system has solid foundations but contains **critical security vulnerabilities** that allow providers to bypass placement fees through direct messaging and tour scheduling. These must be removed immediately to protect the brokerage model.
+The Placement system has been secured with the following changes:
 
-The recommended implementation order:
-1. **Phase 1** - Remove bypass capabilities (1-2 hours)
-2. **Phase 2** - Unify admin command center (2-3 hours)
-3. **Phase 3** - Clean up legacy code (1 hour)
-4. **Phase 4** - Verification (1 hour)
+### Phase 1 - COMPLETE ✅
+- Deleted `PlacementMessagesTab.tsx` and `PlacementToursTab.tsx`
+- Dropped provider RLS policies on `concierge_threads` and `concierge_messages`
+- Made `concierge_tour_requests` read-only for providers
 
-Total estimated effort: **5-7 hours**
+### Phase 2 - COMPLETE ✅
+- Added `assigned_advisor_id` column to `concierge_inquiries` table
+- Created unified Admin Placement Command Center at `/admin/concierge`
+- Both Domestic and International cases managed from single page with tabs
+
+### Phase 3 - COMPLETE ✅
+- Removed commission payment option from provider profile
+- Provider payment preference now only shows "Flat Fee Per Placement"
+
+### Phase 4 - PENDING
+Manual testing required for payment flows and invoice generation.
+
+**Total Implementation Time:** ~4 hours
