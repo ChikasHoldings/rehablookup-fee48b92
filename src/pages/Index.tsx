@@ -321,12 +321,12 @@ const Index = () => {
         <div className="container relative py-12 md:py-14 lg:py-16">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
-            <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
+            <h1 className="mb-3 font-display text-[1.625rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
               Find the Right Path to Recovery
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
+            <p className="mb-6 md:mb-8 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
               Compare verified treatment centers and check your insurance coverage.
             </p>
 
@@ -356,25 +356,25 @@ const Index = () => {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
                 <CheckCircle className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Verified Facilities</span>
+              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">Verified Facilities</span>
             </div>
             <div className="flex items-center gap-2 group">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
                 <Users className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">15,000+ Centers</span>
+              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">15,000+ Centers</span>
             </div>
             <div className="flex items-center gap-2 group">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
                 <Clock className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">24/7 Confidential Help</span>
+              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">24/7 Confidential Help</span>
             </div>
             <div className="flex items-center gap-2 group">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
                 <Phone className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Free Insurance Check</span>
+              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">Free Insurance Check</span>
             </div>
           </div>
         </div>
@@ -389,14 +389,14 @@ const Index = () => {
               <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
                 <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                  <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary">
                     Insurance Verification
                   </span>
                 </div>
-                <h2 className="mb-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-[1.75rem]">
+                <h2 className="mb-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-[1.75rem]">
                   Are You Covered?
                 </h2>
-                <p className="mb-4 md:mb-5 text-sm text-muted-foreground leading-relaxed">
+                <p className="mb-4 md:mb-5 text-[15px] md:text-base text-muted-foreground leading-relaxed">
                   Most insurance plans cover addiction treatment. Check your benefits in minutes.
                 </p>
                 <Link to="/insurance">
@@ -476,10 +476,10 @@ const Index = () => {
                   <Star className="h-3.5 w-3.5 text-accent fill-accent" />
                 </div>
                 <div>
-                  <h2 className="font-display text-base md:text-lg font-semibold text-foreground leading-tight">
+                  <h2 className="font-display text-lg md:text-xl font-semibold text-foreground leading-tight">
                     Featured Centers
                   </h2>
-                  <p className="text-[11px] md:text-xs text-muted-foreground leading-tight">
+                  <p className="text-xs md:text-sm text-muted-foreground leading-tight">
                     Top-rated facilities
                   </p>
                 </div>
@@ -540,8 +540,8 @@ const Index = () => {
         <div className="container">
           {/* Section Header */}
           <div className="mb-6 md:mb-8 lg:mb-10 text-center">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
-            <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
+            <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
+            <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
               Treatment Programs
             </h2>
           </div>
@@ -565,10 +565,10 @@ const Index = () => {
                   </div>
                   
                   <div className="relative flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground transition-colors duration-200 group-hover:text-primary">
+                    <h3 className="font-semibold text-[15px] md:text-base text-foreground transition-colors duration-200 group-hover:text-primary">
                       {option.title}
                     </h3>
-                    <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
+                    <p className="mt-0.5 text-[13px] md:text-sm text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
                       {option.description}
                     </p>
                   </div>
@@ -593,14 +593,14 @@ const Index = () => {
           <div className="mb-6 md:mb-8 lg:mb-10 text-center">
             <div className="mb-1.5 md:mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
               <Navigation className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+              <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary">
                 Near You
               </span>
             </div>
-            <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
+            <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
               Find Treatment Near You
             </h2>
-            <p className="mt-1.5 md:mt-2 text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
+            <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground max-w-lg mx-auto">
               Get location-based treatment options with real-time availability
             </p>
           </div>
@@ -615,10 +615,10 @@ const Index = () => {
                 <Pill className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
                   Drug Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
                   Addiction treatment centers
                 </p>
               </div>
@@ -632,10 +632,10 @@ const Index = () => {
                 <Activity className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
                   Alcohol Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
                   Alcohol treatment programs
                 </p>
               </div>
@@ -649,10 +649,10 @@ const Index = () => {
                 <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
                   Detox Centers Near Me
                 </h3>
-                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
                   Medical detox facilities
                 </p>
               </div>
@@ -666,10 +666,10 @@ const Index = () => {
                 <Brain className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
                   Dual Diagnosis Near Me
                 </h3>
-                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
                   Mental health + addiction
                 </p>
               </div>
@@ -683,10 +683,10 @@ const Index = () => {
                 <Home className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
                   Inpatient Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
                   Residential treatment
                 </p>
               </div>
@@ -700,10 +700,10 @@ const Index = () => {
                 <Stethoscope className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
                   Outpatient Near Me
                 </h3>
-                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
                   IOP & PHP programs
                 </p>
               </div>
@@ -718,10 +718,10 @@ const Index = () => {
           <div className="mx-auto max-w-3xl">
             {/* Section Header */}
             <div className="mb-6 md:mb-8 text-center">
-              <h2 className="font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
                 How It Works
               </h2>
-              <p className="mt-1.5 md:mt-2 text-sm md:text-base text-muted-foreground">
+              <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground">
                 Finding help is simple and confidential
               </p>
             </div>
@@ -753,15 +753,15 @@ const Index = () => {
                   className="group flex items-start gap-3 md:gap-4 rounded-xl border border-border bg-card p-3 md:p-4 transition-all hover:border-primary/30 hover:shadow-sm"
                 >
                   {/* Step number */}
-                  <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                  <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] md:text-sm font-bold text-primary-foreground">
                     {item.step}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground text-sm md:text-base">
+                    <h3 className="font-semibold text-foreground text-[15px] md:text-base">
                       {item.title}
                     </h3>
-                    <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">
+                    <p className="mt-0.5 text-[13px] md:text-sm text-muted-foreground">
                       {item.description}
                     </p>
                   </div>
@@ -790,11 +790,11 @@ const Index = () => {
           <div className="grid items-center gap-6 md:gap-8 md:grid-cols-2 lg:gap-12">
             {/* Content */}
             <div className="order-2 md:order-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
-              <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-primary-foreground lg:text-2xl">
+              <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
+              <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-primary-foreground lg:text-3xl">
                 Trusted by Families Across America
               </h2>
-              <p className="mt-2 md:mt-3 text-sm md:text-base text-primary-foreground/70 leading-relaxed max-w-md">
+              <p className="mt-2 md:mt-3 text-[15px] md:text-base text-primary-foreground/70 leading-relaxed max-w-md">
                 We're committed to helping you find the right treatment with transparency and compassion.
               </p>
 
@@ -807,7 +807,7 @@ const Index = () => {
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2 md:gap-2.5">
                     <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-accent" />
-                    <span className="text-primary-foreground text-xs md:text-sm">{item}</span>
+                    <span className="text-primary-foreground text-[13px] md:text-sm">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -843,10 +843,10 @@ const Index = () => {
                       { value: "24/7", label: "Support" },
                     ].map((stat) => (
                       <div key={stat.label} className="text-center">
-                        <div className="font-display text-base md:text-lg font-bold text-accent lg:text-xl">
+                        <div className="font-display text-lg md:text-xl font-bold text-accent lg:text-2xl">
                           {stat.value}
                         </div>
-                        <p className="text-[9px] md:text-[10px] text-primary-foreground/80 lg:text-xs">{stat.label}</p>
+                        <p className="text-[10px] md:text-xs text-primary-foreground/80 lg:text-sm">{stat.label}</p>
                       </div>
                     ))}
                   </div>
@@ -862,10 +862,10 @@ const Index = () => {
         <div className="container">
           {/* Section Header */}
           <div className="mb-6 md:mb-8 text-center">
-            <h2 className="font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
+            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
               What Families Say
             </h2>
-            <p className="mt-1.5 md:mt-2 text-sm md:text-base text-muted-foreground">
+            <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground">
               Real experiences from people we've helped
             </p>
           </div>
@@ -886,7 +886,7 @@ const Index = () => {
                 
                 {/* Quote */}
                 <blockquote className="mb-3 md:mb-4">
-                  <p className="text-xs md:text-sm text-foreground leading-relaxed line-clamp-4 sm:line-clamp-none">
+                  <p className="text-[13px] md:text-sm text-foreground leading-relaxed line-clamp-4 sm:line-clamp-none">
                     "{testimonial.quote}"
                   </p>
                 </blockquote>
@@ -897,7 +897,7 @@ const Index = () => {
                     {testimonial.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm font-medium text-foreground">{testimonial.name}</p>
+                    <p className="text-[13px] md:text-sm font-medium text-foreground">{testimonial.name}</p>
                     <p className="text-[10px] md:text-xs text-muted-foreground">{testimonial.location}</p>
                   </div>
                 </div>
@@ -1011,19 +1011,19 @@ const Index = () => {
                   {/* Content */}
                   <div className="p-3 md:p-4">
                     {/* Category & Read Time */}
-                    <div className="mb-1.5 md:mb-2 flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
+                    <div className="mb-1.5 md:mb-2 flex items-center gap-2 text-xs md:text-[13px] text-muted-foreground">
                       <span className="font-medium text-primary">{article.category}</span>
                       <span>•</span>
                       <span>{article.readTime}</span>
                     </div>
                     
                     {/* Title */}
-                    <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2 text-sm md:text-base">
+                    <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2 text-[15px] md:text-base">
                       {article.title}
                     </h3>
                     
                     {/* Excerpt */}
-                    <p className="mt-1 md:mt-1.5 text-xs md:text-sm text-muted-foreground line-clamp-2">
+                    <p className="mt-1 md:mt-1.5 text-[13px] md:text-sm text-muted-foreground line-clamp-2">
                       {article.excerpt}
                     </p>
                   </div>
@@ -1039,7 +1039,7 @@ const Index = () => {
         <div className="container space-y-8 md:space-y-10">
           {/* Quick Links to Key Pages */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+            <h3 className="text-xl md:text-lg font-semibold text-foreground mb-4">
               Explore RehabLookup
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -1060,7 +1060,7 @@ const Index = () => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors py-1"
+                  className="text-[13px] md:text-sm text-muted-foreground hover:text-primary transition-colors py-1"
                 >
                   {link.name}
                 </Link>
@@ -1093,10 +1093,10 @@ const Index = () => {
           <div className="mx-auto max-w-3xl">
             {/* Main CTA Card */}
             <div className="rounded-xl border border-border bg-card p-6 md:p-8 lg:p-10 text-center">
-              <h2 className="font-display text-lg md:text-xl font-semibold text-foreground lg:text-2xl">
+              <h2 className="font-display text-xl md:text-2xl font-semibold text-foreground lg:text-3xl">
                 Start Your Recovery Journey
               </h2>
-              <p className="mt-1.5 md:mt-2 text-muted-foreground text-xs md:text-sm lg:text-base max-w-md mx-auto">
+              <p className="mt-1.5 md:mt-2 text-muted-foreground text-[15px] md:text-base lg:text-lg max-w-md mx-auto">
                 Connect with verified treatment centers or list your facility in our directory.
               </p>
               <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
