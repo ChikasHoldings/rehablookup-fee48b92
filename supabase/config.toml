@@ -305,3 +305,6 @@ verify_jwt = true
 
 [functions.respond-international-case]
 verify_jwt = true
+
+[functions.send-abandoned-placement-email]
+verify_jwt = false

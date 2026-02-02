@@ -415,6 +415,7 @@ export type Database = {
       }
       concierge_inquiries: {
         Row: {
+          abandoned_cart_email_sent_at: string | null
           admin_matched_facility_ids: string[] | null
           admin_notes: string | null
           age_range: string | null
@@ -502,6 +503,7 @@ export type Database = {
           willing_to_travel: boolean | null
         }
         Insert: {
+          abandoned_cart_email_sent_at?: string | null
           admin_matched_facility_ids?: string[] | null
           admin_notes?: string | null
           age_range?: string | null
@@ -589,6 +591,7 @@ export type Database = {
           willing_to_travel?: boolean | null
         }
         Update: {
+          abandoned_cart_email_sent_at?: string | null
           admin_matched_facility_ids?: string[] | null
           admin_notes?: string | null
           age_range?: string | null
@@ -2226,6 +2229,7 @@ export type Database = {
       }
       international_placement_cases: {
         Row: {
+          abandoned_cart_email_sent_at: string | null
           accepted_facility_id: string | null
           admin_notes: string | null
           admission_confirmed_at: string | null
@@ -2259,6 +2263,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          abandoned_cart_email_sent_at?: string | null
           accepted_facility_id?: string | null
           admin_notes?: string | null
           admission_confirmed_at?: string | null
@@ -2292,6 +2297,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          abandoned_cart_email_sent_at?: string | null
           accepted_facility_id?: string | null
           admin_notes?: string | null
           admission_confirmed_at?: string | null
@@ -3109,6 +3115,60 @@ export type Database = {
           verified?: boolean | null
         }
         Relationships: []
+      }
+      placement_abandoned_cart_emails: {
+        Row: {
+          clicked_at: string | null
+          converted_at: string | null
+          email: string
+          email_type: string
+          id: string
+          inquiry_id: string | null
+          international_case_id: string | null
+          metadata: Json | null
+          opened_at: string | null
+          sent_at: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          converted_at?: string | null
+          email: string
+          email_type?: string
+          id?: string
+          inquiry_id?: string | null
+          international_case_id?: string | null
+          metadata?: Json | null
+          opened_at?: string | null
+          sent_at?: string
+        }
+        Update: {
+          clicked_at?: string | null
+          converted_at?: string | null
+          email?: string
+          email_type?: string
+          id?: string
+          inquiry_id?: string | null
+          international_case_id?: string | null
+          metadata?: Json | null
+          opened_at?: string | null
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_abandoned_cart_emails_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_abandoned_cart_emails_international_case_id_fkey"
+            columns: ["international_case_id"]
+            isOneToOne: false
+            referencedRelation: "international_placement_cases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       placement_agreements: {
         Row: {
