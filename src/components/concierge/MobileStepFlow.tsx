@@ -119,7 +119,10 @@ export function MobileStepFlow({
           type="button"
           variant="ghost"
           size="lg"
-          onClick={onPrev}
+          onClick={() => {
+            onPrev();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
           disabled={isFirstStep || isSubmitting}
           className={cn(
             "flex-1 h-12 rounded-xl transition-all",
@@ -133,7 +136,10 @@ export function MobileStepFlow({
         <Button
           type="button"
           size="lg"
-          onClick={onNext}
+          onClick={() => {
+            onNext();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
           disabled={!canProceed || isSubmitting}
           className="flex-[2] h-12 rounded-xl font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
         >

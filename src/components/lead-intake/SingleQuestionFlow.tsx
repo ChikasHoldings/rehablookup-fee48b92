@@ -229,6 +229,8 @@ export function SingleQuestionFlow({
     if (currentIndex < activeQuestions.length - 1) {
       setDirection(1);
       setCurrentIndex(prev => prev + 1);
+      // Scroll to top of form section
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentIndex, activeQuestions.length]);
   
@@ -236,6 +238,8 @@ export function SingleQuestionFlow({
     if (currentIndex > 0) {
       setDirection(-1);
       setCurrentIndex(prev => prev - 1);
+      // Scroll to top of form section
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentIndex]);
   
