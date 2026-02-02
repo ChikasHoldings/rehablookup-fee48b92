@@ -170,7 +170,8 @@ export default function InternationalLanding() {
 
                   <Button 
                     size="lg" 
-                    className="h-14 px-10 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 mb-10"
+                    variant="default"
+                    className="h-14 px-10 text-base font-semibold !bg-primary hover:!bg-primary/90 !text-primary-foreground shadow-lg shadow-primary/25 mb-10"
                     asChild
                   >
                     <Link to="/international/apply">
