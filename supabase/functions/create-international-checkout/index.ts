@@ -47,7 +47,7 @@ serve(async (req) => {
       }
     }
 
-    const { email, name, phone, country } = await req.json();
+    const { email, name, phone, country, intakeData } = await req.json();
     
     if (!email) {
       throw new Error("Email is required");
@@ -63,7 +63,8 @@ serve(async (req) => {
       email, 
       name,
       country,
-      userId: authenticatedUserId
+      userId: authenticatedUserId,
+      hasIntakeData: !!intakeData
     });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });

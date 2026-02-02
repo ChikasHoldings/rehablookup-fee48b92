@@ -470,20 +470,20 @@ export default function ProviderPlacementNetworkPage() {
           </>
         ) : (
           /* Opted-In View */
-          <Tabs defaultValue="introductions" className="space-y-4 sm:space-y-6">
+          <Tabs defaultValue="domestic" className="space-y-4 sm:space-y-6">
             <TabsList className="w-full grid grid-cols-7 h-10 sm:h-11">
-              <TabsTrigger value="introductions" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 relative">
+              <TabsTrigger value="domestic" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 relative font-semibold">
                 <Bell className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Intros</span>
+                <span className="hidden lg:inline">Domestic</span>
                 {pendingIntroductions.length > 0 && (
                   <Badge variant="destructive" className="absolute -top-1 -right-1 lg:relative lg:top-0 lg:right-0 lg:ml-1 h-4 lg:h-5 min-w-4 lg:min-w-5 px-1 lg:px-1.5 text-[9px] lg:text-[10px]">
                     {pendingIntroductions.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="international" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
+              <TabsTrigger value="international" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 font-semibold">
                 <Globe className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Int'l</span>
+                <span className="hidden lg:inline">International</span>
               </TabsTrigger>
               <TabsTrigger value="messages" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
                 <MessageSquare className="h-4 w-4 shrink-0" />
@@ -507,8 +507,8 @@ export default function ProviderPlacementNetworkPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Introductions Tab */}
-            <TabsContent value="introductions" className="space-y-4">
+            {/* Domestic Tab */}
+            <TabsContent value="domestic" className="space-y-4">
               {/* Awaiting Provider Confirmation - Top Priority */}
               {awaitingProviderConfirm.length > 0 && (
                 <div className="space-y-3 mb-6">

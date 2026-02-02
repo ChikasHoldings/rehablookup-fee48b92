@@ -1,12 +1,89 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
-import { CheckCircle, Clock, Phone, Mail, Globe } from "lucide-react";
+import { CheckCircle, Clock, Mail, ArrowRight, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 
 export default function InternationalThankYou() {
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState<string>("");
+
+  useEffect(() => {
+    // Trigger confetti on mount
+    const duration = 2000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.7 },
+        colors: ['#10b981', '#3b82f6', '#8b5cf6'],
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.7 },
+        colors: ['#10b981', '#3b82f6', '#8b5cf6'],
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+
+    frame();
+
+    // Try to get email from localStorage intake data
+    try {
+      const intakeData = localStorage.getItem("international_intake_data");
+      if (intakeData) {
+        const parsed = JSON.parse(intakeData);
+        if (parsed.email) {
+          setEmail(parsed.email);
+        }
+        // Clear the stored data
+        localStorage.removeItem("international_intake_data");
+      }
+    } catch (e) {
+      console.error("Error parsing intake data:", e);
+    }
+  }, []);
+
+  const steps = [
+    {
+      number: 1,
+      title: "Verify Your Email",
+      description: "Check your inbox and click the verification link",
+      active: true,
+    },
+    {
+      number: 2,
+      title: "Advisor Review",
+      description: "Our team reviews your case within 24 hours",
+      active: false,
+    },
+    {
+      number: 3,
+      title: "Receive Matches",
+      description: "Get personalized facility recommendations",
+      active: false,
+    },
+    {
+      number: 4,
+      title: "Confirm Placement",
+      description: "We coordinate admission with your chosen facility",
+      active: false,
+    },
+  ];
+
   return (
     <>
       <SEO
@@ -19,67 +96,149 @@ export default function InternationalThankYou() {
         <PublicHeader />
         
         <main className="flex-1 flex items-center justify-center py-12 px-4">
-          <Card className="max-w-lg w-full">
-            <CardContent className="pt-8 pb-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+          <div className="max-w-2xl w-full">
+            {/* Success Header */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-8"
+            >
+              <div className="relative inline-block mb-6">
+                <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+                  <CheckCircle className="h-12 w-12 text-green-600" />
+                </div>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  className="absolute -top-2 -right-2"
+                >
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </motion.div>
               </div>
               
-              <h1 className="text-2xl font-bold text-foreground mb-2">
-                Application Received
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+                Application Submitted!
               </h1>
               
-              <p className="text-muted-foreground mb-6">
-                Thank you for completing your intake. Your dedicated placement advisor will reach out within 24 hours.
+              <p className="text-lg text-muted-foreground">
+                Thank you for completing your placement application. Your dedicated advisor will reach out within 24 hours.
               </p>
+            </motion.div>
 
-              <div className="bg-muted/30 rounded-lg p-4 mb-6 text-left">
-                <h3 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  What Happens Next
-                </h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center shrink-0 mt-0.5">1</span>
-                    <span>Our team reviews your intake and identifies suitable US facilities</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center shrink-0 mt-0.5">2</span>
-                    <span>An advisor will call or email you to discuss options</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <span>We facilitate introductions to matched facilities</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center shrink-0 mt-0.5">4</span>
-                    <span>Ongoing support through admission and travel coordination</span>
-                  </li>
-                </ul>
-              </div>
+            {/* Email Verification Alert */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="border-primary/20 bg-primary/5 mb-8">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">
+                        Please Verify Your Email
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        We sent a verification link to{" "}
+                        <span className="font-medium text-foreground">
+                          {email || "your email address"}
+                        </span>
+                        . Please verify to activate your case.
+                      </p>
+                      <Button variant="outline" size="sm">
+                        Resend Verification Email
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-              <div className="border-t pt-6">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Questions? Contact our international team:
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
-                  <a href="mailto:international@rehablookup.com" className="flex items-center gap-2 text-primary hover:underline">
-                    <Mail className="h-4 w-4" />
-                    international@rehablookup.com
-                  </a>
-                </div>
-              </div>
+            {/* Timeline */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold text-foreground mb-6 flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-primary" />
+                    What Happens Next
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {steps.map((step, index) => (
+                      <div
+                        key={step.number}
+                        className={`flex gap-4 ${index !== steps.length - 1 ? "pb-4 border-b" : ""}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold ${
+                          step.active 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-muted text-muted-foreground"
+                        }`}>
+                          {step.number}
+                        </div>
+                        <div>
+                          <p className={`font-medium ${step.active ? "text-foreground" : "text-muted-foreground"}`}>
+                            {step.title}
+                            {step.active && (
+                              <span className="ml-2 text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                Current Step
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{step.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Button asChild>
-                  <Link to="/account/international">Track Your Case</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link to="/">Return to Homepage</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Contact Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-6 p-6 bg-muted/30 rounded-xl text-center"
+            >
+              <p className="text-sm text-muted-foreground mb-2">
+                Questions? Contact our international team:
+              </p>
+              <a 
+                href="mailto:international@rehablookup.com" 
+                className="text-primary hover:underline font-medium"
+              >
+                international@rehablookup.com
+              </a>
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
+            >
+              <Button asChild size="lg">
+                <Link to="/account/international">
+                  Track Your Case
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/">Return to Homepage</Link>
+              </Button>
+            </motion.div>
+          </div>
         </main>
         
         <PublicFooter />
