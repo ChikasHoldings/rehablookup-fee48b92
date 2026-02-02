@@ -88,13 +88,16 @@ The function detects 40+ crawler user agents including:
 
 ## Verification Checklist
 
-After deployment, verify with these tests:
+After **publishing**, verify with these tests:
 
-### 1. Edge Function Test
+### 1. Edge Function Test (after publish)
 ```bash
 curl -H "User-Agent: Googlebot/2.1" \
   "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/prerender-for-bots?path=/"
 ```
+
+### Note
+The edge function requires publishing to become available. The deployment is complete but the function endpoint won't respond until the project is published.
 
 ### 2. Google Search Console
 - Run URL Inspection on key pages
