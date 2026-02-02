@@ -128,6 +128,18 @@ const OutpatientRehabNearMe = lazy(() => import("./pages/near-me/OutpatientRehab
 const DualDiagnosisRehabNearMe = lazy(() => import("./pages/near-me/DualDiagnosisRehabNearMe"));
 const FaithBasedRehabNearMe = lazy(() => import("./pages/near-me/FaithBasedRehabNearMe"));
 
+// US Rehab International SEO Pages - lazy load
+const USRehabHub = lazy(() => import("./pages/us-rehab/USRehabHub"));
+const BestRehabUSA = lazy(() => import("./pages/us-rehab/BestRehabUSA"));
+const LuxuryRehabAmerica = lazy(() => import("./pages/us-rehab/LuxuryRehabAmerica"));
+const LuxuryRehabCalifornia = lazy(() => import("./pages/us-rehab/LuxuryRehabCalifornia"));
+const LuxuryRehabFlorida = lazy(() => import("./pages/us-rehab/LuxuryRehabFlorida"));
+const LuxuryRehabArizona = lazy(() => import("./pages/us-rehab/LuxuryRehabArizona"));
+const ExecutiveRehabUSA = lazy(() => import("./pages/us-rehab/ExecutiveRehabUSA"));
+const PrivateRehabAmerica = lazy(() => import("./pages/us-rehab/PrivateRehabAmerica"));
+const InternationalPatients = lazy(() => import("./pages/us-rehab/InternationalPatients"));
+const MalibuRehabCenters = lazy(() => import("./pages/us-rehab/MalibuRehabCenters"));
+
 // Provider Panel - lazy load
 const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
 const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
@@ -284,6 +296,18 @@ const App = () => (
             <Route path="/international/intake" element={<Navigate to="/international/apply" replace />} />
             <Route path="/international/thank-you" element={<PublicRouteGuard><InternationalThankYou /></PublicRouteGuard>} />
             <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
+            
+            {/* US Rehab - International SEO Landing Pages */}
+            <Route path="/us-rehab" element={<PublicRouteGuard><USRehabHub /></PublicRouteGuard>} />
+            <Route path="/us-rehab/best-rehab-usa" element={<PublicRouteGuard><BestRehabUSA /></PublicRouteGuard>} />
+            <Route path="/us-rehab/luxury-rehab-america" element={<PublicRouteGuard><LuxuryRehabAmerica /></PublicRouteGuard>} />
+            <Route path="/us-rehab/luxury-rehab-california" element={<PublicRouteGuard><LuxuryRehabCalifornia /></PublicRouteGuard>} />
+            <Route path="/us-rehab/luxury-rehab-florida" element={<PublicRouteGuard><LuxuryRehabFlorida /></PublicRouteGuard>} />
+            <Route path="/us-rehab/luxury-rehab-arizona" element={<PublicRouteGuard><LuxuryRehabArizona /></PublicRouteGuard>} />
+            <Route path="/us-rehab/executive-rehab" element={<PublicRouteGuard><ExecutiveRehabUSA /></PublicRouteGuard>} />
+            <Route path="/us-rehab/private-rehab-america" element={<PublicRouteGuard><PrivateRehabAmerica /></PublicRouteGuard>} />
+            <Route path="/us-rehab/international-patients" element={<PublicRouteGuard><InternationalPatients /></PublicRouteGuard>} />
+            <Route path="/us-rehab/malibu-rehab" element={<PublicRouteGuard><MalibuRehabCenters /></PublicRouteGuard>} />
             
             {/* Treatment center profile pages */}
             <Route path="/treatment-centers/:slug" element={<PublicRouteGuard><TreatmentCenterProfile /></PublicRouteGuard>} />
