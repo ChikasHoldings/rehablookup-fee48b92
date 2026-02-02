@@ -16,7 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import {
   Globe, DollarSign, User, Clock, Building2, FileText, Send, CheckCircle,
-  CreditCard, Loader2, Plus, MessageSquare, History, AlertCircle
+  CreditCard, Loader2, Plus, MessageSquare, History, AlertCircle, Receipt,
+  ExternalLink, RefreshCw, XCircle
 } from "lucide-react";
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -50,6 +51,7 @@ interface InternationalCase {
   admission_confirmed_at: string | null;
   facility_fee_cents: number;
   facility_fee_status: string | null;
+  facility_invoice_id: string | null;
   preferred_language: string | null;
   priority: string | null;
   created_at: string;
@@ -275,19 +277,16 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                 <FacilityMatchesSection caseId={caseData.id} matchedIds={caseData.matched_facility_ids} />
               )}
 
-              {/* Facility Fee Status */}
-              {caseData.status === "admitted" && (
-                <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" /> Facility Fee
-                  </h4>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold">${(caseData.facility_fee_cents / 100).toLocaleString()}</span>
-                    <Badge variant={caseData.facility_fee_status === "paid" ? "default" : "outline"}>
-                      {caseData.facility_fee_status || "pending"}
-                    </Badge>
-                  </div>
-                </div>
+              {/* Facility Invoice Section */}
+              {(caseData.status === "admitted" || caseData.facility_invoice_id) && (
+                <FacilityInvoiceSection 
+                  caseId={caseData.id}
+                  invoiceId={caseData.facility_invoice_id}
+                  feeStatus={caseData.facility_fee_status}
+                  feeCents={caseData.facility_fee_cents}
+                  onAction={(action, data) => manageCaseMutation.mutate({ action, data })}
+                  isPending={manageCaseMutation.isPending}
+                />
               )}
 
               {/* Actions */}
@@ -694,5 +693,203 @@ function FacilityMatchesSection({ caseId, matchedIds }: { caseId: string; matche
         </p>
       )}
     </div>
+  );
+}
+
+// Sub-component for managing facility invoices
+interface FacilityInvoiceSectionProps {
+  caseId: string;
+  invoiceId: string | null;
+  feeStatus: string | null;
+  feeCents: number;
+  onAction: (action: string, data?: Record<string, unknown>) => void;
+  isPending: boolean;
+}
+
+function FacilityInvoiceSection({ caseId, invoiceId, feeStatus, feeCents, onAction, isPending }: FacilityInvoiceSectionProps) {
+  const [showVoidDialog, setShowVoidDialog] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
+  const { toast } = useToast();
+
+  // Fetch invoice details if we have an ID
+  const { data: invoice, isLoading } = useQuery({
+    queryKey: ["international-facility-invoice", invoiceId],
+    queryFn: async () => {
+      if (!invoiceId) return null;
+      const { data, error } = await supabase
+        .from("international_facility_invoices")
+        .select(`
+          *,
+          facilities (name, email)
+        `)
+        .eq("id", invoiceId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!invoiceId,
+  });
+
+  const INVOICE_STATUS_BADGE: Record<string, { label: string; className: string }> = {
+    draft: { label: "Draft", className: "bg-gray-100 text-gray-600" },
+    pending: { label: "Pending", className: "bg-yellow-100 text-yellow-800" },
+    sent: { label: "Sent", className: "bg-blue-100 text-blue-800" },
+    paid: { label: "Paid", className: "bg-green-100 text-green-800" },
+    uncollectible: { label: "Failed", className: "bg-red-100 text-red-800" },
+    void: { label: "Voided", className: "bg-gray-100 text-gray-500" },
+    waived: { label: "Waived", className: "bg-purple-100 text-purple-800" },
+  };
+
+  const statusConfig = INVOICE_STATUS_BADGE[invoice?.status || feeStatus || "pending"] || INVOICE_STATUS_BADGE.pending;
+
+  const handleIssueInvoice = () => {
+    if (!invoiceId) {
+      toast({ title: "Error", description: "No invoice created for this case", variant: "destructive" });
+      return;
+    }
+    onAction("issue_facility_invoice", { invoiceId });
+  };
+
+  const handleResendInvoice = () => {
+    if (!invoiceId) return;
+    onAction("resend_facility_invoice", { invoiceId });
+  };
+
+  const handleVoidInvoice = () => {
+    if (!invoiceId || !voidReason.trim()) return;
+    onAction("void_facility_invoice", { invoiceId, reason: voidReason });
+    setShowVoidDialog(false);
+    setVoidReason("");
+  };
+
+  return (
+    <>
+      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+        <h4 className="font-medium mb-3 flex items-center gap-2">
+          <Receipt className="h-4 w-4" /> Facility Invoice ($4,500)
+        </h4>
+        
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground">Loading invoice...</div>
+        ) : (
+          <div className="space-y-3">
+            {/* Invoice Status */}
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold">${(feeCents / 100).toLocaleString()}</span>
+              <Badge className={statusConfig.className} variant="outline">
+                {statusConfig.label}
+              </Badge>
+            </div>
+
+            {/* Invoice Details */}
+            {invoice && (
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div>Facility: {invoice.facilities?.name || "Unknown"}</div>
+                {invoice.sent_at && <div>Sent: {format(new Date(invoice.sent_at), "MMM d, yyyy")}</div>}
+                {invoice.due_date && <div>Due: {format(new Date(invoice.due_date), "MMM d, yyyy")}</div>}
+                {invoice.paid_at && <div>Paid: {format(new Date(invoice.paid_at), "MMM d, yyyy")}</div>}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
+              {/* Issue Invoice - only if draft/pending */}
+              {(!invoice || invoice.status === "draft" || invoice.status === "pending") && (
+                <Button 
+                  size="sm" 
+                  onClick={handleIssueInvoice}
+                  disabled={isPending}
+                >
+                  {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Send className="h-3.5 w-3.5 mr-1" />}
+                  Issue $4,500 Invoice
+                </Button>
+              )}
+
+              {/* Resend Invoice - only if sent/unpaid */}
+              {invoice?.status === "sent" && (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleResendInvoice}
+                  disabled={isPending}
+                >
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  Resend
+                </Button>
+              )}
+
+              {/* View in Stripe - if we have stripe_invoice_id */}
+              {invoice?.stripe_invoice_id && (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => window.open(`https://dashboard.stripe.com/invoices/${invoice.stripe_invoice_id}`, "_blank")}
+                >
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  View in Stripe
+                </Button>
+              )}
+
+              {/* Void Invoice - only if not paid/void/waived */}
+              {invoice && !["paid", "void", "waived"].includes(invoice.status) && (
+                <Button 
+                  size="sm" 
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setShowVoidDialog(true)}
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                  Void
+                </Button>
+              )}
+            </div>
+
+            {/* Status Messages */}
+            {invoice?.status === "paid" && (
+              <p className="text-sm text-green-600 font-medium flex items-center gap-1">
+                <CheckCircle className="h-4 w-4" /> Invoice paid in full
+              </p>
+            )}
+            {invoice?.status === "uncollectible" && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" /> Payment failed - follow up required
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Void Dialog */}
+      <Dialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Void Invoice</DialogTitle>
+            <DialogDescription>
+              This will mark the $4,500 facility invoice as void and cancel it in Stripe.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label>Reason for voiding</Label>
+            <Textarea
+              value={voidReason}
+              onChange={(e) => setVoidReason(e.target.value)}
+              placeholder="Enter reason..."
+              className="mt-1"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowVoidDialog(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleVoidInvoice}
+              disabled={!voidReason.trim() || isPending}
+            >
+              {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Void Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -76,6 +76,7 @@ interface InternationalCase {
   admission_confirmed_at: string | null;
   facility_fee_cents: number;
   facility_fee_status: string | null;
+  facility_invoice_id: string | null;
   preferred_language: string | null;
   priority: string | null;
   created_at: string;

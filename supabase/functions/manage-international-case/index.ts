@@ -299,51 +299,87 @@ serve(async (req) => {
         }
       }
 
-      case "charge_facility_invoice": {
+      case "issue_facility_invoice": {
         const { invoiceId } = data;
         
         // Get invoice and facility info
-        const { data: invoice, error: invoiceError } = await supabase
+        const { data: dbInvoice, error: invoiceError } = await supabase
           .from("international_facility_invoices")
-          .select("*, facility:facilities(user_id, name)")
+          .select(`
+            *,
+            facilities (id, user_id, name, email),
+            international_placement_cases (client_name, client_country)
+          `)
           .eq("id", invoiceId)
           .single();
 
-        if (invoiceError || !invoice) throw new Error("Invoice not found");
+        if (invoiceError || !dbInvoice) throw new Error("Invoice not found");
 
-        // Get provider's Stripe customer ID
-        const { data: provider } = await supabase
-          .from("profiles")
-          .select("stripe_customer_id")
-          .eq("user_id", invoice.provider_id)
-          .single();
-
-        if (!provider?.stripe_customer_id) {
-          throw new Error("Provider has no payment method on file");
+        // Get or create Stripe customer for the facility
+        const facilityEmail = dbInvoice.facilities?.email;
+        const facilityName = dbInvoice.facilities?.name || "Provider";
+        
+        if (!facilityEmail) {
+          throw new Error("Facility has no email address on file");
         }
 
-        // Charge the customer
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: invoice.amount_cents,
-          currency: "usd",
-          customer: provider.stripe_customer_id,
-          description: `International Placement Fee - Case ${invoice.case_id}`,
+        // Check for existing customer
+        const customers = await stripe.customers.list({ email: facilityEmail, limit: 1 });
+        let customerId: string;
+        
+        if (customers.data.length > 0) {
+          customerId = customers.data[0].id;
+        } else {
+          const newCustomer = await stripe.customers.create({
+            email: facilityEmail,
+            name: facilityName,
+            metadata: {
+              facility_id: dbInvoice.facility_id,
+              provider_id: dbInvoice.provider_id,
+            },
+          });
+          customerId = newCustomer.id;
+        }
+
+        const caseName = dbInvoice.international_placement_cases?.client_name || "Client";
+        const caseCountry = dbInvoice.international_placement_cases?.client_country || "";
+
+        // Create Stripe Invoice
+        const stripeInvoice = await stripe.invoices.create({
+          customer: customerId,
+          collection_method: "send_invoice",
+          days_until_due: 14,
+          description: `International Placement Fee - ${caseName} (${caseCountry})`,
           metadata: {
             invoice_id: invoiceId,
-            case_id: invoice.case_id,
-            facility_id: invoice.facility_id,
+            case_id: dbInvoice.case_id,
+            facility_id: dbInvoice.facility_id,
+            type: "international_placement_fee",
           },
-          off_session: true,
-          confirm: true,
         });
 
-        // Update invoice status
+        // Add line item
+        await stripe.invoiceItems.create({
+          customer: customerId,
+          invoice: stripeInvoice.id,
+          amount: dbInvoice.amount_cents,
+          currency: "usd",
+          description: `International Placement Coordination Fee - Case: ${caseName}`,
+        });
+
+        // Finalize and send invoice
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(stripeInvoice.id);
+        await stripe.invoices.sendInvoice(stripeInvoice.id);
+
+        // Update DB invoice
         const { error: updateError } = await supabase
           .from("international_facility_invoices")
           .update({ 
-            status: "paid",
-            stripe_payment_intent_id: paymentIntent.id,
-            paid_at: new Date().toISOString(),
+            status: "sent",
+            stripe_invoice_id: finalizedInvoice.id,
+            sent_at: new Date().toISOString(),
+            sent_by: user.id,
+            due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           })
           .eq("id", invoiceId);
 
@@ -352,23 +388,112 @@ serve(async (req) => {
         // Update case facility fee status
         await supabase
           .from("international_placement_cases")
-          .update({ facility_fee_status: "paid" })
-          .eq("id", invoice.case_id);
+          .update({ facility_fee_status: "invoiced" })
+          .eq("id", dbInvoice.case_id);
 
         await supabase.from("international_case_events").insert({
-          case_id: invoice.case_id,
-          event_type: "facility_fee_charged",
+          case_id: dbInvoice.case_id,
+          event_type: "facility_invoice_sent",
           actor_id: user.id,
           actor_type: "admin",
           event_data: { 
             invoice_id: invoiceId,
-            payment_intent_id: paymentIntent.id,
-            amount_cents: invoice.amount_cents,
+            stripe_invoice_id: finalizedInvoice.id,
+            amount_cents: dbInvoice.amount_cents,
+            hosted_invoice_url: finalizedInvoice.hosted_invoice_url,
           },
         });
 
         return new Response(
-          JSON.stringify({ success: true, paymentIntentId: paymentIntent.id }),
+          JSON.stringify({ 
+            success: true, 
+            stripeInvoiceId: finalizedInvoice.id,
+            hostedInvoiceUrl: finalizedInvoice.hosted_invoice_url,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "resend_facility_invoice": {
+        const { invoiceId } = data;
+        
+        const { data: dbInvoice, error: invoiceError } = await supabase
+          .from("international_facility_invoices")
+          .select("case_id, stripe_invoice_id")
+          .eq("id", invoiceId)
+          .single();
+
+        if (invoiceError || !dbInvoice) throw new Error("Invoice not found");
+        if (!dbInvoice.stripe_invoice_id) throw new Error("Invoice has not been issued yet");
+
+        // Resend the invoice via Stripe
+        await stripe.invoices.sendInvoice(dbInvoice.stripe_invoice_id);
+
+        // Update sent_at
+        await supabase
+          .from("international_facility_invoices")
+          .update({ sent_at: new Date().toISOString() })
+          .eq("id", invoiceId);
+
+        await supabase.from("international_case_events").insert({
+          case_id: dbInvoice.case_id,
+          event_type: "facility_invoice_resent",
+          actor_id: user.id,
+          actor_type: "admin",
+          event_data: { invoice_id: invoiceId },
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "void_facility_invoice": {
+        const { invoiceId, reason } = data;
+        
+        const { data: dbInvoice, error: invoiceError } = await supabase
+          .from("international_facility_invoices")
+          .select("case_id, stripe_invoice_id")
+          .eq("id", invoiceId)
+          .single();
+
+        if (invoiceError || !dbInvoice) throw new Error("Invoice not found");
+
+        // Void in Stripe if exists
+        if (dbInvoice.stripe_invoice_id) {
+          try {
+            await stripe.invoices.voidInvoice(dbInvoice.stripe_invoice_id);
+          } catch (e) {
+            logStep("Warning: Could not void Stripe invoice", { error: String(e) });
+          }
+        }
+
+        await supabase
+          .from("international_facility_invoices")
+          .update({ 
+            status: "void",
+            waived_at: new Date().toISOString(),
+            waived_by: user.id,
+            waive_reason: reason || "Voided by admin",
+          })
+          .eq("id", invoiceId);
+
+        await supabase
+          .from("international_placement_cases")
+          .update({ facility_fee_status: "void" })
+          .eq("id", dbInvoice.case_id);
+
+        await supabase.from("international_case_events").insert({
+          case_id: dbInvoice.case_id,
+          event_type: "facility_invoice_voided",
+          actor_id: user.id,
+          actor_type: "admin",
+          event_data: { invoice_id: invoiceId, reason },
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
