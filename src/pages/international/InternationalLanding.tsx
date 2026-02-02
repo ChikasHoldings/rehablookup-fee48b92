@@ -134,7 +134,7 @@ export default function InternationalLanding() {
         
         <main className="flex-1">
           {/* Hero Section - Full width with image */}
-          <section className="relative overflow-hidden">
+          <section className="relative overflow-hidden min-h-[calc(100vh-140px)]">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
               <img
@@ -142,35 +142,34 @@ export default function InternationalLanding() {
                 alt="Luxury treatment facility"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/70" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60" />
             </div>
 
-            <div className="relative z-10 container mx-auto px-4 py-20 md:py-28 lg:py-36">
+            <div className="relative z-10 container mx-auto px-4 py-12 md:py-16 lg:py-20 flex flex-col justify-center min-h-[calc(100vh-200px)]">
               <div className="max-w-2xl">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 backdrop-blur-sm">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 text-primary text-sm font-medium mb-5 backdrop-blur-sm border border-primary/20">
                     <Globe className="h-4 w-4" />
                     International Placement Services
                   </div>
                   
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight tracking-tight">
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight tracking-tight">
                     Your Gateway to<br />
                     <span className="text-primary">American Rehab</span>
                   </h1>
                   
-                  <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-xl">
+                  <p className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed max-w-xl">
                     Skip the confusion. Skip the scams. We connect international clients directly with verified U.S. treatment centers—handling everything from matching to admission.
                   </p>
 
-                  <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                  <div className="mb-6">
                     <Button 
                       size="lg" 
-                      variant="outline"
-                      className="h-14 px-8 text-base font-semibold border-2 border-primary text-primary hover:bg-primary/10"
+                      className="h-12 px-8 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
                       asChild
                     >
                       <Link to="/international/apply">
@@ -181,34 +180,34 @@ export default function InternationalLanding() {
                   </div>
 
                   {/* Trust Stats Inline */}
-                  <div className="flex flex-wrap gap-6 md:gap-10">
+                  <div className="flex flex-wrap gap-6 md:gap-8">
                     {TRUST_STATS.map((stat, i) => (
                       <div key={i} className="text-left">
-                        <p className="text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
-                        <p className="text-sm text-muted-foreground">{stat.label}</p>
+                        <p className="text-xl md:text-2xl font-bold text-primary">{stat.value}</p>
+                        <p className="text-xs text-muted-foreground">{stat.label}</p>
                       </div>
                     ))}
                   </div>
                 </motion.div>
               </div>
             </div>
-          </section>
 
-          {/* Value Props Strip */}
-          <section className="py-6 bg-primary/5 border-y">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm">
-                {[
-                  "200+ Vetted Luxury Programs",
-                  "Immediate Admission",
-                  "Complete Privacy",
-                  "Fee Refunded on Admission",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-muted-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
+            {/* Value Props Strip - Inside hero at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm border-t">
+              <div className="container mx-auto px-4 py-4">
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+                  {[
+                    "200+ Vetted Luxury Programs",
+                    "Immediate Admission",
+                    "Complete Privacy",
+                    "Fee Refunded on Admission",
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
@@ -430,8 +429,7 @@ export default function InternationalLanding() {
                 <div className="flex justify-center">
                   <Button 
                     size="lg" 
-                    variant="outline"
-                    className="h-14 px-8 text-base font-semibold border-2 border-primary text-primary hover:bg-primary/10" 
+                    className="h-12 px-8 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" 
                     asChild
                   >
                     <Link to="/international/apply">
