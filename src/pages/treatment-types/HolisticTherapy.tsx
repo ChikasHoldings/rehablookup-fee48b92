@@ -356,12 +356,13 @@ const HolisticTherapy = () => {
                 Find treatment facilities that offer comprehensive holistic therapy options.
               </p>
             </div>
-            <div className="grid gap-6 md:grid-cols-3">
+            {/* Horizontal scroll on mobile, grid on larger screens */}
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-3 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
               {featuredCenters.map((center, index) => (
                 <Link
                   key={center.id}
                   to={`/center/${center.id}`}
-                  className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 animate-fade-in"
+                  className="flex-shrink-0 w-[280px] md:w-auto snap-center group rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 animate-fade-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <h3 className="mb-2 font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -376,6 +377,11 @@ const HolisticTherapy = () => {
                   </div>
                 </Link>
               ))}
+            </div>
+            
+            {/* Scroll indicator for mobile */}
+            <div className="flex justify-center gap-1.5 mt-3 md:hidden">
+              <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
             </div>
             <div className="mt-8 text-center">
               <Link to="/search-results?type=holistic">
