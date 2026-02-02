@@ -150,7 +150,6 @@ export function InternationalCandidatesTab() {
               <h2 className="text-lg font-semibold">International Client Placements</h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Pre-screened international clients seeking treatment in the United States.
-                They've paid a commitment fee and completed our intake process.
               </p>
             </div>
             <div className="sm:text-right">
