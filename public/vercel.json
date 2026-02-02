@@ -58,7 +58,7 @@
       "permanent": true
     },
     {
-      "source": "/placement-help", 
+      "source": "/placement-help",
       "destination": "/concierge",
       "permanent": true
     },
