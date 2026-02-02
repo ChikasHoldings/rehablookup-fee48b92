@@ -136,13 +136,35 @@ export function InternationalCandidatesTab() {
 
   return (
     <div className="space-y-6">
+      {/* International Placements Header */}
+      <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <CardContent className="py-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <Globe className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold">International Client Placements</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                These are pre-screened international clients seeking treatment in the United States. 
+                They've already paid a commitment fee and completed our intake process.
+              </p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-2xl font-bold text-primary">$4,500</p>
+              <p className="text-xs text-muted-foreground">per confirmed admission</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Pending Invitations */}
       <div>
         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Globe className="h-5 w-5 text-primary" />
-          International Placement Candidates
+          Pending Candidates
           {pendingMatches.length > 0 && (
-            <Badge variant="destructive">{pendingMatches.length} pending</Badge>
+            <Badge variant="destructive">{pendingMatches.length} new</Badge>
           )}
         </h3>
 
