@@ -164,7 +164,7 @@ export default function ConciergeLanding() {
                   <div className="flex flex-col items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
                     <Button asChild size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base font-semibold shadow-lg shadow-primary/25 rounded-xl group">
                       <Link to="/concierge/intake">
-                        Get Started — $29
+                        Get Started
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>
@@ -463,7 +463,7 @@ export default function ConciergeLanding() {
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                     <Button asChild size="lg" variant="secondary" className="h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-semibold shadow-xl rounded-xl group">
                       <Link to="/concierge/intake">
-                        Get Started — $29
+                        Get Started
                         <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>
