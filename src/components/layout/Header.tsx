@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
@@ -83,15 +83,31 @@ export function Header({
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
-        <div className="container flex h-14 md:h-16 items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
+        <div className="container flex h-14 md:h-16 items-center justify-between gap-2">
+          {/* Mobile: Hamburger Button (Left) */}
+          <button
+            className={cn(
+              "flex h-11 w-11 items-center justify-center rounded-lg md:hidden transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95",
+              mobileMenuOpen && "bg-primary/90"
+            )}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6 text-primary-foreground" />
+            ) : (
+              <Menu className="h-6 w-6 text-primary-foreground" />
+            )}
+          </button>
+
+          {/* Logo - Centered on mobile */}
+          <Link to="/" className="flex items-center md:flex-none flex-1 justify-center md:justify-start">
             <img 
               src="/logo.png"
               alt="RehabLookup" 
-              className="h-7 md:h-9 w-auto"
+              className="h-8 md:h-9 w-auto"
               width={134}
-              height={28}
+              height={32}
               loading="eager"
               decoding="async"
             />
@@ -158,8 +174,18 @@ export function Header({
             })}
           </nav>
 
-          {/* CTA & Mobile Toggle */}
-          <div className="flex items-center gap-3">
+          {/* CTA & Mobile Actions */}
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Mobile Search Icon */}
+            <PrefetchLink
+              to="/rehab-centers"
+              className="flex h-11 w-11 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Search facilities"
+            >
+              <Search className="h-5 w-5" />
+            </PrefetchLink>
+
+            {/* Desktop CTAs */}
             <div className="hidden sm:flex items-center gap-3">
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
@@ -189,18 +215,6 @@ export function Header({
                 </>
               )}
             </div>
-            <button
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-md md:hidden transition-colors",
-                variant === "provider"
-                  ? "text-white hover:bg-white/10"
-                  : "text-foreground hover:bg-muted"
-              )}
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
           </div>
         </div>
       </header>
