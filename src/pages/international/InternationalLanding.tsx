@@ -133,83 +133,103 @@ export default function InternationalLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section - Full width with image */}
-          <section className="relative overflow-hidden min-h-[calc(100vh-140px)]">
-            {/* Background Image */}
+          {/* Hero Section - Premium Full-Screen */}
+          <section className="relative min-h-[100svh] flex flex-col">
+            {/* Background with refined overlay */}
             <div className="absolute inset-0 z-0">
               <img
                 src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=1920&auto=format&fit=crop"
                 alt="Luxury treatment facility"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60" />
+              {/* Multi-layer gradient for depth */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--background))] via-[hsl(var(--background)/0.85)] to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--background))] via-transparent to-transparent opacity-60" />
             </div>
 
-            <div className="relative z-10 container mx-auto px-4 py-12 md:py-16 lg:py-20 flex flex-col justify-center min-h-[calc(100vh-200px)]">
-              <div className="max-w-2xl">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 text-primary text-sm font-medium mb-5 backdrop-blur-sm border border-primary/20">
-                    <Globe className="h-4 w-4" />
-                    International Placement Services
-                  </div>
-                  
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight tracking-tight">
-                    Your Gateway to<br />
-                    <span className="text-primary">American Rehab</span>
-                  </h1>
-                  
-                  <p className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed max-w-xl">
-                    Skip the confusion. Skip the scams. We connect international clients directly with verified U.S. treatment centers—handling everything from matching to admission.
-                  </p>
+            {/* Main Content */}
+            <div className="relative z-10 flex-1 flex items-center">
+              <div className="container mx-auto px-4 py-16 md:py-20">
+                <div className="grid lg:grid-cols-2 gap-12 items-center">
+                  {/* Left: Content */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+                      <Globe className="h-4 w-4" />
+                      International Placement Services
+                    </div>
+                    
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-[1.1] tracking-tight">
+                      Your Gateway to
+                      <span className="block text-primary mt-1">American Rehab</span>
+                    </h1>
+                    
+                    <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-lg">
+                      Expert placement into America's finest treatment centers. We handle everything—from matching to admission—so you can focus on recovery.
+                    </p>
 
-                  <div className="mb-6">
-                    <Button 
-                      size="lg" 
-                      className="h-12 px-8 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
-                      asChild
-                    >
-                      <Link to="/international/apply">
-                        Start Your Application
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Link>
-                    </Button>
-                  </div>
+                    <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                      <Button 
+                        size="lg" 
+                        className="h-14 px-10 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-0.5"
+                        asChild
+                      >
+                        <Link to="/international/apply">
+                          Start Your Application
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Link>
+                      </Button>
+                    </div>
 
-                  {/* Trust Stats Inline */}
-                  <div className="flex flex-wrap gap-6 md:gap-8">
-                    {TRUST_STATS.map((stat, i) => (
-                      <div key={i} className="text-left">
-                        <p className="text-xl md:text-2xl font-bold text-primary">{stat.value}</p>
-                        <p className="text-xs text-muted-foreground">{stat.label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
+                    {/* Trust Stats - Bold & Prominent */}
+                    <div className="flex gap-8 md:gap-12">
+                      {TRUST_STATS.map((stat, i) => (
+                        <motion.div 
+                          key={i} 
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
+                          className="text-left"
+                        >
+                          <p className="text-3xl md:text-4xl font-bold text-primary tracking-tight">{stat.value}</p>
+                          <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Right: Visual element placeholder - helps balance the layout */}
+                  <div className="hidden lg:block" />
+                </div>
               </div>
             </div>
 
-            {/* Value Props Strip - Inside hero at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm border-t">
-              <div className="container mx-auto px-4 py-4">
-                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+            {/* Trust Bar - Anchored at bottom */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="relative z-10 border-t border-border/50 bg-background/95 backdrop-blur-md"
+            >
+              <div className="container mx-auto px-4 py-5">
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                   {[
                     "200+ Vetted Luxury Programs",
-                    "Immediate Admission",
-                    "Complete Privacy",
+                    "Immediate Admission Available",
+                    "Complete Privacy Guaranteed",
                     "Fee Refunded on Admission",
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-muted-foreground">
+                    <div key={i} className="flex items-center gap-2.5 text-sm font-medium text-foreground/80">
                       <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                       <span>{item}</span>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
           </section>
 
           {/* Why US Treatment */}
