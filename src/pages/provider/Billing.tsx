@@ -201,33 +201,33 @@ export default function ProviderBillingPage() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="max-w-5xl mx-auto space-y-8">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Billing</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Billing</h1>
+          <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
             Manage subscription, credits, and payment methods
           </p>
         </div>
 
         {/* Pro Subscription */}
         <Card>
-          <CardContent className="p-5">
+          <CardContent className="p-4 sm:p-5 md:p-6">
             {proStatus?.isPro ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <Sparkles className="h-6 w-6 text-amber-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-amber-600" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-semibold">Pro Subscription</span>
+                      <span className="text-base md:text-lg font-semibold">Pro Subscription</span>
                       <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-0">
                         Active
                       </Badge>
                     </div>
-                    <p className="text-muted-foreground">
+                    <p className="text-sm md:text-base text-muted-foreground">
                       {proStatus.currentPeriodEnd 
                         ? `Renews ${format(new Date(proStatus.currentPeriodEnd), "MMMM d, yyyy")}`
                         : "Your subscription is active"
@@ -239,6 +239,7 @@ export default function ProviderBillingPage() {
                   variant="outline"
                   onClick={handleManageSubscription}
                   disabled={portalLoading}
+                  className="w-full sm:w-auto"
                 >
                   {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
                   Manage
@@ -246,25 +247,26 @@ export default function ProviderBillingPage() {
               </div>
             ) : (
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-muted-foreground" />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-muted flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                     </div>
                     <div>
-                      <span className="text-lg font-semibold">Upgrade to Pro</span>
-                      <p className="text-muted-foreground">$399/month</p>
+                      <span className="text-base md:text-lg font-semibold">Upgrade to Pro</span>
+                      <p className="text-sm md:text-base text-muted-foreground">$399/month</p>
                     </div>
                   </div>
                   <Button 
                     onClick={handleUpgrade}
                     disabled={upgradeLoading || !facilityId}
+                    className="w-full sm:w-auto"
                   >
                     {upgradeLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Upgrade
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-muted-foreground">
+                <div className="flex flex-wrap gap-x-4 md:gap-x-6 gap-y-2 text-sm md:text-base text-muted-foreground">
                   {PRO_BENEFITS.map((b, i) => {
                     const Icon = b.icon;
                     return (
@@ -282,18 +284,18 @@ export default function ProviderBillingPage() {
 
         {/* Credits */}
         <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Wallet className="h-6 w-6 text-primary" />
+          <CardContent className="p-4 sm:p-5 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Wallet className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Credit Balance</p>
-                  <p className="text-2xl font-bold text-foreground">{balanceFormatted}</p>
+                  <p className="text-sm md:text-base text-muted-foreground">Credit Balance</p>
+                  <p className="text-xl md:text-2xl font-bold text-foreground">{balanceFormatted}</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => setShowPurchaseModal(true)}>
+              <Button variant="outline" onClick={() => setShowPurchaseModal(true)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Credits
               </Button>

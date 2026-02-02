@@ -84,7 +84,7 @@ const About = () => {
       />
       
       {/* Hero - Compact navy header */}
-      <section className="bg-primary py-10 px-4 md:py-14 md:px-6 relative overflow-hidden">
+      <section className="bg-primary py-10 px-4 md:py-14 lg:py-16 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
           <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
@@ -92,23 +92,23 @@ const About = () => {
         
         <div className="container relative">
           {/* Breadcrumb */}
-          <nav className="mb-5 text-center">
-            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
+          <nav className="mb-5 md:mb-6 text-center">
+            <span className="inline-flex items-center gap-2 text-sm md:text-base whitespace-nowrap">
               <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
               <span className="text-white/50">/</span>
               <span className="text-white font-medium">About</span>
             </span>
           </nav>
           
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
-              <Heart className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Our Story</span>
+          <div className="mx-auto max-w-2xl lg:max-w-3xl text-center">
+            <div className="mb-4 md:mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 md:px-5 py-2 md:py-2.5 backdrop-blur-sm border border-white/10">
+              <Heart className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+              <span className="text-sm md:text-base font-medium text-primary-foreground">Our Story</span>
             </div>
-            <h1 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
+            <h1 className="mb-3 md:mb-4 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl xl:text-4xl">
               About RehabLookup: Trusted Addiction Treatment Directory
             </h1>
-            <p className="text-base text-primary-foreground/80 leading-relaxed md:text-lg max-w-xl mx-auto">
+            <p className="text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-xl md:max-w-2xl mx-auto">
               Connecting families with trusted addiction treatment centers through transparency and compassion.
             </p>
           </div>
@@ -116,19 +116,19 @@ const About = () => {
       </section>
 
       {/* Trust Bar */}
-      <section className="border-b border-border bg-card py-5 px-4 md:py-4 md:px-6">
+      <section className="border-b border-border bg-card py-5 px-4 md:py-6 md:px-6">
         <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-base md:gap-12 md:text-sm">
-            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
-              <Shield className="h-5 w-5 text-accent md:h-4 md:w-4" />
+          <div className="flex flex-wrap items-center justify-center gap-6 text-base md:gap-10 lg:gap-12 md:text-sm lg:text-base">
+            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-3">
+              <Shield className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               <span>Verified Facilities</span>
             </div>
-            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
-              <Clock className="h-5 w-5 text-accent md:h-4 md:w-4" />
+            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-3">
+              <Clock className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               <span>24/7 Support</span>
             </div>
-            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
-              <Users className="h-5 w-5 text-accent md:h-4 md:w-4" />
+            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-3">
+              <Users className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               <span>10,000+ Families Helped</span>
             </div>
           </div>
@@ -138,20 +138,20 @@ const About = () => {
       {/* Mission Cards Section */}
       <section className="section-padding-lg bg-gradient-to-b from-background to-muted/30">
         <div className="container">
-          <div className="text-center mb-12">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2.5">
-              <Target className="h-5 w-5 text-accent" />
-              <span className="text-base font-medium text-accent">What Drives Us</span>
+          <div className="text-center mb-10 md:mb-14">
+            <div className="mb-5 md:mb-6 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 md:px-6 py-2.5 md:py-3">
+              <Target className="h-5 w-5 md:h-6 md:w-6 text-accent" />
+              <span className="text-base md:text-lg font-medium text-accent">What Drives Us</span>
             </div>
-            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl mb-4">
+            <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4 md:mb-5">
               Our Purpose & Promise
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-muted-foreground max-w-xl md:max-w-2xl mx-auto text-sm md:text-base lg:text-lg">
               Everything we do is guided by our commitment to helping families find the right treatment.
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3 max-w-5xl mx-auto">
+          <div className="grid gap-5 md:gap-6 md:grid-cols-3 max-w-5xl mx-auto">
             {missionCards.map((card, index) => (
               <div
                 key={card.title}

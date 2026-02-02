@@ -97,7 +97,7 @@ const Contact = () => {
       />
       
       {/* Hero - Navy background with decorative elements */}
-      <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
+      <section className="bg-primary py-10 px-4 md:py-12 lg:py-14 md:px-6 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -106,21 +106,21 @@ const Contact = () => {
         
         <div className="container relative">
           {/* Breadcrumb */}
-          <nav className="mb-5 flex items-center justify-center gap-2 text-sm leading-none whitespace-nowrap">
+          <nav className="mb-5 md:mb-6 flex items-center justify-center gap-2 text-sm md:text-base leading-none whitespace-nowrap">
             <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
             <span className="text-white/50">/</span>
             <span className="text-white font-medium">Contact</span>
           </nav>
           
           <div className="text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
-              <MessageSquare className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Get In Touch</span>
+            <div className="mb-4 md:mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 md:px-5 py-2 md:py-2.5 backdrop-blur-sm border border-white/10">
+              <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+              <span className="text-sm md:text-base font-medium text-primary-foreground">Get In Touch</span>
             </div>
-            <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+            <h1 className="mb-3 md:mb-4 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-primary-foreground">
               Contact Us for Addiction Treatment Help
             </h1>
-            <p className="text-base text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-lg">
+            <p className="text-base md:text-lg text-primary-foreground/80 max-w-xl md:max-w-2xl mx-auto leading-relaxed">
               Have questions about finding treatment? We're here to help.
             </p>
           </div>
@@ -128,19 +128,19 @@ const Contact = () => {
       </section>
 
       {/* Trust Bar */}
-      <section className="border-b border-border bg-card py-5 px-4 md:py-4 md:px-6">
+      <section className="border-b border-border bg-card py-5 md:py-6 px-4 md:px-6">
         <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-base md:gap-12 md:text-sm">
-            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
-              <Shield className="h-5 w-5 text-accent md:h-4 md:w-4" />
+          <div className="flex flex-wrap items-center justify-center gap-6 text-base md:gap-10 lg:gap-12 md:text-sm lg:text-base">
+            <div className="flex items-center gap-2.5 md:gap-3 text-muted-foreground">
+              <Shield className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               <span>Confidential</span>
             </div>
-            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
-              <Headphones className="h-5 w-5 text-accent md:h-4 md:w-4" />
+            <div className="flex items-center gap-2.5 md:gap-3 text-muted-foreground">
+              <Headphones className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               <span>24/7 Available</span>
             </div>
-            <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
-              <Users className="h-5 w-5 text-accent md:h-4 md:w-4" />
+            <div className="flex items-center gap-2.5 md:gap-3 text-muted-foreground">
+              <Users className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               <span>Expert Support</span>
             </div>
           </div>
@@ -148,9 +148,9 @@ const Contact = () => {
       </section>
 
       {/* Contact Methods Cards */}
-      <section className="py-6 md:py-8 bg-gradient-to-b from-background to-muted/30">
+      <section className="py-6 md:py-8 lg:py-10 bg-gradient-to-b from-background to-muted/30">
         <div className="container">
-          <div className="grid gap-4 md:grid-cols-3 max-w-4xl mx-auto">
+          <div className="grid gap-4 md:gap-5 md:grid-cols-3 max-w-4xl lg:max-w-5xl mx-auto">
             {contactMethods.map((method, index) => (
               <div
                 key={method.title}
@@ -160,27 +160,27 @@ const Contact = () => {
                 {method.href ? (
                   <a 
                     href={method.href}
-                    className="block h-full rounded-xl bg-card border border-border/50 p-4 hover:border-accent/30 hover:shadow-md transition-all duration-300"
+                    className="block h-full rounded-xl md:rounded-2xl bg-card border border-border/50 p-4 md:p-5 hover:border-accent/30 hover:shadow-md transition-all duration-300"
                   >
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${method.gradient} shadow-sm`}>
-                        <method.icon className="h-4 w-4 text-white" />
+                    <div className="flex items-center gap-3 md:gap-4 mb-2 md:mb-3">
+                      <div className={`flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br ${method.gradient} shadow-sm`}>
+                        <method.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
                       </div>
-                      <h3 className="text-sm font-medium text-muted-foreground">{method.title}</h3>
+                      <h3 className="text-sm md:text-base font-medium text-muted-foreground">{method.title}</h3>
                     </div>
-                    <p className="font-display text-base font-bold text-foreground mb-0.5">{method.value}</p>
-                    <p className="text-xs text-muted-foreground">{method.description}</p>
+                    <p className="font-display text-base md:text-lg font-bold text-foreground mb-0.5 md:mb-1">{method.value}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{method.description}</p>
                   </a>
                 ) : (
-                  <div className="h-full rounded-xl bg-card border border-border/50 p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${method.gradient} shadow-sm`}>
-                        <method.icon className="h-4 w-4 text-white" />
+                  <div className="h-full rounded-xl md:rounded-2xl bg-card border border-border/50 p-4 md:p-5">
+                    <div className="flex items-center gap-3 md:gap-4 mb-2 md:mb-3">
+                      <div className={`flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br ${method.gradient} shadow-sm`}>
+                        <method.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
                       </div>
-                      <h3 className="text-sm font-medium text-muted-foreground">{method.title}</h3>
+                      <h3 className="text-sm md:text-base font-medium text-muted-foreground">{method.title}</h3>
                     </div>
-                    <p className="font-display text-base font-bold text-foreground mb-0.5">{method.value}</p>
-                    <p className="text-xs text-muted-foreground">{method.description}</p>
+                    <p className="font-display text-base md:text-lg font-bold text-foreground mb-0.5 md:mb-1">{method.value}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{method.description}</p>
                   </div>
                 )}
               </div>

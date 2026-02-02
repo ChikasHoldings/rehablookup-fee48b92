@@ -66,17 +66,17 @@ export default function ProviderAnalyticsPage() {
   const hasActiveFilter = selectedPreset !== "billing_cycle";
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="h-9 w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <BarChart3 className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-primary" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-display text-xl md:text-2xl font-bold text-foreground truncate">Analytics</h1>
-            <p className="text-muted-foreground text-xs md:text-sm">
+            <h1 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">Analytics</h1>
+            <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
               Track lead performance and engagement across all locations
             </p>
           </div>
@@ -181,32 +181,32 @@ export default function ProviderAnalyticsPage() {
       )}
 
       {/* Main Tabs */}
-      <Tabs defaultValue="engagement" className="space-y-6">
-        <TabsList className="w-full sm:w-auto h-11 p-1 bg-muted/50">
+      <Tabs defaultValue="engagement" className="space-y-6 md:space-y-8">
+        <TabsList className="w-full sm:w-auto h-11 md:h-12 p-1 bg-muted/50">
           <TabsTrigger 
             value="engagement" 
-            className="flex-1 sm:flex-none gap-2 text-xs sm:text-sm px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            className="flex-1 sm:flex-none gap-2 text-xs sm:text-sm md:text-base px-4 md:px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
             <div className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5" />
-              <Globe className="h-3.5 w-3.5" />
+              <Phone className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <Globe className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </div>
             <span>Engagement</span>
           </TabsTrigger>
           <TabsTrigger 
             value="leads" 
-            className="flex-1 sm:flex-none gap-2 text-xs sm:text-sm px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            className="flex-1 sm:flex-none gap-2 text-xs sm:text-sm md:text-base px-4 md:px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
-            <BarChart3 className="h-3.5 w-3.5" />
+            <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4" />
             <span>Lead Analytics</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="engagement" className="mt-6">
+        <TabsContent value="engagement" className="mt-6 md:mt-8">
           <CentralizedEngagementAnalytics dateRange={dateRange} />
         </TabsContent>
 
-        <TabsContent value="leads" className="mt-6">
+        <TabsContent value="leads" className="mt-6 md:mt-8">
           <CentralizedLeadAnalyticsDashboard dateRange={dateRange} />
         </TabsContent>
       </Tabs>
