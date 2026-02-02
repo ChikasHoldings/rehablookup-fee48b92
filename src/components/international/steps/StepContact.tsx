@@ -13,13 +13,13 @@ export function StepContact({ data, onChange }: StepContactProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="space-y-5 md:space-y-6"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1.5 md:mb-2">
           Let's start with your name
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           We'll use this to personalize your experience
         </p>
       </div>

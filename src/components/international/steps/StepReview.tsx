@@ -83,29 +83,29 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="space-y-5 md:space-y-6"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1.5 md:mb-2">
           Review Your Application
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Please confirm your details before proceeding to payment
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-lg mx-auto space-y-4 md:space-y-6">
         {/* Summary Cards */}
         {sections.map((section, idx) => (
           <div key={idx} className="border rounded-lg overflow-hidden">
-            <div className="bg-muted/50 px-4 py-2 border-b">
-              <h3 className="font-medium text-sm text-foreground">{section.title}</h3>
+            <div className="bg-muted/50 px-3 md:px-4 py-2 border-b">
+              <h3 className="font-medium text-xs md:text-sm text-foreground">{section.title}</h3>
             </div>
-            <div className="p-4 space-y-2">
+            <div className="p-3 md:p-4 space-y-1.5 md:space-y-2">
               {section.items.map((item, i) => (
-                <div key={i} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{item.label}</span>
-                  <span className="text-foreground font-medium text-right max-w-[200px] capitalize">
+                <div key={i} className="flex justify-between text-xs md:text-sm gap-2">
+                  <span className="text-muted-foreground shrink-0">{item.label}</span>
+                  <span className="text-foreground font-medium text-right max-w-[180px] md:max-w-[200px] capitalize truncate">
                     {item.value}
                   </span>
                 </div>
@@ -116,34 +116,34 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
 
         {data.notes && (
           <div className="border rounded-lg overflow-hidden">
-            <div className="bg-muted/50 px-4 py-2 border-b">
-              <h3 className="font-medium text-sm text-foreground">Additional Notes</h3>
+            <div className="bg-muted/50 px-3 md:px-4 py-2 border-b">
+              <h3 className="font-medium text-xs md:text-sm text-foreground">Additional Notes</h3>
             </div>
-            <div className="p-4">
-              <p className="text-sm text-muted-foreground">{data.notes}</p>
+            <div className="p-3 md:p-4">
+              <p className="text-xs md:text-sm text-muted-foreground">{data.notes}</p>
             </div>
           </div>
         )}
 
         {/* Payment Section */}
-        <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 md:p-6">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
-              <p className="text-sm text-muted-foreground">Placement Service Fee</p>
-              <p className="text-3xl font-bold text-foreground">$299 <span className="text-base font-normal text-muted-foreground">USD</span></p>
+              <p className="text-xs md:text-sm text-muted-foreground">Placement Service Fee</p>
+              <p className="text-2xl md:text-3xl font-bold text-foreground">$299 <span className="text-sm md:text-base font-normal text-muted-foreground">USD</span></p>
             </div>
-            <CreditCard className="h-8 w-8 text-primary" />
+            <CreditCard className="h-6 w-6 md:h-8 md:w-8 text-primary" />
           </div>
 
-          <ul className="space-y-2 mb-6">
+          <ul className="space-y-1.5 md:space-y-2 mb-5 md:mb-6">
             {[
               "Personalized facility matching",
               "Direct admissions coordination", 
               "24-hour advisor response",
               "Refunded upon confirmed admission"
             ].map((item, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+              <li key={i} className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary shrink-0" />
                 {item}
               </li>
             ))}
@@ -152,12 +152,12 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
           <Button
             onClick={onSubmit}
             disabled={isSubmitting}
-            className="w-full h-12 text-base font-semibold"
+            className="w-full h-11 md:h-12 text-sm md:text-base font-semibold"
             size="lg"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 md:h-5 md:w-5 animate-spin" />
                 Processing...
               </>
             ) : (
@@ -167,8 +167,8 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
             )}
           </Button>
 
-          <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
-            <Shield className="h-3.5 w-3.5" />
+          <div className="flex items-center justify-center gap-2 mt-3 md:mt-4 text-[10px] md:text-xs text-muted-foreground">
+            <Shield className="h-3 w-3 md:h-3.5 md:w-3.5" />
             Secure payment via Stripe
           </div>
         </div>

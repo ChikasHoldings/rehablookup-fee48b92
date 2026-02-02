@@ -30,18 +30,18 @@ export function StepLocation({ data, onChange }: StepLocationProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="space-y-5 md:space-y-6"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1.5 md:mb-2">
           Where are you located?
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           This helps us coordinate across time zones
         </p>
       </div>
 
-      <div className="max-w-sm mx-auto space-y-5">
+      <div className="max-w-sm mx-auto space-y-4 md:space-y-5">
         <div>
           <Label htmlFor="country" className="text-sm font-medium flex items-center gap-2">
             <Globe className="h-4 w-4 text-primary" />

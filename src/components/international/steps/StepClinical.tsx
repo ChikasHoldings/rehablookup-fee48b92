@@ -63,29 +63,29 @@ export function StepClinical({ data, onChange }: StepClinicalProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="space-y-5 md:space-y-6"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1.5 md:mb-2">
           Clinical Information
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Help us match you with specialized programs
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-lg mx-auto space-y-5 md:space-y-6">
         {/* Primary Concern */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Primary Concern</Label>
-          <div className="flex flex-wrap gap-2">
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Primary Concern</Label>
+          <div className="flex flex-wrap gap-1.5 md:gap-2">
             {PRIMARY_CONCERN_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => onChange({ ...data, primary_concern: opt.value })}
                 className={cn(
-                  "px-3 py-2 rounded-full border text-sm font-medium transition-all",
+                  "px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border text-xs md:text-sm font-medium transition-all",
                   data.primary_concern === opt.value
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border hover:border-primary/50 text-foreground"
@@ -99,24 +99,24 @@ export function StepClinical({ data, onChange }: StepClinicalProps) {
 
         {/* Co-occurring Conditions */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">
-            Co-occurring Conditions <span className="text-muted-foreground font-normal">(select all that apply)</span>
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">
+            Co-occurring Conditions <span className="text-muted-foreground font-normal text-xs">(select all that apply)</span>
           </Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 md:gap-2">
             {CO_OCCURRING_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => toggleCondition(opt.value)}
                 className={cn(
-                  "px-3 py-2 rounded-full border text-sm font-medium transition-all inline-flex items-center gap-1.5",
+                  "px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border text-xs md:text-sm font-medium transition-all inline-flex items-center gap-1 md:gap-1.5",
                   data.co_occurring_conditions.includes(opt.value)
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border hover:border-primary/50 text-foreground"
                 )}
               >
                 {data.co_occurring_conditions.includes(opt.value) && (
-                  <Check className="h-3.5 w-3.5" />
+                  <Check className="h-3 w-3 md:h-3.5 md:w-3.5" />
                 )}
                 {opt.label}
               </button>
@@ -126,7 +126,7 @@ export function StepClinical({ data, onChange }: StepClinicalProps) {
 
         {/* Previous Treatment */}
         <div>
-          <Label className="text-sm font-medium mb-3 block">Previous Treatment History</Label>
+          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Previous Treatment History</Label>
           <div className="grid gap-2">
             {PREVIOUS_TREATMENT_OPTIONS.map((opt) => (
               <button
@@ -134,7 +134,7 @@ export function StepClinical({ data, onChange }: StepClinicalProps) {
                 type="button"
                 onClick={() => onChange({ ...data, previous_treatment: opt.value })}
                 className={cn(
-                  "px-4 py-3 rounded-lg border text-sm font-medium transition-all text-left",
+                  "px-3 md:px-4 py-2.5 md:py-3 rounded-lg border text-xs md:text-sm font-medium transition-all text-left",
                   data.previous_treatment === opt.value
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                     : "border-border hover:border-primary/50"

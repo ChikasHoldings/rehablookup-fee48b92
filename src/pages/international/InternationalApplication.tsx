@@ -250,18 +250,18 @@ export default function InternationalApplication() {
       <div className="min-h-screen flex flex-col bg-background">
         <PublicHeader />
 
-        <main className="flex-1 py-8 md:py-16">
-          <div className="container mx-auto px-4">
+        <main className="flex-1 py-6 md:py-16">
+          <div className="container mx-auto px-4 md:px-4">
             <div className="max-w-3xl mx-auto">
               {/* Form Container */}
-              <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-card border rounded-xl md:rounded-2xl shadow-sm overflow-hidden">
                 {/* Progress */}
-                <div className="px-6 md:px-10 pt-6 md:pt-8 pb-4 border-b bg-muted/30">
+                <div className="px-4 md:px-10 pt-4 md:pt-8 pb-3 md:pb-4 border-b bg-muted/30">
                   <IntakeProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
                 </div>
 
                 {/* Step Content */}
-                <div className="px-6 md:px-10 py-8 md:py-12 min-h-[400px] flex items-center justify-center">
+                <div className="px-4 md:px-10 py-6 md:py-12 min-h-[350px] md:min-h-[400px] flex items-center justify-center">
                   <div className="w-full max-w-xl">
                     <AnimatePresence mode="wait">
                       {renderStep()}
@@ -271,12 +271,12 @@ export default function InternationalApplication() {
 
                 {/* Navigation */}
                 {currentStep < TOTAL_STEPS && (
-                  <div className="px-6 md:px-10 py-6 border-t bg-muted/20 flex justify-center gap-4">
+                  <div className="px-4 md:px-10 py-4 md:py-6 border-t bg-muted/20 flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
                     {currentStep > 1 && (
                       <Button
                         variant="outline"
                         onClick={handleBack}
-                        className="h-12 px-6"
+                        className="h-11 md:h-12 px-5 md:px-6 order-2 sm:order-1"
                       >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
@@ -285,7 +285,7 @@ export default function InternationalApplication() {
                     <Button
                       onClick={handleNext}
                       disabled={!canProceed()}
-                      className="h-12 px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
+                      className="h-11 md:h-12 px-6 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground order-1 sm:order-2"
                     >
                       Continue
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -294,7 +294,7 @@ export default function InternationalApplication() {
                 )}
 
                 {currentStep === TOTAL_STEPS && (
-                  <div className="px-6 md:px-10 py-4 border-t bg-muted/20 flex justify-center">
+                  <div className="px-4 md:px-10 py-3 md:py-4 border-t bg-muted/20 flex justify-center">
                     <Button
                       variant="ghost"
                       onClick={handleBack}
