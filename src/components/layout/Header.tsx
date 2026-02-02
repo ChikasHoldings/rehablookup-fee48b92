@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown, Search } from "lucide-react";
+import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown, Search, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
@@ -39,6 +39,7 @@ const defaultNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
   { href: "/insurance", label: "Insurance" },
   { href: "/concierge", label: "Concierge" },
+  { href: "/international", label: "International" },
   { href: "/for-providers", label: "For Providers" },
 ];
 
@@ -48,6 +49,7 @@ const navIcons: Record<string, React.ElementType> = {
   "/treatment-types": Building2,
   "/insurance": Shield,
   "/concierge": Heart,
+  "/international": Globe,
   "/for-providers": Building2,
   "/about": Info,
   "/contact": Phone,

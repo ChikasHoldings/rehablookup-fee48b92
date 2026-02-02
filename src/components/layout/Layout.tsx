@@ -4,6 +4,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { FloatingHelpButton } from "@/components/ui/floating-help-button";
+import { InternationalBanner } from "@/components/InternationalBanner";
 import { useUserRole } from "@/hooks/useUserRole";
 
 interface LayoutProps {
@@ -38,6 +39,7 @@ export function Layout({ children }: LayoutProps) {
   // Seekers and unauthenticated users see the public layout
   return (
     <div className="flex min-h-screen flex-col">
+      <InternationalBanner />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
