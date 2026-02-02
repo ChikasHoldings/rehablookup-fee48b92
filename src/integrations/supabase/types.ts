@@ -698,7 +698,9 @@ export type Database = {
       }
       concierge_introductions: {
         Row: {
+          admin_disclosed_pii_at: string | null
           created_at: string | null
+          disclosed_by_admin_id: string | null
           facility_id: string
           id: string
           inquiry_id: string
@@ -711,7 +713,9 @@ export type Database = {
           sent_by: string | null
         }
         Insert: {
+          admin_disclosed_pii_at?: string | null
           created_at?: string | null
+          disclosed_by_admin_id?: string | null
           facility_id: string
           id?: string
           inquiry_id: string
@@ -724,7 +728,9 @@ export type Database = {
           sent_by?: string | null
         }
         Update: {
+          admin_disclosed_pii_at?: string | null
           created_at?: string | null
+          disclosed_by_admin_id?: string | null
           facility_id?: string
           id?: string
           inquiry_id?: string

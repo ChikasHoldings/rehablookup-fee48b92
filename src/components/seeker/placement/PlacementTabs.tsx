@@ -3,20 +3,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { 
   Users, 
-  CalendarDays, 
-  MessageCircle,
-  Loader2,
-  Inbox
+  HeadphonesIcon,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PlacementMatchCard } from "./PlacementMatchCard";
-import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
-import { ConciergeMessaging } from "@/components/seeker/ConciergeMessaging";
+import { AdvisorMessaging } from "./AdvisorMessaging";
 
 interface Facility {
   id: string;
@@ -40,7 +36,6 @@ export function PlacementTabs({
   inquiryId, 
   matchedFacilityIds,
   matchedFacilities,
-  onRequestTour 
 }: PlacementTabsProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -90,55 +85,40 @@ export function PlacementTabs({
     },
   });
 
-  // Tour count
-  const { data: tourCount } = useQuery({
-    queryKey: ["tour-count", inquiryId],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("concierge_tour_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("inquiry_id", inquiryId);
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!inquiryId,
-  });
-
-  // Unread message count
+  // Unread advisor message count
   const { data: unreadCount } = useQuery({
-    queryKey: ["unread-message-count", inquiryId],
+    queryKey: ["unread-advisor-count", inquiryId],
     queryFn: async () => {
-      const { data: threads, error } = await supabase
+      const { data: thread, error } = await supabase
         .from("concierge_threads")
         .select("id, last_message_at, user_last_read_at")
-        .eq("inquiry_id", inquiryId);
+        .eq("inquiry_id", inquiryId)
+        .eq("thread_type", "advisor")
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error || !thread) return 0;
       
-      let count = 0;
-      for (const thread of threads || []) {
-        if (thread.last_message_at) {
-          const lastMessage = new Date(thread.last_message_at);
-          const lastRead = thread.user_last_read_at ? new Date(thread.user_last_read_at) : null;
-          if (!lastRead || lastMessage > lastRead) count++;
-        }
+      if (thread.last_message_at) {
+        const lastMessage = new Date(thread.last_message_at);
+        const lastRead = thread.user_last_read_at ? new Date(thread.user_last_read_at) : null;
+        if (!lastRead || lastMessage > lastRead) return 1;
       }
-      return count;
+      return 0;
     },
     enabled: !!inquiryId,
   });
 
-  // Realtime subscription for threads
+  // Realtime subscription for advisor thread
   useEffect(() => {
     if (!inquiryId) return;
 
     const channel = supabase
-      .channel(`threads-${inquiryId}`)
+      .channel(`advisor-thread-${inquiryId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "concierge_threads", filter: `inquiry_id=eq.${inquiryId}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["unread-message-count", inquiryId] });
+          queryClient.invalidateQueries({ queryKey: ["unread-advisor-count", inquiryId] });
         }
       )
       .subscribe();
@@ -168,23 +148,11 @@ export function PlacementTabs({
               )}
             </TabsTrigger>
             <TabsTrigger 
-              value="tours" 
+              value="advisor" 
               className="gap-2 px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg"
             >
-              <CalendarDays className="h-4 w-4" />
-              <span>Tours</span>
-              {tourCount !== undefined && tourCount > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-background">
-                  {tourCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="messages" 
-              className="gap-2 px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>Messages</span>
+              <HeadphonesIcon className="h-4 w-4" />
+              <span>Advisor</span>
               {unreadCount !== undefined && unreadCount > 0 && (
                 <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">
                   {unreadCount}
@@ -210,14 +178,13 @@ export function PlacementTabs({
                   className="space-y-4"
                 >
                   <p className="text-sm text-muted-foreground">
-                    These treatment centers match your needs. View profiles, request tours, or message them directly.
+                    These treatment centers match your needs. Your advisor will coordinate all communication and next steps.
                   </p>
                   <div className="grid gap-4 md:grid-cols-2">
                     {visibleFacilities?.map((facility) => (
                       <PlacementMatchCard
                         key={facility.id}
                         facility={facility}
-                        onRequestTour={() => onRequestTour(facility)}
                         onDismiss={() => dismissMutation.mutate(facility.id)}
                         isDismissing={dismissMutation.isPending}
                       />
@@ -233,17 +200,9 @@ export function PlacementTabs({
               )}
             </TabsContent>
 
-            {/* Tours Tab */}
-            <TabsContent value="tours" className="m-0">
-              <ConciergeToursList inquiryId={inquiryId} />
-            </TabsContent>
-
-            {/* Messages Tab */}
-            <TabsContent value="messages" className="m-0">
-              <ConciergeMessaging 
-                inquiryId={inquiryId} 
-                matchedFacilityIds={matchedFacilityIds || []}
-              />
+            {/* Advisor Tab - ONLY communication channel */}
+            <TabsContent value="advisor" className="m-0">
+              <AdvisorMessaging inquiryId={inquiryId} />
             </TabsContent>
           </AnimatePresence>
         </CardContent>

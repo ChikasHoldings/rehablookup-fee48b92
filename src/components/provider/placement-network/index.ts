@@ -4,5 +4,3 @@ export { PlacementHowItWorks } from "./PlacementHowItWorks";
 export { PlacementBenefits } from "./PlacementBenefits";
 export { PlacementJoinCTA } from "./PlacementJoinCTA";
 export { IntroductionCard } from "./IntroductionCard";
-export { PlacementMessagesTab } from "./PlacementMessagesTab";
-export { PlacementToursTab } from "./PlacementToursTab";

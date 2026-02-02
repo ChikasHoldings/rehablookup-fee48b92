@@ -21,8 +21,6 @@ import {
   Trash2,
   ExternalLink,
   Settings,
-  MessageSquare,
-  CalendarDays,
   Globe,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -53,8 +51,6 @@ import {
   PlacementBenefits,
   PlacementJoinCTA,
   IntroductionCard,
-  PlacementMessagesTab,
-  PlacementToursTab,
 } from "@/components/provider/placement-network";
 import { InternationalCandidatesTab } from "@/components/provider/international/InternationalCandidatesTab";
 
@@ -471,7 +467,7 @@ export default function ProviderPlacementNetworkPage() {
         ) : (
           /* Opted-In View */
           <Tabs defaultValue="domestic" className="space-y-4 sm:space-y-6">
-            <TabsList className="w-full grid grid-cols-7 h-10 sm:h-11">
+            <TabsList className="w-full grid grid-cols-5 h-10 sm:h-11">
               <TabsTrigger value="domestic" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 relative font-semibold">
                 <Bell className="h-4 w-4 shrink-0" />
                 <span className="hidden lg:inline">Domestic</span>
@@ -484,14 +480,6 @@ export default function ProviderPlacementNetworkPage() {
               <TabsTrigger value="international" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 font-semibold">
                 <Globe className="h-4 w-4 shrink-0" />
                 <span className="hidden lg:inline">International</span>
-              </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
-                <MessageSquare className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Messages</span>
-              </TabsTrigger>
-              <TabsTrigger value="tours" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
-                <CalendarDays className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Tours</span>
               </TabsTrigger>
               <TabsTrigger value="profile" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
                 <Settings className="h-4 w-4 shrink-0" />
@@ -586,16 +574,6 @@ export default function ProviderPlacementNetworkPage() {
             {/* International Candidates Tab */}
             <TabsContent value="international" className="space-y-4">
               <InternationalCandidatesTab />
-            </TabsContent>
-
-            {/* Messages Tab */}
-            <TabsContent value="messages" className="space-y-4">
-              <PlacementMessagesTab facilityId={selectedFacility?.id || ""} />
-            </TabsContent>
-
-            {/* Tours Tab */}
-            <TabsContent value="tours" className="space-y-4">
-              <PlacementToursTab facilityId={selectedFacility?.id || ""} />
             </TabsContent>
 
             {/* Profile Tab */}
