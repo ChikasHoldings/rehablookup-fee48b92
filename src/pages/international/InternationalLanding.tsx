@@ -213,7 +213,7 @@ export default function InternationalLanding() {
                     "Fee Refunded on Admission",
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm font-medium text-background">
-                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
                       <span>{item}</span>
                     </div>
                   ))}
