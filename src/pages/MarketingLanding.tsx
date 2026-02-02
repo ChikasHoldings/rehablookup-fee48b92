@@ -103,10 +103,10 @@ export default function MarketingLanding() {
       <div className="min-h-screen bg-background">
         {/* Minimal Header */}
         <header className="bg-white/95 backdrop-blur-md border-b border-border/30 sticky top-0 z-50 shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex justify-center">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 py-4 flex justify-center">
             <div className="flex items-center gap-2">
-              <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
-              <span className="text-base sm:text-lg font-bold text-foreground">RehabLookup</span>
+              <Heart className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-primary shrink-0" />
+              <span className="text-base sm:text-lg md:text-xl font-bold text-foreground">RehabLookup</span>
             </div>
           </div>
         </header>
@@ -118,57 +118,57 @@ export default function MarketingLanding() {
           className="relative"
           overlayClassName="bg-gradient-to-b from-slate-900/70 via-slate-900/50 to-slate-900/80"
         >
-          <section className="py-10 sm:py-14 md:py-20 lg:py-24">
-            <div className="container mx-auto px-4 max-w-4xl">
+          <section className="py-10 sm:py-14 md:py-16 lg:py-24">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl">
               {/* Trust Badges */}
-              <div className="flex flex-wrap justify-center gap-2 mb-6 sm:mb-8">
-                <div className="flex items-center gap-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full shadow-lg">
-                  <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary flex-shrink-0" />
-                  <span className="text-[10px] sm:text-xs font-medium text-foreground">100% Confidential</span>
+              <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-6 sm:mb-8">
+                <div className="flex items-center gap-1.5 md:gap-2 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 rounded-full shadow-lg">
+                  <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-primary flex-shrink-0" />
+                  <span className="text-[10px] sm:text-xs md:text-sm font-medium text-foreground">100% Confidential</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full shadow-lg">
-                  <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-600 flex-shrink-0" />
-                  <span className="text-[10px] sm:text-xs font-medium text-foreground">Free Service</span>
+                <div className="flex items-center gap-1.5 md:gap-2 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 rounded-full shadow-lg">
+                  <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-green-600 flex-shrink-0" />
+                  <span className="text-[10px] sm:text-xs md:text-sm font-medium text-foreground">Free Service</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full shadow-lg">
-                  <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-600 flex-shrink-0" />
-                  <span className="text-[10px] sm:text-xs font-medium text-foreground">24hr Response</span>
+                <div className="flex items-center gap-1.5 md:gap-2 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 rounded-full shadow-lg">
+                  <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="text-[10px] sm:text-xs md:text-sm font-medium text-foreground">24hr Response</span>
                 </div>
               </div>
 
               {/* Headline */}
-              <div className="text-center mb-6 sm:mb-8">
+              <div className="text-center mb-6 sm:mb-8 md:mb-10">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 leading-tight tracking-tight drop-shadow-lg">
                   Find Treatment Centers{" "}
-                  <span className="block sm:inline text-primary-foreground bg-primary/90 px-2 py-0.5 rounded-md mt-1 sm:mt-0">
+                  <span className="block sm:inline text-primary-foreground bg-primary/90 px-2 md:px-3 py-0.5 md:py-1 rounded-md mt-1 sm:mt-0">
                     Near You Today
                   </span>
                 </h1>
-                <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-xl mx-auto leading-relaxed drop-shadow">
+                <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-xl md:max-w-2xl mx-auto leading-relaxed drop-shadow">
                   Answer a few quick questions and we'll match you with verified treatment programs that fit your needs.
                 </p>
               </div>
 
               {/* Stats Bar */}
-              <div className="bg-white/95 backdrop-blur-sm border border-white/20 rounded-xl p-3 sm:p-4 mb-6 sm:mb-8 shadow-xl">
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+              <div className="bg-white/95 backdrop-blur-sm border border-white/20 rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-5 mb-6 sm:mb-8 shadow-xl max-w-2xl mx-auto">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 text-center">
                   <div className="flex flex-col">
-                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary">5,000+</div>
-                    <div className="text-[9px] sm:text-xs text-muted-foreground">Verified Centers</div>
+                    <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-primary">5,000+</div>
+                    <div className="text-[9px] sm:text-xs md:text-sm text-muted-foreground">Verified Centers</div>
                   </div>
                   <div className="flex flex-col border-x border-border/50">
-                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary">50</div>
-                    <div className="text-[9px] sm:text-xs text-muted-foreground">States Covered</div>
+                    <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-primary">50</div>
+                    <div className="text-[9px] sm:text-xs md:text-sm text-muted-foreground">States Covered</div>
                   </div>
                   <div className="flex flex-col">
-                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary">24/7</div>
-                    <div className="text-[9px] sm:text-xs text-muted-foreground">Support</div>
+                    <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-primary">24/7</div>
+                    <div className="text-[9px] sm:text-xs md:text-sm text-muted-foreground">Support</div>
                   </div>
                 </div>
               </div>
 
               {/* Lead Intake Form */}
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-border/30 overflow-hidden">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-border/30 overflow-hidden max-w-2xl mx-auto">
                 <LeadIntakeForm
                   onCustomSubmit={handleMarketingSubmit}
                   renderSuccess={() => null}
@@ -179,27 +179,27 @@ export default function MarketingLanding() {
         </OptimizedBackground>
 
         {/* How It Works */}
-        <section className="py-10 sm:py-14 md:py-16 bg-gradient-to-b from-muted/30 to-background">
-          <div className="container mx-auto px-4 max-w-4xl">
-            <div className="text-center mb-6 sm:mb-10">
-              <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium mb-3">
-                <Sparkles className="h-3 w-3" />
+        <section className="py-10 sm:py-14 md:py-16 lg:py-20 bg-gradient-to-b from-muted/30 to-background">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-4xl">
+            <div className="text-center mb-6 sm:mb-10 md:mb-12">
+              <div className="inline-flex items-center gap-1.5 md:gap-2 bg-primary/10 text-primary px-3 md:px-4 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-medium mb-3 md:mb-4">
+                <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
                 Simple Process
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">How It Works</h2>
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">How It Works</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
               {[
                 { num: "1", title: "Tell Us Your Needs", desc: "Answer a few questions about your situation and preferences." },
                 { num: "2", title: "Get Matched", desc: "We'll show you verified treatment centers that match your criteria." },
                 { num: "3", title: "Connect Directly", desc: "Request info from facilities with one click — they'll reach out to you." },
               ].map((step, idx) => (
-                <div key={idx} className="group bg-white rounded-xl p-4 sm:p-5 text-center shadow-sm border border-border/30 hover:shadow-lg hover:border-primary/20 transition-all duration-300">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center mx-auto mb-3 shadow-md group-hover:scale-110 transition-transform">
-                    <span className="text-base sm:text-lg font-bold text-primary-foreground">{step.num}</span>
+                <div key={idx} className="group bg-white rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 text-center shadow-sm border border-border/30 hover:shadow-lg hover:border-primary/20 transition-all duration-300">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 shadow-md group-hover:scale-110 transition-transform">
+                    <span className="text-base sm:text-lg md:text-xl font-bold text-primary-foreground">{step.num}</span>
                   </div>
-                  <h3 className="font-semibold text-sm sm:text-base mb-1.5 text-foreground">{step.title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                  <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1.5 md:mb-2 text-foreground">{step.title}</h3>
+                  <p className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -207,46 +207,46 @@ export default function MarketingLanding() {
         </section>
 
         {/* Testimonial */}
-        <section className="py-10 sm:py-14 md:py-16 bg-gradient-to-b from-background to-muted/20">
-          <div className="container mx-auto px-4 max-w-xl">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-7 shadow-lg border border-border/30 text-center relative overflow-hidden">
+        <section className="py-10 sm:py-14 md:py-16 lg:py-20 bg-gradient-to-b from-background to-muted/20">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-xl md:max-w-2xl">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-7 md:p-8 shadow-lg border border-border/30 text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
-              <div className="flex justify-center mb-3">
+              <div className="flex justify-center mb-3 md:mb-4">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-yellow-400" />
+                  <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-yellow-400 fill-yellow-400" />
                 ))}
               </div>
-              <blockquote className="text-sm sm:text-base text-muted-foreground italic mb-3 leading-relaxed">
+              <blockquote className="text-sm sm:text-base md:text-lg text-muted-foreground italic mb-3 md:mb-4 leading-relaxed">
                 "RehabLookup made finding treatment so much easier. I was matched with several great options and got a callback within hours."
               </blockquote>
-              <p className="font-medium text-foreground text-sm">— Sarah M., California</p>
+              <p className="font-medium text-foreground text-sm md:text-base">— Sarah M., California</p>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-8 sm:py-12 bg-primary/5">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-sm sm:text-base text-muted-foreground mb-3">Ready to find the right treatment?</p>
+        <section className="py-8 sm:py-12 md:py-14 bg-primary/5">
+          <div className="container mx-auto px-4 md:px-6 text-center">
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-3 md:mb-4">Ready to find the right treatment?</p>
             <a 
               href="#" 
               onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full font-medium text-sm hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2.5 md:py-3 rounded-full font-medium text-sm md:text-base hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
             >
               Get Started Now
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
             </a>
           </div>
         </section>
 
         {/* Minimal Footer */}
-        <footer className="py-5 sm:py-6 bg-slate-900 text-white/60">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-xs">© {new Date().getFullYear()} RehabLookup. All rights reserved.</p>
-            <div className="flex justify-center gap-3 mt-2">
-              <a href="/privacy-policy" className="text-xs hover:text-white transition-colors">Privacy</a>
+        <footer className="py-5 sm:py-6 md:py-8 bg-slate-900 text-white/60">
+          <div className="container mx-auto px-4 md:px-6 text-center">
+            <p className="text-xs md:text-sm">© {new Date().getFullYear()} RehabLookup. All rights reserved.</p>
+            <div className="flex justify-center gap-3 md:gap-4 mt-2 md:mt-3">
+              <a href="/privacy-policy" className="text-xs md:text-sm hover:text-white transition-colors">Privacy</a>
               <span className="text-white/30">|</span>
-              <a href="/terms-of-service" className="text-xs hover:text-white transition-colors">Terms</a>
+              <a href="/terms-of-service" className="text-xs md:text-sm hover:text-white transition-colors">Terms</a>
             </div>
           </div>
         </footer>
