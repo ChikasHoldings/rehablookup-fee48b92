@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { InternationalPhoneInput } from "@/components/ui/international-phone-input";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Clock,
@@ -17,63 +13,76 @@ import {
   Building2,
   Plane,
   ArrowRight,
-  CheckCircle,
   Phone,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Globe,
+  Users,
+  CheckCircle2,
+  Briefcase
 } from "lucide-react";
 
-const COUNTRIES = [
-  "Canada", "United Kingdom", "Australia", "Germany", "France", "Netherlands",
-  "Ireland", "Mexico", "Brazil", "United Arab Emirates", "Saudi Arabia", "India",
-  "Japan", "South Korea", "Singapore", "Switzerland", "Sweden", "Norway", "Other"
-];
-
-const TRUST_BULLETS = [
-  { icon: Clock, text: "24-hour response" },
-  { icon: Shield, text: "Discreet admissions" },
-  { icon: Building2, text: "Cash-pay & executive programs" },
-  { icon: Plane, text: "We coordinate intake and travel timing" },
+const TRUST_FEATURES = [
+  { 
+    icon: Clock, 
+    title: "24-Hour Response",
+    description: "Dedicated placement advisors respond within one business day"
+  },
+  { 
+    icon: Shield, 
+    title: "Discreet & Confidential",
+    description: "Private coordination with no public records or exposure"
+  },
+  { 
+    icon: Building2, 
+    title: "Premium Programs",
+    description: "Access to executive, luxury, and cash-pay treatment centers"
+  },
+  { 
+    icon: Plane, 
+    title: "Travel Coordination",
+    description: "We help coordinate intake timing and travel logistics"
+  },
 ];
 
 const STEPS = [
   {
-    number: "1",
-    title: "Start your placement",
-    description: "Submit your case to our placement team",
+    number: "01",
+    title: "Submit Your Case",
+    description: "Complete a brief intake form with treatment needs and preferences",
   },
   {
-    number: "2",
-    title: "Get matched",
-    description: "We recommend best-fit centers based on budget, needs, and urgency",
+    number: "02",
+    title: "Get Matched",
+    description: "Our team identifies best-fit U.S. facilities based on your criteria",
   },
   {
-    number: "3",
-    title: "Confirm admission",
-    description: "We coordinate acceptance and intake details",
+    number: "03",
+    title: "Confirm Admission",
+    description: "We coordinate directly with the facility to secure your placement",
   },
 ];
 
 const FAQ_ITEMS = [
   {
-    question: "What does the $299 cover?",
-    answer: "The $299 placement fee covers personalized matching with vetted U.S. treatment centers, verification of availability and fit, direct coordination with facility admissions teams, and ongoing support throughout your placement process. If you are admitted, the fee is refunded or credited.",
+    question: "What does the $299 placement fee cover?",
+    answer: "The placement fee covers personalized matching with vetted U.S. treatment centers, verification of availability and clinical fit, direct coordination with facility admissions teams, and ongoing support throughout your placement process. The fee is fully refunded or credited upon confirmed admission.",
   },
   {
-    question: "Do you work with luxury and executive rehabs?",
-    answer: "Yes. We work with a network of premium treatment facilities including luxury residential programs, executive rehabs with private accommodations, and high-end clinical centers across the United States.",
+    question: "Do you work with luxury and executive programs?",
+    answer: "Yes. We maintain relationships with premium treatment facilities including luxury residential programs, executive rehabs with private accommodations, and high-end clinical centers across the United States.",
   },
   {
-    question: "Can you help if we are in Europe / Middle East / Africa?",
-    answer: "Absolutely. We serve clients from all regions including Europe, the Middle East, Africa, Asia, and the Americas. Our team is experienced in coordinating international placements and can communicate across time zones.",
+    question: "Can you help clients from Europe, Middle East, or Asia?",
+    answer: "Absolutely. We serve clients from all regions globally. Our team is experienced in coordinating international placements and communicates across time zones to ensure a seamless process.",
   },
   {
-    question: "What happens after I pay?",
-    answer: "After payment, you'll complete a brief intake form. Within 24 hours, a placement advisor will review your case and begin identifying suitable treatment options. You'll receive personalized recommendations and next steps via email or phone.",
+    question: "What happens after I pay the placement fee?",
+    answer: "After payment, you'll complete a detailed intake form. Within 24 hours, a placement advisor will review your case and begin identifying suitable treatment options. You'll receive personalized recommendations and next steps via email or phone.",
   },
   {
     question: "Is RehabLookup a treatment provider?",
-    answer: "No. RehabLookup is a placement coordination service. We help people compare treatment options and coordinate placement with independent, licensed treatment facilities. All medical decisions are made by the facilities themselves.",
+    answer: "No. RehabLookup is a placement coordination service. We help individuals and families compare treatment options and coordinate placement with independent, licensed treatment facilities. All clinical decisions are made by the facilities themselves.",
   },
 ];
 
@@ -82,42 +91,17 @@ export default function InternationalLanding() {
   const { toast } = useToast();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    countryCode: "",
-    phoneNumber: "",
-    country: "",
-  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.country) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const fullPhone = formData.countryCode && formData.phoneNumber 
-      ? `${formData.countryCode} ${formData.phoneNumber}` 
-      : "";
-
-    const submitData = {
-      name: `${formData.firstName} ${formData.lastName}`,
-      email: formData.email,
-      phone: fullPhone,
-      country: formData.country,
-    };
-
+  const handleStartPlacement = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-international-checkout", {
-        body: submitData,
+        body: {
+          name: "International Client",
+          email: "",
+          phone: "",
+          country: "International",
+        },
       });
 
       if (error) throw error;
@@ -136,15 +120,11 @@ export default function InternationalLanding() {
     }
   };
 
-  const scrollToForm = () => {
-    document.getElementById("placement-form")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <>
       <SEO
-        title="Find the Right Rehab in the United States | International Placement"
-        description="Private placement for international patients. We match you with vetted U.S. treatment centers and coordinate admission. $299 placement fee, refunded on admission."
+        title="U.S. Treatment Placement for International Clients | RehabLookup"
+        description="Private placement service for international patients seeking treatment in the United States. Vetted facilities, discreet coordination, 24-hour response."
         canonical="/international"
         keywords={["international rehab", "US addiction treatment", "global rehab placement", "travel for treatment", "executive rehab"]}
       />
@@ -154,45 +134,36 @@ export default function InternationalLanding() {
         
         <main className="flex-1">
           {/* Hero Section */}
-          <section className="bg-muted/30 border-b">
-            <div className="container mx-auto px-4 py-12 md:py-20 lg:py-24">
-              <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-                {/* Left: Content */}
+          <section className="relative bg-primary/[0.03] border-b">
+            <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32">
+              <div className="max-w-3xl mx-auto text-center">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4 }}
-                  className="max-w-xl"
                 >
-                  <h1 className="text-2xl font-bold md:text-3xl lg:text-4xl text-foreground mb-4 leading-tight">
-                    Find the Right Rehab in the United States
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+                    <Globe className="h-4 w-4" />
+                    International Placement Services
+                  </div>
+                  
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-tight tracking-tight">
+                    Access Quality Treatment in the United States
                   </h1>
                   
-                  <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed">
-                    Private placement for international patients. We match you with vetted U.S. treatment centers and coordinate admission.
+                  <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
+                    Private placement coordination for international clients. We match you with vetted U.S. treatment centers and manage the entire admissions process.
                   </p>
 
-                  {/* Trust Bullets */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                    {TRUST_BULLETS.map((item, index) => (
-                      <div key={index} className="flex items-center gap-3 text-sm text-foreground">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <item.icon className="h-4 w-4 text-primary" />
-                        </div>
-                        <span>{item.text}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* CTAs */}
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Button 
                       size="lg" 
-                      className="h-12 px-6 font-semibold"
-                      onClick={scrollToForm}
+                      className="h-12 px-8 font-semibold min-w-[200px]"
+                      onClick={handleStartPlacement}
+                      disabled={isLoading}
                     >
-                      Start Placement
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      {isLoading ? "Processing..." : "Start Placement — $299"}
+                      {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -202,180 +173,159 @@ export default function InternationalLanding() {
                     >
                       <a href="tel:+18005551234">
                         <Phone className="mr-2 h-4 w-4" />
-                        Talk to a Placement Advisor
+                        Speak with an Advisor
                       </a>
                     </Button>
                   </div>
-                </motion.div>
-
-                {/* Right: Form */}
-                <motion.div
-                  id="placement-form"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                >
-                  <Card className="border shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="mb-5">
-                        <h2 className="text-lg font-semibold text-foreground mb-1">Start Your Placement</h2>
-                        <p className="text-sm text-muted-foreground">One-time fee • Refunded on admission</p>
-                      </div>
-
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="firstName" className="text-sm">First Name *</Label>
-                            <Input
-                              id="firstName"
-                              value={formData.firstName}
-                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                              placeholder="First name"
-                              className="mt-1"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="lastName" className="text-sm">Last Name *</Label>
-                            <Input
-                              id="lastName"
-                              value={formData.lastName}
-                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                              placeholder="Last name"
-                              className="mt-1"
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="email" className="text-sm">Email *</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            placeholder="your@email.com"
-                            className="mt-1"
-                            required
-                          />
-                        </div>
-
-                        <div>
-                          <Label className="text-sm">Phone</Label>
-                          <div className="mt-1">
-                            <InternationalPhoneInput
-                              countryCode={formData.countryCode}
-                              phoneNumber={formData.phoneNumber}
-                              onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
-                              onPhoneNumberChange={(number) => setFormData({ ...formData, phoneNumber: number })}
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="country" className="text-sm">Country of Residence *</Label>
-                          <select
-                            id="country"
-                            value={formData.country}
-                            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm mt-1"
-                            required
-                          >
-                            <option value="">Select your country</option>
-                            {COUNTRIES.map((c) => (
-                              <option key={c} value={c}>{c}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <Button 
-                          type="submit" 
-                          size="lg" 
-                          className="w-full h-11 font-semibold"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? "Processing..." : (
-                            <>
-                              Start Placement
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-
-                        <p className="text-xs text-center text-muted-foreground">
-                          Fee refunded or credited upon confirmed admission
-                        </p>
-                      </form>
-                    </CardContent>
-                  </Card>
+                  
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Fee refunded upon confirmed admission
+                  </p>
                 </motion.div>
               </div>
             </div>
           </section>
 
-          {/* How It Works */}
-          <section className="py-14 md:py-20">
+          {/* Trust Features */}
+          <section className="py-16 md:py-20 border-b">
             <div className="container mx-auto px-4">
-              <div className="text-center mb-10">
-                <h2 className="text-2xl font-bold md:text-3xl text-foreground mb-3">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                {TRUST_FEATURES.map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    className="text-center p-6"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <feature.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* How It Works */}
+          <section className="py-16 md:py-24 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
                   How It Works
                 </h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Three simple steps to quality treatment in the U.S.
+                <p className="text-muted-foreground max-w-lg mx-auto">
+                  A streamlined process to connect you with the right treatment program
                 </p>
               </div>
 
-              <div className="max-w-3xl mx-auto">
-                <div className="grid md:grid-cols-3 gap-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="grid md:grid-cols-3 gap-8">
                   {STEPS.map((step, index) => (
-                    <div key={index} className="relative">
-                      <div className="flex flex-col items-center text-center p-6 bg-muted/30 rounded-lg border">
-                        <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg mb-4">
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: index * 0.15 }}
+                      className="relative"
+                    >
+                      <div className="bg-background border rounded-lg p-6">
+                        <span className="text-4xl font-bold text-primary/20 mb-4 block">
                           {step.number}
-                        </div>
+                        </span>
                         <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
-                        <p className="text-sm text-muted-foreground">{step.description}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                       </div>
                       {index < STEPS.length - 1 && (
-                        <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2">
-                          <ArrowRight className="h-5 w-5 text-muted-foreground/50" />
+                        <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                          <ArrowRight className="h-5 w-5 text-muted-foreground/40" />
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Mid-Page CTA */}
-          <section className="py-12 bg-primary/5 border-y">
-            <div className="container mx-auto px-4 text-center">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
-                Ready to find the right treatment?
-              </h2>
-              <Button 
-                size="lg" 
-                className="h-12 px-8 font-semibold"
-                onClick={scrollToForm}
-              >
-                Start Placement
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+          {/* Who We Serve */}
+          <section className="py-16 md:py-24 border-b">
+            <div className="container mx-auto px-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                      Serving Clients Worldwide
+                    </h2>
+                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                      We work with individuals and families from Europe, the Middle East, Asia, Latin America, and beyond who are seeking high-quality treatment options in the United States.
+                    </p>
+                    <ul className="space-y-3">
+                      {[
+                        "Executives requiring discreet, private programs",
+                        "Families seeking specialized clinical care",
+                        "Individuals needing dual-diagnosis treatment",
+                        "Clients looking for luxury or concierge-level care"
+                      ].map((item, index) => (
+                        <li key={index} className="flex items-start gap-3 text-sm">
+                          <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                          <span className="text-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-muted/30 border rounded-lg p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Briefcase className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">Placement Fee</p>
+                        <p className="text-2xl font-bold text-foreground">$299 <span className="text-sm font-normal text-muted-foreground">USD</span></p>
+                      </div>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Personalized facility matching
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Direct admissions coordination
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Refunded upon admission
+                      </li>
+                    </ul>
+                    <Button 
+                      className="w-full h-11 font-semibold"
+                      onClick={handleStartPlacement}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Processing..." : "Begin Placement Process"}
+                      {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
           {/* FAQ */}
-          <section className="py-14 md:py-20">
+          <section className="py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-4">
               <div className="text-center mb-10">
-                <h2 className="text-2xl font-bold md:text-3xl text-foreground mb-3">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
                   Frequently Asked Questions
                 </h2>
               </div>
 
-              <div className="max-w-2xl mx-auto space-y-3">
+              <div className="max-w-2xl mx-auto space-y-2">
                 {FAQ_ITEMS.map((item, index) => (
                   <div 
                     key={index} 
@@ -385,7 +335,7 @@ export default function InternationalLanding() {
                       onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                       className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30 transition-colors"
                     >
-                      <span className="font-medium text-foreground pr-4">{item.question}</span>
+                      <span className="font-medium text-foreground pr-4 text-[15px]">{item.question}</span>
                       {expandedFaq === index ? (
                         <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
                       ) : (
@@ -406,21 +356,22 @@ export default function InternationalLanding() {
           </section>
 
           {/* Bottom CTA */}
-          <section className="py-14 md:py-20 bg-muted/30 border-t">
+          <section className="py-16 md:py-20 border-t">
             <div className="container mx-auto px-4 text-center">
-              <h2 className="text-2xl font-bold md:text-3xl text-foreground mb-3">
-                Start Your Placement Today
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                Ready to Find the Right Program?
               </h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Get matched with vetted U.S. treatment centers within 24 hours.
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                Start your placement today and receive personalized recommendations within 24 hours.
               </p>
               <Button 
                 size="lg" 
                 className="h-12 px-8 font-semibold"
-                onClick={scrollToForm}
+                onClick={handleStartPlacement}
+                disabled={isLoading}
               >
-                Start Placement
-                <ArrowRight className="ml-2 h-4 w-4" />
+                {isLoading ? "Processing..." : "Start Placement — $299"}
+                {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
               </Button>
             </div>
           </section>
@@ -429,8 +380,8 @@ export default function InternationalLanding() {
           <section className="py-6 border-t bg-muted/20">
             <div className="container mx-auto px-4">
               <p className="text-xs text-center text-muted-foreground max-w-2xl mx-auto">
-                RehabLookup is not a treatment provider. We help people compare options and coordinate placement. 
-                All medical decisions are made by licensed professionals at partner facilities.
+                RehabLookup is not a treatment provider. We coordinate placement with independent, licensed treatment facilities. 
+                All clinical and medical decisions are made by the facilities themselves.
               </p>
             </div>
           </section>
