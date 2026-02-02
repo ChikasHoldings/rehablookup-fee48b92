@@ -39,7 +39,7 @@ const TRUST_BULLETS = [
 const STEPS = [
   {
     number: "1",
-    title: "Start placement ($299)",
+    title: "Start your placement",
     description: "Submit your case to our placement team",
   },
   {
@@ -191,7 +191,7 @@ export default function InternationalLanding() {
                       className="h-12 px-6 font-semibold"
                       onClick={scrollToForm}
                     >
-                      Start Placement – $299
+                      Start Placement
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                     <Button 
@@ -360,7 +360,7 @@ export default function InternationalLanding() {
                 className="h-12 px-8 font-semibold"
                 onClick={scrollToForm}
               >
-                Start Placement – $299
+                Start Placement
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -419,7 +419,7 @@ export default function InternationalLanding() {
                 className="h-12 px-8 font-semibold"
                 onClick={scrollToForm}
               >
-                Start Placement – $299
+                Start Placement
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
