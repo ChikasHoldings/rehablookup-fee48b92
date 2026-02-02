@@ -15,10 +15,9 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  LayoutList,
-  Users,
   Eye,
   Building2,
+  MousePointerClick,
 } from "lucide-react";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,9 +35,17 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
     return <EngagementSkeleton />;
   }
 
+  // Calculate merged "Listing Views" = impressions + profile views
+  const periodListingViews = (analytics?.periodImpressions || 0) + (analytics?.periodProfileViews || 0);
+  const totalListingViews = (analytics?.totalImpressions || 0) + (analytics?.totalProfileViews || 0);
+  
+  // Calculate growth for merged views
+  const listingViewsGrowth = analytics?.impressionGrowth !== undefined && analytics?.profileViewGrowth !== undefined
+    ? Math.round((analytics.impressionGrowth + analytics.profileViewGrowth) / 2)
+    : 0;
+
   const hasData = analytics && (
-    analytics.totalImpressions > 0 || 
-    analytics.totalProfileViews > 0 || 
+    totalListingViews > 0 || 
     analytics.totalClickToCalls > 0 || 
     analytics.totalWebsiteClicks > 0
   );
@@ -48,6 +55,23 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
   }
 
   const hasMultipleFacilities = analytics.facilityBreakdown.length > 1;
+
+  // Merge daily trends for chart
+  const mergedDailyTrends = analytics.dailyTrends.map(day => ({
+    ...day,
+    listingViews: day.impressions + day.profileViews,
+  }));
+
+  // Calculate conversion rates with merged views
+  const viewToCallRate = periodListingViews > 0 
+    ? Math.round((analytics.periodClickToCalls / periodListingViews) * 100) 
+    : 0;
+  const viewToWebsiteRate = periodListingViews > 0 
+    ? Math.round((analytics.periodWebsiteClicks / periodListingViews) * 100) 
+    : 0;
+  const totalEngagementRate = periodListingViews > 0
+    ? Math.round(((analytics.periodClickToCalls + analytics.periodWebsiteClicks) / periodListingViews) * 100)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -67,56 +91,46 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {analytics.facilityBreakdown.map((facility) => (
-                <div
-                  key={facility.facilityId}
-                  className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                >
-                  <p className="font-medium text-sm text-foreground truncate mb-2">{facility.facilityName}</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <LayoutList className="h-3 w-3 text-indigo-600" />
-                      <span className="text-muted-foreground">{facility.impressions} imp</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-3 w-3 text-purple-600" />
-                      <span className="text-muted-foreground">{facility.profileViews} views</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Phone className="h-3 w-3 text-green-600" />
-                      <span className="text-muted-foreground">{facility.clickToCalls} calls</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Globe className="h-3 w-3 text-blue-600" />
-                      <span className="text-muted-foreground">{facility.websiteClicks} clicks</span>
+              {analytics.facilityBreakdown.map((facility) => {
+                const facilityViews = facility.impressions + facility.profileViews;
+                return (
+                  <div
+                    key={facility.facilityId}
+                    className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <p className="font-medium text-sm text-foreground truncate mb-2">{facility.facilityName}</p>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <Eye className="h-3 w-3 text-primary" />
+                        <span className="text-muted-foreground">{facilityViews} views</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="h-3 w-3 text-green-600" />
+                        <span className="text-muted-foreground">{facility.clickToCalls} calls</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Globe className="h-3 w-3 text-blue-600" />
+                        <span className="text-muted-foreground">{facility.websiteClicks} clicks</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Summary Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Summary Stats - 3 KPIs */}
+      <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
-          title="Listing Impressions"
-          value={analytics.periodImpressions}
-          icon={LayoutList}
-          trend={analytics.impressionGrowth}
-          subtitle={hasMultipleFacilities ? "Across all locations" : "Times shown in search results"}
-          iconBg="bg-indigo-500/10"
-          iconColor="text-indigo-600"
-        />
-        <StatCard
-          title="Profile Views"
-          value={analytics.periodProfileViews}
-          icon={Users}
-          trend={analytics.profileViewGrowth}
-          subtitle="Unique profile page visits"
-          iconBg="bg-purple-500/10"
-          iconColor="text-purple-600"
+          title="Listing Views"
+          value={periodListingViews}
+          icon={Eye}
+          trend={listingViewsGrowth}
+          subtitle="Search impressions + profile visits"
+          iconBg="bg-primary/10"
+          iconColor="text-primary"
         />
         <StatCard
           title="Call Clicks"
@@ -139,21 +153,21 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
       </div>
 
       {/* Conversion Rates */}
-      {(analytics.periodImpressions > 0 || analytics.periodProfileViews > 0) && (
+      {periodListingViews > 0 && (
         <div className="grid gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Impression → View Rate</p>
-                  <p className="text-2xl font-bold text-foreground">{analytics.impressionToViewRate}%</p>
+                  <p className="text-xs text-muted-foreground">Total Engagement Rate</p>
+                  <p className="text-2xl font-bold text-foreground">{totalEngagementRate}%</p>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                  <Eye className="h-5 w-5 text-indigo-600" />
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <MousePointerClick className="h-5 w-5 text-primary" />
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground/70 mt-1">
-                % of impressions that led to profile views
+                % of views that led to any action
               </p>
             </CardContent>
           </Card>
@@ -162,14 +176,14 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">View → Call Rate</p>
-                  <p className="text-2xl font-bold text-foreground">{analytics.viewToCallRate}%</p>
+                  <p className="text-2xl font-bold text-foreground">{viewToCallRate}%</p>
                 </div>
                 <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
                   <Phone className="h-5 w-5 text-green-600" />
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground/70 mt-1">
-                % of profile views that led to calls
+                % of views that led to calls
               </p>
             </CardContent>
           </Card>
@@ -178,14 +192,14 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">View → Website Rate</p>
-                  <p className="text-2xl font-bold text-foreground">{analytics.viewToWebsiteRate}%</p>
+                  <p className="text-2xl font-bold text-foreground">{viewToWebsiteRate}%</p>
                 </div>
                 <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
                   <Globe className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground/70 mt-1">
-                % of profile views that clicked website
+                % of views that clicked website
               </p>
             </CardContent>
           </Card>
@@ -193,7 +207,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
       )}
 
       {/* Daily Trends Chart */}
-      {analytics.dailyTrends.length > 0 && (
+      {mergedDailyTrends.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -202,24 +216,24 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
                   <TrendingUp className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">Engagement Funnel</CardTitle>
+                  <CardTitle className="text-base">Engagement Trends</CardTitle>
                   <CardDescription className="text-xs">
-                    {hasMultipleFacilities ? "Combined daily trends" : "Daily impressions, views, and interactions"}
+                    {hasMultipleFacilities ? "Combined daily activity" : "Daily views and interactions"}
                   </CardDescription>
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
-                  <span className="text-xs text-muted-foreground">Impressions</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                  <span className="text-xs text-muted-foreground">Views</span>
+                  <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                  <span className="text-xs text-muted-foreground">Listing Views</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
                   <span className="text-xs text-muted-foreground">Calls</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                  <span className="text-xs text-muted-foreground">Website</span>
                 </div>
               </div>
             </div>
@@ -227,19 +241,19 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={analytics.dailyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={mergedDailyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="centralImpressionGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(239, 84%, 67%)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(239, 84%, 67%)" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="centralViewGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(271, 91%, 65%)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(271, 91%, 65%)" stopOpacity={0}/>
+                    <linearGradient id="listingViewsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="centralCallGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="centralWebsiteGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
@@ -270,20 +284,11 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
                   />
                   <Area 
                     type="monotone" 
-                    dataKey="impressions" 
-                    name="Impressions"
-                    stroke="hsl(239, 84%, 67%)" 
+                    dataKey="listingViews" 
+                    name="Listing Views"
+                    stroke="hsl(var(--primary))" 
                     strokeWidth={2}
-                    fill="url(#centralImpressionGradient)"
-                    dot={false}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="profileViews" 
-                    name="Profile Views"
-                    stroke="hsl(271, 91%, 65%)" 
-                    strokeWidth={2}
-                    fill="url(#centralViewGradient)"
+                    fill="url(#listingViewsGradient)"
                     dot={false}
                   />
                   <Area 
@@ -293,6 +298,15 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
                     stroke="hsl(142, 71%, 45%)" 
                     strokeWidth={2}
                     fill="url(#centralCallGradient)"
+                    dot={false}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="websiteClicks" 
+                    name="Website Clicks"
+                    stroke="hsl(217, 91%, 60%)" 
+                    strokeWidth={2}
+                    fill="url(#centralWebsiteGradient)"
                     dot={false}
                   />
                 </AreaChart>
@@ -351,8 +365,8 @@ function StatCard({ title, value, icon: Icon, trend, subtitle, iconBg, iconColor
 function EngagementSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-32" />
         ))}
       </div>
@@ -375,8 +389,8 @@ function EmptyEngagement() {
         </div>
         <h3 className="text-lg font-semibold text-foreground mb-2">No Engagement Data Yet</h3>
         <p className="text-sm text-muted-foreground max-w-md">
-          Once your listings start receiving impressions and interactions, you'll see detailed 
-          engagement analytics here including views, calls, and website clicks across all locations.
+          Once your listings start receiving views and interactions, you'll see detailed 
+          engagement analytics here including listing views, calls, and website clicks.
         </p>
       </CardContent>
     </Card>

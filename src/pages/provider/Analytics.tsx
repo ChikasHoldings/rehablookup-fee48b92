@@ -77,7 +77,7 @@ export default function ProviderAnalyticsPage() {
           <div className="min-w-0">
             <h1 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">Analytics</h1>
             <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
-              Track lead performance and engagement across all locations
+              Track listing views, inquiries, and engagement metrics
             </p>
           </div>
         </div>
