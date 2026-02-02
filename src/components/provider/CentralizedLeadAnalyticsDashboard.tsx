@@ -109,11 +109,6 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {isPro 
-                    ? "Information: $31 • Callback: $39" 
-                    : "Information: $39 • Callback: $49"}
-                </p>
               </div>
             </div>
             <div className="sm:text-right">
@@ -222,9 +217,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
               </div>
               <div>
                 <CardTitle className="text-base">Information Requests</CardTitle>
-                <CardDescription className="text-xs">
-                  {isPro ? "$31 per unlock (20% Pro discount)" : "$39 per unlock"}
-                </CardDescription>
+                <CardDescription className="text-xs">Seekers wanting more info</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -248,9 +241,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
               </div>
               <div>
                 <CardTitle className="text-base">Callback Requests</CardTitle>
-                <CardDescription className="text-xs">
-                  {isPro ? "$39 per unlock (20% Pro discount)" : "$49 per unlock"}
-                </CardDescription>
+                <CardDescription className="text-xs">Seekers wanting a call back</CardDescription>
               </div>
             </div>
           </CardHeader>
