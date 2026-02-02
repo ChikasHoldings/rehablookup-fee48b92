@@ -1,8 +1,4 @@
 import { useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
-import { Users, Clock, CheckCircle, TrendingUp, FileText, Send, MessageCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ConciergeStatsChartsProps {
@@ -11,49 +7,16 @@ interface ConciergeStatsChartsProps {
   activeStatus: string;
 }
 
-interface StatItemProps {
-  label: string;
-  value: number;
-  icon: React.ElementType;
-  status: string;
-  activeStatus: string;
-  onStatusClick: (status: string) => void;
-  variant?: "default" | "success" | "warning" | "destructive" | "accent" | "primary" | "muted";
-}
-
-function StatItem({ label, value, icon: Icon, status, activeStatus, onStatusClick, variant = "default" }: StatItemProps) {
-  const isActive = activeStatus === status;
-  
-  const variantStyles = {
-    default: "text-foreground",
-    success: "text-success",
-    warning: "text-warning",
-    destructive: "text-destructive",
-    accent: "text-accent",
-    primary: "text-primary",
-    muted: "text-muted-foreground",
-  };
-
-  return (
-    <button
-      onClick={() => onStatusClick(status)}
-      className={cn(
-        "flex flex-col items-center justify-center p-2.5 rounded-lg transition-all text-center min-w-[70px]",
-        isActive 
-          ? "bg-accent/10 ring-1 ring-accent" 
-          : "hover:bg-muted/50"
-      )}
-    >
-      <Icon className={cn("h-3.5 w-3.5 mb-0.5", variantStyles[variant])} />
-      <span className={cn("text-lg font-semibold tabular-nums", variantStyles[variant])}>
-        {value}
-      </span>
-      <span className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium leading-tight">
-        {label}
-      </span>
-    </button>
-  );
-}
+const PIPELINE_STAGES = [
+  { key: "new", label: "New", color: "bg-primary" },
+  { key: "reviewing", label: "Reviewing", color: "bg-info" },
+  { key: "matching", label: "Matching", color: "bg-warning" },
+  { key: "matched", label: "Matched", color: "bg-accent" },
+  { key: "introductions_sent", label: "Intros Sent", color: "bg-primary" },
+  { key: "in_contact", label: "In Contact", color: "bg-info" },
+  { key: "placed", label: "Placed", color: "bg-success" },
+  { key: "closed", label: "Closed", color: "bg-muted-foreground" },
+];
 
 export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: ConciergeStatsChartsProps) {
   const totalCases = useMemo(() => {
@@ -67,161 +30,83 @@ export function ConciergeStatsCharts({ stats, onStatusClick, activeStatus }: Con
            (stats.matched || 0) + (stats.introductions_sent || 0) + (stats.in_contact || 0);
   }, [stats]);
 
+  const placedCount = stats?.placed || 0;
+  const closedCount = stats?.closed || 0;
+
   const placementRate = useMemo(() => {
-    if (!stats) return 0;
-    const closedAndPlaced = (stats.placed || 0) + (stats.closed || 0);
+    const closedAndPlaced = placedCount + closedCount;
     if (closedAndPlaced === 0) return 0;
-    return Math.round((stats.placed || 0) / closedAndPlaced * 100);
-  }, [stats]);
-
-  const barData = useMemo(() => {
-    if (!stats) return [];
-    return [
-      { name: "New", value: stats.new || 0, fill: "hsl(var(--primary))" },
-      { name: "Reviewing", value: stats.reviewing || 0, fill: "hsl(var(--accent))" },
-      { name: "Matching", value: stats.matching || 0, fill: "hsl(var(--warning))" },
-      { name: "Matched", value: stats.matched || 0, fill: "hsl(var(--accent))" },
-      { name: "Intros", value: stats.introductions_sent || 0, fill: "hsl(var(--primary))" },
-      { name: "Contact", value: stats.in_contact || 0, fill: "hsl(var(--accent))" },
-      { name: "Placed", value: stats.placed || 0, fill: "hsl(var(--success))" },
-      { name: "Closed", value: stats.closed || 0, fill: "hsl(var(--muted-foreground))" },
-    ];
-  }, [stats]);
-
-  const chartConfig: ChartConfig = {
-    value: { label: "Cases" },
-  };
+    return Math.round(placedCount / closedAndPlaced * 100);
+  }, [placedCount, closedCount]);
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex flex-col xl:flex-row xl:items-center gap-4">
-          {/* Summary Stats */}
-          <div className="flex items-center gap-1">
-            <StatItem
-              label="Total"
-              value={totalCases}
-              icon={Users}
-              status="all"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="default"
-            />
-            <div className="flex flex-col items-center justify-center p-2.5 rounded-lg text-center min-w-[70px] bg-warning/10">
-              <Clock className="h-3.5 w-3.5 mb-0.5 text-warning" />
-              <span className="text-lg font-semibold tabular-nums text-warning">
-                {activeCases}
-              </span>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium leading-tight">
-                Active
-              </span>
-            </div>
+    <div className="bg-card border rounded-lg">
+      {/* Summary Row */}
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => onStatusClick("all")}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors",
+              activeStatus === "all" ? "bg-primary/10 text-primary" : "hover:bg-muted"
+            )}
+          >
+            <span className="text-2xl font-bold tabular-nums">{totalCases}</span>
+            <span className="text-sm text-muted-foreground">Total Cases</span>
+          </button>
+          
+          <div className="h-6 w-px bg-border" />
+          
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+            <span className="text-lg font-semibold tabular-nums">{activeCases}</span>
+            <span className="text-sm text-muted-foreground">Active</span>
           </div>
-
-          <div className="w-px h-10 bg-border hidden xl:block" />
-
-          {/* Pipeline Stages */}
-          <div className="flex items-center gap-1 flex-wrap">
-            <StatItem
-              label="New"
-              value={stats?.new || 0}
-              icon={FileText}
-              status="new"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="primary"
-            />
-            <StatItem
-              label="Reviewing"
-              value={stats?.reviewing || 0}
-              icon={Clock}
-              status="reviewing"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="accent"
-            />
-            <StatItem
-              label="Matching"
-              value={stats?.matching || 0}
-              icon={Users}
-              status="matching"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="warning"
-            />
-            <StatItem
-              label="Matched"
-              value={stats?.matched || 0}
-              icon={CheckCircle}
-              status="matched"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="accent"
-            />
-            <StatItem
-              label="Intros"
-              value={stats?.introductions_sent || 0}
-              icon={Send}
-              status="introductions_sent"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="primary"
-            />
-            <StatItem
-              label="Contact"
-              value={stats?.in_contact || 0}
-              icon={MessageCircle}
-              status="in_contact"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="accent"
-            />
-            <StatItem
-              label="Placed"
-              value={stats?.placed || 0}
-              icon={CheckCircle}
-              status="placed"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="success"
-            />
-            <StatItem
-              label="Closed"
-              value={stats?.closed || 0}
-              icon={XCircle}
-              status="closed"
-              activeStatus={activeStatus}
-              onStatusClick={onStatusClick}
-              variant="muted"
-            />
-          </div>
-
-          {/* Placement Rate & Mini Chart */}
-          <div className="flex items-center gap-4 xl:ml-auto">
-            <div className="flex items-center gap-2 text-sm">
-              <TrendingUp className="h-4 w-4 text-success" />
-              <span className="text-muted-foreground">Placement Rate:</span>
-              <span className="font-semibold text-success">{placementRate}%</span>
-            </div>
-
-            {/* Mini Bar Chart */}
-            <div className="w-[180px] h-[50px] hidden 2xl:block">
-              <ChartContainer config={chartConfig} className="h-full w-full">
-                <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" hide />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" radius={[0, 2, 2, 0]} barSize={5}>
-                    {barData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            </div>
+          
+          <div className="h-6 w-px bg-border" />
+          
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-semibold tabular-nums text-success">{placementRate}%</span>
+            <span className="text-sm text-muted-foreground">Placement Rate</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-success" />
+            {placedCount} placed
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-muted-foreground" />
+            {closedCount} closed
+          </span>
+        </div>
+      </div>
+
+      {/* Pipeline Stages */}
+      <div className="flex items-center gap-1 p-2 overflow-x-auto">
+        {PIPELINE_STAGES.map((stage) => {
+          const count = stats?.[stage.key] || 0;
+          const isActive = activeStatus === stage.key;
+          
+          return (
+            <button
+              key={stage.key}
+              onClick={() => onStatusClick(stage.key)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-md transition-all min-w-fit",
+                isActive 
+                  ? "bg-accent text-accent-foreground shadow-sm" 
+                  : "hover:bg-muted"
+              )}
+            >
+              <span className={cn("h-2 w-2 rounded-full shrink-0", stage.color)} />
+              <span className="font-medium tabular-nums">{count}</span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">{stage.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

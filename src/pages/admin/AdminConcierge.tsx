@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, RefreshCw, Users, UserCheck } from "lucide-react";
+import { Search, RefreshCw, UserCheck, HeartHandshake } from "lucide-react";
 import { format } from "date-fns";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
 import { ConciergeStatsCharts } from "@/components/admin/ConciergeStatsCharts";
@@ -93,45 +93,48 @@ export default function AdminConcierge() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Concierge Cases</h1>
-          <p className="text-muted-foreground">Manage placement inquiries and matching</p>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <HeartHandshake className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Concierge Cases</h1>
+            <p className="text-sm text-muted-foreground">Manage placement inquiries and facility matching</p>
+          </div>
         </div>
-        <Button variant="outline" onClick={() => refetch()}>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
-      {/* Interactive Stats Charts */}
+      {/* Pipeline Stats */}
       <ConciergeStatsCharts 
         stats={stats} 
         onStatusClick={handleStatusClick}
         activeStatus={statusFilter}
       />
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, email, or phone..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 max-w-md"
-        />
-      </div>
-
-      {/* Cases Table */}
+      {/* Search & Table */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Cases ({filteredCases?.length || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, email, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-[300px]"
+            />
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {filteredCases?.length || 0} cases
+          </span>
+        </div>
+        <div className="p-4">
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : filteredCases?.length === 0 ? (
@@ -190,7 +193,7 @@ export default function AdminConcierge() {
               </table>
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       {/* Detail Sheet */}
