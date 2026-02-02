@@ -206,10 +206,10 @@ export default function InternationalLanding() {
               <div className="container mx-auto px-6 lg:px-8 py-4">
                 <div className="flex flex-wrap justify-center gap-x-10 gap-y-2">
                   {[
-                    "200+ Vetted Luxury Programs",
+                    "Vetted Luxury Programs",
                     "Immediate Admission",
                     "Complete Privacy",
-                    "Fee Refunded on Admission",
+                    "Money-Back Guarantee",
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm font-medium text-background">
                       <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
