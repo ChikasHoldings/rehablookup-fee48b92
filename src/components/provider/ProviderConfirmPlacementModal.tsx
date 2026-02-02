@@ -83,7 +83,7 @@ export function ProviderConfirmPlacementModal({
         });
       } else {
         toast.success("Confirmation recorded", {
-          description: "Waiting for patient to confirm admission.",
+          description: "Waiting for individual to confirm admission.",
         });
       }
       queryClient.invalidateQueries({ queryKey: ["placement-introductions"] });
@@ -157,15 +157,15 @@ export function ProviderConfirmPlacementModal({
             </p>
           </div>
 
-          {/* Patient confirmation status */}
+          {/* Individual confirmation status */}
           {inquiry.seeker_confirmed ? (
             <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg p-3">
               <CheckCircle2 className="h-4 w-4" />
-              Patient has confirmed admission
+              Individual has confirmed admission
             </div>
           ) : (
             <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
-              Patient has not yet confirmed admission. Once both parties confirm, the placement will be finalized.
+              Individual has not yet confirmed admission. Once both parties confirm, the placement will be finalized.
             </div>
           )}
 
