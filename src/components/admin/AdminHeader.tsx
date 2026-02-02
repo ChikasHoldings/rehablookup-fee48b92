@@ -515,39 +515,42 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
               <ScrollArea className="h-[300px]">
                 {sortedNotifications.length > 0 ? (
                   <div className="py-2">
-                    {sortedNotifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        onClick={() => handleNotificationClick(notification)}
-                        className={`flex items-start gap-3 px-4 py-3 hover:bg-muted cursor-pointer transition-colors ${
-                          notification.type === "provider" || notification.type === "lead" || notification.isUnread
-                            ? "bg-muted/50"
-                            : ""
-                        }`}
-                      >
-                        <div className="mt-0.5">
-                          {getNotificationIcon(notification.type)}
+                    {sortedNotifications.map((notification) => {
+                      // For user notifications, use isUnread state
+                      // For system notifications (pending/leads), always show as active since they're action items
+                      const isUserNotification = notification.id.startsWith("user-");
+                      const showAsActive = isUserNotification 
+                        ? notification.isUnread 
+                        : (notification.type === "provider" || notification.type === "lead");
+                      
+                      return (
+                        <div
+                          key={notification.id}
+                          onClick={() => handleNotificationClick(notification)}
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-muted cursor-pointer transition-colors ${
+                            showAsActive ? "bg-muted/50" : ""
+                          }`}
+                        >
+                          <div className="mt-0.5">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm ${showAsActive ? "font-medium" : ""}`}>
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {notification.time}
+                            </p>
+                          </div>
+                          {showAsActive && (
+                            <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${
-                            notification.type === "provider" || notification.type === "lead" || notification.isUnread
-                              ? "font-medium"
-                              : ""
-                          }`}>
-                            {notification.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {notification.time}
-                          </p>
-                        </div>
-                        {(notification.type === "provider" || notification.type === "lead" || notification.isUnread) && (
-                          <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="py-8 text-center text-muted-foreground">
