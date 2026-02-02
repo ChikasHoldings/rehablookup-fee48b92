@@ -422,6 +422,7 @@ export type Database = {
           alternative_contact_phone: string | null
           amenity_preferences: Json | null
           assessment_preference: string | null
+          assigned_advisor_id: string | null
           benefits_verified: boolean | null
           best_time_to_call: string | null
           budget_range: string | null
@@ -508,6 +509,7 @@ export type Database = {
           alternative_contact_phone?: string | null
           amenity_preferences?: Json | null
           assessment_preference?: string | null
+          assigned_advisor_id?: string | null
           benefits_verified?: boolean | null
           best_time_to_call?: string | null
           budget_range?: string | null
@@ -594,6 +596,7 @@ export type Database = {
           alternative_contact_phone?: string | null
           amenity_preferences?: Json | null
           assessment_preference?: string | null
+          assigned_advisor_id?: string | null
           benefits_verified?: boolean | null
           best_time_to_call?: string | null
           budget_range?: string | null
@@ -673,6 +676,13 @@ export type Database = {
           willing_to_travel?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "concierge_inquiries_assigned_advisor_id_fkey"
+            columns: ["assigned_advisor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_user_profiles"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "concierge_inquiries_placed_facility_id_fkey"
             columns: ["placed_facility_id"]
