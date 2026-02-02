@@ -1979,6 +1979,38 @@ export type Database = {
           },
         ]
       }
+      international_case_notes: {
+        Row: {
+          admin_id: string
+          case_id: string
+          content: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          admin_id: string
+          case_id: string
+          content: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          admin_id?: string
+          case_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "international_case_notes_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "international_placement_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       international_facility_invoices: {
         Row: {
           amount_cents: number
