@@ -49,12 +49,25 @@ serve(async (req) => {
 
     logStep("Payment verified", { paymentStatus: session.payment_status });
 
-    // Extract metadata
-    const metadata = session.metadata || {};
-    const clientName = metadata.client_name || intakeData?.name || "";
-    const clientEmail = metadata.client_email || session.customer_email || intakeData?.email || "";
-    const clientPhone = metadata.client_phone || intakeData?.phone || "";
-    const clientCountry = metadata.client_country || intakeData?.country || "";
+    // Extract data from intake
+    const clientName = intakeData?.firstName && intakeData?.lastName 
+      ? `${intakeData.firstName} ${intakeData.lastName}`.trim()
+      : session.metadata?.client_name || "";
+    const clientEmail = intakeData?.email || session.customer_email || session.metadata?.client_email || "";
+    const clientPhone = intakeData?.phone || session.metadata?.client_phone || "";
+    const clientCountry = intakeData?.country || session.metadata?.client_country || "";
+    const preferredLanguage = intakeData?.preferredLanguage || "English";
+
+    // Get user from auth header if available
+    let userId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) {
+        userId = user.id;
+      }
+    }
 
     // Check if case already exists for this session
     const { data: existingCase } = await supabase
@@ -69,13 +82,32 @@ serve(async (req) => {
       const { error: updateError } = await supabase
         .from("international_placement_cases")
         .update({
+          client_name: clientName,
+          client_email: clientEmail,
+          client_phone: clientPhone,
+          client_country: clientCountry,
+          preferred_language: preferredLanguage,
           intake_data: intakeData || {},
           intake_submitted_at: new Date().toISOString(),
-          status: "reviewing",
+          status: "in_review",
+          user_id: userId || undefined,
         })
         .eq("id", existingCase.id);
 
       if (updateError) throw updateError;
+
+      // Log event
+      await supabase.from("international_case_events").insert({
+        case_id: existingCase.id,
+        event_type: "intake_submitted",
+        actor_id: userId,
+        actor_type: userId ? "client" : "system",
+        event_data: { 
+          intake_submitted: true,
+          primary_concern: intakeData?.primaryConcern,
+          urgency: intakeData?.urgency,
+        },
+      });
 
       return new Response(
         JSON.stringify({ success: true, caseId: existingCase.id }),
@@ -92,17 +124,20 @@ serve(async (req) => {
     const { data: newCase, error: insertError } = await supabase
       .from("international_placement_cases")
       .insert({
+        user_id: userId,
         client_name: clientName,
         client_email: clientEmail,
         client_phone: clientPhone,
         client_country: clientCountry,
+        preferred_language: preferredLanguage,
         payment_status: "paid",
         payment_amount_cents: 29900,
         stripe_checkout_session_id: sessionId,
         stripe_payment_intent_id: session.payment_intent as string,
         intake_data: intakeData || {},
         intake_submitted_at: new Date().toISOString(),
-        status: "reviewing",
+        status: "in_review",
+        priority: "normal",
       })
       .select("id")
       .single();
@@ -115,10 +150,25 @@ serve(async (req) => {
     await supabase.from("international_case_events").insert({
       case_id: newCase.id,
       event_type: "case_created",
-      actor_type: "client",
+      actor_id: userId,
+      actor_type: userId ? "client" : "system",
       event_data: { 
         payment_verified: true,
-        intake_submitted: !!intakeData 
+        intake_submitted: true,
+        primary_concern: intakeData?.primaryConcern,
+        urgency: intakeData?.urgency,
+      },
+    });
+
+    // Create admin notification
+    await supabase.from("admin_notifications").insert({
+      type: "international_case",
+      title: "New International Placement Case",
+      message: `New placement case from ${clientName} (${clientCountry}). Primary concern: ${intakeData?.primaryConcern || "Not specified"}`,
+      metadata: {
+        case_id: newCase.id,
+        client_country: clientCountry,
+        urgency: intakeData?.urgency,
       },
     });
 

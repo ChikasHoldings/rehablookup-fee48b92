@@ -1987,7 +1987,10 @@ export type Database = {
           due_date: string | null
           facility_id: string
           id: string
+          issued_at: string | null
+          issued_by: string | null
           paid_at: string | null
+          provider_id: string | null
           sent_at: string | null
           sent_by: string | null
           status: string
@@ -2005,7 +2008,10 @@ export type Database = {
           due_date?: string | null
           facility_id: string
           id?: string
+          issued_at?: string | null
+          issued_by?: string | null
           paid_at?: string | null
+          provider_id?: string | null
           sent_at?: string | null
           sent_by?: string | null
           status?: string
@@ -2023,7 +2029,10 @@ export type Database = {
           due_date?: string | null
           facility_id?: string
           id?: string
+          issued_at?: string | null
+          issued_by?: string | null
           paid_at?: string | null
+          provider_id?: string | null
           sent_at?: string | null
           sent_by?: string | null
           status?: string
@@ -2125,9 +2134,12 @@ export type Database = {
           id: string
           intake_data: Json
           intake_submitted_at: string | null
+          international_payment_id: string | null
           matched_facility_ids: string[] | null
           payment_amount_cents: number
           payment_status: string
+          preferred_language: string | null
+          priority: string | null
           refund_type: string | null
           refunded_at: string | null
           refunded_by: string | null
@@ -2155,9 +2167,12 @@ export type Database = {
           id?: string
           intake_data?: Json
           intake_submitted_at?: string | null
+          international_payment_id?: string | null
           matched_facility_ids?: string[] | null
           payment_amount_cents?: number
           payment_status?: string
+          preferred_language?: string | null
+          priority?: string | null
           refund_type?: string | null
           refunded_at?: string | null
           refunded_by?: string | null
@@ -2185,9 +2200,12 @@ export type Database = {
           id?: string
           intake_data?: Json
           intake_submitted_at?: string | null
+          international_payment_id?: string | null
           matched_facility_ids?: string[] | null
           payment_amount_cents?: number
           payment_status?: string
+          preferred_language?: string | null
+          priority?: string | null
           refund_type?: string | null
           refunded_at?: string | null
           refunded_by?: string | null

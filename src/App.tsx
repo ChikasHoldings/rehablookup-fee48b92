@@ -102,6 +102,7 @@ const SeekerFacilityProfile = lazy(() => import("./pages/seeker/SeekerFacilityPr
 const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
 const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
+const SeekerInternationalCase = lazy(() => import("./pages/seeker/SeekerInternationalCase"));
 
 // Near Me SEO Pages - lazy load
 const DrugRehabNearMe = lazy(() => import("./pages/near-me/DrugRehabNearMe"));
@@ -333,6 +334,7 @@ const App = () => (
               <Route path="help" element={<SeekerHelp />} />
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
+              <Route path="international" element={<SeekerInternationalCase />} />
             </Route>
             
             {/* Legacy /my-account redirect */}
