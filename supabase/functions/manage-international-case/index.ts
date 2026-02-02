@@ -416,6 +416,108 @@ serve(async (req) => {
         );
       }
 
+      case "add_note": {
+        const { content } = data;
+        
+        if (!content || content.trim().length === 0) {
+          throw new Error("Note content is required");
+        }
+
+        const { data: note, error } = await supabase
+          .from("international_case_notes")
+          .insert({
+            case_id: caseId,
+            admin_id: user.id,
+            content: content.trim(),
+          })
+          .select("id, created_at")
+          .single();
+
+        if (error) throw error;
+
+        await supabase.from("international_case_events").insert({
+          case_id: caseId,
+          event_type: "note_added",
+          actor_id: user.id,
+          actor_type: "admin",
+          event_data: { note_id: note.id },
+        });
+
+        return new Response(
+          JSON.stringify({ success: true, noteId: note.id }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "invite_facilities": {
+        const { facilityIds } = data;
+        
+        // Get case info
+        const { data: caseData, error: caseError } = await supabase
+          .from("international_placement_cases")
+          .select("client_name, client_country, intake_data")
+          .eq("id", caseId)
+          .single();
+
+        if (caseError || !caseData) throw new Error("Case not found");
+
+        // Update case with matched facilities
+        const { error } = await supabase
+          .from("international_placement_cases")
+          .update({ 
+            matched_facility_ids: facilityIds,
+            status: "introductions_sent",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", caseId);
+
+        if (error) throw error;
+
+        await supabase.from("international_case_events").insert({
+          case_id: caseId,
+          event_type: "facilities_invited",
+          actor_id: user.id,
+          actor_type: "admin",
+          event_data: { 
+            facility_ids: facilityIds,
+            count: facilityIds.length,
+          },
+        });
+
+        return new Response(
+          JSON.stringify({ success: true, invitedCount: facilityIds.length }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "mark_facility_accepted": {
+        const { facilityId } = data;
+        
+        const { error } = await supabase
+          .from("international_placement_cases")
+          .update({ 
+            accepted_facility_id: facilityId,
+            status: "in_contact",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", caseId);
+
+        if (error) throw error;
+
+        await supabase.from("international_case_events").insert({
+          case_id: caseId,
+          event_type: "facility_accepted",
+          actor_id: user.id,
+          actor_type: "admin",
+          event_data: { facility_id: facilityId },
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }

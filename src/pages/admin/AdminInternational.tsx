@@ -7,22 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search,
@@ -35,24 +25,23 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  ArrowRight,
-  Loader2,
   CreditCard,
-  XCircle,
+  Filter,
 } from "lucide-react";
 import { format } from "date-fns";
+import { InternationalCaseDetailSheet } from "@/components/admin/international/InternationalCaseDetailSheet";
 
 type CaseStatus = 'new' | 'reviewing' | 'matching' | 'matched' | 'introductions_sent' | 'in_contact' | 'admitted' | 'closed' | 'all';
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ElementType }> = {
-  new: { label: "New", variant: "default", icon: AlertCircle },
-  reviewing: { label: "Reviewing", variant: "secondary", icon: Clock },
-  matching: { label: "Matching", variant: "secondary", icon: Search },
-  matched: { label: "Matched", variant: "outline", icon: CheckCircle },
-  introductions_sent: { label: "Intros Sent", variant: "outline", icon: ArrowRight },
-  in_contact: { label: "In Contact", variant: "secondary", icon: Users },
-  admitted: { label: "Admitted", variant: "default", icon: Building2 },
-  closed: { label: "Closed", variant: "destructive", icon: XCircle },
+const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  new: { label: "New", variant: "default" },
+  reviewing: { label: "Reviewing", variant: "secondary" },
+  matching: { label: "Matching", variant: "secondary" },
+  matched: { label: "Matched", variant: "outline" },
+  introductions_sent: { label: "Intros Sent", variant: "outline" },
+  in_contact: { label: "In Contact", variant: "secondary" },
+  admitted: { label: "Admitted", variant: "default" },
+  closed: { label: "Closed", variant: "destructive" },
 };
 
 const INVOICE_STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -63,11 +52,16 @@ const INVOICE_STATUS_CONFIG: Record<string, { label: string; variant: "default" 
   waived: { label: "Waived", variant: "secondary" },
 };
 
+const URGENCY_OPTIONS = ["immediate", "1-2 weeks", "30 days", "flexible"];
+const BUDGET_OPTIONS = ["<10k", "10-25k", "25-50k", "50-100k", "100k+"];
+const STYLE_OPTIONS = ["standard", "luxury", "executive", "discreet_vip"];
+
 interface InternationalCase {
   id: string;
+  user_id: string | null;
   client_name: string;
   client_email: string;
-  client_phone: string;
+  client_phone: string | null;
   client_country: string;
   status: string;
   payment_status: string;
@@ -80,9 +74,12 @@ interface InternationalCase {
   matched_facility_ids: string[] | null;
   accepted_facility_id: string | null;
   admission_confirmed_at: string | null;
-  facility_fee_cents: number | null;
+  facility_fee_cents: number;
   facility_fee_status: string | null;
+  preferred_language: string | null;
+  priority: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 interface InternationalInvoice {
@@ -104,15 +101,31 @@ export default function AdminInternational() {
   const [activeTab, setActiveTab] = useState("cases");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
+  const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+  const [budgetFilter, setBudgetFilter] = useState<string>("all");
+  const [styleFilter, setStyleFilter] = useState<string>("all");
+  const [advisorFilter, setAdvisorFilter] = useState<string>("all");
   const [selectedCase, setSelectedCase] = useState<InternationalCase | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [actionDialog, setActionDialog] = useState<{ type: string; caseId?: string; invoiceId?: string } | null>(null);
-  const [actionNotes, setActionNotes] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [refundType, setRefundType] = useState<"refunded" | "credited">("refunded");
+  const [waiveDialogInvoice, setWaiveDialogInvoice] = useState<string | null>(null);
+  const [waiveReason, setWaiveReason] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch admin staff for advisor filter
+  const { data: adminStaff } = useQuery({
+    queryKey: ["admin-staff-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("admin_user_profiles")
+        .select("user_id, first_name, last_name, display_name, admin_role")
+        .in("admin_role", ["super_admin", "manager", "advisor"])
+        .eq("status", "active");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Fetch cases
   const { data: cases, isLoading: casesLoading, refetch: refetchCases } = useQuery({
@@ -192,73 +205,89 @@ export default function AdminInternational() {
     },
   });
 
-  // Manage case mutation
-  const manageCaseMutation = useMutation({
-    mutationFn: async ({ action, caseId, data }: { action: string; caseId?: string; data?: Record<string, unknown> }) => {
-      const { data: result, error } = await supabase.functions.invoke("manage-international-case", {
-        body: { action, caseId, data },
+  // Invoice mutation
+  const invoiceMutation = useMutation({
+    mutationFn: async ({ action, invoiceId, reason }: { action: string; invoiceId: string; reason?: string }) => {
+      const { data, error } = await supabase.functions.invoke("manage-international-case", {
+        body: { 
+          action: action === "charge" ? "charge_facility_invoice" : "waive_facility_invoice",
+          data: { invoiceId, reason }
+        },
       });
       if (error) throw error;
-      return result;
+      return data;
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Action completed successfully." });
-      queryClient.invalidateQueries({ queryKey: ["admin-international-cases"] });
+      toast({ title: "Success", description: "Invoice updated successfully." });
       queryClient.invalidateQueries({ queryKey: ["admin-international-invoices"] });
       queryClient.invalidateQueries({ queryKey: ["admin-international-stats"] });
-      setActionDialog(null);
-      setDetailOpen(false);
+      setWaiveDialogInvoice(null);
+      setWaiveReason("");
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Action failed",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Action failed", variant: "destructive" });
     },
   });
 
+  // Filter cases based on all filters
   const filteredCases = cases?.filter((c) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      c.client_name?.toLowerCase().includes(q) ||
-      c.client_email?.toLowerCase().includes(q) ||
-      c.client_country?.toLowerCase().includes(q)
-    );
+    // Text search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matches = 
+        c.client_name?.toLowerCase().includes(q) ||
+        c.client_email?.toLowerCase().includes(q) ||
+        c.client_country?.toLowerCase().includes(q);
+      if (!matches) return false;
+    }
+    
+    // Urgency filter
+    if (urgencyFilter !== "all") {
+      const caseUrgency = (c.intake_data?.urgency as string)?.toLowerCase();
+      if (caseUrgency !== urgencyFilter.toLowerCase()) return false;
+    }
+    
+    // Budget filter
+    if (budgetFilter !== "all") {
+      const caseBudget = c.intake_data?.budget_range as string;
+      if (caseBudget !== budgetFilter) return false;
+    }
+    
+    // Style/VIP filter
+    if (styleFilter !== "all") {
+      const caseStyle = c.intake_data?.rehab_style as string;
+      if (caseStyle !== styleFilter) return false;
+    }
+    
+    // Advisor filter
+    if (advisorFilter !== "all") {
+      if (advisorFilter === "unassigned") {
+        if (c.assigned_advisor_id) return false;
+      } else {
+        if (c.assigned_advisor_id !== advisorFilter) return false;
+      }
+    }
+    
+    return true;
   });
 
-  const handleStatusChange = () => {
-    if (!selectedCase || !selectedStatus) return;
-    manageCaseMutation.mutate({
-      action: "update_status",
-      caseId: selectedCase.id,
-      data: { status: selectedStatus, notes: actionNotes },
-    });
+  const getAdvisorName = (advisorId: string | null) => {
+    if (!advisorId) return "Unassigned";
+    const advisor = adminStaff?.find(a => a.user_id === advisorId);
+    return advisor ? (advisor.display_name || `${advisor.first_name} ${advisor.last_name}`) : "Unknown";
   };
 
-  const handleRefundCredit = () => {
-    if (!selectedCase) return;
-    manageCaseMutation.mutate({
-      action: "refund_client_fee",
-      caseId: selectedCase.id,
-      data: { refundType },
-    });
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setUrgencyFilter("all");
+    setBudgetFilter("all");
+    setStyleFilter("all");
+    setAdvisorFilter("all");
   };
 
-  const handleChargeInvoice = (invoiceId: string) => {
-    manageCaseMutation.mutate({
-      action: "charge_facility_invoice",
-      data: { invoiceId },
-    });
-  };
-
-  const handleWaiveInvoice = (invoiceId: string) => {
-    manageCaseMutation.mutate({
-      action: "waive_facility_invoice",
-      data: { invoiceId, reason: actionNotes },
-    });
-  };
+  const hasActiveFilters = statusFilter !== "all" || urgencyFilter !== "all" || 
+    budgetFilter !== "all" || styleFilter !== "all" || advisorFilter !== "all" || searchQuery;
 
   return (
     <div className="space-y-5">
@@ -289,8 +318,8 @@ export default function AdminInternational() {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3">
-            <div className="text-2xl font-bold">{stats?.reviewing || 0}</div>
-            <p className="text-xs text-muted-foreground">In Review</p>
+            <div className="text-2xl font-bold">{(stats?.reviewing || 0) + (stats?.matching || 0)}</div>
+            <p className="text-xs text-muted-foreground">In Progress</p>
           </CardContent>
         </Card>
         <Card>
@@ -333,20 +362,21 @@ export default function AdminInternational() {
         {/* Cases Tab */}
         <TabsContent value="cases" className="space-y-4">
           <Card>
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="flex items-center gap-4">
-                <div className="relative">
+            {/* Filters Bar */}
+            <div className="p-4 border-b space-y-3">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search by name, email, country..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-[280px]"
+                    className="pl-10"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as CaseStatus)}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="All statuses" />
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
@@ -355,11 +385,68 @@ export default function AdminInternational() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Urgency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Urgency</SelectItem>
+                    {URGENCY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={budgetFilter} onValueChange={setBudgetFilter}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Budget" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Budgets</SelectItem>
+                    {BUDGET_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={styleFilter} onValueChange={setStyleFilter}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="VIP Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Styles</SelectItem>
+                    {STYLE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt.replace("_", " ")}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={advisorFilter} onValueChange={setAdvisorFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Advisor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Advisors</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {adminStaff?.map((staff) => (
+                      <SelectItem key={staff.user_id} value={staff.user_id}>
+                        {staff.display_name || `${staff.first_name} ${staff.last_name}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <span className="text-sm text-muted-foreground">
-                {filteredCases?.length || 0} cases
-              </span>
+              {hasActiveFilters && (
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {filteredCases?.length || 0} of {cases?.length || 0} cases
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="ml-2 h-7 text-xs">
+                    Clear filters
+                  </Button>
+                </div>
+              )}
             </div>
+
+            {/* Cases Table */}
             <div className="p-4">
               {casesLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading...</div>
@@ -372,9 +459,11 @@ export default function AdminInternational() {
                       <tr className="border-b text-left text-sm text-muted-foreground">
                         <th className="pb-3 font-medium">Client</th>
                         <th className="pb-3 font-medium">Country</th>
-                        <th className="pb-3 font-medium">Payment</th>
+                        <th className="pb-3 font-medium">Urgency</th>
+                        <th className="pb-3 font-medium">Budget</th>
+                        <th className="pb-3 font-medium">Style</th>
                         <th className="pb-3 font-medium">Status</th>
-                        <th className="pb-3 font-medium">Facility Fee</th>
+                        <th className="pb-3 font-medium">Advisor</th>
                         <th className="pb-3 font-medium">Date</th>
                       </tr>
                     </thead>
@@ -396,9 +485,19 @@ export default function AdminInternational() {
                             </div>
                           </td>
                           <td className="py-3">
-                            <Badge variant={c.payment_status === "paid" ? "default" : "secondary"}>
-                              ${(c.payment_amount_cents / 100).toFixed(0)} - {c.payment_status}
-                            </Badge>
+                            <span className="text-sm">
+                              {(c.intake_data?.urgency as string) || "—"}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <span className="text-sm">
+                              {(c.intake_data?.budget_range as string) || "—"}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <span className="text-sm capitalize">
+                              {((c.intake_data?.rehab_style as string) || "—").replace("_", " ")}
+                            </span>
                           </td>
                           <td className="py-3">
                             <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
@@ -406,13 +505,9 @@ export default function AdminInternational() {
                             </Badge>
                           </td>
                           <td className="py-3">
-                            {c.facility_fee_cents ? (
-                              <Badge variant={c.facility_fee_status === "paid" ? "default" : "outline"}>
-                                ${(c.facility_fee_cents / 100).toLocaleString()} - {c.facility_fee_status || "pending"}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">—</span>
-                            )}
+                            <span className="text-sm text-muted-foreground">
+                              {getAdvisorName(c.assigned_advisor_id)}
+                            </span>
                           </td>
                           <td className="py-3 text-sm text-muted-foreground">
                             {format(new Date(c.created_at), "MMM d, yyyy")}
@@ -479,8 +574,8 @@ export default function AdminInternational() {
                                 <Button
                                   size="sm"
                                   variant="default"
-                                  onClick={() => handleChargeInvoice(inv.id)}
-                                  disabled={manageCaseMutation.isPending}
+                                  onClick={() => invoiceMutation.mutate({ action: "charge", invoiceId: inv.id })}
+                                  disabled={invoiceMutation.isPending}
                                 >
                                   <CreditCard className="h-3 w-3 mr-1" />
                                   Charge
@@ -488,7 +583,7 @@ export default function AdminInternational() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => setActionDialog({ type: "waive", invoiceId: inv.id })}
+                                  onClick={() => setWaiveDialogInvoice(inv.id)}
                                 >
                                   Waive
                                 </Button>
@@ -514,188 +609,45 @@ export default function AdminInternational() {
         </TabsContent>
       </Tabs>
 
-      {/* Case Detail Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedCase && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  {selectedCase.client_name}
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedCase.client_email} • {selectedCase.client_country}
-                </DialogDescription>
-              </DialogHeader>
+      {/* Case Detail Sheet */}
+      <InternationalCaseDetailSheet
+        caseData={selectedCase}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
 
-              <div className="space-y-4">
-                {/* Status & Payment Info */}
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant={STATUS_CONFIG[selectedCase.status]?.variant}>
-                    {STATUS_CONFIG[selectedCase.status]?.label}
-                  </Badge>
-                  <Badge variant={selectedCase.payment_status === "paid" ? "default" : "outline"}>
-                    $299 {selectedCase.payment_status}
-                  </Badge>
-                  {selectedCase.refund_type && (
-                    <Badge variant="secondary">Fee {selectedCase.refund_type}</Badge>
-                  )}
-                </div>
-
-                {/* Intake Data */}
-                {selectedCase.intake_data && Object.keys(selectedCase.intake_data).length > 0 && (
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <h4 className="font-medium mb-2">Intake Information</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {Object.entries(selectedCase.intake_data).map(([key, value]) => (
-                        <div key={key}>
-                          <span className="text-muted-foreground capitalize">{key.replace(/_/g, " ")}:</span>{" "}
-                          <span className="font-medium">{String(value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Admin Notes */}
-                {selectedCase.admin_notes && (
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                    <p className="text-sm"><strong>Notes:</strong> {selectedCase.admin_notes}</p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="border-t pt-4 space-y-3">
-                  <h4 className="font-medium">Actions</h4>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setActionDialog({ type: "status", caseId: selectedCase.id })}
-                    >
-                      Update Status
-                    </Button>
-
-                    {selectedCase.payment_status === "paid" && !selectedCase.refund_type && selectedCase.status === "admitted" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActionDialog({ type: "refund", caseId: selectedCase.id })}
-                      >
-                        Refund/Credit $299
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Action Dialogs */}
-      <Dialog open={actionDialog?.type === "status"} onOpenChange={() => setActionDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Update Case Status</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>New Status</Label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Notes (optional)</Label>
-              <Textarea
-                value={actionNotes}
-                onChange={(e) => setActionNotes(e.target.value)}
-                placeholder="Add any notes..."
+      {/* Waive Invoice Dialog */}
+      {waiveDialogInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-2">Waive Facility Invoice</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              This will mark the $4,500 facility fee as waived.
+            </p>
+            <div className="mb-4">
+              <label className="text-sm font-medium mb-1 block">Reason for waiving</label>
+              <textarea
+                value={waiveReason}
+                onChange={(e) => setWaiveReason(e.target.value)}
+                placeholder="Enter reason..."
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActionDialog(null)}>Cancel</Button>
-            <Button onClick={handleStatusChange} disabled={!selectedStatus || manageCaseMutation.isPending}>
-              {manageCaseMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Update Status
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={actionDialog?.type === "refund"} onOpenChange={() => setActionDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Refund or Credit Client Fee</DialogTitle>
-            <DialogDescription>
-              The client paid $299 for placement coordination. Upon confirmed admission, this can be refunded or credited.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Resolution Type</Label>
-              <Select value={refundType} onValueChange={(v) => setRefundType(v as "refunded" | "credited")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="refunded">Refund to original payment method</SelectItem>
-                  <SelectItem value="credited">Credit for future services</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setWaiveDialogInvoice(null); setWaiveReason(""); }}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => invoiceMutation.mutate({ action: "waive", invoiceId: waiveDialogInvoice, reason: waiveReason })}
+                disabled={!waiveReason || invoiceMutation.isPending}
+              >
+                Waive Invoice
+              </Button>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActionDialog(null)}>Cancel</Button>
-            <Button onClick={handleRefundCredit} disabled={manageCaseMutation.isPending}>
-              {manageCaseMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {refundType === "refunded" ? "Process Refund" : "Mark as Credited"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={actionDialog?.type === "waive"} onOpenChange={() => setActionDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Waive Facility Invoice</DialogTitle>
-            <DialogDescription>
-              This will mark the $4,500 facility fee as waived.
-            </DialogDescription>
-          </DialogHeader>
-          <div>
-            <Label>Reason for waiving</Label>
-            <Textarea
-              value={actionNotes}
-              onChange={(e) => setActionNotes(e.target.value)}
-              placeholder="Enter reason..."
-              required
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActionDialog(null)}>Cancel</Button>
-            <Button
-              variant="destructive"
-              onClick={() => actionDialog?.invoiceId && handleWaiveInvoice(actionDialog.invoiceId)}
-              disabled={!actionNotes || manageCaseMutation.isPending}
-            >
-              {manageCaseMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Waive Invoice
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
