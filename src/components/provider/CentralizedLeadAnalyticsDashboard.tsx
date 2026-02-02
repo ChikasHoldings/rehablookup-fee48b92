@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
 import { useProStatus } from "@/hooks/useProStatus";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { type DateRange } from "@/hooks/useLeadAnalytics";
@@ -60,15 +61,17 @@ const STATUS_BG_COLORS: Record<string, string> = {
 export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLeadAnalyticsDashboardProps) {
   const { data: analytics, isLoading } = useCentralizedLeadAnalytics(dateRange);
   const { data: proStatus } = useProStatus();
+  const { facilities } = useProviderFacilities();
 
   const isPro = proStatus?.isPro || false;
+  const hasApprovedListing = facilities.some(f => f.status === "approved");
 
   if (isLoading) {
     return <AnalyticsSkeleton />;
   }
 
   if (!analytics || analytics.totalLeads === 0) {
-    return <EmptyAnalytics />;
+    return <EmptyAnalytics hasApprovedListing={hasApprovedListing} />;
   }
 
   const conversionRate = analytics.totalLeads > 0 
@@ -547,7 +550,7 @@ function AnalyticsSkeleton() {
   );
 }
 
-function EmptyAnalytics() {
+function EmptyAnalytics({ hasApprovedListing }: { hasApprovedListing: boolean }) {
   return (
     <Card className="py-12">
       <CardContent className="flex flex-col items-center justify-center text-center">
@@ -556,12 +559,14 @@ function EmptyAnalytics() {
         </div>
         <h3 className="text-lg font-semibold text-foreground mb-2">No Inquiry Data Yet</h3>
         <p className="text-sm text-muted-foreground max-w-md mb-4">
-          Once seekers start submitting inquiries to your facility, you'll see detailed 
-          analytics here including trends, conversion rates, and more.
+          {hasApprovedListing 
+            ? "Your listing is live! Once seekers start submitting inquiries, you'll see detailed analytics here including trends, conversion rates, and more."
+            : "Once seekers start submitting inquiries to your facility, you'll see detailed analytics here including trends, conversion rates, and more."
+          }
         </p>
         <Button variant="outline" asChild>
-          <Link to="/provider/listings">
-            Complete Your Listing
+          <Link to={hasApprovedListing ? "/provider/inquiries" : "/provider/listings"}>
+            {hasApprovedListing ? "View Inquiries" : "Complete Your Listing"}
           </Link>
         </Button>
       </CardContent>
