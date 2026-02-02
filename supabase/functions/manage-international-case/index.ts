@@ -149,7 +149,7 @@ serve(async (req) => {
       }
 
       case "confirm_admission": {
-        const { facilityId } = data;
+        const { facilityId, clientFeeResolution } = data;
         
         // Get the case and facility info
         const { data: caseData, error: caseError } = await supabase
@@ -168,7 +168,29 @@ serve(async (req) => {
 
         if (facilityError || !facility) throw new Error("Facility not found");
 
-        // Update case with admission
+        logStep("Processing client fee resolution", { clientFeeResolution, paymentIntentId: caseData.stripe_payment_intent_id });
+
+        // Handle client $299 fee refund/credit
+        let refundId: string | null = null;
+        const refundType = clientFeeResolution === "refund" ? "refunded" : "credited";
+
+        if (clientFeeResolution === "refund" && caseData.stripe_payment_intent_id && caseData.payment_status === "paid") {
+          // Process Stripe refund for $299
+          try {
+            const refund = await stripe.refunds.create({
+              payment_intent: caseData.stripe_payment_intent_id,
+              amount: caseData.payment_amount_cents,
+              reason: "requested_by_customer",
+            });
+            refundId = refund.id;
+            logStep("Stripe refund processed", { refundId, amount: caseData.payment_amount_cents });
+          } catch (refundError) {
+            logStep("WARNING: Stripe refund failed", { error: String(refundError) });
+            // Continue with admission but note the refund failure
+          }
+        }
+
+        // Update case with admission and refund info
         const { error: updateError } = await supabase
           .from("international_placement_cases")
           .update({ 
@@ -178,6 +200,11 @@ serve(async (req) => {
             status: "admitted",
             facility_fee_cents: 450000, // $4,500
             facility_fee_status: "pending",
+            // Client fee resolution
+            refund_type: refundType,
+            refunded_at: new Date().toISOString(),
+            refunded_by: user.id,
+            payment_status: refundType,
           })
           .eq("id", caseId);
 
@@ -206,6 +233,7 @@ serve(async (req) => {
           .update({ facility_invoice_id: invoice.id })
           .eq("id", caseId);
 
+        // Log admission event
         await supabase.from("international_case_events").insert({
           case_id: caseId,
           event_type: "admission_confirmed",
@@ -218,8 +246,27 @@ serve(async (req) => {
           },
         });
 
+        // Log client fee resolution event
+        await supabase.from("international_case_events").insert({
+          case_id: caseId,
+          event_type: refundType === "refunded" ? "client_fee_refunded" : "client_fee_credited",
+          actor_id: user.id,
+          actor_type: "admin",
+          event_data: { 
+            resolution_type: refundType,
+            amount_cents: caseData.payment_amount_cents,
+            ...(refundId && { stripe_refund_id: refundId }),
+          },
+        });
+
+        logStep("Admission confirmed with fee resolution", { 
+          invoiceId: invoice.id, 
+          refundType, 
+          refundId 
+        });
+
         return new Response(
-          JSON.stringify({ success: true, invoiceId: invoice.id }),
+          JSON.stringify({ success: true, invoiceId: invoice.id, refundType, refundId }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
