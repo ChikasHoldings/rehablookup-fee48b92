@@ -1,21 +1,26 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Megaphone,
   Users,
   Mail,
   TrendingUp,
   Search,
-  ChevronDown,
   ExternalLink,
   Phone,
   MapPin,
+  Calendar,
+  Shield,
+  Zap,
+  Target,
+  MessageSquare,
+  UserCheck,
+  Clock,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -32,35 +37,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-interface MarketingLead {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  location_city_state: string | null;
-  location_zip: string | null;
-  urgency: string | null;
-  level_of_care: string | null;
-  insurance_type: string | null;
-  utm_source: string | null;
-  utm_campaign: string | null;
-  facilities_requested: string[] | null;
-  followup_email_sent: boolean;
-  converted_to_concierge: boolean;
-  status: string;
-  created_at: string;
-  admin_notes: string | null;
-}
+  MarketingLeadProfileModal,
+  type MarketingLead,
+} from "@/components/admin/marketing/MarketingLeadProfileModal";
 
 export default function AdminMarketing() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedLead, setSelectedLead] = useState<MarketingLead | null>(null);
@@ -92,7 +77,8 @@ export default function AdminMarketing() {
       lead.first_name?.toLowerCase().includes(searchLower) ||
       lead.last_name?.toLowerCase().includes(searchLower) ||
       lead.email?.toLowerCase().includes(searchLower) ||
-      lead.phone?.includes(searchQuery)
+      lead.phone?.includes(searchQuery) ||
+      lead.location_city_state?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -105,18 +91,25 @@ export default function AdminMarketing() {
   const engagedLeads = leads.filter(
     (l) => (l.facilities_requested?.length || 0) > 0
   ).length;
+  const urgentLeads = leads.filter(
+    (l) => l.urgency === "immediate" || l.urgency === "within-week"
+  ).length;
 
   const getStatusBadge = (lead: MarketingLead) => {
     if (lead.converted_to_concierge) {
-      return <Badge className="bg-violet-100 text-violet-700">Concierge</Badge>;
+      return <Badge className="bg-violet-100 text-violet-700 border-violet-200 gap-1"><Shield className="h-3 w-3" />Concierge</Badge>;
     }
     if ((lead.facilities_requested?.length || 0) > 0) {
-      return <Badge className="bg-green-100 text-green-700">Engaged</Badge>;
+      return <Badge className="bg-green-100 text-green-700 border-green-200 gap-1"><MessageSquare className="h-3 w-3" />Engaged</Badge>;
     }
     if (lead.followup_email_sent) {
-      return <Badge className="bg-blue-100 text-blue-700">Followed Up</Badge>;
+      return <Badge className="bg-blue-100 text-blue-700 border-blue-200 gap-1"><Mail className="h-3 w-3" />Followed Up</Badge>;
     }
-    return <Badge variant="secondary">New</Badge>;
+    return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />New</Badge>;
+  };
+
+  const handleLeadUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
   };
 
   return (
@@ -134,86 +127,94 @@ export default function AdminMarketing() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalLeads}</p>
-                <p className="text-sm text-muted-foreground">Total Leads</p>
+      {/* Enterprise KPI Summary Bar */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="flex items-stretch flex-wrap">
+            {/* Primary Stats */}
+            <div className="flex items-center gap-0.5 p-3">
+              <button
+                onClick={() => setStatusFilter("all")}
+                className={cn(
+                  "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
+                  statusFilter === "all" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
+                )}
+              >
+                <Users className="h-3.5 w-3.5 text-muted-foreground mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : totalLeads}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Total</span>
+              </button>
+              <button
+                onClick={() => setStatusFilter("all")}
+                className="flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px] hover:bg-muted/50"
+              >
+                <TrendingUp className="h-3.5 w-3.5 text-green-500 mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : engagedLeads}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Engaged</span>
+              </button>
+              <button
+                onClick={() => setStatusFilter("converted")}
+                className={cn(
+                  "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
+                  statusFilter === "converted" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
+                )}
+              >
+                <Shield className="h-3.5 w-3.5 text-violet-500 mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : convertedLeads}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Concierge</span>
+              </button>
+              <button
+                onClick={() => setStatusFilter("all")}
+                className="flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px] hover:bg-muted/50"
+              >
+                <Mail className="h-3.5 w-3.5 text-amber-500 mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : pendingFollowup}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Pending</span>
+              </button>
+            </div>
+
+            <div className="w-px bg-border my-2" />
+
+            {/* Urgency Stats */}
+            <div className="flex items-center gap-0.5 p-3">
+              <div className="flex flex-col items-center justify-center px-3 py-2.5 min-w-[72px]">
+                <Zap className="h-3.5 w-3.5 text-red-500 mb-1" />
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : urgentLeads}</span>
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Urgent</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{engagedLeads}</p>
-                <p className="text-sm text-muted-foreground">Engaged</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-100 rounded-lg">
-                <ExternalLink className="h-5 w-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{convertedLeads}</p>
-                <p className="text-sm text-muted-foreground">Concierge</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Mail className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingFollowup}</p>
-                <p className="text-sm text-muted-foreground">Pending F/U</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, email, or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="new">New</SelectItem>
-            <SelectItem value="contacted">Contacted</SelectItem>
-            <SelectItem value="converted">Converted</SelectItem>
-            <SelectItem value="lost">Lost</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, email, phone, or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Filter status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="contacted">Contacted</SelectItem>
+                <SelectItem value="converted">Converted</SelectItem>
+                <SelectItem value="lost">Lost</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Leads Table */}
       <Card>
@@ -221,25 +222,33 @@ export default function AdminMarketing() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>Lead</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Location</TableHead>
+                <TableHead>Urgency</TableHead>
                 <TableHead>Source</TableHead>
-                <TableHead>Requests</TableHead>
+                <TableHead>Engagement</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    Loading...
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-10 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  </TableRow>
+                ))
               ) : filteredLeads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No marketing leads found
                   </TableCell>
                 </TableRow>
@@ -250,19 +259,63 @@ export default function AdminMarketing() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => setSelectedLead(lead)}
                   >
-                    <TableCell className="font-medium">
-                      {lead.first_name} {lead.last_name}
-                    </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <div>{lead.email}</div>
-                        <div className="text-muted-foreground">{lead.phone}</div>
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-semibold text-primary">
+                            {lead.first_name[0]}{lead.last_name[0]}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {lead.first_name} {lead.last_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {lead.who_seeking_help || "Self"}
+                          </p>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {lead.location_city_state || lead.location_zip || "—"}
-                      </span>
+                      <div className="text-sm space-y-0.5">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Mail className="h-3 w-3" />
+                          <span className="truncate max-w-[160px]">{lead.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Phone className="h-3 w-3" />
+                          <span>{lead.phone}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {lead.location_city_state || lead.location_zip ? (
+                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {lead.location_city_state || lead.location_zip}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {lead.urgency ? (
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-xs gap-1",
+                            lead.urgency === "immediate" && "bg-red-50 text-red-700 border-red-200",
+                            lead.urgency === "within-week" && "bg-amber-50 text-amber-700 border-amber-200",
+                            lead.urgency === "within-month" && "bg-blue-50 text-blue-700 border-blue-200",
+                            lead.urgency === "researching" && "bg-slate-50 text-slate-600 border-slate-200"
+                          )}
+                        >
+                          {lead.urgency === "immediate" && <Zap className="h-3 w-3" />}
+                          {lead.urgency}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="text-xs bg-muted px-2 py-1 rounded">
@@ -270,13 +323,23 @@ export default function AdminMarketing() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">
-                        {lead.facilities_requested?.length || 0}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">
+                          {lead.facilities_requested?.length || 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          requests
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(lead)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(lead.created_at), "MMM d, h:mm a")}
+                    <TableCell>
+                      <div className="text-sm">
+                        <p>{format(new Date(lead.created_at), "MMM d")}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -286,83 +349,13 @@ export default function AdminMarketing() {
         </CardContent>
       </Card>
 
-      {/* Lead Detail Dialog */}
-      <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedLead?.first_name} {selectedLead?.last_name}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedLead && (
-            <div className="space-y-4">
-              {/* Contact Info */}
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <a href={`mailto:${selectedLead.email}`} className="text-primary hover:underline">
-                    {selectedLead.email}
-                  </a>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <a href={`tel:${selectedLead.phone}`} className="text-primary hover:underline">
-                    {selectedLead.phone}
-                  </a>
-                </div>
-                {(selectedLead.location_city_state || selectedLead.location_zip) && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {selectedLead.location_city_state || selectedLead.location_zip}
-                  </div>
-                )}
-              </div>
-
-              {/* Clinical Details */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Urgency:</span>
-                  <p className="font-medium">{selectedLead.urgency || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Level of Care:</span>
-                  <p className="font-medium">{selectedLead.level_of_care || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Insurance:</span>
-                  <p className="font-medium">{selectedLead.insurance_type || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Facilities Requested:</span>
-                  <p className="font-medium">{selectedLead.facilities_requested?.length || 0}</p>
-                </div>
-              </div>
-
-              {/* UTM Tracking */}
-              {(selectedLead.utm_source || selectedLead.utm_campaign) && (
-                <div className="bg-blue-50 rounded-lg p-3 text-sm">
-                  <p className="font-medium text-blue-800 mb-1">Campaign Tracking</p>
-                  <div className="text-blue-700 space-y-1">
-                    {selectedLead.utm_source && <div>Source: {selectedLead.utm_source}</div>}
-                    {selectedLead.utm_campaign && <div>Campaign: {selectedLead.utm_campaign}</div>}
-                  </div>
-                </div>
-              )}
-
-              {/* Status */}
-              <div className="flex items-center gap-2 pt-2">
-                <span className="text-sm text-muted-foreground">Status:</span>
-                {getStatusBadge(selectedLead)}
-                {selectedLead.followup_email_sent && (
-                  <Badge variant="outline" className="text-xs">
-                    Follow-up Sent
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Lead Detail Modal */}
+      <MarketingLeadProfileModal
+        lead={selectedLead}
+        open={!!selectedLead}
+        onOpenChange={(open) => !open && setSelectedLead(null)}
+        onUpdated={handleLeadUpdated}
+      />
     </div>
   );
 }
