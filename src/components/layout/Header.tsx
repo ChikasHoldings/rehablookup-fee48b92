@@ -62,6 +62,7 @@ export function Header({
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
+  const [mobileProviderExpanded, setMobileProviderExpanded] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   // Use unified role system - only show "My Account" for seekers (not admin/provider)
@@ -305,24 +306,35 @@ export function Header({
                     const isProviderActive = location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider");
                     return (
                       <div key={link.href}>
-                        <PrefetchLink
-                          to={link.href}
-                          onClick={() => setMobileMenuOpen(false)}
+                        <button
+                          onClick={() => setMobileProviderExpanded(!mobileProviderExpanded)}
                           className={cn(
-                            linkClasses,
-                            isProviderActive && "bg-primary/10 text-primary"
+                            "w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200",
+                            isProviderActive
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground hover:bg-muted active:scale-[0.98]",
+                            mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
                           )}
                           style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
                         >
-                          <Icon className={cn(
-                            "h-5 w-5 shrink-0",
-                            isProviderActive ? "text-primary" : "text-muted-foreground"
+                          <div className="flex items-center gap-3">
+                            <Icon className={cn(
+                              "h-5 w-5 shrink-0",
+                              isProviderActive ? "text-primary" : "text-muted-foreground"
+                            )} />
+                            <span>{link.label}</span>
+                          </div>
+                          <ChevronDown className={cn(
+                            "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                            mobileProviderExpanded && "rotate-180"
                           )} />
-                          <span>{link.label}</span>
-                        </PrefetchLink>
-                        {/* Provider sub-links */}
-                        <div className="ml-8 mt-1 space-y-1">
-                          {providerDropdownLinks.slice(1).map((subLink, subIndex) => (
+                        </button>
+                        {/* Provider sub-links - collapsible */}
+                        <div className={cn(
+                          "ml-8 space-y-1 overflow-hidden transition-all duration-300",
+                          mobileProviderExpanded ? "max-h-48 opacity-100 mt-1" : "max-h-0 opacity-0"
+                        )}>
+                          {providerDropdownLinks.map((subLink, subIndex) => (
                             <PrefetchLink
                               key={subLink.href}
                               to={subLink.href}
@@ -331,10 +343,8 @@ export function Header({
                                 "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                                 location.pathname === subLink.href
                                   ? "text-primary"
-                                  : "text-muted-foreground hover:text-foreground",
-                                mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+                                  : "text-muted-foreground hover:text-foreground"
                               )}
-                              style={{ transitionDelay: mobileMenuOpen ? `${delay + 30 + subIndex * 20}ms` : '0ms' }}
                             >
                               <ChevronRight className="h-3.5 w-3.5" />
                               {subLink.label}
