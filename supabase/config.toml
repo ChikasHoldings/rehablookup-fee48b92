@@ -302,3 +302,6 @@ verify_jwt = false
 
 [functions.manage-international-case]
 verify_jwt = true
+
+[functions.respond-international-case]
+verify_jwt = true

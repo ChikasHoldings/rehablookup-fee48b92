@@ -1979,6 +1979,67 @@ export type Database = {
           },
         ]
       }
+      international_case_facility_matches: {
+        Row: {
+          case_id: string
+          created_at: string
+          facility_id: string
+          id: string
+          invited_at: string
+          provider_id: string
+          provider_notes: string | null
+          responded_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          facility_id: string
+          id?: string
+          invited_at?: string
+          provider_id: string
+          provider_notes?: string | null
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          facility_id?: string
+          id?: string
+          invited_at?: string
+          provider_id?: string
+          provider_notes?: string | null
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "international_case_facility_matches_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "international_placement_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "international_case_facility_matches_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "international_case_facility_matches_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       international_case_notes: {
         Row: {
           admin_id: string
