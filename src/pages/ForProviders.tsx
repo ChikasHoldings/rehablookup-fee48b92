@@ -76,11 +76,18 @@ const ForProviders = () => {
       
       <main className="flex-1">
         {/* Hero Section - Image background like homepage */}
-        <section className="relative z-10">
-          <link rel="preload" as="image" href={providerHero} />
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${providerHero})` }}
+        <section className="relative z-10 bg-primary">
+          {/* Background Image - using img for better LCP and no flash */}
+          <img 
+            src={providerHero}
+            alt=""
+            role="presentation"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+            loading="eager"
+            decoding="sync"
           />
           
           {/* Dark overlay for text readability */}
