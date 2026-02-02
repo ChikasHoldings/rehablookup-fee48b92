@@ -10,6 +10,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
+import { InternationalCTA } from "@/components/home/InternationalCTA";
 import heroImage from "@/assets/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
@@ -711,6 +712,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* International Patients CTA */}
+      <InternationalCTA />
 
       {/* How It Works */}
       <section className="py-10 md:py-12 lg:py-20">
