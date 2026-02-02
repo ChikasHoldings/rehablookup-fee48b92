@@ -1,0 +1,143 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[SUBMIT-INTL-INTAKE] ${step}${detailsStr}`);
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration missing");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    const { sessionId, intakeData } = await req.json();
+
+    if (!sessionId) {
+      throw new Error("Session ID is required");
+    }
+
+    logStep("Verifying payment session", { sessionId });
+
+    // Verify payment was successful
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    if (session.payment_status !== "paid") {
+      throw new Error("Payment not completed");
+    }
+
+    logStep("Payment verified", { paymentStatus: session.payment_status });
+
+    // Extract metadata
+    const metadata = session.metadata || {};
+    const clientName = metadata.client_name || intakeData?.name || "";
+    const clientEmail = metadata.client_email || session.customer_email || intakeData?.email || "";
+    const clientPhone = metadata.client_phone || intakeData?.phone || "";
+    const clientCountry = metadata.client_country || intakeData?.country || "";
+
+    // Check if case already exists for this session
+    const { data: existingCase } = await supabase
+      .from("international_placement_cases")
+      .select("id")
+      .eq("stripe_checkout_session_id", sessionId)
+      .maybeSingle();
+
+    if (existingCase) {
+      logStep("Case already exists, updating intake data", { caseId: existingCase.id });
+      
+      const { error: updateError } = await supabase
+        .from("international_placement_cases")
+        .update({
+          intake_data: intakeData || {},
+          intake_submitted_at: new Date().toISOString(),
+          status: "reviewing",
+        })
+        .eq("id", existingCase.id);
+
+      if (updateError) throw updateError;
+
+      return new Response(
+        JSON.stringify({ success: true, caseId: existingCase.id }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // Create new case
+    logStep("Creating new international placement case");
+
+    const { data: newCase, error: insertError } = await supabase
+      .from("international_placement_cases")
+      .insert({
+        client_name: clientName,
+        client_email: clientEmail,
+        client_phone: clientPhone,
+        client_country: clientCountry,
+        payment_status: "paid",
+        payment_amount_cents: 29900,
+        stripe_checkout_session_id: sessionId,
+        stripe_payment_intent_id: session.payment_intent as string,
+        intake_data: intakeData || {},
+        intake_submitted_at: new Date().toISOString(),
+        status: "reviewing",
+      })
+      .select("id")
+      .single();
+
+    if (insertError) throw insertError;
+
+    logStep("Case created successfully", { caseId: newCase.id });
+
+    // Log the event
+    await supabase.from("international_case_events").insert({
+      case_id: newCase.id,
+      event_type: "case_created",
+      actor_type: "client",
+      event_data: { 
+        payment_verified: true,
+        intake_submitted: !!intakeData 
+      },
+    });
+
+    return new Response(
+      JSON.stringify({ success: true, caseId: newCase.id }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
+});

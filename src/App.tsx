@@ -59,6 +59,11 @@ const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding")
 const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
 const ConciergeThankYou = lazy(() => import("./pages/concierge/ConciergeThankYou"));
 const ConciergeCreatePassword = lazy(() => import("./pages/concierge/ConciergeCreatePassword"));
+
+// International Placement (Global Clients) - lazy load
+const InternationalLanding = lazy(() => import("./pages/international/InternationalLanding"));
+const InternationalIntake = lazy(() => import("./pages/international/InternationalIntake"));
+const InternationalThankYou = lazy(() => import("./pages/international/InternationalThankYou"));
 const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
 const Resources = lazy(() => import("./pages/Resources"));
@@ -155,6 +160,7 @@ const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
+const AdminInternational = lazy(() => import("./pages/admin/AdminInternational"));
 const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementRevenueDashboard"));
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
@@ -268,6 +274,11 @@ const App = () => (
             <Route path="/request-help/intake" element={<Navigate to="/concierge/intake" replace />} />
             <Route path="/request-help/thank-you" element={<Navigate to="/concierge/thank-you" replace />} />
             <Route path="/request-help/create-password" element={<Navigate to="/concierge/create-password" replace />} />
+            
+            {/* International Placement Routes */}
+            <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
+            <Route path="/international/intake" element={<PublicRouteGuard><InternationalIntake /></PublicRouteGuard>} />
+            <Route path="/international/thank-you" element={<PublicRouteGuard><InternationalThankYou /></PublicRouteGuard>} />
             <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
             
             {/* Treatment center profile pages */}
@@ -380,6 +391,7 @@ const App = () => (
               <Route path="security-logs" element={<AdminSecurityLogs />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="concierge" element={<AdminConcierge />} />
+              <Route path="international" element={<AdminInternational />} />
               <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="marketing" element={<AdminMarketing />} />
