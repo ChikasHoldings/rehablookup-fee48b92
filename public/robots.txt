@@ -1,6 +1,6 @@
 # robots.txt for RehabLookup
 # https://rehablookup.com
-# Last updated: 2026-01-31
+# Last updated: 2026-02-02
 # 
 # This file controls how search engines crawl and index our website.
 # For more info: https://developers.google.com/search/docs/crawling-indexing/robots/intro

@@ -8,7 +8,7 @@
   <!-- Homepage - Highest Priority -->
   <url>
     <loc>https://rehablookup.com</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -20,21 +20,21 @@
   <!-- Primary Navigation Pages -->
   <url>
     <loc>https://rehablookup.com/rehab-centers</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/concierge</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.95</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/locations</loc>
-    <lastmod>2025-12-22</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -42,57 +42,56 @@
   <!-- Treatment Types - High Priority Content -->
   <url>
     <loc>https://rehablookup.com/treatment-types</loc>
-    <lastmod>2025-12-22</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/treatment-types/detox-programs</loc>
-    <lastmod>2025-12-22</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/treatment-types/residential-inpatient</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
-  <url>
     <loc>https://rehablookup.com/treatment-types/outpatient-programs</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/treatment-types/drug-addiction-treatment</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/treatment-types/alcohol-rehabilitation</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/treatment-types/dual-diagnosis-treatment</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/treatment-types/holistic-therapy</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -100,14 +99,14 @@
   <!-- Insurance & Cost Tools -->
   <url>
     <loc>https://rehablookup.com/insurance</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/cost-estimator</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -115,63 +114,63 @@
   <!-- Insurance Provider Landing Pages -->
   <url>
     <loc>https://rehablookup.com/insurance/aetna-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/anthem-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/bcbs-treatment</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/cigna-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/humana-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/kaiser-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/united-healthcare-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/medicare-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/insurance/medicaid-rehab</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -179,147 +178,147 @@
   <!-- Near Me SEO Landing Pages -->
   <url>
     <loc>https://rehablookup.com/drug-rehab-near-me</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/alcohol-rehab-near-me</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/detox-near-me</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/dual-diagnosis-near-me</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/inpatient-rehab-near-me</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/outpatient-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/free-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/luxury-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/womens-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/mens-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/fentanyl-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/sober-living-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/teen-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/veterans-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/medicaid-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/court-ordered-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/suboxone-clinic-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/methadone-clinic-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/outpatient-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/dual-diagnosis-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/faith-based-rehab-near-me</loc>
-    <lastmod>2026-01-31</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -327,7 +326,7 @@
   <!-- Resources & Educational Content -->
   <url>
     <loc>https://rehablookup.com/resources</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -335,168 +334,168 @@
   <!-- Resource Articles -->
   <url>
     <loc>https://rehablookup.com/resources/types-of-addiction-treatment</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/choosing-rehab-center</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/first-week-treatment</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/insurance-coverage-guide</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/stages-of-recovery</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/support-loved-one</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/inpatient-vs-outpatient</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/dual-diagnosis</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/signs-of-addiction</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/aftercare-planning</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/family-therapy</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/medication-assisted-treatment</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/anxiety-and-addiction</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/talking-to-teens</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/holistic-therapies</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/relapse-prevention</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/opioid-addiction-treatment</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/alcohol-detox-what-to-expect</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/depression-and-substance-abuse</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/sober-living-homes</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/intervention-guide</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/ptsd-and-addiction</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/workplace-substance-abuse</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://rehablookup.com/resources/long-term-recovery-success</loc>
-    <lastmod>2025-12-21</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
