@@ -1,242 +1,242 @@
 
-# International SEO Strategy: Capturing Global Search Traffic
 
-## Executive Summary
-Create a comprehensive network of SEO-optimized landing pages targeting foreigners searching for US-based addiction treatment. This mirrors the successful "near-me" page architecture but focuses on international search intent keywords like "best rehab in America," "luxury rehab California for foreigners," etc.
+# Placement System Transformation: Audit & Conversion Plan
+## Converting from Marketplace to Brokerage Deal Desk
 
-## Target Keyword Categories
+---
 
-### Tier 1: High-Volume Primary Keywords
-| Keyword | Monthly Search Volume (Est.) |
-|---------|------------------------------|
-| best rehab in USA | 8,100 |
-| rehab centers in America | 5,400 |
-| luxury rehab California | 4,400 |
-| American rehab for foreigners | 2,900 |
-| US addiction treatment for international patients | 1,900 |
-| private rehab United States | 1,600 |
+## Current State Audit
 
-### Tier 2: Location-Specific Keywords
-- luxury rehab Florida
-- celebrity rehab California
-- best rehab Malibu
-- Arizona rehab resorts
-- executive rehab New York
+### Problems Identified
 
-### Tier 3: Treatment-Specific International Keywords
-- detox centers USA for foreigners
-- alcohol rehab America international
-- dual diagnosis treatment United States
-- private drug rehab America
+The current Placement system allows **direct provider-seeker interaction** which breaks the brokerage model:
+
+| Feature | Location | Problem |
+|---------|----------|---------|
+| **Direct Messaging** | Provider: `PlacementMessagesTab.tsx` | Providers can message seekers directly |
+| **Direct Messaging** | Seeker: `ConciergeMessaging.tsx` | Seekers can initiate threads with facilities |
+| **Tour Scheduling** | Provider: `PlacementToursTab.tsx` | Providers manage tours directly |
+| **Tour Requests** | Seeker: `TourRequestModal.tsx`, `PlacementTabs.tsx` | Seekers can request tours with facilities |
+| **User Name Exposure** | `IntroductionCard.tsx` line 55 | Shows `inquiry?.user_name` to providers |
+| **Facility Direct Access** | `PlacementMatchCard.tsx` | Seekers see facility names/contact info |
+| **Confirm Placement** | `ProviderConfirmPlacementModal.tsx` | Providers can confirm placements directly |
+
+### Current Flow (Problematic)
+
+```text
+Seeker submits intake
+     ↓
+Admin matches to facilities
+     ↓
+Provider sees: Name + Case Details
+     ↓
+Provider clicks "Interested"
+     ↓
+Provider & Seeker can MESSAGE DIRECTLY  ← Problem
+     ↓
+Provider & Seeker can SCHEDULE TOURS    ← Problem
+     ↓
+Provider confirms placement directly     ← Problem
+```
+
+---
+
+## Target Architecture: Brokerage Deal Desk
+
+### New Flow (Controlled)
+
+```text
+Seeker submits intake → Creates Placement Case
+     ↓
+Admin/Advisor reviews & matches
+     ↓
+Provider sees: ANONYMIZED CASE SUMMARY ONLY
+  - Case #ABC123 (no name)
+  - Level of care, budget, urgency, geography
+  - Special requirements (anonymized)
+     ↓
+Provider can ONLY: Accept or Decline
+     ↓
+On Accept: RehabLookup takes over coordination
+  - Admin contacts seeker
+  - Admin coordinates calls
+  - Admin manages medical info transfer
+  - Admin handles travel/intake
+     ↓
+Admin confirms admission (both sides verified)
+     ↓
+Invoice generated → Placement complete
+```
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: International SEO Landing Page Directory
-Create a new directory `src/pages/us-rehab/` with SEO-optimized pages:
+### Phase 1: Remove Direct Contact from Provider Placement View
+
+**1.1 Remove Messages Tab from Provider Placement**
+- File: `src/pages/provider/PlacementNetwork.tsx`
+- Remove the "messages" TabsTrigger and TabsContent (lines 488-494, 591-594)
+- Remove `PlacementMessagesTab` import
+
+**1.2 Remove Tours Tab from Provider Placement**
+- File: `src/pages/provider/PlacementNetwork.tsx`
+- Remove the "tours" TabsTrigger and TabsContent (lines 492-495, 596-599)
+- Remove `PlacementToursTab` import
+
+**1.3 Remove Provider Confirm Placement Button**
+- File: `src/components/provider/placement-network/IntroductionCard.tsx`
+- Remove the "Confirm Placement" button and modal
+- Providers should NOT confirm placements - only Admin does
+
+### Phase 2: Anonymize Case Data Shown to Providers
+
+**2.1 Update IntroductionCard to Hide User Name**
+- File: `src/components/provider/placement-network/IntroductionCard.tsx`
+- Line 55: Change from `{inquiry?.user_name || ...}` to only show Case ID
+- Always display: `Case #${inquiry?.id?.slice(0, 8).toUpperCase()}`
+
+**2.2 Update International Candidate Cards**
+- File: `src/components/provider/international/InternationalCandidatesTab.tsx`
+- Ensure no PII is displayed
+- Show only: Country, Budget Range, Urgency, Primary Concern, Preferences
+
+**2.3 Simplify Provider Response Actions**
+- Change from: "Interested", "Limited Availability", "Not Available"
+- To: "Accept Candidate", "Decline Candidate"
+- Remove notes field (all communication goes through Admin)
+
+### Phase 3: Update Seeker Placement Hub
+
+**3.1 Remove Direct Facility Messaging**
+- File: `src/components/seeker/placement/PlacementTabs.tsx`
+- Remove "Messages" tab for facility threads
+- Keep ONLY "Advisor" messaging (seeker ↔ RehabLookup)
+
+**3.2 Remove Tour Request Feature**
+- File: `src/components/seeker/placement/PlacementTabs.tsx`
+- Remove "Tours" tab entirely
+- Tours will be coordinated by Admin, not self-serve
+
+**3.3 Remove Direct Facility Actions from Match Cards**
+- File: `src/components/seeker/placement/PlacementMatchCard.tsx`
+- Remove "Request Tour" button
+- Remove direct facility contact options
+- Show only: "Your advisor will coordinate next steps"
+
+### Phase 4: Centralize Control in Admin Panel
+
+**4.1 Enhance Admin Case Management**
+- File: `src/components/admin/ConciergeDetailSheet.tsx`
+- Admin should be the ONLY one who can:
+  - Send introductions to facilities
+  - Coordinate calls between parties
+  - Confirm placements
+  - Generate invoices
+
+**4.2 Add Admin-Controlled Disclosure**
+- Create new admin action: "Disclose Patient Info to Facility"
+- Only triggered after facility accepts AND Admin approves
+- Logged in audit trail
+
+### Phase 5: Database & Permission Changes
+
+**5.1 Update concierge_introductions table**
+- Add column: `admin_disclosed_pii_at` (timestamp, nullable)
+- Add column: `disclosed_by_admin_id` (uuid, nullable)
+- PII only shared when this is populated
+
+**5.2 Restrict Direct Thread Creation**
+- Update RLS policies on `concierge_threads`
+- Prevent seekers from creating facility threads
+- Only Admin can create seeker-facility threads
+
+**5.3 Restrict Tour Request Creation**
+- Update RLS or remove `concierge_tour_requests` from Placement flow
+- Tours only exist in directory/self-serve context
+
+---
+
+## UI Changes Summary
+
+### Provider Placement Dashboard (After)
+
+| Tab | Status |
+|-----|--------|
+| Domestic Candidates | Keep (anonymized cases) |
+| International Candidates | Keep (already anonymized) |
+| ~~Messages~~ | **REMOVE** |
+| ~~Tours~~ | **REMOVE** |
+| Profile | Keep |
+| Billing | Keep |
+| Placed | Keep (history only) |
+
+### Seeker Placement Hub (After)
+
+| Tab | Status |
+|-----|--------|
+| Matches | Keep (show facility names, no direct contact) |
+| ~~Tours~~ | **REMOVE** |
+| ~~Messages (to facilities)~~ | **REMOVE** |
+| Messages (to Advisor) | **KEEP** - This is the ONLY communication channel |
+
+### Provider Case Card (After)
 
 ```text
-/us-rehab/                              → Main hub page
-/us-rehab/best-rehab-usa                → Primary keyword page
-/us-rehab/luxury-rehab-california       → State-specific luxury
-/us-rehab/luxury-rehab-florida          → State-specific luxury
-/us-rehab/luxury-rehab-arizona          → State-specific luxury
-/us-rehab/executive-rehab-new-york      → Executive treatment
-/us-rehab/malibu-rehab-centers          → Premium destination
-/us-rehab/private-rehab-america         → Privacy-focused page
-/us-rehab/rehab-for-international       → Foreigners-specific
-```
-
-### Phase 2: Page Structure (Template)
-
-Each page will include:
-
-1. **SEO Metadata**
-   - Title optimized for target keyword
-   - Meta description with CTA
-   - Canonical URLs
-   - hreflang tags for multi-language signals
-   - FAQPage schema, Service schema
-
-2. **Hero Section**
-   - H1 with primary keyword
-   - Trust signals (countries served, response time)
-   - Prominent CTA to `/international/apply`
-
-3. **Content Sections**
-   - "Why Choose US Treatment" (privacy, quality, immediate admission)
-   - Location/Treatment highlights
-   - Facility listings (filtered by state/type)
-   - FAQ section with international-specific questions
-   - Process overview
-
-4. **Internal Linking**
-   - Links to `/international` placement service
-   - Cross-links to related state pages
-   - Links to treatment type pages
-
-### Phase 3: Hub Page Structure
-
-**Main Hub (`/us-rehab/`):**
-```text
-├── Hero: "Find Treatment in the United States"
-├── Search by State (top destinations)
-│   ├── California, Florida, Arizona, New York, Texas
-├── Search by Treatment Type
-│   ├── Luxury, Executive, Private, Dual Diagnosis
-├── Why International Clients Choose US Treatment
-├── Countries We Serve (visual trust section)
-├── FAQ for International Patients
-└── CTA: Start Your Placement
-```
-
-### Phase 4: State-Specific Pages
-
-Create dedicated pages for top rehab destination states:
-
-| State | URL Slug | Target Keywords |
-|-------|----------|-----------------|
-| California | `/us-rehab/california` | rehab California, Malibu rehab, LA treatment |
-| Florida | `/us-rehab/florida` | Florida rehab, Miami treatment, South Florida |
-| Arizona | `/us-rehab/arizona` | Arizona rehab, Sedona treatment, desert rehab |
-| New York | `/us-rehab/new-york` | NYC rehab, executive treatment NY |
-| Texas | `/us-rehab/texas` | Texas rehab, Houston treatment |
-| Colorado | `/us-rehab/colorado` | Colorado rehab, mountain treatment |
-
-### Phase 5: Specialty Pages
-
-| Page | URL | Target Intent |
-|------|-----|---------------|
-| Best Rehab USA | `/us-rehab/best-rehab-usa` | Generic quality seekers |
-| Luxury Rehab America | `/us-rehab/luxury-rehab-america` | High-end clients |
-| Private Rehab USA | `/us-rehab/private-rehab-usa` | Privacy-focused |
-| Executive Rehab USA | `/us-rehab/executive-rehab-usa` | Business professionals |
-| Celebrity Rehab USA | `/us-rehab/celebrity-rehab-usa` | High-profile clients |
-| Rehab for Foreigners | `/us-rehab/international-patients` | Explicit international intent |
-
----
-
-## Technical Implementation
-
-### New Files to Create
-
-```text
-src/pages/us-rehab/
-├── USRehabHub.tsx                    # Main hub page
-├── BestRehabUSA.tsx                  # Primary keyword page
-├── LuxuryRehabAmerica.tsx            # Luxury-focused
-├── LuxuryRehabCalifornia.tsx         # CA luxury
-├── LuxuryRehabFlorida.tsx            # FL luxury
-├── LuxuryRehabArizona.tsx            # AZ luxury
-├── ExecutiveRehabUSA.tsx             # Executive treatment
-├── PrivateRehabAmerica.tsx           # Privacy-focused
-├── InternationalPatients.tsx         # Foreigners page
-├── MalibuRehabCenters.tsx            # Malibu destination
-└── components/
-    ├── InternationalHero.tsx         # Reusable hero
-    ├── CountriesServed.tsx           # Trust visual
-    └── InternationalFAQ.tsx          # Reusable FAQ
-```
-
-### Route Configuration (App.tsx)
-
-```tsx
-// International SEO Routes
-<Route path="/us-rehab" element={<USRehabHub />} />
-<Route path="/us-rehab/best-rehab-usa" element={<BestRehabUSA />} />
-<Route path="/us-rehab/luxury-rehab-america" element={<LuxuryRehabAmerica />} />
-<Route path="/us-rehab/luxury-rehab-california" element={<LuxuryRehabCalifornia />} />
-<Route path="/us-rehab/luxury-rehab-florida" element={<LuxuryRehabFlorida />} />
-<Route path="/us-rehab/luxury-rehab-arizona" element={<LuxuryRehabArizona />} />
-<Route path="/us-rehab/executive-rehab" element={<ExecutiveRehabUSA />} />
-<Route path="/us-rehab/private-rehab-america" element={<PrivateRehabAmerica />} />
-<Route path="/us-rehab/international-patients" element={<InternationalPatients />} />
-<Route path="/us-rehab/malibu-rehab" element={<MalibuRehabCenters />} />
-<Route path="/us-rehab/:stateSlug" element={<USRehabState />} />
-```
-
-### Sitemap Updates
-
-Add all new URLs to `public/sitemap.xml`:
-```xml
-<!-- International SEO Pages -->
-<url>
-  <loc>https://rehablookup.com/us-rehab</loc>
-  <priority>0.9</priority>
-</url>
-<url>
-  <loc>https://rehablookup.com/us-rehab/best-rehab-usa</loc>
-  <priority>0.9</priority>
-</url>
-<!-- ... all other pages -->
-```
-
-### Prerender Configuration
-
-Update `supabase/functions/prerender-for-bots/index.ts` to include:
-```ts
-if (path.startsWith('/us-rehab')) return true;
+┌────────────────────────────────────────┐
+│ Case #ABC123XY                         │
+│ ──────────────────────────────────────│
+│ Level of Care: Residential Inpatient  │
+│ Payment: Private Pay                   │
+│ Budget: $25K-$50K/month               │
+│ Urgency: Within 1 Week                │
+│ Location: California preferred         │
+│ ──────────────────────────────────────│
+│ [Accept Candidate]  [Decline]          │
+└────────────────────────────────────────┘
 ```
 
 ---
 
-## Content Strategy
+## Technical Implementation Order
 
-### FAQ Topics for Each Page
-1. How do international patients pay for US treatment?
-2. Do US rehabs accept patients without US insurance?
-3. What visa do I need for treatment in America?
-4. How long can I stay in the US for rehab?
-5. Will my treatment be confidential?
-6. How do I get from the airport to the facility?
-7. Can family members visit during treatment?
-8. What languages do US rehabs support?
+1. **Provider Side First** (most critical for business protection)
+   - Remove Messages/Tours tabs
+   - Anonymize case cards
+   - Remove confirm placement from provider
 
-### Trust Signals to Include
-- "50+ Countries Served"
-- "24-Hour Response Time"
-- "200+ Vetted US Facilities"
-- "100% Confidential Placement"
-- Country flags visual (UK, UAE, Australia, Germany, etc.)
+2. **Seeker Side Second**
+   - Remove facility messaging
+   - Remove tour requests
+   - Keep advisor-only communication
 
----
+3. **Admin Enhancements Third**
+   - Add PII disclosure workflow
+   - Enhance case coordination tools
 
-## Internal Linking Strategy
-
-```text
-Homepage
-  └── US Treatment (Header nav)
-       └── /us-rehab (Hub)
-            ├── /us-rehab/california
-            ├── /us-rehab/best-rehab-usa
-            └── /international/apply (CTA)
-
-/international (Current landing)
-  └── Cross-link to /us-rehab/* pages
-
-Footer
-  └── "US Treatment Access" → /us-rehab
-```
+4. **Database/RLS Last**
+   - Add disclosure tracking columns
+   - Update RLS policies
 
 ---
 
-## Deliverables Summary
+## What Stays the Same
 
-| Item | Count |
-|------|-------|
-| New SEO landing pages | 12-15 |
-| Reusable components | 3 |
-| Route additions | 12+ |
-| Sitemap entries | 15+ |
-| FAQ schemas | 15+ |
+- **Directory side** (search, profiles, self-serve listings): Tours, messages, and direct contact remain for the self-serve marketplace
+- **International intake wizard**: No changes
+- **Domestic intake flow**: No changes
+- **Admin case management**: Enhanced, not replaced
+- **Billing/invoicing**: No changes to fee structure
 
 ---
 
-## Expected Outcomes
+## Expected Outcome
 
-- **Traffic Capture**: Target 15,000+ monthly international searches
-- **Conversion Path**: Every page funnels to `/international/apply`
-- **SEO Authority**: Establish topical authority for "US rehab for foreigners"
-- **Revenue Impact**: Higher-value international placements ($4,500/admission)
+After implementation, the Placement system will function as a true **brokerage deal desk**:
+
+- RehabLookup controls all patient-provider introductions
+- Providers see only what they need to make accept/decline decisions
+- All coordination flows through Admin/Advisor
+- Placement fees are protected because providers cannot bypass the platform
+- Clear audit trail of all disclosures and communications
 
