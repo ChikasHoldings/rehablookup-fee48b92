@@ -111,7 +111,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
           value={periodListingViews}
           icon={Eye}
           trend={listingViewsGrowth}
-          subtitle="Search impressions + profile visits"
+          subtitle="Total profile page views"
           iconBg="bg-primary/10"
           iconColor="text-primary"
         />

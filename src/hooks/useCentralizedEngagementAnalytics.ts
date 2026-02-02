@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfDay, endOfDay, subDays, format, isWithinInterval } from "date-fns";
+import { startOfDay, endOfDay, subDays, format, parseISO } from "date-fns";
 import { useProviderFacilities } from "./useProviderFacilities";
 import { type DateRange } from "./useLeadAnalytics";
-
 export interface FacilityEngagementBreakdown {
   facilityId: string;
   facilityName: string;
@@ -164,33 +163,39 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange) {
       const rangeStart = dateRange?.from || subDays(now, 30);
       const rangeEnd = dateRange?.to || now;
       
+      // Get date strings for comparison (YYYY-MM-DD format)
+      const rangeStartStr = format(startOfDay(rangeStart), "yyyy-MM-dd");
+      const rangeEndStr = format(endOfDay(rangeEnd), "yyyy-MM-dd");
+      
       // Calculate previous period for comparison
       const periodLength = Math.ceil((rangeEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
       const prevPeriodStart = subDays(rangeStart, periodLength);
       const prevPeriodEnd = subDays(rangeStart, 1);
+      const prevStartStr = format(startOfDay(prevPeriodStart), "yyyy-MM-dd");
+      const prevEndStr = format(endOfDay(prevPeriodEnd), "yyyy-MM-dd");
 
-      // Filter views by current period
+      // Filter views by current period using string comparison (view_date is DATE type)
       const currentPeriodViews = views.filter(v => {
-        const viewDate = new Date(v.view_date);
-        return isWithinInterval(viewDate, { start: startOfDay(rangeStart), end: endOfDay(rangeEnd) });
+        const viewDateStr = v.view_date; // Already in YYYY-MM-DD format
+        return viewDateStr >= rangeStartStr && viewDateStr <= rangeEndStr;
       });
 
       // Filter views by previous period
       const prevPeriodViews = views.filter(v => {
-        const viewDate = new Date(v.view_date);
-        return isWithinInterval(viewDate, { start: startOfDay(prevPeriodStart), end: endOfDay(prevPeriodEnd) });
+        const viewDateStr = v.view_date;
+        return viewDateStr >= prevStartStr && viewDateStr <= prevEndStr;
       });
 
       // Filter events by current period
       const currentPeriodEvents = events.filter(e => {
-        const eventDate = new Date(e.created_at);
-        return isWithinInterval(eventDate, { start: startOfDay(rangeStart), end: endOfDay(rangeEnd) });
+        const eventDateStr = format(parseISO(e.created_at), "yyyy-MM-dd");
+        return eventDateStr >= rangeStartStr && eventDateStr <= rangeEndStr;
       });
 
       // Filter events by previous period
       const prevPeriodEvents = events.filter(e => {
-        const eventDate = new Date(e.created_at);
-        return isWithinInterval(eventDate, { start: startOfDay(prevPeriodStart), end: endOfDay(prevPeriodEnd) });
+        const eventDateStr = format(parseISO(e.created_at), "yyyy-MM-dd");
+        return eventDateStr >= prevStartStr && eventDateStr <= prevEndStr;
       });
 
       // Calculate all-time totals
@@ -297,7 +302,7 @@ function buildDailyTrends(
 
     const dayViews = views.filter(v => v.view_date === dateStr);
     const dayEvents = events.filter(e => 
-      format(new Date(e.created_at), "yyyy-MM-dd") === dateStr
+      format(parseISO(e.created_at), "yyyy-MM-dd") === dateStr
     );
 
     trends.push({
