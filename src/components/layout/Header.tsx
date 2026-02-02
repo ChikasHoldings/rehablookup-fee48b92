@@ -39,7 +39,7 @@ const defaultNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
   { href: "/insurance", label: "Insurance" },
   { href: "/concierge", label: "Concierge" },
-  { href: "/international", label: "International" },
+  { href: "/international", label: "US Treatment" },
   { href: "/for-providers", label: "For Providers" },
 ];
 

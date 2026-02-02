@@ -75,7 +75,7 @@ export function InternationalBanner() {
             variant="secondary"
             className="h-7 text-xs font-semibold whitespace-nowrap"
           >
-            <Link to="/international">Start Placement</Link>
+            <Link to="/international">Find US Treatment</Link>
           </Button>
           
           <button
