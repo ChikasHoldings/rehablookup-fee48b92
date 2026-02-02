@@ -337,24 +337,27 @@ export function SingleQuestionFlow({
     switch (currentQuestion.type) {
       case "choice":
         return (
-          <div className="space-y-3">
-            {currentQuestion.options?.map((option) => (
-              <button
+          <div className="space-y-2.5 sm:space-y-3">
+            {currentQuestion.options?.map((option, index) => (
+              <motion.button
                 key={option.value}
                 type="button"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
                 onClick={() => handleChoiceSelect(currentQuestion.field as keyof LeadIntakeFormData, option.value)}
                 className={cn(
-                  "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left",
+                  "w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 text-left",
                   "hover:border-primary hover:bg-primary/5 hover:shadow-sm",
                   "active:scale-[0.98]",
                   formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value
-                    ? "border-primary bg-primary/5 shadow-sm"
+                    ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
                     : "border-border bg-card"
                 )}
               >
                 {option.icon && (
                   <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                    "w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 transition-colors",
                     formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground"
@@ -364,7 +367,7 @@ export function SingleQuestionFlow({
                 )}
                 <div className="flex-1 min-w-0">
                   <div className={cn(
-                    "font-semibold",
+                    "font-semibold text-sm sm:text-base transition-colors",
                     formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value
                       ? "text-primary"
                       : "text-foreground"
@@ -372,7 +375,7 @@ export function SingleQuestionFlow({
                     {option.label}
                   </div>
                   {option.description && (
-                    <div className="text-sm text-muted-foreground mt-0.5">{option.description}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground mt-0.5 line-clamp-1">{option.description}</div>
                   )}
                 </div>
                 <div className={cn(
@@ -382,25 +385,25 @@ export function SingleQuestionFlow({
                     : "border-muted-foreground/30"
                 )}>
                   {formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value && (
-                    <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                    <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-foreground" />
                   )}
                 </div>
-              </button>
+              </motion.button>
             ))}
           </div>
         );
         
       case "location":
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-5 gap-3">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-5 gap-2 sm:gap-3">
               <div className="col-span-2 relative">
                 <Input
-                  placeholder="ZIP Code"
+                  placeholder="ZIP"
                   value={formData.locationZip}
                   onChange={(e) => handleZipcodeChange(e.target.value)}
                   className={cn(
-                    "h-14 text-lg font-medium text-center",
+                    "h-12 sm:h-14 text-base sm:text-lg font-medium text-center rounded-xl",
                     errors.locationZip && "border-destructive",
                     zipcodeData && "border-green-400 bg-green-50/50"
                   )}
@@ -409,8 +412,8 @@ export function SingleQuestionFlow({
                   autoFocus
                 />
                 {isLookingUp && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <div className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary" />
                   </div>
                 )}
               </div>
@@ -420,7 +423,7 @@ export function SingleQuestionFlow({
                   value={formData.locationCityState}
                   onChange={(e) => updateFormData({ locationCityState: e.target.value })}
                   className={cn(
-                    "h-14 text-lg",
+                    "h-12 sm:h-14 text-base sm:text-lg rounded-xl",
                     zipcodeData && "bg-green-50/50 border-green-400"
                   )}
                   disabled={isLookingUp}
@@ -428,17 +431,21 @@ export function SingleQuestionFlow({
               </div>
             </div>
             {errors.locationZip && (
-              <p className="text-sm text-destructive">{errors.locationZip}</p>
+              <p className="text-xs sm:text-sm text-destructive">{errors.locationZip}</p>
             )}
             {zipcodeData && (
-              <p className="text-sm text-green-600 flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" />
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs sm:text-sm text-green-600 flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Location detected
-              </p>
+              </motion.p>
             )}
             <Button 
               onClick={handleLocationSubmit}
-              className="w-full h-14 text-lg font-semibold rounded-xl"
+              className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
               Continue
@@ -448,10 +455,10 @@ export function SingleQuestionFlow({
         
       case "contact":
         return (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">First Name *</Label>
+          <div className="space-y-4 sm:space-y-5">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label className="text-xs sm:text-sm font-medium">First Name *</Label>
                 <Input
                   placeholder="John"
                   value={formData.firstName}
@@ -459,13 +466,13 @@ export function SingleQuestionFlow({
                     updateFormData({ firstName: e.target.value });
                     setErrors(prev => ({ ...prev, firstName: "" }));
                   }}
-                  className={cn("h-12", errors.firstName && "border-destructive")}
+                  className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.firstName && "border-destructive")}
                   autoComplete="given-name"
                 />
-                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+                {errors.firstName && <p className="text-[10px] sm:text-xs text-destructive">{errors.firstName}</p>}
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Last Name *</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label className="text-xs sm:text-sm font-medium">Last Name *</Label>
                 <Input
                   placeholder="Doe"
                   value={formData.lastName}
@@ -473,28 +480,28 @@ export function SingleQuestionFlow({
                     updateFormData({ lastName: e.target.value });
                     setErrors(prev => ({ ...prev, lastName: "" }));
                   }}
-                  className={cn("h-12", errors.lastName && "border-destructive")}
+                  className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.lastName && "border-destructive")}
                   autoComplete="family-name"
                 />
-                {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+                {errors.lastName && <p className="text-[10px] sm:text-xs text-destructive">{errors.lastName}</p>}
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Phone Number *</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Phone Number *</Label>
               <PhoneInput
                 value={formData.phone}
                 onChange={(value) => {
                   updateFormData({ phone: value });
                   setErrors(prev => ({ ...prev, phone: "" }));
                 }}
-                className={cn("h-12", errors.phone && "border-destructive")}
+                className={cn("h-11 sm:h-12", errors.phone && "border-destructive")}
               />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+              {errors.phone && <p className="text-[10px] sm:text-xs text-destructive">{errors.phone}</p>}
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Email Address *</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Email Address *</Label>
               <EmailInput
                 placeholder="you@example.com"
                 value={formData.email}
@@ -505,31 +512,31 @@ export function SingleQuestionFlow({
                     resetEmailVerification();
                   }
                 }}
-                className={cn("h-12", errors.email && "border-destructive")}
+                className={cn("h-11 sm:h-12", errors.email && "border-destructive")}
               />
-              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+              {errors.email && <p className="text-[10px] sm:text-xs text-destructive">{errors.email}</p>}
             </div>
             
             <Button 
               onClick={handleContactSubmit}
               disabled={isSendingCode}
-              className="w-full h-14 text-lg font-semibold rounded-xl"
+              className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
               {isSendingCode ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                   Submitting...
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-5 w-5" />
+                  <Send className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Submit
                 </>
               )}
             </Button>
             
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
               🔒 Your information is confidential and protected
             </p>
           </div>
@@ -537,12 +544,12 @@ export function SingleQuestionFlow({
         
       case "verify":
         return (
-          <div className="space-y-6">
-            <p className="text-sm text-muted-foreground text-center">
-              We sent a 6-digit code to <span className="font-medium text-foreground">{formData.email}</span>
+          <div className="space-y-4 sm:space-y-6">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center px-2">
+              We sent a 6-digit code to <span className="font-medium text-foreground break-all">{formData.email}</span>
             </p>
             
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-3 sm:gap-4">
               <InputOTP
                 value={verificationCode}
                 onChange={(value) => {
@@ -551,16 +558,16 @@ export function SingleQuestionFlow({
                 }}
                 maxLength={6}
               >
-                <InputOTPGroup className="gap-2">
+                <InputOTPGroup className="gap-1.5 sm:gap-2">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot key={i} index={i} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot key={i} index={i} className="h-12 w-10 sm:h-14 sm:w-12 text-lg sm:text-xl rounded-lg sm:rounded-xl" />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
               
               {errors.code && (
-                <p className="text-sm text-destructive flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
+                <p className="text-xs sm:text-sm text-destructive flex items-center gap-1.5 sm:gap-2">
+                  <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {errors.code}
                 </p>
               )}
@@ -569,30 +576,30 @@ export function SingleQuestionFlow({
             <Button 
               onClick={handleVerifyCode}
               disabled={isVerifying || verificationCode.length !== 6 || isSubmitting}
-              className="w-full h-14 text-lg font-semibold rounded-xl"
+              className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
               {isVerifying || isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                   {isSubmitting ? "Submitting..." : "Verifying..."}
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="mr-2 h-5 w-5" />
+                  <CheckCircle2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Verify & Submit
                 </>
               )}
             </Button>
             
-            <div className="flex items-center justify-center gap-2 text-sm">
+            <div className="flex items-center justify-center gap-2 text-xs sm:text-sm">
               <span className="text-muted-foreground">Didn't receive it?</span>
               <Button
                 variant="link"
                 size="sm"
                 onClick={sendVerificationCode}
                 disabled={resendCooldown > 0 || resendCount >= 3}
-                className="p-0 h-auto"
+                className="p-0 h-auto text-xs sm:text-sm"
               >
                 {resendCooldown > 0 ? (
                   `Resend in ${resendCooldown}s`
@@ -620,19 +627,19 @@ export function SingleQuestionFlow({
   };
   
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto px-1">
       
       {/* Facility badge */}
       {facilityName && currentIndex === 0 && (
-        <div className="mb-4 text-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm">
-            Requesting info from <span className="font-semibold">{facilityName}</span>
+        <div className="mb-3 sm:mb-4 text-center">
+          <span className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-muted text-xs sm:text-sm">
+            Requesting info from <span className="font-semibold truncate max-w-[150px] sm:max-w-none">{facilityName}</span>
           </span>
         </div>
       )}
       
       {/* Question content */}
-      <div className="relative min-h-[400px]">
+      <div className="relative min-h-[350px] sm:min-h-[400px]">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentQuestion?.id}
@@ -644,18 +651,23 @@ export function SingleQuestionFlow({
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="w-full"
           >
-            {/* Question header */}
-            <div className="text-center mb-8">
+            {/* Question header - Mobile Optimized */}
+            <div className="text-center mb-5 sm:mb-8">
               {currentQuestion?.icon && (
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-4">
+                <motion.div 
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary/10 text-primary mb-3 sm:mb-4"
+                >
                   {currentQuestion.icon}
-                </div>
+                </motion.div>
               )}
-              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-1.5 sm:mb-2 px-2">
                 {currentQuestion?.title}
               </h2>
               {currentQuestion?.subtitle && (
-                <p className="text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground px-4">
                   {currentQuestion.subtitle}
                 </p>
               )}
@@ -667,47 +679,49 @@ export function SingleQuestionFlow({
         </AnimatePresence>
       </div>
       
-      {/* Navigation */}
-      <div className="mt-6 flex items-center justify-between">
+      {/* Navigation - Mobile Optimized */}
+      <div className="mt-4 sm:mt-6 flex items-center justify-between">
         <Button
           variant="ghost"
+          size="sm"
           onClick={goBack}
           disabled={currentIndex === 0}
           className={cn(
-            "gap-2",
+            "gap-1.5 sm:gap-2 h-9 sm:h-10",
             currentIndex === 0 && "invisible"
           )}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back
+          <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span className="text-sm">Back</span>
         </Button>
         
         {/* Skip button for optional questions */}
         {!currentQuestion?.required && currentQuestion?.type === "choice" && (
           <Button
             variant="ghost"
+            size="sm"
             onClick={goNext}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-9 sm:h-10 text-sm"
           >
             Skip
           </Button>
         )}
       </div>
       
-      {/* Trust indicators */}
-      <div className="mt-8 pt-6 border-t flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <Shield className="h-3.5 w-3.5 text-primary" />
+      {/* Trust indicators - Mobile Compact */}
+      <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
+        <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
+          <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
           <span>HIPAA Compliant</span>
         </div>
-        <span className="text-border">•</span>
-        <div className="flex items-center gap-1.5">
-          <span>🔒</span>
-          <span>256-bit Encryption</span>
+        <span className="hidden sm:block text-border">•</span>
+        <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
+          <span className="text-xs">🔒</span>
+          <span>Encrypted</span>
         </div>
-        <span className="text-border">•</span>
-        <div className="flex items-center gap-1.5">
-          <span>✓</span>
+        <span className="hidden sm:block text-border">•</span>
+        <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
+          <span className="text-xs">✓</span>
           <span>100% Free</span>
         </div>
       </div>
