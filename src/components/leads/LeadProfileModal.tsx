@@ -61,6 +61,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatSourceLabel } from "@/lib/sourceLabels";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
@@ -1127,7 +1128,7 @@ export function LeadProfileModal({
                   <div className="grid gap-3 text-sm sm:grid-cols-3">
                     <div>
                       <span className="text-muted-foreground block text-xs">Source</span>
-                      <span className="font-medium">{lead.source || "Profile Lead"}</span>
+                      <span className="font-medium">{formatSourceLabel(lead.source)}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block text-xs">Submitted</span>

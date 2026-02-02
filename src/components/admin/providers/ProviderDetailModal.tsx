@@ -62,6 +62,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { formatSourceLabel } from "@/lib/sourceLabels";
 import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
 import { type Facility, type ProSubscription, getStatusBadge } from "./ProviderListItem";
 
@@ -923,7 +924,7 @@ export function ProviderDetailModal({
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-xs">
-                              {lead.source || "direct"}
+                              {formatSourceLabel(lead.source)}
                             </Badge>
                           </TableCell>
                           <TableCell>
