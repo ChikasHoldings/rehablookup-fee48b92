@@ -336,8 +336,15 @@ const Index = () => {
               <SearchForm variant="directory" />
             </div>
 
-            {/* Provider CTA */}
-            <div className="mt-5 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            {/* Quick Links */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in" style={{ animationDelay: "150ms" }}>
+              <Link 
+                to="/international" 
+                className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
+              >
+                International Placement
+              </Link>
+              <span className="text-white/40">•</span>
               <Link 
                 to="/for-providers" 
                 className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"

@@ -24,6 +24,7 @@ const treatmentTypes = [
 const resources = [
   { name: "Guides & Articles", path: "/resources" },
   { name: "Insurance Guide", path: "/insurance" },
+  { name: "International Placement", path: "/international" },
   { name: "Cost Estimator", path: "/cost-estimator" },
   { name: "How It Works", path: "/how-it-works" },
   { name: "FAQ", path: "/faq" },
