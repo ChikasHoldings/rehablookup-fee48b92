@@ -9,6 +9,7 @@ import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { InternationalPhoneInput } from "@/components/ui/international-phone-input";
 import { useToast } from "@/hooks/use-toast";
 import { 
   CheckCircle,
@@ -63,9 +64,11 @@ const FAQ_ITEMS = [
 
 export default function InternationalLanding() {
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
-    phone: "",
+    countryCode: "",
+    phoneNumber: "",
     country: "",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -74,7 +77,7 @@ export default function InternationalLanding() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.country) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.country) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -82,11 +85,23 @@ export default function InternationalLanding() {
       });
       return;
     }
+    
+    // Combine phone data for submission
+    const fullPhone = formData.countryCode && formData.phoneNumber 
+      ? `${formData.countryCode} ${formData.phoneNumber}` 
+      : "";
+    
+    const submitData = {
+      name: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      phone: fullPhone,
+      country: formData.country,
+    };
 
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-international-checkout", {
-        body: formData,
+        body: submitData,
       });
 
       if (error) throw error;
@@ -235,15 +250,27 @@ export default function InternationalLanding() {
                       </div>
 
                       <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                          <Label htmlFor="name">Full Name *</Label>
-                          <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="Your full name"
-                            required
-                          />
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="firstName">First Name *</Label>
+                            <Input
+                              id="firstName"
+                              value={formData.firstName}
+                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                              placeholder="First name"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="lastName">Last Name *</Label>
+                            <Input
+                              id="lastName"
+                              value={formData.lastName}
+                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                              placeholder="Last name"
+                              required
+                            />
+                          </div>
                         </div>
 
                         <div>
@@ -259,13 +286,12 @@ export default function InternationalLanding() {
                         </div>
 
                         <div>
-                          <Label htmlFor="phone">Phone (with country code)</Label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            placeholder="+44 20 1234 5678"
+                          <Label>Phone</Label>
+                          <InternationalPhoneInput
+                            countryCode={formData.countryCode}
+                            phoneNumber={formData.phoneNumber}
+                            onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+                            onPhoneNumberChange={(number) => setFormData({ ...formData, phoneNumber: number })}
                           />
                         </div>
 
