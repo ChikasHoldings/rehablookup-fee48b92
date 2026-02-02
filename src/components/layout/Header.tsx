@@ -84,24 +84,8 @@ export function Header({
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
         <div className="container flex h-14 md:h-16 items-center justify-between gap-2">
-          {/* Mobile: Hamburger Button (Left) */}
-          <button
-            className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-lg md:hidden transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95",
-              mobileMenuOpen && "bg-primary/90"
-            )}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6 text-primary-foreground" />
-            ) : (
-              <Menu className="h-6 w-6 text-primary-foreground" />
-            )}
-          </button>
-
-          {/* Logo - Centered on mobile */}
-          <Link to="/" className="flex items-center md:flex-none flex-1 justify-center md:justify-start">
+          {/* Logo - Left aligned */}
+          <Link to="/" className="flex items-center">
             <img 
               src="/logo.png"
               alt="RehabLookup" 
@@ -179,14 +163,30 @@ export function Header({
             {/* Mobile Search Icon */}
             <PrefetchLink
               to="/rehab-centers"
-              className="flex h-11 w-11 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Search facilities"
             >
               <Search className="h-5 w-5" />
             </PrefetchLink>
 
+            {/* Mobile Hamburger Button */}
+            <button
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-lg md:hidden transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95",
+                mobileMenuOpen && "bg-primary/90"
+              )}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5 text-primary-foreground" />
+              ) : (
+                <Menu className="h-5 w-5 text-primary-foreground" />
+              )}
+            </button>
+
             {/* Desktop CTAs */}
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
