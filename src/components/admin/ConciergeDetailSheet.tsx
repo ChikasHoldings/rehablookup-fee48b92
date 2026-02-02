@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   closed: { label: "Closed", variant: "destructive" },
 };
 
-export function ConciergeDetailSheet({ caseData, open, onClose, onRefresh }: ConciergeDetailSheetProps) {
+export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
+  function ConciergeDetailSheet({ caseData, open, onClose, onRefresh }, ref) {
   const [activeTab, setActiveTab] = useState("intake");
 
   if (!caseData) return null;
@@ -112,4 +113,6 @@ export function ConciergeDetailSheet({ caseData, open, onClose, onRefresh }: Con
       </SheetContent>
     </Sheet>
   );
-}
+});
+
+ConciergeDetailSheet.displayName = "ConciergeDetailSheet";
