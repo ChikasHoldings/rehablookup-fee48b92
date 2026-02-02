@@ -149,14 +149,17 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
       <CardHeader className="py-3">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-primary" />
-          Confirm Placement (Admin Only)
+          Confirm Admission (Brokerage Control)
         </CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Only admins can confirm placements to ensure fee collection and coordination.
+        </p>
       </CardHeader>
       <CardContent className="py-2 space-y-4">
         {!hasInterestedFacilities ? (
           <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
             <ShieldAlert className="h-4 w-4 inline mr-2" />
-            No facilities have accepted this candidate yet. Wait for provider responses before confirming.
+            No facilities have accepted this candidate yet. Send introductions and wait for provider responses.
           </div>
         ) : (
           <>
@@ -211,10 +214,10 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
                 <DollarSign className="h-4 w-4 text-amber-600 mt-0.5" />
                 <div>
                   <p className="font-medium text-amber-800 dark:text-amber-400">
-                    Placement Fee: $1,000 (or $800 for Pro facilities)
+                    Placement Fee: Domestic $1,000 / International $4,500
                   </p>
                   <p className="text-amber-700 dark:text-amber-500 text-xs mt-1">
-                    An invoice will be automatically generated for the selected facility.
+                    Invoice auto-generated. Pro facilities receive discounted domestic rates.
                   </p>
                 </div>
               </div>

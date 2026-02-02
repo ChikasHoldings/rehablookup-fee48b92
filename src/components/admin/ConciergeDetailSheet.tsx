@@ -70,7 +70,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             </TabsTrigger>
             <TabsTrigger value="messages" className="gap-1 px-2">
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs">Msgs</span>
+              <span className="hidden sm:inline text-xs">Coord</span>
             </TabsTrigger>
             <TabsTrigger value="tours" className="gap-1 px-2">
               <CalendarCheck className="h-4 w-4" />

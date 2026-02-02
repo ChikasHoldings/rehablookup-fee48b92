@@ -71,50 +71,34 @@ serve(async (req) => {
       throw new Error("Facility not in matched list for this inquiry");
     }
 
-    // Check user authorization
-    const isSeeker = inquiry.user_email === userData.user.email;
-    
-    // Check if user is provider
-    const { data: facility } = await supabaseService
-      .from('facilities')
-      .select('id, user_id, name')
-      .eq('id', facilityId)
+    // Check user authorization - ADMIN ONLY for brokerage model
+    // Verify user is an admin
+    const { data: userRole } = await supabaseService
+      .from('user_roles')
+      .select('role')
       .eq('user_id', userData.user.id)
+      .eq('role', 'admin')
       .maybeSingle();
-    
-    const isProvider = !!facility;
 
-    if (!isSeeker && !isProvider) {
-      throw new Error("Not authorized to confirm this placement");
+    const isAdmin = !!userRole;
+
+    if (!isAdmin) {
+      throw new Error("Only administrators can confirm placements. This ensures RehabLookup coordinates all admissions.");
     }
 
-    // Handle confirmation based on type
-    const updates: Record<string, unknown> = {};
+    logStep(requestId, "Admin authorization verified", { adminUserId: userData.user.id });
 
-    if (confirmationType === 'seeker') {
-      if (!isSeeker) throw new Error("Only seeker can confirm admission");
-      updates.seeker_confirmed = true;
-      updates.seeker_confirmed_at = new Date().toISOString();
-      logStep(requestId, "Seeker confirmation recorded");
-    } else if (confirmationType === 'provider') {
-      if (!isProvider) throw new Error("Only provider can confirm placement");
-      updates.placed_facility_id = facilityId;
-      updates.placement_confirmed = true;
-      updates.placement_confirmed_at = admittedAt || new Date().toISOString();
-      logStep(requestId, "Provider confirmation recorded");
-    }
+    // Admin confirms placement directly - no dual confirmation needed in brokerage model
+    const updates: Record<string, unknown> = {
+      placed_facility_id: facilityId,
+      placement_confirmed: true,
+      placement_confirmed_at: admittedAt || new Date().toISOString(),
+      seeker_confirmed: true, // Admin acts on behalf of both parties
+      seeker_confirmed_at: new Date().toISOString(),
+      status: 'placed',
+    };
 
-    // Check if both parties have confirmed
-    const willBeFullyConfirmed = 
-      (confirmationType === 'seeker' && inquiry.placement_confirmed) ||
-      (confirmationType === 'provider' && inquiry.seeker_confirmed);
-
-    if (willBeFullyConfirmed) {
-      updates.status = 'placed';
-      logStep(requestId, "Dual confirmation complete - placement confirmed");
-    } else {
-      updates.status = 'confirming';
-    }
+    logStep(requestId, "Admin confirmed placement", { facilityId, admittedAt });
 
     updates.updated_at = new Date().toISOString();
 
@@ -128,94 +112,55 @@ serve(async (req) => {
       throw new Error(`Failed to update inquiry: ${updateError.message}`);
     }
 
-    // Send confirmation notifications
+    // Send placement complete notification (admin-controlled)
+    logStep(requestId, "Sending placement complete notifications");
+    
     try {
-      if (confirmationType === 'seeker') {
-        // Notify provider that seeker confirmed
-        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            type: 'seeker_confirmed',
-            inquiryId,
-            facilityId,
-          }),
-        });
-      } else if (confirmationType === 'provider') {
-        // Notify seeker that provider confirmed
-        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            type: 'provider_confirmed',
-            inquiryId,
-            facilityId,
-          }),
-        });
-      }
-      logStep(requestId, "Confirmation notification sent");
+      await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          type: 'placement_complete',
+          inquiryId,
+          facilityId,
+        }),
+      });
     } catch (notifError) {
-      logStep(requestId, "Warning: Failed to send confirmation notification", { error: String(notifError) });
+      logStep(requestId, "Warning: Failed to send placement complete notification", { error: String(notifError) });
     }
 
-    // If fully confirmed, send placement complete and trigger fee charge
-    if (willBeFullyConfirmed) {
-      logStep(requestId, "Sending placement complete notifications");
-      
-      try {
-        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            type: 'placement_complete',
-            inquiryId,
-            facilityId,
-          }),
-        });
-      } catch (notifError) {
-        logStep(requestId, "Warning: Failed to send placement complete notification", { error: String(notifError) });
-      }
+    logStep(requestId, "Triggering placement fee charge");
+    
+    // Call the charge function
+    try {
+      const chargeResponse = await fetch(`${supabaseUrl}/functions/v1/charge-placement-fee`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          inquiryId,
+          facilityId,
+          feeType: 'flat_fee',
+        }),
+      });
 
-      logStep(requestId, "Triggering placement fee charge");
-      
-      // Call the charge function
-      try {
-        const chargeResponse = await fetch(`${supabaseUrl}/functions/v1/charge-placement-fee`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            inquiryId,
-            facilityId,
-            feeType: 'flat_fee',
-          }),
-        });
-
-        const chargeResult = await chargeResponse.json();
-        logStep(requestId, "Charge result", chargeResult);
-      } catch (chargeError) {
-        logStep(requestId, "Warning: Charge failed", { error: String(chargeError) });
-        // Don't fail the confirmation if charge fails
-      }
+      const chargeResult = await chargeResponse.json();
+      logStep(requestId, "Charge result", chargeResult);
+    } catch (chargeError) {
+      logStep(requestId, "Warning: Charge failed", { error: String(chargeError) });
+      // Don't fail the confirmation if charge fails
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        confirmationType,
-        fullyConfirmed: willBeFullyConfirmed,
-        status: willBeFullyConfirmed ? 'placed' : 'confirming',
+        adminConfirmed: true,
+        status: 'placed',
         requestId,
         _version: VERSION,
       }),

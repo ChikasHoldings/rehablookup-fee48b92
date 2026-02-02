@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Send, Clock, CheckCircle, XCircle, MessageSquare, Loader2 } from "lucide-react";
+import { Send, Clock, CheckCircle, XCircle, MessageSquare, Loader2, Eye, EyeOff, Shield } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -27,13 +27,14 @@ interface ConciergeIntroductionsTabProps {
 
 const RESPONSE_STATUS = {
   pending: { label: "Pending", icon: Clock, variant: "secondary" as const },
-  interested: { label: "Interested", icon: CheckCircle, variant: "default" as const },
+  interested: { label: "Accepted", icon: CheckCircle, variant: "default" as const },
   declined: { label: "Declined", icon: XCircle, variant: "destructive" as const },
   no_response: { label: "No Response", icon: Clock, variant: "outline" as const },
 };
 
 export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntroductionsTabProps) {
   const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const [disclosingTo, setDisclosingTo] = useState<string | null>(null);
 
   // Fetch introductions for this inquiry
   const { data: introductions, isLoading, refetch: refetchIntros } = useQuery({
@@ -192,6 +193,44 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
     },
   });
 
+  // Disclose PII mutation - admin-only action to share patient info with facility
+  const disclosePIIMutation = useMutation({
+    mutationFn: async (introId: string) => {
+      setDisclosingTo(introId);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("concierge_introductions")
+        .update({
+          admin_disclosed_pii_at: new Date().toISOString(),
+          disclosed_by_admin_id: user.id,
+        })
+        .eq("id", introId);
+
+      if (error) throw error;
+
+      // Log the disclosure event
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseData.id,
+        event_type: "pii_disclosed",
+        event_data: { introduction_id: introId },
+        actor_id: user.id,
+        actor_type: "admin",
+      });
+    },
+    onSuccess: () => {
+      toast.success("Patient info disclosed to facility");
+      refetchIntros();
+      onRefresh();
+      setDisclosingTo(null);
+    },
+    onError: (error) => {
+      toast.error("Failed to disclose: " + error.message);
+      setDisclosingTo(null);
+    },
+  });
+
   return (
     <div className="space-y-4">
       {/* Send New Introduction */}
@@ -276,7 +315,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                     </div>
 
                     {/* Response Controls */}
-                    <div className="mt-3 pt-3 border-t">
+                    <div className="mt-3 pt-3 border-t space-y-3">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Provider Response:</span>
                         <Select
@@ -293,21 +332,56 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="interested">Interested</SelectItem>
+                            <SelectItem value="interested">Accepted</SelectItem>
                             <SelectItem value="declined">Declined</SelectItem>
                             <SelectItem value="no_response">No Response</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
+                      {/* PII Disclosure Control - Only show when provider accepted */}
+                      {intro.provider_response === "interested" && (
+                        <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-800">
+                          {intro.admin_disclosed_pii_at ? (
+                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                              <Eye className="h-4 w-4" />
+                              <span className="text-sm">
+                                PII disclosed {format(new Date(intro.admin_disclosed_pii_at), "MMM d, h:mm a")}
+                              </span>
+                            </div>
+                          ) : (
+                            <>
+                              <Shield className="h-4 w-4 text-amber-600" />
+                              <span className="text-sm text-amber-800 dark:text-amber-200 flex-1">
+                                Patient info is hidden from facility
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => disclosePIIMutation.mutate(intro.id)}
+                                disabled={disclosingTo === intro.id}
+                                className="gap-1"
+                              >
+                                {disclosingTo === intro.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Eye className="h-3 w-3" />
+                                )}
+                                Disclose PII
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
+
                       {intro.provider_notes && (
-                        <p className="text-sm mt-2 p-2 bg-muted rounded">
+                        <p className="text-sm p-2 bg-muted rounded">
                           {intro.provider_notes}
                         </p>
                       )}
 
                       {intro.seeker_contacted && (
-                        <p className="text-xs text-green-600 mt-2">
+                        <p className="text-xs text-green-600">
                           ✓ Seeker contacted at{" "}
                           {intro.seeker_contacted_at &&
                             format(new Date(intro.seeker_contacted_at), "MMM d, h:mm a")}
