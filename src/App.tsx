@@ -139,6 +139,15 @@ const ExecutiveRehabUSA = lazy(() => import("./pages/us-rehab/ExecutiveRehabUSA"
 const PrivateRehabAmerica = lazy(() => import("./pages/us-rehab/PrivateRehabAmerica"));
 const InternationalPatients = lazy(() => import("./pages/us-rehab/InternationalPatients"));
 const MalibuRehabCenters = lazy(() => import("./pages/us-rehab/MalibuRehabCenters"));
+// Country-specific SEO pages
+const RehabUSAFromUK = lazy(() => import("./pages/us-rehab/RehabUSAFromUK"));
+const RehabUSAFromUAE = lazy(() => import("./pages/us-rehab/RehabUSAFromUAE"));
+const RehabUSAFromAustralia = lazy(() => import("./pages/us-rehab/RehabUSAFromAustralia"));
+// Treatment-specific SEO pages
+const AlcoholRehabUSA = lazy(() => import("./pages/us-rehab/AlcoholRehabUSA"));
+const DrugRehabUSA = lazy(() => import("./pages/us-rehab/DrugRehabUSA"));
+const DualDiagnosisUSA = lazy(() => import("./pages/us-rehab/DualDiagnosisUSA"));
+const CelebrityRehabUSA = lazy(() => import("./pages/us-rehab/CelebrityRehabUSA"));
 
 // Provider Panel - lazy load
 const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
@@ -308,6 +317,15 @@ const App = () => (
             <Route path="/us-rehab/private-rehab-america" element={<PublicRouteGuard><PrivateRehabAmerica /></PublicRouteGuard>} />
             <Route path="/us-rehab/international-patients" element={<PublicRouteGuard><InternationalPatients /></PublicRouteGuard>} />
             <Route path="/us-rehab/malibu-rehab" element={<PublicRouteGuard><MalibuRehabCenters /></PublicRouteGuard>} />
+            {/* Country-specific SEO pages */}
+            <Route path="/us-rehab/uk-patients" element={<PublicRouteGuard><RehabUSAFromUK /></PublicRouteGuard>} />
+            <Route path="/us-rehab/uae-middle-east" element={<PublicRouteGuard><RehabUSAFromUAE /></PublicRouteGuard>} />
+            <Route path="/us-rehab/australian-patients" element={<PublicRouteGuard><RehabUSAFromAustralia /></PublicRouteGuard>} />
+            {/* Treatment-specific SEO pages */}
+            <Route path="/us-rehab/alcohol-rehab-usa" element={<PublicRouteGuard><AlcoholRehabUSA /></PublicRouteGuard>} />
+            <Route path="/us-rehab/drug-rehab-usa" element={<PublicRouteGuard><DrugRehabUSA /></PublicRouteGuard>} />
+            <Route path="/us-rehab/dual-diagnosis-usa" element={<PublicRouteGuard><DualDiagnosisUSA /></PublicRouteGuard>} />
+            <Route path="/us-rehab/celebrity-rehab-usa" element={<PublicRouteGuard><CelebrityRehabUSA /></PublicRouteGuard>} />
             
             {/* Treatment center profile pages */}
             <Route path="/treatment-centers/:slug" element={<PublicRouteGuard><TreatmentCenterProfile /></PublicRouteGuard>} />

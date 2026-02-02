@@ -352,10 +352,14 @@ export default function InternationalLanding() {
                   { name: "Luxury Rehab America", path: "/us-rehab/luxury-rehab-america" },
                   { name: "Luxury Rehab California", path: "/us-rehab/luxury-rehab-california" },
                   { name: "Luxury Rehab Florida", path: "/us-rehab/luxury-rehab-florida" },
-                  { name: "Luxury Rehab Arizona", path: "/us-rehab/luxury-rehab-arizona" },
                   { name: "Executive Rehab USA", path: "/us-rehab/executive-rehab" },
-                  { name: "Malibu Rehab Centers", path: "/us-rehab/malibu-rehab" },
-                  { name: "Private Rehab America", path: "/us-rehab/private-rehab-america" },
+                  { name: "Celebrity Rehab USA", path: "/us-rehab/celebrity-rehab-usa" },
+                  { name: "Alcohol Rehab USA", path: "/us-rehab/alcohol-rehab-usa" },
+                  { name: "Drug Rehab USA", path: "/us-rehab/drug-rehab-usa" },
+                  { name: "Dual Diagnosis USA", path: "/us-rehab/dual-diagnosis-usa" },
+                  { name: "Rehab from UK", path: "/us-rehab/uk-patients" },
+                  { name: "Rehab from UAE", path: "/us-rehab/uae-middle-east" },
+                  { name: "Rehab from Australia", path: "/us-rehab/australian-patients" },
                 ].map((item, i) => (
                   <Link
                     key={i}
