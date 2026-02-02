@@ -1941,6 +1941,238 @@ export type Database = {
           },
         ]
       }
+      international_case_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string | null
+          case_id: string | null
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string | null
+          case_id?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string | null
+          case_id?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "international_case_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "international_placement_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      international_facility_invoices: {
+        Row: {
+          amount_cents: number
+          case_id: string
+          created_at: string
+          due_date: string | null
+          facility_id: string
+          id: string
+          paid_at: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          waive_reason: string | null
+          waived_at: string | null
+          waived_by: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          case_id: string
+          created_at?: string
+          due_date?: string | null
+          facility_id: string
+          id?: string
+          paid_at?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          waive_reason?: string | null
+          waived_at?: string | null
+          waived_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          case_id?: string
+          created_at?: string
+          due_date?: string | null
+          facility_id?: string
+          id?: string
+          paid_at?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          waive_reason?: string | null
+          waived_at?: string | null
+          waived_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "international_facility_invoices_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "international_placement_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "international_facility_invoices_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "international_facility_invoices_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      international_placement_cases: {
+        Row: {
+          accepted_facility_id: string | null
+          admin_notes: string | null
+          admission_confirmed_at: string | null
+          admission_confirmed_by: string | null
+          assigned_advisor_id: string | null
+          client_country: string
+          client_email: string
+          client_name: string
+          client_phone: string | null
+          closed_at: string | null
+          created_at: string
+          facility_fee_cents: number
+          facility_fee_status: string | null
+          facility_invoice_id: string | null
+          id: string
+          intake_data: Json
+          intake_submitted_at: string | null
+          matched_facility_ids: string[] | null
+          payment_amount_cents: number
+          payment_status: string
+          refund_type: string | null
+          refunded_at: string | null
+          refunded_by: string | null
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_facility_id?: string | null
+          admin_notes?: string | null
+          admission_confirmed_at?: string | null
+          admission_confirmed_by?: string | null
+          assigned_advisor_id?: string | null
+          client_country: string
+          client_email: string
+          client_name: string
+          client_phone?: string | null
+          closed_at?: string | null
+          created_at?: string
+          facility_fee_cents?: number
+          facility_fee_status?: string | null
+          facility_invoice_id?: string | null
+          id?: string
+          intake_data?: Json
+          intake_submitted_at?: string | null
+          matched_facility_ids?: string[] | null
+          payment_amount_cents?: number
+          payment_status?: string
+          refund_type?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_facility_id?: string | null
+          admin_notes?: string | null
+          admission_confirmed_at?: string | null
+          admission_confirmed_by?: string | null
+          assigned_advisor_id?: string | null
+          client_country?: string
+          client_email?: string
+          client_name?: string
+          client_phone?: string | null
+          closed_at?: string | null
+          created_at?: string
+          facility_fee_cents?: number
+          facility_fee_status?: string | null
+          facility_invoice_id?: string | null
+          id?: string
+          intake_data?: Json
+          intake_submitted_at?: string | null
+          matched_facility_ids?: string[] | null
+          payment_amount_cents?: number
+          payment_status?: string
+          refund_type?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "international_placement_cases_accepted_facility_id_fkey"
+            columns: ["accepted_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "international_placement_cases_accepted_facility_id_fkey"
+            columns: ["accepted_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "international_placement_cases_facility_invoice_id_fkey"
+            columns: ["facility_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "international_facility_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_distributions: {
         Row: {
           created_at: string
