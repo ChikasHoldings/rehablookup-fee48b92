@@ -1,81 +1,82 @@
-✅ **COMPLETED**
 
-# Update "Matching" to "Treatment Placement" Terminology
 
-## Overview
-Replace generic "Matching" terminology with "Treatment Placement" across all placement-related interfaces to better convey the premium, brokerage nature of the service.
+# SEO Prerendering Fix: Making Pages Crawlable
 
----
+## The Problem
 
-## Files to Update
+Your `prerender-for-bots` edge function exists but is **never invoked**. The routing rule `/* /index.html 200` sends ALL requests directly to the SPA shell. Crawlers (Google, ChatGPT, etc.) see a generic HTML shell with navigation links instead of unique page content.
 
-### 1. Admin Status Labels
-
-**File: `src/pages/admin/AdminConcierge.tsx`**
-- Line 22: Change `matching: { label: "Matching" }` → `matching: { label: "Placing" }`
-- Line 23: Change `matched: { label: "Matched" }` → `matched: { label: "Facilities Found" }`
-
-**File: `src/components/admin/concierge/ConciergeActionsTab.tsx`**
-- Line 45: Change `{ value: "matching", label: "Matching" }` → `{ value: "matching", label: "Placing" }`
-- Line 46: Change `{ value: "matched", label: "Matched" }` → `{ value: "matched", label: "Facilities Found" }`
-
-**File: `src/components/admin/concierge/InternationalCasesTab.tsx`**
-- Line 32: Change `matching: { label: "Matching" }` → `matching: { label: "Placing" }`
-- Line 33: Change `matched: { label: "Matched" }` → `matched: { label: "Facilities Found" }`
+**Impact**: 
+- `/for-providers` looks identical to homepage to crawlers
+- `/privacy-policy` shows no policy text
+- All SEO landing pages appear as near-duplicates
 
 ---
 
-### 2. Seeker-Facing Status Card
+## The Solution
 
-**File: `src/components/seeker/placement/PlacementStatusCard.tsx`**
-- Line 37: Change `matching: { label: "Finding Matches" }` → `matching: { label: "Finding Treatment Options" }`
-
----
-
-### 3. Admin Placement Algorithm UI
-
-**File: `src/components/admin/concierge/ConciergeMatchingTab.tsx`**
-- Line 89: Change `"Matching Algorithm"` → `"Treatment Placement Engine"`
-- Line 103: Change `"Matching..."` → `"Placing..."`
-- Line 108: Change `"Re-run Matching"` → `"Re-run Placement"`
-- Line 113: Change `"Run Matching"` → `"Run Placement"`
-- Line 126: Change `"Matched Facilities"` → `"Placement Options"`
-- Line 134: Change text `"Run the matching algorithm"` → `"Run the placement engine"`
-- Line 201: Change `"Matching Criteria Used"` → `"Placement Criteria Used"`
+Implement a multi-layered approach to ensure crawlers receive unique, pre-rendered HTML for every SEO-critical page.
 
 ---
 
-### 4. FAQ Section
+## Implementation Phases
 
-**File: `src/pages/FAQ.tsx`**
-- Line 76: Change category name `"Matching & Privacy"` → `"Placement & Privacy"`
+### Phase 1: Enhanced Static Fallback Content (index.html)
+
+Replace the generic `<noscript>` section with route-specific semantic content blocks containing unique text for:
+- Homepage (treatment center discovery pitch)
+- `/for-providers` (provider acquisition content)
+- `/privacy-policy` (full policy text)
+- `/terms-of-service` (full terms text)
+- `/concierge` (placement service description)
+- `/about`, `/contact`, `/how-it-works`
+
+### Phase 2: Bot Detection Middleware Edge Function
+
+Create `detect-and-prerender` edge function that:
+1. Intercepts requests and checks User-Agent against 45+ bot patterns
+2. For bots on SEO routes → Proxies to `prerender-for-bots`
+3. For regular users → Passes through to SPA
+
+### Phase 3: Update Prerender Function
+
+Enhance `prerender-for-bots/index.ts`:
+- Add `X-Prerender-Request` header for middleware calls
+- Implement HTML caching (1-24 hour TTL)
+- Return meaningful fallback HTML on errors
+
+### Phase 4: Routing Updates
+
+Update `public/_redirects` to prioritize static/prerendered content for known SEO paths before the SPA fallback.
 
 ---
 
-### 5. Marketing Copy
+## Files to Create/Modify
 
-**File: `src/components/marketing/MarketingLeadSuccess.tsx`**
-- Line 178: Change `"one-on-one matching"` → `"personalized treatment placement"`
-
----
-
-## Summary of Changes
-
-| Location | Current Term | New Term |
-|----------|-------------|----------|
-| Status badges | "Matching" | "Placing" |
-| Status badges | "Matched" | "Facilities Found" |
-| Seeker status | "Finding Matches" | "Finding Treatment Options" |
-| Admin UI | "Matching Algorithm" | "Treatment Placement Engine" |
-| Button | "Run Matching" | "Run Placement" |
-| FAQ | "Matching & Privacy" | "Placement & Privacy" |
-| Marketing | "one-on-one matching" | "personalized treatment placement" |
+| File | Action |
+|------|--------|
+| `index.html` | Add route-specific `<noscript>` content |
+| `supabase/functions/detect-and-prerender/index.ts` | Create bot detection middleware |
+| `supabase/functions/prerender-for-bots/index.ts` | Add caching, improve fallbacks |
+| `supabase/config.toml` | Add detect-and-prerender config |
+| `public/_redirects` | Update routing priorities |
 
 ---
 
-## Technical Notes
+## Expected Outcomes
 
-- Database column names (e.g., `matched_at`, `match_scores`) remain unchanged as they are internal
-- Component file names (e.g., `ConciergeMatchingTab.tsx`) can remain unchanged since they're internal
-- The status value in the database (`matching`) stays the same - only the display label changes
+| Metric | Before | After |
+|--------|--------|-------|
+| Unique HTML per page | 1 generic shell | 50+ unique pages |
+| `/for-providers` indexability | Not indexable | Fully indexable |
+| `/privacy-policy` visibility | No policy text | Full policy visible |
+| Google ranking potential | Low | High |
+
+---
+
+## Priority Order
+
+1. **Day 1**: Enhance `index.html` with unique `<noscript>` content
+2. **Day 2-3**: Create `detect-and-prerender` middleware
+3. **Day 4-5**: Implement HTML caching in prerender function
 
