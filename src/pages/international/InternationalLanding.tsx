@@ -90,7 +90,7 @@ const STEPS = [
 const FAQ_ITEMS = [
   {
     question: "How much does placement cost?",
-    answer: "We charge a $299 service fee to begin your placement. This fee ensures we can dedicate personalized attention to every case—matching you with the right facilities, verifying clinical fit, and coordinating directly with admissions teams on your behalf. The fee filters out casual inquiries so our advisors can focus on clients who are serious about treatment. Best of all, the $299 is fully refunded when you're admitted to a facility through our service.",
+    answer: "We charge a $299 service fee to begin your placement. This fee ensures we can dedicate personalized attention to every case, matching you with the right facilities, verifying clinical fit, and coordinating directly with admissions teams on your behalf. It also filters out casual inquiries so our advisors can focus on clients who are serious about treatment. Best of all, the $299 is fully refunded when you're admitted to a facility through our service.",
   },
   {
     question: "Do you work with luxury and executive programs?",
