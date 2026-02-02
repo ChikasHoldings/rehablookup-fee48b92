@@ -334,6 +334,53 @@ export default function InternationalLanding() {
             </div>
           </section>
 
+          {/* US Rehab Destinations - Cross-linking */}
+          <section className="py-12 md:py-20 border-t">
+            <div className="container mx-auto px-5 md:px-4">
+              <div className="text-center mb-8 md:mb-10">
+                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 md:mb-3">
+                  Explore U.S. Treatment Options
+                </h2>
+                <p className="text-[15px] md:text-base text-muted-foreground max-w-2xl mx-auto">
+                  Discover America's top treatment destinations and specialty programs
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-5xl mx-auto">
+                {[
+                  { name: "Best Rehab in USA", path: "/us-rehab/best-rehab-usa" },
+                  { name: "Luxury Rehab America", path: "/us-rehab/luxury-rehab-america" },
+                  { name: "Luxury Rehab California", path: "/us-rehab/luxury-rehab-california" },
+                  { name: "Luxury Rehab Florida", path: "/us-rehab/luxury-rehab-florida" },
+                  { name: "Luxury Rehab Arizona", path: "/us-rehab/luxury-rehab-arizona" },
+                  { name: "Executive Rehab USA", path: "/us-rehab/executive-rehab" },
+                  { name: "Malibu Rehab Centers", path: "/us-rehab/malibu-rehab" },
+                  { name: "Private Rehab America", path: "/us-rehab/private-rehab-america" },
+                ].map((item, i) => (
+                  <Link
+                    key={i}
+                    to={item.path}
+                    className="group px-4 py-3 md:px-5 md:py-4 rounded-xl border bg-background hover:bg-muted/50 hover:border-primary/30 transition-all text-center"
+                  >
+                    <span className="text-sm md:text-[15px] font-medium text-foreground group-hover:text-primary transition-colors">
+                      {item.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="text-center mt-6 md:mt-8">
+                <Link
+                  to="/us-rehab"
+                  className="inline-flex items-center gap-2 text-sm md:text-base font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  View All US Treatment Options
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </section>
+
           {/* How It Works */}
           <section className="py-12 md:py-24">
             <div className="container mx-auto px-5 md:px-4">
