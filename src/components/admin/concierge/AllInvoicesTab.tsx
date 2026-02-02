@@ -79,14 +79,23 @@ export function AllInvoicesTab() {
   const [overrideAmount, setOverrideAmount] = useState("");
   const [overrideReason, setOverrideReason] = useState("");
 
-  // Fetch all invoices
+  // Fetch all invoices with optimized caching
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["admin-all-invoices", statusFilter],
     queryFn: async () => {
       let query = supabase
         .from("placement_invoices")
         .select(`
-          *,
+          id,
+          amount_cents,
+          override_amount_cents,
+          status,
+          created_at,
+          due_at,
+          paid_at,
+          discount_percent,
+          facility_id,
+          inquiry_id,
           facilities(id, name, email),
           concierge_inquiries(id, user_name, user_email)
         `)
@@ -101,6 +110,8 @@ export function AllInvoicesTab() {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 30 * 1000, // Data stays fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Admin manage invoice mutation
