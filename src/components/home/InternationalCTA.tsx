@@ -47,43 +47,36 @@ export function InternationalCTA() {
                   </div>
                 </div>
                 
-                {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                {/* CTA Button */}
+                <div className="flex justify-center lg:justify-start">
                   <Link to="/international">
-                    <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground gap-2 font-semibold shadow-md hover:shadow-lg transition-all">
+                    <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2 font-semibold shadow-md hover:shadow-lg transition-all">
                       <Plane className="h-4 w-4" />
                       Find US Treatment
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link to="/international/apply">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2">
-                      Start Application
-                    </Button>
-                  </Link>
                 </div>
               </div>
               
-              {/* Right Side - Countries served visual */}
+              {/* Right Side - Premium stats card */}
               <div className="hidden lg:block shrink-0">
-                <div className="relative w-64 h-48">
-                  {/* Globe visualization with country flags */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-border/50 flex items-center justify-center">
-                    <div className="text-center">
-                      <Globe className="h-12 w-12 text-primary/40 mx-auto mb-3" />
-                      <div className="flex flex-wrap gap-1.5 justify-center max-w-[200px]">
-                        {["🇬🇧", "🇦🇺", "🇦🇪", "🇨🇦", "🇩🇪", "🇫🇷", "🇳🇱", "🇮🇪", "🇲🇽", "🇧🇷", "🇸🇦", "🇮🇳"].map((flag, i) => (
-                          <span 
-                            key={i} 
-                            className="text-lg opacity-70 hover:opacity-100 hover:scale-125 transition-all cursor-default"
-                            title="Countries we serve"
-                          >
-                            {flag}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">& 40+ more countries</p>
-                    </div>
+                <div className="grid grid-cols-2 gap-3 w-56">
+                  <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 text-center">
+                    <div className="font-display text-2xl font-bold text-primary">50+</div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Countries</p>
+                  </div>
+                  <div className="rounded-xl bg-accent/10 border border-accent/20 p-4 text-center">
+                    <div className="font-display text-2xl font-bold text-accent">200+</div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Facilities</p>
+                  </div>
+                  <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-4 text-center">
+                    <div className="font-display text-2xl font-bold text-green-600">24h</div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Response</p>
+                  </div>
+                  <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-4 text-center">
+                    <div className="font-display text-2xl font-bold text-blue-600">100%</div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Confidential</p>
                   </div>
                 </div>
               </div>
