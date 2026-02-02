@@ -1,208 +1,347 @@
 
-# International Placement System - Production Readiness Audit & Enhancement Plan
 
-## Executive Summary
-The International Placement system has a critical bug in the checkout flow and several design/UX improvements needed to match the high-value enterprise positioning. This plan addresses all issues to make the system production-ready.
+# International Placement System - Complete Restructure
+
+## Overview
+This plan completely restructures the International Placement system with a premium design, comprehensive intake form capturing all placement-critical data, and clear provider visibility.
 
 ---
 
-## Critical Bug Fix
+## 1. Landing Page Redesign (`InternationalLanding.tsx`)
 
-### 1. Broken Checkout Flow
-**Problem**: The landing page (`InternationalLanding.tsx`) calls the checkout function with empty/placeholder data:
-```javascript
-body: {
-  name: "International Client",  // Placeholder
-  email: "",                      // EMPTY - will fail validation
-  country: "International",       // Placeholder
+### Remove
+- `PreCheckoutForm` component from hero section
+- All price references from buttons ("$299")
+- Payment-first flow
+
+### Add
+- Full-width hero with premium imagery using Unsplash
+- Clear "Start Application" CTA (no price visible)
+- Trust indicators with actual imagery
+- Enhanced visual hierarchy
+
+### New Hero Structure
+```text
++--------------------------------------------------+
+|  [Full-width hero image: luxury US facility]      |
+|                                                   |
+|   Your Gateway to American Rehab                  |
+|   Expert placement into America's finest          |
+|   treatment centers                               |
+|                                                   |
+|   [ Start Your Application ]  [ Call an Advisor ] |
+|                                                   |
+|   50+ Countries • 200+ Centers • 24hr Response    |
++--------------------------------------------------+
+```
+
+---
+
+## 2. Complete Multi-Step Intake Wizard
+
+### NEW Route: `/international/apply`
+
+Create a sleek, one-question-at-a-time wizard that captures ALL data needed for successful placement.
+
+### Form Steps (10 steps total)
+
+| Step | Title | Fields |
+|------|-------|--------|
+| 1 | Contact Info | First name, Last name |
+| 2 | Email | Email address |
+| 3 | Phone | International phone |
+| 4 | Location | Country, Preferred language |
+| 5 | About the Patient | Who needs help, Age range, Gender |
+| 6 | **Level of Care** | Detox, Inpatient, PHP, IOP, Sober Living, Not sure |
+| 7 | Clinical Details | Primary concern, Co-occurring conditions, Previous treatment |
+| 8 | Preferences | Budget, Rehab style (Luxury/Executive/Standard), Duration |
+| 9 | Special Requirements | Amenities, Gender-specific, LGBTQ+, Faith-based |
+| 10 | Review & Pay | Summary + "Continue to Payment - $299" |
+
+### Missing Fields Being Added
+
+**Level of Care (CRITICAL)**
+```typescript
+const LEVEL_OF_CARE_OPTIONS = [
+  { value: "detox", label: "Medical Detox" },
+  { value: "inpatient", label: "Inpatient / Residential" },
+  { value: "php", label: "Partial Hospitalization (PHP)" },
+  { value: "iop", label: "Intensive Outpatient (IOP)" },
+  { value: "sober-living", label: "Sober Living / Extended Care" },
+  { value: "not-sure", label: "Not sure — I need guidance" },
+];
+```
+
+**Age Range**
+```typescript
+const AGE_RANGE_OPTIONS = [
+  { value: "18-25", label: "18-25 years old" },
+  { value: "26-35", label: "26-35 years old" },
+  { value: "36-45", label: "36-45 years old" },
+  { value: "46-55", label: "46-55 years old" },
+  { value: "56+", label: "56+ years old" },
+];
+```
+
+**Gender**
+```typescript
+const GENDER_OPTIONS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "non-binary", label: "Non-binary" },
+  { value: "prefer-not-say", label: "Prefer not to say" },
+];
+```
+
+**Previous Treatment**
+```typescript
+const PREVIOUS_TREATMENT_OPTIONS = [
+  { value: "none", label: "No previous treatment" },
+  { value: "once", label: "Been to treatment once" },
+  { value: "multiple", label: "Multiple treatment attempts" },
+];
+```
+
+**Co-occurring Conditions**
+```typescript
+const CO_OCCURRING_OPTIONS = [
+  { value: "anxiety", label: "Anxiety" },
+  { value: "depression", label: "Depression" },
+  { value: "ptsd", label: "PTSD / Trauma" },
+  { value: "bipolar", label: "Bipolar Disorder" },
+  { value: "eating-disorder", label: "Eating Disorder" },
+  { value: "none", label: "None / Not sure" },
+];
+```
+
+**Treatment Duration**
+```typescript
+const DURATION_OPTIONS = [
+  { value: "30-days", label: "30 days" },
+  { value: "60-days", label: "60 days" },
+  { value: "90-days", label: "90 days" },
+  { value: "6-months", label: "6+ months (extended care)" },
+  { value: "flexible", label: "Flexible / Need guidance" },
+];
+```
+
+**Special Requirements / Amenities**
+```typescript
+const AMENITY_OPTIONS = [
+  { value: "private-room", label: "Private room" },
+  { value: "gym-fitness", label: "Gym / Fitness facilities" },
+  { value: "spa-wellness", label: "Spa / Wellness services" },
+  { value: "holistic", label: "Holistic therapies" },
+  { value: "equine", label: "Equine therapy" },
+  { value: "ocean-view", label: "Ocean/mountain views" },
+  { value: "women-only", label: "Women only program" },
+  { value: "men-only", label: "Men only program" },
+  { value: "lgbtq", label: "LGBTQ+ friendly" },
+  { value: "faith-based", label: "Faith-based program" },
+];
+```
+
+### Design Specifications
+- Animated progress bar at top (0-100%)
+- Framer Motion slide transitions between steps
+- Large, touch-friendly inputs
+- One focus area per step
+- Back/Next navigation
+- Final step shows complete summary + $299 payment button
+
+---
+
+## 3. Updated Form Data Structure
+
+```typescript
+interface InternationalIntakeData {
+  // Contact
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  country: string;
+  preferred_language: string;
+  
+  // Patient Demographics
+  seeking_for: 'self' | 'loved-one';
+  age_range: string;
+  gender: string;
+  
+  // Level of Care (NEW - CRITICAL)
+  level_of_care: string;
+  
+  // Clinical
+  primary_concern: string;
+  co_occurring_conditions: string[];
+  previous_treatment: string;
+  
+  // Preferences
+  budget_range: string;
+  rehab_style: string;  // standard, luxury, executive, vip
+  treatment_duration: string;
+  willing_to_travel: string;
+  
+  // Special Requirements (NEW)
+  amenities: string[];
+  special_requirements: string;
+  
+  // Notes
+  notes: string;
 }
 ```
 
-The `create-international-checkout` function requires email, name, and country - this will throw an error immediately.
-
-**Solution**: Add a pre-checkout collection form on the landing page to gather:
-- Full name (required)
-- Email address (required)  
-- Phone number (optional)
-- Country of residence (required)
-
-This will be a simple inline form before redirecting to Stripe checkout.
-
 ---
 
-## Provider Portal - Two Placement Types
+## 4. Enhanced Thank You Page
 
-### 2. Fee Structure Visibility
-**Current State**: The `PlacementBenefits.tsx` only shows domestic fees ($1,000/$800). Providers need to clearly see both placement types.
+### Premium Design Elements
+- Full-page layout with confetti animation on load
+- Large success checkmark with pulse animation
+- Email verification status/prompt section
+- Clear timeline visualization
+- Track case CTA to user portal
+- Professional contact information
 
-**Enhancement**: Update the provider Placement Network page to display:
-
-| Placement Type | Description | Standard Fee | Pro Fee |
-|----------------|-------------|--------------|---------|
-| **Domestic** | US-based seekers | $1,000 | $800 |
-| **International** | Global clients seeking US treatment | $4,500 | $4,500 |
-
-Add a new "Fee Structure" section in the landing view that clearly distinguishes between both types.
-
----
-
-## Landing Page Enhancement
-
-### 3. Enterprise-Grade Design Upgrade
-The current landing page is functional but needs to better convey the premium nature of a $299 service that gates access to $30K-$100K treatment programs.
-
-**Enhancements**:
-- Add a compelling value proposition section explaining why US rehab is different (privacy, immediate access, luxury options, no wait lists)
-- Add international client testimonials placeholder section
-- Add trust indicators (countries served, facilities in network)
-- Improve the hero section with more authoritative messaging
-- Add a "Why Choose US Treatment?" section with clear benefits
-
----
-
-## Data Flow Verification
-
-### 4. Intake Data Key Normalization
-**Issue**: The intake form uses camelCase (`budgetRange`, `rehabStyle`) but the provider view expects snake_case (`budget_range`, `rehab_style`).
-
-**Solution**: Update the intake submission to normalize keys to snake_case before storing, ensuring consistent data access throughout the system.
-
----
-
-## Technical Implementation Tasks
-
-### Files to Modify:
-
-1. **`src/pages/international/InternationalLanding.tsx`**
-   - Add pre-checkout collection form (name, email, phone, country)
-   - Improve hero messaging and value proposition
-   - Add "Why US Treatment?" section
-   - Add trust indicators
-
-2. **`src/components/provider/placement-network/PlacementBenefits.tsx`**
-   - Update to show BOTH domestic and international fee structures
-   - Clear visual distinction between the two types
-
-3. **`src/components/provider/international/InternationalCandidatesTab.tsx`**
-   - Add clearer header explaining this is for international (non-US) clients
-   - Add brief explanation of the $4,500 fee context
-
-4. **`src/pages/international/InternationalIntake.tsx`**
-   - Normalize form data keys to snake_case before submission
-
-5. **`supabase/functions/create-international-checkout/index.ts`**
-   - Add fallback handling if minimal data is passed (use Stripe's customer_email field)
-
----
-
-## Flow Verification Checklist
-
-After implementation, verify these end-to-end flows:
-
-### Flow 1: International Client Journey
-1. Non-US visitor sees geo-targeted banner (Already working)
-2. Clicks to `/international` landing page
-3. Fills pre-checkout form with name, email, country
-4. Redirected to Stripe for $299 payment
-5. Returns to `/international/intake` with session_id
-6. Completes detailed intake form
-7. Redirected to thank-you page
-8. Case appears in admin dashboard
-
-### Flow 2: Admin Case Management
-1. Admin sees new case in International dashboard
-2. Admin assigns advisor
-3. Admin invites facilities
-4. Facilities receive invitations in provider portal
-
-### Flow 3: Provider Response
-1. Provider sees candidate in "Int'l" tab
-2. Reviews anonymized details (country, budget, urgency, concern)
-3. Accepts or declines
-4. On acceptance, admin notified
-
-### Flow 4: Admission & Billing
-1. Admin confirms admission with refund/credit choice
-2. System processes $299 refund via Stripe OR marks as credited
-3. System creates $4,500 facility invoice record
-4. Admin issues invoice via Stripe
-5. Webhook updates status when paid
-
----
-
-## Design Specifications
-
-### Pre-Checkout Form (New Component)
+### Email Verification Flow
 ```text
-+------------------------------------------+
-|  Start Your Placement                    |
-|                                          |
-|  Full Name *                             |
-|  [________________________]              |
-|                                          |
-|  Email Address *                         |
-|  [________________________]              |
-|                                          |
-|  Phone (optional)                        |
-|  [+1 v] [_______________]                |
-|                                          |
-|  Country *                               |
-|  [Select country...        v]            |
-|                                          |
-|  [  Continue to Payment - $299  ]        |
-|                                          |
-|  Fee refunded upon confirmed admission   |
-+------------------------------------------+
-```
-
-### Provider Fee Structure Display
-```text
-+------------------------------------------+
-|  PLACEMENT FEES                          |
-|                                          |
-|  Domestic Placements                     |
-|  US-based families                       |
-|  Standard: $1,000  |  Pro: $800          |
-|                                          |
-|  ─────────────────────────────────────── |
-|                                          |
-|  International Placements                |
-|  Global clients seeking US treatment     |
-|  Flat Fee: $4,500                        |
-|                                          |
-|  Charged only on confirmed admission     |
-+------------------------------------------+
++--------------------------------------------------+
+|  [✓ Success Animation]                            |
+|                                                   |
+|  Application Submitted!                           |
+|                                                   |
+|  ⚠️ Please verify your email                      |
+|  [We sent a verification link to xxx@email.com]   |
+|                                                   |
+|  [Resend Verification Email]                      |
+|                                                   |
+|  WHAT'S NEXT                                      |
+|  1. Verify your email ←                           |
+|  2. Advisor reviews your case (within 24hrs)      |
+|  3. Receive matched facility options              |
+|  4. Confirm placement & travel                    |
+|                                                   |
+|  [Track Your Case]  [Return Home]                 |
++--------------------------------------------------+
 ```
 
 ---
 
-## Responsive Design Notes
+## 5. Provider Tab Restructure
 
-All new components will use existing Tailwind patterns:
-- Mobile-first grid layouts
-- `sm:` / `md:` / `lg:` breakpoints for responsive behavior
-- Consistent spacing with existing design system
+### Current State (PlacementNetwork.tsx)
+```tsx
+<TabsTrigger value="introductions">Intros</TabsTrigger>
+<TabsTrigger value="international">Int'l</TabsTrigger>
+```
+
+### New State
+```tsx
+<TabsTrigger value="domestic" className="font-semibold">
+  <MapPin className="h-4 w-4 mr-1.5" />
+  <span>Domestic</span>
+  {domesticCount > 0 && <Badge>{domesticCount}</Badge>}
+</TabsTrigger>
+<TabsTrigger value="international" className="font-semibold">
+  <Globe className="h-4 w-4 mr-1.5" />
+  <span>International</span>
+  {internationalCount > 0 && <Badge>{internationalCount}</Badge>}
+</TabsTrigger>
+```
+
+### Tab Layout (7 tabs → clearer labels)
+```text
+[Domestic] [International] [Messages] [Tours] [Profile] [Billing] [History]
+```
+
+- Bold, legible text
+- Icons + full words (not abbreviations)
+- Badge counts on both placement types
 
 ---
 
-## Timeline Estimate
+## 6. Files to Create
 
-| Task | Complexity |
-|------|------------|
-| Fix checkout flow bug | Low |
-| Add pre-checkout form | Medium |
-| Update provider fee display | Low |
-| Enhance landing page | Medium |
-| Normalize intake data | Low |
-| End-to-end testing | Medium |
+| File | Purpose |
+|------|---------|
+| `src/pages/international/InternationalApplication.tsx` | Multi-step intake wizard page |
+| `src/components/international/steps/StepContact.tsx` | Name inputs |
+| `src/components/international/steps/StepEmail.tsx` | Email input |
+| `src/components/international/steps/StepPhone.tsx` | International phone |
+| `src/components/international/steps/StepLocation.tsx` | Country & language |
+| `src/components/international/steps/StepPatient.tsx` | Who, age, gender |
+| `src/components/international/steps/StepLevelOfCare.tsx` | Care level selection |
+| `src/components/international/steps/StepClinical.tsx` | Concern, conditions, history |
+| `src/components/international/steps/StepPreferences.tsx` | Budget, style, duration |
+| `src/components/international/steps/StepAmenities.tsx` | Special requirements |
+| `src/components/international/steps/StepReview.tsx` | Summary + payment |
+| `src/components/international/IntakeProgress.tsx` | Progress bar component |
+
+---
+
+## 7. Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/international/InternationalLanding.tsx` | Remove form, add imagery, polish design, add "Start Application" CTA |
+| `src/pages/international/InternationalThankYou.tsx` | Premium design, email verification, confetti |
+| `src/pages/provider/PlacementNetwork.tsx` | Rename tabs to "Domestic" / "International" |
+| `src/App.tsx` | Add route `/international/apply` |
+| `src/components/international/PreCheckoutForm.tsx` | Delete (no longer needed) |
+| `src/pages/international/InternationalIntake.tsx` | Deprecate (redirect to /apply) |
+
+---
+
+## 8. Route Structure
+
+```text
+/international              → Landing page (redesigned, no form)
+/international/apply        → Multi-step intake wizard (NEW)
+/international/intake       → Redirect to /apply (deprecated)
+/international/thank-you    → Enhanced thank you page
+```
+
+---
+
+## 9. Data Flow
+
+```text
+1. User visits /international (landing page)
+2. Clicks "Start Application" → navigates to /international/apply
+3. Completes 10-step wizard (data stored in React state)
+4. Final step shows summary + "Continue to Payment - $299"
+5. On submit: call edge function with complete intake data
+6. Edge function creates pending case + Stripe session
+7. User redirected to Stripe checkout
+8. On success: redirected to /international/thank-you
+9. Thank you page prompts email verification
+```
+
+---
+
+## 10. Provider View Updates
+
+When providers view international candidates, they will now see:
+- Level of care needed
+- Age range
+- Gender
+- Previous treatment history
+- Co-occurring conditions
+- Treatment duration preference
+- Special requirements/amenities
+
+This gives facilities the complete picture needed to make acceptance decisions.
 
 ---
 
 ## Summary
 
-This plan addresses:
-1. **Critical bug** - Checkout flow will work without errors
-2. **Provider clarity** - Clear distinction between domestic ($1K) and international ($4.5K) fees  
-3. **Enterprise design** - Landing page worthy of a premium $299 service
-4. **Data integrity** - Consistent data format throughout the system
-5. **Production readiness** - Full end-to-end flow verification
+This restructure delivers:
+
+1. **Premium Landing Page** - No price on CTAs, professional imagery, enterprise feel
+2. **Complete Intake Data** - Level of care, age, gender, treatment history, amenities
+3. **Sleek Form Experience** - One-at-a-time wizard with smooth animations
+4. **Payment After Form** - Serious applicants complete full form before paying
+5. **Enhanced Thank You** - Email verification + clear next steps
+6. **Clear Provider Tabs** - "Domestic" and "International" with full labels
+
