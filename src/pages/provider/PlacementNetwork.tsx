@@ -597,7 +597,7 @@ export default function ProviderPlacementNetworkPage() {
                     </div>
                   </div>
 
-                  {/* Agreement Preference */}
+                  {/* Agreement Preference - Flat fee only */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Payment Preference</Label>
                     <Select
@@ -608,9 +608,7 @@ export default function ProviderPlacementNetworkPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="commission">Prefer Commission (% of first month)</SelectItem>
-                        <SelectItem value="flat_fee">Prefer Flat Fee</SelectItem>
-                        <SelectItem value="either">Open to Either</SelectItem>
+                        <SelectItem value="flat_fee">Flat Fee Per Placement</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
