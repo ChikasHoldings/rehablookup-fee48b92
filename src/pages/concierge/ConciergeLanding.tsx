@@ -285,7 +285,7 @@ export default function ConciergeLanding() {
                 <div className="text-center mt-8 sm:mt-10">
                   <Button asChild size="lg" className="w-full sm:w-auto h-12 px-6 sm:px-8 text-base shadow-lg shadow-primary/25 rounded-xl">
                     <Link to="/concierge/intake">
-                      Start Your Free Intake
+                      Start Your Intake
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
