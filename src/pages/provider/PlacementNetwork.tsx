@@ -50,7 +50,7 @@ import {
   PlacementHowItWorks,
   PlacementBenefits,
   PlacementJoinCTA,
-  IntroductionCard,
+  DomesticCandidatesTab,
 } from "@/components/provider/placement-network";
 import { InternationalCandidatesTab } from "@/components/provider/international/InternationalCandidatesTab";
 
@@ -471,15 +471,14 @@ export default function ProviderPlacementNetworkPage() {
               <TabsTrigger value="domestic" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 relative font-semibold">
                 <Bell className="h-4 w-4 shrink-0" />
                 <span className="hidden lg:inline">Domestic</span>
-                {pendingIntroductions.length > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 lg:relative lg:top-0 lg:right-0 lg:ml-1 h-4 lg:h-5 min-w-4 lg:min-w-5 px-1 lg:px-1.5 text-[9px] lg:text-[10px]">
-                    {pendingIntroductions.length}
-                  </Badge>
-                )}
               </TabsTrigger>
               <TabsTrigger value="international" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 font-semibold">
                 <Globe className="h-4 w-4 shrink-0" />
                 <span className="hidden lg:inline">International</span>
+              </TabsTrigger>
+              <TabsTrigger value="placed" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
+                <Building2 className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Placed</span>
               </TabsTrigger>
               <TabsTrigger value="profile" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
                 <Settings className="h-4 w-4 shrink-0" />
@@ -489,86 +488,11 @@ export default function ProviderPlacementNetworkPage() {
                 <CreditCard className="h-4 w-4 shrink-0" />
                 <span className="hidden lg:inline">Billing</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
-                <Building2 className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Placed</span>
-              </TabsTrigger>
             </TabsList>
 
             {/* Domestic Tab */}
             <TabsContent value="domestic" className="space-y-4">
-              {/* Awaiting Provider Confirmation - Top Priority */}
-              {awaitingProviderConfirm.length > 0 && (
-                <div className="space-y-3 mb-6">
-                  <h3 className="text-sm font-semibold text-emerald-600 flex items-center gap-2">
-                    <UserCheck className="h-4 w-4" />
-                    Awaiting Your Confirmation ({awaitingProviderConfirm.length})
-                  </h3>
-                  {awaitingProviderConfirm.map((intro) => (
-                    <IntroductionCard
-                      key={`confirm-${intro.id}`}
-                      introduction={intro}
-                      facilityId={selectedFacility?.id || ""}
-                      onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
-                      isResponding={respondMutation.isPending}
-                      showConfirmButton
-                      hasPro={!!proSubscription}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Pending Introductions */}
-              {pendingIntroductions.length > 0 ? (
-                pendingIntroductions.map((intro) => (
-                  <IntroductionCard
-                    key={intro.id}
-                    introduction={intro}
-                    facilityId={selectedFacility?.id || ""}
-                    onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
-                    isResponding={respondMutation.isPending}
-                    hasPro={!!proSubscription}
-                  />
-                ))
-              ) : awaitingProviderConfirm.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="py-16 text-center">
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <Bell className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="font-medium text-foreground mb-1">No pending introductions</p>
-                    <p className="text-sm text-muted-foreground">We'll notify you when there's a match</p>
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              {/* Past Introductions */}
-              {introductions &&
-                introductions.filter((i) => i.provider_response && i.provider_response !== "pending").length > 0 && (
-                  <div className="space-y-3 pt-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Past Responses</h3>
-                    {introductions
-                      .filter((i) => i.provider_response && i.provider_response !== "pending")
-                      .slice(0, 5)
-                      .map((intro) => (
-                        <Card key={intro.id} className="bg-muted/30">
-                          <CardContent className="p-4 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">
-                                Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase() || intro.id.slice(0, 8).toUpperCase()}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Responded {intro.provider_responded_at && format(new Date(intro.provider_responded_at), "MMM d")}
-                              </p>
-                            </div>
-                            <Badge variant="secondary" className="capitalize">
-                              {intro.provider_response}
-                            </Badge>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                )}
+              <DomesticCandidatesTab hasPro={!!proSubscription} />
             </TabsContent>
 
             {/* International Candidates Tab */}
@@ -890,7 +814,7 @@ export default function ProviderPlacementNetworkPage() {
             </TabsContent>
 
             {/* Placements Tab */}
-            <TabsContent value="history" className="space-y-3 sm:space-y-4">
+            <TabsContent value="placed" className="space-y-3 sm:space-y-4">
               {placements && placements.length > 0 ? (
                 placements.map((p) => (
                   <Card key={p.id}>
