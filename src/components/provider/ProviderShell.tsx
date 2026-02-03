@@ -13,6 +13,8 @@ import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/Select
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { useUserRole } from "@/hooks/useUserRole";
+import { ProviderShellSkeleton } from "@/components/ui/shell-skeletons";
+import { prefetchAdjacentRoutes } from "@/lib/routePrefetch";
 
 // Use components directly - memo can cause issues with hot reloading
 
@@ -34,11 +36,12 @@ function ProviderShellContent() {
   // Track navigation for Sentry breadcrumbs
   useSentryBreadcrumbs();
 
-  // Scroll content area to top on route change
+  // Scroll content area to top and prefetch on route change
   useEffect(() => {
     if (mainContentRef.current) {
       mainContentRef.current.scrollTo(0, 0);
     }
+    prefetchAdjacentRoutes(location.pathname);
   }, [location.pathname]);
 
   // Role-based redirect - Admins go to admin panel, non-providers go to login
@@ -176,22 +179,14 @@ function ProviderShellContent() {
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
 
-  // Show loading while checking role
+  // Show instant skeleton while checking role
   if (isRoleLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <ProviderShellSkeleton />;
   }
 
-  // If admin or seeker, show loading during redirect
+  // If admin or seeker, show skeleton during redirect
   if (role === "admin" || role === "seeker") {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <ProviderShellSkeleton />;
   }
 
   return (

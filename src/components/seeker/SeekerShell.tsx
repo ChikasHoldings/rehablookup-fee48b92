@@ -7,6 +7,8 @@ import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useUserRole, getPortalHome } from "@/hooks/useUserRole";
+import { SeekerShellSkeleton } from "@/components/ui/shell-skeletons";
+import { prefetchAdjacentRoutes } from "@/lib/routePrefetch";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -49,11 +51,13 @@ export function SeekerShell() {
     refetchOnWindowFocus: true,
   });
 
-  // Scroll content area to top on route change
+  // Scroll content area to top and prefetch adjacent routes on navigation
   useEffect(() => {
     if (mainContentRef.current) {
       mainContentRef.current.scrollTo(0, 0);
     }
+    // Prefetch adjacent routes for faster navigation
+    prefetchAdjacentRoutes(location.pathname);
   }, [location.pathname]);
 
   // Redirect admins and providers to their respective portals
@@ -158,22 +162,14 @@ export function SeekerShell() {
   // Get display name - prefer first name, fall back to display name or email
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
-  // Show loading while checking role or auth
+  // Show instant skeleton while checking role or auth
   if (isRoleLoading || isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <SeekerShellSkeleton />;
   }
 
-  // If user is admin or provider, show loading (redirect is happening)
+  // If user is admin or provider, show skeleton during redirect
   if (role === "admin" || role === "provider") {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <SeekerShellSkeleton />;
   }
 
   return (

@@ -36,13 +36,12 @@ export function PublicRouteGuard({ children }: PublicRouteGuardProps) {
   const { role, isLoading, isAuthenticated } = useUserRole();
   const location = useLocation();
 
-  // Show loading while checking role
+  // Skip loading state - show children immediately for perceived instant loading
+  // Redirects will happen after role resolves
   if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    // Return children during loading for instant content display
+    // Role-based redirects will trigger after loading completes
+    return <>{children}</>;
   }
 
   // Skip redirect logic in iframe (preview functionality)
