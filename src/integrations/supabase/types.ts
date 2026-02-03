@@ -1131,6 +1131,7 @@ export type Database = {
       }
       facilities: {
         Row: {
+          accepts_international_patients: boolean | null
           address: string
           admin_notes: string | null
           bed_count: string | null
@@ -1187,6 +1188,7 @@ export type Database = {
           zip_code: string
         }
         Insert: {
+          accepts_international_patients?: boolean | null
           address: string
           admin_notes?: string | null
           bed_count?: string | null
@@ -1243,6 +1245,7 @@ export type Database = {
           zip_code: string
         }
         Update: {
+          accepts_international_patients?: boolean | null
           address?: string
           admin_notes?: string | null
           bed_count?: string | null

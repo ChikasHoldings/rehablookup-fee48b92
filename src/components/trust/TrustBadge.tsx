@@ -27,6 +27,7 @@ export type AccreditationType =
 export type TrustBadgeType = 
   | "verified" 
   | "years" 
+  | "luxury"
   | AccreditationType
   | "pending";
 
@@ -58,6 +59,13 @@ const badgeConfig: Record<string, {
     icon: Clock,
     variant: "secondary",
     className: "bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-800",
+  },
+  luxury: {
+    label: "Luxury",
+    description: "Premium luxury rehab facility with upscale amenities",
+    icon: Award,
+    variant: "secondary",
+    className: "bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-700 border-amber-300 dark:from-amber-500/30 dark:to-yellow-500/30 dark:text-amber-300 dark:border-amber-700",
   },
   JCAHO: {
     label: "JCAHO",

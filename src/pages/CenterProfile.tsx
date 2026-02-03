@@ -975,6 +975,7 @@ const CenterProfile = () => {
                 verified={facility.verified || false}
                 yearEstablished={facility.year_established}
                 accreditations={facility.facility_accreditations || []}
+                facilityType={facility.facility_type}
               />
 
               {/* Google Reviews - shown below trust badges */}

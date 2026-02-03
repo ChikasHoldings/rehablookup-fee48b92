@@ -113,11 +113,24 @@ const insuranceProviders = [
 
 const facilityTypes = [
   "Residential Treatment Center",
-  "Outpatient Clinic",
+  "Outpatient Program",
   "Detox Center",
-  "Sober Living Home",
-  "Hospital-Based Program",
+  "Intensive Outpatient (IOP)",
+  "Partial Hospitalization (PHP)",
+  "Sober Living",
+  "Dual Diagnosis",
+  "Luxury Rehab",
   "Telehealth/Virtual",
+];
+
+// Structured accreditation options
+const accreditationOptions = [
+  { value: "JCAHO", label: "JCAHO Accredited", description: "Joint Commission on Accreditation of Healthcare Organizations" },
+  { value: "CARF", label: "CARF Certified", description: "Commission on Accreditation of Rehabilitation Facilities" },
+  { value: "LegitScript", label: "LegitScript Certified", description: "Verified for advertising compliance" },
+  { value: "NAATP", label: "NAATP Member", description: "National Association of Addiction Treatment Providers" },
+  { value: "State Licensed", label: "State Licensed", description: "Licensed by state regulatory authority" },
+  { value: "SAMHSA Listed", label: "SAMHSA Listed", description: "Listed in SAMHSA's National Directory" },
 ];
 
 const states = [
@@ -187,6 +200,10 @@ export default function ProviderSignup() {
     selectedInsurance: [] as string[],
     licensingInfo: "",
     accreditations: "",
+    selectedAccreditations: [] as string[],
+
+    // Step 3 extras
+    acceptsInternationalPatients: false,
 
     // Terms
     agreeToTerms: false,
@@ -314,6 +331,7 @@ export default function ProviderSignup() {
           bed_count: formData.bedCount,
           gender_served: formData.genderServed,
           year_established: formData.yearEstablished ? parseInt(formData.yearEstablished) : null,
+          accepts_international_patients: formData.acceptsInternationalPatients,
         })
         .select()
         .single();
@@ -357,13 +375,23 @@ export default function ProviderSignup() {
         await supabase.from("facility_insurance").insert(insuranceData);
       }
 
-      // 7. Insert credentials
+      // 7. Insert credentials (legacy free-text)
       if (formData.licensingInfo || formData.accreditations) {
         await supabase.from("facility_credentials").insert({
           facility_id: facilityId,
           licensing_info: formData.licensingInfo,
           accreditations: formData.accreditations,
         });
+      }
+
+      // 7b. Insert structured accreditations
+      if (formData.selectedAccreditations.length > 0) {
+        const accreditationsData = formData.selectedAccreditations.map((accreditation) => ({
+          facility_id: facilityId,
+          accreditation_type: accreditation,
+          verified: false, // Pending admin verification
+        }));
+        await supabase.from("facility_accreditations").insert(accreditationsData);
       }
 
       // 8. Upload images if provided
@@ -975,6 +1003,24 @@ export default function ProviderSignup() {
                       className="min-h-[100px]"
                     />
                   </div>
+
+                  {/* International Patients */}
+                  <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50 border border-border">
+                    <Checkbox
+                      id="acceptsInternationalPatients"
+                      checked={formData.acceptsInternationalPatients}
+                      onCheckedChange={(checked) => updateFormData("acceptsInternationalPatients", checked === true)}
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="acceptsInternationalPatients" className="text-sm font-medium cursor-pointer">
+                        Accept International Patients
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Check this if your facility can accommodate patients traveling from outside the United States
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1174,13 +1220,41 @@ export default function ProviderSignup() {
                     />
                   </div>
 
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Accreditations & Certifications</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Select any accreditations your facility holds. These will be verified by our team and displayed as trust badges on your profile.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {accreditationOptions.map((acc) => (
+                        <div
+                          key={acc.value}
+                          className="flex items-start space-x-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <Checkbox
+                            id={acc.value}
+                            checked={formData.selectedAccreditations.includes(acc.value)}
+                            onCheckedChange={() => toggleArrayItem("selectedAccreditations", acc.value)}
+                            className="mt-0.5"
+                          />
+                          <div className="space-y-0.5">
+                            <Label htmlFor={acc.value} className="text-sm font-normal cursor-pointer">
+                              {acc.label}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">{acc.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5">
-                    <Label htmlFor="accreditations" className="text-sm font-medium">Accreditations</Label>
+                    <Label htmlFor="accreditations" className="text-sm font-medium">Other Accreditations</Label>
                     <Textarea
                       id="accreditations"
                       value={formData.accreditations}
                       onChange={(e) => updateFormData("accreditations", e.target.value)}
-                      placeholder="e.g., JCAHO, CARF, LegitScript Certified..."
+                      placeholder="List any other accreditations or certifications not shown above..."
                       rows={2}
                     />
                   </div>
