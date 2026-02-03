@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Search, Filter, Inbox, Mail, Building2, User, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search, Filter, Inbox, Mail, Building2, User, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { useAdminSupportTickets, SupportTicket, SupportTicketFilters } from "@/h
 import { SupportTicketModal } from "@/components/admin/SupportTicketModal";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const sourceLabels: Record<string, { label: string; icon: React.ElementType }> = {
   public_contact: { label: "Public", icon: Mail },
@@ -34,17 +35,42 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
 };
 
 export default function AdminSupport() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<SupportTicketFilters>({
     status: "all",
     source: "all",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [deepLinkLoading, setDeepLinkLoading] = useState(false);
 
   const { data: tickets = [], isLoading } = useAdminSupportTickets({
     ...filters,
     search: searchTerm || undefined,
   });
+
+  // Handle deep link ?ticket=ID from admin notifications
+  useEffect(() => {
+    const ticketId = searchParams.get("ticket");
+    if (ticketId && !selectedTicket) {
+      setDeepLinkLoading(true);
+      // Fetch the specific ticket to open
+      supabase
+        .from("support_tickets")
+        .select("*")
+        .eq("id", ticketId)
+        .single()
+        .then(({ data, error }) => {
+          if (data && !error) {
+            setSelectedTicket(data as SupportTicket);
+          }
+          setDeepLinkLoading(false);
+          // Clear the query parameter
+          searchParams.delete("ticket");
+          setSearchParams(searchParams, { replace: true });
+        });
+    }
+  }, [searchParams, selectedTicket, setSearchParams]);
 
   const statusCounts = tickets.reduce(
     (acc, ticket) => {

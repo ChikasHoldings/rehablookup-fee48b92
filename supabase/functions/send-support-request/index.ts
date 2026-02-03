@@ -11,6 +11,7 @@ interface SupportRequest {
   category: string;
   subject: string;
   message: string;
+  source?: "provider" | "seeker";
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -56,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body: SupportRequest = await req.json();
-    const { category, subject, message } = body;
+    const { category, subject, message, source = "provider" } = body;
 
     if (!category || !subject || !message) {
       return new Response(
@@ -65,23 +66,48 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("[SEND-SUPPORT-REQUEST] Request:", { userId: user.id, category, subject });
+    const ticketSource = source === "seeker" ? "seeker_support" : "provider_support";
+    const isSeeker = source === "seeker";
+    console.log("[SEND-SUPPORT-REQUEST] Request:", { userId: user.id, category, subject, source: ticketSource });
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("first_name, last_name, email")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // Get user name based on account type
+    let userName = "Unknown";
+    let userEmail = user.email || "Unknown";
+    let contextInfo = "";
 
-    const { data: facility } = await supabase
-      .from("facilities")
-      .select("name, city, state")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    if (isSeeker) {
+      // Look up seeker profile
+      const { data: seekerProfile } = await supabase
+        .from("seeker_profiles")
+        .select("first_name, last_name, email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (seekerProfile) {
+        userName = [seekerProfile.first_name, seekerProfile.last_name].filter(Boolean).join(" ") || "Unknown";
+        userEmail = seekerProfile.email || user.email || "Unknown";
+      }
+      contextInfo = "Seeker Account";
+    } else {
+      // Look up provider profile and facility
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-    const providerName = profile ? `${profile.first_name} ${profile.last_name}` : "Unknown";
-    const providerEmail = user.email || profile?.email || "Unknown";
-    const facilityInfo = facility ? `${facility.name} (${facility.city}, ${facility.state})` : "No facility";
+      const { data: facility } = await supabase
+        .from("facilities")
+        .select("name, city, state")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profile) {
+        userName = `${profile.first_name} ${profile.last_name}`;
+        userEmail = profile.email || user.email || "Unknown";
+      }
+      contextInfo = facility ? `Facility: ${facility.name} (${facility.city}, ${facility.state})` : "No facility";
+    }
 
     const categoryLabels: Record<string, string> = {
       account: "Account",
@@ -89,6 +115,10 @@ const handler = async (req: Request): Promise<Response> => {
       listing: "Listing",
       leads: "Leads",
       technical: "Technical",
+      search: "Search & Filters",
+      facility: "Facility Information",
+      reviews: "Reviews",
+      privacy: "Privacy",
       other: "Other",
     };
 
@@ -97,13 +127,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Insert into support_tickets table (dual-write)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const { data: ticketData, error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
-      source: 'provider_support',
-      sender_name: providerName,
-      sender_email: providerEmail,
+      source: ticketSource,
+      sender_name: userName,
+      sender_email: userEmail,
       sender_user_id: user.id,
       category: categoryLabel,
       subject: subject,
-      message: `Facility: ${facilityInfo}\n\n${message}`,
+      message: contextInfo ? `${contextInfo}\n\n${message}` : message,
     }).select('id').single();
 
     if (ticketError) {
@@ -118,13 +148,14 @@ const handler = async (req: Request): Promise<Response> => {
         .eq('status', 'active');
       
       if (adminUsers && adminUsers.length > 0) {
+        const sourceLabel = isSeeker ? "Seeker" : "Provider";
         const notifications = adminUsers.map(admin => ({
           user_id: admin.user_id,
           type: 'support_ticket',
-          title: 'New Provider Support Request',
-          message: `${providerName} (${facilityInfo}) needs help with ${categoryLabel}`,
+          title: `New ${sourceLabel} Support Request`,
+          message: `${userName}${!isSeeker && contextInfo ? ` (${contextInfo})` : ''} needs help with ${categoryLabel}`,
           link: `/admin/support?ticket=${ticketData?.id}`,
-          metadata: { ticket_id: ticketData?.id, source: 'provider_support' }
+          metadata: { ticket_id: ticketData?.id, source: ticketSource }
         }));
         
         await supabaseAdmin.from('admin_user_notifications').insert(notifications);
@@ -132,6 +163,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    const sourceLabel = isSeeker ? "Seeker" : "Provider";
     const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -150,7 +182,7 @@ const handler = async (req: Request): Promise<Response> => {
           <tr>
             <td style="background: #1B365D; padding: 24px 32px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600;">
-                Support Request: ${categoryLabel}
+                ${sourceLabel} Support Request: ${categoryLabel}
               </h1>
             </td>
           </tr>
@@ -162,15 +194,15 @@ const handler = async (req: Request): Promise<Response> => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; width: 90px;">From:</td>
-                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a;">${providerName}</td>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a;">${userName}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">Email:</td>
-                  <td style="padding: 8px 0;"><a href="mailto:${providerEmail}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1B365D; text-decoration: none;">${providerEmail}</a></td>
+                  <td style="padding: 8px 0;"><a href="mailto:${userEmail}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1B365D; text-decoration: none;">${userEmail}</a></td>
                 </tr>
                 <tr>
-                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">Facility:</td>
-                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a;">${facilityInfo}</td>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">Type:</td>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a;">${contextInfo}</td>
                 </tr>
               </table>
               
@@ -212,9 +244,9 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "RehabLookup Support <no-reply@rehablookup.com>",
       to: ["help@rehablookup.com"],
-      subject: `[${categoryLabel}] ${subject}`,
+      subject: `[${sourceLabel}] ${categoryLabel} - ${subject}`,
       html: emailHtml,
-      reply_to: providerEmail,
+      reply_to: userEmail,
     });
 
     console.log("[SEND-SUPPORT-REQUEST] Email sent:", emailResponse);
