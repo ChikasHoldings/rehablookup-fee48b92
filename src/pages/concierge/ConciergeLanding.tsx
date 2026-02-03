@@ -165,49 +165,17 @@ export default function ConciergeLanding() {
                   </h1>
                   
                   <p className="text-base md:text-lg text-white/85 mb-8 leading-relaxed max-w-2xl mx-auto px-2">
-                    Our specialists match you with programs that fit your needs, insurance, and location. 
-                    Get matched in 24-48 hours for just <span className="text-white font-semibold">$29</span>.
+                    Our specialists match you with programs that fit your needs, insurance, and location.
                   </p>
                   
                   {/* CTA */}
-                  <div className="flex flex-col items-center gap-3 sm:gap-4 mb-6">
+                  <div className="flex flex-col items-center">
                     <Button asChild size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base font-semibold shadow-lg shadow-primary/25 rounded-xl group">
                       <Link to="/concierge/intake">
                         Get Started
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>
-                  </div>
-                  
-                  {/* Trust Badges */}
-                  <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-x-6 gap-y-2 text-xs sm:text-sm text-white/70">
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full"
-                    >
-                      <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
-                      <span>Confidential</span>
-                    </motion.div>
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full"
-                    >
-                      <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
-                      <span>24-48hr Match</span>
-                    </motion.div>
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                      className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full"
-                    >
-                      <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
-                      <span>100+ Facilities</span>
-                    </motion.div>
                   </div>
                 </motion.div>
               </div>
