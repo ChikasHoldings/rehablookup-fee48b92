@@ -12,13 +12,15 @@ interface TrustBadgesSectionProps {
   yearEstablished?: number | null;
   accreditations?: Accreditation[];
   showCard?: boolean;
+  facilityType?: string | null;
 }
 
 export function TrustBadgesSection({ 
   verified, 
   yearEstablished, 
   accreditations = [],
-  showCard = true
+  showCard = true,
+  facilityType
 }: TrustBadgesSectionProps) {
   const currentYear = new Date().getFullYear();
   const yearsInBusiness = yearEstablished ? currentYear - yearEstablished : null;
@@ -26,13 +28,19 @@ export function TrustBadgesSection({
   // Only show verified accreditations to public
   const verifiedAccreditations = accreditations.filter(a => a.verified);
 
+  // Check if this is a luxury facility
+  const isLuxury = facilityType?.toLowerCase().includes("luxury");
+
   // Don't render if nothing to show
-  const hasContent = verified || (yearsInBusiness && yearsInBusiness > 0) || verifiedAccreditations.length > 0;
+  const hasContent = verified || (yearsInBusiness && yearsInBusiness > 0) || verifiedAccreditations.length > 0 || isLuxury;
   
   if (!hasContent) return null;
 
   const content = (
     <div className="flex flex-wrap gap-2">
+      {isLuxury && (
+        <TrustBadge type="luxury" />
+      )}
       {verified && (
         <TrustBadge type="verified" />
       )}
@@ -76,14 +84,19 @@ export function TrustBadgesInline({
   verified, 
   yearEstablished, 
   accreditations = [],
-  size = "md"
+  size = "md",
+  facilityType
 }: TrustBadgesSectionProps & { size?: "sm" | "md" }) {
   const currentYear = new Date().getFullYear();
   const yearsInBusiness = yearEstablished ? currentYear - yearEstablished : null;
   const verifiedAccreditations = accreditations.filter(a => a.verified);
+  const isLuxury = facilityType?.toLowerCase().includes("luxury");
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {isLuxury && (
+        <TrustBadge type="luxury" size={size} />
+      )}
       {verified && (
         <TrustBadge type="verified" size={size} />
       )}

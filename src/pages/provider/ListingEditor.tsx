@@ -105,12 +105,15 @@ interface Facility {
 }
 
 const facilityTypes = [
-  "Residential Treatment",
+  "Residential Treatment Center",
   "Outpatient Program",
   "Detox Center",
+  "Intensive Outpatient (IOP)",
+  "Partial Hospitalization (PHP)",
   "Sober Living",
   "Dual Diagnosis",
   "Luxury Rehab",
+  "Telehealth/Virtual",
 ];
 
 const genderOptions = [

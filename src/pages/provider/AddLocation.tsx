@@ -47,13 +47,14 @@ const US_STATES = [
 
 const FACILITY_TYPES = [
   { value: "Residential Treatment Center", label: "Residential Treatment Center" },
-  { value: "Outpatient Treatment", label: "Outpatient Treatment" },
+  { value: "Outpatient Program", label: "Outpatient Program" },
   { value: "Detox Center", label: "Detox Center" },
   { value: "Intensive Outpatient (IOP)", label: "Intensive Outpatient (IOP)" },
   { value: "Partial Hospitalization (PHP)", label: "Partial Hospitalization (PHP)" },
   { value: "Sober Living", label: "Sober Living" },
   { value: "Dual Diagnosis", label: "Dual Diagnosis" },
   { value: "Luxury Rehab", label: "Luxury Rehab" },
+  { value: "Telehealth/Virtual", label: "Telehealth/Virtual" },
 ];
 
 interface FacilityFormData {

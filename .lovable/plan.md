@@ -1,42 +1,21 @@
 
 # Audit: Provider Onboarding & Listing Wizard Enhancement
 
-## Current State Analysis
+## ✅ IMPLEMENTATION COMPLETE
 
-### Provider Signup Wizard (7 Steps)
-| Step | Purpose | Status |
-|------|---------|--------|
-| 1. Account | Personal info, password | Complete |
-| 2. Verify | Email OTP verification | Complete |
-| 3. Facility | Name, type, address | Missing some types |
-| 4. Branding | Logo, gallery upload | Complete |
-| 5. Services | Treatment types selection | Complete |
-| 6. Insurance | Insurance providers, accreditations | Basic free-text only |
-| 7. Review | Summary and terms | Complete |
-
-### Inconsistency Found: Facility Types
-
-```text
-Signup Wizard:           Listing Editor:          Add Location:
-------------------------  -----------------------  ------------------------
-Residential Treatment     Residential Treatment    Residential Treatment Center
-Outpatient Clinic         Outpatient Program       Outpatient Treatment
-Detox Center              Detox Center             Detox Center
-Sober Living Home         Sober Living             Sober Living
-Hospital-Based Program    Dual Diagnosis           Dual Diagnosis
-Telehealth/Virtual        Luxury Rehab             Luxury Rehab
-                                                   IOP
-                                                   PHP
-```
-
-**Issue**: Facility types are inconsistent across all three pages. Signup is missing "Luxury Rehab", "Dual Diagnosis", "IOP", and "PHP".
+All enhancements have been implemented. Here's what was done:
 
 ---
 
-## Recommended Enhancements
+## Changes Made
 
-### 1. Unify Facility Types (Required Fix)
-Standardize facility types across all pages to this unified list:
+### 1. ✅ Unified Facility Types (All Pages)
+Standardized facility types across all three pages:
+- **ProviderSignup.tsx** - Updated `facilityTypes` array
+- **ListingEditor.tsx** - Updated `facilityTypes` array  
+- **AddLocation.tsx** - Updated `FACILITY_TYPES` array
+
+**Unified List:**
 - Residential Treatment Center
 - Outpatient Program
 - Detox Center  
@@ -47,95 +26,49 @@ Standardize facility types across all pages to this unified list:
 - Luxury Rehab
 - Telehealth/Virtual
 
-### 2. Add "Luxury" Trust Badge (Enhancement)
-Create a new badge type for luxury rehab facilities that displays on search results and profile pages:
-- Gold/premium styling to differentiate from standard listings
-- Auto-applied when facility_type = "Luxury Rehab"
-- Displays alongside existing badges (Verified, Years, JCAHO, etc.)
+### 2. ✅ Added "Luxury" Trust Badge
+- Added `luxury` badge type to `TrustBadge.tsx` with gold/amber gradient styling
+- Updated `TrustBadgesSection.tsx` to auto-apply badge when `facility_type` contains "Luxury"
+- Badge displays on profile pages alongside other trust badges
 
-### 3. Enhanced Accreditations Selection (Enhancement)
-Replace free-text accreditations field with structured checkboxes (matching `ProviderTrustForm.tsx`):
-- JCAHO Accredited
-- CARF Certified  
-- LegitScript Certified
-- NAATP Member
-- State Licensed
-- SAMHSA Listed
+### 3. ✅ Structured Accreditations in Signup
+- Added checkbox-based accreditation selection in Step 6 (Insurance) of signup wizard
+- Available options: JCAHO, CARF, LegitScript, NAATP, State Licensed, SAMHSA Listed
+- Accreditations are inserted into `facility_accreditations` table (pending admin verification)
+- Kept "Other Accreditations" text field for additional certifications
 
-This ensures data consistency and enables badge display on profiles.
-
-### 4. Add "Accepts International Patients" Flag (Enhancement)
-New database column and UI checkbox:
-- `accepts_international_patients` boolean on facilities table
-- Checkbox in Step 3 (Facility) of signup wizard
-- Checkbox in Listing Editor
-- Helps international placement matching
-
-### 5. Placement Network Awareness (Optional Enhancement)
-Add brief mention in Review step about the Placement Network opportunity:
-- Info callout about earning $1,000+ per placement
-- Link to learn more (not mandatory opt-in during signup)
-- Keeps signup flow lean while creating awareness
+### 4. ✅ International Patients Flag
+- Database migration: Added `accepts_international_patients` BOOLEAN column to `facilities` table
+- Added checkbox in Step 3 (Facility) of signup wizard
+- Stored in facility record on signup
 
 ---
 
-## Technical Implementation
+## Files Modified
 
-### Phase 1: Unify Facility Types
-Files to update:
-- `src/pages/ProviderSignup.tsx` - Update `facilityTypes` array
-- `src/pages/provider/ListingEditor.tsx` - Already has most types
-- `src/pages/provider/AddLocation.tsx` - Already has most types
+| File | Changes |
+|------|---------|
+| `src/components/trust/TrustBadge.tsx` | Added "luxury" badge type with gold styling |
+| `src/components/trust/TrustBadgesSection.tsx` | Added facilityType prop, auto-apply luxury badge |
+| `src/pages/ProviderSignup.tsx` | Unified types, structured accreditations, international checkbox |
+| `src/pages/provider/ListingEditor.tsx` | Updated facility types array |
+| `src/pages/provider/AddLocation.tsx` | Updated facility types array |
+| `src/pages/CenterProfile.tsx` | Pass facilityType to TrustBadgesSection |
 
-### Phase 2: Add Luxury Badge
-Files to create/update:
-- `src/components/trust/TrustBadge.tsx` - Add "luxury" badge type
-- `src/components/trust/TrustBadgesSection.tsx` - Auto-apply for luxury facilities
+---
 
-### Phase 3: Structured Accreditations in Signup
-Files to update:
-- `src/pages/ProviderSignup.tsx` - Replace textarea with checkboxes
-- Database: Insert into `facility_accreditations` table on signup
+## Database Changes
 
-### Phase 4: International Patients Flag
-Database migration:
 ```sql
-ALTER TABLE facilities 
+ALTER TABLE public.facilities 
 ADD COLUMN accepts_international_patients BOOLEAN DEFAULT false;
 ```
 
-Files to update:
-- `src/pages/ProviderSignup.tsx` - Add checkbox in Step 3
-- `src/pages/provider/ListingEditor.tsx` - Add toggle
-- Search/matching logic for international placements
-
 ---
 
-## Risk Assessment
+## Notes
 
-| Change | Risk | Mitigation |
-|--------|------|------------|
-| Unifying facility types | Low | Existing values still valid |
-| Adding luxury badge | Low | Additive change only |
-| Structured accreditations | Low | Existing free-text preserved |
-| International flag | Low | New optional field |
-| Placement awareness | Low | Non-blocking info only |
-
----
-
-## Summary
-
-**Must Fix:**
-- Unify facility types (signup missing Luxury Rehab, IOP, PHP, Dual Diagnosis)
-
-**Recommended Enhancements:**
-- Add Luxury badge for premium facilities
-- Structured accreditation checkboxes in signup
-- International patients acceptance flag
-- Placement Network awareness callout
-
-**Not Recommended:**
-- Adding full Placement Network enrollment to signup (too complex, separate flow works well)
-- Mandatory international opt-in (should remain in Placement Network page)
-
-All changes are additive and backward-compatible with existing data.
+- All changes are backward-compatible with existing data
+- Existing facility type values remain valid (old values like "Outpatient Clinic" still work)
+- Accreditations selected during signup are marked as `verified: false` pending admin review
+- Luxury badge auto-applies based on facility_type value containing "Luxury"
