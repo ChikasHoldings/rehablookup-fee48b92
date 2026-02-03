@@ -95,7 +95,7 @@ const ForProviders = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
 
           {/* Content */}
-          <div className="container relative py-16 md:py-20 lg:py-24">
+          <div className="container relative py-12 md:py-14 lg:py-16">
             <div className="mx-auto max-w-3xl text-center">
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">
@@ -152,7 +152,7 @@ const ForProviders = () => {
         </section>
 
         {/* Stats Bar */}
-        <section className="border-b border-border bg-primary text-primary-foreground py-6 sm:py-8">
+        <section className="border-b border-border bg-primary text-primary-foreground py-3 md:py-5">
           <div className="container px-4 sm:px-5 md:px-6">
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 text-center max-w-4xl mx-auto">
               {[
