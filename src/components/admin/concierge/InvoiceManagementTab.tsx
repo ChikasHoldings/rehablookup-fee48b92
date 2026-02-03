@@ -170,14 +170,17 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
         retry_charge: "Payment retry initiated",
       };
       toast.success(messages[variables.action]);
+      // Invalidate all invoice-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["admin-placement-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-all-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["concierge-inquiries"] });
       setActionModal(null);
       setSelectedInvoice(null);
       setWaiveReason("");
       setOverrideAmount("");
       setOverrideReason("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error("Action failed", { description: error.message });
     },
   });
@@ -331,74 +334,72 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                         )}
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {invoice.status !== "paid" && invoice.status !== "waived" && (
-                            <>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedInvoice(invoice);
-                                  setActionModal("waive");
-                                }}
-                              >
-                                <XCircle className="mr-2 h-4 w-4" />
-                                Waive Fee
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedInvoice(invoice);
-                                  setOverrideAmount(((invoice.override_amount_cents || invoice.amount_cents) / 100).toString());
-                                  setActionModal("override");
-                                }}
-                              >
-                                <Edit3 className="mr-2 h-4 w-4" />
-                                Override Amount
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
+                      {invoice.status !== "paid" && invoice.status !== "waived" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedInvoice(invoice);
+                                setActionModal("waive");
+                              }}
+                            >
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Waive Fee
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedInvoice(invoice);
+                                setOverrideAmount(((invoice.override_amount_cents || invoice.amount_cents) / 100).toString());
+                                setActionModal("override");
+                              }}
+                            >
+                              <Edit3 className="mr-2 h-4 w-4" />
+                              Override Amount
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                manageMutation.mutate({
+                                  invoiceId: invoice.id,
+                                  action: "mark_paid",
+                                })
+                              }
+                            >
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                              Mark as Paid
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                manageMutation.mutate({
+                                  invoiceId: invoice.id,
+                                  action: "send_reminder",
+                                })
+                              }
+                            >
+                              <Mail className="mr-2 h-4 w-4" />
+                              Send Reminder
+                            </DropdownMenuItem>
+                            {invoice.status === "failed" && (
                               <DropdownMenuItem
                                 onClick={() =>
                                   manageMutation.mutate({
                                     invoiceId: invoice.id,
-                                    action: "mark_paid",
+                                    action: "retry_charge",
                                   })
                                 }
                               >
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Mark as Paid
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Retry Payment
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  manageMutation.mutate({
-                                    invoiceId: invoice.id,
-                                    action: "send_reminder",
-                                  })
-                                }
-                              >
-                                <Mail className="mr-2 h-4 w-4" />
-                                Send Reminder
-                              </DropdownMenuItem>
-                              {invoice.status === "failed" && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    manageMutation.mutate({
-                                      invoiceId: invoice.id,
-                                      action: "retry_charge",
-                                    })
-                                  }
-                                >
-                                  <RefreshCw className="mr-2 h-4 w-4" />
-                                  Retry Payment
-                                </DropdownMenuItem>
-                              )}
-                            </>
-                              )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
                 ))}
