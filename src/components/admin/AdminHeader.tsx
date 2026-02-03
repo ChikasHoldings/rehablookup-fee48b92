@@ -31,6 +31,7 @@ import { toast } from "sonner";
 interface AdminHeaderProps {
   userEmail?: string;
   userId?: string;
+  adminRole?: "super_admin" | "manager" | "customer_rep" | "advisor";
   onLogout: () => void;
 }
 
@@ -44,7 +45,7 @@ type Notification = {
   isUnread?: boolean;
 };
 
-function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps) {
+function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminHeaderProps) {
   const initials = userEmail?.slice(0, 2).toUpperCase() || "AD";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -53,6 +54,9 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   const [bellAnimating, setBellAnimating] = useState(false);
   const lastPendingCountRef = useRef<number | null>(null);
   const lastLeadsCountRef = useRef<number | null>(null);
+
+  // Advisors (Placement Advisors) should NOT see lead notifications - they only handle placements
+  const isAdvisor = adminRole === "advisor";
 
   // Fetch admin profile for avatar
   const { data: adminProfile, refetch: refetchAdminProfile } = useQuery({
@@ -126,6 +130,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   }, []);
 
   // Set up realtime subscriptions for notifications with toast alerts
+  // Advisors only see provider notifications, not lead notifications
   useEffect(() => {
     const facilitiesChannel = supabase
       .channel("admin-facilities-notifications-live")
@@ -164,52 +169,59 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
       )
       .subscribe();
 
-    const leadsChannel = supabase
-      .channel("admin-leads-notifications-live")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "leads",
-        },
-        (payload) => {
-          invalidateNotifications();
-          triggerBellAnimation();
-          const lead = payload.new as { name?: string; facility_id?: string | null };
-          if (!lead.facility_id) {
-            toast.info("New Unassigned Lead", {
-              description: `${lead.name || "A new lead"} needs assignment`,
-              action: {
-                label: "View",
-                onClick: () => navigate("/admin/leads?unassigned=true"),
-              },
-            });
-          } else {
-            toast.success("New Lead Received", {
-              description: `${lead.name || "A new lead"} is ready for follow-up`,
-            });
+    // Only subscribe to leads channel if NOT an advisor
+    // Advisors handle placements, not leads
+    let leadsChannel: ReturnType<typeof supabase.channel> | null = null;
+    if (!isAdvisor) {
+      leadsChannel = supabase
+        .channel("admin-leads-notifications-live")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "leads",
+          },
+          (payload) => {
+            invalidateNotifications();
+            triggerBellAnimation();
+            const lead = payload.new as { name?: string; facility_id?: string | null };
+            if (!lead.facility_id) {
+              toast.info("New Unassigned Lead", {
+                description: `${lead.name || "A new lead"} needs assignment`,
+                action: {
+                  label: "View",
+                  onClick: () => navigate("/admin/leads?unassigned=true"),
+                },
+              });
+            } else {
+              toast.success("New Lead Received", {
+                description: `${lead.name || "A new lead"} is ready for follow-up`,
+              });
+            }
           }
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "leads",
-        },
-        () => {
-          invalidateNotifications();
-        }
-      )
-      .subscribe();
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "leads",
+          },
+          () => {
+            invalidateNotifications();
+          }
+        )
+        .subscribe();
+    }
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
-      supabase.removeChannel(leadsChannel);
+      if (leadsChannel) {
+        supabase.removeChannel(leadsChannel);
+      }
     };
-  }, [invalidateNotifications, navigate, triggerBellAnimation]);
+  }, [invalidateNotifications, navigate, triggerBellAnimation, isAdvisor]);
 
   // Fetch pending providers
   const { data: pendingProviders } = useQuery({
@@ -226,7 +238,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Fetch unassigned leads
+  // Fetch unassigned leads - NOT for advisors (they handle placements, not leads)
   const { data: unassignedLeads } = useQuery({
     queryKey: ["admin-notifications-unassigned-leads"],
     queryFn: async () => {
@@ -239,6 +251,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
       return data || [];
     },
     refetchInterval: 30000,
+    enabled: !isAdvisor, // Advisors don't see lead notifications
   });
 
   // Fetch recent approvals (last 24 hours)
@@ -310,7 +323,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   // Build notifications from real data
   const notifications: Notification[] = [];
 
-  // Add pending providers as notifications
+  // Add pending providers as notifications (all admin roles can see this)
   pendingProviders?.forEach((provider) => {
     notifications.push({
       id: `pending-${provider.id}`,
@@ -322,8 +335,8 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
     });
   });
 
-  // Add unassigned leads count as notification
-  if (unassignedLeads && unassignedLeads.length > 0) {
+  // Add unassigned leads count as notification - NOT for advisors
+  if (!isAdvisor && unassignedLeads && unassignedLeads.length > 0) {
     notifications.push({
       id: "unassigned-leads",
       title: "Leads awaiting assignment",
@@ -347,6 +360,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   });
 
   // Add user-specific notifications (tasks assigned to this admin, etc.)
+  // Filter out lead notifications for advisors
   userNotifications?.slice(0, 5).forEach((notif) => {
     let notifType: Notification["type"] = "provider";
     if (["payment_failed", "payment_delinquent", "placement_payment_failed"].includes(notif.type)) notifType = "warning";
@@ -354,6 +368,11 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
     else if (notif.type === "provider_signup") notifType = "provider";
     else if (["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"].includes(notif.type)) notifType = "security";
     else if (["facility_approved", "new_subscription"].includes(notif.type)) notifType = "success";
+
+    // Skip lead notifications for advisors
+    if (isAdvisor && notifType === "lead") {
+      return;
+    }
 
     notifications.push({
       id: `user-${notif.id}`,
