@@ -325,8 +325,8 @@ const Index = () => {
         <div className="container relative py-10 md:py-12 lg:py-14 px-4 md:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
-            <h1 className="mb-3 font-display text-[1.625rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find the Right Treatment & Rehab
+            <h1 className="mb-3 font-display text-[1.875rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
+              Find the Right<br className="sm:hidden" /> Treatment & Rehab
             </h1>
 
             {/* Subheadline */}
