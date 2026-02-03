@@ -14,17 +14,22 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { role, isLoading, isAuthenticated } = useUserRole();
 
-  // Show nothing while loading to prevent flash of public content
+  // Skip redirect logic in iframe (preview functionality)
+  const isInIframe = typeof window !== "undefined" && window.self !== window.top;
+
+  // Show children immediately during loading for instant perceived performance
+  // Redirects will happen once role is resolved
   if (isLoading) {
+    // Show public layout skeleton during load - prevents flash but feels instant
     return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex min-h-screen flex-col">
+        <InternationalBanner />
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
       </div>
     );
   }
-
-  // Skip redirect logic in iframe (preview functionality)
-  const isInIframe = typeof window !== "undefined" && window.self !== window.top;
 
   // If admin is authenticated, redirect to admin panel - do NOT render public layout
   if (!isInIframe && isAuthenticated && role === "admin") {

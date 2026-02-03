@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
+import { AdminShellSkeleton } from "@/components/ui/shell-skeletons";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
@@ -79,13 +80,9 @@ export function AdminShell() {
     prefetchAdjacentPages(location.pathname);
   }, [location.pathname]);
 
-  // Don't render anything until we know auth status (prevents flash)
+  // Don't render anything until we know auth status - show skeleton instead of spinner
   if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-900 border-t-transparent" />
-      </div>
-    );
+    return <AdminShellSkeleton />;
   }
 
   // Redirect handled in hook, but don't render if not admin
