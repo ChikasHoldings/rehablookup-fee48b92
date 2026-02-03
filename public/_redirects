@@ -35,8 +35,14 @@
 # proxies them to prerender-for-bots for server-rendered HTML.
 # 
 # For Netlify/Vercel deployments without edge function support at the CDN level,
-# the index.html contains route-specific <noscript> content as fallback.
+# the index.html contains homepage-only <noscript> content as fallback.
+# Legal pages (privacy-policy, terms-of-service) are served as static HTML files.
 # =============================================================================
 
-# Handle SPA routing - serve index.html for all routes
+# Static legal pages - served directly to ensure clean, focused SEO content
+# These bypass the SPA shell so crawlers see dedicated legal page content
+/privacy-policy /privacy-policy.html 200
+/terms-of-service /terms-of-service.html 200
+
+# Handle SPA routing - serve index.html for all other routes
 /* /index.html 200
