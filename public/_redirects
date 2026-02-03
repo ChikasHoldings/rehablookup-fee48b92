@@ -49,5 +49,12 @@
 /how-it-works /how-it-works.html 200
 /resources /resources.html 200
 
+# Insurance static pages with FAQPage schema for rich snippets
+/insurance/aetna-rehab /insurance/aetna-rehab.html 200
+/insurance/bcbs-treatment /insurance/bcbs-treatment.html 200
+/insurance/cigna-rehab /insurance/cigna-rehab.html 200
+/insurance/united-healthcare-rehab /insurance/united-healthcare-rehab.html 200
+/insurance/medicare-rehab /insurance/medicare-rehab.html 200
+
 # Handle SPA routing - serve index.html for all other routes
 /* /index.html 200
