@@ -88,11 +88,11 @@ export function Header({
       <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
         <div className="container flex h-14 items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo - Left aligned */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex-shrink-0">
             <img 
               src="/logo.png"
               alt="RehabLookup" 
-              className="h-8 md:h-9 w-auto"
+              className="h-8 w-auto"
               width={134}
               height={32}
               loading="eager"
@@ -101,7 +101,7 @@ export function Header({
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-0.5 lg:gap-1 md:flex">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.href || 
                 (link.href !== "/" && location.pathname.startsWith(link.href));
@@ -114,7 +114,7 @@ export function Header({
                     <DropdownMenuTrigger asChild>
                       <button
                         className={cn(
-                          "flex items-center gap-1 px-3.5 py-2 text-[15px] font-medium transition-colors",
+                          "flex items-center gap-1 px-2 lg:px-3.5 py-2 text-sm lg:text-[15px] font-medium transition-colors whitespace-nowrap",
                           isActive || location.pathname.startsWith("/provider")
                             ? "text-foreground"
                             : "text-muted-foreground hover:text-foreground"
@@ -149,7 +149,7 @@ export function Header({
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "px-3.5 py-2 text-[15px] font-medium transition-colors",
+                    "px-2 lg:px-3.5 py-2 text-sm lg:text-[15px] font-medium transition-colors whitespace-nowrap",
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -189,12 +189,13 @@ export function Header({
             </button>
 
             {/* Desktop CTAs */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-shrink-0">
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
-                  <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
+                  <Button size="sm" variant="ghost" className="h-8 text-xs lg:text-sm gap-1.5 relative px-2 lg:px-3">
                     <User className="h-4 w-4" />
-                    My Account
+                    <span className="hidden lg:inline">My Account</span>
+                    <span className="lg:hidden">Account</span>
                     {favoritesCount > 0 && (
                       <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
@@ -205,14 +206,16 @@ export function Header({
               ) : (
                 <>
                   <PrefetchLink to="/provider-signup">
-                    <Button size="sm" variant="outline" className="h-8 text-sm">
-                      List Facility
+                    <Button size="sm" variant="outline" className="h-8 text-xs lg:text-sm px-2 lg:px-3">
+                      <span className="hidden lg:inline">List Facility</span>
+                      <span className="lg:hidden">List</span>
                     </Button>
                   </PrefetchLink>
                   <PrefetchLink to="/login">
-                    <Button size="sm" className="h-8 text-sm gap-1.5">
+                    <Button size="sm" className="h-8 text-xs lg:text-sm gap-1.5 px-2 lg:px-3">
                       <User className="h-4 w-4" />
-                      Sign In
+                      <span className="hidden lg:inline">Sign In</span>
+                      <span className="lg:hidden">Login</span>
                     </Button>
                   </PrefetchLink>
                 </>
