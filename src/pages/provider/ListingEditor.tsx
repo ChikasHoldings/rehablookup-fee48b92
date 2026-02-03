@@ -102,6 +102,7 @@ interface Facility {
   logo_url: string | null;
   gallery_urls: string[] | null;
   year_established: number | null;
+  accepts_international_patients: boolean | null;
 }
 
 const facilityTypes = [
@@ -686,7 +687,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   };
 
-  const updateField = (field: keyof Facility, value: string | number | null) => {
+  const updateField = (field: keyof Facility, value: string | number | boolean | null) => {
     if (facility) {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
@@ -1754,6 +1755,45 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                           />
                         </div>
                       </FormField>
+                    </div>
+
+                    {/* International Patients Toggle */}
+                    <div className="mt-4 p-4 rounded-lg border bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-primary" />
+                            Accept International Patients
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Enable this if your facility accepts patients from outside the United States
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={facility.accepts_international_patients || false}
+                          onClick={() => updateField("accepts_international_patients", !facility.accepts_international_patients)}
+                          className={cn(
+                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            facility.accepts_international_patients ? "bg-primary" : "bg-muted-foreground/30"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
+                              facility.accepts_international_patients ? "translate-x-6" : "translate-x-1"
+                            )}
+                          />
+                        </button>
+                      </div>
+                      {facility.accepts_international_patients && (
+                        <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10">
+                          <p className="text-xs text-primary">
+                            Your facility will be visible to international clients seeking treatment in the US through our placement service.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </CollapsibleContent>

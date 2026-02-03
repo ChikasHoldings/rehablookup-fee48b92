@@ -311,6 +311,12 @@ export default function ProviderSignup() {
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
+        // Profile creation is critical - notify user but continue
+        toast({
+          title: "Profile Notice",
+          description: "Your profile was created with limited info. You can update it later in settings.",
+          variant: "default",
+        });
       }
 
       // 3. Create facility

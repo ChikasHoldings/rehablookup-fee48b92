@@ -92,6 +92,17 @@ serve(async (req) => {
     }
 
     const { leadId, facilityId, paymentMethod = 'credits' } = await req.json();
+    
+    // Validate payment method against whitelist
+    const ALLOWED_PAYMENT_METHODS = ['credits', 'stripe'];
+    if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
+      logStep(requestId, "Invalid payment method", { paymentMethod });
+      return new Response(JSON.stringify({ error: "Invalid payment method", requestId }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
     logStep(requestId, "Processing unlock request", { leadId, facilityId, paymentMethod });
 
     if (!leadId || !facilityId) {
