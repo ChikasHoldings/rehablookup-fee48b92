@@ -34,7 +34,7 @@ const adjacentPagesMap: Record<string, string[]> = {
   "/admin/notifications": ["/admin", "/admin/settings"],
   "/admin/profile": ["/admin/settings", "/admin"],
   "/admin/reviews": ["/admin/providers"],
-  "/admin/concierge": ["/admin", "/admin/placement-revenue"],
+  "/admin/concierge": ["/admin", "/admin/placement-revenue", "/admin/providers"],
   "/admin/placement-revenue": ["/admin/concierge", "/admin/subscriptions"],
 };
 
