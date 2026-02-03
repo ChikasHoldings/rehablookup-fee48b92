@@ -5,13 +5,51 @@ import { Link, useSearchParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
-import { CheckCircle, Clock, Mail, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle, Clock, Mail, ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InternationalThankYou() {
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState<string>("");
+  const [isResending, setIsResending] = useState(false);
+  const { toast } = useToast();
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please provide your email address to resend verification.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-verification-code", {
+        body: { email, type: "international_placement" },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Verification Sent",
+        description: "A new verification email has been sent to your inbox.",
+      });
+    } catch (err) {
+      console.error("Resend error:", err);
+      toast({
+        title: "Error",
+        description: "Failed to resend verification. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   useEffect(() => {
     // Trigger confetti on mount
@@ -150,8 +188,20 @@ export default function InternationalThankYou() {
                         </span>
                         . Please verify to activate your case.
                       </p>
-                      <Button variant="outline" size="sm">
-                        Resend Verification Email
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleResendVerification}
+                        disabled={isResending || !email}
+                      >
+                        {isResending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          "Resend Verification Email"
+                        )}
                       </Button>
                     </div>
                   </div>

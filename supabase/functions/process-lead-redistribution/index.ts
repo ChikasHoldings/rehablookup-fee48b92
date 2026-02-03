@@ -156,12 +156,27 @@ serve(async (req) => {
         continue;
       }
 
-      // Get lead's state from facility or location
-      const leadState = (lead.facilities as { state?: string })?.state || 
-        lead.location_city_state?.split(',')[1]?.trim();
+      // Get lead's state from facility or location - improved parsing
+      let leadState = (lead.facilities as { state?: string })?.state;
+      
+      if (!leadState && lead.location_city_state) {
+        // Handle multiple formats: "City, State", "City, ST", "City ST"
+        const locationParts = lead.location_city_state.split(/[,\s]+/).filter(Boolean);
+        if (locationParts.length >= 2) {
+          // Last part is likely the state
+          const potentialState = locationParts[locationParts.length - 1].trim().toUpperCase();
+          // Validate it looks like a state (2 chars or common state names)
+          if (potentialState.length === 2 || potentialState.length <= 15) {
+            leadState = potentialState;
+          }
+        }
+      }
 
       if (!leadState) {
-        log("WARN", "Could not determine lead state for redistribution", { leadId: lead.id });
+        log("WARN", "Could not determine lead state for redistribution", { 
+          leadId: lead.id, 
+          locationCityState: lead.location_city_state 
+        });
         continue;
       }
 

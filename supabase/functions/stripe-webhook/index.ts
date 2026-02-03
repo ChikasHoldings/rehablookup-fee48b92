@@ -50,18 +50,36 @@ serve(async (req) => {
     );
 
     const body = await req.text();
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
     let event: Stripe.Event;
     
-    try {
-      event = JSON.parse(body) as Stripe.Event;
-      logStep("Event parsed", { type: event.type, id: event.id });
-    } catch (parseError) {
-      logStep("Failed to parse event body", { error: String(parseError) });
-      return new Response(JSON.stringify({ error: "Invalid payload" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Verify webhook signature if secret is configured (production)
+    const signature = req.headers.get("stripe-signature");
+    
+    if (webhookSecret && signature) {
+      try {
+        event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+        logStep("Event verified with signature", { type: event.type, id: event.id });
+      } catch (signatureError) {
+        logStep("Webhook signature verification failed", { error: String(signatureError) });
+        return new Response(JSON.stringify({ error: "Invalid signature" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      // Fallback for development/testing without signature verification
+      try {
+        event = JSON.parse(body) as Stripe.Event;
+        logStep("Event parsed (no signature verification)", { type: event.type, id: event.id });
+      } catch (parseError) {
+        logStep("Failed to parse event body", { error: String(parseError) });
+        return new Response(JSON.stringify({ error: "Invalid payload" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // ==========================================

@@ -211,18 +211,31 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Use stored customer ID for efficiency
-    const customerId = paymentMethod.stripe_customer_id;
+    let finalCustomerId = paymentMethod.stripe_customer_id;
 
-    if (!customerId) {
+    if (!finalCustomerId) {
       // Fallback to retrieving from Stripe if not stored
       logStep(requestId, "Customer ID not stored, retrieving from Stripe");
-      const pm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
-      if (!pm.customer) {
-        throw new Error("Payment method not attached to customer");
+      try {
+        const pm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
+        if (!pm.customer) {
+          logStep(requestId, "ERROR: Payment method not attached to any customer", { 
+            paymentMethodId: paymentMethod.stripe_payment_method_id 
+          });
+          throw new Error("Payment method not attached to customer. Please update your payment method.");
+        }
+        finalCustomerId = pm.customer as string;
+      } catch (pmError) {
+        logStep(requestId, "ERROR: Failed to retrieve payment method from Stripe", { 
+          error: pmError instanceof Error ? pmError.message : String(pmError) 
+        });
+        throw new Error("Unable to process payment. Please update your payment method and try again.");
       }
     }
 
-    const finalCustomerId = customerId || (await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id)).customer as string;
+    if (!finalCustomerId) {
+      throw new Error("No valid customer ID found for payment processing");
+    }
 
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
