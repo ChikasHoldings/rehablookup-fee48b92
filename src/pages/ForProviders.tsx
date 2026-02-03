@@ -95,7 +95,7 @@ const ForProviders = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
 
           {/* Content */}
-          <div className="container relative py-10 md:py-12 lg:py-14">
+          <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
             <div className="mx-auto max-w-3xl text-center">
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">
@@ -153,7 +153,7 @@ const ForProviders = () => {
 
         {/* Stats Bar */}
         <section className="border-b border-border bg-primary text-primary-foreground py-2.5 md:py-4">
-          <div className="container px-4 sm:px-5 md:px-6">
+          <div className="container px-4 md:px-6 lg:px-8">
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 text-center max-w-4xl mx-auto">
               {[
                 { value: "10K+", label: "Families Helped Monthly", icon: Users },
@@ -175,7 +175,7 @@ const ForProviders = () => {
 
         {/* How It Works */}
         <section className="py-12 sm:py-16 md:py-24 bg-background">
-          <div className="container px-4 sm:px-5 md:px-6">
+          <div className="container px-4 md:px-6 lg:px-8">
             <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">How It Works</p>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
@@ -224,7 +224,7 @@ const ForProviders = () => {
 
         {/* Value Proposition with Image */}
         <section className="py-12 sm:py-16 md:py-24 bg-muted/30 border-y border-border">
-          <div className="container px-4 sm:px-5 md:px-6">
+          <div className="container px-4 md:px-6 lg:px-8">
             {/* Centered Section Header */}
             <div className="text-center mb-8 sm:mb-12 max-w-3xl mx-auto">
               <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Why RehabLookup</p>
@@ -295,7 +295,7 @@ const ForProviders = () => {
 
         {/* Features Grid with Images */}
         <section className="py-12 sm:py-16 md:py-24 bg-background">
-          <div className="container px-4 sm:px-5 md:px-6">
+          <div className="container px-4 md:px-6 lg:px-8">
             <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Platform Features</p>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
@@ -369,7 +369,7 @@ const ForProviders = () => {
 
         {/* Testimonials */}
         <section className="py-12 sm:py-16 md:py-24 bg-muted/30 border-y border-border">
-          <div className="container px-4 sm:px-5 md:px-6">
+          <div className="container px-4 md:px-6 lg:px-8">
             <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Success Stories</p>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
@@ -445,7 +445,7 @@ const ForProviders = () => {
 
         {/* FAQ Section */}
         <section className="py-12 sm:py-16 md:py-24 bg-background">
-          <div className="container px-4 sm:px-5 md:px-6">
+          <div className="container px-4 md:px-6 lg:px-8">
             <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">FAQ</p>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4">
@@ -493,7 +493,7 @@ const ForProviders = () => {
 
         {/* Final CTA - Card style, not full-width background */}
         <section className="py-12 sm:py-16 md:py-24 bg-background">
-          <div className="container px-4 sm:px-5 md:px-6">
+          <div className="container px-4 md:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
               <div className="bg-card border border-border rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-12 text-center shadow-lg">
                 <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-primary/10 px-3 sm:px-4 py-1.5 sm:py-2 mb-4 sm:mb-6">
