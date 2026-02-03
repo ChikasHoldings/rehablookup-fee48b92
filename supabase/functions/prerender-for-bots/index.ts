@@ -72,6 +72,8 @@ const SEO_EXACT_ROUTES = [
   '/',
   '/for-providers',
   '/concierge',
+  '/international',
+  '/international/apply',
   '/about',
   '/contact',
   '/privacy-policy',
