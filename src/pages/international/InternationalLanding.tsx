@@ -145,7 +145,7 @@ export default function InternationalLanding() {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
 
-            <div className="container relative py-12 md:py-14 lg:py-16">
+            <div className="container relative py-10 md:py-12 lg:py-14">
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -157,7 +157,7 @@ export default function InternationalLanding() {
                   <span className="text-sm font-medium text-white/90">International Placement Services</span>
                 </div>
                 
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight leading-tight">
+                <h1 className="text-[1.625rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-white mb-3 tracking-tight leading-tight">
                   Your Gateway to American Rehab
                 </h1>
                 

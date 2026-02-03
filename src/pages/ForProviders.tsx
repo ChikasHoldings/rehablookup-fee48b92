@@ -95,7 +95,7 @@ const ForProviders = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
 
           {/* Content */}
-          <div className="container relative py-12 md:py-14 lg:py-16">
+          <div className="container relative py-10 md:py-12 lg:py-14">
             <div className="mx-auto max-w-3xl text-center">
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">
@@ -104,7 +104,7 @@ const ForProviders = () => {
               </div>
 
               {/* Headline */}
-              <h1 className="mb-4 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl animate-fade-in" style={{ animationDelay: "50ms" }}>
+              <h1 className="mb-3 font-display text-[1.625rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in" style={{ animationDelay: "50ms" }}>
                 Grow Your Admissions with Qualified Families
               </h1>
 
