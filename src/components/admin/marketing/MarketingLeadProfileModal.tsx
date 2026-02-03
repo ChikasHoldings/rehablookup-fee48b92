@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -128,8 +128,16 @@ export function MarketingLeadProfileModal({
 }: MarketingLeadProfileModalProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [adminNotes, setAdminNotes] = useState(lead?.admin_notes || "");
+  const [adminNotes, setAdminNotes] = useState("");
   const queryClient = useQueryClient();
+
+  // Sync admin notes when lead changes
+  React.useEffect(() => {
+    if (lead) {
+      setAdminNotes(lead.admin_notes || "");
+      setActiveTab("overview");
+    }
+  }, [lead?.id]);
 
   // Fetch lead journey data
   const { data: journeyData, isLoading: journeyLoading } = useQuery({

@@ -60,7 +60,10 @@ export default function AdminMarketing() {
         .order("created_at", { ascending: false })
         .limit(200);
 
-      if (statusFilter !== "all") {
+      // Handle special "converted" filter which should check converted_to_concierge boolean
+      if (statusFilter === "converted") {
+        query = query.eq("converted_to_concierge", true);
+      } else if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
       }
 
