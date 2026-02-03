@@ -140,7 +140,7 @@ export function InternationalCasesTab() {
     },
   });
 
-  // Fetch invoices
+  // Fetch invoices - use explicit FK reference to avoid ambiguity
   const { data: invoices, isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
     queryKey: ["admin-international-invoices"],
     queryFn: async () => {
@@ -149,7 +149,7 @@ export function InternationalCasesTab() {
         .select(`
           *,
           facility:facilities(name),
-          case:international_placement_cases(client_name, client_country)
+          case:international_placement_cases!international_facility_invoices_case_id_fkey(client_name, client_country)
         `)
         .order("created_at", { ascending: false });
 
