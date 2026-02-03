@@ -4,8 +4,13 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
-import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   CheckCircle,
   Shield,
@@ -19,9 +24,8 @@ import {
   BadgeCheck,
   Building2,
   Heart,
-  Zap,
-  Calendar
 } from "lucide-react";
+import conciergeHero from "@/assets/concierge-hero.jpg";
 
 const TESTIMONIALS = [
   {
@@ -45,9 +49,9 @@ const TESTIMONIALS = [
 ];
 
 const STATS = [
-  { value: "500+", label: "Families Helped" },
-  { value: "100+", label: "Partner Facilities" },
-  { value: "24hr", label: "Avg Response Time" },
+  { value: "500+", label: "Families Helped", icon: Users },
+  { value: "100+", label: "Partner Facilities", icon: Building2 },
+  { value: "24hr", label: "Avg Response Time", icon: Clock },
   { value: "4.9", label: "Client Rating", icon: Star },
 ];
 
@@ -76,19 +80,16 @@ export default function ConciergeLanding() {
       icon: Sparkles,
       title: "Tell Us Your Needs",
       description: "Complete a quick intake form about your situation, preferences, and insurance",
-      time: "5 min",
     },
     {
       icon: Users,
       title: "We Find Your Matches",
       description: "Our specialists identify programs that fit your specific requirements",
-      time: "24-48 hrs",
     },
     {
       icon: MessageCircle,
       title: "Get Connected",
       description: "Matched programs reach out directly to discuss next steps with you",
-      time: "Same day",
     },
   ];
 
@@ -132,72 +133,80 @@ export default function ConciergeLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section - Mobile Optimized */}
-          <section className="relative overflow-hidden">
-            {/* Background with subtle pattern */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-muted/30" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_50%)]" />
-            <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC40Ij48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzLTItMi00LTItNCAwLTQgMiAwIDIgMiA0IDIgNHMyLTIgNC0yIDQgMCA0LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')]" />
+          {/* Hero Section - Image Background */}
+          <section className="relative z-10 bg-primary">
+            <img 
+              src={conciergeHero}
+              alt=""
+              role="presentation"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              width={1920}
+              height={1080}
+              fetchPriority="high"
+              loading="eager"
+              decoding="sync"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
             
-            <div className="container relative mx-auto px-4 py-10 sm:py-12 md:py-16 lg:py-20">
+            <div className="container relative mx-auto px-4 py-16 md:py-20 lg:py-24">
               <div className="max-w-3xl mx-auto text-center">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Badge className="mb-4 sm:mb-5 px-3 py-1.5 text-xs sm:text-sm font-medium bg-primary/10 text-primary border-primary/20">
-                    <HeartHandshake className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                    Personalized Placement
-                  </Badge>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6">
+                    <HeartHandshake className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-medium text-white/90">Personalized Placement</span>
+                  </div>
                   
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4 tracking-tight leading-tight">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight leading-tight">
                     Find the Right Treatment
                   </h1>
                   
-                  <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed max-w-2xl mx-auto px-2">
+                  <p className="text-base md:text-lg text-white/85 mb-8 leading-relaxed max-w-2xl mx-auto px-2">
                     Our specialists match you with programs that fit your needs, insurance, and location. 
-                    Get matched in 24-48 hours for just <span className="text-foreground font-semibold">$29</span>.
+                    Get matched in 24-48 hours for just <span className="text-white font-semibold">$29</span>.
                   </p>
                   
-                  {/* Mobile-First CTA */}
-                  <div className="flex flex-col items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+                  {/* CTA */}
+                  <div className="flex flex-col items-center gap-3 sm:gap-4 mb-6">
                     <Button asChild size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base font-semibold shadow-lg shadow-primary/25 rounded-xl group">
                       <Link to="/concierge/intake">
                         Get Started
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>
-                    <p className="text-xs text-muted-foreground">One-time fee • No hidden costs</p>
+                    <p className="text-xs text-white/70">One-time fee • No hidden costs</p>
                   </div>
                   
-                  {/* Trust Badges - Mobile Optimized */}
-                  <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-x-6 gap-y-2 text-xs sm:text-sm text-muted-foreground">
+                  {/* Trust Badges */}
+                  <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-x-6 gap-y-2 text-xs sm:text-sm text-white/70">
                     <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
-                      className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-full"
+                      className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full"
                     >
-                      <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                      <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
                       <span>Confidential</span>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-full"
+                      className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full"
                     >
-                      <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                      <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
                       <span>24-48hr Match</span>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.5 }}
-                      className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-full"
+                      className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full"
                     >
-                      <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                      <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
                       <span>100+ Facilities</span>
                     </motion.div>
                   </div>
@@ -206,108 +215,90 @@ export default function ConciergeLanding() {
             </div>
           </section>
           
-          {/* Social Proof Stats Bar */}
-          <section className="py-8 relative overflow-hidden bg-primary/10 border-y border-primary/20">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.08),transparent_60%)]" />
-            <div className="container relative mx-auto px-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-                {STATS.map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <span className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</span>
-                      {stat.icon && <stat.icon className="h-5 w-5 text-yellow-500 fill-yellow-500" />}
+          {/* Stats Bar - Solid Primary Background */}
+          <section className="border-b border-border bg-primary text-primary-foreground py-6 sm:py-8">
+            <div className="container px-4 sm:px-5 md:px-6">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 text-center max-w-4xl mx-auto">
+                {STATS.map((stat) => (
+                  <div key={stat.label} className="px-1">
+                    <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1">
+                      <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent shrink-0" />
+                      <span className="text-xl sm:text-2xl md:text-3xl font-bold">{stat.value}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">{stat.label}</span>
+                    <p className="text-[10px] sm:text-xs md:text-sm text-primary-foreground/80">{stat.label}</p>
                   </div>
                 ))}
               </div>
             </div>
           </section>
           
-          {/* How It Works - Mobile Optimized */}
-          <section className="py-10 sm:py-16 md:py-24">
+          {/* How It Works */}
+          <section className="py-12 sm:py-16 md:py-24 bg-background">
             <div className="container mx-auto px-4">
-              <div className="text-center mb-8 sm:mb-12">
-                <Badge variant="outline" className="mb-3 sm:mb-4">
-                  <Zap className="h-3 w-3 mr-1" />
-                  Simple Process
-                </Badge>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
-                  How It Works
+              <div className="text-center mb-10 sm:mb-14">
+                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">How It Works</p>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
+                  Three Simple Steps to Find Treatment
                 </h2>
-                <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto px-2">
-                  Three simple steps to find treatment that fits
+                <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
+                  No complicated process. We guide you every step of the way.
                 </p>
               </div>
               
-              <div className="max-w-4xl mx-auto">
-                {/* Mobile: Vertical Stack with Connection Line */}
-                <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-6 md:gap-8">
-                  {steps.map((step, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="relative"
-                    >
-                      {/* Mobile Connection Line */}
-                      {index < steps.length - 1 && (
-                        <div className="sm:hidden absolute left-7 top-20 bottom-0 w-0.5 bg-gradient-to-b from-primary/40 to-transparent h-8" />
-                      )}
-                      
-                      <Card className="relative h-full bg-card border-0 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group">
-                        {/* Step number */}
-                        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs sm:text-sm font-bold text-primary">{index + 1}</span>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto">
+                {steps.map((step, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    className="relative"
+                  >
+                    {index < 2 && (
+                      <div className="hidden sm:block absolute top-8 left-[calc(50%+2.5rem)] w-[calc(100%-3rem)] border-t-2 border-dashed border-border" />
+                    )}
+                    <Card className="relative h-full bg-card border border-border rounded-xl text-center">
+                      <CardContent className="pt-6 pb-5 px-4 sm:pt-8 sm:pb-6 sm:px-6">
+                        <div className="flex items-center justify-center mb-4">
+                          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-base sm:text-lg font-bold">
+                            {index + 1}
+                          </div>
                         </div>
-                        
-                        <CardContent className="pt-6 pb-5 px-4 sm:pt-8 sm:pb-6 sm:px-6">
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 sm:mb-5 group-hover:scale-110 transition-transform">
-                            <step.icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-                          </div>
-                          
-                          <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1.5 sm:mb-2">{step.title}</h3>
-                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-3 sm:mb-4">{step.description}</p>
-                          
-                          <div className="flex items-center gap-2 text-xs text-primary font-medium">
-                            <Calendar className="h-3 w-3" />
-                            {step.time}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
-                
-                {/* CTA after steps */}
-                <div className="text-center mt-8 sm:mt-10">
-                  <Button asChild size="lg" className="w-full sm:w-auto h-12 px-6 sm:px-8 text-base shadow-lg shadow-primary/25 rounded-xl">
-                    <Link to="/concierge/intake">
-                      Start Your Intake
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-3">Takes only 5 minutes</p>
-                </div>
+                        <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted mx-auto mb-3 sm:mb-4">
+                          <step.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                        </div>
+                        <h3 className="font-semibold text-sm sm:text-base text-foreground mb-1 sm:mb-2">{step.title}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{step.description}</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+              
+              {/* CTA after steps */}
+              <div className="text-center mt-8 sm:mt-10">
+                <Button asChild size="lg" className="w-full sm:w-auto h-12 px-6 sm:px-8 text-base shadow-lg shadow-primary/25 rounded-xl">
+                  <Link to="/concierge/intake">
+                    Start Your Intake
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">Takes only 5 minutes</p>
               </div>
             </div>
           </section>
           
-          {/* Benefits Grid - Mobile Optimized */}
-          <section className="py-10 sm:py-16 md:py-24 bg-muted/30">
+          {/* Benefits Grid */}
+          <section className="py-12 sm:py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-4">
               <div className="max-w-5xl mx-auto">
-                <div className="text-center mb-8 sm:mb-12">
-                  <Badge variant="outline" className="mb-3 sm:mb-4">
-                    <Heart className="h-3 w-3 mr-1" />
-                    Why Choose Us
-                  </Badge>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
+                <div className="text-center mb-10 sm:mb-14">
+                  <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Why Choose Us</p>
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
                     More Than Just Matching
                   </h2>
-                  <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto px-2">
+                  <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
                     We're committed to helping you find the right path
                   </p>
                 </div>
@@ -343,18 +334,15 @@ export default function ConciergeLanding() {
             </div>
           </section>
           
-          {/* Testimonials - Mobile Optimized */}
-          <section className="py-10 sm:py-16 md:py-24">
+          {/* Testimonials */}
+          <section className="py-12 sm:py-16 md:py-24 bg-background">
             <div className="container mx-auto px-4">
-              <div className="text-center mb-8 sm:mb-12">
-                <Badge variant="outline" className="mb-3 sm:mb-4">
-                  <Star className="h-3 w-3 mr-1 fill-current" />
-                  Real Stories
-                </Badge>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
+              <div className="text-center mb-10 sm:mb-14">
+                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Success Stories</p>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4">
                   Families We've Helped
                 </h2>
-                <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto px-2">
+                <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
                   Join hundreds who found the right treatment
                 </p>
               </div>
@@ -404,43 +392,34 @@ export default function ConciergeLanding() {
             </div>
           </section>
           
-          {/* FAQ Section - Mobile Optimized */}
-          <section className="py-10 sm:py-16 md:py-24 bg-muted/30">
+          {/* FAQ Section - Radix Accordion */}
+          <section className="py-12 sm:py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-4">
-              <div className="max-w-3xl mx-auto">
-                <div className="text-center mb-8 sm:mb-12">
-                  <Badge variant="outline" className="mb-3 sm:mb-4">
-                    <MessageCircle className="h-3 w-3 mr-1" />
-                    FAQ
-                  </Badge>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
+              <div className="max-w-2xl mx-auto">
+                <div className="text-center mb-10 sm:mb-14">
+                  <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">FAQ</p>
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4">
                     Common Questions
                   </h2>
                 </div>
                 
-                <div className="space-y-3 sm:space-y-4">
-                  {FAQ_ITEMS.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                    >
-                      <Card className="border bg-card">
-                        <CardContent className="p-4 sm:p-6">
-                          <h3 className="font-semibold text-sm sm:text-base text-foreground mb-1.5 sm:mb-2">{item.question}</h3>
-                          <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">{item.answer}</p>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
+                <Accordion type="single" collapsible className="space-y-2 sm:space-y-3">
+                  {FAQ_ITEMS.map((item) => (
+                    <AccordionItem key={item.question} value={item.question} className="border border-border rounded-lg px-3 sm:px-5 bg-card">
+                      <AccordionTrigger className="text-left text-foreground text-sm sm:text-base font-medium hover:no-underline py-3 sm:py-4">
+                        {item.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-xs sm:text-sm text-muted-foreground pb-3 sm:pb-4">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               </div>
             </div>
           </section>
           
-          {/* Final CTA Section - Mobile Optimized */}
+          {/* Final CTA Section */}
           <section className="py-12 sm:py-20 md:py-28 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/90" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
