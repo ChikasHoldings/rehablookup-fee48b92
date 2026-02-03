@@ -234,20 +234,22 @@ const Index = () => {
   return (
     <Layout>
       <SEO
-        title="RehabLookup: Find 15,000+ Addiction Treatment Centers"
-        description="Search verified drug and alcohol rehab centers near you. Compare programs, check insurance coverage, and find recovery help. Free, confidential 24/7."
+        title="Find Drug & Alcohol Rehab Centers Near You | RehabLookup"
+        description="Search 15,000+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
         canonical="/"
         keywords={[
           "drug rehab near me",
           "alcohol treatment centers",
-          "addiction recovery programs",
+          "addiction treatment directory",
+          "rehab centers near me",
+          "substance abuse treatment",
+          "detox centers",
           "inpatient rehab",
           "outpatient treatment",
-          "detox centers",
-          "substance abuse treatment",
           "dual diagnosis treatment",
-          "rehab centers near me",
-          "addiction help"
+          "addiction help",
+          "find rehab",
+          "alcohol rehab",
         ]}
         structuredData={[
           {
@@ -324,7 +326,7 @@ const Index = () => {
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-[1.625rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find the Right Path to Recovery
+              Addiction Treatment & Rehab Center Directory
             </h1>
 
             {/* Subheadline */}

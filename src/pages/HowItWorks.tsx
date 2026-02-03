@@ -102,6 +102,38 @@ const HowItWorks = () => {
           { name: "Home", url: "/" },
           { name: "How It Works", url: "/how-it-works" },
         ]}
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            "name": "How to Find Addiction Treatment",
+            "description": "Three simple steps to find the right treatment center for drug or alcohol addiction recovery.",
+            "totalTime": "PT10M",
+            "step": [
+              {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Search Treatment Centers",
+                "text": "Enter your location and preferences to browse verified treatment facilities in your area. Filter by treatment type, insurance, amenities, and more.",
+                "url": "https://rehablookup.com/how-it-works#step-1"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Review & Compare",
+                "text": "Explore detailed facility profiles with information about programs, costs, insurance acceptance, and success rates to make an informed decision.",
+                "url": "https://rehablookup.com/how-it-works#step-2"
+              },
+              {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Connect Directly",
+                "text": "Contact treatment centers directly through our platform or speak with our specialists who can help guide you to the right program.",
+                "url": "https://rehablookup.com/how-it-works#step-3"
+              }
+            ]
+          }
+        ]}
       />
       {/* Hero - Compact navy header matching About page */}
       <section className="bg-primary py-10 px-4 md:py-14 md:px-6 relative overflow-hidden">
