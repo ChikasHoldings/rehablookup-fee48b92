@@ -140,5 +140,10 @@ Create `public/terms-of-service.html`:
 1. ✅ **DONE**: Remove Privacy/Terms from `<noscript>`, simplify to homepage-only
 2. ✅ **DONE**: Create static `privacy-policy.html` and `terms-of-service.html`
 3. ✅ **DONE**: Update `_redirects` to serve static legal pages
-4. **Day 2**: Consider static files for other high-priority SEO pages (`/for-providers`, `/about`)
+4. ✅ **DONE**: Create static files for all key SEO pages:
+   - `/for-providers` → `for-providers.html`
+   - `/about` → `about.html`
+   - `/contact` → `contact.html`
+   - `/how-it-works` → `how-it-works.html`
+   - `/resources` → `resources.html`
 
