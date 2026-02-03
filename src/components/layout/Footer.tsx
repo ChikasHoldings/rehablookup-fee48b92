@@ -278,12 +278,12 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
         </div>
       </div>
 
-      {/* Desktop: Original Grid Layout */}
+      {/* Desktop/Tablet: Grid Layout */}
       <div className="hidden md:block">
-        <div className="container py-10 md:py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
+        <div className="container py-10 md:py-12 px-4 md:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-5 lg:gap-8">
             {/* Brand */}
-            <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col gap-5">
+            <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col gap-4 md:gap-5">
               <Link to="/" className="inline-block">
                 <img 
                   src="/logo.png" 
@@ -443,7 +443,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
 
         {/* Bottom Bar */}
         <div className="border-t border-border">
-          <div className="container py-6">
+          <div className="container py-6 px-4 md:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <p className="text-sm text-muted-foreground">
                 © {new Date().getFullYear()} RehabLookup. All rights reserved.

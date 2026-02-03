@@ -145,7 +145,7 @@ export default function InternationalLanding() {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
 
-            <div className="container relative py-10 md:py-12 lg:py-14">
+            <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -205,7 +205,7 @@ export default function InternationalLanding() {
 
           {/* Why US Treatment */}
           <section className="py-12 sm:py-16 md:py-24 bg-background">
-            <div className="container mx-auto px-5 md:px-4">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8">
               <div className="text-center mb-10 sm:mb-14">
                 <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Why U.S. Treatment</p>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
@@ -239,7 +239,7 @@ export default function InternationalLanding() {
 
           {/* Image + Text Section */}
           <section className="py-12 md:py-24 bg-muted/30">
-            <div className="container mx-auto px-5 md:px-4">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8">
               <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center max-w-6xl mx-auto">
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
@@ -296,7 +296,7 @@ export default function InternationalLanding() {
 
           {/* US Rehab Destinations - Cross-linking */}
           <section className="py-12 md:py-20 border-t bg-background">
-            <div className="container mx-auto px-5 md:px-4">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8">
               <div className="text-center mb-8 md:mb-10">
                 <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Explore Options</p>
                 <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 md:mb-3">
@@ -348,7 +348,7 @@ export default function InternationalLanding() {
 
           {/* How It Works */}
           <section className="py-12 sm:py-16 md:py-24 bg-muted/30">
-            <div className="container mx-auto px-5 md:px-4">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8">
               <div className="text-center mb-10 sm:mb-14">
                 <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">How It Works</p>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">

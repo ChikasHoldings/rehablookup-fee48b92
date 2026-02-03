@@ -322,7 +322,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
 
         {/* Content */}
-        <div className="container relative py-10 md:py-12 lg:py-14">
+        <div className="container relative py-10 md:py-12 lg:py-14 px-4 md:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-[1.625rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
@@ -361,8 +361,8 @@ const Index = () => {
 
       {/* Trust Bar */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
-        <div className="container py-3 md:py-5">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-10 lg:gap-x-14">
+        <div className="container py-3 md:py-4 px-4 md:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
             <div className="flex items-center gap-2 group">
               <CheckCircle className="h-4 w-4 text-accent shrink-0" />
               <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">Verified Facilities</span>
@@ -385,9 +385,9 @@ const Index = () => {
 
       {/* Insurance Coverage Section */}
       <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-background to-muted/30">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8 lg:gap-12">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-6 lg:gap-12">
               {/* Left Content */}
               <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
                 <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
@@ -471,7 +471,7 @@ const Index = () => {
       {/* Featured Centers - Horizontal Carousel - Only show when centers available */}
       {!isLoadingFeatured && featuredCenters.length > 0 && (
         <section className="py-8 md:py-10 lg:py-14 overflow-hidden">
-          <div className="container">
+          <div className="container px-4 md:px-6 lg:px-8">
             {/* Section Header - Sleek inline design */}
             <div className="mb-4 md:mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -540,7 +540,7 @@ const Index = () => {
 
       {/* Treatment Options */}
       <section className="py-10 md:py-12 lg:py-20 bg-muted/40 border-y border-border/50">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className="mb-6 md:mb-8 lg:mb-10 text-center">
             <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
@@ -592,7 +592,7 @@ const Index = () => {
 
       {/* Find Treatment Near You - SEO Section */}
       <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           <div className="mb-6 md:mb-8 lg:mb-10 text-center">
             <div className="mb-1.5 md:mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
               <Navigation className="h-3.5 w-3.5 text-primary" />
@@ -720,7 +720,7 @@ const Index = () => {
 
       {/* How It Works */}
       <section className="py-10 md:py-12 lg:py-20">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             {/* Section Header */}
             <div className="mb-6 md:mb-8 text-center">
@@ -792,7 +792,7 @@ const Index = () => {
 
       {/* Why Choose Us */}
       <section className="py-10 md:py-12 lg:py-20 bg-primary">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           <div className="grid items-center gap-6 md:gap-8 md:grid-cols-2 lg:gap-12">
             {/* Content */}
             <div className="order-2 md:order-1">
@@ -865,7 +865,7 @@ const Index = () => {
 
       {/* Testimonials */}
       <section className="py-10 md:py-12 lg:py-20 bg-muted/30 border-y border-border/50">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className="mb-6 md:mb-8 text-center">
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
@@ -925,7 +925,7 @@ const Index = () => {
         {/* Decorative background pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
         
-        <div className="container relative">
+        <div className="container relative px-4 md:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
             {/* Left side - Content */}
             <div className="text-center md:text-left">
@@ -978,7 +978,7 @@ const Index = () => {
 
       {/* Resources / Blog Section */}
       <section className="py-10 md:py-12 lg:py-20">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:gap-4">
             <div>
@@ -1042,7 +1042,7 @@ const Index = () => {
 
       {/* SEO Internal Links Section */}
       <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
-        <div className="container space-y-8 md:space-y-10">
+        <div className="container px-4 md:px-6 lg:px-8 space-y-8 md:space-y-10">
           {/* Quick Links to Key Pages */}
           <div>
             <h3 className="text-xl md:text-lg font-semibold text-foreground mb-4">
@@ -1095,7 +1095,7 @@ const Index = () => {
 
       {/* CTA Section */}
       <section className="py-10 md:py-14 lg:py-20">
-        <div className="container">
+        <div className="container px-4 md:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             {/* Main CTA Card */}
             <div className="rounded-xl border border-border bg-card p-6 md:p-8 lg:p-10 text-center">
