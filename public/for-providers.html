@@ -194,7 +194,7 @@
     }
   </style>
   
-  <!-- Structured Data -->
+  <!-- Structured Data: Service -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -210,6 +210,48 @@
       "@type": "Country",
       "name": "United States"
     }
+  }
+  </script>
+  
+  <!-- Structured Data: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is it really free to list my facility?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, basic listings are completely free. We offer optional premium features for providers who want enhanced visibility."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How long does verification take?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most facilities are verified within 24-48 hours of submitting their information and documentation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What information do I need to get started?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You'll need your facility's licensing information, photos, and details about your programs and services."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do inquiries work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "When a family submits an inquiry for your facility, you'll receive an instant notification with their contact information and needs."
+        }
+      }
+    ]
   }
   </script>
 </head>
