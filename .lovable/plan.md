@@ -1,269 +1,297 @@
 
-# SEO Enhancement Plan Based on Audit Report
 
-## Summary
+# Design Consistency Alignment Plan
 
-This plan addresses the specific opportunities identified in the SEO audit report, focusing on structured data gaps, content optimization, and E-E-A-T signals.
+## Overview
+
+This plan standardizes the visual language across three high-value landing pages (Concierge, International, For Providers) to create a cohesive platform identity while preserving each page's unique content and conversion goals.
+
+## Design System Baseline
+
+**Reference**: ForProviders.tsx and Homepage (Index.tsx) establish the baseline patterns:
+- Hero: Image background + dark gradient overlay + centered content
+- Stats bar: Solid `bg-primary` background with accent icons
+- Section headers: Uppercase primary label + bold h2 + muted description
+- Content containers: max-w-5xl for sections, max-w-2xl for FAQ
+- FAQ: Radix Accordion component
 
 ---
 
-## Part 1: Add Organization Schema to About Page
+## Part 1: Concierge Landing Page Alignment
 
-**File**: `public/about.html`
+**File**: `src/pages/concierge/ConciergeLanding.tsx`
 
-The About page is missing Organization schema which helps establish authority. Add structured data:
+### 1.1 Hero Section Redesign
 
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "RehabLookup",
-  "url": "https://rehablookup.com",
-  "logo": "https://rehablookup.com/logo.svg",
-  "foundingDate": "2024",
-  "description": "RehabLookup connects families with verified addiction treatment centers through transparency and compassion",
-  "knowsAbout": ["Addiction Treatment", "Drug Rehabilitation", "Alcohol Recovery"],
-  "sameAs": [
-    "https://facebook.com/rehablookup",
-    "https://twitter.com/rehablookup",
-    "https://linkedin.com/company/rehablookup"
-  ],
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer service",
-    "email": "help@rehablookup.com",
-    "availableLanguage": ["English", "Spanish"]
-  }
-}
+**Current**: Gradient-only background with pattern overlay
+**Target**: Image background with dark overlay (like ForProviders)
+
+```text
+Changes:
+- Add hero image (reuse existing asset or new concierge-specific image)
+- Apply consistent gradient overlay: from-black/70 via-black/60 to-black/75
+- Keep centered layout with trust badges below CTA
+- Remove subtle pattern background
 ```
 
+### 1.2 Stats Bar Standardization
+
+**Current**: `bg-primary/10` (subtle, light)
+**Target**: `bg-primary` (solid, like ForProviders)
+
+```text
+Changes:
+- Change background from bg-primary/10 to bg-primary
+- Update text colors from text-foreground to text-primary-foreground
+- Add icons to each stat for visual consistency
+- Adjust badge/pill styling for contrast
+```
+
+### 1.3 Section Headers Standardization
+
+**Current**: Badge components with icons
+**Target**: Uppercase label + h2 + p pattern
+
+```text
+Before (Concierge):
+<Badge variant="outline" className="mb-3 sm:mb-4">
+  <Zap className="h-3 w-3 mr-1" />
+  Simple Process
+</Badge>
+<h2>How It Works</h2>
+
+After (Standardized):
+<p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">
+  How It Works
+</p>
+<h2>Three Simple Steps to Find Treatment</h2>
+<p className="text-muted-foreground">...</p>
+```
+
+### 1.4 How It Works Steps Alignment
+
+**Current**: Cards with step number in top-right corner badge
+**Target**: Centered numbered circles in cards (like ForProviders)
+
+### 1.5 FAQ Component Switch
+
+**Current**: Custom useState-based expand/collapse
+**Target**: Radix Accordion component
+
 ---
 
-## Part 2: Enhance Category Pages with Above-Fold Content
+## Part 2: International Landing Page Alignment
 
-**Files**: `src/pages/near-me/AlcoholRehabNearMe.tsx`, `src/pages/near-me/DetoxNearMe.tsx`
+**File**: `src/pages/international/InternationalLanding.tsx`
 
-Add introductory content section with localized keywords immediately after the hero:
+### 2.1 Hero Section Adjustment
+
+**Current**: Full viewport height, left-aligned content, image visible on right
+**Target**: Keep image but center content, standardize overlay gradient
+
+```text
+Changes:
+- Change from left-aligned to centered layout
+- Apply consistent gradient: from-black/70 via-black/60 to-black/75
+- Reduce hero height from min-h-[calc(100svh-64px)] to standard py-16 md:py-24
+- Move trust stats to stats bar below hero
+```
+
+### 2.2 Trust Bar Standardization
+
+**Current**: `bg-foreground` (inverted/dark)
+**Target**: `bg-primary` with accent icons
+
+```text
+Changes:
+- Change from bg-foreground to bg-primary
+- Update text from text-background to text-primary-foreground
+- Add consistent icon treatment with accent color
+```
+
+### 2.3 Section Headers Addition
+
+**Current**: Just h2 + p (no visual indicator)
+**Target**: Add uppercase label pattern
+
+```text
+Before (International):
+<h2>Why Choose U.S. Treatment?</h2>
+<p>The United States has...</p>
+
+After (Standardized):
+<p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">
+  Why U.S. Treatment
+</p>
+<h2>World-Class Care, Complete Privacy</h2>
+<p>The United States has...</p>
+```
+
+### 2.4 Steps Section Alignment
+
+**Current**: "01", "02", "03" numbering with timeline
+**Target**: Numbered circles in cards pattern
+
+### 2.5 FAQ Accordion Conversion
+
+**Current**: Custom useState expand/collapse
+**Target**: Radix Accordion
+
+---
+
+## Part 3: Minor ForProviders Refinements
+
+**File**: `src/pages/ForProviders.tsx`
+
+This page is the baseline, but minor refinements for consistency:
+
+### 3.1 Add Subtle Motion
+
+Add Framer Motion to "How It Works" cards for consistent animation language:
 
 ```typescript
-// New component: Above-fold intro section
-<section className="py-8 bg-muted/20 border-b">
-  <div className="container max-w-3xl text-center">
-    <p className="text-muted-foreground leading-relaxed">
-      {stateData 
-        ? `Looking for alcohol rehab in ${stateData.name}? Browse ${facilities.length}+ verified treatment centers offering medical detox, inpatient rehabilitation, and outpatient programs. Many facilities accept insurance from Aetna, BCBS, and Cigna.`
-        : `Search our directory of alcohol treatment centers across the United States. Compare programs, check insurance coverage, and find the right recovery path.`
-      }
-    </p>
-  </div>
-</section>
-```
+import { motion } from "framer-motion";
 
-This adds descriptive text above the fold that Google weighs heavily.
-
----
-
-## Part 3: Add E-E-A-T Section to About Page
-
-**File**: `public/about.html`
-
-Add a "Medical Advisory" section to establish expertise and authority:
-
-```html
-<section style="background: #f8fafc; padding: 48px 20px;">
-  <div class="container">
-    <h2 style="text-align: center; margin-bottom: 24px;">Medical Advisory & Editorial Standards</h2>
-    <p style="text-align: center; color: #666; max-width: 700px; margin: 0 auto 32px;">
-      Our content is reviewed by addiction medicine specialists and licensed clinicians to ensure accuracy and clinical relevance.
-    </p>
-    
-    <div class="values-grid">
-      <div class="value-card">
-        <h3>Evidence-Based Information</h3>
-        <p>All treatment information is based on current clinical guidelines from SAMHSA and NIDA.</p>
-      </div>
-      <div class="value-card">
-        <h3>Licensed Verification</h3>
-        <p>Our team verifies facility licenses, accreditations (JCAHO, CARF), and quality credentials.</p>
-      </div>
-      <div class="value-card">
-        <h3>Regular Updates</h3>
-        <p>Content is reviewed and updated quarterly to reflect current treatment standards.</p>
-      </div>
-    </div>
-  </div>
-</section>
+// Wrap step cards
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true }}
+  transition={{ duration: 0.5, delay: index * 0.1 }}
+>
 ```
 
 ---
 
-## Part 4: Enhance Homepage H1 and Keywords
+## Implementation Summary
 
-**File**: `src/pages/Index.tsx`
-
-Current H1: "Find the Right Path to Recovery"
-Proposed H1: "Addiction Treatment & Rehab Center Directory"
-
-Update SEO component for stronger keyword targeting:
-
-```typescript
-<SEO
-  title="Find Drug & Alcohol Rehab Centers Near You | RehabLookup"
-  description="Search 15,000+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
-  keywords={[
-    "drug rehab near me",
-    "alcohol treatment centers",
-    "addiction treatment directory",
-    "rehab centers near me",
-    "substance abuse treatment",
-    "detox centers",
-    "inpatient rehab",
-    "outpatient treatment",
-    "dual diagnosis treatment",
-    "addiction help",
-    "find rehab",
-    "alcohol rehab",
-  ]}
-/>
-```
-
----
-
-## Part 5: Add HowTo Schema to How It Works Page
-
-**File**: `src/pages/HowItWorks.tsx`
-
-Add HowTo structured data for potential rich results:
-
-```typescript
-structuredData={[
-  generateFAQSchema(faqs),
-  {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "How to Find Addiction Treatment",
-    "description": "Three simple steps to find the right treatment center",
-    "step": [
-      {
-        "@type": "HowToStep",
-        "name": "Search Treatment Centers",
-        "text": "Enter your location to browse verified facilities in your area"
-      },
-      {
-        "@type": "HowToStep", 
-        "name": "Review & Compare",
-        "text": "Explore facility profiles with program details and insurance information"
-      },
-      {
-        "@type": "HowToStep",
-        "name": "Connect Directly",
-        "text": "Contact facilities or speak with specialists for placement assistance"
-      }
-    ]
-  }
-]}
-```
-
----
-
-## Files to Modify
+### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `public/about.html` | Add Organization schema + E-E-A-T section |
-| `src/pages/Index.tsx` | Optimize title, meta description, H1 |
-| `src/pages/near-me/AlcoholRehabNearMe.tsx` | Add above-fold intro content |
-| `src/pages/near-me/DetoxNearMe.tsx` | Add above-fold intro content |
-| `src/pages/HowItWorks.tsx` | Add HowTo schema |
+| `src/pages/concierge/ConciergeLanding.tsx` | Hero, stats bar, section headers, steps, FAQ |
+| `src/pages/international/InternationalLanding.tsx` | Hero, trust bar, section headers, steps, FAQ |
+| `src/pages/ForProviders.tsx` | Add motion animations (optional polish) |
+
+### Design Tokens Standardized
+
+| Element | Value |
+|---------|-------|
+| Hero gradient | `from-black/70 via-black/60 to-black/75` |
+| Stats bar background | `bg-primary` |
+| Stats bar text | `text-primary-foreground` |
+| Section label | `text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide` |
+| Content max-width | `max-w-5xl` |
+| FAQ max-width | `max-w-2xl` |
+| Step circles | `h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary text-primary-foreground` |
+
+---
+
+## Visual Comparison
+
+### Before
+```text
+┌─────────────────────────────────────────────────────┐
+│  ForProviders    │   Concierge    │  International  │
+├─────────────────────────────────────────────────────┤
+│  Image Hero      │  Gradient Hero │  Side Image     │
+│  Solid Stats     │  Light Stats   │  Dark Stats     │
+│  Uppercase Label │  Badge Label   │  No Label       │
+│  Circle Steps    │  Corner Badge  │  Timeline       │
+│  Accordion FAQ   │  Custom FAQ    │  Custom FAQ     │
+└─────────────────────────────────────────────────────┘
+```
+
+### After
+```text
+┌─────────────────────────────────────────────────────┐
+│  ForProviders    │   Concierge    │  International  │
+├─────────────────────────────────────────────────────┤
+│  Image Hero      │  Image Hero    │  Image Hero     │
+│  Solid Stats     │  Solid Stats   │  Solid Stats    │
+│  Uppercase Label │  Uppercase     │  Uppercase      │
+│  Circle Steps    │  Circle Steps  │  Circle Steps   │
+│  Accordion FAQ   │  Accordion FAQ │  Accordion FAQ  │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Technical Details
 
-### About Page Organization Schema (Full)
-
-```html
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "@id": "https://rehablookup.com/#organization",
-  "name": "RehabLookup",
-  "legalName": "RehabLookup, Inc.",
-  "url": "https://rehablookup.com",
-  "logo": {
-    "@type": "ImageObject",
-    "url": "https://rehablookup.com/logo.svg",
-    "width": 512,
-    "height": 512
-  },
-  "foundingDate": "2024",
-  "description": "RehabLookup connects individuals and families with verified addiction treatment centers across the United States through transparency and compassion.",
-  "slogan": "Find the Right Path to Recovery",
-  "knowsAbout": [
-    "Addiction Treatment",
-    "Drug Rehabilitation",
-    "Alcohol Recovery",
-    "Mental Health Services",
-    "Detox Programs",
-    "Dual Diagnosis Treatment"
-  ],
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer service",
-    "email": "help@rehablookup.com",
-    "availableLanguage": ["English", "Spanish"],
-    "areaServed": "US"
-  },
-  "sameAs": [
-    "https://facebook.com/rehablookup",
-    "https://twitter.com/rehablookup",
-    "https://linkedin.com/company/rehablookup",
-    "https://instagram.com/rehablookup"
-  ]
-}
-</script>
-```
-
-### Above-Fold Content Component
+### Concierge Hero Update
 
 ```typescript
-// Add after NearMeHero in category pages
-{stateData && (
-  <section className="py-6 bg-muted/30 border-b">
-    <div className="container">
-      <p className="text-center text-muted-foreground max-w-2xl mx-auto">
-        Searching for alcohol rehab in {stateData.name}? Our directory features {facilities.length}+ 
-        verified treatment centers offering detox, inpatient, and outpatient programs. 
-        Many facilities accept major insurance including Aetna, BCBS, Cigna, and United Healthcare.
-        {stateData.name === "California" && " California is home to some of the nation's leading addiction treatment programs."}
-        {stateData.name === "Florida" && " Florida offers year-round treatment options in supportive recovery environments."}
-        {stateData.name === "Texas" && " Texas provides comprehensive treatment options across major metropolitan areas."}
-      </p>
+// Before
+<section className="relative overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-muted/30" />
+  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,...)]" />
+
+// After
+<section className="relative z-10 bg-primary">
+  <img 
+    src={conciergeHeroImg}
+    alt=""
+    role="presentation"
+    className="absolute inset-0 w-full h-full object-cover object-center"
+    fetchPriority="high"
+  />
+  <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
+```
+
+### Stats Bar Pattern
+
+```typescript
+// Standardized stats bar
+<section className="border-b border-border bg-primary text-primary-foreground py-6 sm:py-8">
+  <div className="container px-4 sm:px-5 md:px-6">
+    <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 text-center max-w-4xl mx-auto">
+      {STATS.map((stat) => (
+        <div key={stat.label} className="px-1">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1">
+            <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent shrink-0" />
+            <span className="text-xl sm:text-2xl md:text-3xl font-bold">{stat.value}</span>
+          </div>
+          <p className="text-[10px] sm:text-xs md:text-sm text-primary-foreground/80">{stat.label}</p>
+        </div>
+      ))}
     </div>
-  </section>
-)}
+  </div>
+</section>
+```
+
+### Section Header Pattern
+
+```typescript
+// Standardized section header
+<div className="text-center mb-10 sm:mb-14">
+  <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">
+    {sectionLabel}
+  </p>
+  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
+    {sectionTitle}
+  </h2>
+  <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
+    {sectionDescription}
+  </p>
+</div>
 ```
 
 ---
 
-## Expected SEO Impact
+## Expected Outcome
 
-| Page | Current Grade | Expected Grade |
-|------|---------------|----------------|
-| Homepage | B+ | A- |
-| Category Pages | B | B+ |
-| About | B | A- |
-| How It Works | C+ | B+ |
-| For Providers | C- | B (already improved) |
+After implementation, all three pages will share:
+1. Consistent hero visual treatment (image + overlay)
+2. Unified stats/trust bar styling
+3. Standardized section header hierarchy
+4. Matching "How It Works" step presentation
+5. Consistent FAQ component behavior
+6. Cohesive animation language
 
----
+The pages will still maintain their unique:
+- Content and messaging
+- Pricing and CTAs
+- Target audience focus
+- Specific testimonials and stats
 
-## Validation Checklist
-
-After implementation:
-1. Test structured data with Google Rich Results Test
-2. Verify meta tags render correctly in page source
-3. Check that above-fold content appears in HTML (not just JS)
-4. Confirm Organization schema links to homepage
-5. Monitor Search Console for rich result eligibility
