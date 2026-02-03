@@ -16,7 +16,6 @@ import {
   MessageSquare,
   Headphones,
   Megaphone,
-  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
@@ -52,8 +51,7 @@ const navEntries: NavEntry[] = [
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
   { to: "/admin/seekers", icon: UserSearch, label: "Users", permission: "seekers" },
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
-  { to: "/admin/concierge", icon: UserPlus, label: "Concierge", permission: "placements" },
-  { to: "/admin/international", icon: Globe, label: "International", permission: "placements" },
+  { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
