@@ -58,6 +58,22 @@ serve(async (req) => {
     const clientCountry = intakeData?.country || session.metadata?.client_country || "";
     const preferredLanguage = intakeData?.preferredLanguage || "English";
 
+    // Verify email if provided
+    let emailVerified = false;
+    if (clientEmail) {
+      const { data: verificationRecord } = await supabase
+        .from("email_verification_codes")
+        .select("verified")
+        .eq("email", clientEmail.toLowerCase())
+        .eq("verified", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      emailVerified = verificationRecord?.verified === true;
+      logStep("Email verification status", { email: clientEmail, verified: emailVerified });
+    }
+
     // Get user from auth header if available
     let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
@@ -89,7 +105,8 @@ serve(async (req) => {
           preferred_language: preferredLanguage,
           intake_data: intakeData || {},
           intake_submitted_at: new Date().toISOString(),
-          status: "in_review",
+          status: emailVerified ? "in_review" : "pending_verification",
+          email_verified: emailVerified,
           user_id: userId || undefined,
         })
         .eq("id", existingCase.id);
@@ -136,8 +153,9 @@ serve(async (req) => {
         stripe_payment_intent_id: session.payment_intent as string,
         intake_data: intakeData || {},
         intake_submitted_at: new Date().toISOString(),
-        status: "in_review",
+        status: emailVerified ? "in_review" : "pending_verification",
         priority: "normal",
+        email_verified: emailVerified,
       })
       .select("id")
       .single();

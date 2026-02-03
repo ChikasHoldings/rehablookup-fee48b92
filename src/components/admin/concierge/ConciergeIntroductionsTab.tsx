@@ -200,6 +200,10 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Get introduction details for audit logging
+      const intro = introductions?.find((i) => i.id === introId);
+      const facility = intro?.facility as { id: string; name: string } | undefined;
+
       const { error } = await supabase
         .from("concierge_introductions")
         .update({
@@ -210,13 +214,30 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
       if (error) throw error;
 
-      // Log the disclosure event
+      // Log the disclosure event to case events
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id,
         event_type: "pii_disclosed",
         event_data: { introduction_id: introId },
         actor_id: user.id,
         actor_type: "admin",
+      });
+
+      // Log to PII disclosure audit table for compliance tracking
+      await supabase.from("pii_disclosure_log").insert({
+        disclosure_type: "concierge_introduction",
+        reference_id: introId,
+        admin_user_id: user.id,
+        client_name: caseData.user_name,
+        client_email: caseData.user_email,
+        client_phone: caseData.user_phone,
+        facility_id: facility?.id,
+        facility_name: facility?.name,
+        reason: `Admin disclosed PII for concierge case ${caseData.id}`,
+        metadata: {
+          inquiry_id: caseData.id,
+          primary_concern: caseData.primary_concern,
+        },
       });
     },
     onSuccess: () => {

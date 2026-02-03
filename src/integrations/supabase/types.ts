@@ -2244,6 +2244,7 @@ export type Database = {
           client_phone: string | null
           closed_at: string | null
           created_at: string
+          email_verified: boolean | null
           facility_fee_cents: number
           facility_fee_status: string | null
           facility_invoice_id: string | null
@@ -2278,6 +2279,7 @@ export type Database = {
           client_phone?: string | null
           closed_at?: string | null
           created_at?: string
+          email_verified?: boolean | null
           facility_fee_cents?: number
           facility_fee_status?: string | null
           facility_invoice_id?: string | null
@@ -2312,6 +2314,7 @@ export type Database = {
           client_phone?: string | null
           closed_at?: string | null
           created_at?: string
+          email_verified?: boolean | null
           facility_fee_cents?: number
           facility_fee_status?: string | null
           facility_invoice_id?: string | null
@@ -3116,6 +3119,51 @@ export type Database = {
           id?: string
           phone?: string
           verified?: boolean | null
+        }
+        Relationships: []
+      }
+      pii_disclosure_log: {
+        Row: {
+          admin_user_id: string
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          disclosed_at: string
+          disclosure_type: string
+          facility_id: string | null
+          facility_name: string | null
+          id: string
+          metadata: Json | null
+          reason: string | null
+          reference_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          disclosed_at?: string
+          disclosure_type: string
+          facility_id?: string | null
+          facility_name?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          reference_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          disclosed_at?: string
+          disclosure_type?: string
+          facility_id?: string | null
+          facility_name?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          reference_id?: string
         }
         Relationships: []
       }
