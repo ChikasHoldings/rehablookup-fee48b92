@@ -35,11 +35,21 @@ export interface HeaderProps {
   variant?: "default" | "provider";
 }
 
-const defaultNavLinks: NavLink[] = [
+// Primary nav items shown on tablet+
+const primaryNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
-  { href: "/insurance", label: "Insurance" },
   { href: "/concierge", label: "Concierge" },
+];
+
+// Secondary nav items shown in "More" dropdown on tablet, inline on desktop
+const secondaryNavLinks: NavLink[] = [
+  { href: "/insurance", label: "Insurance" },
   { href: "/international", label: "US Treatment" },
+];
+
+const defaultNavLinks: NavLink[] = [
+  ...primaryNavLinks,
+  ...secondaryNavLinks,
   { href: "/for-providers", label: "For Providers" },
 ];
 
@@ -64,6 +74,7 @@ export function Header({
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileProviderExpanded, setMobileProviderExpanded] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,54 +113,17 @@ export function Header({
 
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-0.5 lg:gap-1 md:flex">
-            {navLinks.map((link) => {
+            {/* Primary nav items - always visible on md+ */}
+            {primaryNavLinks.map((link) => {
               const isActive = location.pathname === link.href || 
                 (link.href !== "/" && location.pathname.startsWith(link.href));
-              const isForProviders = link.href === "/for-providers";
-              
-              // For Providers dropdown
-              if (isForProviders) {
-                return (
-                  <DropdownMenu key={link.href} open={providerDropdownOpen} onOpenChange={setProviderDropdownOpen}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className={cn(
-                          "flex items-center gap-1 px-2 lg:px-3.5 py-2 text-sm lg:text-[15px] font-medium transition-colors whitespace-nowrap",
-                          isActive || location.pathname.startsWith("/provider")
-                            ? "text-foreground"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        {link.label}
-                        <ChevronDown className={cn(
-                          "h-3.5 w-3.5 transition-transform duration-200",
-                          providerDropdownOpen && "rotate-180"
-                        )} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-48">
-                      {providerDropdownLinks.map((dropdownLink) => (
-                        <DropdownMenuItem key={dropdownLink.href} asChild>
-                          <PrefetchLink
-                            to={dropdownLink.href}
-                            className="w-full cursor-pointer"
-                            onClick={() => setProviderDropdownOpen(false)}
-                          >
-                            {dropdownLink.label}
-                          </PrefetchLink>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                );
-              }
               
               return (
                 <PrefetchLink
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "px-2 lg:px-3.5 py-2 text-sm lg:text-[15px] font-medium transition-colors whitespace-nowrap",
+                    "px-2.5 lg:px-3.5 py-2 text-sm lg:text-[15px] font-medium transition-colors whitespace-nowrap",
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -159,6 +133,100 @@ export function Header({
                 </PrefetchLink>
               );
             })}
+
+            {/* Secondary nav items - hidden on tablet, visible on lg+ */}
+            {secondaryNavLinks.map((link) => {
+              const isActive = location.pathname === link.href || 
+                (link.href !== "/" && location.pathname.startsWith(link.href));
+              
+              return (
+                <PrefetchLink
+                  key={link.href}
+                  to={link.href}
+                  className={cn(
+                    "hidden lg:block px-3.5 py-2 text-[15px] font-medium transition-colors whitespace-nowrap",
+                    isActive
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {link.label}
+                </PrefetchLink>
+              );
+            })}
+
+            {/* For Providers dropdown - hidden on tablet, visible on lg+ */}
+            <DropdownMenu open={providerDropdownOpen} onOpenChange={setProviderDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "hidden lg:flex items-center gap-1 px-3.5 py-2 text-[15px] font-medium transition-colors whitespace-nowrap",
+                    location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider")
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  For Providers
+                  <ChevronDown className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    providerDropdownOpen && "rotate-180"
+                  )} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background border border-border shadow-lg z-50">
+                {providerDropdownLinks.map((dropdownLink) => (
+                  <DropdownMenuItem key={dropdownLink.href} asChild>
+                    <PrefetchLink
+                      to={dropdownLink.href}
+                      className="w-full cursor-pointer"
+                      onClick={() => setProviderDropdownOpen(false)}
+                    >
+                      {dropdownLink.label}
+                    </PrefetchLink>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* "More" dropdown - visible on tablet only */}
+            <DropdownMenu open={moreDropdownOpen} onOpenChange={setMoreDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "flex lg:hidden items-center gap-1 px-2.5 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                    "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  More
+                  <ChevronDown className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    moreDropdownOpen && "rotate-180"
+                  )} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-background border border-border shadow-lg z-50">
+                {secondaryNavLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <PrefetchLink
+                      to={link.href}
+                      className="w-full cursor-pointer"
+                      onClick={() => setMoreDropdownOpen(false)}
+                    >
+                      {link.label}
+                    </PrefetchLink>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem asChild>
+                  <PrefetchLink
+                    to="/for-providers"
+                    className="w-full cursor-pointer"
+                    onClick={() => setMoreDropdownOpen(false)}
+                  >
+                    For Providers
+                  </PrefetchLink>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* CTA & Mobile Actions */}
@@ -189,13 +257,12 @@ export function Header({
             </button>
 
             {/* Desktop CTAs */}
-            <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-2 flex-shrink-0">
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
-                  <Button size="sm" variant="ghost" className="h-8 text-xs lg:text-sm gap-1.5 relative px-2 lg:px-3">
+                  <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
                     <User className="h-4 w-4" />
-                    <span className="hidden lg:inline">My Account</span>
-                    <span className="lg:hidden">Account</span>
+                    Account
                     {favoritesCount > 0 && (
                       <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
@@ -205,17 +272,15 @@ export function Header({
                 </PrefetchLink>
               ) : (
                 <>
-                  <PrefetchLink to="/provider-signup">
-                    <Button size="sm" variant="outline" className="h-8 text-xs lg:text-sm px-2 lg:px-3">
-                      <span className="hidden lg:inline">List Facility</span>
-                      <span className="lg:hidden">List</span>
+                  <PrefetchLink to="/provider-signup" className="hidden lg:block">
+                    <Button size="sm" variant="outline" className="h-8 text-sm">
+                      List Facility
                     </Button>
                   </PrefetchLink>
                   <PrefetchLink to="/login">
-                    <Button size="sm" className="h-8 text-xs lg:text-sm gap-1.5 px-2 lg:px-3">
+                    <Button size="sm" className="h-8 text-sm gap-1.5">
                       <User className="h-4 w-4" />
-                      <span className="hidden lg:inline">Sign In</span>
-                      <span className="lg:hidden">Login</span>
+                      Sign In
                     </Button>
                   </PrefetchLink>
                 </>
