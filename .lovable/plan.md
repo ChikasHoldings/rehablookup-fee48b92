@@ -1,141 +1,154 @@
 
-# SEO Enhancement: Insurance Page Static HTML + Schema Expansion
+# SEO Launch Readiness: Sitemap Update and Final Optimization
 
-## Current Situation
+## Executive Summary
 
-The crawl report shows excellent progress but identifies two remaining gaps:
-- **Insurance subcategories** may still be showing shallow crawl text
-- **Schema/structured data** could be expanded for better rich results
-
-## Solution: Phase 2 SEO Expansion
-
-### Part 1: Static HTML for Top Insurance Pages
-
-Create standalone static HTML files for the 5 most-searched insurance categories to ensure crawlers see dedicated, keyword-rich content:
-
-| Insurance Page | Target File |
-|---------------|-------------|
-| `/insurance/aetna-rehab` | `public/insurance/aetna-rehab.html` |
-| `/insurance/bcbs-treatment` | `public/insurance/bcbs-treatment.html` |
-| `/insurance/cigna-rehab` | `public/insurance/cigna-rehab.html` |
-| `/insurance/united-healthcare-rehab` | `public/insurance/united-healthcare-rehab.html` |
-| `/insurance/medicare-rehab` | `public/insurance/medicare-rehab.html` |
-
-Each file will include:
-- Unique title and meta description
-- Canonical URL
-- Coverage details (detox, inpatient, outpatient, MAT)
-- FAQs with answers
-- FAQPage schema markup
-- Contact/CTA sections
-
-### Part 2: Add FAQPage Schema to Existing Static Pages
-
-Update these existing static HTML files with FAQPage structured data:
-- `public/for-providers.html` (already has Service schema, add FAQPage)
-- `public/how-it-works.html` (if FAQs exist)
-
-### Part 3: Update Redirects
-
-Add routing rules to serve insurance static files:
-
-```text
-/insurance/aetna-rehab /insurance/aetna-rehab.html 200
-/insurance/bcbs-treatment /insurance/bcbs-treatment.html 200
-/insurance/cigna-rehab /insurance/cigna-rehab.html 200
-/insurance/united-healthcare-rehab /insurance/united-healthcare-rehab.html 200
-/insurance/medicare-rehab /insurance/medicare-rehab.html 200
-```
+This plan updates the sitemap with current dates, removes blocked pages, adds missing routes, and ensures the platform is fully optimized for search engine launch.
 
 ---
 
-## Files to Create/Modify
+## Part 1: Sitemap Date Normalization
+
+Update all `lastmod` dates to **2026-02-03** (today's date) across:
 
 | File | Action |
 |------|--------|
-| `public/insurance/aetna-rehab.html` | **CREATE** - Full insurance guide with FAQPage schema |
-| `public/insurance/bcbs-treatment.html` | **CREATE** - Full insurance guide with FAQPage schema |
-| `public/insurance/cigna-rehab.html` | **CREATE** - Full insurance guide with FAQPage schema |
-| `public/insurance/united-healthcare-rehab.html` | **CREATE** - Full insurance guide with FAQPage schema |
-| `public/insurance/medicare-rehab.html` | **CREATE** - Full insurance guide with FAQPage schema |
-| `public/for-providers.html` | **MODIFY** - Add FAQPage schema |
-| `public/_redirects` | **MODIFY** - Add insurance page routes |
+| `public/sitemap.xml` | Update ~200 lastmod entries |
+| `public/sitemap-index.xml` | Update both sitemap references |
+
+This signals fresh content to search engines and ensures consistency.
 
 ---
 
-## Static HTML Content Structure
+## Part 2: Remove Blocked Pages from Sitemap
 
-Each insurance page will follow this structure:
+These pages are blocked in robots.txt but currently appear in sitemap.xml (lines 1265-1293):
 
+| Remove | Reason |
+|--------|--------|
+| `/auth` | Auth page - blocked in robots.txt |
+| `/signup` | Auth page - blocked in robots.txt |
+| `/provider-login` | Auth page - blocked in robots.txt |
+| `/lp/treatment` | Ad landing page - blocked in robots.txt |
+| `/lp/social` | Ad landing page - blocked in robots.txt |
+
+Keeping blocked pages in sitemap sends mixed signals to crawlers.
+
+---
+
+## Part 3: Add Missing Pages to Sitemap
+
+**International Placement Pages** (high-value conversion funnels):
 ```text
-<head>
-  - Title: "[Insurance] Coverage for Rehab | RehabLookup"
-  - Meta description: Insurance-specific benefits info
-  - Canonical URL
-  - FAQPage schema
-  - Organization schema
-</head>
+/international              (priority: 0.85)
+/international/apply        (priority: 0.80)
+```
 
-<body>
-  - Header with navigation
-  - Hero: "Does [Insurance] Cover Rehab?"
-  - Coverage Details section (Detox, Inpatient, Outpatient, MAT)
-  - How to Verify Benefits (step-by-step)
-  - FAQ section (5-6 common questions)
-  - CTA: "Find [Insurance]-Accepting Facilities"
-  - Footer
-</body>
+**Static HTML Insurance Pages** (already created, need sitemap entries):
+- All 5 insurance static pages are already in sitemap - verified
+
+---
+
+## Part 4: Sitemap Index Update
+
+Update `public/sitemap-index.xml`:
+- Change lastmod to 2026-02-03 for both referenced sitemaps
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `public/sitemap.xml` | Update ~200 dates, remove 5 blocked pages, add 2 international pages |
+| `public/sitemap-index.xml` | Update 2 dates |
+
+---
+
+## Technical Implementation
+
+### sitemap.xml Updates
+
+1. **Global Date Update**: Replace all `2025-12-21`, `2025-12-22`, `2026-01-31`, `2026-02-01`, `2026-02-02` with `2026-02-03`
+
+2. **Remove Auth/Ad Pages** (around lines 1265-1293):
+```xml
+<!-- DELETE these entries -->
+<url><loc>https://rehablookup.com/auth</loc>...</url>
+<url><loc>https://rehablookup.com/signup</loc>...</url>
+<url><loc>https://rehablookup.com/provider-login</loc>...</url>
+<url><loc>https://rehablookup.com/lp/treatment</loc>...</url>
+<url><loc>https://rehablookup.com/lp/social</loc>...</url>
+```
+
+3. **Add International Pages** (after Provider Pages section):
+```xml
+<!-- International Placement Pages -->
+<url>
+  <loc>https://rehablookup.com/international</loc>
+  <lastmod>2026-02-03</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.85</priority>
+</url>
+
+<url>
+  <loc>https://rehablookup.com/international/apply</loc>
+  <lastmod>2026-02-03</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.80</priority>
+</url>
+```
+
+### sitemap-index.xml Updates
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://rehablookup.com/sitemap.xml</loc>
+    <lastmod>2026-02-03</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities</loc>
+    <lastmod>2026-02-03</lastmod>
+  </sitemap>
+</sitemapindex>
 ```
 
 ---
 
-## Schema Examples
+## SEO Launch Checklist
 
-**FAQPage Schema** (for insurance pages):
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "Does Aetna cover rehab treatment?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes, Aetna provides comprehensive coverage..."
-      }
-    }
-  ]
-}
-```
+After implementation, the platform will have:
+
+| Component | Status |
+|-----------|--------|
+| Homepage with Organization + WebSite schema | Ready |
+| Dynamic facility sitemap (edge function) | Ready |
+| Static sitemap with all public pages | Ready |
+| FAQPage schema on insurance + provider pages | Ready |
+| LocalBusiness schema on facility profiles | Ready |
+| Robots.txt with crawler directives | Ready |
+| Google Search Console verification | Ready |
+| IndexNow integration | Ready |
+| Prerendering for crawlers | Ready |
+| Canonical URL normalization | Ready |
+| noindex on auth/loading states | Ready |
 
 ---
 
-## Expected SEO Improvements
+## Expected Impact
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Insurance page crawl depth | Shallow/navigation-only | Full coverage guides |
-| FAQPage rich results eligibility | Limited | All insurance + provider pages |
-| Insurance keyword targeting | Generic | Specific ("Aetna rehab coverage") |
-| Schema coverage | Homepage + facility pages | + Insurance + Provider pages |
+- **Crawl efficiency**: Removing blocked pages reduces wasted crawl budget
+- **Freshness signals**: Updated dates indicate active maintenance
+- **Coverage**: International pages now discoverable
+- **Consistency**: No conflicts between sitemap and robots.txt
 
 ---
 
-## Technical Notes
+## Post-Implementation Steps
 
-- Static files bypass SPA shell entirely
-- `_redirects` exact matches take priority over wildcard
-- FAQPage schema enables Google's FAQ rich snippets
-- Content mirrors existing React component content for consistency
-- No changes to React components needed (they continue serving JS users)
-
----
-
-## Implementation Order
-
-1. Create `public/insurance/` directory
-2. Create 5 insurance static HTML files with FAQPage schema
-3. Update `public/for-providers.html` with FAQPage schema
-4. Update `public/_redirects` with insurance routes
-5. Test crawlability with fresh ChatGPT crawl
+1. Submit updated sitemap to Google Search Console
+2. Trigger IndexNow notification for updated pages
+3. Monitor Search Console for crawl stats over 7 days
+4. Verify international pages appear in coverage report
