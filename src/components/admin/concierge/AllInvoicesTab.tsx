@@ -80,7 +80,7 @@ export function AllInvoicesTab() {
   const [overrideReason, setOverrideReason] = useState("");
 
   // Fetch all invoices with optimized caching
-  const { data: invoices, isLoading } = useQuery({
+  const { data: invoices, isLoading, isFetching } = useQuery({
     queryKey: ["admin-all-invoices", statusFilter],
     queryFn: async () => {
       let query = supabase
@@ -96,11 +96,11 @@ export function AllInvoicesTab() {
           discount_percent,
           facility_id,
           inquiry_id,
-          facilities(id, name, email),
-          concierge_inquiries(id, user_name, user_email)
+          facilities!inner(id, name),
+          concierge_inquiries!inner(id, user_name, user_email)
         `)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(50);
 
       if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
@@ -110,8 +110,9 @@ export function AllInvoicesTab() {
       if (error) throw error;
       return data || [];
     },
-    staleTime: 30 * 1000, // Data stays fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 60 * 1000, // Data stays fresh for 60 seconds
+    gcTime: 10 * 60 * 1000, // Cache for 10 minutes
+    placeholderData: (previousData) => previousData, // Show stale data while fetching
   });
 
   // Admin manage invoice mutation
@@ -245,7 +246,10 @@ export function AllInvoicesTab() {
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>
-        <span className="text-sm text-muted-foreground ml-auto">
+        <span className="text-sm text-muted-foreground ml-auto flex items-center gap-2">
+          {isFetching && !isLoading && (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          )}
           {filteredInvoices?.length || 0} invoices
         </span>
       </div>
