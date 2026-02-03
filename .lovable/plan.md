@@ -1,154 +1,157 @@
 
-# SEO Launch Readiness: Sitemap Update and Final Optimization
+# SEO Crawler Visibility Enhancement Plan
 
-## Executive Summary
+## Overview
+This plan addresses gaps in crawler accessibility for high-value placement pages and adds redundancy to ensure search engines can index critical conversion routes.
 
-This plan updates the sitemap with current dates, removes blocked pages, adds missing routes, and ensures the platform is fully optimized for search engine launch.
+## Part 1: Add International Routes to Prerendering (Critical)
 
----
+**File**: `supabase/functions/prerender-for-bots/index.ts`
 
-## Part 1: Sitemap Date Normalization
+Update `SEO_EXACT_ROUTES` to include international placement pages:
 
-Update all `lastmod` dates to **2026-02-03** (today's date) across:
-
-| File | Action |
-|------|--------|
-| `public/sitemap.xml` | Update ~200 lastmod entries |
-| `public/sitemap-index.xml` | Update both sitemap references |
-
-This signals fresh content to search engines and ensures consistency.
-
----
-
-## Part 2: Remove Blocked Pages from Sitemap
-
-These pages are blocked in robots.txt but currently appear in sitemap.xml (lines 1265-1293):
-
-| Remove | Reason |
-|--------|--------|
-| `/auth` | Auth page - blocked in robots.txt |
-| `/signup` | Auth page - blocked in robots.txt |
-| `/provider-login` | Auth page - blocked in robots.txt |
-| `/lp/treatment` | Ad landing page - blocked in robots.txt |
-| `/lp/social` | Ad landing page - blocked in robots.txt |
-
-Keeping blocked pages in sitemap sends mixed signals to crawlers.
-
----
-
-## Part 3: Add Missing Pages to Sitemap
-
-**International Placement Pages** (high-value conversion funnels):
-```text
-/international              (priority: 0.85)
-/international/apply        (priority: 0.80)
+```typescript
+const SEO_EXACT_ROUTES = [
+  '/',
+  '/for-providers',
+  '/concierge',
+  '/international',        // ADD
+  '/international/apply',  // ADD
+  '/about',
+  '/contact',
+  // ... rest unchanged
+];
 ```
 
-**Static HTML Insurance Pages** (already created, need sitemap entries):
-- All 5 insurance static pages are already in sitemap - verified
+This ensures crawlers hitting `/international` trigger the prerendering pipeline.
 
 ---
 
-## Part 4: Sitemap Index Update
+## Part 2: Create Static HTML for Critical Conversion Pages
 
-Update `public/sitemap-index.xml`:
-- Change lastmod to 2026-02-03 for both referenced sitemaps
+### File 1: `public/concierge.html`
+- Title: "Find Treatment That Fits | Concierge Placement Service"
+- Content: Service description, 3-step process, FAQs, testimonials
+- Schema: FAQPage + Service JSON-LD
+- CTA: Link to intake form
+
+### File 2: `public/international.html`
+- Title: "U.S. Treatment Placement for International Clients | RehabLookup"
+- Content: Service benefits, trust stats, destination links, FAQs
+- Schema: FAQPage + Service JSON-LD
+- CTA: Link to application form
 
 ---
 
-## Files to Modify
+## Part 3: Update Routing to Serve Static Files
 
-| File | Changes |
-|------|---------|
-| `public/sitemap.xml` | Update ~200 dates, remove 5 blocked pages, add 2 international pages |
-| `public/sitemap-index.xml` | Update 2 dates |
+**File**: `public/_redirects`
 
----
+Add routes for static placement pages:
 
-## Technical Implementation
-
-### sitemap.xml Updates
-
-1. **Global Date Update**: Replace all `2025-12-21`, `2025-12-22`, `2026-01-31`, `2026-02-01`, `2026-02-02` with `2026-02-03`
-
-2. **Remove Auth/Ad Pages** (around lines 1265-1293):
-```xml
-<!-- DELETE these entries -->
-<url><loc>https://rehablookup.com/auth</loc>...</url>
-<url><loc>https://rehablookup.com/signup</loc>...</url>
-<url><loc>https://rehablookup.com/provider-login</loc>...</url>
-<url><loc>https://rehablookup.com/lp/treatment</loc>...</url>
-<url><loc>https://rehablookup.com/lp/social</loc>...</url>
+```
+/concierge /concierge.html 200
+/international /international.html 200
 ```
 
-3. **Add International Pages** (after Provider Pages section):
-```xml
-<!-- International Placement Pages -->
-<url>
-  <loc>https://rehablookup.com/international</loc>
-  <lastmod>2026-02-03</lastmod>
-  <changefreq>weekly</changefreq>
-  <priority>0.85</priority>
-</url>
+This ensures crawlers receive static HTML content while users still get the React app.
 
-<url>
-  <loc>https://rehablookup.com/international/apply</loc>
-  <lastmod>2026-02-03</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.80</priority>
-</url>
+---
+
+## Part 4: Update Sitemap with International Routes
+
+Verify these are in `public/sitemap.xml` (confirmed already added):
+- `https://rehablookup.com/international`
+- `https://rehablookup.com/international/apply`
+
+---
+
+## Files to Create/Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `supabase/functions/prerender-for-bots/index.ts` | Modify | Add `/international` routes |
+| `public/concierge.html` | Create | Static fallback with FAQPage schema |
+| `public/international.html` | Create | Static fallback with FAQPage schema |
+| `public/_redirects` | Modify | Route static files to crawlers |
+
+---
+
+## Static Page Content Structure
+
+### concierge.html Structure
+```
+- Header with navigation
+- Hero: "Find Treatment That Fits" + value prop
+- How It Works: 3-step process
+- Benefits section: 4 key benefits
+- Testimonials: 3 client quotes
+- FAQ section: 4 common questions (with FAQPage schema)
+- CTA: Start intake form
+- Footer
 ```
 
-### sitemap-index.xml Updates
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>https://rehablookup.com/sitemap.xml</loc>
-    <lastmod>2026-02-03</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities</loc>
-    <lastmod>2026-02-03</lastmod>
-  </sitemap>
-</sitemapindex>
+### international.html Structure
+```
+- Header with navigation
+- Hero: "Your Gateway to American Rehab"
+- Trust stats: 50+ countries, 200+ facilities, 24hr response
+- Why US Treatment: 4 advantages
+- How It Works: 3-step process
+- US Destinations: Links to /us-rehab/* pages
+- FAQ section: 5 questions (with FAQPage schema)
+- CTA: Start application
+- Footer
 ```
 
 ---
 
-## SEO Launch Checklist
+## Schema Implementation
 
-After implementation, the platform will have:
+Both static files will include:
 
-| Component | Status |
-|-----------|--------|
-| Homepage with Organization + WebSite schema | Ready |
-| Dynamic facility sitemap (edge function) | Ready |
-| Static sitemap with all public pages | Ready |
-| FAQPage schema on insurance + provider pages | Ready |
-| LocalBusiness schema on facility profiles | Ready |
-| Robots.txt with crawler directives | Ready |
-| Google Search Console verification | Ready |
-| IndexNow integration | Ready |
-| Prerendering for crawlers | Ready |
-| Canonical URL normalization | Ready |
-| noindex on auth/loading states | Ready |
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "...",
+      "acceptedAnswer": { "@type": "Answer", "text": "..." }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "...",
+  "provider": { "@type": "Organization", "name": "RehabLookup" },
+  "serviceType": "Treatment Placement"
+}
+</script>
+```
 
 ---
 
 ## Expected Impact
 
-- **Crawl efficiency**: Removing blocked pages reduces wasted crawl budget
-- **Freshness signals**: Updated dates indicate active maintenance
-- **Coverage**: International pages now discoverable
-- **Consistency**: No conflicts between sitemap and robots.txt
+| Metric | Before | After |
+|--------|--------|-------|
+| `/international` crawler visibility | None | Full HTML |
+| `/concierge` fallback | Prerender only | Static + Prerender |
+| FAQPage rich snippets eligibility | Partial | Complete |
+| Single point of failure risk | High | Mitigated |
 
 ---
 
-## Post-Implementation Steps
+## Post-Implementation Verification
 
-1. Submit updated sitemap to Google Search Console
-2. Trigger IndexNow notification for updated pages
-3. Monitor Search Console for crawl stats over 7 days
-4. Verify international pages appear in coverage report
+1. Test static files load directly: `curl https://rehablookup.com/concierge.html`
+2. Verify redirect works: Test with Google's URL Inspection Tool
+3. Validate FAQPage schema: Use Google Rich Results Test
+4. Monitor Search Console coverage report after 7 days
