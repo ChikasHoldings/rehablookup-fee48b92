@@ -38,7 +38,8 @@ export function TwoFactorEnforcementDialog({
     try {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: "RehabLookup Admin 2FA",
+        friendlyName: "RehabLookup Admin",
+        issuer: "rehablookup.com",
       });
 
       if (error) throw error;
