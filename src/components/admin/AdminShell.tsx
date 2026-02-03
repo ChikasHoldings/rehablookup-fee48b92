@@ -113,7 +113,7 @@ export function AdminShell() {
         onSuccess={completeMfaSetup}
       />
       
-      <AdminHeader userEmail={user?.email} userId={user?.id} adminRole={adminRole} onLogout={logout} />
+      <AdminHeader userEmail={user?.email} userId={user?.id} adminRole={adminRole} onLogout={logout} isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
       
       <div className="flex flex-1">
         <AdminSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />

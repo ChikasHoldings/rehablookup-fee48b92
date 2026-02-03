@@ -33,6 +33,8 @@ interface AdminHeaderProps {
   userId?: string;
   adminRole?: "super_admin" | "manager" | "customer_rep" | "advisor";
   onLogout: () => void;
+  isSuperAdmin?: boolean;
+  hasPermission?: (permission: string) => boolean;
 }
 
 type Notification = {
@@ -45,7 +47,7 @@ type Notification = {
   isUnread?: boolean;
 };
 
-function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminHeaderProps) {
+function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperAdmin = false, hasPermission = () => false }: AdminHeaderProps) {
   const initials = userEmail?.slice(0, 2).toUpperCase() || "AD";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -57,6 +59,19 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
 
   // Advisors (Placement Advisors) should NOT see lead notifications - they only handle placements
   const isAdvisor = adminRole === "advisor";
+
+  // Permission helpers for search filtering
+  const canViewProviders = isSuperAdmin || hasPermission("providers");
+  const canViewLeads = isSuperAdmin || hasPermission("leads");
+  const canViewAnalytics = isSuperAdmin || hasPermission("analytics");
+  const canViewSeekers = isSuperAdmin || hasPermission("seekers");
+  const canViewPlacements = isSuperAdmin || hasPermission("placements");
+  const canViewSubscriptions = isSuperAdmin || hasPermission("subscriptions");
+  const canViewReviews = isSuperAdmin || hasPermission("reviews");
+  const canViewFeatured = isSuperAdmin || hasPermission("featured");
+  const canViewUsers = isSuperAdmin || hasPermission("users");
+  const canViewAuditLog = isSuperAdmin || hasPermission("audit_log");
+  const canViewSecurityLogs = isSuperAdmin || hasPermission("security_logs");
 
   // Fetch admin profile for avatar
   const { data: adminProfile, refetch: refetchAdminProfile } = useQuery({
@@ -273,11 +288,11 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
     refetchInterval: 60000,
   });
 
-  // Search providers when query changes
+  // Search providers when query changes - only if user has permission
   const { data: searchedProviders, isLoading: searchingProviders } = useQuery({
-    queryKey: ["admin-search-providers", searchQuery],
+    queryKey: ["admin-search-providers", searchQuery, canViewProviders],
     queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return [];
+      if (!searchQuery || searchQuery.length < 2 || !canViewProviders) return [];
       const { data } = await supabase
         .from("facilities")
         .select("id, name, city, state, status, slug")
@@ -286,15 +301,15 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
         .limit(5);
       return data || [];
     },
-    enabled: searchQuery.length >= 2,
+    enabled: searchQuery.length >= 2 && canViewProviders,
     staleTime: 10000,
   });
 
-  // Search leads when query changes
+  // Search leads when query changes - only if user has permission
   const { data: searchedLeads, isLoading: searchingLeads } = useQuery({
-    queryKey: ["admin-search-leads", searchQuery],
+    queryKey: ["admin-search-leads", searchQuery, canViewLeads],
     queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return [];
+      if (!searchQuery || searchQuery.length < 2 || !canViewLeads) return [];
       const normalizedQuery = searchQuery.replace(/\D/g, "");
       const isPhoneSearch = normalizedQuery.length >= 3;
       
@@ -313,7 +328,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
       const { data } = await query;
       return data || [];
     },
-    enabled: searchQuery.length >= 2,
+    enabled: searchQuery.length >= 2 && canViewLeads,
     staleTime: 10000,
   });
 
@@ -719,8 +734,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
             <CommandEmpty>Type at least 2 characters to search...</CommandEmpty>
           )}
 
-          {/* Provider Search Results */}
-          {searchedProviders && searchedProviders.length > 0 && (
+          {/* Provider Search Results - only if user has permission */}
+          {canViewProviders && searchedProviders && searchedProviders.length > 0 && (
             <CommandGroup heading={`Providers (${searchedProviders.length})`}>
               {searchedProviders.map((provider) => (
                 <CommandItem 
@@ -750,8 +765,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
             </CommandGroup>
           )}
 
-          {/* Lead Search Results */}
-          {searchedLeads && searchedLeads.length > 0 && (
+          {/* Lead Search Results - only if user has permission */}
+          {canViewLeads && searchedLeads && searchedLeads.length > 0 && (
             <CommandGroup heading={`Leads (${searchedLeads.length})`}>
               {searchedLeads.map((lead) => (
                 <CommandItem 
@@ -782,55 +797,75 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
             </CommandGroup>
           )}
 
-          {/* Quick Actions - show when not searching or no results */}
+          {/* Quick Actions - show when not searching or no results, filtered by permissions */}
           {(!searchQuery || searchQuery.length < 2) && (
             <>
               <CommandGroup heading="Quick Actions">
-                <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Review Pending Providers ({pendingProviders?.length || 0})
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/leads?unassigned=true"); setSearchOpen(false); }}>
-                  <Users className="h-4 w-4 mr-2" />
-                  View Unassigned Leads ({unassignedLeads?.length || 0})
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/featured"); setSearchOpen(false); }}>
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Manage Featured Placement
-                </CommandItem>
+                {canViewProviders && (
+                  <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Review Pending Providers ({pendingProviders?.length || 0})
+                  </CommandItem>
+                )}
+                {canViewLeads && (
+                  <CommandItem onSelect={() => { navigate("/admin/leads?unassigned=true"); setSearchOpen(false); }}>
+                    <Users className="h-4 w-4 mr-2" />
+                    View Unassigned Leads ({unassignedLeads?.length || 0})
+                  </CommandItem>
+                )}
+                {canViewFeatured && (
+                  <CommandItem onSelect={() => { navigate("/admin/featured"); setSearchOpen(false); }}>
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    Manage Featured Placement
+                  </CommandItem>
+                )}
               </CommandGroup>
               <CommandGroup heading="Navigation">
                 <CommandItem onSelect={() => { navigate("/admin"); setSearchOpen(false); }}>
                   Dashboard
                 </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/analytics"); setSearchOpen(false); }}>
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analytics
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/providers"); setSearchOpen(false); }}>
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Providers
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/leads"); setSearchOpen(false); }}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Leads
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/seekers"); setSearchOpen(false); }}>
-                  <UserSearch className="h-4 w-4 mr-2" />
-                  Users (Seekers)
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); }}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Concierge
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/subscriptions"); setSearchOpen(false); }}>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Subscriptions
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/reviews"); setSearchOpen(false); }}>
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Review Moderation
-                </CommandItem>
+                {canViewAnalytics && (
+                  <CommandItem onSelect={() => { navigate("/admin/analytics"); setSearchOpen(false); }}>
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Analytics
+                  </CommandItem>
+                )}
+                {canViewProviders && (
+                  <CommandItem onSelect={() => { navigate("/admin/providers"); setSearchOpen(false); }}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Providers
+                  </CommandItem>
+                )}
+                {canViewLeads && (
+                  <CommandItem onSelect={() => { navigate("/admin/leads"); setSearchOpen(false); }}>
+                    <Users className="h-4 w-4 mr-2" />
+                    Leads
+                  </CommandItem>
+                )}
+                {canViewSeekers && (
+                  <CommandItem onSelect={() => { navigate("/admin/seekers"); setSearchOpen(false); }}>
+                    <UserSearch className="h-4 w-4 mr-2" />
+                    Users (Seekers)
+                  </CommandItem>
+                )}
+                {canViewPlacements && (
+                  <CommandItem onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); }}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Concierge
+                  </CommandItem>
+                )}
+                {canViewSubscriptions && (
+                  <CommandItem onSelect={() => { navigate("/admin/subscriptions"); setSearchOpen(false); }}>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Subscriptions
+                  </CommandItem>
+                )}
+                {canViewReviews && (
+                  <CommandItem onSelect={() => { navigate("/admin/reviews"); setSearchOpen(false); }}>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Review Moderation
+                  </CommandItem>
+                )}
                 <CommandItem onSelect={() => { navigate("/admin/notifications"); setSearchOpen(false); }}>
                   <Bell className="h-4 w-4 mr-2" />
                   Notifications
@@ -840,23 +875,29 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout }: AdminH
                   My Profile
                 </CommandItem>
               </CommandGroup>
-              <CommandGroup heading="Settings & Security">
+              <CommandGroup heading="Settings & Administration">
                 <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
                   <Settings className="h-4 w-4 mr-2" />
-                  General Settings
+                  Settings
                 </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/users"); setSearchOpen(false); }}>
-                  <Shield className="h-4 w-4 mr-2" />
-                  Admin Staff Management
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/security-logs"); setSearchOpen(false); }}>
-                  <ShieldAlert className="h-4 w-4 mr-2" />
-                  Security Logs
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/audit-log"); setSearchOpen(false); }}>
-                  <ClipboardList className="h-4 w-4 mr-2" />
-                  Audit Log
-                </CommandItem>
+                {canViewUsers && (
+                  <CommandItem onSelect={() => { navigate("/admin/users"); setSearchOpen(false); }}>
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin Staff Management
+                  </CommandItem>
+                )}
+                {canViewSecurityLogs && (
+                  <CommandItem onSelect={() => { navigate("/admin/security-logs"); setSearchOpen(false); }}>
+                    <ShieldAlert className="h-4 w-4 mr-2" />
+                    Security Logs
+                  </CommandItem>
+                )}
+                {canViewAuditLog && (
+                  <CommandItem onSelect={() => { navigate("/admin/audit-log"); setSearchOpen(false); }}>
+                    <ClipboardList className="h-4 w-4 mr-2" />
+                    Audit Log
+                  </CommandItem>
+                )}
               </CommandGroup>
             </>
           )}
