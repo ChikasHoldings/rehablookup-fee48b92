@@ -733,8 +733,8 @@ export default function AdminSettings() {
             </div>
           ) : (
             <>
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Platform Settings */}
+              {/* Platform Settings - Super Admin Only */}
+              {isSuperAdmin && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -815,89 +815,91 @@ export default function AdminSettings() {
                     </SettingRow>
                   </CardContent>
                 </Card>
+              )}
 
-                {/* Appearance */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Palette className="h-5 w-5 text-purple-500" />
-                      Appearance
-                    </CardTitle>
-                    <CardDescription>Customize the admin panel look and feel</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-1">
-                    <SettingRow
-                      icon={<Palette className="h-4 w-4 text-slate-500" />}
-                      title="Theme Mode"
-                      description="Choose between light and dark themes"
+              {/* Appearance - All Admins */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Palette className="h-5 w-5 text-purple-500" />
+                    Appearance
+                  </CardTitle>
+                  <CardDescription>Customize your admin panel look and feel</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-1">
+                  <SettingRow
+                    icon={<Palette className="h-4 w-4 text-slate-500" />}
+                    title="Theme Mode"
+                    description="Choose between light and dark themes"
+                  >
+                    <Select 
+                      value={themeMode}
+                      onValueChange={(value) => {
+                        updateSetting.mutate({
+                          key: "theme_mode",
+                          value: { mode: value }
+                        });
+                      }}
+                      disabled={updateSetting.isPending}
                     >
-                      <Select 
-                        value={themeMode}
-                        onValueChange={(value) => {
-                          updateSetting.mutate({
-                            key: "theme_mode",
-                            value: { mode: value }
-                          });
-                        }}
-                        disabled={updateSetting.isPending}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="light">Light</SelectItem>
-                          <SelectItem value="dark">Dark</SelectItem>
-                          <SelectItem value="system">System</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </SettingRow>
-                    <Separator />
-                    <SettingRow
-                      icon={<Activity className="h-4 w-4 text-slate-500" />}
-                      title="Compact Mode"
-                      description="Use condensed layouts for data tables"
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light">Light</SelectItem>
+                        <SelectItem value="dark">Dark</SelectItem>
+                        <SelectItem value="system">System</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingRow>
+                  <Separator />
+                  <SettingRow
+                    icon={<Activity className="h-4 w-4 text-slate-500" />}
+                    title="Compact Mode"
+                    description="Use condensed layouts for data tables"
+                  >
+                    <Switch 
+                      checked={compactMode}
+                      onCheckedChange={(checked) => {
+                        updateSetting.mutate({
+                          key: "compact_mode",
+                          value: { enabled: checked }
+                        });
+                      }}
+                      disabled={updateSetting.isPending}
+                    />
+                  </SettingRow>
+                  <Separator />
+                  <SettingRow
+                    icon={<FileText className="h-4 w-4 text-slate-500" />}
+                    title="Show Timestamps"
+                    description="Display relative or absolute timestamps"
+                  >
+                    <Select 
+                      value={timestampFormat}
+                      onValueChange={(value) => {
+                        updateSetting.mutate({
+                          key: "timestamp_display",
+                          value: { format: value }
+                        });
+                      }}
+                      disabled={updateSetting.isPending}
                     >
-                      <Switch 
-                        checked={compactMode}
-                        onCheckedChange={(checked) => {
-                          updateSetting.mutate({
-                            key: "compact_mode",
-                            value: { enabled: checked }
-                          });
-                        }}
-                        disabled={updateSetting.isPending}
-                      />
-                    </SettingRow>
-                    <Separator />
-                    <SettingRow
-                      icon={<FileText className="h-4 w-4 text-slate-500" />}
-                      title="Show Timestamps"
-                      description="Display relative or absolute timestamps"
-                    >
-                      <Select 
-                        value={timestampFormat}
-                        onValueChange={(value) => {
-                          updateSetting.mutate({
-                            key: "timestamp_display",
-                            value: { format: value }
-                          });
-                        }}
-                        disabled={updateSetting.isPending}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="relative">Relative</SelectItem>
-                          <SelectItem value="absolute">Absolute</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </SettingRow>
-                  </CardContent>
-                </Card>
-              </div>
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="relative">Relative</SelectItem>
+                        <SelectItem value="absolute">Absolute</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingRow>
+                </CardContent>
+              </Card>
 
-              {/* System Status */}
+              {/* System Status & Platform Statistics - Super Admin Only */}
+              {isSuperAdmin && (
+              <>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -962,7 +964,6 @@ export default function AdminSettings() {
                 </CardContent>
               </Card>
 
-              {/* Platform Statistics */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -1002,6 +1003,8 @@ export default function AdminSettings() {
                   </div>
                 </CardContent>
               </Card>
+              </>
+              )}
             </>
           )}
         </TabsContent>
