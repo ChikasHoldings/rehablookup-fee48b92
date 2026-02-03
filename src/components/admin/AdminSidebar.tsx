@@ -57,12 +57,13 @@ const navEntries: NavEntry[] = [
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
+  // Settings is accessible to all roles - sub-items are permission-gated
+  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "dashboard" },
   {
-    icon: Settings,
-    label: "Settings",
-    permission: "settings",
+    icon: ShieldCheck,
+    label: "Administration",
+    permission: "users", // Only visible to those with admin user management
     items: [
-      { to: "/admin/settings", icon: Settings, label: "General Settings", permission: "settings" },
       { to: "/admin/users", icon: ShieldCheck, label: "Admin Staff", permission: "users" },
       { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
       { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
