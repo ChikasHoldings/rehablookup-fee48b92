@@ -1,17 +1,20 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   Clock,
   Shield,
   Building2,
   Plane,
-  ChevronDown,
-  ChevronUp,
   Globe,
   CheckCircle2,
   Lock,
@@ -71,17 +74,14 @@ const WHY_US_TREATMENT = [
 
 const STEPS = [
   {
-    number: "01",
     title: "Complete Application",
     description: "Fill out our comprehensive intake form with your treatment needs and preferences",
   },
   {
-    number: "02",
     title: "Get Matched",
     description: "Our team identifies best-fit U.S. facilities based on your specific criteria",
   },
   {
-    number: "03",
     title: "Confirm Admission",
     description: "We coordinate directly with the facility to secure your placement",
   },
@@ -111,14 +111,12 @@ const FAQ_ITEMS = [
 ];
 
 const TRUST_STATS = [
-  { value: "50+", label: "Countries Served" },
-  { value: "200+", label: "US Facilities" },
-  { value: "24hr", label: "Response Time" },
+  { value: "50+", label: "Countries Served", icon: Globe },
+  { value: "200+", label: "US Facilities", icon: Building2 },
+  { value: "24hr", label: "Response Time", icon: Clock },
 ];
 
 export default function InternationalLanding() {
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-
   return (
     <>
       <SEO
@@ -132,132 +130,93 @@ export default function InternationalLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section - Fits Viewport with Trust Bar */}
-          <section className="relative min-h-[calc(100svh-64px)] md:h-[calc(100svh-64px)] flex flex-col">
-            {/* Background with refined overlay */}
-            <div className="absolute inset-0 z-0">
-              <img
-                src={internationalHeroImg}
-                alt="Professional treatment center therapy lounge"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[hsl(var(--background))] via-[hsl(var(--background)/0.95)] md:via-[hsl(var(--background)/0.9)] to-[hsl(var(--background)/0.7)] md:to-[hsl(var(--background)/0.3)]" />
-            </div>
+          {/* Hero Section - Image Background, Centered */}
+          <section className="relative z-10 bg-primary">
+            <img 
+              src={internationalHeroImg}
+              alt=""
+              role="presentation"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              width={1920}
+              height={1080}
+              fetchPriority="high"
+              loading="eager"
+              decoding="sync"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
 
-            {/* Main Content - Centered */}
-            <div className="relative z-10 flex-1 flex items-center py-10 md:py-0">
-              <div className="container mx-auto px-5 md:px-6 lg:px-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="max-w-2xl"
+            <div className="container relative py-16 md:py-20 lg:py-24">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="max-w-3xl mx-auto text-center"
+              >
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6">
+                  <Globe className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium text-white/90">International Placement Services</span>
+                </div>
+                
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight leading-tight">
+                  Your Gateway to American Rehab
+                </h1>
+                
+                <p className="text-base md:text-lg text-white/85 mb-8 leading-relaxed max-w-2xl mx-auto px-2">
+                  Expert placement into America's finest treatment centers. We handle everything—from matching to admission—so you can focus on recovery.
+                </p>
+
+                <Button 
+                  size="lg" 
+                  className="h-12 md:h-14 px-6 md:px-10 text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/25 w-full sm:w-auto"
+                  asChild
                 >
-                  <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs md:text-sm font-medium mb-5 md:mb-8">
-                    <Globe className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    International Placement Services
-                  </div>
-                  
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 md:mb-6 leading-[1.1] tracking-tight">
-                    Your Gateway to
-                    <span className="block text-primary">American Rehab</span>
-                  </h1>
-                  
-                  <p className="text-[15px] md:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed max-w-xl">
-                    Expert placement into America's finest treatment centers. We handle everything—from matching to admission—so you can focus on recovery.
-                  </p>
-
-                  <Button 
-                    size="lg" 
-                    className="h-12 md:h-14 px-6 md:px-10 text-[15px] md:text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/25 mb-8 md:mb-10 w-full sm:w-auto"
-                    asChild
-                  >
-                    <Link to="/international/apply">
-                      Find Treatment
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
-
-                  {/* Trust Stats */}
-                  <div className="flex justify-between sm:justify-start gap-4 sm:gap-10 lg:gap-14">
-                    {TRUST_STATS.map((stat, i) => (
-                      <motion.div 
-                        key={i} 
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
-                        className="text-center sm:text-left"
-                      >
-                        <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary">{stat.value}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
+                  <Link to="/international/apply">
+                    Find Treatment
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </motion.div>
             </div>
+          </section>
 
-            {/* Trust Bar - Dark Background */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-              className="relative z-10 bg-foreground"
-            >
-              <div className="container mx-auto px-5 md:px-6 lg:px-8 py-3 md:py-4">
-                <div className="grid grid-cols-2 md:flex md:flex-wrap md:justify-center gap-x-4 md:gap-x-10 gap-y-2">
-                  {[
-                    "Vetted Programs",
-                    "Immediate Admission",
-                    "Complete Privacy",
-                    "Money-Back Guarantee",
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-medium text-background">
-                      <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-accent shrink-0" />
-                      <span>{item}</span>
+          {/* Stats Bar - Solid Primary Background */}
+          <section className="border-b border-border bg-primary text-primary-foreground py-6 sm:py-8">
+            <div className="container px-4 sm:px-5 md:px-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center max-w-4xl mx-auto">
+                {TRUST_STATS.map((stat) => (
+                  <div key={stat.label} className="px-1">
+                    <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1">
+                      <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent shrink-0" />
+                      <span className="text-xl sm:text-2xl md:text-3xl font-bold">{stat.value}</span>
                     </div>
-                  ))}
+                    <p className="text-[10px] sm:text-xs md:text-sm text-primary-foreground/80">{stat.label}</p>
+                  </div>
+                ))}
+                <div className="px-1">
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1">
+                    <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent shrink-0" />
+                    <span className="text-xl sm:text-2xl md:text-3xl font-bold">100%</span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-primary-foreground/80">Money-Back Guarantee</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </section>
 
           {/* Why US Treatment */}
-          <section className="py-12 md:py-24">
+          <section className="py-12 sm:py-16 md:py-24 bg-background">
             <div className="container mx-auto px-5 md:px-4">
-              <div className="text-center mb-8 md:mb-12">
-                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 md:mb-3">
-                  Why Choose U.S. Treatment?
+              <div className="text-center mb-10 sm:mb-14">
+                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Why U.S. Treatment</p>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
+                  World-Class Care, Complete Privacy
                 </h2>
-                <p className="text-[15px] md:text-base text-muted-foreground max-w-2xl mx-auto px-2">
+                <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto px-2">
                   The United States has the largest private rehab system in the world—offering what government-run programs in other countries simply cannot.
                 </p>
               </div>
 
-              {/* Mobile: Horizontal scroll, Desktop: Grid */}
-              <div className="md:hidden -mx-5 px-5">
-                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 scrollbar-hide">
-                  {WHY_US_TREATMENT.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 16 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      className="flex-none w-[280px] snap-start bg-background border rounded-xl p-5"
-                    >
-                      <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                        <item.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-foreground mb-1.5 text-[15px]">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Desktop Grid */}
-              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
                 {WHY_US_TREATMENT.map((item, index) => (
                   <motion.div
                     key={index}
@@ -265,13 +224,13 @@ export default function InternationalLanding() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    className="bg-background border rounded-xl p-6 hover:shadow-lg transition-shadow"
+                    className="bg-background border rounded-xl p-5 md:p-6 hover:shadow-lg transition-shadow"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                      <item.icon className="h-6 w-6 text-primary" />
+                    <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 md:mb-4">
+                      <item.icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                    <h3 className="font-semibold text-foreground mb-1.5 md:mb-2 text-sm md:text-base">{item.title}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{item.description}</p>
                   </motion.div>
                 ))}
               </div>
@@ -302,10 +261,11 @@ export default function InternationalLanding() {
                   transition={{ duration: 0.5, delay: 0.1 }}
                   className="order-1 lg:order-2"
                 >
+                  <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Global Reach</p>
                   <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-3 md:mb-4">
                     Serving Clients Worldwide
                   </h2>
-                  <p className="text-[15px] md:text-base text-muted-foreground mb-5 md:mb-6 leading-relaxed">
+                  <p className="text-sm md:text-base text-muted-foreground mb-5 md:mb-6 leading-relaxed">
                     We work with individuals and families from Europe, the Middle East, Asia, Latin America, and beyond who are seeking high-quality treatment options in the United States.
                   </p>
                   <ul className="space-y-2.5 md:space-y-3">
@@ -317,7 +277,7 @@ export default function InternationalLanding() {
                     ].map((item, index) => (
                       <li key={index} className="flex items-start gap-2.5 md:gap-3">
                         <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-[15px] md:text-base text-foreground">{item}</span>
+                        <span className="text-sm md:text-base text-foreground">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -335,13 +295,14 @@ export default function InternationalLanding() {
           </section>
 
           {/* US Rehab Destinations - Cross-linking */}
-          <section className="py-12 md:py-20 border-t">
+          <section className="py-12 md:py-20 border-t bg-background">
             <div className="container mx-auto px-5 md:px-4">
               <div className="text-center mb-8 md:mb-10">
+                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Explore Options</p>
                 <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 md:mb-3">
                   Explore U.S. Treatment Options
                 </h2>
-                <p className="text-[15px] md:text-base text-muted-foreground max-w-2xl mx-auto">
+                <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
                   Discover America's top treatment destinations and specialty programs
                 </p>
               </div>
@@ -386,55 +347,53 @@ export default function InternationalLanding() {
           </section>
 
           {/* How It Works */}
-          <section className="py-12 md:py-24">
+          <section className="py-12 sm:py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-5 md:px-4">
-              <div className="text-center mb-8 md:mb-12">
-                <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 md:mb-3">
-                  How It Works
+              <div className="text-center mb-10 sm:mb-14">
+                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">How It Works</p>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
+                  A Streamlined Placement Process
                 </h2>
-                <p className="text-[15px] md:text-base text-muted-foreground max-w-lg mx-auto">
+                <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
                   A streamlined process to connect you with the right treatment program
                 </p>
               </div>
 
-              <div className="max-w-4xl mx-auto">
-                <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-8">
-                  {STEPS.map((step, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 16 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: index * 0.15 }}
-                      className="relative"
-                    >
-                      <div className="bg-background border rounded-xl p-5 md:p-6 h-full flex md:block items-start gap-4">
-                        <span className="text-3xl md:text-5xl font-bold text-primary/20 md:mb-4 md:block shrink-0">
-                          {step.number}
-                        </span>
-                        <div>
-                          <h3 className="font-semibold text-foreground mb-1 md:mb-2 text-[15px] md:text-base">{step.title}</h3>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto">
+                {STEPS.map((step, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: index * 0.15 }}
+                    className="relative"
+                  >
+                    {index < 2 && (
+                      <div className="hidden sm:block absolute top-8 left-[calc(50%+2.5rem)] w-[calc(100%-3rem)] border-t-2 border-dashed border-border" />
+                    )}
+                    <div className="relative bg-card border border-border rounded-xl p-5 md:p-6 text-center h-full">
+                      <div className="flex items-center justify-center mb-3 sm:mb-4">
+                        <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-base sm:text-lg font-bold">
+                          {index + 1}
                         </div>
                       </div>
-                      {index < STEPS.length - 1 && (
-                        <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-muted-foreground/30">
-                          <ArrowRight className="h-8 w-8" />
-                        </div>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
+                      <h3 className="font-semibold text-foreground mb-1 md:mb-2 text-sm md:text-base">{step.title}</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </div>
           </section>
 
           {/* Trust Features */}
-          <section className="py-12 md:py-20 bg-muted/30">
+          <section className="py-12 md:py-20 bg-background">
             <div className="container mx-auto px-5 md:px-4">
-              <div className="text-center mb-8 md:mb-12">
+              <div className="text-center mb-10 sm:mb-14">
+                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">What We Provide</p>
                 <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 md:mb-3">
-                  What We Provide
+                  Comprehensive Support
                 </h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto">
@@ -458,49 +417,35 @@ export default function InternationalLanding() {
             </div>
           </section>
 
-          {/* FAQ Section */}
-          <section className="py-12 md:py-24">
+          {/* FAQ Section - Radix Accordion */}
+          <section className="py-12 sm:py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-5 md:px-4">
-              <div className="text-center mb-8 md:mb-12">
+              <div className="text-center mb-10 sm:mb-14">
+                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">FAQ</p>
                 <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 md:mb-3">
                   Frequently Asked Questions
                 </h2>
               </div>
 
-              <div className="max-w-3xl mx-auto space-y-2 md:space-y-3">
-                {FAQ_ITEMS.map((item, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 8 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="border rounded-xl overflow-hidden"
-                  >
-                    <button
-                      onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-                      className="w-full flex items-center justify-between p-4 md:p-5 text-left hover:bg-muted/30 transition-colors"
-                    >
-                      <span className="font-medium text-foreground pr-3 md:pr-4 text-[15px] md:text-base">{item.question}</span>
-                      {expandedFaq === index ? (
-                        <ChevronUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
-                      )}
-                    </button>
-                    {expandedFaq === index && (
-                      <div className="px-4 pb-4 md:px-5 md:pb-5">
-                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{item.answer}</p>
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
+              <div className="max-w-2xl mx-auto">
+                <Accordion type="single" collapsible className="space-y-2 sm:space-y-3">
+                  {FAQ_ITEMS.map((item) => (
+                    <AccordionItem key={item.question} value={item.question} className="border border-border rounded-lg px-3 sm:px-5 bg-card">
+                      <AccordionTrigger className="text-left text-foreground text-sm sm:text-base font-medium hover:no-underline py-3 sm:py-4">
+                        {item.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-xs sm:text-sm text-muted-foreground pb-3 sm:pb-4">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               </div>
             </div>
           </section>
 
           {/* Final CTA */}
-          <section className="py-12 md:py-24">
+          <section className="py-12 md:py-24 bg-background">
             <div className="container mx-auto px-5 md:px-4">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
@@ -517,7 +462,7 @@ export default function InternationalLanding() {
                 </p>
                 <Button 
                   size="lg" 
-                  className="h-11 md:h-12 px-6 md:px-8 text-[15px] md:text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg w-full sm:w-auto" 
+                  className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg w-full sm:w-auto" 
                   asChild
                 >
                   <Link to="/international/apply">

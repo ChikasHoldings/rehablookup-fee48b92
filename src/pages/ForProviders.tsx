@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -192,7 +193,14 @@ const ForProviders = () => {
                 { step: 3, title: "Get Discovered", description: "Families find your facility through search and directories.", icon: Eye },
                 { step: 4, title: "Connect Directly", description: "Reach out to interested families and grow your census.", icon: MessageSquare },
               ].map((item, index) => (
-                <div key={item.step} className="relative">
+                <motion.div
+                  key={item.step}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="relative"
+                >
                   {index < 3 && (
                     <div className="hidden lg:block absolute top-8 left-[calc(50%+2.5rem)] w-[calc(100%-3rem)] border-t-2 border-dashed border-border" />
                   )}
@@ -208,7 +216,7 @@ const ForProviders = () => {
                     <h3 className="font-semibold text-sm sm:text-base text-foreground mb-1 sm:mb-2">{item.title}</h3>
                     <p className="text-xs sm:text-sm text-muted-foreground">{item.description}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
