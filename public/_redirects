@@ -48,6 +48,8 @@
 /contact /contact.html 200
 /how-it-works /how-it-works.html 200
 /resources /resources.html 200
+/concierge /concierge.html 200
+/international /international.html 200
 
 # Insurance static pages with FAQPage schema for rich snippets
 /insurance/aetna-rehab /insurance/aetna-rehab.html 200
