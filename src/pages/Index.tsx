@@ -11,7 +11,8 @@ import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSke
 import { supabase } from "@/integrations/supabase/client";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import { InternationalCTA } from "@/components/home/InternationalCTA";
-import heroImage from "@/assets/hero-recovery.jpg";
+// Hero image moved to public folder for FCP optimization - preloaded in index.html
+const heroImage = "/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
   Carousel,
