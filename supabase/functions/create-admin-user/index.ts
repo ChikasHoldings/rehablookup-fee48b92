@@ -63,6 +63,29 @@ serve(async (req) => {
 
     console.log("[CREATE-ADMIN-USER] Creating admin user:", { email, displayName, adminRole });
 
+    // Check if user already exists with this email
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    
+    if (existingUser) {
+      // Check if they already have any conflicting roles
+      const { data: hasProviderProfile } = await supabase.rpc("user_has_provider_profile", { p_user_id: existingUser.id });
+      const { data: hasSeekerProfile } = await supabase.rpc("user_has_seeker_profile", { p_user_id: existingUser.id });
+      const { data: isAlreadyAdmin } = await supabase.rpc("has_role", { _user_id: existingUser.id, _role: "admin" });
+      
+      if (hasProviderProfile) {
+        throw new Error("This email belongs to an existing provider account and cannot be made an admin");
+      }
+      if (hasSeekerProfile) {
+        throw new Error("This email belongs to an existing seeker account and cannot be made an admin");
+      }
+      if (isAlreadyAdmin) {
+        throw new Error("This user is already an admin");
+      }
+      
+      throw new Error("A user with this email address already exists in the system");
+    }
+
     // Generate temporary password
     const tempPassword = generateTempPassword();
     const tempPasswordExpiry = new Date();
@@ -87,20 +110,11 @@ serve(async (req) => {
     const userId = newUser.user.id;
     console.log("[CREATE-ADMIN-USER] User created:", userId);
 
-    // Create profile for the user
-    const { error: profileError } = await supabase.from("profiles").insert({
-      user_id: userId,
-      email,
-      first_name: displayName.split(" ")[0] || displayName,
-      last_name: displayName.split(" ").slice(1).join(" ") || "",
-    });
+    // IMPORTANT: Do NOT create a provider profile (profiles table) for admin users
+    // This would trigger the prevent_admin_double_account check
+    // Admin users should ONLY have admin_user_profiles records
 
-    if (profileError) {
-      console.error("[CREATE-ADMIN-USER] Failed to create profile:", profileError);
-      // Continue anyway, profile can be created later
-    }
-
-    // Assign admin role in user_roles table
+    // Assign admin role in user_roles table FIRST (before any other tables)
     const { error: roleError } = await supabase.from("user_roles").insert({
       user_id: userId,
       role: "admin",
@@ -108,8 +122,12 @@ serve(async (req) => {
 
     if (roleError) {
       console.error("[CREATE-ADMIN-USER] Failed to assign role:", roleError);
-      throw new Error("Failed to assign role");
+      // Clean up the auth user if role assignment fails
+      await supabase.auth.admin.deleteUser(userId);
+      throw new Error("Failed to assign admin role. Please try again.");
     }
+
+    console.log("[CREATE-ADMIN-USER] Admin role assigned successfully");
 
     // Split display name into first and last name
     const nameParts = displayName.trim().split(/\s+/);
@@ -338,7 +356,6 @@ serve(async (req) => {
         success: true,
         userId,
         message: "Admin user created successfully. Invitation email sent.",
-        // Only return temp password once - it won't be accessible again
         tempPassword,
       }),
       {
