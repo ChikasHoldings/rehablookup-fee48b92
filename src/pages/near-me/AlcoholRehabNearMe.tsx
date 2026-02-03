@@ -170,6 +170,23 @@ export default function AlcoholRehabNearMe() {
         treatmentType="Alcohol Rehab"
       />
 
+      {/* Above-fold intro content for SEO */}
+      <section className="py-6 bg-muted/30 border-b">
+        <div className="container">
+          <p className="text-center text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            {stateData 
+              ? `Searching for alcohol rehab in ${stateData.name}? Our directory features ${facilities.length}+ verified treatment centers offering detox, inpatient, and outpatient programs. Many facilities accept major insurance including Aetna, BCBS, Cigna, and United Healthcare.${
+                  stateData.name === "California" ? " California is home to some of the nation's leading alcohol addiction treatment programs." :
+                  stateData.name === "Florida" ? " Florida offers year-round alcohol treatment options in supportive recovery environments." :
+                  stateData.name === "Texas" ? " Texas provides comprehensive alcohol treatment options across major metropolitan areas." :
+                  stateData.name === "New York" ? " New York offers diverse alcohol rehabilitation programs from urban centers to serene retreats." : ""
+                }`
+              : "Search our directory of alcohol treatment centers across the United States. Compare programs, check insurance coverage, and find the right recovery path for alcohol addiction."
+            }
+          </p>
+        </div>
+      </section>
+
       <section className="py-12 bg-background">
         <div className="container">
           <h2 className="text-2xl font-bold text-foreground mb-2 treatment-intro">

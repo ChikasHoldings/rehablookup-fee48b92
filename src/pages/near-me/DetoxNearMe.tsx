@@ -131,6 +131,23 @@ export default function DetoxNearMe() {
         treatmentType="Detox"
       />
 
+      {/* Above-fold intro content for SEO */}
+      <section className="py-6 bg-muted/30 border-b">
+        <div className="container">
+          <p className="text-center text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            {stateData 
+              ? `Looking for medical detox in ${stateData.name}? Browse ${facilities.length}+ verified detoxification centers offering medically-supervised withdrawal management. Most facilities accept major insurance including Aetna, BCBS, Cigna, and United Healthcare.${
+                  stateData.name === "California" ? " California offers world-class medical detox programs with holistic approaches." :
+                  stateData.name === "Florida" ? " Florida provides year-round detox options in comfortable, therapeutic settings." :
+                  stateData.name === "Texas" ? " Texas features comprehensive detox programs across major cities and suburban areas." :
+                  stateData.name === "New York" ? " New York offers diverse medical detox options from urban hospitals to private facilities." : ""
+                }`
+              : "Search our directory of medical detox centers across the United States. Find safe, medically-supervised detoxification programs for drugs and alcohol."
+            }
+          </p>
+        </div>
+      </section>
+
       <section className="py-12 bg-background">
         <div className="container">
           <h2 className="text-2xl font-bold text-foreground mb-2">
