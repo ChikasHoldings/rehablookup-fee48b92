@@ -16,7 +16,7 @@ const PORTAL_CONFIG = {
   admin: {
     homeRoute: "/admin",
     allowedPrefixes: ["/admin"],
-    loginRoute: "/admin-login",
+    loginRoute: "/admin/login",
   },
   provider: {
     homeRoute: "/provider/dashboard",
@@ -38,7 +38,7 @@ const PUBLIC_AUTH_ROUTES = [
   "/provider-signup",
   "/provider-forgot-password",
   "/provider-reset-password",
-  "/admin-login",
+  "/admin/login",
   "/auth",
   "/signup",
   "/seeker/signup",
@@ -231,15 +231,15 @@ export function useRoleBasedRedirect() {
     if (!isAuthenticated) {
       // Block admin and provider routes
       if (currentPath.startsWith("/admin") || currentPath.startsWith("/provider")) {
-        return { shouldBlock: true, redirectTo: currentPath.startsWith("/admin") ? "/admin-login" : "/login" };
+        return { shouldBlock: true, redirectTo: currentPath.startsWith("/admin") ? "/admin/login" : "/login" };
       }
       return { shouldBlock: false, redirectTo: null };
     }
 
     // Authenticated - enforce portal boundaries
     if (role === "admin") {
-      // Admins can ONLY access /admin routes
-      if (!currentPath.startsWith("/admin") && currentPath !== "/admin-login") {
+      // Admins can ONLY access /admin routes (login is under /admin/login)
+      if (!currentPath.startsWith("/admin")) {
         return { shouldBlock: true, redirectTo: "/admin" };
       }
     } else if (role === "provider") {

@@ -152,8 +152,17 @@ export function useAdminAuth() {
 
   const checkMfaStatus = useCallback(async (): Promise<boolean> => {
     try {
-      const { data: factorsData } = await supabase.auth.mfa.listFactors();
-      return factorsData?.totp?.some(f => f.status === 'verified') ?? false;
+      // Check both: verified TOTP factors AND current session AAL level
+      const [factorsResult, aalResult] = await Promise.all([
+        supabase.auth.mfa.listFactors(),
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      ]);
+      
+      const hasVerifiedFactor = factorsResult.data?.totp?.some(f => f.status === 'verified') ?? false;
+      const currentAAL = aalResult.data?.currentLevel;
+      
+      // MFA is set up if user has verified factors OR their current session is at aal2
+      return hasVerifiedFactor || currentAAL === 'aal2';
     } catch (err) {
       console.error("Error checking MFA status:", err);
       return false;
@@ -275,7 +284,7 @@ export function useAdminAuth() {
       
       if (!session?.user) {
         setIsInitialized(true);
-        navigate("/admin-login", { replace: true });
+        navigate("/admin/login", { replace: true });
         return;
       }
 
@@ -305,7 +314,7 @@ export function useAdminAuth() {
           setRequireMfaSetup(false);
           setIsInitialized(true);
           clearSentryUser();
-          navigate("/admin-login", { replace: true });
+          navigate("/admin/login", { replace: true });
           return;
         }
 
@@ -358,7 +367,7 @@ export function useAdminAuth() {
       });
 
       // Navigate to login
-      navigate("/admin-login", { replace: true });
+      navigate("/admin/login", { replace: true });
     } catch (err) {
       console.error("Logout exception:", err);
       toast.error("Logout failed", {

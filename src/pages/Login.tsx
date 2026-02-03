@@ -606,7 +606,7 @@ export default function Login() {
                   <AlertDescription>{error}</AlertDescription>
                   {detectedType === "admin" && (
                     <Link 
-                      to="/admin-login" 
+                      to="/admin/login" 
                       className="mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
                     >
                       Go to Admin Login <ExternalLink className="h-3 w-3" />
