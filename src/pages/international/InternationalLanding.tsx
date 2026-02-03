@@ -180,24 +180,24 @@ export default function InternationalLanding() {
           </section>
 
           {/* Stats Bar - Solid Primary Background */}
-          <section className="border-b border-border bg-primary text-primary-foreground py-3 md:py-5">
+          <section className="border-b border-border bg-primary text-primary-foreground py-2.5 md:py-4">
             <div className="container px-4 sm:px-5 md:px-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center max-w-4xl mx-auto">
                 {TRUST_STATS.map((stat) => (
                   <div key={stat.label} className="px-1">
-                    <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1">
-                      <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent shrink-0" />
-                      <span className="text-xl sm:text-2xl md:text-3xl font-bold">{stat.value}</span>
+                    <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-0.5">
+                      <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
+                      <span className="text-lg sm:text-xl md:text-2xl font-bold">{stat.value}</span>
                     </div>
-                    <p className="text-[10px] sm:text-xs md:text-sm text-primary-foreground/80">{stat.label}</p>
+                    <p className="text-[9px] sm:text-[10px] md:text-xs text-primary-foreground/80">{stat.label}</p>
                   </div>
                 ))}
                 <div className="px-1">
-                  <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1">
-                    <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent shrink-0" />
-                    <span className="text-xl sm:text-2xl md:text-3xl font-bold">100%</span>
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-0.5">
+                    <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
+                    <span className="text-lg sm:text-xl md:text-2xl font-bold">100%</span>
                   </div>
-                  <p className="text-[10px] sm:text-xs md:text-sm text-primary-foreground/80">Money-Back Guarantee</p>
+                  <p className="text-[9px] sm:text-[10px] md:text-xs text-primary-foreground/80">Money-Back Guarantee</p>
                 </div>
               </div>
             </div>
