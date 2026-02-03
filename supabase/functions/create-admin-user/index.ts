@@ -185,7 +185,7 @@ serve(async (req) => {
     // Send invitation email
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
-      const loginUrl = "https://rehablookup.com/admin-login";
+      const loginUrl = "https://rehablookup.com/admin/login";
 
       try {
         await resend.emails.send({

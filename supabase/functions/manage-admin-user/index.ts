@@ -447,7 +447,7 @@ serve(async (req) => {
         // Send email with new temp password
         if (resendApiKey && targetProfile?.email) {
           const resend = new Resend(resendApiKey);
-          const loginUrl = "https://rehablookup.com/admin-login";
+          const loginUrl = "https://rehablookup.com/admin/login";
 
           await resend.emails.send({
             from: "RehabLookup Admin <no-reply@rehablookup.com>",
@@ -608,7 +608,7 @@ serve(async (req) => {
         // Send invitation email
         if (resendApiKey && targetProfile?.email) {
           const resend = new Resend(resendApiKey);
-          const loginUrl = "https://rehablookup.com/admin-login";
+          const loginUrl = "https://rehablookup.com/admin/login";
           const displayName = adminProfile.display_name || targetProfile.first_name || "Admin";
 
           await resend.emails.send({

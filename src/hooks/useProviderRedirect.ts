@@ -56,7 +56,7 @@ export function useProviderRedirect(options: { enabled?: boolean } = {}) {
           const currentPath = location.pathname;
           
           // If admin is on non-admin route, redirect to admin panel
-          if (!currentPath.startsWith("/admin") && currentPath !== "/admin-login") {
+          if (!currentPath.startsWith("/admin")) {
             navigate("/admin", { replace: true });
           }
           
