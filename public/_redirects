@@ -39,10 +39,15 @@
 # Legal pages (privacy-policy, terms-of-service) are served as static HTML files.
 # =============================================================================
 
-# Static legal pages - served directly to ensure clean, focused SEO content
-# These bypass the SPA shell so crawlers see dedicated legal page content
+# Static pages - served directly to ensure clean, focused SEO content
+# These bypass the SPA shell so crawlers see dedicated page content
 /privacy-policy /privacy-policy.html 200
 /terms-of-service /terms-of-service.html 200
+/for-providers /for-providers.html 200
+/about /about.html 200
+/contact /contact.html 200
+/how-it-works /how-it-works.html 200
+/resources /resources.html 200
 
 # Handle SPA routing - serve index.html for all other routes
 /* /index.html 200
