@@ -113,16 +113,27 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
     enabled: !!caseData?.matched_facility_ids?.length,
   });
 
-  // Fetch invoices - scoped to case if provided
-  const { data: invoices, isLoading } = useQuery({
+  // Fetch invoices - scoped to case if provided with optimized caching
+  const { data: invoices, isLoading, isFetching } = useQuery({
     queryKey: ["admin-placement-invoices", statusFilter, caseData?.id],
     queryFn: async () => {
       let query = supabase
         .from("placement_invoices")
         .select(`
-          *,
-          facilities(id, name, email, user_id),
-          concierge_inquiries(id, user_name, user_email)
+          id,
+          amount_cents,
+          override_amount_cents,
+          status,
+          created_at,
+          due_at,
+          paid_at,
+          discount_percent,
+          waived,
+          discount_reason,
+          facility_id,
+          inquiry_id,
+          facilities!inner(id, name),
+          concierge_inquiries!inner(id, user_name, user_email)
         `)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -140,6 +151,9 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 60 * 1000, // Data stays fresh for 60 seconds
+    gcTime: 10 * 60 * 1000, // Cache for 10 minutes
+    placeholderData: (previousData) => previousData, // Show stale data while fetching
   });
 
   // Admin manage invoice mutation
