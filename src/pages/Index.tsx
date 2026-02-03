@@ -326,7 +326,7 @@ const Index = () => {
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-[1.625rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Addiction Treatment & Rehab Center Directory
+              Find the Right Treatment & Rehab
             </h1>
 
             {/* Subheadline */}
