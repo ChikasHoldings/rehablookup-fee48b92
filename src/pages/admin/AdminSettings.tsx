@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, forwardRef } from "react";
+import { useState, useEffect, useCallback, forwardRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useTheme } from "next-themes";
 import {
   Settings,
@@ -66,6 +67,16 @@ import { BlockedIdentifiersDialog } from "@/components/admin/BlockedIdentifiersD
 import { SecurityAlertsPanel } from "@/components/admin/SecurityAlertsPanel";
 import { RecentNotificationsPanel } from "@/components/admin/RecentNotificationsPanel";
 import { DataHealthMonitor } from "@/components/admin/DataHealthMonitor";
+
+// Define which tabs each role can access
+type SettingsTab = "general" | "security" | "notifications" | "data";
+
+const ROLE_TAB_ACCESS: Record<string, SettingsTab[]> = {
+  super_admin: ["general", "security", "notifications", "data"],
+  manager: ["general", "notifications"],
+  customer_rep: ["general", "notifications"],
+  advisor: ["general", "notifications"],
+};
 
 interface SettingRowProps {
   icon: React.ReactNode;
@@ -135,8 +146,14 @@ const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warni
 export default function AdminSettings() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminSettings");
+  const { adminRole, isSuperAdmin } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("general");
   const { theme, setTheme } = useTheme();
+
+  // Get allowed tabs for current role
+  const allowedTabs = useMemo(() => {
+    return ROLE_TAB_ACCESS[adminRole] || ROLE_TAB_ACCESS.customer_rep;
+  }, [adminRole]);
 
   // Invalidate settings queries helper
   const invalidateSettingsQueries = useCallback(() => {
@@ -668,28 +685,44 @@ export default function AdminSettings() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground">Manage platform configuration and preferences</p>
+        <p className="text-muted-foreground">
+          {isSuperAdmin 
+            ? "Manage platform configuration and preferences" 
+            : "Manage your personal preferences"}
+        </p>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
-          <TabsTrigger value="general" className="gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">General</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Security</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="data" className="gap-2">
-            <Database className="h-4 w-4" />
-            <span className="hidden sm:inline">Data</span>
-          </TabsTrigger>
+        <TabsList className={cn(
+          "grid w-full max-w-2xl",
+          allowedTabs.length === 2 ? "grid-cols-2" : 
+          allowedTabs.length === 3 ? "grid-cols-3" : "grid-cols-4"
+        )}>
+          {allowedTabs.includes("general") && (
+            <TabsTrigger value="general" className="gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">General</span>
+            </TabsTrigger>
+          )}
+          {allowedTabs.includes("security") && (
+            <TabsTrigger value="security" className="gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Security</span>
+            </TabsTrigger>
+          )}
+          {allowedTabs.includes("notifications") && (
+            <TabsTrigger value="notifications" className="gap-2">
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Notifications</span>
+            </TabsTrigger>
+          )}
+          {allowedTabs.includes("data") && (
+            <TabsTrigger value="data" className="gap-2">
+              <Database className="h-4 w-4" />
+              <span className="hidden sm:inline">Data</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* General Tab */}

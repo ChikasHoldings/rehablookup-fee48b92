@@ -230,7 +230,8 @@ export function useAdminAuth() {
       }
     }
 
-    if (!permissionKey || permissionKey === "dashboard") return true;
+    // Dashboard and settings are accessible to all admin roles
+    if (!permissionKey || permissionKey === "dashboard" || permissionKey === "settings") return true;
 
     return permissions[permissionKey] === true;
   }, [isSuperAdmin, permissions]);
