@@ -127,11 +127,12 @@ serve(async (req) => {
     const planInfo = providerEmail ? await getProviderPlan(providerEmail, stripe) : { plan: 'free' as PlanType, planName: 'Free', locationLimit: 1, unlockDiscount: 0 };
 
     // Fetch admin emails for notifications
+    // Exclude advisors as they only handle placements, not general admin tasks like review moderation
     const { data: adminProfiles } = await supabase
       .from("admin_user_profiles")
-      .select("user_id, first_name")
+      .select("user_id, first_name, admin_role")
       .eq("status", "active")
-      .eq("notify_new_leads", true);
+      .neq("admin_role", "advisor"); // Advisors don't need review notifications
 
     const adminEmails: string[] = [];
     if (adminProfiles && adminProfiles.length > 0) {

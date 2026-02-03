@@ -54,7 +54,8 @@ export function AdminShell() {
   const { 
     user, 
     isAdmin, 
-    isSuperAdmin, 
+    isSuperAdmin,
+    adminRole,
     hasPermission, 
     canAccessRoute, 
     forcePasswordChange,
@@ -112,7 +113,7 @@ export function AdminShell() {
         onSuccess={completeMfaSetup}
       />
       
-      <AdminHeader userEmail={user?.email} userId={user?.id} onLogout={logout} />
+      <AdminHeader userEmail={user?.email} userId={user?.id} adminRole={adminRole} onLogout={logout} />
       
       <div className="flex flex-1">
         <AdminSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
