@@ -322,7 +322,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
 
         {/* Content */}
-        <div className="container relative py-12 md:py-14 lg:py-16">
+        <div className="container relative py-10 md:py-12 lg:py-14">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-[1.625rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
