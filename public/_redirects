@@ -50,6 +50,10 @@
 /resources /resources.html 200
 /concierge /concierge.html 200
 /international /international.html 200
+/treatment-types /treatment-types.html 200
+/insurance /insurance.html 200
+/locations /locations.html 200
+/cost-estimator /cost-estimator.html 200
 
 # Insurance static pages with FAQPage schema for rich snippets
 /insurance/aetna-rehab /insurance/aetna-rehab.html 200
