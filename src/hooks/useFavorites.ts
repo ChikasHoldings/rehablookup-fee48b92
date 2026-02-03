@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -16,31 +16,53 @@ export function useFavorites() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSynced, setIsSynced] = useState(false);
+  
+  // Track synced user ID to prevent duplicate syncs
+  const syncedUserIdRef = useRef<string | null>(null);
+  const isSyncingRef = useRef(false);
 
   // Listen for auth changes
   useEffect(() => {
+    let mounted = true;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user ?? null);
+        if (mounted) {
+          setUser(session?.user ?? null);
+        }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      if (mounted) {
+        setUser(session?.user ?? null);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Sync favorites with database when user logs in
   useEffect(() => {
     const syncFavorites = async () => {
-      console.log('[useFavorites] Syncing favorites for user:', user?.id);
+      // Skip if no user or already synced for this user
       if (!user) {
         setIsLoading(false);
         setIsSynced(false);
+        syncedUserIdRef.current = null;
         return;
       }
+      
+      // Prevent duplicate syncs for the same user
+      if (syncedUserIdRef.current === user.id || isSyncingRef.current) {
+        return;
+      }
+      
+      isSyncingRef.current = true;
+      console.log('[useFavorites] Syncing favorites for user:', user.id);
 
       setIsLoading(true);
 
@@ -86,6 +108,10 @@ export function useFavorites() {
       const allFavorites = [...new Set([...dbFavoriteIds, ...localFavoritesToSync])];
       setFavorites(allFavorites);
       setIsSynced(true);
+      
+      // Mark as synced for this user
+      syncedUserIdRef.current = user.id;
+      isSyncingRef.current = false;
       setIsLoading(false);
 
       // Update localStorage
@@ -97,7 +123,7 @@ export function useFavorites() {
     };
 
     syncFavorites();
-  }, [user]);
+  }, [user?.id]); // Only re-run when user ID changes, not the entire user object
 
   // Persist to localStorage when favorites change (for guests)
   useEffect(() => {

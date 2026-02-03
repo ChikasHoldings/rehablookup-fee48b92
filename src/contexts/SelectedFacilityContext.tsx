@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo, useRef } from "react";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
 
 interface SelectedFacilityContextType {
@@ -37,24 +37,24 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
   const [selectedFacility, setSelectedFacilityState] = useState<ProviderFacility | null>(getInitialFacility);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingFacilitySwitch, setPendingFacilitySwitch] = useState<ProviderFacility | null>(null);
+  
+  // Track if we've already hydrated from the facilities list
+  const hydratedRef = useRef(false);
 
-  // Update selected facility when facilities load
+  // Update selected facility when facilities load (only once)
   useEffect(() => {
-    console.log("[SelectedFacilityContext] Effect triggered:", { 
-      facilitiesLoading, 
-      facilitiesCount: facilities.length, 
-      selectedFacilityId: selectedFacility?.id 
-    });
+    if (facilitiesLoading || facilities.length === 0 || hydratedRef.current) return;
     
-    if (facilitiesLoading || facilities.length === 0) return;
+    const currentId = selectedFacility?.id;
     
     // If we have a selected facility, try to find the full version
-    if (selectedFacility?.id) {
-      const fullFacility = facilities.find(f => f.id === selectedFacility.id);
+    if (currentId) {
+      const fullFacility = facilities.find(f => f.id === currentId);
       if (fullFacility) {
-        console.log("[SelectedFacilityContext] Found full facility:", fullFacility.name);
+        console.log("[SelectedFacilityContext] Hydrated facility:", fullFacility.name);
         setSelectedFacilityState(fullFacility);
         localStorage.setItem("selectedFacilityData", JSON.stringify(fullFacility));
+        hydratedRef.current = true;
         return;
       }
     }
@@ -64,6 +64,7 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     setSelectedFacilityState(facilities[0]);
     localStorage.setItem("selectedFacilityId", facilities[0].id);
     localStorage.setItem("selectedFacilityData", JSON.stringify(facilities[0]));
+    hydratedRef.current = true;
   }, [facilities, facilitiesLoading, selectedFacility?.id]);
 
   const setSelectedFacility = useCallback((facility: ProviderFacility) => {
