@@ -14,7 +14,9 @@ import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvide
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
 
-type CaseStatus = 'new' | 'reviewing' | 'matching' | 'matched' | 'introductions_sent' | 'in_contact' | 'placed' | 'closed' | 'all';
+type CaseStatus = 'new' | 'in_progress' | 'placed' | 'closed' | 'all';
+
+const IN_PROGRESS_STATUSES = ['reviewing', 'matching', 'matched', 'introductions_sent', 'in_contact'];
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   new: { label: "New", variant: "default" },
@@ -41,7 +43,9 @@ export default function AdminConcierge() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (statusFilter !== "all") {
+      if (statusFilter === "in_progress") {
+        query = query.in("status", IN_PROGRESS_STATUSES);
+      } else if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
       }
 

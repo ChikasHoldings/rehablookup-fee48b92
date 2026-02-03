@@ -9,11 +9,7 @@ interface ConciergeStatsChartsProps {
 
 const PIPELINE_STAGES = [
   { key: "new", label: "New", color: "bg-primary" },
-  { key: "reviewing", label: "Reviewing", color: "bg-info" },
-  { key: "matching", label: "Matching", color: "bg-warning" },
-  { key: "matched", label: "Matched", color: "bg-accent" },
-  { key: "introductions_sent", label: "Intros Sent", color: "bg-primary" },
-  { key: "in_contact", label: "In Contact", color: "bg-info" },
+  { key: "in_progress", label: "In Progress", color: "bg-warning", keys: ["reviewing", "matching", "matched", "introductions_sent", "in_contact"] },
   { key: "placed", label: "Placed", color: "bg-success" },
   { key: "closed", label: "Closed", color: "bg-muted-foreground" },
 ];
@@ -87,7 +83,10 @@ export const ConciergeStatsCharts = forwardRef<HTMLDivElement, ConciergeStatsCha
       {/* Pipeline Stages */}
       <div className="flex items-center gap-1 p-2 overflow-x-auto">
         {PIPELINE_STAGES.map((stage) => {
-          const count = stats?.[stage.key] || 0;
+          // For aggregated stages, sum counts from all sub-keys
+          const count = 'keys' in stage && stage.keys 
+            ? stage.keys.reduce((sum, k) => sum + (stats?.[k] || 0), 0)
+            : stats?.[stage.key] || 0;
           const isActive = activeStatus === stage.key;
           
           return (
