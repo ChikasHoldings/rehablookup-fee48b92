@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,13 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
   const [status, setStatus] = useState(caseData.status);
   const [adminNotes, setAdminNotes] = useState(caseData.admin_notes || "");
   const [closeReason, setCloseReason] = useState("");
+
+  // Sync state when caseData changes (e.g., switching between cases)
+  useEffect(() => {
+    setStatus(caseData.status);
+    setAdminNotes(caseData.admin_notes || "");
+    setCloseReason("");
+  }, [caseData.id, caseData.status, caseData.admin_notes]);
 
   const updateCaseMutation = useMutation({
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {

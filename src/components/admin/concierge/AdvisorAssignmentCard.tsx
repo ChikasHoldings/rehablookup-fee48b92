@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,11 @@ interface AdvisorAssignmentCardProps {
 export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignmentCardProps) {
   const queryClient = useQueryClient();
   const [selectedAdvisor, setSelectedAdvisor] = useState(caseData.assigned_advisor_id || "");
+
+  // Sync state when caseData changes (e.g., switching between cases)
+  useEffect(() => {
+    setSelectedAdvisor(caseData.assigned_advisor_id || "");
+  }, [caseData.id, caseData.assigned_advisor_id]);
 
   // Fetch admin staff for advisor assignment
   const { data: adminStaff, isLoading: staffLoading } = useQuery({
