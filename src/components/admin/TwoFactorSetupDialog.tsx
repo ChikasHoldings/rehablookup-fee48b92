@@ -56,10 +56,11 @@ export function TwoFactorSetupDialog({
   const handleStartSetup = async () => {
     setIsLoading(true);
     try {
-      // Enroll in TOTP MFA
+      // Enroll in TOTP MFA with custom issuer for proper branding
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: "Authenticator App",
+        friendlyName: "RehabLookup Admin",
+        issuer: "rehablookup.com",
       });
 
       if (error) throw error;
