@@ -263,7 +263,7 @@ function ModalSuccessView({
                 Want help finding the best fit?
               </div>
               <p className="text-sm text-muted-foreground">
-                Our free Concierge service matches you with verified treatment centers based on your unique needs.
+                Our Concierge service matches you with verified treatment centers based on your unique needs.
               </p>
             </div>
             <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-2" />
@@ -473,6 +473,8 @@ export function RequestInfoModal({
             />
           ) : (
             <LeadIntakeForm 
+              facilityId={facility.id}
+              facilityName={facility.name}
               renderSuccess={renderSuccess}
             />
           )}
