@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
@@ -15,7 +15,18 @@ import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { useUserRole } from "@/hooks/useUserRole";
 import { prefetchAdjacentRoutes } from "@/lib/routePrefetch";
 
-// Use components directly - memo can cause issues with hot reloading
+// Minimal content-area loading placeholder - keeps shell visible
+function ContentLoading() {
+  return (
+    <div className="p-4 lg:p-6 space-y-4 animate-pulse">
+      <div className="h-8 w-48 bg-muted rounded" />
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="h-32 bg-muted rounded-lg" />
+        <div className="h-32 bg-muted rounded-lg" />
+      </div>
+    </div>
+  );
+}
 
 function ProviderShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -224,7 +235,9 @@ function ProviderShellContent() {
           className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
         >
           <ProviderErrorBoundary>
-            <Outlet />
+            <Suspense fallback={<ContentLoading />}>
+              <Outlet />
+            </Suspense>
           </ProviderErrorBoundary>
         </main>
       </div>

@@ -92,7 +92,6 @@ const Login = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 
 // Seeker pages - lazy load
-const SeekerShell = lazy(() => import("./components/seeker/SeekerShell").then(m => ({ default: m.SeekerShell })));
 const SeekerHome = lazy(() => import("./pages/seeker/SeekerHome"));
 const SeekerRequests = lazy(() => import("./pages/seeker/SeekerRequests"));
 const SeekerSaved = lazy(() => import("./pages/seeker/SeekerSaved"));
@@ -150,8 +149,12 @@ const DrugRehabUSA = lazy(() => import("./pages/us-rehab/DrugRehabUSA"));
 const DualDiagnosisUSA = lazy(() => import("./pages/us-rehab/DualDiagnosisUSA"));
 const CelebrityRehabUSA = lazy(() => import("./pages/us-rehab/CelebrityRehabUSA"));
 
-// Provider Panel - lazy load
-const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
+// Panel shells - eagerly loaded for instant rendering
+import { ProviderShell } from "./components/provider/ProviderShell";
+import { AdminShell } from "./components/admin/AdminShell";
+import { SeekerShell } from "./components/seeker/SeekerShell";
+
+// Provider Panel pages - lazy load (shell handles Suspense)
 const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
 const ProviderListingPage = lazy(() => import("./pages/provider/MyListings"));
 const ProviderInquiriesPage = lazy(() => import("./pages/provider/Inquiries"));
@@ -168,8 +171,7 @@ const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
 const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
 const ProviderPlacementNetworkPage = lazy(() => import("./pages/provider/PlacementNetwork"));
 
-// Admin Panel - lazy load
-const AdminShell = lazy(() => import("./components/admin/AdminShell").then(m => ({ default: m.AdminShell })));
+// Admin Panel pages - lazy load (shell handles Suspense)
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
