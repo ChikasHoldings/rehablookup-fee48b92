@@ -592,131 +592,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Find Treatment Near You - SEO Section */}
-      <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mb-6 md:mb-8 lg:mb-10 text-center">
-            <div className="mb-1.5 md:mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-              <Navigation className="h-3.5 w-3.5 text-primary" />
-              <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary">
-                Near You
-              </span>
-            </div>
-            <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
-              Find Treatment Near You
-            </h2>
-            <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground max-w-lg mx-auto">
-              Get location-based treatment options with real-time availability
-            </p>
-          </div>
-
-          {/* Near me grid - 2 columns on mobile, 3 on tablet, 3 on desktop */}
-          <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto">
-            <Link
-              to="/drug-rehab-near-me"
-              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Pill className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
-                  Drug Rehab Near Me
-                </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
-                  Addiction treatment centers
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/alcohol-rehab-near-me"
-              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Activity className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
-                  Alcohol Rehab Near Me
-                </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
-                  Alcohol treatment programs
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/detox-near-me"
-              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
-                  Detox Centers Near Me
-                </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
-                  Medical detox facilities
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/dual-diagnosis-near-me"
-              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Brain className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
-                  Dual Diagnosis Near Me
-                </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
-                  Mental health + addiction
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/inpatient-rehab-near-me"
-              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Home className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
-                  Inpatient Rehab Near Me
-                </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
-                  Residential treatment
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/outpatient-near-me"
-              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Stethoscope className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
-                  Outpatient Near Me
-                </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
-                  IOP & PHP programs
-                </p>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* International Patients CTA */}
       <InternationalCTA />
 
@@ -974,6 +849,131 @@ const Index = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Find Treatment Near You - SEO Section */}
+      <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
+        <div className="container px-4 md:px-6 lg:px-8">
+          <div className="mb-6 md:mb-8 lg:mb-10 text-center">
+            <div className="mb-1.5 md:mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+              <Navigation className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary">
+                Near You
+              </span>
+            </div>
+            <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
+              Find Treatment Near You
+            </h2>
+            <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground max-w-lg mx-auto">
+              Get location-based treatment options with real-time availability
+            </p>
+          </div>
+
+          {/* Near me grid - 2 columns on mobile, 3 on tablet, 3 on desktop */}
+          <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto">
+            <Link
+              to="/drug-rehab-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Pill className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                  Drug Rehab Near Me
+                </h3>
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                  Addiction treatment centers
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/alcohol-rehab-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Activity className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                  Alcohol Rehab Near Me
+                </h3>
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                  Alcohol treatment programs
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/detox-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                  Detox Centers Near Me
+                </h3>
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                  Medical detox facilities
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/dual-diagnosis-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Brain className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                  Dual Diagnosis Near Me
+                </h3>
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                  Mental health + addiction
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/inpatient-rehab-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Home className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                  Inpatient Rehab Near Me
+                </h3>
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                  Residential treatment
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/outpatient-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Stethoscope className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                  Outpatient Near Me
+                </h3>
+                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                  IOP & PHP programs
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
       </section>
