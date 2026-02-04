@@ -1,23 +1,49 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   MapPin,
-  DollarSign,
   Clock,
   Users,
   UserCheck,
   Bell,
-  TrendingUp,
   CheckCircle,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
+
+// Proper type definitions for type safety
+interface ConciergeInquiry {
+  id: string;
+  user_name?: string;
+  level_of_care?: string | null;
+  payment_type?: string | null;
+  timeline_urgency?: string | null;
+  preferred_state?: string | null;
+  status?: string;
+  seeker_confirmed?: boolean;
+  seeker_confirmed_at?: string | null;
+  placement_confirmed?: boolean;
+  placement_confirmed_at?: string | null;
+  placed_facility_id?: string | null;
+}
+
+interface Introduction {
+  id: string;
+  facility_id: string;
+  inquiry_id: string;
+  created_at: string;
+  provider_response?: string | null;
+  provider_responded_at?: string | null;
+  provider_notes?: string | null;
+  concierge_inquiries?: ConciergeInquiry | null;
+}
 
 interface DomesticCandidatesTabProps {
   hasPro?: boolean;
@@ -27,16 +53,23 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
 
-  // Fetch pending introductions from concierge system
-  const { data: introductions, isLoading } = useQuery({
+  // Fetch pending introductions from concierge system with proper error handling
+  const { data: introductions, isLoading, error, refetch } = useQuery({
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
+      
       const { data, error } = await supabase
         .from("concierge_introductions")
         .select(
           `
-          *,
+          id,
+          facility_id,
+          inquiry_id,
+          created_at,
+          provider_response,
+          provider_responded_at,
+          provider_notes,
           concierge_inquiries (
             id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state, status,
             seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id
@@ -46,35 +79,55 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error("[DomesticCandidatesTab] Query error:", error.message);
+        throw new Error(`Failed to load introductions: ${error.message}`);
+      }
+      
+      return (data || []) as Introduction[];
     },
     enabled: !!selectedFacility?.id,
+    staleTime: 30000, // 30 seconds
+    retry: 2,
   });
 
-  // Respond to introduction mutation
+  // Respond to introduction mutation with per-item tracking
   const respondMutation = useMutation({
     mutationFn: async ({ id, response, notes }: { id: string; response: string; notes?: string }) => {
+      // Validate inputs
+      if (!id || typeof id !== "string") {
+        throw new Error("Invalid introduction ID");
+      }
+      if (!["interested", "not_available"].includes(response)) {
+        throw new Error("Invalid response value");
+      }
+
       const { error } = await supabase
         .from("concierge_introductions")
         .update({
           provider_response: response,
           provider_responded_at: new Date().toISOString(),
-          provider_notes: notes || null,
+          provider_notes: notes?.trim() || null,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("facility_id", selectedFacility?.id); // Security: ensure facility ownership
 
-      if (error) throw error;
+      if (error) {
+        console.error("[DomesticCandidatesTab] Respond error:", error.message);
+        throw new Error(`Failed to submit response: ${error.message}`);
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-introductions"] });
-      toast.success("Response submitted");
+      const action = variables.response === "interested" ? "accepted" : "declined";
+      toast.success(`Candidate ${action} successfully`);
     },
-    onError: () => {
-      toast.error("Failed to submit response");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to submit response");
     },
   });
 
+  // Safely filter introductions with null checks
   const pendingIntroductions =
     introductions?.filter((i) => !i.provider_response || i.provider_response === "pending") || [];
 
@@ -82,7 +135,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   const confirmedPlacements =
     introductions?.filter(
       (i) =>
-        i.concierge_inquiries?.placement_confirmed &&
+        i.concierge_inquiries?.placement_confirmed === true &&
         i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
     ) || [];
 
@@ -92,6 +145,27 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
 
   const acceptedCount = respondedIntroductions.filter((i) => i.provider_response === "interested").length;
   const declinedCount = respondedIntroductions.filter((i) => i.provider_response === "not_available").length;
+
+  // Error state
+  if (error) {
+    return (
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardContent className="py-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
+          <p className="text-destructive font-medium">Failed to load candidates</p>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
+            {error instanceof Error ? error.message : "An unexpected error occurred"}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="text-sm text-primary hover:underline"
+          >
+            Try again
+          </button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (

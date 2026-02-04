@@ -75,10 +75,36 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const resend = new Resend(resendKey);
 
-    const { type, inquiryId, facilityId, invoiceId, metadata }: NotificationRequest = await req.json();
+    const body = await req.json();
+    const { type, inquiryId, facilityId, invoiceId, metadata }: NotificationRequest = body;
 
+    // Validate required fields
     if (!type || !inquiryId) {
       throw new Error("Notification type and inquiryId are required");
+    }
+
+    // UUID validation helper
+    const isValidUUID = (str: string | undefined): boolean => {
+      if (!str || typeof str !== "string") return false;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(str);
+    };
+
+    // Validate UUIDs
+    if (!isValidUUID(inquiryId)) {
+      throw new Error("Invalid inquiry ID format");
+    }
+    if (facilityId && !isValidUUID(facilityId)) {
+      throw new Error("Invalid facility ID format");
+    }
+    if (invoiceId && !isValidUUID(invoiceId)) {
+      throw new Error("Invalid invoice ID format");
+    }
+
+    // Validate notification type
+    const validTypes = ['intake_received', 'matches_found', 'provider_interested', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid'];
+    if (!validTypes.includes(type)) {
+      throw new Error("Invalid notification type");
     }
 
     logStep("Processing notification", { type, inquiryId, facilityId });
@@ -91,7 +117,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (inquiryError || !inquiry) {
-      throw new Error("Inquiry not found: " + inquiryError?.message);
+      throw new Error("Inquiry not found");
     }
 
     // Fetch facility if needed
