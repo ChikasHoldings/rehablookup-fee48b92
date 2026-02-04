@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { 
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useSeekerNotifications } from "@/hooks/useSeekerNotifications";
 import { supabase } from "@/integrations/supabase/client";
+import { prefetchRoute } from "@/lib/routePrefetch";
 
 export interface SeekerHeaderProps {
   userName?: string;
@@ -82,6 +83,10 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+
+  const handlePrefetch = useCallback((path: string) => {
+    prefetchRoute(path);
+  }, []);
   
   const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useSeekerNotifications();
   const recentNotifications = notifications.slice(0, 5);
@@ -254,6 +259,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
               key={item.to}
               to={item.to}
               end={item.to === "/account"}
+              onMouseEnter={() => handlePrefetch(item.to)}
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",

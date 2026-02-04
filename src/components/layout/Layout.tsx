@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
@@ -6,6 +6,7 @@ import { BackToTop } from "@/components/ui/back-to-top";
 import { FloatingHelpButton } from "@/components/ui/floating-help-button";
 import { InternationalBanner } from "@/components/InternationalBanner";
 import { useUserRole } from "@/hooks/useUserRole";
+import { preloadPublicPages } from "@/lib/routePrefetch";
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,6 +14,11 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { role, isLoading, isAuthenticated } = useUserRole();
+
+  // Preload public pages on mount for instant navigation
+  useEffect(() => {
+    preloadPublicPages();
+  }, []);
 
   // Skip redirect logic in iframe (preview functionality)
   const isInIframe = typeof window !== "undefined" && window.self !== window.top;

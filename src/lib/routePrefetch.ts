@@ -243,6 +243,32 @@ export function preloadSeekerPages(): void {
 }
 
 /**
+ * Preload key public website pages for instant navigation
+ */
+export function preloadPublicPages(): void {
+  if (preloadedPanels.has("public")) return;
+  preloadedPanels.add("public");
+  
+  const pages = [
+    () => import("@/pages/RehabCenters"),
+    () => import("@/pages/concierge/ConciergeLanding"),
+    () => import("@/pages/Insurance"),
+    () => import("@/pages/international/InternationalLanding"),
+    () => import("@/pages/ForProviders"),
+    () => import("@/pages/About"),
+    () => import("@/pages/Contact"),
+  ];
+  
+  pages.forEach((load, i) => {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => load().catch(() => {}), { timeout: 1000 + i * 100 });
+    } else {
+      setTimeout(() => load().catch(() => {}), 100 + i * 100);
+    }
+  });
+}
+
+/**
  * Prefetch on visibility - for links in viewport
  */
 export function createVisibilityPrefetcher() {
