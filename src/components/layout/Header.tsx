@@ -283,16 +283,9 @@ export function Header({
                     </Button>
                   </PrefetchLink>
                   <PrefetchLink to="/login">
-                    <Button size="sm" variant="ghost" className="h-9 text-sm gap-1.5">
+                    <Button size="sm" className="h-9 text-sm gap-1.5">
                       <User className="h-4 w-4" />
                       Sign In
-                    </Button>
-                  </PrefetchLink>
-                  <PrefetchLink to="/concierge">
-                    <Button size="sm" className="h-9 text-sm gap-1.5 shadow-sm">
-                      <Heart className="h-4 w-4" />
-                      <span className="hidden lg:inline">Get Matched</span>
-                      <span className="lg:hidden">Match</span>
                     </Button>
                   </PrefetchLink>
                 </>
