@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CameraCaptureDialog } from "@/components/seeker/CameraCaptureDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { SessionManagementCard } from "@/components/shared/SessionManagementCard";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -1105,6 +1106,9 @@ export default function SeekerSettings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Session Management */}
+        <SessionManagementCard compact />
 
         {/* Activity Log */}
         <ActivityLog />
