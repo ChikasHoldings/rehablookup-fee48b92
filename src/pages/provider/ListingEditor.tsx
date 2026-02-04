@@ -105,75 +105,14 @@ interface Facility {
   accepts_international_patients: boolean | null;
 }
 
-const facilityTypes = [
-  "Residential Treatment Center",
-  "Outpatient Program",
-  "Detox Center",
-  "Intensive Outpatient (IOP)",
-  "Partial Hospitalization (PHP)",
-  "Sober Living",
-  "Dual Diagnosis",
-  "Luxury Rehab",
-  "Telehealth/Virtual",
-];
-
-const genderOptions = [
-  { value: "all", label: "All Genders" },
-  { value: "male", label: "Men Only" },
-  { value: "female", label: "Women Only" },
-];
-
-const states = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
-  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
-  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
-  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
-  "Wisconsin", "Wyoming"
-];
-
-const availableServices = [
-  "Detox Programs",
-  "Inpatient Treatment",
-  "Outpatient Treatment",
-  "Medication-Assisted Treatment (MAT)",
-  "Dual Diagnosis",
-  "Individual Therapy",
-  "Group Therapy",
-  "Family Therapy",
-  "Cognitive Behavioral Therapy (CBT)",
-  "12-Step Programs",
-  "Holistic Therapy",
-  "Aftercare Planning",
-  "Relapse Prevention",
-  "Trauma Therapy",
-  "Mental Health Services",
-];
-
-const availableAgeGroups = [
-  "Adults (18+)",
-  "Young Adults (18-25)",
-  "Adolescents (13-17)",
-  "Seniors (65+)",
-  "All Ages",
-];
-
-const availableInsurance = [
-  "Aetna",
-  "Blue Cross Blue Shield",
-  "Cigna",
-  "Humana",
-  "Kaiser Permanente",
-  "United Healthcare",
-  "Medicare",
-  "Medicaid",
-  "Tricare",
-  "Self-Pay",
-  "Private Pay",
-  "Sliding Scale",
-];
+import {
+  FACILITY_TYPE_VALUES,
+  GENDER_OPTIONS,
+  US_STATES,
+  TREATMENT_SERVICES,
+  AGE_GROUPS,
+  INSURANCE_PROVIDERS,
+} from "@/lib/facilityConstants";
 
 const DESCRIPTION_MAX_LENGTH = 2000;
 
@@ -1305,7 +1244,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                           <SelectValue placeholder="Select facility type" />
                         </SelectTrigger>
                         <SelectContent className="bg-card">
-                          {facilityTypes.map((type) => (
+                          {FACILITY_TYPE_VALUES.map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
                             </SelectItem>
@@ -1425,7 +1364,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent className="bg-card max-h-[200px]">
-                            {states.map((state) => (
+                            {US_STATES.map((state) => (
                               <SelectItem key={state} value={state}>
                                 {state}
                               </SelectItem>
@@ -1731,7 +1670,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                             <SelectValue placeholder="Select gender" />
                           </SelectTrigger>
                           <SelectContent className="bg-card">
-                            {genderOptions.map((option) => (
+                            {GENDER_OPTIONS.map((option) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}
                               </SelectItem>
@@ -1843,7 +1782,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     )}
 
                     <MultiSelectDropdown
-                      options={availableServices}
+                      options={[...TREATMENT_SERVICES]}
                       selected={services.map(s => s.service_name)}
                       onChange={handleServicesChange}
                       placeholder="Select services to add..."
@@ -1896,7 +1835,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     )}
 
                     <MultiSelectDropdown
-                      options={availableInsurance}
+                      options={[...INSURANCE_PROVIDERS]}
                       selected={insurance.map(i => i.insurance_name)}
                       onChange={handleInsuranceChange}
                       placeholder="Select insurance providers to add..."
@@ -1949,7 +1888,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     )}
 
                     <MultiSelectDropdown
-                      options={availableAgeGroups}
+                      options={[...AGE_GROUPS]}
                       selected={ageGroups.map(ag => ag.age_group)}
                       onChange={handleAgeGroupsChange}
                       placeholder="Select age groups to add..."

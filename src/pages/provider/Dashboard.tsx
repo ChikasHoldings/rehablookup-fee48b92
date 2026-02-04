@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
 import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
+import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -114,6 +115,9 @@ export default function ProviderDashboardPage() {
   const viewsCount = providerData?.viewsCount ?? 0;
   const userName = profile?.first_name || "";
   const facilityIds = facilities?.map(f => f.id) ?? [];
+
+  // Welcome modal - show for first-time providers (use providerData.facility which includes the field)
+  const showWelcomeModal = providerData?.facility && providerData.facility.profile_completion_celebrated === false;
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -322,6 +326,18 @@ export default function ProviderDashboardPage() {
 
   return (
     <div className="min-h-full bg-background">
+      {/* Welcome Modal for New Providers */}
+      {showWelcomeModal && providerData?.facility && (
+        <ProviderWelcomeModal
+          facilityId={providerData.facility.id}
+          facilityName={providerData.facility.name}
+          isFirstLogin={true}
+          onDismiss={() => {
+            queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+          }}
+        />
+      )}
+
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         
         {/* Main Grid Layout - No full-width sections */}
