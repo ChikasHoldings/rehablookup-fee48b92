@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,6 +9,7 @@ interface UserRoleResult {
   isLoading: boolean;
   isAuthenticated: boolean;
   userId: string | null;
+  sessionExpiresAt: number | null;
 }
 
 // Define portal boundaries
@@ -71,13 +72,26 @@ export function useUserRole(): UserRoleResult {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
+  
+  const mountedRef = useRef(true);
+  const initializingRef = useRef(true);
+  const roleCache = useRef<Map<string, { role: UserRole; timestamp: number }>>(new Map());
+  const CACHE_TTL = 30000; // 30 seconds
 
   useEffect(() => {
-    let mounted = true;
-    let isInitializing = true;
+    mountedRef.current = true;
+    initializingRef.current = true;
     let timeoutId: ReturnType<typeof setTimeout>;
+    let refreshIntervalId: ReturnType<typeof setInterval>;
 
     const determineRole = async (uid: string): Promise<UserRole> => {
+      // Check cache first
+      const cached = roleCache.current.get(uid);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return cached.role;
+      }
+
       try {
         // Check admin role first (highest priority)
         const { data: isAdmin } = await supabase.rpc("has_role", {
@@ -86,6 +100,7 @@ export function useUserRole(): UserRoleResult {
         });
         
         if (isAdmin === true) {
+          roleCache.current.set(uid, { role: "admin", timestamp: Date.now() });
           return "admin";
         }
 
@@ -97,6 +112,7 @@ export function useUserRole(): UserRoleResult {
           .maybeSingle();
 
         if (providerProfile) {
+          roleCache.current.set(uid, { role: "provider", timestamp: Date.now() });
           return "provider";
         }
 
@@ -108,10 +124,12 @@ export function useUserRole(): UserRoleResult {
           .maybeSingle();
 
         if (seekerProfile) {
+          roleCache.current.set(uid, { role: "seeker", timestamp: Date.now() });
           return "seeker";
         }
 
         // Authenticated but no profile yet
+        roleCache.current.set(uid, { role: null, timestamp: Date.now() });
         return null;
       } catch (error) {
         console.error("[useUserRole] Error determining role:", error);
@@ -119,88 +137,130 @@ export function useUserRole(): UserRoleResult {
       }
     };
 
+    const updateAuthState = (session: typeof supabase.auth extends { getSession: () => Promise<{ data: { session: infer S } }> } ? S : never) => {
+      if (!mountedRef.current) return;
+      
+      if (!session?.user) {
+        setIsAuthenticated(false);
+        setUserId(null);
+        setRole(null);
+        setSessionExpiresAt(null);
+        return false;
+      }
+
+      setIsAuthenticated(true);
+      setUserId(session.user.id);
+      setSessionExpiresAt(session.expires_at ? session.expires_at * 1000 : null);
+      return true;
+    };
+
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (!mounted) return;
+        if (!mountedRef.current) return;
 
-        if (!session?.user) {
-          setIsAuthenticated(false);
-          setUserId(null);
-          setRole(null);
-          setIsLoading(false);
-          isInitializing = false;
-          return;
-        }
-
-        setIsAuthenticated(true);
-        setUserId(session.user.id);
+        const hasSession = updateAuthState(session);
         
-        const userRole = await determineRole(session.user.id);
-        if (mounted) {
-          setRole(userRole);
+        if (hasSession && session?.user) {
+          const userRole = await determineRole(session.user.id);
+          if (mountedRef.current) {
+            setRole(userRole);
+          }
+        }
+        
+        if (mountedRef.current) {
           setIsLoading(false);
-          isInitializing = false;
+          initializingRef.current = false;
         }
       } catch (error) {
         console.error("[useUserRole] Error checking session:", error);
-        if (mounted) {
+        if (mountedRef.current) {
           setIsAuthenticated(false);
           setUserId(null);
           setRole(null);
+          setSessionExpiresAt(null);
           setIsLoading(false);
-          isInitializing = false;
+          initializingRef.current = false;
         }
       }
     };
 
     // Safety timeout - ensure loading state resolves even if auth hangs
     timeoutId = setTimeout(() => {
-      if (mounted && isInitializing) {
+      if (mountedRef.current && initializingRef.current) {
         console.warn("[useUserRole] Auth initialization timed out");
         setIsLoading(false);
-        isInitializing = false;
+        initializingRef.current = false;
       }
     }, 5000);
 
-    // Listener for ONGOING auth changes (does NOT control isLoading)
+    // Proactive token refresh to prevent session expiry
+    const checkAndRefreshToken = async () => {
+      if (!mountedRef.current) return;
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const expiresAt = session.expires_at;
+        if (expiresAt) {
+          const expiryTime = expiresAt * 1000;
+          const fiveMinutesFromNow = Date.now() + 5 * 60 * 1000;
+          
+          if (expiryTime < fiveMinutesFromNow) {
+            await supabase.auth.refreshSession();
+          }
+        }
+      } catch {
+        // Silent fail - non-critical
+      }
+    };
+
+    // Listener for ONGOING auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!mounted) return;
+        if (!mountedRef.current) return;
         
         // Skip processing during initial load - initializeAuth handles it
-        if (isInitializing) return;
+        if (initializingRef.current && event !== "INITIAL_SESSION") return;
 
-        if (!session?.user) {
-          setIsAuthenticated(false);
-          setUserId(null);
+        const hasSession = updateAuthState(session);
+
+        if (!hasSession) {
           setRole(null);
           return;
         }
 
-        setIsAuthenticated(true);
-        setUserId(session.user.id);
-        
-        // Fire and forget for ongoing changes
-        determineRole(session.user.id).then((userRole) => {
-          if (mounted) {
-            setRole(userRole);
-          }
-        });
+        if (session?.user) {
+          // Use setTimeout to avoid Supabase deadlock
+          setTimeout(() => {
+            if (mountedRef.current) {
+              determineRole(session.user.id).then((userRole) => {
+                if (mountedRef.current) {
+                  setRole(userRole);
+                }
+              });
+            }
+          }, 0);
+        }
       }
     );
 
     initializeAuth();
 
+    // Set up proactive token refresh (every 2 minutes)
+    refreshIntervalId = setInterval(checkAndRefreshToken, 120000);
+
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       clearTimeout(timeoutId);
+      clearInterval(refreshIntervalId);
       subscription.unsubscribe();
     };
   }, []);
 
-  return { role, isLoading, isAuthenticated, userId };
+  return { role, isLoading, isAuthenticated, userId, sessionExpiresAt };
 }
 
 /**
