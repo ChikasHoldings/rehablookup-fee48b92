@@ -1086,8 +1086,7 @@ export default function ProviderSignup() {
                         <span className="text-primary hover:underline text-sm font-medium">
                           Upload logo
                         </span>
-                        <Input
-                          id="logo-upload"
+                        <input
                           type="file"
                           accept="image/*"
                           onChange={handleLogoSelect}
@@ -1123,7 +1122,7 @@ export default function ProviderSignup() {
                         <label className="border-2 border-dashed border-border rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
                           <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
                           <span className="text-xs text-muted-foreground">Add image</span>
-                          <Input
+                          <input
                             type="file"
                             accept="image/*"
                             multiple
