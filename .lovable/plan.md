@@ -1,170 +1,188 @@
 
-# Lead Submission Flows Audit - Complete Bug Analysis
 
-## Executive Summary
+# Lead System Audit & Cleanup Plan
 
-After thoroughly auditing all lead submission flows, I've identified **1 critical bug** that explains why facility-specific inquiries are not being delivered to providers, plus **3 additional issues** that could cause problems in edge cases.
-
----
-
-## Critical Bug Found
-
-### BUG #1: RequestInfoModal Missing Facility Props
-
-**Location:** `src/components/profile/RequestInfoModal.tsx` (lines 475-477)
-
-**Impact:** HIGH - All inquiries submitted through the "Request Info" button on facility profile pages are being treated as direct/unassigned inquiries instead of facility-specific inquiries.
-
-**Root Cause:**
-```tsx
-// Current code (BROKEN)
-<LeadIntakeForm 
-  renderSuccess={renderSuccess}
-/>
-
-// Should be
-<LeadIntakeForm 
-  facilityId={facility.id}
-  facilityName={facility.name}
-  renderSuccess={renderSuccess}
-/>
-```
-
-**Symptoms:**
-- Leads created with `facility_id: null`
-- Status set to "unassigned" instead of "new"  
-- Source set to "direct" instead of "facility_profile"
-- Provider never receives email/SMS/in-app notification
-- Lead appears in admin queue as "direct inquiry" instead of showing in provider dashboard
-
----
-
-## Additional Issues Found
-
-### Issue #2: Success Page Text Inconsistency
-
-**Location:** `src/components/lead-intake/LeadIntakeSuccess.tsx` (line 141)
-
-**Impact:** LOW - The Concierge CTA still says "Our Concierge service matches you..." but the user already submitted to a specific facility.
-
-**Note:** This was already addressed in a previous update but may need consistency review.
-
----
-
-### Issue #3: ModalSuccessView Concierge Text Contains "free"
-
-**Location:** `src/components/profile/RequestInfoModal.tsx` (line 266)
-
-**Impact:** LOW - The word "free" still appears in the success screen's Concierge CTA text.
-
-**Current text:** "Our free Concierge service matches you with verified treatment centers..."
-
-**Should be:** "Our Concierge service matches you with verified treatment centers..."
-
----
-
-### Issue #4: Marketing Flow Email Verification Not Required
-
-**Location:** `src/pages/MarketingLanding.tsx`
-
-**Impact:** MEDIUM - The marketing landing page uses `onCustomSubmit` which bypasses the email verification flow entirely. Marketing leads are submitted without email verification.
-
-**Note:** This may be intentional for conversion optimization, but should be documented as a known difference in flows.
-
----
-
-## All Lead Submission Entry Points Audited
-
-| Entry Point | Location | Status |
-|-------------|----------|--------|
-| Facility Profile "Request Info" Modal | `RequestInfoModal.tsx` | **BUG - Missing props** |
-| Seeker Dashboard Request Form | `SeekerRequestForm.tsx` | Fixed (last update) |
-| Direct Lead Intake Page | `/request-help` route | OK |
-| Marketing Landing Page | `/lp/convert` route | OK (uses separate table) |
-| Concierge Intake | `/concierge` route | OK (different flow) |
-
----
-
-## Email Verification Flow Status
-
-The email verification flow was recently fixed and now correctly:
-
-1. Checks if email was verified within 24 hours via `verified_at` timestamp
-2. Handles retries gracefully with `alreadyVerified` response
-3. Distinguishes between invalidated codes and actual verifications
-4. Auto-verifies on form load if localStorage contains a previously verified email
-
----
-
-## Implementation Plan
-
-### Step 1: Fix RequestInfoModal (Critical)
-
-Add the missing `facilityId` and `facilityName` props to the LeadIntakeForm component in RequestInfoModal.tsx.
-
-### Step 2: Fix Concierge CTA Text (Minor)
-
-Update the "free" reference in the ModalSuccessView component.
-
-### Step 3: Verify Fix with Test
-
-After deployment, submit a test lead from a facility profile page and verify:
-- Lead appears in provider dashboard
-- Provider receives email notification
-- Lead status is "new" (not "unassigned")
-- Source is "facility_profile"
-
----
-
-## Technical Details
-
-### Data Flow for Facility-Specific Lead
+## Current Monetization Model (Confirmed Working)
 
 ```text
-User clicks "Request Info" on facility page
-    |
-    v
-RequestInfoModal opens with facility context
-    |
-    v
-LeadIntakeForm receives facilityId + facilityName props
-    |
-    v
-useLeadIntakeForm hook sets source = "facility_profile"
-    |
-    v
-handleSubmit calls submit-qualified-lead edge function
-    |
-    v
-Edge function creates lead with:
-  - facility_id: [actual facility UUID]
+User submits inquiry on facility page
+         |
+         v
+Lead created with:
+  - facility_id: [target facility]
   - status: "new"
-  - source: "facility_profile"
-  - redistribution fields populated
-    |
-    v
-Provider receives:
-  - Email notification
-  - SMS (if enabled)
-  - In-app notification
+  - redistribution_status: "exclusive"
+  - exclusive_until: +24 hours
+         |
+         v
+Provider has 24hr exclusive window to unlock ($39-$49)
+         |
+         v
+If NOT unlocked after 24hrs:
+  - Lead redistributed to 2-3 nearby facilities
+  - redistribution_status: "extended"
+  - Price drops to $15
+         |
+         v
+First facility to unlock wins exclusively
 ```
-
-### Files to Modify
-
-1. `src/components/profile/RequestInfoModal.tsx`
-   - Line 475-477: Add facilityId and facilityName props
-   - Line 266: Remove "free" from Concierge CTA
 
 ---
 
-## Verification Checklist
+## Legacy Code to Remove
 
-After implementation, verify these scenarios:
+### 1. Database Columns (Deprecated)
 
-- [ ] Submit inquiry from facility profile page -> lead assigned to that facility
-- [ ] Submit inquiry from RequestInfoModal -> provider receives notification
-- [ ] Submit inquiry from SeekerRequestForm -> lead correctly attributed
-- [ ] Submit direct inquiry (no facility) -> lead marked as "unassigned"
-- [ ] Marketing lead -> stored in marketing_leads table separately
-- [ ] Email verification persists across page refresh
-- [ ] Retry verification doesn't show error if already verified
+These columns in the `leads` table are no longer used:
+
+| Column | Purpose (Old) | Replacement |
+|--------|---------------|-------------|
+| `qualified` | Boolean qualification flag | Removed - all leads go to facility |
+| `qualification_reason` | Why lead was (un)qualified | Removed |
+| `assignment_status` | "assigned", "pending", "unassigned" | `redistribution_status` is now the only status |
+| `assignment_reason` | Routing decision explanation | Removed |
+| `routing_order` | Priority for multi-provider routing | Removed |
+| `shared_with` | Array of facility IDs for shared leads | `lead_distributions` table |
+| `exclusivity` | Old exclusivity tracking | `redistribution_status` |
+
+### 2. Database Table
+
+- **`lead_routing_logs`** - Tracked old routing decisions, no longer needed
+
+### 3. Platform Settings
+
+- **`inapp_unassigned_leads`** - Remove this setting (no unassigned concept)
+
+---
+
+## Files to Update
+
+### A. Edge Functions
+
+**1. `submit-qualified-lead/index.ts`**
+- Remove `isDirectInquiry` logic and "unassigned" status
+- All leads must have a `facility_id` (reject submissions without one)
+- Remove direct inquiry email template
+- Simplify to only handle facility-specific submissions
+
+**2. `supabase/config.toml`**
+- Remove `track-request-help` function reference (already commented/disabled)
+
+### B. Admin UI Components
+
+**1. `src/pages/admin/AdminLeads.tsx`**
+- Remove "Unassigned" filter button
+- Remove `unassignedFilter` state and logic
+- Remove URL param handling for `?unassigned=true`
+
+**2. `src/pages/admin/AdminAnalytics.tsx`**
+- Remove qualification rate metrics
+- Remove assignment success rate metrics
+- Remove assignment reasons breakdown
+- Remove qualification reasons breakdown
+- Keep redistribution analytics (those are still valid)
+
+**3. `src/pages/admin/AdminSettings.tsx`**
+- Remove "Unassigned Leads" notification toggle
+
+**4. `src/components/admin/AdminHeader.tsx`**
+- Remove unassigned leads notifications query
+- Remove unassigned leads count from notifications
+- Remove "New Unassigned Lead" toast
+- Remove "View Unassigned Leads" command item
+
+**5. `src/components/admin/dashboard/SuperAdminDashboard.tsx`**
+- Keep redistribution stats (exclusive/extended/expired)
+- Remove any unassigned lead references
+
+**6. `src/components/leads/LeadProfileModal.tsx`**
+- Remove "Unassigned" badge display
+- Remove "Leads are automatically assigned" message
+
+### C. Provider Components
+
+**1. `src/components/provider/leads/LeadDetailPanel.tsx`**
+- Remove `assignment_status` display
+- Remove `qualification_reason` display
+- Keep redistribution-related displays
+
+### D. Hooks & Utilities
+
+**1. `src/hooks/useAdminUserManagement.ts`**
+- Remove `lead_routing` permission from `ADMIN_PERMISSIONS`
+- Remove `lead_routing` from all `ROLE_DEFAULTS`
+
+**2. `src/hooks/useCentralizedLeadAnalytics.ts`**
+- Remove qualification/assignment analytics
+
+### E. Delete Edge Functions
+
+**1. Remove or archive:**
+- `supabase/functions/track-request-help/` (if still exists - appears disabled)
+
+---
+
+## Database Migration
+
+Create migration to:
+
+1. **Clean up platform_settings:**
+```sql
+DELETE FROM public.platform_settings 
+WHERE setting_key = 'inapp_unassigned_leads';
+```
+
+2. **Note:** Keep the columns in the `leads` table for now (historical data) but stop using them in new code. A future migration can drop them after confirming no issues.
+
+---
+
+## Validation After Cleanup
+
+1. Submit inquiry from facility profile page
+   - Lead should be created with `facility_id` set
+   - `redistribution_status` = "exclusive"
+   - Provider receives notification
+
+2. Admin dashboard should NOT show:
+   - Unassigned leads count
+   - Qualification rates
+   - Assignment reasons
+
+3. Admin leads page should NOT have:
+   - "Unassigned" filter button
+   - `?unassigned=true` URL param handling
+
+4. Lead profile modal should NOT show:
+   - "Unassigned" badge
+   - Assignment status field
+
+---
+
+## Files Summary
+
+| File | Action |
+|------|--------|
+| `supabase/functions/submit-qualified-lead/index.ts` | Remove direct inquiry logic |
+| `supabase/config.toml` | Remove track-request-help entry |
+| `src/pages/admin/AdminLeads.tsx` | Remove unassigned filter |
+| `src/pages/admin/AdminAnalytics.tsx` | Remove qualification metrics |
+| `src/pages/admin/AdminSettings.tsx` | Remove unassigned notification setting |
+| `src/components/admin/AdminHeader.tsx` | Remove unassigned notifications |
+| `src/components/leads/LeadProfileModal.tsx` | Remove unassigned badge |
+| `src/components/provider/leads/LeadDetailPanel.tsx` | Remove assignment/qualification displays |
+| `src/hooks/useAdminUserManagement.ts` | Remove lead_routing permission |
+
+---
+
+## What to KEEP
+
+The redistribution system is still valid and should remain:
+
+- `redistribution_status` column (exclusive, extended, expired)
+- `exclusive_until` and `extended_until` columns
+- `original_facility_id` column
+- `lead_distributions` table
+- `process-lead-redistribution` edge function
+- `send-unlock-reminders` edge function
+- Redistribution analytics in admin dashboard
+
