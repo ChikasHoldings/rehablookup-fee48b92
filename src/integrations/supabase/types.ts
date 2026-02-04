@@ -272,6 +272,48 @@ export type Database = {
         }
         Relationships: []
       }
+      badge_impressions: {
+        Row: {
+          badge_size: string
+          badge_type: string
+          created_at: string
+          facility_id: string
+          id: string
+          referrer_domain: string | null
+        }
+        Insert: {
+          badge_size?: string
+          badge_type?: string
+          created_at?: string
+          facility_id: string
+          id?: string
+          referrer_domain?: string | null
+        }
+        Update: {
+          badge_size?: string
+          badge_type?: string
+          created_at?: string
+          facility_id?: string
+          id?: string
+          referrer_domain?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "badge_impressions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "badge_impressions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocked_identifiers: {
         Row: {
           blocked_at: string
