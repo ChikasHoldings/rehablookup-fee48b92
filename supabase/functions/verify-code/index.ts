@@ -47,13 +47,15 @@ const handler = async (req: Request): Promise<Response> => {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     // First check if email was already verified recently (handle retries/double-clicks gracefully)
+    // Use verified_at to distinguish actual verifications from invalidated codes
     const { data: recentlyVerified, error: recentlyVerifiedError } = await supabase
       .from("email_verification_codes")
-      .select("id, verified, created_at")
+      .select("id, verified, created_at, verified_at")
       .eq("email", normalizedEmail)
       .eq("verified", true)
-      .gte("created_at", twentyFourHoursAgo)
-      .order("created_at", { ascending: false })
+      .not("verified_at", "is", null)
+      .gte("verified_at", twentyFourHoursAgo)
+      .order("verified_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -132,10 +134,13 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Code matches! Mark as verified
+    // Code matches! Mark as verified with timestamp
     const { error: updateError } = await supabase
       .from("email_verification_codes")
-      .update({ verified: true })
+      .update({ 
+        verified: true,
+        verified_at: new Date().toISOString() // Track actual verification time
+      })
       .eq("id", verificationRecord.id);
 
     if (updateError) {

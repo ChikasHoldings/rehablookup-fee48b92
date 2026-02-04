@@ -1150,6 +1150,7 @@ export type Database = {
           expires_at: string
           id: string
           verified: boolean | null
+          verified_at: string | null
         }
         Insert: {
           attempts?: number | null
@@ -1159,6 +1160,7 @@ export type Database = {
           expires_at: string
           id?: string
           verified?: boolean | null
+          verified_at?: string | null
         }
         Update: {
           attempts?: number | null
@@ -1168,6 +1170,7 @@ export type Database = {
           expires_at?: string
           id?: string
           verified?: boolean | null
+          verified_at?: string | null
         }
         Relationships: []
       }

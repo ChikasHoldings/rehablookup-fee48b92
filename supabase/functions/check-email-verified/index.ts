@@ -31,15 +31,17 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check for a recently verified email (within last 24 hours)
+    // Use verified_at to distinguish actual verifications from invalidated codes
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     
     const { data: verifiedRecord, error: fetchError } = await supabase
       .from("email_verification_codes")
-      .select("id, verified, created_at")
+      .select("id, verified, created_at, verified_at")
       .eq("email", normalizedEmail)
       .eq("verified", true)
-      .gte("created_at", twentyFourHoursAgo)
-      .order("created_at", { ascending: false })
+      .not("verified_at", "is", null) // Only count actual verifications, not invalidated codes
+      .gte("verified_at", twentyFourHoursAgo) // Check verified_at, not created_at
+      .order("verified_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 

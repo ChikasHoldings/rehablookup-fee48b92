@@ -60,11 +60,12 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Invalidate previous codes by expiring them (NOT by setting verified: true)
+    // Setting verified: true would trick check-email-verified into false positives
     const { error: invalidateError } = await supabase
       .from("email_verification_codes")
       .update({ 
-        verified: true,
-        expires_at: new Date().toISOString()
+        expires_at: new Date().toISOString() // Just expire, don't mark as verified
       })
       .eq("email", normalizedEmail)
       .eq("verified", false);
