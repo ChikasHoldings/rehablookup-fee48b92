@@ -104,12 +104,14 @@ export default function InternationalApplication() {
   const handleNext = () => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
       setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
