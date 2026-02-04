@@ -85,8 +85,7 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" /></noscript>
     
-    <!-- Modulepreload for faster JS parsing -->
-    <link rel="modulepreload" href="/src/main.tsx" />
+    <!-- Note: modulepreload hints are added by Vite during build -->
     
     <!-- Critical CSS for above-the-fold content (prevents FOUC) -->
     <style>
@@ -370,13 +369,26 @@
       document.getElementById('root').classList.add('js-loaded');
       document.getElementById('root').classList.remove('js-loading');
     </script>
-    <!-- Google Analytics - loaded after main content for better FCP -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
+    <!-- Google Analytics - deferred until after page is interactive -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-2VB6C1X2MQ');
+      // Defer GA loading until page is idle to improve TTI
+      function loadGoogleAnalytics() {
+        var script = document.createElement('script');
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ';
+        script.async = true;
+        document.head.appendChild(script);
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', 'G-2VB6C1X2MQ');
+      }
+      // Load after page becomes interactive
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadGoogleAnalytics, { timeout: 3000 });
+      } else {
+        setTimeout(loadGoogleAnalytics, 2000);
+      }
     </script>
     <!-- Prefetch likely next pages for instant navigation -->
     <link rel="prefetch" href="/rehab-centers" as="document" />
