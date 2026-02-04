@@ -71,15 +71,15 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=main"
+      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=main"
     },
     {
       "source": "/sitemap-index.xml",
-      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=index"
+      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=index"
     },
     {
       "source": "/sitemap-facilities.xml",
-      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities"
+      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=facilities"
     },
     {
       "source": "/((?!api|_next|static|.*\\..*).*)",
