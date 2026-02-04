@@ -1,17 +1,13 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-// Version tracking for deployment verification
-const VERSION = "1.0.1";
-const DEPLOYED_AT = "2026-01-31T00:00:00Z";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Production logging with request ID
 const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString();
@@ -19,7 +15,6 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
   console.log(`[PURCHASE-CREDITS] [${VERSION}] [${requestId}] [${timestamp}] ${step}${detailsStr}`);
 };
 
-// Credit package options with validation
 const CREDIT_PACKAGES = [
   { amountCents: 10000, label: "$100" },
   { amountCents: 25000, label: "$250" },
@@ -29,7 +24,7 @@ const CREDIT_PACKAGES = [
 
 const VALID_AMOUNTS: Set<number> = new Set(CREDIT_PACKAGES.map(p => p.amountCents));
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = generateRequestId();
   logStep(requestId, "Request received", { method: req.method, version: VERSION });
 
