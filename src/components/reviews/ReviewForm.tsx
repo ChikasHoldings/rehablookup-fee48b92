@@ -3,6 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Star, Loader2, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -35,6 +45,7 @@ export function ReviewForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const handleResendVerification = async () => {
     if (!onResendVerification) return;
@@ -77,11 +88,10 @@ export function ReviewForm({
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete your review?')) return;
-    
     setIsDeleting(true);
     const { error } = await onDelete();
     setIsDeleting(false);
+    setDeleteConfirmOpen(false);
 
     if (error) {
       toast.error('Failed to delete review');
@@ -132,84 +142,122 @@ export function ReviewForm({
 
   if (userReview && userReview.status === 'approved') {
     return (
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="py-6">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <h3 className="font-medium">Your Review is Live</h3>
-              <div className="flex items-center gap-1 mt-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={cn(
-                      "h-4 w-4",
-                      star <= userReview.rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground/30"
-                    )}
-                  />
-                ))}
+      <>
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
+              <div>
+                <h3 className="font-medium">Your Review is Live</h3>
+                <div className="flex items-center gap-1 mt-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={cn(
+                        "h-4 w-4",
+                        star <= userReview.rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground/30"
+                      )}
+                    />
+                  ))}
+                </div>
+                {userReview.review_text && (
+                  <p className="text-sm text-muted-foreground mt-2">{userReview.review_text}</p>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-3 text-destructive hover:text-destructive"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Review'}
+                </Button>
               </div>
-              {userReview.review_text && (
-                <p className="text-sm text-muted-foreground mt-2">{userReview.review_text}</p>
-              )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-3 text-destructive hover:text-destructive"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete Review'}
-              </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Review</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete your review? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 
   if (userReview && userReview.status === 'pending') {
     return (
-      <Card className="border-yellow-500/20 bg-yellow-500/5">
-        <CardContent className="py-6">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-            <div>
-              <h3 className="font-medium">Review Pending Approval</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your review is being reviewed by our team and will be visible shortly.
-              </p>
-              <div className="flex items-center gap-1 mt-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={cn(
-                      "h-4 w-4",
-                      star <= userReview.rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground/30"
-                    )}
-                  />
-                ))}
+      <>
+        <Card className="border-yellow-500/20 bg-yellow-500/5">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium">Review Pending Approval</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your review is being reviewed by our team and will be visible shortly.
+                </p>
+                <div className="flex items-center gap-1 mt-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={cn(
+                        "h-4 w-4",
+                        star <= userReview.rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground/30"
+                      )}
+                    />
+                  ))}
+                </div>
+                {userReview.review_text && (
+                  <p className="text-sm text-muted-foreground mt-2">{userReview.review_text}</p>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-3 text-destructive hover:text-destructive"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Review'}
+                </Button>
               </div>
-              {userReview.review_text && (
-                <p className="text-sm text-muted-foreground mt-2">{userReview.review_text}</p>
-              )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-3 text-destructive hover:text-destructive"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete Review'}
-              </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Review</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete your review? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 

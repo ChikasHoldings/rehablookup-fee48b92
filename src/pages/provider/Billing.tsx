@@ -33,6 +33,16 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
 
 const CREDIT_PACKAGES = [
@@ -69,6 +79,7 @@ export default function ProviderBillingPage() {
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [deleteCardConfirm, setDeleteCardConfirm] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
 
   // Handle success/cancel URL params from Stripe checkout
   useEffect(() => {
@@ -169,6 +180,13 @@ export default function ProviderBillingPage() {
     } finally {
       setPortalLoading(false);
     }
+  };
+
+  const handleDeleteCard = () => {
+    if (deleteCardConfirm.id) {
+      deletePaymentMethod.mutate(deleteCardConfirm.id);
+    }
+    setDeleteCardConfirm({ id: "", isOpen: false });
   };
 
   const getTransactionIcon = (type: string) => {
@@ -404,11 +422,7 @@ export default function ProviderBillingPage() {
                         variant="ghost"
                         size="icon"
                         className="text-muted-foreground hover:text-destructive"
-                        onClick={() => {
-                          if (confirm("Remove this card?")) {
-                            deletePaymentMethod.mutate(pm.id);
-                          }
-                        }}
+                        onClick={() => setDeleteCardConfirm({ id: pm.id, isOpen: true })}
                         disabled={deletePaymentMethod.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -439,103 +453,96 @@ export default function ProviderBillingPage() {
                   <Wallet className="h-7 w-7 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">Add Credits</h2>
-                  <p className="text-muted-foreground">
-                    Current balance: <span className="font-semibold text-foreground">{balanceFormatted}</span>
-                  </p>
+                  <p className="text-sm text-muted-foreground font-medium">Current Balance</p>
+                  <p className="text-3xl font-bold text-foreground">{balanceFormatted}</p>
                 </div>
               </div>
             </div>
-
-            {/* Packages */}
-            <div className="p-6 space-y-3">
-              <p className="text-sm font-medium text-muted-foreground mb-4">Select a package</p>
-              {CREDIT_PACKAGES.map((pkg, index) => {
-                const isPopular = pkg.bonus === "Popular";
-                const isBestValue = pkg.bonus === "Best Value";
-                const isHighlighted = isPopular || isBestValue;
-                
-                return (
+            
+            {/* Package Selection */}
+            <div className="p-6 space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Add Credits</h3>
+                <p className="text-sm text-muted-foreground">Select a package to add credits to your account</p>
+              </div>
+              
+              <div className="grid gap-3">
+                {CREDIT_PACKAGES.map((pkg) => (
                   <button
                     key={pkg.amountCents}
                     onClick={() => handlePurchase(pkg.amountCents)}
                     disabled={purchaseLoading !== null}
                     className={cn(
-                      "relative w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left group",
-                      isHighlighted 
-                        ? "border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10" 
-                        : "border-border hover:border-primary/50 hover:bg-muted/50",
-                      purchaseLoading === pkg.amountCents && "opacity-50 cursor-wait",
-                      purchaseLoading !== null && purchaseLoading !== pkg.amountCents && "opacity-60"
+                      "flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left",
+                      "hover:border-primary/50 hover:bg-primary/5",
+                      "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                      purchaseLoading === pkg.amountCents && "border-primary bg-primary/5"
                     )}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "h-12 w-12 rounded-xl flex items-center justify-center transition-colors",
-                        isHighlighted ? "bg-primary/15" : "bg-muted group-hover:bg-primary/10"
-                      )}>
-                        <Wallet className={cn(
-                          "h-6 w-6 transition-colors",
-                          isHighlighted ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                        )} />
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                        <Wallet className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="text-xl font-bold text-foreground">{pkg.label}</p>
-                        <p className="text-sm text-muted-foreground">in credits</p>
+                        <p className="font-semibold text-foreground">{pkg.label}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {pkg.amountCents / 100} credits
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       {pkg.bonus && (
                         <Badge 
+                          variant={pkg.bonus === "Popular" ? "default" : "secondary"}
                           className={cn(
-                            "font-medium",
-                            isPopular && "bg-amber-500/15 text-amber-600 border-amber-500/30",
-                            isBestValue && "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                            pkg.bonus === "Popular" && "bg-primary",
+                            pkg.bonus === "Best Value" && "bg-emerald-600 text-white border-0"
                           )}
-                          variant="outline"
                         >
-                          {isPopular && <Star className="h-3 w-3 mr-1" />}
-                          {isBestValue && <CheckCircle className="h-3 w-3 mr-1" />}
                           {pkg.bonus}
                         </Badge>
                       )}
                       {purchaseLoading === pkg.amountCents ? (
                         <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       ) : (
-                        <ChevronRight className={cn(
-                          "h-5 w-5 transition-colors",
-                          isHighlighted ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                        )} />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
                       )}
                     </div>
                   </button>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 pb-6 pt-2">
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <span>Secure checkout powered by Stripe</span>
+                ))}
               </div>
+              
+              <p className="text-xs text-center text-muted-foreground pt-2">
+                Credits never expire • Secure checkout via Stripe
+              </p>
             </div>
           </DialogContent>
         </Dialog>
 
         {/* Add Payment Method Modal */}
-        {facilityId && (
-          <AddPaymentMethodModal
-            open={showPaymentMethodModal}
-            onOpenChange={setShowPaymentMethodModal}
-            facilityId={facilityId}
-            onSuccess={() => setShowPaymentMethodModal(false)}
-            cardOnly
-          />
-        )}
+        <AddPaymentMethodModal 
+          open={showPaymentMethodModal} 
+          onOpenChange={setShowPaymentMethodModal}
+          facilityId={facilityId || ""}
+        />
+
+        {/* Delete Card Confirmation Dialog */}
+        <AlertDialog open={deleteCardConfirm.isOpen} onOpenChange={(open) => setDeleteCardConfirm(prev => ({ ...prev, isOpen: open }))}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove Payment Method</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to remove this card? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteCard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Remove Card
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         </div>
       </div>
     </div>

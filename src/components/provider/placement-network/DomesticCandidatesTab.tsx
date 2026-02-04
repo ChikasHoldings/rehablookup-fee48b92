@@ -179,7 +179,6 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                 facilityId={selectedFacility?.id || ""}
                 onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
                 isResponding={respondMutation.isPending}
-                showConfirmButton
                 hasPro={hasPro}
               />
             ))}

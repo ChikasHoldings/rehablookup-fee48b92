@@ -33,6 +33,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -332,6 +342,14 @@ export default function ProviderPlacementNetworkPage() {
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [careTypesModalOpen, setCareTypesModalOpen] = useState(false);
+  const [deletePaymentConfirm, setDeletePaymentConfirm] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
+
+  const handleDeletePaymentMethod = () => {
+    if (deletePaymentConfirm.id) {
+      deletePaymentMethodMutation.mutate(deletePaymentConfirm.id);
+    }
+    setDeletePaymentConfirm({ id: "", isOpen: false });
+  };
 
   const optedIn = facilityData?.concierge_network_opted_in || false;
   const pendingIntroductions =
@@ -738,11 +756,7 @@ export default function ProviderPlacementNetworkPage() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => {
-                              if (confirm("Remove this payment method?")) {
-                                deletePaymentMethodMutation.mutate(pm.id);
-                              }
-                            }}
+                            onClick={() => setDeletePaymentConfirm({ id: pm.id, isOpen: true })}
                             disabled={deletePaymentMethodMutation.isPending}
                           >
                             <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -857,6 +871,24 @@ export default function ProviderPlacementNetworkPage() {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Delete Payment Method Confirmation Dialog */}
+        <AlertDialog open={deletePaymentConfirm.isOpen} onOpenChange={(open) => setDeletePaymentConfirm(prev => ({ ...prev, isOpen: open }))}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove Payment Method</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to remove this payment method? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeletePaymentMethod} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
