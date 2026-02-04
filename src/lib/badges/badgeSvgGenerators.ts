@@ -136,9 +136,6 @@ export function generateMetallicBadge(config: BadgeConfig): string {
   
   <!-- Subtitle / Year -->
   <text x="${cx}" y="${cy + dim.iconSize * 0.1 + dim.fontSize * 1.4}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="${dim.fontSize * 0.8}" font-weight="600" fill="${colors.primary}">${year || subtitle}</text>
-  
-  <!-- Bottom Text -->
-  <text x="${cx}" y="${cy + radius * 0.6}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="${dim.fontSize * 0.65}" font-weight="500" fill="${colors.secondary}">REHABLOOKUP.COM</text>
 </svg>`;
 }
 
@@ -202,9 +199,6 @@ export function generateGradientBadge(config: BadgeConfig): string {
   <!-- Text Content -->
   <text x="${cx}" y="${dim.height * 0.52}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="${dim.fontSize}" font-weight="700" fill="white" letter-spacing="0.5">${title}</text>
   <text x="${cx}" y="${dim.height * 0.52 + dim.fontSize * 1.3}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="${dim.fontSize * 0.75}" font-weight="500" fill="${colors.secondary}">${subtitle}</text>
-  
-  <!-- Bottom Branding -->
-  <text x="${cx}" y="${dim.height * 0.82}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="${dim.fontSize * 0.6}" font-weight="600" fill="${colors.primary}" letter-spacing="1">REHABLOOKUP</text>
 </svg>`;
 }
 
@@ -245,9 +239,6 @@ export function generateFlatBadge(config: BadgeConfig): string {
   
   <!-- Subtitle -->
   <text x="${cx}" y="${cy + dim.iconSize * 0.15 + dim.fontSize * 1.2}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="${dim.fontSize * 0.65}" font-weight="500" fill="${colors.secondary}">${subtitle}</text>
-  
-  <!-- Bottom Label -->
-  <text x="${cx}" y="${cy + radius * 0.55}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="${dim.fontSize * 0.5}" font-weight="600" fill="${colors.primary}" letter-spacing="0.5">REHABLOOKUP.COM</text>
 </svg>`;
 }
 
