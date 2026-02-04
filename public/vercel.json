@@ -71,11 +71,11 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "/sitemap.xml"
+      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=main"
     },
     {
       "source": "/sitemap-index.xml",
-      "destination": "/sitemap-index.xml"
+      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=index"
     },
     {
       "source": "/sitemap-facilities.xml",
