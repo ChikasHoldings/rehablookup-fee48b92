@@ -17,19 +17,8 @@ export function Layout({ children }: LayoutProps) {
   // Skip redirect logic in iframe (preview functionality)
   const isInIframe = typeof window !== "undefined" && window.self !== window.top;
 
-  // Show children immediately during loading for instant perceived performance
-  // Redirects will happen once role is resolved
-  if (isLoading) {
-    // Show public layout skeleton during load - prevents flash but feels instant
-    return (
-      <div className="flex min-h-screen flex-col">
-        <InternationalBanner />
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-      </div>
-    );
-  }
+  // With localStorage caching, isLoading is usually false on mount
+  // Show content immediately - no skeleton needed for public layout
 
   // If admin is authenticated, redirect to admin panel - do NOT render public layout
   if (!isInIframe && isAuthenticated && role === "admin") {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -6,6 +6,48 @@ import { useQueryClient } from "@tanstack/react-query";
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { toast } from "sonner";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+
+// LocalStorage cache keys for instant admin auth
+const ADMIN_CACHE_KEYS = {
+  isAdmin: "rl_admin_auth",
+  isSuperAdmin: "rl_admin_super",
+  role: "rl_admin_role",
+  timestamp: "rl_admin_ts",
+} as const;
+
+const ADMIN_CACHE_TTL = 60000; // 1 minute
+
+// Get cached admin state for instant render
+function getCachedAdminState(): { isAdmin: boolean; isSuperAdmin: boolean; role: AdminRoleType } | null {
+  try {
+    const ts = localStorage.getItem(ADMIN_CACHE_KEYS.timestamp);
+    if (!ts || Date.now() - parseInt(ts, 10) > ADMIN_CACHE_TTL) return null;
+    
+    const isAdmin = localStorage.getItem(ADMIN_CACHE_KEYS.isAdmin) === "true";
+    const isSuperAdmin = localStorage.getItem(ADMIN_CACHE_KEYS.isSuperAdmin) === "true";
+    const role = (localStorage.getItem(ADMIN_CACHE_KEYS.role) || "customer_rep") as AdminRoleType;
+    
+    return isAdmin ? { isAdmin, isSuperAdmin, role } : null;
+  } catch {
+    return null;
+  }
+}
+
+function cacheAdminState(isAdmin: boolean, isSuperAdmin: boolean, role: AdminRoleType) {
+  try {
+    localStorage.setItem(ADMIN_CACHE_KEYS.isAdmin, String(isAdmin));
+    localStorage.setItem(ADMIN_CACHE_KEYS.isSuperAdmin, String(isSuperAdmin));
+    localStorage.setItem(ADMIN_CACHE_KEYS.role, role);
+    localStorage.setItem(ADMIN_CACHE_KEYS.timestamp, String(Date.now()));
+  } catch {}
+}
+
+function clearAdminCache() {
+  try {
+    Object.values(ADMIN_CACHE_KEYS).forEach(k => localStorage.removeItem(k));
+  } catch {}
+}
+
 // Map routes to permission keys
 const routePermissionMap: Record<string, string> = {
   "/admin": "dashboard",
@@ -44,35 +86,33 @@ interface AdminProfile {
 }
 
 export function useAdminAuth() {
+  // Initialize from cache for instant perceived loading
+  const cached = getCachedAdminState();
+  
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = checking, true/false = determined
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(cached?.isAdmin ?? null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(cached?.isSuperAdmin ?? false);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
   const [requireMfaSetup, setRequireMfaSetup] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Start false - don't block initial render
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  // If we have cache, start initialized for instant render
+  const [isInitialized, setIsInitialized] = useState(!!cached);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const hasInitialized = useRef(false);
+
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
-    console.log('[useAdminAuth] Checking admin status for:', userId);
     try {
       const { data, error } = await supabase.rpc("has_role", {
         _user_id: userId,
         _role: "admin",
       });
-
-      if (error) {
-        console.error("[useAdminAuth] Error checking admin status:", error);
-        return false;
-      }
-
-      console.log('[useAdminAuth] Admin status:', data);
+      if (error) return false;
       return data === true;
-    } catch (err) {
-      console.error("[useAdminAuth] Exception checking admin status:", err);
+    } catch {
       return false;
     }
   }, []);
@@ -82,40 +122,28 @@ export function useAdminAuth() {
       const { data, error } = await supabase.rpc("is_super_admin", {
         _user_id: userId,
       });
-
-      if (error) {
-        console.error("Error checking super admin status:", error);
-        return false;
-      }
-
+      if (error) return false;
       return data === true;
-    } catch (err) {
-      console.error("Exception checking super admin status:", err);
+    } catch {
       return false;
     }
   }, []);
 
   const fetchPermissions = useCallback(async (userId: string): Promise<Record<string, boolean>> => {
-    console.log('[useAdminAuth] Fetching permissions for:', userId);
     try {
       const { data, error } = await supabase
         .from("admin_user_permissions")
         .select("permission_key, granted")
         .eq("user_id", userId);
 
-      if (error) {
-        console.error("[useAdminAuth] Error fetching permissions:", error);
-        return {};
-      }
+      if (error) return {};
 
       const perms: Record<string, boolean> = {};
       data?.forEach((p) => {
         perms[p.permission_key] = p.granted;
       });
-      console.log('[useAdminAuth] Loaded permissions:', Object.keys(perms).length);
       return perms;
-    } catch (err) {
-      console.error("[useAdminAuth] Exception fetching permissions:", err);
+    } catch {
       return {};
     }
   }, []);
@@ -126,12 +154,7 @@ export function useAdminAuth() {
         .rpc("get_admin_profile", { p_user_id: userId })
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching admin profile:", error);
-        return null;
-      }
-
-      if (!data) return null;
+      if (error || !data) return null;
 
       return {
         force_password_change: data.force_password_change,
@@ -144,15 +167,13 @@ export function useAdminAuth() {
         mfa_skip: data.mfa_skip,
         admin_role: data.admin_role,
       };
-    } catch (err) {
-      console.error("Exception fetching admin profile:", err);
+    } catch {
       return null;
     }
   }, []);
 
   const checkMfaStatus = useCallback(async (): Promise<boolean> => {
     try {
-      // Check both: verified TOTP factors AND current session AAL level
       const [factorsResult, aalResult] = await Promise.all([
         supabase.auth.mfa.listFactors(),
         supabase.auth.mfa.getAuthenticatorAssuranceLevel()
@@ -161,10 +182,8 @@ export function useAdminAuth() {
       const hasVerifiedFactor = factorsResult.data?.totp?.some(f => f.status === 'verified') ?? false;
       const currentAAL = aalResult.data?.currentLevel;
       
-      // MFA is set up if user has verified factors OR their current session is at aal2
       return hasVerifiedFactor || currentAAL === 'aal2';
-    } catch (err) {
-      console.error("Error checking MFA status:", err);
+    } catch {
       return false;
     }
   }, []);
@@ -178,16 +197,11 @@ export function useAdminAuth() {
         .update({ mfa_enabled: true })
         .eq("user_id", user.id);
 
-      if (error) {
-        console.error("Error updating MFA status:", error);
-        return;
+      if (!error) {
+        setRequireMfaSetup(false);
+        setAdminProfile((prev) => prev ? { ...prev, mfa_enabled: true } : null);
       }
-
-      setRequireMfaSetup(false);
-      setAdminProfile((prev) => prev ? { ...prev, mfa_enabled: true } : null);
-    } catch (err) {
-      console.error("Exception updating MFA status:", err);
-    }
+    } catch {}
   }, [user]);
 
   const clearForcePasswordChange = useCallback(async () => {
@@ -199,16 +213,11 @@ export function useAdminAuth() {
         .update({ force_password_change: false, temp_password_hash: null, temp_password_expires_at: null })
         .eq("user_id", user.id);
 
-      if (error) {
-        console.error("Error clearing force password change:", error);
-        return;
+      if (!error) {
+        setForcePasswordChange(false);
+        setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
       }
-
-      setForcePasswordChange(false);
-      setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
-    } catch (err) {
-      console.error("Exception clearing force password change:", err);
-    }
+    } catch {}
   }, [user]);
 
   const hasPermission = useCallback((permissionKey: string): boolean => {
@@ -230,7 +239,6 @@ export function useAdminAuth() {
       }
     }
 
-    // Dashboard and settings are accessible to all admin roles
     if (!permissionKey || permissionKey === "dashboard" || permissionKey === "settings") return true;
 
     return permissions[permissionKey] === true;
@@ -241,6 +249,7 @@ export function useAdminAuth() {
     
     const performAdminChecks = async (userId: string, userEmail?: string) => {
       try {
+        // Run all checks in parallel for speed
         const [adminStatus, superAdminStatus, userPermissions, profile, hasMfa] = await Promise.all([
           checkAdminStatus(userId),
           checkSuperAdminStatus(userId),
@@ -258,11 +267,16 @@ export function useAdminAuth() {
         setForcePasswordChange(profile?.force_password_change === true);
         setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true);
         
+        // Cache for instant next load
+        const role: AdminRoleType = superAdminStatus ? "super_admin" : (profile?.admin_role || "customer_rep");
+        cacheAdminState(adminStatus, superAdminStatus, role);
+        
         if (adminStatus) {
           setSentryUser({ id: userId, email: userEmail, role: "admin" });
         }
         
         if (!adminStatus) {
+          clearAdminCache();
           navigate("/", { replace: true });
         }
       } catch (err) {
@@ -270,6 +284,7 @@ export function useAdminAuth() {
         if (mounted) {
           setIsAdmin(false);
           setIsSuperAdmin(false);
+          clearAdminCache();
         }
       } finally {
         if (mounted) {
@@ -285,6 +300,7 @@ export function useAdminAuth() {
       
       if (!session?.user) {
         setIsInitialized(true);
+        clearAdminCache();
         navigate("/admin/login", { replace: true });
         return;
       }
@@ -296,6 +312,7 @@ export function useAdminAuth() {
       console.error("Error getting auth session:", error);
       if (mounted) {
         setIsInitialized(true);
+        clearAdminCache();
       }
     });
 
@@ -315,6 +332,7 @@ export function useAdminAuth() {
           setRequireMfaSetup(false);
           setIsInitialized(true);
           clearSentryUser();
+          clearAdminCache();
           navigate("/admin/login", { replace: true });
           return;
         }
@@ -334,7 +352,6 @@ export function useAdminAuth() {
     setIsLoggingOut(true);
 
     try {
-      // Log logout activity before signing out
       if (user) {
         await logAdminAction({
           actionType: AdminAuditActions.LOGOUT,
@@ -344,14 +361,11 @@ export function useAdminAuth() {
         });
       }
 
-      // Clear Sentry user context
       clearSentryUser();
-
-      // Sign out from Supabase
+      clearAdminCache();
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("Logout error:", error);
         toast.error("Logout failed", {
           description: "Please try again or refresh the page.",
         });
@@ -359,15 +373,10 @@ export function useAdminAuth() {
         return;
       }
 
-      // Clear all cached data
       queryClient.clear();
-
-      // Show success toast
       toast.success("Signed out", {
         description: "You've been successfully logged out.",
       });
-
-      // Navigate to login
       navigate("/admin/login", { replace: true });
     } catch (err) {
       console.error("Logout exception:", err);
@@ -378,19 +387,19 @@ export function useAdminAuth() {
     }
   }, [user, isLoggingOut, queryClient, navigate]);
 
-  // Derive admin role - super_admin if isSuperAdmin, otherwise from profile
+  // Derive admin role
   const adminRole: AdminRoleType = isSuperAdmin 
     ? "super_admin" 
-    : (adminProfile?.admin_role || "customer_rep");
+    : (adminProfile?.admin_role || cached?.role || "customer_rep");
 
-  // Compute full name from first/last name
+  // Compute full name
   const adminFullName = adminProfile?.first_name && adminProfile?.last_name
     ? `${adminProfile.first_name} ${adminProfile.last_name}`
     : adminProfile?.first_name || adminProfile?.display_name || null;
 
   return { 
     user, 
-    isAdmin: isAdmin === true, // Convert null to false for backwards compat
+    isAdmin: isAdmin === true,
     isSuperAdmin, 
     adminRole,
     adminFullName,
