@@ -137,19 +137,38 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
         body: { email, code: codeString },
       });
 
-      if (fnError) throw fnError;
+      if (fnError) {
+        console.error("Function error:", fnError);
+        throw fnError;
+      }
 
       if (data?.error) {
         setError(data.error);
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
-      } else if (data?.verified) {
+        setIsVerifying(false);
+        return;
+      }
+      
+      if (data?.verified) {
+        // Set verifying to false BEFORE calling onVerified to prevent state race
+        setIsVerifying(false);
         toast({
           title: "Email Verified",
           description: "Your email has been verified successfully!",
         });
-        onVerified();
+        // Use setTimeout to ensure state updates flush before navigation
+        setTimeout(() => {
+          onVerified();
+        }, 0);
+        return;
       }
+
+      // Fallback: if neither error nor verified, treat as unexpected response
+      console.error("Unexpected response from verify-code:", data);
+      setError("Unexpected response. Please try again.");
+      setCode(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
     } catch (err: any) {
       console.error("Error verifying code:", err);
       setError("Failed to verify code. Please try again.");
