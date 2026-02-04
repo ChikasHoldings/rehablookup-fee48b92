@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useCallback, useState } from "react";
 import { 
   Home, 
   Search, 
@@ -20,7 +21,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useState } from "react";
+import { prefetchRoute } from "@/lib/routePrefetch";
 
 interface SeekerMobileNavProps extends React.HTMLAttributes<HTMLElement> {
   isAuthenticated?: boolean;
@@ -36,6 +37,10 @@ const navItems = [
 export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMobileNavProps) {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handlePrefetch = useCallback((path: string) => {
+    prefetchRoute(path);
+  }, []);
 
   const isMoreActive = ["/account/settings", "/account/saved", "/account/reviews", "/auth"].some(
     path => location.pathname.startsWith(path)
@@ -65,6 +70,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
             <Link
               key={item.href}
               to={item.href}
+              onMouseEnter={() => handlePrefetch(item.href)}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
                 isActive 
@@ -128,6 +134,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                     key={item.href}
                     to={item.href}
                     onClick={() => setDrawerOpen(false)}
+                    onMouseEnter={() => handlePrefetch(item.href)}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 active:scale-[0.98]",
                       isActive 
