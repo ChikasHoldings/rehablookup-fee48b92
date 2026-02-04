@@ -11,12 +11,11 @@ import {
 import { cn } from "@/lib/utils";
 
 interface PlacementConfirmationCardProps {
-  type: "ready" | "awaiting_provider" | "confirmed";
-  onConfirm?: () => void;
+  type: "ready" | "awaiting_provider" | "awaiting_admin" | "confirmed";
   facilityName?: string;
 }
 
-export function PlacementConfirmationCard({ type, onConfirm, facilityName }: PlacementConfirmationCardProps) {
+export function PlacementConfirmationCard({ type, facilityName }: PlacementConfirmationCardProps) {
   if (type === "confirmed") {
     return (
       <motion.div
@@ -46,7 +45,7 @@ export function PlacementConfirmationCard({ type, onConfirm, facilityName }: Pla
     );
   }
 
-  if (type === "awaiting_provider") {
+  if (type === "awaiting_provider" || type === "awaiting_admin") {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -59,10 +58,10 @@ export function PlacementConfirmationCard({ type, onConfirm, facilityName }: Pla
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-amber-800 dark:text-amber-300">
-                Awaiting Facility Confirmation
+                Finalizing Your Placement
               </h3>
               <p className="text-sm text-amber-700/80 dark:text-amber-400/80 mt-0.5">
-                You've confirmed your admission. We're waiting for the facility to confirm as well.
+                Your advisor is coordinating with the facility to finalize your admission. We'll notify you once confirmed.
               </p>
             </div>
           </CardContent>
@@ -71,7 +70,7 @@ export function PlacementConfirmationCard({ type, onConfirm, facilityName }: Pla
     );
   }
 
-  // type === "ready"
+  // type === "ready" - Show informational card instead of confirm button
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -84,15 +83,11 @@ export function PlacementConfirmationCard({ type, onConfirm, facilityName }: Pla
               <CheckCircle className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-lg">Ready to Confirm?</h3>
+              <h3 className="font-semibold text-lg">In Contact with Facilities</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Have you been admitted to one of the matched facilities? Let us know!
+                Your advisor is actively coordinating with matched facilities. Once you're ready to be admitted, your advisor will finalize the placement on your behalf.
               </p>
             </div>
-            <Button onClick={onConfirm} className="gap-2 shrink-0">
-              Confirm My Admission
-              <ArrowRight className="h-4 w-4" />
-            </Button>
           </div>
         </CardContent>
       </Card>

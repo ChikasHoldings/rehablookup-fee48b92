@@ -34,7 +34,6 @@ import {
   PlacementMatchCard,
   PlacementSupportCard 
 } from "@/components/seeker/placement";
-import { ConfirmAdmissionModal } from "@/components/seeker/ConfirmAdmissionModal";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 import { TourRequestModal } from "@/components/seeker/TourRequestModal";
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
@@ -79,7 +78,6 @@ export default function SeekerConcierge() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tourModalFacility, setTourModalFacility] = useState<Facility | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
@@ -547,12 +545,9 @@ export default function SeekerConcierge() {
           <PlacementConfirmationCard type="awaiting_provider" />
         )}
 
-        {/* Ready to Confirm */}
+        {/* In Contact Status */}
         {showConfirmation && hasMatches && (
-          <PlacementConfirmationCard 
-            type="ready" 
-            onConfirm={() => setShowConfirmModal(true)} 
-          />
+          <PlacementConfirmationCard type="ready" />
         )}
 
         {/* Feedback */}
@@ -596,30 +591,6 @@ export default function SeekerConcierge() {
           />
         )}
 
-        {showConfirmModal && selectedCase && matchedFacilities && (
-          <ConfirmAdmissionModal
-            open={showConfirmModal}
-            onClose={() => setShowConfirmModal(false)}
-            inquiryId={selectedCase.id}
-            facilities={matchedFacilities}
-            onConfirmed={() => {
-              setShowConfirmModal(false);
-              queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
-            }}
-          />
-        )}
-
-        {/* Mobile Sticky CTA */}
-        {showConfirmation && hasMatches && (
-          <>
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t md:hidden z-50 safe-area-bottom">
-              <Button onClick={() => setShowConfirmModal(true)} className="w-full gap-2">
-                Confirm My Admission
-              </Button>
-            </div>
-            <div className="h-20 md:hidden" />
-          </>
-        )}
       </div>
     </>
   );
