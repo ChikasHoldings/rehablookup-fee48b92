@@ -1,70 +1,93 @@
 
-# Sitemap Configuration Fix Plan
+# Critical SEO Infrastructure Fix
 
-## Problem Summary
-The sitemap URLs are returning HTML content instead of XML because the SPA catch-all redirect rule (`/* /index.html 200`) intercepts requests before static files can be served. This is blocking Google and Bing from discovering your pages.
+## Problem Identified
+The `vercel.json` configuration lacks explicit sitemap handling. While `_redirects` (Netlify) has proper rules, the Vercel/Lovable deployment config relies on a fragile regex pattern that may not correctly exclude XML files in all scenarios, causing sitemaps to return HTML instead of XML.
 
-## Solution Overview
-Add explicit rewrite rules for all sitemap files that execute BEFORE the catch-all, ensuring crawlers receive valid XML with the correct content type.
+## Root Cause Analysis
+| File | Status | Issue |
+|------|--------|-------|
+| `public/_redirects` | ✅ Correct | Has explicit sitemap rules before catch-all |
+| `public/vercel.json` | ❌ Missing | No explicit sitemap rewrites - relies on regex |
+| `public/robots.txt` | ✅ Correct | Single sitemap index declaration |
+| `sitemap-facilities` edge function | ✅ Working | Returns valid XML (verified) |
 
-## Implementation Steps
+## Solution
 
-### Step 1: Update `_redirects` File
-Add explicit rules for sitemap files near the top of the file, before any catch-all rules:
+### Step 1: Add Explicit Sitemap Rewrites to vercel.json
 
-```text
-# Sitemaps - Must be served BEFORE SPA catch-all
-/sitemap.xml /sitemap.xml 200
-/sitemap-index.xml /sitemap-index.xml 200
-/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities 200
+Add rewrites that explicitly serve sitemap files BEFORE the SPA catch-all:
+
+```json
+"rewrites": [
+  { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+  { "source": "/sitemap-index.xml", "destination": "/sitemap-index.xml" },
+  { 
+    "source": "/sitemap-facilities.xml", 
+    "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities" 
+  },
+  {
+    "source": "/((?!api|_next|static|.*\\..*).*)",
+    "destination": "/index.html"
+  }
+]
 ```
 
-The full `_redirects` file will be reorganized with this priority order:
-1. Trailing slash removal
-2. **Sitemap explicit rules (NEW)**
-3. Canonical redirects
-4. Static HTML pages
-5. SPA catch-all (last)
+### Step 2: Add Content-Type Headers for XML Files
 
-### Step 2: Simplify `robots.txt` Sitemap Declaration
-Update robots.txt to declare only one primary sitemap - the index file:
+Add headers to ensure XML files are served with the correct MIME type:
 
-```text
-# SITEMAPS - Single canonical entry pointing to the index
-Sitemap: https://rehablookup.com/sitemap-index.xml
+```json
+{
+  "source": "/(sitemap.*\\.xml)",
+  "headers": [
+    { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+    { "key": "Cache-Control", "value": "public, max-age=3600" }
+  ]
+}
 ```
-
-This is the recommended approach because:
-- The sitemap index already references the other sitemaps
-- Google will discover all child sitemaps from the index
-- Reduces potential for duplicate declarations causing issues
-
-### Step 3: Update `sitemap-index.xml` (Optional Enhancement)
-Ensure the sitemap index has the correct lastmod dates that reflect actual content updates.
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `public/_redirects` | Add explicit sitemap rules before catch-all |
-| `public/robots.txt` | Simplify to single sitemap declaration |
+| `public/vercel.json` | Add explicit sitemap rewrites and XML headers |
+
+## Technical Details
+
+The updated `vercel.json` rewrites section will:
+1. Explicitly handle `/sitemap.xml` → serve static file
+2. Explicitly handle `/sitemap-index.xml` → serve static file  
+3. Proxy `/sitemap-facilities.xml` → edge function
+4. Fall through to SPA catch-all for all other non-file routes
+
+The headers section will ensure proper MIME type for all sitemap XML files.
+
+## Expected Outcome
+
+After publishing:
+- `https://rehablookup.com/sitemap.xml` → Returns XML (1,657 URLs)
+- `https://rehablookup.com/sitemap-index.xml` → Returns XML (index)
+- `https://rehablookup.com/sitemap-facilities.xml` → Returns XML (2 facilities)
 
 ## Verification Steps
-After deployment:
-1. Test `https://rehablookup.com/sitemap.xml` returns XML (not HTML)
-2. Test `https://rehablookup.com/sitemap-index.xml` returns XML
-3. Test `https://rehablookup.com/sitemap-facilities.xml` returns XML
-4. Resubmit sitemap-index.xml to Google Search Console
+1. Publish the changes
+2. Test each sitemap URL returns `Content-Type: application/xml`
+3. Verify in Google Search Console that sitemap-index.xml can be read
+4. Submit only `https://rehablookup.com/sitemap-index.xml` to GSC
 
-## Final Sitemap URLs for Google Search Console
-Submit only this URL:
-- **https://rehablookup.com/sitemap-index.xml**
+## Sitemap Architecture Summary
 
-Google will automatically discover:
-- `sitemap.xml` (static pages, treatment types, locations, near-me, insurance, resources)
-- `sitemap-facilities.xml` (all facility profile pages via edge function)
-
-## Technical Notes
-- The edge function for `sitemap-facilities` is working correctly (verified - returns valid XML with 2 facilities)
-- Static sitemap.xml contains 1,657 lines covering all page types
-- No changes needed to edge function code
+```text
+sitemap-index.xml (submit this to Google)
+    ├── sitemap.xml (static - 1,657 URLs)
+    │   ├── Homepage
+    │   ├── Treatment Types (7 pages)
+    │   ├── Near-Me Pages (18+ variations)
+    │   ├── Insurance Pages (10+ pages)
+    │   ├── Location Pages (50 states + cities)
+    │   └── Resources/Articles
+    │
+    └── sitemap-facilities.xml (dynamic - edge function)
+        └── /center/{slug} profile pages
+```
