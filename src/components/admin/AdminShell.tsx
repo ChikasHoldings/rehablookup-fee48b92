@@ -81,8 +81,9 @@ export function AdminShell() {
     prefetchAdjacentPages(location.pathname);
   }, [location.pathname]);
 
-  // Don't render anything until we know auth status - show skeleton instead of spinner
-  if (!isInitialized) {
+  // Only show skeleton if truly not initialized AND no cached admin state
+  // With caching, isInitialized starts true if cached, so this rarely shows
+  if (!isInitialized && !isAdmin) {
     return <AdminShellSkeleton />;
   }
 

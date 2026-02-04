@@ -12,6 +12,55 @@ interface UserRoleResult {
   sessionExpiresAt: number | null;
 }
 
+// LocalStorage keys for instant perceived loading
+const CACHE_KEYS = {
+  role: "rl_cached_role",
+  userId: "rl_cached_uid",
+  isAuth: "rl_cached_auth",
+  timestamp: "rl_cached_ts",
+} as const;
+
+const CACHE_TTL = 60000; // 1 minute - short enough to be safe, long enough to feel instant
+
+// Get cached auth state for instant initial render
+function getCachedAuthState(): { role: UserRole; userId: string | null; isAuth: boolean } | null {
+  try {
+    const timestamp = localStorage.getItem(CACHE_KEYS.timestamp);
+    if (!timestamp || Date.now() - parseInt(timestamp, 10) > CACHE_TTL) {
+      return null;
+    }
+    
+    const role = localStorage.getItem(CACHE_KEYS.role) as UserRole;
+    const userId = localStorage.getItem(CACHE_KEYS.userId);
+    const isAuth = localStorage.getItem(CACHE_KEYS.isAuth) === "true";
+    
+    return { role, userId, isAuth };
+  } catch {
+    return null;
+  }
+}
+
+// Cache auth state for instant subsequent loads
+function cacheAuthState(role: UserRole, userId: string | null, isAuth: boolean) {
+  try {
+    localStorage.setItem(CACHE_KEYS.role, role || "");
+    localStorage.setItem(CACHE_KEYS.userId, userId || "");
+    localStorage.setItem(CACHE_KEYS.isAuth, String(isAuth));
+    localStorage.setItem(CACHE_KEYS.timestamp, String(Date.now()));
+  } catch {
+    // Silent fail - caching is optional optimization
+  }
+}
+
+// Clear cached auth state on logout
+function clearCachedAuthState() {
+  try {
+    Object.values(CACHE_KEYS).forEach(key => localStorage.removeItem(key));
+  } catch {
+    // Silent fail
+  }
+}
+
 // Define portal boundaries
 const PORTAL_CONFIG = {
   admin: {
@@ -61,23 +110,23 @@ const PROVIDER_ALLOWED_PUBLIC_ROUTES = [
  * Unified hook for role resolution and route guarding.
  * This is the SINGLE SOURCE OF TRUTH for user roles.
  * 
- * Role determination:
- * 1. Check user_roles table for 'admin' role
- * 2. Check profiles table for provider profile
- * 3. Check seeker_profiles table for seeker profile
- * 4. If authenticated but no profile, default to null (no role)
+ * PERFORMANCE: Uses localStorage caching for instant initial render.
+ * Shows cached state immediately, then refreshes in background.
  */
 export function useUserRole(): UserRoleResult {
-  const [role, setRole] = useState<UserRole>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  // Initialize from cache for instant perceived loading
+  const cached = getCachedAuthState();
+  
+  const [role, setRole] = useState<UserRole>(cached?.role ?? null);
+  const [isLoading, setIsLoading] = useState(!cached); // Not loading if we have cache
+  const [isAuthenticated, setIsAuthenticated] = useState(cached?.isAuth ?? false);
+  const [userId, setUserId] = useState<string | null>(cached?.userId ?? null);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
   
   const mountedRef = useRef(true);
   const initializingRef = useRef(true);
   const roleCache = useRef<Map<string, { role: UserRole; timestamp: number }>>(new Map());
-  const CACHE_TTL = 30000; // 30 seconds
+  const MEMORY_CACHE_TTL = 30000; // 30 seconds memory cache
 
   useEffect(() => {
     mountedRef.current = true;
@@ -86,44 +135,34 @@ export function useUserRole(): UserRoleResult {
     let refreshIntervalId: ReturnType<typeof setInterval>;
 
     const determineRole = async (uid: string): Promise<UserRole> => {
-      // Check cache first
-      const cached = roleCache.current.get(uid);
-      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        return cached.role;
+      // Check memory cache first
+      const memCached = roleCache.current.get(uid);
+      if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL) {
+        return memCached.role;
       }
 
       try {
-        // Check admin role first (highest priority)
-        const { data: isAdmin } = await supabase.rpc("has_role", {
-          _user_id: uid,
-          _role: "admin",
-        });
+        // Run all checks in parallel for speed
+        const [adminResult, providerResult, seekerResult] = await Promise.all([
+          supabase.rpc("has_role", { _user_id: uid, _role: "admin" }),
+          supabase.from("profiles").select("id").eq("user_id", uid).maybeSingle(),
+          supabase.from("seeker_profiles").select("id").eq("user_id", uid).maybeSingle(),
+        ]);
         
-        if (isAdmin === true) {
+        // Check admin role first (highest priority)
+        if (adminResult.data === true) {
           roleCache.current.set(uid, { role: "admin", timestamp: Date.now() });
           return "admin";
         }
 
-        // Check provider profile (provider role)
-        const { data: providerProfile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", uid)
-          .maybeSingle();
-
-        if (providerProfile) {
+        // Check provider profile
+        if (providerResult.data) {
           roleCache.current.set(uid, { role: "provider", timestamp: Date.now() });
           return "provider";
         }
 
         // Check seeker profile
-        const { data: seekerProfile } = await supabase
-          .from("seeker_profiles")
-          .select("id")
-          .eq("user_id", uid)
-          .maybeSingle();
-
-        if (seekerProfile) {
+        if (seekerResult.data) {
           roleCache.current.set(uid, { role: "seeker", timestamp: Date.now() });
           return "seeker";
         }
@@ -137,14 +176,15 @@ export function useUserRole(): UserRoleResult {
       }
     };
 
-    const updateAuthState = (session: typeof supabase.auth extends { getSession: () => Promise<{ data: { session: infer S } }> } ? S : never) => {
-      if (!mountedRef.current) return;
+    const updateAuthState = (session: any) => {
+      if (!mountedRef.current) return false;
       
       if (!session?.user) {
         setIsAuthenticated(false);
         setUserId(null);
         setRole(null);
         setSessionExpiresAt(null);
+        clearCachedAuthState();
         return false;
       }
 
@@ -166,7 +206,12 @@ export function useUserRole(): UserRoleResult {
           const userRole = await determineRole(session.user.id);
           if (mountedRef.current) {
             setRole(userRole);
+            // Cache for next load
+            cacheAuthState(userRole, session.user.id, true);
           }
+        } else {
+          // No session - clear cache
+          clearCachedAuthState();
         }
         
         if (mountedRef.current) {
@@ -182,18 +227,20 @@ export function useUserRole(): UserRoleResult {
           setSessionExpiresAt(null);
           setIsLoading(false);
           initializingRef.current = false;
+          clearCachedAuthState();
         }
       }
     };
 
     // Safety timeout - ensure loading state resolves even if auth hangs
+    // Reduced from 5s to 3s for faster recovery
     timeoutId = setTimeout(() => {
       if (mountedRef.current && initializingRef.current) {
         console.warn("[useUserRole] Auth initialization timed out");
         setIsLoading(false);
         initializingRef.current = false;
       }
-    }, 5000);
+    }, 3000);
 
     // Proactive token refresh to prevent session expiry
     const checkAndRefreshToken = async () => {
@@ -229,6 +276,7 @@ export function useUserRole(): UserRoleResult {
 
         if (!hasSession) {
           setRole(null);
+          clearCachedAuthState();
           return;
         }
 
@@ -239,6 +287,7 @@ export function useUserRole(): UserRoleResult {
               determineRole(session.user.id).then((userRole) => {
                 if (mountedRef.current) {
                   setRole(userRole);
+                  cacheAuthState(userRole, session.user.id, true);
                 }
               });
             }

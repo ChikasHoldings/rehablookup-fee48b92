@@ -162,14 +162,15 @@ export function SeekerShell() {
   // Get display name - prefer first name, fall back to display name or email
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
-  // Show instant skeleton while checking role or auth
-  if (isRoleLoading || isLoading) {
+  // Only show skeleton if truly loading with no cached state
+  // With localStorage caching, isRoleLoading starts false if cached
+  if ((isRoleLoading || isLoading) && role === null) {
     return <SeekerShellSkeleton />;
   }
 
-  // If user is admin or provider, show skeleton during redirect
+  // If user is admin or provider, redirect happens via useEffect - render null
   if (role === "admin" || role === "provider") {
-    return <SeekerShellSkeleton />;
+    return null;
   }
 
   return (

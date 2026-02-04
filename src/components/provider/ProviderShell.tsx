@@ -179,14 +179,15 @@ function ProviderShellContent() {
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
 
-  // Show instant skeleton while checking role
-  if (isRoleLoading) {
+  // Only show skeleton if truly loading with no cached state
+  // If we have a cached role that doesn't match, redirect silently
+  if (isRoleLoading && role === null) {
     return <ProviderShellSkeleton />;
   }
 
-  // If admin or seeker, show skeleton during redirect
+  // If admin or seeker, redirect happens via useEffect - render null during redirect
   if (role === "admin" || role === "seeker") {
-    return <ProviderShellSkeleton />;
+    return null;
   }
 
   return (
