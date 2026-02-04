@@ -97,7 +97,7 @@ export function Header({
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
-        <div className="container flex h-14 items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
+        <div className="container flex h-16 items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo - Left aligned */}
           <Link to="/" className="flex-shrink-0">
             <img 
