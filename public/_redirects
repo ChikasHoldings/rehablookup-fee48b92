@@ -6,10 +6,10 @@
 # Note: This rule uses regex to catch all paths with trailing slashes
 /*/ /:splat 301!
 
-# Sitemaps - Proxied to edge functions for reliable XML delivery
-/sitemap.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=main 200
-/sitemap-index.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=index 200
-/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities 200
+# Sitemaps - All routed through sitemap-facilities function (consolidated)
+/sitemap.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=main 200
+/sitemap-index.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=index 200
+/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=facilities 200
 
 # Force HTTPS and www normalization (if needed)
 # http://rehablookup.com/* https://rehablookup.com/:splat 301!
