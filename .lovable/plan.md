@@ -1,93 +1,159 @@
 
-# Critical SEO Infrastructure Fix
 
-## Problem Identified
-The `vercel.json` configuration lacks explicit sitemap handling. While `_redirects` (Netlify) has proper rules, the Vercel/Lovable deployment config relies on a fragile regex pattern that may not correctly exclude XML files in all scenarios, causing sitemaps to return HTML instead of XML.
+# Corrected Sitemap Infrastructure Plan
 
-## Root Cause Analysis
-| File | Status | Issue |
-|------|--------|-------|
-| `public/_redirects` | ✅ Correct | Has explicit sitemap rules before catch-all |
-| `public/vercel.json` | ❌ Missing | No explicit sitemap rewrites - relies on regex |
-| `public/robots.txt` | ✅ Correct | Single sitemap index declaration |
-| `sitemap-facilities` edge function | ✅ Working | Returns valid XML (verified) |
+## Key Findings from Audit
 
-## Solution
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Database facilities | ✅ Only 2 approved | The "2 URLs" in sitemap-facilities is correct - not a bug |
+| Static sitemap.xml | ✅ Valid XML, 1,657 lines | But cannot be served as-is because hosting intercepts |
+| `_redirects` / `vercel.json` | ❌ Not processed | Lovable's hosting ignores these files |
+| Edge functions | ✅ Working | The proven path for serving dynamic content |
 
-### Step 1: Add Explicit Sitemap Rewrites to vercel.json
+## Root Cause Confirmed
 
-Add rewrites that explicitly serve sitemap files BEFORE the SPA catch-all:
+Lovable's hosting routes ALL requests through the SPA before any static file handling. The `_redirects` and `vercel.json` files are configuration for Netlify/Vercel CDNs respectively - but Lovable uses its own routing layer that doesn't process these configurations.
 
-```json
-"rewrites": [
-  { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-  { "source": "/sitemap-index.xml", "destination": "/sitemap-index.xml" },
-  { 
-    "source": "/sitemap-facilities.xml", 
-    "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities" 
-  },
-  {
-    "source": "/((?!api|_next|static|.*\\..*).*)",
-    "destination": "/index.html"
-  }
-]
-```
+## Corrected Solution: Generate Sitemaps Dynamically via Edge Functions
 
-### Step 2: Add Content-Type Headers for XML Files
+### What We WON'T Do (Per ChatGPT Feedback)
+- ❌ No React route redirects (crawlers can't follow client-side redirects)
+- ❌ No static string embedding (goes stale, hard to maintain)
+- ❌ No exposed Supabase URLs as canonical (Google may index the function URLs)
 
-Add headers to ensure XML files are served with the correct MIME type:
+### What We WILL Do
+- ✅ Dynamic sitemap generation from a route registry
+- ✅ Edge functions return XML directly with correct MIME type
+- ✅ All sitemap URLs stay on rehablookup.com domain
+- ✅ Proper pagination structure for future growth
 
-```json
-{
-  "source": "/(sitemap.*\\.xml)",
-  "headers": [
-    { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
-    { "key": "Cache-Control", "value": "public, max-age=3600" }
-  ]
-}
-```
+---
 
-## Files to Modify
+## Implementation Steps
 
-| File | Change |
-|------|--------|
-| `public/vercel.json` | Add explicit sitemap rewrites and XML headers |
+### Step 1: Create Dynamic Sitemap Edge Function
 
-## Technical Details
+Create `supabase/functions/serve-sitemap/index.ts` that generates sitemaps dynamically:
 
-The updated `vercel.json` rewrites section will:
-1. Explicitly handle `/sitemap.xml` → serve static file
-2. Explicitly handle `/sitemap-index.xml` → serve static file  
-3. Proxy `/sitemap-facilities.xml` → edge function
-4. Fall through to SPA catch-all for all other non-file routes
+**For `/sitemap-index.xml`:**
+- Returns `<sitemapindex>` referencing child sitemaps
+- Uses canonical rehablookup.com URLs
 
-The headers section will ensure proper MIME type for all sitemap XML files.
+**For `/sitemap.xml` (main static pages):**
+- Generates URLs from a route registry array (not embedded XML)
+- Includes: homepage, treatment types, near-me pages, insurance pages, locations, resources
+- Uses changefreq and priority based on page type
+- Sets lastmod to current date (or stored value)
 
-## Expected Outcome
+**For `/sitemap-facilities.xml`:**
+- Queries database for approved facilities (already working - just needs proxying)
 
-After publishing:
-- `https://rehablookup.com/sitemap.xml` → Returns XML (1,657 URLs)
-- `https://rehablookup.com/sitemap-index.xml` → Returns XML (index)
-- `https://rehablookup.com/sitemap-facilities.xml` → Returns XML (2 facilities)
+### Step 2: Update Infrastructure Config (For Documentation)
 
-## Verification Steps
-1. Publish the changes
-2. Test each sitemap URL returns `Content-Type: application/xml`
-3. Verify in Google Search Console that sitemap-index.xml can be read
-4. Submit only `https://rehablookup.com/sitemap-index.xml` to GSC
-
-## Sitemap Architecture Summary
+Update `_redirects` and `vercel.json` to proxy to edge functions:
 
 ```text
-sitemap-index.xml (submit this to Google)
-    ├── sitemap.xml (static - 1,657 URLs)
-    │   ├── Homepage
-    │   ├── Treatment Types (7 pages)
-    │   ├── Near-Me Pages (18+ variations)
-    │   ├── Insurance Pages (10+ pages)
-    │   ├── Location Pages (50 states + cities)
-    │   └── Resources/Articles
-    │
-    └── sitemap-facilities.xml (dynamic - edge function)
-        └── /center/{slug} profile pages
+/sitemap.xml → https://[project-id].supabase.co/functions/v1/serve-sitemap?type=main
+/sitemap-index.xml → https://[project-id].supabase.co/functions/v1/serve-sitemap?type=index
+/sitemap-facilities.xml → https://[project-id].supabase.co/functions/v1/sitemap-facilities
 ```
+
+**Note:** These configs may not be processed by Lovable's hosting, but they serve as documentation and will work if deployed to Netlify/Vercel directly.
+
+### Step 3: Keep robots.txt Clean
+
+```text
+Sitemap: https://rehablookup.com/sitemap-index.xml
+```
+
+Single entry pointing to the index. Google discovers child sitemaps from there.
+
+---
+
+## Route Registry Structure
+
+The edge function will use a typed route registry instead of embedded XML:
+
+```typescript
+const STATIC_ROUTES = [
+  { path: "/", priority: 1.0, changefreq: "daily" },
+  { path: "/rehab-centers", priority: 0.95, changefreq: "daily" },
+  { path: "/locations", priority: 0.9, changefreq: "weekly" },
+  { path: "/treatment-types", priority: 0.9, changefreq: "weekly" },
+  // ... all 7 treatment type pages
+  // ... all 20+ near-me pages  
+  // ... all 10+ insurance pages
+  // ... all 50 state pages (generated from US_STATES array)
+  // ... resource/article pages
+];
+```
+
+This is:
+- Easy to update when adding new pages
+- Type-safe and maintainable
+- Generates proper XML at runtime
+
+---
+
+## Sitemap Architecture (Final)
+
+```text
+/sitemap-index.xml (submit ONLY this to Google)
+│
+├── /sitemap.xml (generated dynamically)
+│   ├── Homepage
+│   ├── /rehab-centers
+│   ├── /locations
+│   ├── /treatment-types/* (7 pages)
+│   ├── /near-me/* (20+ pages)
+│   ├── /insurance/* (10+ pages)
+│   ├── /rehab-centers/{state} (50 states)
+│   ├── /resources, /about, /contact, etc.
+│   └── Total: ~100-150 static URLs
+│
+└── /sitemap-facilities.xml (database-driven)
+    └── /center/{slug} (currently 2, will grow)
+```
+
+---
+
+## Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| `supabase/functions/serve-sitemap/index.ts` | CREATE | Dynamic sitemap generation edge function |
+| `supabase/config.toml` | MODIFY | Add `[functions.serve-sitemap]` config |
+| `public/_redirects` | MODIFY | Update sitemap proxy rules |
+| `public/vercel.json` | MODIFY | Update sitemap rewrite rules |
+
+---
+
+## Why This Approach Works
+
+1. **Edge functions ARE processed by Lovable** - We know this because `sitemap-facilities` already returns valid XML when called directly
+2. **No client-side code involved** - Edge functions return server-rendered XML
+3. **Maintainable** - Route changes in app = update the registry array
+4. **Scalable** - Pagination ready for when you have thousands of facilities
+5. **Canonical URLs** - All sitemaps served from rehablookup.com domain
+
+---
+
+## Verification Checklist (Post-Deploy)
+
+1. Open in browser - must show raw XML (not HTML):
+   - `/sitemap-index.xml`
+   - `/sitemap.xml`
+   - `/sitemap-facilities.xml`
+
+2. Check response headers (DevTools → Network):
+   - `Content-Type: application/xml`
+
+3. Count URLs:
+   - Main sitemap should have ~100-150 URLs
+   - Facilities sitemap has 2 (correct for current DB)
+
+4. Submit to Google Search Console:
+   - Submit ONLY `/sitemap-index.xml`
+   - Should show "Success" and discovered URLs
+
