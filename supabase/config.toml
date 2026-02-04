@@ -1,5 +1,8 @@
 project_id = "plckxokpyiubuekvodtc"
 
+[functions.serve-badge]
+verify_jwt = false
+
 [functions.track-view]
 verify_jwt = false
 
