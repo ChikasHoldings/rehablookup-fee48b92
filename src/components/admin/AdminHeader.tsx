@@ -134,7 +134,6 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
   // Invalidate queries callback for realtime updates
   const invalidateNotifications = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-notifications-pending"] });
-    queryClient.invalidateQueries({ queryKey: ["admin-notifications-unassigned-leads"] });
     queryClient.invalidateQueries({ queryKey: ["admin-notifications-approvals"] });
   }, [queryClient]);
 
@@ -197,23 +196,12 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
             schema: "public",
             table: "leads",
           },
-          (payload) => {
+          () => {
             invalidateNotifications();
             triggerBellAnimation();
-            const lead = payload.new as { name?: string; facility_id?: string | null };
-            if (!lead.facility_id) {
-              toast.info("New Unassigned Lead", {
-                description: `${lead.name || "A new lead"} needs assignment`,
-                action: {
-                  label: "View",
-                  onClick: () => navigate("/admin/leads?unassigned=true"),
-                },
-              });
-            } else {
-              toast.success("New Lead Received", {
-                description: `${lead.name || "A new lead"} is ready for follow-up`,
-              });
-            }
+            toast.success("New Lead Received", {
+              description: "A new lead has been submitted",
+            });
           }
         )
         .on(
@@ -251,22 +239,6 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
       return data || [];
     },
     refetchInterval: 30000, // Refresh every 30 seconds
-  });
-
-  // Fetch unassigned leads - NOT for advisors (they handle placements, not leads)
-  const { data: unassignedLeads } = useQuery({
-    queryKey: ["admin-notifications-unassigned-leads"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("leads")
-        .select("id, name, created_at")
-        .is("facility_id", null)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      return data || [];
-    },
-    refetchInterval: 30000,
-    enabled: !isAdvisor, // Advisors don't see lead notifications
   });
 
   // Fetch recent approvals (last 24 hours)
@@ -349,18 +321,6 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
       link: "/admin/providers?status=pending",
     });
   });
-
-  // Add unassigned leads count as notification - NOT for advisors
-  if (!isAdvisor && unassignedLeads && unassignedLeads.length > 0) {
-    notifications.push({
-      id: "unassigned-leads",
-      title: "Leads awaiting assignment",
-      message: `${unassignedLeads.length} unassigned lead${unassignedLeads.length > 1 ? "s" : ""} need attention`,
-      time: formatDistanceToNow(new Date(unassignedLeads[0].created_at), { addSuffix: true }),
-      type: "lead",
-      link: "/admin/leads?unassigned=true",
-    });
-  }
 
   // Add recent approvals
   recentApprovals?.forEach((facility) => {
@@ -805,13 +765,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                   <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
                     <Building2 className="h-4 w-4 mr-2" />
                     Review Pending Providers ({pendingProviders?.length || 0})
-                  </CommandItem>
-                )}
-                {canViewLeads && (
-                  <CommandItem onSelect={() => { navigate("/admin/leads?unassigned=true"); setSearchOpen(false); }}>
-                    <Users className="h-4 w-4 mr-2" />
-                    View Unassigned Leads ({unassignedLeads?.length || 0})
-                  </CommandItem>
+                </CommandItem>
                 )}
                 {canViewFeatured && (
                   <CommandItem onSelect={() => { navigate("/admin/featured"); setSearchOpen(false); }}>
