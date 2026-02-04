@@ -14,6 +14,19 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
   console.log(`[CONFIRM-PLACEMENT] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
+// UUID validation
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+// ISO date validation
+const isValidISODate = (str: string): boolean => {
+  if (!str) return true; // Optional field
+  const date = new Date(str);
+  return !isNaN(date.getTime()) && str === date.toISOString().slice(0, -1) + 'Z' || /^\d{4}-\d{2}-\d{2}/.test(str);
+};
+
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
@@ -45,8 +58,28 @@ Deno.serve(async (req) => {
 
     const { inquiryId, facilityId, confirmationType, admittedAt } = await req.json();
     
+    // Validate required fields
     if (!inquiryId || !facilityId || !confirmationType) {
       throw new Error("Inquiry ID, Facility ID, and confirmation type are required");
+    }
+
+    // Strict UUID validation
+    if (!isValidUUID(inquiryId)) {
+      throw new Error("Invalid inquiry ID format");
+    }
+    if (!isValidUUID(facilityId)) {
+      throw new Error("Invalid facility ID format");
+    }
+
+    // Validate confirmation type
+    const validConfirmationTypes = ['admin_confirm', 'placement_confirm'];
+    if (!validConfirmationTypes.includes(confirmationType)) {
+      throw new Error("Invalid confirmation type");
+    }
+
+    // Validate admitted date if provided
+    if (admittedAt && !isValidISODate(admittedAt)) {
+      throw new Error("Invalid admitted date format");
     }
 
     logStep(requestId, "Processing confirmation", { inquiryId, facilityId, confirmationType });

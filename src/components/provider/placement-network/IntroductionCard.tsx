@@ -1,12 +1,39 @@
-import { useState } from "react";
-import { Clock, CheckCircle2, XCircle, Loader2, DollarSign, MapPin, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Clock, CheckCircle2, XCircle, Loader2, MapPin, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
+// Proper type definitions
+interface ConciergeInquiry {
+  id: string;
+  user_name?: string;
+  level_of_care?: string | null;
+  payment_type?: string | null;
+  timeline_urgency?: string | null;
+  preferred_state?: string | null;
+  status?: string;
+  seeker_confirmed?: boolean;
+  seeker_confirmed_at?: string | null;
+  placement_confirmed?: boolean;
+  placement_confirmed_at?: string | null;
+  placed_facility_id?: string | null;
+}
+
+interface Introduction {
+  id: string;
+  facility_id: string;
+  inquiry_id: string;
+  created_at: string;
+  provider_response?: string | null;
+  provider_responded_at?: string | null;
+  provider_notes?: string | null;
+  concierge_inquiries?: ConciergeInquiry | null;
+}
+
 interface IntroductionCardProps {
-  introduction: any;
+  introduction: Introduction;
   facilityId: string;
   onRespond: (response: string, notes?: string) => void;
   isResponding: boolean;
@@ -53,13 +80,23 @@ export function IntroductionCard({
 
   const handleAccept = () => {
     setIsAccepting(true);
+    setIsDeclining(false);
     onRespond("interested");
   };
 
   const handleDecline = () => {
     setIsDeclining(true);
+    setIsAccepting(false);
     onRespond("not_available");
   };
+
+  // Reset loading states when mutation completes
+  useEffect(() => {
+    if (!isResponding) {
+      setIsAccepting(false);
+      setIsDeclining(false);
+    }
+  }, [isResponding]);
 
   return (
     <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
