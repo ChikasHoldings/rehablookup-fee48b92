@@ -126,21 +126,36 @@ export function LeadIntakeSuccess({ facilityName, firstName }: LeadIntakeSuccess
           </div>
         </div>
 
-        {/* Actions - Enhanced */}
-        <div className="space-y-3">
+        {/* Concierge CTA - Professional Design */}
+        <div className="bg-card border border-border rounded-2xl p-6 text-left">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <HeartHandshake className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-base mb-1">
+                Want help finding the best fit?
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Our Concierge service matches you with verified treatment centers based on your unique needs.
+              </p>
+            </div>
+          </div>
+          
           <Link to="/concierge">
-            <Button className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 group">
-              <HeartHandshake className="mr-2 h-4 w-4" />
-              Try Concierge Service
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
-          <Link to="/rehab-centers">
-            <Button variant="outline" className="w-full text-muted-foreground hover:text-foreground">
-              Browse Treatment Centers
+            <Button className="w-full h-11 gap-2 group">
+              Get Matched
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </Link>
         </div>
+
+        {/* Secondary Action */}
+        <Link to="/rehab-centers">
+          <Button variant="ghost" className="w-full text-muted-foreground hover:text-foreground">
+            Browse Treatment Centers
+          </Button>
+        </Link>
       </div>
     </div>
   );
