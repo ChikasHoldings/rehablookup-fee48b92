@@ -110,7 +110,7 @@ export function IntroductionCard({
           <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           <div>
             <p className="text-muted-foreground">
-              <strong className="text-foreground">Placement fee applies</strong> only if admission is confirmed by both parties. 
+              <strong className="text-foreground">Placement fee applies</strong> only when admission is confirmed by RehabLookup. 
               {hasPro ? " Pro discount: $800" : " Standard: $1,000"}
             </p>
           </div>
