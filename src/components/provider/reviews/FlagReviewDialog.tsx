@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ interface FlagReviewDialogProps {
   onSubmit: (reviewId: string, reason: string, details?: string) => Promise<{ error: any }>;
 }
 
-export function FlagReviewDialog({ review, open, onOpenChange, onSubmit }: FlagReviewDialogProps) {
+export const FlagReviewDialog = memo(function FlagReviewDialog({ review, open, onOpenChange, onSubmit }: FlagReviewDialogProps) {
   const [reason, setReason] = useState('');
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -177,4 +177,4 @@ export function FlagReviewDialog({ review, open, onOpenChange, onSubmit }: FlagR
       </DialogContent>
     </Dialog>
   );
-}
+});
