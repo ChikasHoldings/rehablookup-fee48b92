@@ -23,6 +23,12 @@ const PLACEMENT_FEES = {
   },
 };
 
+// UUID validation
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
@@ -46,8 +52,17 @@ Deno.serve(async (req) => {
 
     const { inquiryId, facilityId, feeType, firstMonthCost, adminInitiated } = await req.json();
     
+    // Validate required fields
     if (!inquiryId || !facilityId) {
       throw new Error("Inquiry ID and Facility ID are required");
+    }
+
+    // Strict UUID validation
+    if (!isValidUUID(inquiryId)) {
+      throw new Error("Invalid inquiry ID format");
+    }
+    if (!isValidUUID(facilityId)) {
+      throw new Error("Invalid facility ID format");
     }
 
     logStep(requestId, "Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated });
@@ -132,6 +147,34 @@ Deno.serve(async (req) => {
       // Create invoice instead of charging directly
       logStep(requestId, "No payment method, creating invoice");
       
+      // Check for existing pending invoice (idempotency)
+      const { data: existingInvoice } = await supabase
+        .from('placement_invoices')
+        .select('id, status')
+        .eq('inquiry_id', inquiryId)
+        .eq('facility_id', facilityId)
+        .in('status', ['pending', 'paid'])
+        .maybeSingle();
+
+      if (existingInvoice) {
+        logStep(requestId, "Invoice already exists", { invoiceId: existingInvoice.id, status: existingInvoice.status });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            charged: existingInvoice.status === 'paid',
+            invoiceId: existingInvoice.id,
+            amountCents: feeCents,
+            message: existingInvoice.status === 'paid' ? "Already paid" : "Invoice already exists",
+            requestId,
+            _version: VERSION,
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
+      }
+
       const dueAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
       
       const { data: invoice, error: invoiceError } = await supabase
@@ -150,6 +193,34 @@ Deno.serve(async (req) => {
         .single();
 
       if (invoiceError) {
+        // Check if this is a unique constraint error (race condition)
+        if (invoiceError.code === '23505') {
+          logStep(requestId, "Invoice created by concurrent request, fetching existing");
+          const { data: raceInvoice } = await supabase
+            .from('placement_invoices')
+            .select('id')
+            .eq('inquiry_id', inquiryId)
+            .eq('facility_id', facilityId)
+            .single();
+          
+          if (raceInvoice) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                charged: false,
+                invoiceId: raceInvoice.id,
+                amountCents: feeCents,
+                message: "Invoice exists",
+                requestId,
+                _version: VERSION,
+              }),
+              {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+              }
+            );
+          }
+        }
         throw new Error(`Failed to create invoice: ${invoiceError.message}`);
       }
 

@@ -92,6 +92,37 @@ interface InlineIntakeData {
 
 type IntakeData = FullIntakeData | InlineIntakeData;
 
+// Input sanitization helpers
+const sanitizeString = (str: string | undefined | null, maxLength = 500): string => {
+  if (!str) return '';
+  return str
+    .toString()
+    .trim()
+    .slice(0, maxLength)
+    .replace(/[<>]/g, ''); // Remove potential XSS characters
+};
+
+const sanitizeEmail = (email: string | undefined | null): string => {
+  if (!email) return '';
+  const sanitized = email.toString().trim().toLowerCase().slice(0, 255);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(sanitized)) {
+    throw new Error("Invalid email format");
+  }
+  return sanitized;
+};
+
+const sanitizePhone = (phone: string | undefined | null): string => {
+  if (!phone) return '';
+  return phone.toString().replace(/[^\d+\-() ]/g, '').slice(0, 20);
+};
+
+// UUID validation
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
@@ -137,6 +168,7 @@ Deno.serve(async (req) => {
       userId?: string;
     };
     
+    // Validate required fields
     if (!sessionId) {
       throw new Error("Session ID is required");
     }
@@ -144,12 +176,33 @@ Deno.serve(async (req) => {
       throw new Error("Intake data is required");
     }
 
-    // Use authenticated user ID first, then passed userId
-    const finalUserId = authenticatedUserId || passedUserId || null;
+    // Validate and sanitize critical intake fields
+    if (!intakeData.email) {
+      throw new Error("Email is required");
+    }
+    if (!intakeData.decisionMakerName) {
+      throw new Error("Decision maker name is required");
+    }
+    if (!intakeData.hipaaConsent) {
+      throw new Error("HIPAA consent is required");
+    }
+
+    // Sanitize user-provided data
+    const sanitizedEmail = sanitizeEmail(intakeData.email);
+    const sanitizedName = sanitizeString(intakeData.decisionMakerName, 100);
+    const sanitizedPhone = sanitizePhone(intakeData.phone);
+
+    // Validate userId if passed
+    if (passedUserId && !isValidUUID(passedUserId)) {
+      logStep(requestId, "Invalid passedUserId format, ignoring", { passedUserId });
+    }
+
+    // Use authenticated user ID first, then passed userId (if valid)
+    const finalUserId = authenticatedUserId || (passedUserId && isValidUUID(passedUserId) ? passedUserId : null);
 
     logStep(requestId, "Processing intake submission", { 
       sessionId, 
-      email: intakeData.email,
+      email: sanitizedEmail,
       userId: finalUserId,
       hasAuthHeader: !!authHeader
     });
@@ -210,12 +263,12 @@ Deno.serve(async (req) => {
         // Link to authenticated user if available
         user_id: effectiveUserId,
         
-        // Core required fields
-        user_name: intakeData.decisionMakerName,
-        user_email: intakeData.email,
-        user_phone: intakeData.phone || '',
-        preferred_state: intakeData.desiredState,
-        preferred_city: intakeData.desiredCity || currentCity,
+        // Core required fields - use sanitized values
+        user_name: sanitizedName,
+        user_email: sanitizedEmail,
+        user_phone: sanitizedPhone,
+        preferred_state: sanitizeString(intakeData.desiredState, 50),
+        preferred_city: sanitizeString(intakeData.desiredCity || currentCity, 100),
         payment_status: 'paid',
         payment_amount_cents: 2900,
         status: 'new',
@@ -230,58 +283,58 @@ Deno.serve(async (req) => {
         intake_submitted_at: new Date().toISOString(),
         
         // Step 1: Who needs help
-        age_range: intakeData.ageRange,
-        gender: intakeData.gender,
-        preferred_language: (intakeData as FullIntakeData).preferredLanguage || null,
-        current_living_situation: (intakeData as FullIntakeData).currentLivingSituation || null,
-        relationship_to_decision_maker: intakeData.relationship || 'self',
-        mobility_needs: (intakeData as FullIntakeData).mobilityNeeds || null,
+        age_range: sanitizeString(intakeData.ageRange, 50),
+        gender: sanitizeString(intakeData.gender, 50),
+        preferred_language: sanitizeString((intakeData as FullIntakeData).preferredLanguage, 50) || null,
+        current_living_situation: sanitizeString((intakeData as FullIntakeData).currentLivingSituation, 100) || null,
+        relationship_to_decision_maker: sanitizeString(intakeData.relationship, 50) || 'self',
+        mobility_needs: sanitizeString((intakeData as FullIntakeData).mobilityNeeds, 200) || null,
         
         // Step 2: Care needs
-        primary_concern: intakeData.primaryConcern,
-        substance_use_frequency: (intakeData as FullIntakeData).substanceUseFrequency || null,
-        substance_use_duration: (intakeData as FullIntakeData).substanceUseDuration || null,
-        detox_needed: intakeData.detoxNeeded,
-        level_of_care: intakeData.levelOfCare,
+        primary_concern: sanitizeString(intakeData.primaryConcern, 100),
+        substance_use_frequency: sanitizeString((intakeData as FullIntakeData).substanceUseFrequency, 50) || null,
+        substance_use_duration: sanitizeString((intakeData as FullIntakeData).substanceUseDuration, 50) || null,
+        detox_needed: sanitizeString(intakeData.detoxNeeded, 50),
+        level_of_care: sanitizeString(intakeData.levelOfCare, 50),
         prior_treatment_history: intakeData.priorTreatment ?? null,
-        prior_treatment_notes: (intakeData as FullIntakeData).priorTreatmentNotes || null,
-        current_medications: (intakeData as FullIntakeData).currentMedications || null,
+        prior_treatment_notes: sanitizeString((intakeData as FullIntakeData).priorTreatmentNotes, 500) || null,
+        current_medications: sanitizeString((intakeData as FullIntakeData).currentMedications, 500) || null,
         co_occurring_concerns: (intakeData as FullIntakeData).coOccurringConcerns || null,
-        suicide_history: (intakeData as FullIntakeData).suicideHistory || null,
+        suicide_history: sanitizeString((intakeData as FullIntakeData).suicideHistory, 100) || null,
         
         // Step 3: Logistics
-        desired_location_state: intakeData.desiredState,
-        desired_location_city: intakeData.desiredCity || null,
+        desired_location_state: sanitizeString(intakeData.desiredState, 50),
+        desired_location_city: sanitizeString(intakeData.desiredCity, 100) || null,
         desired_radius_miles: (intakeData as FullIntakeData).radiusMiles || null,
-        preferred_environment: (intakeData as FullIntakeData).preferredEnvironment || null,
-        timeline_urgency: intakeData.timeline,
-        faith_based_preference: (intakeData as FullIntakeData).faithBasedPreference || null,
+        preferred_environment: sanitizeString((intakeData as FullIntakeData).preferredEnvironment, 50) || null,
+        timeline_urgency: sanitizeString(intakeData.timeline, 50),
+        faith_based_preference: sanitizeString((intakeData as FullIntakeData).faithBasedPreference, 50) || null,
         holistic_interest: (intakeData as FullIntakeData).holisticInterest ?? null,
         amenity_preferences: (intakeData as FullIntakeData).amenityPreferences || null,
         needs_transport_help: (intakeData as FullIntakeData).needsTransport ?? null,
-        assessment_preference: (intakeData as FullIntakeData).assessmentPreference || 'phone',
+        assessment_preference: sanitizeString((intakeData as FullIntakeData).assessmentPreference, 50) || 'phone',
         
         // Step 4: Payment
-        payment_type: intakeData.paymentType,
-        insurance_carrier: intakeData.insuranceCarrier || null,
-        insurance_member_id: (intakeData as FullIntakeData).insuranceMemberId || null,
-        insurance_group_number: (intakeData as FullIntakeData).insuranceGroupNumber || null,
-        employer_name: (intakeData as FullIntakeData).employerName || null,
+        payment_type: sanitizeString(intakeData.paymentType, 50),
+        insurance_carrier: sanitizeString(intakeData.insuranceCarrier, 100) || null,
+        insurance_member_id: sanitizeString((intakeData as FullIntakeData).insuranceMemberId, 100) || null,
+        insurance_group_number: sanitizeString((intakeData as FullIntakeData).insuranceGroupNumber, 100) || null,
+        employer_name: sanitizeString((intakeData as FullIntakeData).employerName, 100) || null,
         benefits_verified: (intakeData as FullIntakeData).benefitsVerified ?? null,
-        budget_range: (intakeData as FullIntakeData).budgetRange || null,
+        budget_range: sanitizeString((intakeData as FullIntakeData).budgetRange, 50) || null,
         scholarship_interest: (intakeData as FullIntakeData).scholarshipInterest ?? null,
         willing_to_travel: (intakeData as FullIntakeData).willingToTravel ?? null,
         
-        // Step 5: Contact
-        decision_maker_name: intakeData.decisionMakerName,
-        decision_maker_phone: intakeData.phone || null,
-        best_time_to_call: (intakeData as FullIntakeData).bestTimeToCall || null,
-        alternative_contact_name: (intakeData as FullIntakeData).alternativeContactName || null,
-        alternative_contact_phone: (intakeData as FullIntakeData).alternativeContactPhone || null,
-        emergency_contact_name: (intakeData as FullIntakeData).emergencyContactName || null,
-        emergency_contact_phone: (intakeData as FullIntakeData).emergencyContactPhone || null,
-        notes: intakeData.notes || null,
-        referral_source: (intakeData as FullIntakeData).referralSource || (effectiveUserId ? 'account_concierge' : 'public_concierge'),
+        // Step 5: Contact - use pre-sanitized values
+        decision_maker_name: sanitizedName,
+        decision_maker_phone: sanitizedPhone || null,
+        best_time_to_call: sanitizeString((intakeData as FullIntakeData).bestTimeToCall, 50) || null,
+        alternative_contact_name: sanitizeString((intakeData as FullIntakeData).alternativeContactName, 100) || null,
+        alternative_contact_phone: sanitizePhone((intakeData as FullIntakeData).alternativeContactPhone) || null,
+        emergency_contact_name: sanitizeString((intakeData as FullIntakeData).emergencyContactName, 100) || null,
+        emergency_contact_phone: sanitizePhone((intakeData as FullIntakeData).emergencyContactPhone) || null,
+        notes: sanitizeString(intakeData.notes, 1000) || null,
+        referral_source: sanitizeString((intakeData as FullIntakeData).referralSource, 100) || (effectiveUserId ? 'account_concierge' : 'public_concierge'),
         hipaa_consent: intakeData.hipaaConsent,
         
         // Store full intake data as JSON backup
