@@ -576,64 +576,62 @@ export default function ConciergeIntake() {
       <div className="min-h-screen flex flex-col bg-background">
         <PublicHeader />
 
-        <main className="flex-1 py-6 md:py-16">
-          <div className="container mx-auto px-4 md:px-4">
-            <div className="max-w-3xl mx-auto">
+        <main className="flex-1 py-4 sm:py-6 md:py-12">
+          <div className="container mx-auto px-3 sm:px-4">
+            <div className="max-w-2xl mx-auto">
               {/* Form Container */}
-              <div className="bg-card border rounded-xl md:rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
                 {/* Progress */}
-                <div className="px-4 md:px-10 pt-4 md:pt-8 pb-3 md:pb-4 border-b bg-muted/30">
+                <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 border-b bg-muted/30">
                   <IntakeProgress currentStep={currentStep} totalSteps={6} />
                 </div>
 
                 {/* Step Content */}
-                <div className="px-4 md:px-10 py-6 md:py-12 min-h-[350px] md:min-h-[400px]">
-                  <div className="w-full max-w-xl mx-auto">
-                    {/* Step Header */}
-                    <motion.div
-                      key={`header-${currentStep}`}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mb-6 md:mb-8"
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-2xl">{STEP_CONFIG[currentStep - 1].icon}</span>
-                        <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                          {STEP_CONFIG[currentStep - 1].title}
-                        </h2>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {STEP_CONFIG[currentStep - 1].description}
-                      </p>
-                    </motion.div>
+                <div className="px-4 sm:px-6 md:px-8 py-5 sm:py-6 md:py-8 min-h-[300px]">
+                  {/* Step Header */}
+                  <motion.div
+                    key={`header-${currentStep}`}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-5 sm:mb-6"
+                  >
+                    <div className="flex items-center gap-2.5 mb-1.5">
+                      <span className="text-xl sm:text-2xl">{STEP_CONFIG[currentStep - 1].icon}</span>
+                      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
+                        {STEP_CONFIG[currentStep - 1].title}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {STEP_CONFIG[currentStep - 1].description}
+                    </p>
+                  </motion.div>
 
-                    <AnimatePresence mode="wait" custom={direction}>
-                      <motion.div
-                        key={currentStep}
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{
-                          x: { type: "spring", stiffness: 300, damping: 30 },
-                          opacity: { duration: 0.2 },
-                        }}
-                      >
-                        {renderStep()}
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
+                  <AnimatePresence mode="wait" custom={direction}>
+                    <motion.div
+                      key={currentStep}
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{
+                        x: { type: "spring", stiffness: 300, damping: 30 },
+                        opacity: { duration: 0.2 },
+                      }}
+                    >
+                      {renderStep()}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
 
                 {/* Navigation */}
                 {currentStep < 6 && (
-                  <div className="px-4 md:px-10 py-4 md:py-6 border-t bg-muted/20 flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
+                  <div className="px-4 sm:px-6 md:px-8 py-4 border-t bg-muted/20 flex flex-col-reverse sm:flex-row justify-center gap-3">
                     {currentStep > 1 && (
                       <Button
                         variant="outline"
                         onClick={handlePrev}
-                        className="h-11 md:h-12 px-5 md:px-6 order-2 sm:order-1"
+                        className="h-11 px-5"
                       >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
@@ -641,7 +639,7 @@ export default function ConciergeIntake() {
                     )}
                     <Button
                       onClick={handleNext}
-                      className="h-11 md:h-12 px-6 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground order-1 sm:order-2"
+                      className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
                     >
                       {currentStep === 5 ? "Review & Submit" : "Continue"}
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -650,7 +648,7 @@ export default function ConciergeIntake() {
                 )}
 
                 {currentStep === 6 && (
-                  <div className="px-4 md:px-10 py-3 md:py-4 border-t bg-muted/20 flex justify-center">
+                  <div className="px-4 sm:px-6 py-3 border-t bg-muted/20 flex justify-center">
                     <Button
                       variant="ghost"
                       onClick={handlePrev}
@@ -668,7 +666,7 @@ export default function ConciergeIntake() {
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-2"
+                  className="mt-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle className="h-3.5 w-3.5 text-green-500" />
                   Auto-saved
