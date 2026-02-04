@@ -84,6 +84,9 @@ export function StepReviewSubmit({
   const [searchParams] = useSearchParams();
   const wasCanceled = searchParams.get("canceled") === "true";
 
+  // Compute full name from firstName and lastName
+  const fullName = [data.firstName, data.lastName].filter(Boolean).join(" ") || data.decisionMakerName;
+
   return (
     <div className="space-y-6">
       {/* Cancellation Alert */}
@@ -177,7 +180,7 @@ export function StepReviewSubmit({
 
         {/* Step 5: Contact Information */}
         <SectionCard title="Contact Information" icon={Phone} step={5} onEdit={onEdit}>
-          <InfoRow label="Name" value={data.decisionMakerName} />
+          <InfoRow label="Name" value={fullName} />
           <InfoRow label="Phone" value={data.phone} />
           <InfoRow label="Email" value={data.email} />
           <InfoRow label="Best Time to Call" value={data.bestTimeToCall} />
@@ -210,7 +213,7 @@ export function StepReviewSubmit({
           {!paymentState.paid ? (
             <>
               <p className="text-sm text-muted-foreground mb-4">
-                A one-time $29 placement fee is required to submit your intake and receive personalized matches.
+                A one-time $29 placement fee is required to process your placement service.
               </p>
               <Button
                 onClick={onPay}
@@ -234,7 +237,7 @@ export function StepReviewSubmit({
           ) : (
             <>
               <p className="text-sm text-muted-foreground mb-4">
-                Your payment has been verified. Submit your intake to receive personalized treatment matches within 48 hours.
+                Your payment has been verified. Submit your intake to begin your placement process within 48 hours.
               </p>
               <Button
                 onClick={onSubmit}

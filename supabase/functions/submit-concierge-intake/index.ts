@@ -54,6 +54,8 @@ interface FullIntakeData {
   budgetRange?: string;
   scholarshipInterest?: boolean;
   willingToTravel?: boolean;
+  firstName?: string;
+  lastName?: string;
   decisionMakerName: string;
   phone: string;
   email: string;
@@ -85,6 +87,8 @@ interface InlineIntakeData {
   insuranceCarrier?: string;
   notes?: string;
   hipaaConsent: boolean;
+  firstName?: string;
+  lastName?: string;
   decisionMakerName: string;
   email: string;
   phone?: string;
@@ -180,8 +184,15 @@ Deno.serve(async (req) => {
     if (!intakeData.email) {
       throw new Error("Email is required");
     }
-    if (!intakeData.decisionMakerName) {
-      throw new Error("Decision maker name is required");
+    
+    // Compute decisionMakerName from firstName + lastName if not provided
+    const firstName = sanitizeString(intakeData.firstName, 50);
+    const lastName = sanitizeString(intakeData.lastName, 50);
+    const computedName = [firstName, lastName].filter(Boolean).join(" ");
+    const decisionMakerName = computedName || intakeData.decisionMakerName;
+    
+    if (!decisionMakerName) {
+      throw new Error("Name is required (first and last name)");
     }
     if (!intakeData.hipaaConsent) {
       throw new Error("HIPAA consent is required");
@@ -189,7 +200,7 @@ Deno.serve(async (req) => {
 
     // Sanitize user-provided data
     const sanitizedEmail = sanitizeEmail(intakeData.email);
-    const sanitizedName = sanitizeString(intakeData.decisionMakerName, 100);
+    const sanitizedName = sanitizeString(decisionMakerName, 100);
     const sanitizedPhone = sanitizePhone(intakeData.phone);
 
     // Validate userId if passed

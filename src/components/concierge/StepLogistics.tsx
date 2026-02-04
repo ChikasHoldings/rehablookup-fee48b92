@@ -1,9 +1,19 @@
-import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ZipcodeInput } from "@/components/ui/zipcode-input";
 import type { ConciergeIntakeData } from "@/pages/concierge/ConciergeIntake";
+
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+  "Wisconsin", "Wyoming"
+];
 
 const RADIUS_OPTIONS = [
   { value: "25", label: "Within 25 miles" },
@@ -52,8 +62,6 @@ interface Props {
 }
 
 export function StepLogistics({ data, errors, onChange }: Props) {
-  const [desiredZip, setDesiredZip] = useState("");
-  
   const toggleAmenity = (amenity: string) => {
     const current = data.amenityPreferences || [];
     const updated = current.includes(amenity)
@@ -64,26 +72,43 @@ export function StepLogistics({ data, errors, onChange }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* Preferred Location with Zipcode */}
-      <div className="space-y-1.5">
-        <Label className="text-sm font-medium">
-          Preferred Treatment Location <span className="text-destructive">*</span>
-        </Label>
-        <ZipcodeInput
-          zipcode={desiredZip}
-          city={data.desiredCity}
-          state={data.desiredState}
-          onZipcodeChange={setDesiredZip}
-          onCityChange={(city) => onChange({ desiredCity: city })}
-          onStateChange={(state) => onChange({ desiredState: state })}
-          zipcodeError={errors.desiredState ? "Location is required" : undefined}
-          layout="compact"
-          showLabels={false}
-        />
+      {/* Preferred Location - State dropdown + optional City */}
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">
+            Preferred Treatment State <span className="text-destructive">*</span>
+          </Label>
+          <Select 
+            value={data.desiredState} 
+            onValueChange={(v) => onChange({ desiredState: v })}
+          >
+            <SelectTrigger className={`h-11 ${errors.desiredState ? "border-destructive ring-1 ring-destructive" : ""}`}>
+              <SelectValue placeholder="Select state" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover max-h-[300px]">
+              {US_STATES.map((state) => (
+                <SelectItem key={state} value={state}>{state}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.desiredState && <p className="text-xs text-destructive">{errors.desiredState}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">
+            Preferred City <span className="text-xs text-muted-foreground">(Optional)</span>
+          </Label>
+          <Input
+            value={data.desiredCity || ""}
+            onChange={(e) => onChange({ desiredCity: e.target.value })}
+            placeholder="Enter city name (optional)"
+            className="h-11"
+          />
+        </div>
       </div>
 
       {/* Radius & Environment Row */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-sm font-medium">Search Radius</Label>
           <Select 
@@ -120,7 +145,7 @@ export function StepLogistics({ data, errors, onChange }: Props) {
       </div>
 
       {/* Timeline & Assessment Row */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-sm font-medium">
             Timeline <span className="text-destructive">*</span>

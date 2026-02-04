@@ -51,17 +51,33 @@ export function StepContact({ data, errors, onChange }: Props) {
           Primary Contact
         </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium">
-            Full Name <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            value={data.decisionMakerName}
-            onChange={(e) => onChange({ decisionMakerName: e.target.value })}
-            placeholder="Your full name"
-            className={`h-11 ${errors.decisionMakerName ? "border-destructive ring-1 ring-destructive" : ""}`}
-          />
-          {errors.decisionMakerName && <p className="text-xs text-destructive">{errors.decisionMakerName}</p>}
+        {/* First Name and Last Name */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              First Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={data.firstName || ""}
+              onChange={(e) => onChange({ firstName: e.target.value })}
+              placeholder="First name"
+              className={`h-11 ${errors.firstName ? "border-destructive ring-1 ring-destructive" : ""}`}
+            />
+            {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              Last Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={data.lastName || ""}
+              onChange={(e) => onChange({ lastName: e.target.value })}
+              placeholder="Last name"
+              className={`h-11 ${errors.lastName ? "border-destructive ring-1 ring-destructive" : ""}`}
+            />
+            {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -170,7 +186,7 @@ export function StepContact({ data, errors, onChange }: Props) {
           value={data.notes}
           onChange={(e) => onChange({ notes: e.target.value })}
           rows={3}
-          placeholder="Share any details that will help us match you..."
+          placeholder="Share any details that will help us process your placement..."
           className={`resize-none ${errors.notes ? "border-destructive ring-1 ring-destructive" : ""}`}
         />
         {errors.notes && <p className="text-xs text-destructive">{errors.notes}</p>}

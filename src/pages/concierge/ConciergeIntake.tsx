@@ -65,7 +65,9 @@ export interface ConciergeIntakeData {
   willingToTravel: boolean;
   
   // Step 5: Contact
-  decisionMakerName: string;
+  firstName: string;
+  lastName: string;
+  decisionMakerName: string; // Legacy - computed from firstName + lastName
   phone: string;
   email: string;
   bestTimeToCall: string;
@@ -126,6 +128,8 @@ const initialData: ConciergeIntakeData = {
   budgetRange: "",
   scholarshipInterest: false,
   willingToTravel: false,
+  firstName: "",
+  lastName: "",
   decisionMakerName: "",
   phone: "",
   email: "",
@@ -162,7 +166,7 @@ const STEP_CONFIG = [
   },
   { 
     title: "Contact Information", 
-    description: "How we can reach you with matches",
+    description: "How we can reach you about your placement",
     icon: "📞"
   },
   { 
@@ -339,7 +343,8 @@ export default function ConciergeIntake() {
         }
         break;
       case 5: // Contact
-        if (!formData.decisionMakerName) errors.decisionMakerName = "Name is required";
+        if (!formData.firstName) errors.firstName = "First name is required";
+        if (!formData.lastName) errors.lastName = "Last name is required";
         if (!formData.phone) errors.phone = "Phone is required";
         if (!formData.email) errors.email = "Email is required";
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
