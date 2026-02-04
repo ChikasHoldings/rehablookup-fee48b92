@@ -109,42 +109,49 @@ Deno.serve(async (req) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Provider Support Request</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
           
+          <!-- Header -->
           <tr>
-            <td style="background: #1B365D; padding: 20px 28px;">
+            <td style="background-color: #1B365D; padding: 20px 28px;">
               <h1 style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600;">
                 Provider Support: ${topicLabel}
               </h1>
             </td>
           </tr>
           
+          <!-- Body -->
           <tr>
-            <td style="padding: 28px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+            <td style="padding: 28px; background-color: #ffffff;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
                 <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #6b7280; width: 70px;">From:</td>
-                  <td style="padding: 6px 0; font-size: 14px; color: #111827; font-weight: 500;">${name}</td>
+                  <td style="padding: 8px 0; font-size: 14px; color: #6b7280; width: 70px;">From:</td>
+                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937; font-weight: 500;">${name}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Email:</td>
-                  <td style="padding: 6px 0;"><a href="mailto:${email}" style="font-size: 14px; color: #1B365D; text-decoration: none;">${email}</a></td>
+                  <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Email:</td>
+                  <td style="padding: 8px 0;"><a href="mailto:${email}" style="font-size: 15px; color: #1B365D; text-decoration: none;">${email}</a></td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #6b7280;">Topic:</td>
-                  <td style="padding: 6px 0; font-size: 14px; color: #111827;">${topicLabel}</td>
+                  <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Topic:</td>
+                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937;">${topicLabel}</td>
                 </tr>
               </table>
               
-              <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
-                <p style="margin: 0 0 6px 0; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Message</p>
-                <p style="margin: 0; font-size: 14px; color: #111827; line-height: 1.6; white-space: pre-wrap;">${message}</p>
-              </div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0 0 6px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Message</p>
+                    <p style="margin: 0; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
@@ -174,42 +181,60 @@ Deno.serve(async (req) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support Request Received</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
           
+          <!-- Header -->
           <tr>
-            <td style="background: #1B365D; padding: 20px 28px;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600;">
+            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px 28px; text-align: center;">
+              <div style="font-size: 36px; margin-bottom: 12px;">✓</div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 700;">
                 We've Received Your Message
               </h1>
             </td>
           </tr>
           
+          <!-- Body -->
           <tr>
-            <td style="padding: 28px;">
-              <p style="margin: 0 0 16px 0; font-size: 15px; color: #111827; line-height: 1.6;">
+            <td style="padding: 32px 28px; background-color: #ffffff;">
+              <p style="margin: 0 0 16px 0; font-size: 16px; color: #1f2937; line-height: 1.6;">
                 Hi ${name},
               </p>
-              <p style="margin: 0 0 16px 0; font-size: 15px; color: #111827; line-height: 1.6;">
-                Thank you for reaching out to our provider support team. We've received your message regarding <strong>${topicLabel}</strong> and will get back to you within 24 hours.
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151; line-height: 1.6;">
+                Thank you for reaching out to our provider support team. We've received your message regarding <strong style="color: #1f2937;">${topicLabel}</strong> and will get back to you within 24 hours.
               </p>
               
-              <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin: 20px 0;">
-                <p style="margin: 0 0 6px 0; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Your Message</p>
-                <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.5; white-space: pre-wrap;">${message}</p>
-              </div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 10px; margin: 24px 0;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0 0 6px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Your Message</p>
+                    <p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                  </td>
+                </tr>
+              </table>
               
-              <p style="margin: 0 0 16px 0; font-size: 15px; color: #111827; line-height: 1.6;">
-                In the meantime, you might find answers in our <a href="https://rehablookup.com/provider-faq" style="color: #1B365D; text-decoration: underline;">Provider FAQ</a> or <a href="https://rehablookup.com/provider-resources" style="color: #1B365D; text-decoration: underline;">Resources</a> section.
+              <p style="margin: 0 0 20px 0; font-size: 15px; color: #374151; line-height: 1.6;">
+                In the meantime, you might find answers in our <a href="https://rehablookup.com/provider-faq" style="color: #1B365D; text-decoration: underline; font-weight: 500;">Provider FAQ</a> or <a href="https://rehablookup.com/provider-resources" style="color: #1B365D; text-decoration: underline; font-weight: 500;">Resources</a> section.
               </p>
               
-              <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280;">
+              <p style="margin: 24px 0 0 0; font-size: 15px; color: #6b7280;">
                 Best regards,<br>
-                The RehabLookup Team
+                <strong style="color: #374151;">The RehabLookup Team</strong>
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #1B365D; padding: 20px 28px;">
+              <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #ffffff; text-align: center;">RehabLookup</p>
+              <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">
+                Connecting families with trusted treatment providers
               </p>
             </td>
           </tr>

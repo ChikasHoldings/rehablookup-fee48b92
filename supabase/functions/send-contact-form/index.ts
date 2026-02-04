@@ -117,43 +117,67 @@ Deno.serve(async (req: Request): Promise<Response> => {
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Form Submission</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="background: #1B365D; padding: 20px; text-align: center;">
-      <h1 style="color: #fff; margin: 0; font-size: 16px; font-weight: 600;">Website Contact Form</h1>
-    </div>
-    
-    <div style="padding: 24px;">
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-        <tr>
-          <td style="padding: 6px 0; color: #64748b; width: 80px;">From:</td>
-          <td style="padding: 6px 0;">${name}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #64748b;">Email:</td>
-          <td style="padding: 6px 0;"><a href="mailto:${email}" style="color: #1B365D;">${email}</a></td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #64748b;">Category:</td>
-          <td style="padding: 6px 0;">${subjectLabel}</td>
-        </tr>
-      </table>
-      
-      <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
-        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Message</p>
-        <p style="margin: 0; white-space: pre-wrap;">${message}</p>
-      </div>
-    </div>
-    
-    <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
-      <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
-      <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">
-        Submitted via rehablookup.com contact form
-      </p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #1B365D; padding: 20px 28px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600;">
+                Website Contact Form
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 28px; background-color: #ffffff;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 8px 0; font-size: 14px; color: #6b7280; width: 80px;">From:</td>
+                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937; font-weight: 500;">${name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Email:</td>
+                  <td style="padding: 8px 0;"><a href="mailto:${email}" style="font-size: 15px; color: #1B365D; text-decoration: none;">${email}</a></td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Category:</td>
+                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937;">${subjectLabel}</td>
+                </tr>
+              </table>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0 0 6px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Message</p>
+                    <p style="margin: 0; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #1B365D; padding: 20px 28px;">
+              <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #ffffff; text-align: center;">RehabLookup</p>
+              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">
+                Submitted via rehablookup.com contact form
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
