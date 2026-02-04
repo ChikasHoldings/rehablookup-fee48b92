@@ -44,22 +44,52 @@ export function useLeadIntakeForm() {
   const hasTrackedPageView = useRef(false);
   const stepViewsTracked = useRef<Set<number>>(new Set());
   
+  // Check if email is already verified (within 24h)
+  const checkEmailAlreadyVerified = async (email: string): Promise<boolean> => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("check-email-verified", {
+        body: { email: email.toLowerCase().trim() },
+      });
+      
+      if (error) throw error;
+      return data?.verified === true;
+    } catch (error) {
+      console.error("Error checking email verification:", error);
+      return false;
+    }
+  };
+  
   // Load saved form data from localStorage
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: StoredFormData = JSON.parse(saved);
-        if (Date.now() - parsed.timestamp < STORAGE_EXPIRY_MS) {
-          setFormData(parsed.data);
-          setCurrentStep(parsed.step);
-        } else {
-          localStorage.removeItem(STORAGE_KEY);
+    const loadSavedData = async () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed: StoredFormData = JSON.parse(saved);
+          if (Date.now() - parsed.timestamp < STORAGE_EXPIRY_MS) {
+            setFormData(parsed.data);
+            setCurrentStep(parsed.step);
+            
+            // Check if the saved email is already verified
+            if (parsed.data.email) {
+              const alreadyVerified = await checkEmailAlreadyVerified(parsed.data.email);
+              if (alreadyVerified) {
+                setIsEmailVerified(true);
+                setCodeSent(true); // Show as verified state
+              }
+            }
+          } else {
+            localStorage.removeItem(STORAGE_KEY);
+          }
         }
+      } catch (e) {
+        localStorage.removeItem(STORAGE_KEY);
       }
-    } catch (e) {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    };
+    
+    loadSavedData();
   }, []);
   
   // Save form data to localStorage
@@ -134,19 +164,17 @@ export function useLeadIntakeForm() {
     }
   }, [currentStep]);
   
-  // Check if email is already verified (within 24h)
-  const checkEmailAlreadyVerified = async (email: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.functions.invoke("check-email-verified", {
-        body: { email: email.toLowerCase().trim() },
-      });
-      
-      if (error) throw error;
-      return data?.verified === true;
-    } catch (error) {
-      console.error("Error checking email verification:", error);
-      return false;
+  // Function to check and auto-verify email (exposed for component use)
+  const checkAndAutoVerifyEmail = async (email: string): Promise<boolean> => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+    
+    const verified = await checkEmailAlreadyVerified(email);
+    if (verified) {
+      setIsEmailVerified(true);
+      setCodeSent(true);
+      return true;
     }
+    return false;
   };
   
   // Email verification functions
@@ -358,7 +386,7 @@ export function useLeadIntakeForm() {
     sendVerificationCode,
     verifyCode,
     resetEmailVerification,
-    checkEmailAlreadyVerified,
+    checkAndAutoVerifyEmail,
     
     // Analytics
     trackAnalytics,
