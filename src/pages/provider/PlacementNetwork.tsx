@@ -355,15 +355,6 @@ export default function ProviderPlacementNetworkPage() {
   const pendingIntroductions =
     introductions?.filter((i) => !i.provider_response || i.provider_response === "pending") || [];
 
-  // Introductions where seeker confirmed but provider hasn't yet
-  const awaitingProviderConfirm =
-    introductions?.filter(
-      (i) =>
-        i.concierge_inquiries?.seeker_confirmed &&
-        !i.concierge_inquiries?.placement_confirmed &&
-        i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
-    ) || [];
-
   // Readiness checks for placement network
   const hasCompleteProfile = !!(facilityData?.name && facilityData?.address && facilityData?.phone);
   const hasTermsAccepted = !!facilityData?.concierge_terms_accepted_at;
@@ -690,7 +681,7 @@ export default function ProviderPlacementNetworkPage() {
                     <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                     Placement Fee Structure
                   </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">You only pay when a placement is confirmed by both parties</CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">You only pay when a placement is confirmed by RehabLookup</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
                   <div className="p-3 sm:p-4 rounded-xl border bg-muted/30">
@@ -717,7 +708,7 @@ export default function ProviderPlacementNetworkPage() {
                     </p>
                     <ul className="text-[11px] sm:text-xs text-muted-foreground space-y-1 sm:space-y-1.5 ml-5 sm:ml-6">
                       <li>• Fees are charged only after confirmed placement</li>
-                      <li>• Both you and the family must confirm admission</li>
+                      <li>• RehabLookup confirms admission with both parties</li>
                       <li>• Invoices are due within 14 days</li>
                     </ul>
                   </div>

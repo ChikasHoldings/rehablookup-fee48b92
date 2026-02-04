@@ -78,12 +78,11 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   const pendingIntroductions =
     introductions?.filter((i) => !i.provider_response || i.provider_response === "pending") || [];
 
-  // Introductions where seeker confirmed but provider hasn't yet
-  const awaitingProviderConfirm =
+  // Placements confirmed by admin (status = placed with this facility)
+  const confirmedPlacements =
     introductions?.filter(
       (i) =>
-        i.concierge_inquiries?.seeker_confirmed &&
-        !i.concierge_inquiries?.placement_confirmed &&
+        i.concierge_inquiries?.placement_confirmed &&
         i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
     ) || [];
 
@@ -91,8 +90,8 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
     (i) => i.provider_response && i.provider_response !== "pending"
   ) || [];
 
-  const acceptedCount = respondedIntroductions.filter((i) => i.provider_response === "accepted").length;
-  const declinedCount = respondedIntroductions.filter((i) => i.provider_response === "declined").length;
+  const acceptedCount = respondedIntroductions.filter((i) => i.provider_response === "interested").length;
+  const declinedCount = respondedIntroductions.filter((i) => i.provider_response === "not_available").length;
 
   if (isLoading) {
     return (
@@ -158,29 +157,39 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         </Card>
       </div>
 
-      {/* Awaiting Provider Confirmation - Top Priority */}
-      {awaitingProviderConfirm.length > 0 && (
+      {/* Confirmed Placements - Show success state */}
+      {confirmedPlacements.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-emerald-500" />
-            Awaiting Your Confirmation
+            Confirmed Admissions
             <Badge variant="default" className="bg-emerald-500">
-              {awaitingProviderConfirm.length}
+              {confirmedPlacements.length}
             </Badge>
           </h3>
           <p className="text-sm text-muted-foreground -mt-1">
-            These seekers have confirmed interest. Accept to finalize the placement.
+            These placements have been confirmed by RehabLookup. Thank you for working with us!
           </p>
-          <div className="grid gap-4">
-            {awaitingProviderConfirm.map((intro) => (
-              <IntroductionCard
-                key={`confirm-${intro.id}`}
-                introduction={intro}
-                facilityId={selectedFacility?.id || ""}
-                onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
-                isResponding={respondMutation.isPending}
-                hasPro={hasPro}
-              />
+          <div className="grid gap-3">
+            {confirmedPlacements.slice(0, 3).map((intro) => (
+              <Card key={`confirmed-${intro.id}`} className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="default" className="bg-emerald-500">
+                        <CheckCircle className="h-3 w-3 mr-1" /> Placed
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {intro.concierge_inquiries?.placement_confirmed_at &&
+                        format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>

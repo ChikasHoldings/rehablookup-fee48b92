@@ -22,7 +22,8 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
  * matching → matched: Automatic when match algorithm completes with results
  * matched → introductions_sent: Automatic when first introduction is sent
  * introductions_sent → in_contact: Automatic when any provider marks "interested"
- * in_contact → placed: Automatic when both seeker and provider confirm
+ * 
+ * Note: in_contact → placed is handled by confirm-placement edge function (admin-only)
  */
 
 interface TransitionRequest {
@@ -31,9 +32,7 @@ interface TransitionRequest {
     | 'admin_viewed'         // new → reviewing
     | 'matches_completed'    // matching → matched
     | 'introduction_sent'    // matched → introductions_sent
-    | 'provider_interested'  // introductions_sent → in_contact
-    | 'seeker_confirmed'     // Check if both confirmed → placed
-    | 'provider_confirmed';  // Check if both confirmed → placed
+    | 'provider_interested'; // introductions_sent → in_contact
   actorId?: string;
   actorType?: 'admin' | 'provider' | 'seeker' | 'system';
 }
@@ -43,7 +42,6 @@ const VALID_TRANSITIONS: Record<string, { from: string[]; to: string }> = {
   matches_completed: { from: ['reviewing', 'matching'], to: 'matched' },
   introduction_sent: { from: ['matched'], to: 'introductions_sent' },
   provider_interested: { from: ['introductions_sent'], to: 'in_contact' },
-  dual_confirmation: { from: ['in_contact'], to: 'placed' },
 };
 
 serve(async (req) => {
@@ -107,21 +105,6 @@ serve(async (req) => {
           newStatus = VALID_TRANSITIONS.provider_interested.to;
         }
         break;
-
-      case 'seeker_confirmed':
-      case 'provider_confirmed':
-        // Check if both parties have confirmed
-        if (VALID_TRANSITIONS.dual_confirmation.from.includes(inquiry.status)) {
-          // For seeker_confirmed, check if provider already confirmed
-          // For provider_confirmed, check if seeker already confirmed
-          const seekerConfirmed = trigger === 'seeker_confirmed' ? true : inquiry.seeker_confirmed;
-          const providerConfirmed = trigger === 'provider_confirmed' ? true : inquiry.placement_confirmed;
-          
-          if (seekerConfirmed && providerConfirmed) {
-            newStatus = VALID_TRANSITIONS.dual_confirmation.to;
-          }
-        }
-        break;
     }
 
     // Apply the status transition if valid
@@ -133,10 +116,8 @@ serve(async (req) => {
         updateData.matched_at = new Date().toISOString();
       } else if (newStatus === 'introductions_sent' && !inquiry.status?.includes('introductions')) {
         updateData.introductions_sent_at = new Date().toISOString();
-      } else if (newStatus === 'placed') {
-        updateData.placement_confirmed_at = new Date().toISOString();
-        updateData.closed_at = new Date().toISOString();
       }
+      // Note: 'placed' status is handled by confirm-placement edge function
 
       const { error: updateError } = await supabase
         .from("concierge_inquiries")
