@@ -31,6 +31,7 @@ interface StepContactVerifyProps {
   sendVerificationCode: () => Promise<boolean>;
   verifyCode: (code: string) => Promise<boolean>;
   resetEmailVerification: () => void;
+  checkAndAutoVerifyEmail: (email: string) => Promise<boolean>;
   isSubmitting: boolean;
 }
 

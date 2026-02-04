@@ -180,7 +180,7 @@ interface SingleQuestionFlowProps {
   sendVerificationCode: () => Promise<boolean>;
   verifyCode: (code: string) => Promise<boolean>;
   resetEmailVerification: () => void;
-  checkEmailAlreadyVerified: (email: string) => Promise<boolean>;
+  checkAndAutoVerifyEmail: (email: string) => Promise<boolean>;
   isSubmitting: boolean;
   facilityName?: string | null;
 }
@@ -201,7 +201,7 @@ export function SingleQuestionFlow({
   sendVerificationCode,
   verifyCode,
   resetEmailVerification,
-  checkEmailAlreadyVerified,
+  checkAndAutoVerifyEmail,
   isSubmitting,
   facilityName,
 }: SingleQuestionFlowProps) {
@@ -289,11 +289,10 @@ export function SingleQuestionFlow({
     }
     
     // Check if email is already verified (within 24h)
-    const alreadyVerified = await checkEmailAlreadyVerified(formData.email);
+    const alreadyVerified = await checkAndAutoVerifyEmail(formData.email);
     
     if (alreadyVerified) {
       // Email already verified - submit directly
-      setIsEmailVerified(true);
       await onSubmit();
       return;
     }

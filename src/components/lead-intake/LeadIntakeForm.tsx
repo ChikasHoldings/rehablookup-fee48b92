@@ -38,7 +38,7 @@ export function LeadIntakeForm({ className, renderSuccess, onCustomSubmit }: Lea
     sendVerificationCode,
     verifyCode,
     resetEmailVerification,
-    checkEmailAlreadyVerified,
+    checkAndAutoVerifyEmail,
   } = useLeadIntakeForm();
 
   // Determine which submission state to use
@@ -87,7 +87,7 @@ export function LeadIntakeForm({ className, renderSuccess, onCustomSubmit }: Lea
           sendVerificationCode={sendVerificationCode}
           verifyCode={verifyCode}
           resetEmailVerification={resetEmailVerification}
-          checkEmailAlreadyVerified={checkEmailAlreadyVerified}
+          checkAndAutoVerifyEmail={checkAndAutoVerifyEmail}
           isSubmitting={isSubmitting}
           facilityName={facilityName}
         />
