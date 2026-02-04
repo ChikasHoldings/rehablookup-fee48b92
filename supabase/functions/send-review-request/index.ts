@@ -1,10 +1,9 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const LOG_PREFIX = "[SEND-REVIEW-REQUEST]";
@@ -19,10 +18,9 @@ interface ReviewRequestBody {
   recipientEmail: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+Deno.serve(async (req) => {
   logStep("Function invoked", { method: req.method });
 
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     logStep("Handling CORS preflight");
     return new Response(null, { headers: corsHeaders });
@@ -58,7 +56,6 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get auth user
     const authHeader = req.headers.get("Authorization");
     logStep("Auth header check", { hasAuthHeader: !!authHeader });
 
@@ -83,7 +80,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Parse request body
     let body: ReviewRequestBody;
     try {
       body = await req.json();
@@ -98,7 +94,6 @@ const handler = async (req: Request): Promise<Response> => {
     const { facilityId, recipientName, recipientEmail } = body;
     logStep("Request parsed", { facilityId, recipientName, recipientEmail: recipientEmail?.substring(0, 3) + "***" });
 
-    // Validate required fields
     if (!facilityId || !recipientName || !recipientEmail) {
       logStep("ERROR: Missing required fields", { facilityId: !!facilityId, recipientName: !!recipientName, recipientEmail: !!recipientEmail });
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -107,7 +102,6 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(recipientEmail)) {
       logStep("ERROR: Invalid email format");
@@ -117,7 +111,6 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Verify user owns this facility
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
       .select("id, name, city, state, slug, user_id")
@@ -135,7 +128,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("Facility verified", { facilityName: facility.name, slug: facility.slug });
 
-    // Check if we already sent a request to this email for this facility recently (within 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -157,12 +149,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Generate review link - use production URL
     const baseUrl = "https://rehablookup.com";
     const reviewLink = `${baseUrl}/center/${facility.slug}?action=review`;
     logStep("Review link generated", { reviewLink });
 
-    // Create the review request record first (pending status)
     const { data: reviewRequest, error: insertError } = await supabase
       .from("review_requests")
       .insert({
@@ -185,7 +175,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("Review request record created", { requestId: reviewRequest.id });
 
-    // Send the email
     try {
       const emailResponse = await resend.emails.send({
         from: "RehabLookup <no-reply@rehablookup.com>",
@@ -244,10 +233,8 @@ const handler = async (req: Request): Promise<Response> => {
 
       logStep("Email API response", { response: JSON.stringify(emailResponse) });
 
-      // Check if email sending failed
       if (emailResponse.error) {
         logStep("ERROR: Email sending failed", { error: emailResponse.error });
-        // Update status to failed
         await supabase
           .from("review_requests")
           .update({ status: "failed" })
@@ -261,7 +248,6 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      // Update the review request with sent status and resend_id
       const { error: updateError } = await supabase
         .from("review_requests")
         .update({
@@ -289,7 +275,6 @@ const handler = async (req: Request): Promise<Response> => {
     } catch (emailError: any) {
       logStep("ERROR: Exception during email send", { error: emailError.message });
       
-      // Update status to failed
       await supabase
         .from("review_requests")
         .update({ status: "failed" })
@@ -308,6 +293,4 @@ const handler = async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-};
-
-serve(handler);
+});

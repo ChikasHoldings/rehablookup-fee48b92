@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -27,7 +26,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[SMS-NOTIFICATION] ${step}${detailsStr}`);
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
   
   if (req.method === "OPTIONS") {
@@ -37,7 +36,6 @@ serve(async (req) => {
   try {
     logStep("Function started", { requestId });
 
-    // Validate environment
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -60,7 +58,6 @@ serve(async (req) => {
       );
     }
 
-    // Parse and validate request
     let body: SMSNotificationRequest;
     try {
       body = await req.json();
@@ -82,7 +79,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate notification type
     const validTypes = ["new_lead", "lead_status", "lead_limit_warning", "subscription_alert", "general"];
     if (!validTypes.includes(notificationType)) {
       logStep("Invalid notification type", { requestId, type: notificationType });
@@ -96,7 +92,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user's notification preferences and phone
     const { data: notifPrefs, error: prefsError } = await supabase
       .from("notification_preferences")
       .select("sms_lead_alerts")
@@ -107,7 +102,6 @@ serve(async (req) => {
       logStep("Error fetching notification preferences", { requestId, error: prefsError.message });
     }
 
-    // Check if SMS alerts are enabled
     if (!notifPrefs?.sms_lead_alerts) {
       logStep("SMS alerts disabled for user", { requestId, userId: userId.slice(0, 8) });
       return new Response(
@@ -116,7 +110,6 @@ serve(async (req) => {
       );
     }
 
-    // Get provider profile with phone verification status
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("phone, phone_verified")
@@ -147,7 +140,6 @@ serve(async (req) => {
       );
     }
 
-    // Format phone to E.164
     let phone = profile.phone.replace(/\D/g, "");
     if (phone.length === 10) {
       phone = `+1${phone}`;
@@ -157,7 +149,6 @@ serve(async (req) => {
       phone = `+${phone}`;
     }
 
-    // Validate phone format
     const phoneRegex = /^\+1\d{10}$/;
     if (!phoneRegex.test(phone)) {
       logStep("Invalid phone format after normalization", { requestId, phoneLength: phone.length });
@@ -167,7 +158,6 @@ serve(async (req) => {
       );
     }
 
-    // Build message based on notification type
     let messageBody = "";
     
     switch (notificationType) {
@@ -214,14 +204,12 @@ serve(async (req) => {
         messageBody = "RehabLookup: You have a new notification.";
     }
 
-    // Truncate message to SMS limit (160 chars for single SMS)
     if (messageBody.length > 160) {
       messageBody = messageBody.substring(0, 157) + "...";
     }
 
     logStep("Sending SMS via Twilio", { requestId, notificationType, messageLength: messageBody.length });
 
-    // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     const authHeader = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
 

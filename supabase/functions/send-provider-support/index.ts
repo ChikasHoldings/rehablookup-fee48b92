@@ -1,10 +1,9 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface ProviderSupportRequest {
@@ -24,7 +23,7 @@ const topicLabels: Record<string, string> = {
   other: "Other",
 };
 
-const handler = async (req: Request): Promise<Response> => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -44,7 +43,6 @@ const handler = async (req: Request): Promise<Response> => {
     const body: ProviderSupportRequest = await req.json();
     const { name, email, topic, message, userId } = body;
 
-    // Validate required fields
     if (!name || !email || !topic || !message) {
       console.error("[SEND-PROVIDER-SUPPORT] Missing required fields");
       return new Response(
@@ -53,7 +51,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return new Response(
@@ -66,7 +63,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const topicLabel = topicLabels[topic] || topic;
 
-    // Store ticket in database for Admin Support Inbox
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -87,7 +83,6 @@ const handler = async (req: Request): Promise<Response> => {
     } else {
       console.log("[SEND-PROVIDER-SUPPORT] Support ticket created successfully");
       
-      // Notify all admins with support permission
       const { data: adminUsers } = await supabaseAdmin
         .from('admin_user_profiles')
         .select('user_id')
@@ -163,7 +158,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(resendApiKey);
     
-    // Send notification to support team
     const supportEmailResponse = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: ["providers@rehablookup.com"],
@@ -174,7 +168,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("[SEND-PROVIDER-SUPPORT] Support email sent:", supportEmailResponse);
 
-    // Send confirmation email to user
     const confirmationHtml = `
 <!DOCTYPE html>
 <html>
@@ -251,6 +244,4 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
-};
-
-serve(handler);
+});
