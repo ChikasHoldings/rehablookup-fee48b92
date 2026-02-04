@@ -38,7 +38,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/provider/help": () => import("@/pages/provider/Help"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
   "/provider/reviews": () => import("@/pages/provider/Reviews"),
-  "/provider/embed-badge": () => import("@/pages/provider/EmbedBadge"),
+  // "/provider/embed-badge": () => import("@/pages/provider/EmbedBadge"), // Hidden for now
   // Admin panel routes (lazy loaded)
   "/admin": () => import("@/pages/admin/AdminDashboard"),
   "/admin/dashboard": () => import("@/pages/admin/AdminDashboard"),

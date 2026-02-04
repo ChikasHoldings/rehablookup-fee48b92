@@ -10,7 +10,6 @@ import {
   Sparkles,
   Star,
   Network,
-  Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +32,7 @@ const navItems = [
   { href: "/provider/listings", label: "My Listing", icon: Building2 },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
-  { href: "/provider/embed-badge", label: "Embed Badge", icon: Code2 },
+  // { href: "/provider/embed-badge", label: "Embed Badge", icon: Code2 }, // Hidden for now - incomplete feature
   { href: "/provider/billing", label: "Billing", icon: Wallet },
   { href: "/provider/settings", label: "Settings", icon: Settings },
 ];
