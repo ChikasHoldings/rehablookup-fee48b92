@@ -35,7 +35,7 @@ import {
   PlacementSupportCard 
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
-import { TourRequestModal } from "@/components/seeker/TourRequestModal";
+// TourRequestModal removed - all coordination goes through advisor (brokerage model)
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 import { ConciergePaymentRecovery } from "@/components/seeker/ConciergePaymentRecovery";
 
@@ -78,7 +78,7 @@ export default function SeekerConcierge() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [tourModalFacility, setTourModalFacility] = useState<Facility | null>(null);
+  // Tour modal state removed - brokerage model requires advisor coordination
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -536,7 +536,6 @@ export default function SeekerConcierge() {
             inquiryId={selectedCase.id}
             matchedFacilityIds={selectedCase.matched_facility_ids}
             matchedFacilities={matchedFacilities}
-            onRequestTour={setTourModalFacility}
           />
         )}
 
@@ -579,17 +578,6 @@ export default function SeekerConcierge() {
 
         {/* Support Card */}
         <PlacementSupportCard />
-
-        {/* Modals */}
-        {tourModalFacility && selectedCase && (
-          <TourRequestModal
-            open={!!tourModalFacility}
-            onClose={() => setTourModalFacility(null)}
-            inquiryId={selectedCase.id}
-            facilityId={tourModalFacility.id}
-            facilityName={tourModalFacility.name}
-          />
-        )}
 
       </div>
     </>

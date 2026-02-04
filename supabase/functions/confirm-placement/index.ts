@@ -112,6 +112,24 @@ serve(async (req) => {
       throw new Error(`Failed to update inquiry: ${updateError.message}`);
     }
 
+    // Log the case event
+    try {
+      await supabaseService.from("concierge_case_events").insert({
+        inquiry_id: inquiryId,
+        event_type: "placement_confirmed",
+        event_data: { 
+          facility_id: facilityId,
+          admitted_at: admittedAt || new Date().toISOString(),
+          confirmed_by: "admin",
+        },
+        actor_id: userData.user.id,
+        actor_type: "admin",
+      });
+      logStep(requestId, "Case event logged");
+    } catch (eventError) {
+      logStep(requestId, "Warning: Failed to log case event", { error: String(eventError) });
+    }
+
     // Send placement complete notification (admin-controlled)
     logStep(requestId, "Sending placement complete notifications");
     
