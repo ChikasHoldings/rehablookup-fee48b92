@@ -1,7 +1,6 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +14,7 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
   console.log(`[CONFIRM-PLACEMENT] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
   if (req.method === "OPTIONS") {
