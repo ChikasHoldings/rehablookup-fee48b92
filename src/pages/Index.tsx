@@ -540,61 +540,6 @@ const Index = () => {
         </section>
       )}
 
-      {/* Treatment Options */}
-      <section className="py-10 md:py-12 lg:py-20 bg-muted/40 border-y border-border/50">
-        <div className="container px-4 md:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="mb-6 md:mb-8 lg:mb-10 text-center">
-            <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
-            <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
-              Treatment Programs
-            </h2>
-          </div>
-
-          {/* Options Grid - Optimized for tablet with 2 columns */}
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {treatmentOptions.map((option, index) => (
-              <Link
-                key={option.title}
-                to={option.link}
-                className="group"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="relative flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 overflow-hidden">
-                  {/* Subtle background gradient on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  
-                  {/* Icon with scale and rotate */}
-                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-md">
-                    <option.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-                  </div>
-                  
-                  <div className="relative flex-1 min-w-0">
-                    <h3 className="font-semibold text-[15px] md:text-base text-foreground transition-colors duration-200 group-hover:text-primary">
-                      {option.title}
-                    </h3>
-                    <p className="mt-0.5 text-[13px] md:text-sm text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
-                      {option.description}
-                    </p>
-                  </div>
-                  
-                  {/* Arrow with enhanced animation */}
-                  <div className="relative mt-1 flex items-center">
-                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
-                  </div>
-                  
-                  {/* Bottom accent line */}
-                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* International Patients CTA */}
-      <InternationalCTA />
-
       {/* How It Works */}
       <section className="py-10 md:py-12 lg:py-20">
         <div className="container px-4 md:px-6 lg:px-8">
@@ -663,6 +608,58 @@ const Index = () => {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Treatment Options */}
+      <section className="py-10 md:py-12 lg:py-20 bg-muted/40 border-y border-border/50">
+        <div className="container px-4 md:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="mb-6 md:mb-8 lg:mb-10 text-center">
+            <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
+            <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
+              Treatment Programs
+            </h2>
+          </div>
+
+          {/* Options Grid - Optimized for tablet with 2 columns */}
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {treatmentOptions.map((option, index) => (
+              <Link
+                key={option.title}
+                to={option.link}
+                className="group"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="relative flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 overflow-hidden">
+                  {/* Subtle background gradient on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  
+                  {/* Icon with scale and rotate */}
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-md">
+                    <option.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+                  
+                  <div className="relative flex-1 min-w-0">
+                    <h3 className="font-semibold text-[15px] md:text-base text-foreground transition-colors duration-200 group-hover:text-primary">
+                      {option.title}
+                    </h3>
+                    <p className="mt-0.5 text-[13px] md:text-sm text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
+                      {option.description}
+                    </p>
+                  </div>
+                  
+                  {/* Arrow with enhanced animation */}
+                  <div className="relative mt-1 flex items-center">
+                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
+                  </div>
+                  
+                  {/* Bottom accent line */}
+                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -740,6 +737,62 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Placement Service */}
+      <section className="py-12 md:py-16 lg:py-20 bg-accent/5 border-y border-accent/10 relative overflow-hidden">
+        {/* Decorative background pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        
+        <div className="container relative px-4 md:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
+            {/* Left side - Content */}
+            <div className="text-center md:text-left">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
+                <Heart className="h-4 w-4 text-accent fill-accent/30" />
+                <span className="text-sm font-semibold text-accent">Placement Service</span>
+              </div>
+              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+                Overwhelmed by Options?
+                <span className="block text-accent mt-1">Let Us Help.</span>
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Our specialists personally match you with verified treatment centers based on your insurance, location, and unique needs.
+              </p>
+              <Link to="/concierge">
+                <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
+                  Get Matched
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Right side - Visual steps */}
+            <div className="space-y-3">
+              {[
+                { icon: ClipboardList, title: "Tell Us Your Needs", desc: "Share your situation, preferences, and insurance" },
+                { icon: Users, title: "We Find Matches", desc: "Our team reviews programs that fit your criteria" },
+                { icon: Phone, title: "Get Connected", desc: "We introduce you directly to the best options" },
+              ].map((step, idx) => (
+                <div 
+                  key={step.title}
+                  className="flex items-start gap-4 bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    <step.icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
+                      <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section className="py-10 md:py-12 lg:py-20 bg-muted/30 border-y border-border/50">
         <div className="container px-4 md:px-6 lg:px-8">
@@ -797,61 +850,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Placement Service */}
-      <section className="py-12 md:py-16 lg:py-20 bg-accent/5 border-y border-accent/10 relative overflow-hidden">
-        {/* Decorative background pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-        
-        <div className="container relative px-4 md:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
-            {/* Left side - Content */}
-            <div className="text-center md:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
-                <Heart className="h-4 w-4 text-accent fill-accent/30" />
-                <span className="text-sm font-semibold text-accent">Placement Service</span>
-              </div>
-              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-                Overwhelmed by Options?
-                <span className="block text-accent mt-1">Let Us Help.</span>
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Our specialists personally match you with verified treatment centers based on your insurance, location, and unique needs.
-              </p>
-              <Link to="/concierge">
-                <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
-                  Get Matched
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Right side - Visual steps */}
-            <div className="space-y-3">
-              {[
-                { icon: ClipboardList, title: "Tell Us Your Needs", desc: "Share your situation, preferences, and insurance" },
-                { icon: Users, title: "We Find Matches", desc: "Our team reviews programs that fit your criteria" },
-                { icon: Phone, title: "Get Connected", desc: "We introduce you directly to the best options" },
-              ].map((step, idx) => (
-                <div 
-                  key={step.title}
-                  className="flex items-start gap-4 bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                    <step.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
-                      <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* International Patients CTA */}
+      <InternationalCTA />
 
       {/* Find Treatment Near You - SEO Section */}
       <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
