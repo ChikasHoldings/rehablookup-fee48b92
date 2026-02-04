@@ -6,8 +6,7 @@ import { SeekerMobileNav } from "./SeekerMobileNav";
 import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useUserRole, getPortalHome } from "@/hooks/useUserRole";
-import { SeekerShellSkeleton } from "@/components/ui/shell-skeletons";
+import { useUserRole } from "@/hooks/useUserRole";
 import { prefetchAdjacentRoutes } from "@/lib/routePrefetch";
 
 interface SeekerProfile {
@@ -162,13 +161,8 @@ export function SeekerShell() {
   // Get display name - prefer first name, fall back to display name or email
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
-  // Only show skeleton if truly loading with no cached state
-  // With localStorage caching, isRoleLoading starts false if cached
-  if ((isRoleLoading || isLoading) && role === null) {
-    return <SeekerShellSkeleton />;
-  }
-
-  // If user is admin or provider, redirect happens via useEffect - render null
+  // NEVER show skeleton - render shell immediately
+  // Redirects happen via useEffect, render null during redirect
   if (role === "admin" || role === "provider") {
     return null;
   }

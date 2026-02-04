@@ -13,7 +13,6 @@ import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/Select
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { useUserRole } from "@/hooks/useUserRole";
-import { ProviderShellSkeleton } from "@/components/ui/shell-skeletons";
 import { prefetchAdjacentRoutes } from "@/lib/routePrefetch";
 
 // Use components directly - memo can cause issues with hot reloading
@@ -179,14 +178,9 @@ function ProviderShellContent() {
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
 
-  // Only show skeleton if truly loading with no cached state
-  // If we have a cached role that doesn't match, redirect silently
-  if (isRoleLoading && role === null) {
-    return <ProviderShellSkeleton />;
-  }
-
-  // If admin or seeker, redirect happens via useEffect - render null during redirect
-  if (role === "admin" || role === "seeker") {
+  // NEVER show skeleton - render shell immediately
+  // Redirects happen via useEffect, show null only during active redirect
+  if (hasRedirected.current || role === "admin" || role === "seeker") {
     return null;
   }
 

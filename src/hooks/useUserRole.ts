@@ -117,9 +117,22 @@ export function useUserRole(): UserRoleResult {
   // Initialize from cache for instant perceived loading
   const cached = getCachedAuthState();
   
-  const [role, setRole] = useState<UserRole>(cached?.role ?? null);
-  const [isLoading, setIsLoading] = useState(!cached); // Not loading if we have cache
-  const [isAuthenticated, setIsAuthenticated] = useState(cached?.isAuth ?? false);
+  // Route-based role hint for instant perceived loading on first visit
+  const routeHint = typeof window !== "undefined" 
+    ? window.location.pathname.startsWith("/provider") ? "provider" as UserRole
+    : window.location.pathname.startsWith("/admin") ? "admin" as UserRole
+    : window.location.pathname.startsWith("/account") ? "seeker" as UserRole
+    : null
+    : null;
+  
+  // Use cache first, then route hint, for instant initial render
+  const initialRole = cached?.role ?? routeHint;
+  const initialAuth = cached?.isAuth ?? !!routeHint;
+  
+  const [role, setRole] = useState<UserRole>(initialRole);
+  // CRITICAL: Never start in loading state - trust cache/route hint
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuth);
   const [userId, setUserId] = useState<string | null>(cached?.userId ?? null);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
   
