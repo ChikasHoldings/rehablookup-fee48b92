@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
@@ -16,7 +15,7 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
 
 const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = generateRequestId();
 
   if (req.method === "OPTIONS") {
