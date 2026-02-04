@@ -1352,9 +1352,16 @@ export type Database = {
         Row: {
           accreditation_type: string
           created_at: string | null
+          document_name: string | null
+          document_url: string | null
           expiry_date: string | null
           facility_id: string
           id: string
+          issuing_authority: string | null
+          notes: string | null
+          rejection_reason: string | null
+          verification_number: string | null
+          verification_url: string | null
           verified: boolean | null
           verified_at: string | null
           verified_by: string | null
@@ -1362,9 +1369,16 @@ export type Database = {
         Insert: {
           accreditation_type: string
           created_at?: string | null
+          document_name?: string | null
+          document_url?: string | null
           expiry_date?: string | null
           facility_id: string
           id?: string
+          issuing_authority?: string | null
+          notes?: string | null
+          rejection_reason?: string | null
+          verification_number?: string | null
+          verification_url?: string | null
           verified?: boolean | null
           verified_at?: string | null
           verified_by?: string | null
@@ -1372,9 +1386,16 @@ export type Database = {
         Update: {
           accreditation_type?: string
           created_at?: string | null
+          document_name?: string | null
+          document_url?: string | null
           expiry_date?: string | null
           facility_id?: string
           id?: string
+          issuing_authority?: string | null
+          notes?: string | null
+          rejection_reason?: string | null
+          verification_number?: string | null
+          verification_url?: string | null
           verified?: boolean | null
           verified_at?: string | null
           verified_by?: string | null
