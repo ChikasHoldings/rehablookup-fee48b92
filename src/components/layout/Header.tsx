@@ -256,9 +256,9 @@ export function Header({
               )}
             </button>
 
-            {/* Desktop CTAs */}
-            <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-              {!roleLoading && isSeekerLoggedIn ? (
+            {/* Desktop CTAs - min-w prevents layout shift during auth loading */}
+            <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
+              {isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
                     <User className="h-4 w-4" />
