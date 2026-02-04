@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -371,7 +370,7 @@ function getFacilityNotificationEmail(
 }
 
 // ============ MAIN HANDLER ============
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = generateRequestId();
   log(requestId, "INFO", "Request received", { method: req.method });
 
