@@ -1,9 +1,25 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const VERSION = "1.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[SEND-CONCIERGE-INTRO] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
+};
+
+// UUID validation
+const isValidUUID = (str: string): boolean => {
+  if (!str || typeof str !== "string") return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 };
 
 interface IntroductionRequest {
@@ -12,27 +28,45 @@ interface IntroductionRequest {
   introductionId: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+Deno.serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    console.log("[SEND-CONCIERGE-INTRODUCTION] Function started");
+    logStep(requestId, "Function started", { version: VERSION });
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Supabase configuration missing");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
-
     const resend = new Resend(resendKey);
-    const { inquiryId, facilityId, introductionId }: IntroductionRequest = await req.json();
+    
+    const body = await req.json();
+    const { inquiryId, facilityId, introductionId }: IntroductionRequest = body;
 
-    console.log("[SEND-CONCIERGE-INTRODUCTION] Processing:", { inquiryId, facilityId });
+    // Strict UUID validation
+    if (!isValidUUID(inquiryId)) {
+      throw new Error("Invalid inquiry ID format");
+    }
+    if (!isValidUUID(facilityId)) {
+      throw new Error("Invalid facility ID format");
+    }
+    if (!isValidUUID(introductionId)) {
+      throw new Error("Invalid introduction ID format");
+    }
+
+    logStep(requestId, "Processing", { inquiryId, facilityId, introductionId });
 
     // Fetch inquiry details
     const { data: inquiry, error: inquiryError } = await supabase
@@ -42,18 +76,18 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (inquiryError || !inquiry) {
-      throw new Error("Inquiry not found: " + inquiryError?.message);
+      throw new Error("Inquiry not found");
     }
 
     // Fetch facility details
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
-      .select("id, name, city, state, concierge_admissions_email, concierge_admissions_contact, email, reply_email")
+      .select("id, name, city, state, concierge_admissions_email, concierge_admissions_contact, email, reply_email, user_id")
       .eq("id", facilityId)
       .single();
 
     if (facilityError || !facility) {
-      throw new Error("Facility not found: " + facilityError?.message);
+      throw new Error("Facility not found");
     }
 
     // Determine recipient email - prioritize concierge email, then reply_email, then regular email
@@ -257,22 +291,24 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    logStep(requestId, "Email sent successfully", { sentTo: recipientEmail, emailId: emailData?.id });
+
     return new Response(JSON.stringify({ 
       success: true, 
       emailId: emailData?.id,
-      sentTo: recipientEmail 
+      sentTo: recipientEmail,
+      requestId,
+      _version: VERSION,
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("[SEND-CONCIERGE-INTRODUCTION] ERROR:", errorMessage);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    logStep(requestId, "ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage, requestId, _version: VERSION }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-};
-
-Deno.serve(handler);
+});

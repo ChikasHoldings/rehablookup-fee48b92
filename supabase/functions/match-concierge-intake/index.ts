@@ -169,10 +169,17 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { inquiryId } = await req.json();
+    const body = await req.json();
+    const { inquiryId } = body;
     
-    if (!inquiryId) {
+    // Strict UUID validation
+    if (!inquiryId || typeof inquiryId !== "string") {
       throw new Error("Inquiry ID is required");
+    }
+    
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(inquiryId)) {
+      throw new Error("Invalid inquiry ID format");
     }
 
     logStep(requestId, "Matching for inquiry", { inquiryId });
@@ -185,6 +192,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (inquiryError || !inquiry) {
+      logStep(requestId, "Inquiry not found", { inquiryId, error: inquiryError?.message });
       throw new Error("Inquiry not found");
     }
 

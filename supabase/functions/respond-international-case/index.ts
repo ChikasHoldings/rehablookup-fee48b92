@@ -1,24 +1,41 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const logStep = (step: string, details?: unknown) => {
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+const logStep = (requestId: string, step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[RESPOND-INTL-CASE] [${VERSION}] ${step}${detailsStr}`);
+  console.log(`[RESPOND-INTL-CASE] [${VERSION}] [${requestId}] ${step}${detailsStr}`);
+};
+
+// UUID validation
+const isValidUUID = (str: string): boolean => {
+  if (!str || typeof str !== "string") return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+// Sanitize notes input
+const sanitizeNotes = (notes: unknown): string | null => {
+  if (!notes || typeof notes !== "string") return null;
+  return notes.trim().slice(0, 2000).replace(/[<>]/g, "");
 };
 
 Deno.serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
+    logStep(requestId, "Function started");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -44,16 +61,29 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, matchId, data } = await req.json();
+    const body = await req.json();
+    const { action, matchId, data } = body;
 
-    logStep("Processing action", { action, matchId, providerId: user.id });
+    // Validate action
+    if (!action || typeof action !== "string") {
+      throw new Error("Action is required");
+    }
+
+    // Validate matchId
+    if (!isValidUUID(matchId)) {
+      throw new Error("Invalid match ID format");
+    }
+
+    logStep(requestId, "Processing action", { action, matchId, providerId: user.id });
 
     switch (action) {
       case "respond": {
-        const { response, notes } = data;
+        const response = data?.response;
+        const notes = sanitizeNotes(data?.notes);
         
-        if (!["accepted", "declined"].includes(response)) {
-          throw new Error("Invalid response value");
+        // Strict response validation
+        if (!response || !["accepted", "declined"].includes(response)) {
+          throw new Error("Invalid response value - must be 'accepted' or 'declined'");
         }
 
         // Verify match belongs to this provider
@@ -65,6 +95,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (matchError || !match) {
+          logStep(requestId, "Match not found", { matchId, providerId: user.id, error: matchError?.message });
           throw new Error("Match not found or access denied");
         }
 
@@ -111,8 +142,10 @@ Deno.serve(async (req) => {
           }
         }
 
+        logStep(requestId, "Response submitted", { matchId, response });
+        
         return new Response(
-          JSON.stringify({ success: true }),
+          JSON.stringify({ success: true, requestId, _version: VERSION }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -122,9 +155,9 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    logStep(requestId, "ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
