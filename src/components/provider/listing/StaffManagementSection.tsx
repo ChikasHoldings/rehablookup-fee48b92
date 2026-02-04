@@ -8,6 +8,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Users2, 
   Plus, 
@@ -45,6 +55,7 @@ export function StaffManagementSection({
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<FacilityStaff | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
 
   // Get staff limit based on Pro status
   const isPro = proStatus?.isPro || false;
@@ -73,10 +84,11 @@ export function StaffManagementSection({
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to remove this team member?")) {
-      deleteStaff.mutate(id);
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.id) {
+      deleteStaff.mutate(deleteConfirm.id);
     }
+    setDeleteConfirm({ id: "", isOpen: false });
   };
 
   const handleToggleVisibility = (id: string, isVisible: boolean) => {
@@ -135,7 +147,7 @@ export function StaffManagementSection({
                           key={member.id}
                           staff={member}
                           onEdit={handleEditClick}
-                          onDelete={handleDelete}
+                          onDelete={(id) => setDeleteConfirm({ id, isOpen: true })}
                           onToggleVisibility={handleToggleVisibility}
                         />
                       ))}
@@ -188,6 +200,24 @@ export function StaffManagementSection({
         currentStaffCount={staff.length}
         maxStaff={staffLimit}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirm.isOpen} onOpenChange={(open) => setDeleteConfirm(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this team member? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

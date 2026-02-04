@@ -10,7 +10,6 @@ interface IntroductionCardProps {
   facilityId: string;
   onRespond: (response: string, notes?: string) => void;
   isResponding: boolean;
-  showConfirmButton?: boolean;
   hasPro?: boolean;
 }
 
@@ -19,7 +18,6 @@ export function IntroductionCard({
   facilityId,
   onRespond,
   isResponding,
-  showConfirmButton = false,
   hasPro = false,
 }: IntroductionCardProps) {
   const [isAccepting, setIsAccepting] = useState(false);
