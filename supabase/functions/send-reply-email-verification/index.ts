@@ -130,16 +130,16 @@ Deno.serve(async (req) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verification Code</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
           
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 700;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
                 Verify Reply Email
               </h1>
             </td>
@@ -147,51 +147,47 @@ Deno.serve(async (req) => {
           
           <!-- Body -->
           <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #64748b; text-align: center; line-height: 1.6;">
-                Enter this code in your provider settings:
+            <td style="padding: 40px 32px; background-color: #ffffff;">
+              <p style="margin: 0 0 24px 0; font-size: 16px; color: #374151; text-align: center; line-height: 1.6;">
+                Enter this code in your provider settings to verify your reply email:
               </p>
               
               <!-- Code Box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; margin-bottom: 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 <tr>
-                  <td style="padding: 32px; text-align: center;">
-                    <span style="font-family: 'Courier New', Courier, monospace; font-size: 42px; font-weight: 700; letter-spacing: 10px; color: #1B365D;">${code}</span>
+                  <td style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 28px 20px; text-align: center;">
+                    <span style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 700; letter-spacing: 8px; color: #1B365D;">${code}</span>
                   </td>
                 </tr>
               </table>
               
-              <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; text-align: center; line-height: 1.6;">
-                Once verified, lead replies will come to this address.
+              <p style="margin: 0 0 12px 0; font-size: 14px; color: #374151; text-align: center; line-height: 1.5;">
+                Once verified, lead replies will be sent to this address.
               </p>
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #94a3b8; text-align: center; line-height: 1.6;">
-                Code expires in 10 minutes
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; text-align: center; line-height: 1.5;">
+                This code will expire in <strong style="color: #374151;">10 minutes</strong>.
+              </p>
+              <p style="margin: 0; font-size: 13px; color: #9ca3af; text-align: center; line-height: 1.5;">
+                If you didn't request this code, you can safely ignore this email.
               </p>
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="background: #1B365D; padding: 28px 32px;">
+            <td style="background-color: #1B365D; padding: 24px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="padding-bottom: 12px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
+                  <td align="center" style="padding-bottom: 8px;">
+                    <p style="margin: 0; font-size: 18px; font-weight: 700; color: #ffffff;">
                       RehabLookup
                     </p>
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" style="padding-bottom: 16px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
-                      Connecting families with trusted treatment providers
-                    </p>
-                  </td>
-                </tr>
-                <tr>
                   <td align="center">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
-                      Didn't request this? You can safely ignore this email.
+                    <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5;">
+                      Connecting families with trusted treatment providers
                     </p>
                   </td>
                 </tr>
