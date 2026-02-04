@@ -4,6 +4,13 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StateLinksGroup } from "@/components/treatment/StateLinksSection";
+import { 
+  InternalLinkingSection, 
+  nearMeLinks, 
+  insuranceLinks, 
+  resourceLinks 
+} from "@/components/seo/InternalLinkingSection";
+import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
 import {
   Pill,
   Brain,
@@ -586,6 +593,26 @@ const TreatmentTypes = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured Centers - SEO Internal Links */}
+      <FeaturedCentersSection 
+        title="Explore Treatment Centers"
+        description="Verified facilities offering these treatment programs"
+        limit={8}
+        className="border-t border-border bg-muted/30"
+      />
+
+      {/* SEO Internal Linking */}
+      <InternalLinkingSection
+        title="Related Resources"
+        description="Learn more about treatment options and coverage"
+        variant="grid"
+        groups={[
+          { title: "Find Treatment Near You", links: nearMeLinks.slice(0, 5) },
+          { title: "Insurance Coverage", links: insuranceLinks.slice(0, 5) },
+          { title: "Recovery Guides", links: resourceLinks.slice(0, 5) },
+        ]}
+      />
 
       {/* CTA */}
       <section className="border-t border-border bg-primary py-10 md:py-12">

@@ -16,6 +16,13 @@ import {
   Compass,
   Heart
 } from "lucide-react";
+import { 
+  InternalLinkingSection, 
+  treatmentTypeLinks, 
+  nearMeLinks, 
+  insuranceLinks 
+} from "@/components/seo/InternalLinkingSection";
+import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
 
 const Locations = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -336,6 +343,26 @@ const Locations = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured Centers */}
+      <FeaturedCentersSection 
+        title="Featured Treatment Centers"
+        description="Top-rated facilities across the country"
+        limit={8}
+        className="border-t border-border"
+      />
+
+      {/* SEO Internal Linking */}
+      <InternalLinkingSection
+        title="Explore More Resources"
+        description="Treatment types, insurance coverage, and recovery guides"
+        variant="grid"
+        groups={[
+          { title: "Treatment Programs", links: treatmentTypeLinks.slice(0, 5) },
+          { title: "Find Treatment Near You", links: nearMeLinks.slice(0, 5) },
+          { title: "Insurance Coverage", links: insuranceLinks.slice(0, 5) },
+        ]}
+      />
 
       {/* CTA Section */}
       <section className="section-padding-lg">

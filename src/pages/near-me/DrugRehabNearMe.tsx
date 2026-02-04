@@ -12,6 +12,12 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin } from "lucide-react";
+import { 
+  InternalLinkingSection, 
+  treatmentTypeLinks, 
+  insuranceLinks, 
+  resourceLinks 
+} from "@/components/seo/InternalLinkingSection";
 
 // State coordinates for geolocation matching
 const stateCoordinates: Record<string, { lat: number; lng: number; name: string; abbr: string }> = {
@@ -262,6 +268,18 @@ export default function DrugRehabNearMe() {
           </div>
         </section>
       )}
+
+      {/* SEO Internal Linking */}
+      <InternalLinkingSection
+        title="Related Resources"
+        description="Explore treatment types, insurance coverage, and recovery guides"
+        variant="grid"
+        groups={[
+          { title: "Treatment Programs", links: treatmentTypeLinks.slice(0, 5) },
+          { title: "Insurance Coverage", links: insuranceLinks.slice(0, 5) },
+          { title: "Recovery Guides", links: resourceLinks.slice(0, 5) },
+        ]}
+      />
 
       <TreatmentFAQSection
         faqs={faqs}
