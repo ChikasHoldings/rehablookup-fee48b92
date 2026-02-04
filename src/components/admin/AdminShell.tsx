@@ -13,7 +13,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
-import { AdminShellSkeleton } from "@/components/ui/shell-skeletons";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
@@ -81,13 +80,8 @@ export function AdminShell() {
     prefetchAdjacentPages(location.pathname);
   }, [location.pathname]);
 
-  // Only show skeleton if truly not initialized AND no cached admin state
-  // With caching, isInitialized starts true if cached, so this rarely shows
-  if (!isInitialized && !isAdmin) {
-    return <AdminShellSkeleton />;
-  }
-
-  // Redirect handled in hook, but don't render if not admin
+  // NEVER show skeleton - render shell immediately
+  // Redirects happen in hook, render null during redirect
   if (!isAdmin) {
     return null;
   }
