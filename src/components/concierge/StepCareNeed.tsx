@@ -1,32 +1,30 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { HelpCircle, AlertTriangle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertTriangle } from "lucide-react";
 import type { ConciergeIntakeData } from "@/pages/concierge/ConciergeIntake";
 
 const PRIMARY_CONCERNS = [
   { value: "alcohol", label: "Alcohol" },
-  { value: "opioids", label: "Opioids (heroin, fentanyl, prescription painkillers)" },
-  { value: "stimulants", label: "Stimulants (cocaine, meth, Adderall)" },
-  { value: "benzos", label: "Benzodiazepines (Xanax, Valium, Klonopin)" },
+  { value: "opioids", label: "Opioids (heroin, fentanyl, pills)" },
+  { value: "stimulants", label: "Stimulants (cocaine, meth)" },
+  { value: "benzos", label: "Benzodiazepines (Xanax, etc.)" },
   { value: "cannabis", label: "Cannabis/Marijuana" },
   { value: "polysubstance", label: "Multiple substances" },
-  { value: "behavioral", label: "Behavioral addiction (gambling, gaming, etc.)" },
+  { value: "behavioral", label: "Behavioral addiction" },
   { value: "other", label: "Other" },
 ];
 
 const LEVELS_OF_CARE = [
-  { value: "detox", label: "Medical Detox", desc: "24/7 medical supervision for withdrawal" },
-  { value: "residential", label: "Residential/Inpatient", desc: "Full-time live-in treatment (30-90+ days)" },
-  { value: "php", label: "Partial Hospitalization (PHP)", desc: "6-8 hours/day, 5-7 days/week" },
-  { value: "iop", label: "Intensive Outpatient (IOP)", desc: "3-4 hours/day, 3-5 days/week" },
-  { value: "outpatient", label: "Standard Outpatient", desc: "1-2 hours/week" },
-  { value: "mat", label: "Medication-Assisted Treatment (MAT)", desc: "Suboxone, Methadone, Vivitrol" },
-  { value: "unsure", label: "Not sure, need guidance", desc: "We'll help determine the right level" },
+  { value: "detox", label: "Medical Detox (24/7 supervision)" },
+  { value: "residential", label: "Residential/Inpatient (30-90+ days)" },
+  { value: "php", label: "Partial Hospitalization (6-8 hrs/day)" },
+  { value: "iop", label: "Intensive Outpatient (3-4 hrs/day)" },
+  { value: "outpatient", label: "Standard Outpatient (1-2 hrs/wk)" },
+  { value: "mat", label: "Medication-Assisted Treatment" },
+  { value: "unsure", label: "Not sure - need guidance" },
 ];
 
 const USE_FREQUENCIES = [
@@ -34,7 +32,7 @@ const USE_FREQUENCIES = [
   { value: "several_weekly", label: "Several times per week" },
   { value: "weekly", label: "Once a week" },
   { value: "occasionally", label: "Occasionally" },
-  { value: "in_recovery", label: "Currently in recovery (relapse prevention)" },
+  { value: "in_recovery", label: "In recovery (relapse prevention)" },
 ];
 
 const USE_DURATIONS = [
@@ -45,10 +43,20 @@ const USE_DURATIONS = [
   { value: "over_10_years", label: "Over 10 years" },
 ];
 
+const DETOX_OPTIONS = [
+  { value: "yes", label: "Yes, likely needs detox" },
+  { value: "no", label: "No, already stable" },
+  { value: "unsure", label: "Unsure - need assessment" },
+];
+
+const PRIOR_TREATMENT_OPTIONS = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No - first time" },
+];
+
 const CO_OCCURRING = [
-  "Depression", "Anxiety", "PTSD/Trauma", "Bipolar Disorder", 
-  "Eating Disorder", "ADHD", "Schizophrenia", "OCD",
-  "Personality Disorder", "Chronic Pain", "Other"
+  "Depression", "Anxiety", "PTSD/Trauma", "Bipolar", 
+  "Eating Disorder", "ADHD", "Chronic Pain", "Other"
 ];
 
 interface Props {
@@ -67,238 +75,184 @@ export function StepCareNeed({ data, errors, onChange }: Props) {
   };
 
   return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        <p className="text-sm text-muted-foreground border-l-4 border-primary/30 pl-4 py-2 bg-muted/30 rounded-r-lg">
-          The more details you provide about care needs, the better we can match you with programs that specialize in treating these specific conditions.
-        </p>
-
-        {/* Primary Concern */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            Primary Substance Concern *
+    <div className="space-y-5">
+      {/* Primary Concern & Level of Care - Most important */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">
+            Primary Concern <span className="text-destructive">*</span>
           </Label>
           <Select value={data.primaryConcern} onValueChange={(v) => onChange({ primaryConcern: v })}>
-            <SelectTrigger className={errors.primaryConcern ? "border-destructive ring-1 ring-destructive" : ""}>
-              <SelectValue placeholder="Select primary concern" />
+            <SelectTrigger className={`h-11 ${errors.primaryConcern ? "border-destructive ring-1 ring-destructive" : ""}`}>
+              <SelectValue placeholder="Select substance" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover">
               {PRIMARY_CONCERNS.map((c) => (
                 <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.primaryConcern && <p className="text-sm text-destructive">{errors.primaryConcern}</p>}
+          {errors.primaryConcern && <p className="text-xs text-destructive">{errors.primaryConcern}</p>}
         </div>
 
-        {/* Frequency & Duration */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              Current Use Frequency *
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">Helps determine appropriate level of care and detox needs.</p>
-                </TooltipContent>
-              </Tooltip>
-            </Label>
-            <Select value={data.substanceUseFrequency || ""} onValueChange={(v) => onChange({ substanceUseFrequency: v })}>
-              <SelectTrigger className={errors.substanceUseFrequency ? "border-destructive ring-1 ring-destructive" : ""}>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                {USE_FREQUENCIES.map((f) => (
-                  <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.substanceUseFrequency && <p className="text-sm text-destructive">{errors.substanceUseFrequency}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Duration of Use</Label>
-            <Select value={data.substanceUseDuration || ""} onValueChange={(v) => onChange({ substanceUseDuration: v })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select duration" />
-              </SelectTrigger>
-              <SelectContent>
-                {USE_DURATIONS.map((d) => (
-                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Detox Needed */}
-        <div className="space-y-3 p-4 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-          <Label className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-            <AlertTriangle className="h-4 w-4" />
-            Is Medical Detox Needed? *
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">
+            Level of Care <span className="text-destructive">*</span>
           </Label>
-          <RadioGroup
-            value={data.detoxNeeded || ""}
-            onValueChange={(v) => onChange({ detoxNeeded: v })}
-            className={errors.detoxNeeded ? "border border-destructive rounded-md p-2" : ""}
-          >
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100/50 dark:hover:bg-amber-900/30">
-              <RadioGroupItem value="yes" id="detox-yes" />
-              <Label htmlFor="detox-yes" className="font-normal cursor-pointer">Yes, likely needs detox supervision</Label>
-            </div>
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100/50 dark:hover:bg-amber-900/30">
-              <RadioGroupItem value="no" id="detox-no" />
-              <Label htmlFor="detox-no" className="font-normal cursor-pointer">No, already stable</Label>
-            </div>
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100/50 dark:hover:bg-amber-900/30">
-              <RadioGroupItem value="unsure" id="detox-unsure" />
-              <Label htmlFor="detox-unsure" className="font-normal cursor-pointer">Unsure, need assessment</Label>
-            </div>
-          </RadioGroup>
-          {errors.detoxNeeded && <p className="text-sm text-destructive">{errors.detoxNeeded}</p>}
-        </div>
-
-        {/* Level of Care */}
-        <div className="space-y-3">
-          <Label className="flex items-center gap-2">
-            Level of Care Needed *
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">If unsure, select "Not sure, need guidance" and we'll help determine the right level.</p>
-              </TooltipContent>
-            </Tooltip>
-          </Label>
-          <RadioGroup
-            value={data.levelOfCare}
-            onValueChange={(v) => onChange({ levelOfCare: v })}
-            className={errors.levelOfCare ? "border border-destructive rounded-md p-2" : "space-y-2"}
-          >
-            {LEVELS_OF_CARE.map((l) => (
-              <div key={l.value} className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer">
-                <RadioGroupItem value={l.value} id={l.value} className="mt-0.5" />
-                <div className="flex-1">
-                  <Label htmlFor={l.value} className="font-medium cursor-pointer">{l.label}</Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">{l.desc}</p>
-                </div>
-              </div>
-            ))}
-          </RadioGroup>
-          {errors.levelOfCare && <p className="text-sm text-destructive">{errors.levelOfCare}</p>}
-        </div>
-
-        {/* Prior Treatment */}
-        <div className="space-y-3">
-          <Label>Has this person received treatment before? *</Label>
-          <RadioGroup
-            value={data.priorTreatment === null ? "" : data.priorTreatment ? "yes" : "no"}
-            onValueChange={(v) => onChange({ priorTreatment: v === "yes" })}
-            className={errors.priorTreatment ? "border border-destructive rounded-md p-2" : ""}
-          >
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50">
-              <RadioGroupItem value="yes" id="prior-yes" />
-              <Label htmlFor="prior-yes" className="font-normal cursor-pointer">Yes</Label>
-            </div>
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50">
-              <RadioGroupItem value="no" id="prior-no" />
-              <Label htmlFor="prior-no" className="font-normal cursor-pointer">No, this is first time seeking treatment</Label>
-            </div>
-          </RadioGroup>
-          {errors.priorTreatment && <p className="text-sm text-destructive">{errors.priorTreatment}</p>}
-          
-          {data.priorTreatment && (
-            <div className="space-y-1 mt-2">
-              <Textarea
-                value={data.priorTreatmentNotes}
-                onChange={(e) => onChange({ priorTreatmentNotes: e.target.value })}
-                rows={3}
-              />
-              <p className="text-xs text-muted-foreground">Brief description of prior treatment (what type, when, outcome)</p>
-            </div>
-          )}
-        </div>
-
-        {/* Current Medications */}
-        <div className="space-y-2">
-          <Label htmlFor="currentMedications" className="flex items-center gap-2">
-            Current Medications
-            <span className="text-xs text-muted-foreground">(Optional)</span>
-          </Label>
-          <Input
-            id="currentMedications"
-            value={data.currentMedications || ""}
-            onChange={(e) => onChange({ currentMedications: e.target.value })}
-          />
-          <p className="text-xs text-muted-foreground">List any current medications to ensure program can accommodate them</p>
-        </div>
-
-        {/* Co-occurring Concerns */}
-        <div className="space-y-3">
-          <Label className="flex items-center gap-2">
-            Co-occurring Mental Health Concerns
-            <span className="text-xs text-muted-foreground">(Select all that apply)</span>
-          </Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {CO_OCCURRING.map((concern) => (
-              <div 
-                key={concern} 
-                className={`flex items-center space-x-2 p-2.5 rounded-lg border transition-colors cursor-pointer ${
-                  data.coOccurringConcerns?.includes(concern) 
-                    ? "bg-primary/10 border-primary/50" 
-                    : "hover:bg-muted/50"
-                }`}
-                onClick={() => toggleCoOccurring(concern)}
-              >
-                <Checkbox
-                  id={concern}
-                  checked={data.coOccurringConcerns?.includes(concern)}
-                  onCheckedChange={() => toggleCoOccurring(concern)}
-                />
-                <Label htmlFor={concern} className="font-normal text-sm cursor-pointer">{concern}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Suicide History - Sensitive */}
-        <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
-          <Label className="flex items-center gap-2">
-            History of Self-Harm or Suicidal Thoughts
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">This helps ensure placement at a facility with appropriate crisis support capabilities.</p>
-              </TooltipContent>
-            </Tooltip>
-          </Label>
-          <RadioGroup
-            value={data.suicideHistory || ""}
-            onValueChange={(v) => onChange({ suicideHistory: v })}
-          >
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50">
-              <RadioGroupItem value="yes" id="suicide-yes" />
-              <Label htmlFor="suicide-yes" className="font-normal cursor-pointer">Yes, history of self-harm or suicidal thoughts</Label>
-            </div>
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50">
-              <RadioGroupItem value="no" id="suicide-no" />
-              <Label htmlFor="suicide-no" className="font-normal cursor-pointer">No</Label>
-            </div>
-            <div className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50">
-              <RadioGroupItem value="prefer_not_say" id="suicide-prefer" />
-              <Label htmlFor="suicide-prefer" className="font-normal cursor-pointer">Prefer not to say</Label>
-            </div>
-          </RadioGroup>
-          <p className="text-xs text-muted-foreground">
-            Your response is confidential and helps us match with appropriate support services.
-          </p>
+          <Select value={data.levelOfCare} onValueChange={(v) => onChange({ levelOfCare: v })}>
+            <SelectTrigger className={`h-11 ${errors.levelOfCare ? "border-destructive ring-1 ring-destructive" : ""}`}>
+              <SelectValue placeholder="Select level" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {LEVELS_OF_CARE.map((l) => (
+                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.levelOfCare && <p className="text-xs text-destructive">{errors.levelOfCare}</p>}
         </div>
       </div>
-    </TooltipProvider>
+
+      {/* Frequency & Duration Row */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">
+            Use Frequency <span className="text-destructive">*</span>
+          </Label>
+          <Select value={data.substanceUseFrequency || ""} onValueChange={(v) => onChange({ substanceUseFrequency: v })}>
+            <SelectTrigger className={`h-11 ${errors.substanceUseFrequency ? "border-destructive ring-1 ring-destructive" : ""}`}>
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {USE_FREQUENCIES.map((f) => (
+                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.substanceUseFrequency && <p className="text-xs text-destructive">{errors.substanceUseFrequency}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Duration</Label>
+          <Select value={data.substanceUseDuration || ""} onValueChange={(v) => onChange({ substanceUseDuration: v })}>
+            <SelectTrigger className="h-11">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {USE_DURATIONS.map((d) => (
+                <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Detox & Prior Treatment Row */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            Detox Needed? <span className="text-destructive">*</span>
+          </Label>
+          <Select value={data.detoxNeeded || ""} onValueChange={(v) => onChange({ detoxNeeded: v })}>
+            <SelectTrigger className={`h-11 ${errors.detoxNeeded ? "border-destructive ring-1 ring-destructive" : ""}`}>
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {DETOX_OPTIONS.map((d) => (
+                <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.detoxNeeded && <p className="text-xs text-destructive">{errors.detoxNeeded}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">
+            Prior Treatment? <span className="text-destructive">*</span>
+          </Label>
+          <Select 
+            value={data.priorTreatment === null ? "" : data.priorTreatment ? "yes" : "no"} 
+            onValueChange={(v) => onChange({ priorTreatment: v === "yes" })}
+          >
+            <SelectTrigger className={`h-11 ${errors.priorTreatment ? "border-destructive ring-1 ring-destructive" : ""}`}>
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {PRIOR_TREATMENT_OPTIONS.map((p) => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.priorTreatment && <p className="text-xs text-destructive">{errors.priorTreatment}</p>}
+        </div>
+      </div>
+
+      {/* Prior Treatment Notes - Conditional */}
+      {data.priorTreatment && (
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Prior Treatment Details</Label>
+          <Textarea
+            value={data.priorTreatmentNotes}
+            onChange={(e) => onChange({ priorTreatmentNotes: e.target.value })}
+            rows={2}
+            placeholder="What type, when, outcome"
+            className="resize-none"
+          />
+        </div>
+      )}
+
+      {/* Current Medications */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">
+          Current Medications <span className="text-xs text-muted-foreground">(Optional)</span>
+        </Label>
+        <Input
+          value={data.currentMedications || ""}
+          onChange={(e) => onChange({ currentMedications: e.target.value })}
+          placeholder="List any current medications"
+          className="h-11"
+        />
+      </div>
+
+      {/* Co-occurring Concerns - Chip Selection */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">
+          Mental Health Concerns <span className="text-xs text-muted-foreground">(Select all)</span>
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {CO_OCCURRING.map((concern) => (
+            <button
+              key={concern}
+              type="button"
+              onClick={() => toggleCoOccurring(concern)}
+              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                data.coOccurringConcerns?.includes(concern) 
+                  ? "bg-primary text-primary-foreground border-primary" 
+                  : "bg-muted/50 hover:bg-muted border-border"
+              }`}
+            >
+              {concern}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Suicide History - Dropdown for sensitivity */}
+      <div className="space-y-1.5 p-3 rounded-lg bg-muted/30 border">
+        <Label className="text-sm font-medium">History of Self-Harm or Suicidal Thoughts?</Label>
+        <Select value={data.suicideHistory || ""} onValueChange={(v) => onChange({ suicideHistory: v })}>
+          <SelectTrigger className="h-11">
+            <SelectValue placeholder="Select (confidential)" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover">
+            <SelectItem value="yes">Yes</SelectItem>
+            <SelectItem value="no">No</SelectItem>
+            <SelectItem value="prefer_not_say">Prefer not to say</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Helps match with appropriate support services</p>
+      </div>
+    </div>
   );
 }
