@@ -1,27 +1,10 @@
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { EmbedBadgeWidget } from "@/components/provider/EmbedBadgeWidget";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Code2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle, Award } from "lucide-react";
 
 export default function EmbedBadgePage() {
   const { selectedFacility } = useSelectedFacility();
-
-  // Check if facility has reviews
-  const { data: reviewCount } = useQuery({
-    queryKey: ["facility-review-count", selectedFacility?.id],
-    queryFn: async () => {
-      if (!selectedFacility?.id) return 0;
-      const { count } = await supabase
-        .from("facility_reviews")
-        .select("*", { count: "exact", head: true })
-        .eq("facility_id", selectedFacility.id)
-        .eq("status", "approved");
-      return count || 0;
-    },
-    enabled: !!selectedFacility?.id,
-  });
 
   if (!selectedFacility) {
     return (
@@ -30,7 +13,7 @@ export default function EmbedBadgePage() {
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              Please select a facility to generate embed badges.
+              Please select a facility to view your badge collection.
             </p>
           </CardContent>
         </Card>
@@ -59,12 +42,12 @@ export default function EmbedBadgePage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Code2 className="h-5 w-5 text-primary" />
+          <Award className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold">Embed Badge</h1>
+          <h1 className="text-xl lg:text-2xl font-bold">Badge Collection</h1>
           <p className="text-sm text-muted-foreground">
-            Add a badge to your website to boost visibility and SEO
+            Earn badges by improving your facility performance and embed them on your website
           </p>
         </div>
       </div>
@@ -74,8 +57,6 @@ export default function EmbedBadgePage() {
         facilityId={selectedFacility.id}
         facilitySlug={selectedFacility.slug || selectedFacility.id}
         facilityName={selectedFacility.name}
-        isFeatured={selectedFacility.featured}
-        hasReviews={(reviewCount || 0) > 0}
       />
     </div>
   );
