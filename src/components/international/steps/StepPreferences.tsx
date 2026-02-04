@@ -2,6 +2,13 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DollarSign, Sparkles, Building2, Crown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const BUDGET_OPTIONS = [
   { value: "under-25k", label: "Under $25,000/month" },
@@ -70,86 +77,82 @@ export function StepPreferences({ data, onChange }: StepPreferencesProps) {
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-5 md:space-y-6">
-        {/* Budget Range */}
+      <div className="max-w-lg mx-auto space-y-5 md:space-y-6 px-1">
+        {/* Budget Range - Dropdown */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 flex items-center gap-2">
+          <Label className="text-sm font-medium mb-2 flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-primary" />
             Budget Range
           </Label>
-          <div className="grid gap-1.5 md:gap-2">
-            {BUDGET_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ ...data, budget_range: opt.value })}
-                className={cn(
-                  "px-3 md:px-4 py-2.5 md:py-3 rounded-lg border text-xs md:text-sm font-medium transition-all text-left",
-                  data.budget_range === opt.value
-                    ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                    : "border-border hover:border-primary/50"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Select
+            value={data.budget_range}
+            onValueChange={(value) => onChange({ ...data, budget_range: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select budget range..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {BUDGET_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Rehab Style */}
+        {/* Rehab Style - Keep as cards for rich visual */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Program Style</Label>
-          <div className="grid gap-2.5 md:gap-3">
+          <Label className="text-sm font-medium mb-3 block">Program Style</Label>
+          <div className="grid gap-3">
             {REHAB_STYLE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => onChange({ ...data, rehab_style: opt.value })}
                 className={cn(
-                  "flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border text-left transition-all",
+                  "flex items-start gap-3 p-4 rounded-lg border text-left transition-all",
                   data.rehab_style === opt.value
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                     : "border-border hover:border-primary/50"
                 )}
               >
                 <div className={cn(
-                  "w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center shrink-0",
+                  "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
                   data.rehab_style === opt.value ? "bg-primary/10" : "bg-muted"
                 )}>
                   <opt.icon className={cn(
-                    "h-4 w-4 md:h-5 md:w-5",
+                    "h-5 w-5",
                     data.rehab_style === opt.value ? "text-primary" : "text-muted-foreground"
                   )} />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground text-sm md:text-base">{opt.label}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5 line-clamp-2">{opt.description}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{opt.description}</p>
                 </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Duration */}
+        {/* Duration - Dropdown */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Preferred Duration</Label>
-          <div className="flex flex-wrap gap-2">
-            {DURATION_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ ...data, treatment_duration: opt.value })}
-                className={cn(
-                  "px-3 md:px-4 py-2 md:py-2.5 rounded-full border text-xs md:text-sm font-medium transition-all",
-                  data.treatment_duration === opt.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-primary/50 text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Label className="text-sm font-medium mb-2 block">Preferred Duration</Label>
+          <Select
+            value={data.treatment_duration}
+            onValueChange={(value) => onChange({ ...data, treatment_duration: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select duration..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {DURATION_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </motion.div>

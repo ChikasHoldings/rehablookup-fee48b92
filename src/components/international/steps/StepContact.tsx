@@ -24,7 +24,7 @@ export function StepContact({ data, onChange }: StepContactProps) {
         </p>
       </div>
 
-      <div className="space-y-4 max-w-sm mx-auto">
+      <div className="space-y-4 max-w-sm mx-auto px-1">
         <div>
           <Label htmlFor="first_name" className="text-sm font-medium">
             First Name
@@ -34,7 +34,7 @@ export function StepContact({ data, onChange }: StepContactProps) {
             value={data.first_name}
             onChange={(e) => onChange({ ...data, first_name: e.target.value })}
             placeholder="Enter your first name"
-            className="h-12 text-base mt-1.5"
+            className="h-12 text-base mt-2"
             autoFocus
           />
         </div>
@@ -48,7 +48,7 @@ export function StepContact({ data, onChange }: StepContactProps) {
             value={data.last_name}
             onChange={(e) => onChange({ ...data, last_name: e.target.value })}
             placeholder="Enter your last name"
-            className="h-12 text-base mt-1.5"
+            className="h-12 text-base mt-2"
           />
         </div>
       </div>

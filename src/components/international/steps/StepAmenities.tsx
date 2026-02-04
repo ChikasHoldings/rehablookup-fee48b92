@@ -3,6 +3,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AMENITY_OPTIONS = [
   { value: "private-room", label: "Private Room" },
@@ -16,6 +23,7 @@ const AMENITY_OPTIONS = [
 ];
 
 const PROGRAM_PREFERENCES = [
+  { value: "", label: "No preference" },
   { value: "women-only", label: "Women Only" },
   { value: "men-only", label: "Men Only" },
   { value: "lgbtq", label: "LGBTQ+ Friendly" },
@@ -62,27 +70,27 @@ export function StepAmenities({ data, onChange }: StepAmenitiesProps) {
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-5 md:space-y-6">
-        {/* Amenities */}
+      <div className="max-w-lg mx-auto space-y-5 md:space-y-6 px-1">
+        {/* Amenities - Multi-select chips */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">
+          <Label className="text-sm font-medium mb-3 block">
             Desired Amenities <span className="text-muted-foreground font-normal text-xs">(optional)</span>
           </Label>
-          <div className="flex flex-wrap gap-1.5 md:gap-2">
+          <div className="flex flex-wrap gap-2">
             {AMENITY_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => toggleAmenity(opt.value)}
                 className={cn(
-                  "px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border text-xs md:text-sm font-medium transition-all inline-flex items-center gap-1 md:gap-1.5",
+                  "px-3 py-2 rounded-full border text-sm font-medium transition-all inline-flex items-center gap-1.5",
                   data.amenities.includes(opt.value)
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border hover:border-primary/50 text-foreground"
                 )}
               >
                 {data.amenities.includes(opt.value) && (
-                  <Check className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <Check className="h-3.5 w-3.5" />
                 )}
                 {opt.label}
               </button>
@@ -90,36 +98,31 @@ export function StepAmenities({ data, onChange }: StepAmenitiesProps) {
           </div>
         </div>
 
-        {/* Program Preferences */}
+        {/* Program Preferences - Dropdown */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">
-            Program Preferences <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+          <Label className="text-sm font-medium mb-2 block">
+            Program Type <span className="text-muted-foreground font-normal text-xs">(optional)</span>
           </Label>
-          <div className="flex flex-wrap gap-1.5 md:gap-2">
-            {PROGRAM_PREFERENCES.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ 
-                  ...data, 
-                  special_requirements: data.special_requirements === opt.value ? "" : opt.value 
-                })}
-                className={cn(
-                  "px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border text-xs md:text-sm font-medium transition-all",
-                  data.special_requirements === opt.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-primary/50 text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Select
+            value={data.special_requirements}
+            onValueChange={(value) => onChange({ ...data, special_requirements: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select program type..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {PROGRAM_PREFERENCES.map((opt) => (
+                <SelectItem key={opt.value || "none"} value={opt.value} className="cursor-pointer">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Additional Notes */}
         <div>
-          <Label htmlFor="notes" className="text-sm font-medium">
+          <Label htmlFor="notes" className="text-sm font-medium mb-2 block">
             Additional Notes <span className="text-muted-foreground font-normal text-xs">(optional)</span>
           </Label>
           <Textarea
@@ -127,7 +130,7 @@ export function StepAmenities({ data, onChange }: StepAmenitiesProps) {
             value={data.notes}
             onChange={(e) => onChange({ ...data, notes: e.target.value })}
             placeholder="Any specific needs, medical conditions, dietary requirements, or other important information..."
-            className="mt-1.5 min-h-[100px] text-base"
+            className="min-h-[100px] text-base resize-none"
           />
         </div>
       </div>
