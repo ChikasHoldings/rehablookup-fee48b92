@@ -44,11 +44,16 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
     setError("");
 
     try {
+      console.log("[EmailVerification] Sending verification code to:", email.substring(0, 3) + "***");
+      
       const { data, error: fnError } = await supabase.functions.invoke("send-verification-code", {
         body: { email },
       });
 
-      if (fnError) throw fnError;
+      if (fnError) {
+        console.error("[EmailVerification] Function invocation error:", fnError);
+        throw fnError;
+      }
 
       if (data?.error) {
         const errorCode = data?.errorCode;
@@ -63,31 +68,36 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
           description = "Too many attempts. Please wait a few minutes before trying again.";
         }
         
+        console.log("[EmailVerification] Send failed:", errorCode, description);
         setError(description);
         toast({
           title: "Unable to send code",
           description,
           variant: "destructive",
         });
-      } else {
-        setCodeSent(true);
-        setResendCooldown(60);
-        toast({
-          title: "Code Sent",
-          description: `A 6-digit verification code has been sent to ${email}`,
-        });
+        setIsSending(false);
+        return;
       }
+      
+      console.log("[EmailVerification] Code sent successfully");
+      setCodeSent(true);
+      setResendCooldown(60);
+      toast({
+        title: "Code Sent",
+        description: `A 6-digit verification code has been sent to ${email}`,
+      });
+      setIsSending(false);
     } catch (err: any) {
-      console.error("Error sending verification code:", err);
+      console.error("[EmailVerification] Unexpected error sending code:", err);
       setError("Failed to send verification code. Please try again.");
       toast({
         title: "Error",
         description: "Failed to send verification code. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsSending(false);
     }
+    // NOTE: No finally block - each path explicitly handles setIsSending(false)
   };
 
   const handleCodeChange = (index: number, value: string) => {
@@ -129,6 +139,9 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
   };
 
   const verifyCode = async (codeString: string) => {
+    // Prevent double submissions
+    if (isVerifying) return;
+    
     setIsVerifying(true);
     setError("");
 
@@ -138,11 +151,16 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       });
 
       if (fnError) {
-        console.error("Function error:", fnError);
-        throw fnError;
+        console.error("[EmailVerification] Function invocation error:", fnError);
+        setError("Unable to verify code. Please check your connection and try again.");
+        setCode(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+        setIsVerifying(false);
+        return;
       }
 
       if (data?.error) {
+        console.log("[EmailVerification] Verification failed:", data.error);
         setError(data.error);
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
@@ -151,13 +169,14 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       }
       
       if (data?.verified) {
+        console.log("[EmailVerification] Email verified successfully");
         // Set verifying to false BEFORE calling onVerified to prevent state race
         setIsVerifying(false);
         toast({
           title: "Email Verified",
           description: "Your email has been verified successfully!",
         });
-        // Use setTimeout to ensure state updates flush before navigation
+        // Use setTimeout to ensure state updates flush before parent navigation
         setTimeout(() => {
           onVerified();
         }, 0);
@@ -165,18 +184,20 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       }
 
       // Fallback: if neither error nor verified, treat as unexpected response
-      console.error("Unexpected response from verify-code:", data);
+      console.error("[EmailVerification] Unexpected response format:", data);
       setError("Unexpected response. Please try again.");
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
+      setIsVerifying(false);
     } catch (err: any) {
-      console.error("Error verifying code:", err);
+      console.error("[EmailVerification] Unexpected error:", err);
       setError("Failed to verify code. Please try again.");
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
-    } finally {
       setIsVerifying(false);
     }
+    // NOTE: No finally block - each path explicitly handles setIsVerifying(false)
+    // This prevents double state updates and potential unmount issues
   };
 
   return (
