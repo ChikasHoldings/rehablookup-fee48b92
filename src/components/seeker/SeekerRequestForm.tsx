@@ -119,7 +119,11 @@ export function SeekerRequestForm({
       </div>
       
       {/* Lead Intake Form with unified animated flow */}
-      <LeadIntakeForm renderSuccess={renderSuccess} />
+      <LeadIntakeForm 
+        facilityId={facilityId}
+        facilityName={facilityName}
+        renderSuccess={renderSuccess} 
+      />
       
       {/* Cancel button */}
       {onCancel && (
