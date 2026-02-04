@@ -43,8 +43,29 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find the MOST RECENT unverified, unexpired code for this email
     const now = new Date().toISOString();
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    // First check if email was already verified recently (handle retries/double-clicks gracefully)
+    const { data: recentlyVerified, error: recentlyVerifiedError } = await supabase
+      .from("email_verification_codes")
+      .select("id, verified, created_at")
+      .eq("email", normalizedEmail)
+      .eq("verified", true)
+      .gte("created_at", twentyFourHoursAgo)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!recentlyVerifiedError && recentlyVerified) {
+      console.log(`Email already verified (retry detected): ${normalizedEmail}`);
+      return new Response(
+        JSON.stringify({ success: true, verified: true, alreadyVerified: true }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Find the MOST RECENT unverified, unexpired code for this email
     const { data: verificationRecord, error: fetchError } = await supabase
       .from("email_verification_codes")
       .select("*")
