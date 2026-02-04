@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,7 +10,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[SMS-VERIFICATION-VERIFY] ${step}${detailsStr}`);
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
 
   if (req.method === "OPTIONS") {

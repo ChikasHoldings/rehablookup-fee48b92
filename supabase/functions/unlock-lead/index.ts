@@ -1,10 +1,8 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 // Version tracking for deployment verification
-const VERSION = "1.0.2";
-const DEPLOYED_AT = "2026-01-31T00:00:00Z";
+const VERSION = "1.0.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,7 +57,7 @@ async function getUnlockPricing(supabase: any): Promise<{
   return { prices, proDiscountPercent };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = generateRequestId();
   logStep(requestId, "Request received", { method: req.method });
 
