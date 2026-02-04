@@ -24,6 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useAdminSidebarCounts, type AdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
 
 interface NavItem {
   to: string;
@@ -31,6 +32,7 @@ interface NavItem {
   label: string;
   end?: boolean;
   permission: string;
+  countKey?: keyof AdminSidebarCounts;
 }
 
 interface NavGroup {
@@ -48,15 +50,15 @@ const isNavGroup = (entry: NavEntry): entry is NavGroup => {
 
 const navEntries: NavEntry[] = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
-  { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
+  { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads", countKey: "leads" },
   { to: "/admin/seekers", icon: UserSearch, label: "Users", permission: "seekers" },
-  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
-  { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements" },
-  { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support" },
-  { to: "/admin/marketing", icon: Megaphone, label: "Marketing Leads", permission: "leads" },
+  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
+  { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
+  { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support", countKey: "supportTickets" },
+  { to: "/admin/marketing", icon: Megaphone, label: "Marketing Leads", permission: "leads", countKey: "marketingLeads" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-  { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
+  { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews", countKey: "pendingReviews" },
   // Settings is accessible to all roles - sub-items are permission-gated
   { to: "/admin/settings", icon: Settings, label: "Settings", permission: "dashboard" },
   {
@@ -78,6 +80,8 @@ interface AdminSidebarProps {
 
 function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProps) {
   const location = useLocation();
+  const { data: counts } = useAdminSidebarCounts();
+  
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     navEntries.forEach((entry) => {
@@ -109,6 +113,11 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
 
   const canViewItem = (item: NavItem): boolean => {
     return isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission);
+  };
+
+  const getItemCount = (item: NavItem): number => {
+    if (!item.countKey || !counts) return 0;
+    return counts[item.countKey] || 0;
   };
 
   return (
@@ -169,6 +178,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                       const isActive = item.to === "/admin/leads"
                         ? location.pathname === item.to
                         : location.pathname.startsWith(item.to);
+                      const itemCount = getItemCount(item);
 
                       return (
                         <NavLink
@@ -183,7 +193,17 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                           )}
                         >
                           <ItemIcon className="h-3.5 w-3.5" />
-                          <span>{item.label}</span>
+                          <span className="flex-1">{item.label}</span>
+                          {itemCount > 0 && (
+                            <span className={cn(
+                              "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold",
+                              isActive 
+                                ? "bg-white/20 text-primary-foreground" 
+                                : "bg-primary text-primary-foreground"
+                            )}>
+                              {itemCount > 99 ? "99+" : itemCount}
+                            </span>
+                          )}
                         </NavLink>
                       );
                     })}
@@ -197,6 +217,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
           const isActive = entry.end
             ? location.pathname === entry.to
             : location.pathname.startsWith(entry.to);
+          const itemCount = getItemCount(entry);
 
           return (
             <NavLink
@@ -222,7 +243,17 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                   isActive ? "text-primary-foreground" : "text-slate-500 group-hover:text-slate-700"
                 )} />
               </div>
-              <span className="text-sm font-medium">{entry.label}</span>
+              <span className="text-sm font-medium flex-1">{entry.label}</span>
+              {itemCount > 0 && (
+                <span className={cn(
+                  "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold",
+                  isActive 
+                    ? "bg-white/20 text-primary-foreground" 
+                    : "bg-primary text-primary-foreground"
+                )}>
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
+              )}
             </NavLink>
           );
         })}
