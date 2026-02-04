@@ -1,213 +1,194 @@
 
-# Comprehensive Audit: Inquiry and Placement Flow Fixes
+# Enhanced Accreditation Verification System
 
-## Executive Summary
-This audit identified **92+ bugs and gaps** across the inquiry and placement flows, primarily caused by:
-1. **89 edge functions** using deprecated Deno imports that can cause deployment failures
-2. **CORS header inconsistencies** causing potential client-side call failures
-3. **Orphaned components** violating the brokerage model
-4. **Missing version tracking** preventing deployment verification
+## Current State Analysis
+
+The existing system has two separate, unlinked tables:
+- **`facility_accreditations`**: Stores claimed accreditations (JCAHO, CARF, etc.) with verification status
+- **`facility_credential_documents`**: Stores generic uploaded documents without linking to specific accreditations
+
+**Problem**: When a provider claims an accreditation, there's no way to:
+1. Enter a verification number specific to that accreditation
+2. Upload a certificate linked directly to that accreditation
+3. Provide a public verification URL for admin lookup
 
 ---
 
-## Critical Issues Found
+## Verification Methods by Accreditation Type
 
-### 1. Edge Function Deployment Failures (89 Functions)
+| Accreditation | Primary Verification | Public Lookup Available |
+|---------------|---------------------|------------------------|
+| **JCAHO** | Certificate/Organization Number | qualitycheck.org |
+| **CARF** | Accreditation Number | carf.org/providerSearch |
+| **LegitScript** | Certification ID | legitscript.com/search |
+| **NAATP** | Member ID | naatp.org/membership-directory |
+| **State Licensed** | License Number + State | Varies by state |
+| **SAMHSA Listed** | Facility ID or Name | findtreatment.gov |
 
-**Problem:** All functions using `import { serve } from "https://deno.land/std@X.X.X/http/server.ts"` can fail with network errors during Supabase bundling.
+---
 
-**Affected Core Placement Functions:**
-| Function | Status | Impact |
-|----------|--------|--------|
-| `charge-placement-fee` | Deprecated import | Billing fails |
-| `send-concierge-notifications` | Deprecated import | All notifications fail |
-| `match-concierge-intake` | Deprecated import | Matching algorithm fails |
-| `auto-status-transition` | Deprecated import | Status flow breaks |
-| `verify-concierge-payment` | Deprecated import | Payment verification fails |
-| `create-concierge-checkout` | Deprecated import | Checkout creation fails |
-| `send-concierge-introduction` | Already fixed | Working |
-| `submit-concierge-intake` | Already fixed | Working |
-| `confirm-placement` | Already fixed | Working |
+## Proposed Database Changes
 
-**Fix:** Replace `serve()` with built-in `Deno.serve()`:
+### 1. Extend `facility_accreditations` Table
+
+Add new columns to store verification data directly on each accreditation:
+
 ```text
-// REMOVE:
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-serve(async (req) => { ... });
-
-// REPLACE WITH:
-Deno.serve(async (req) => { ... });
+New Columns:
+├── verification_number (text) - License/certificate/member number
+├── verification_url (text) - Optional public lookup URL
+├── document_url (text) - Uploaded certificate file URL
+├── document_name (text) - Original filename
+├── issuing_authority (text) - e.g., "State of California DHCS"
+└── notes (text) - Provider notes for admin
 ```
 
-### 2. CORS Header Inconsistencies (6 Functions)
+### 2. Add Verification Metadata Config
 
-**Problem:** Missing Supabase metadata headers cause preflight failures.
+Create an `ACCREDITATION_VERIFICATION_CONFIG` that defines what each accreditation type requires:
 
-**Affected Functions:**
-- `send-concierge-notifications` (line 7)
-- `verify-concierge-payment` (line 7)
-- `create-concierge-checkout` (line 7)
-- `charge-placement-fee` (already has correct headers)
-- `match-concierge-intake` (already has correct headers)
-- `auto-status-transition` (already has correct headers)
-
-**Fix:** Standardize all CORS headers:
 ```text
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+JCAHO:
+├── requiresNumber: true
+├── numberLabel: "Organization ID"
+├── numberPlaceholder: "e.g., 123456"
+├── numberFormat: "6-digit number"
+├── lookupUrl: "https://www.qualitycheck.org"
+├── supportsDocument: true
+└── documentLabel: "JCAHO Certificate"
+
+CARF:
+├── requiresNumber: true
+├── numberLabel: "Accreditation Number"
+├── supportsDocument: true
+...
+
+State Licensed:
+├── requiresNumber: true
+├── numberLabel: "License Number"
+├── requiresState: true (already captured at facility level)
+├── supportsDocument: true
+└── documentLabel: "State License Document"
 ```
 
-### 3. Orphaned Components (Brokerage Model Violations)
+---
 
-**Problem:** Dead code that violates the admin-only brokerage model.
+## UI/UX Enhancements
 
-| File | Issue | Action |
-|------|-------|--------|
-| `src/components/seeker/TourRequestModal.tsx` | Orphaned, not imported | Delete |
-| `src/components/facility/FacilityTourRequestModal.tsx` | Still used in `SeekerFacilityProfile.tsx` | Review/Remove |
+### 1. Enhanced Accreditation Card Component
 
-### 4. Version Tracking Gaps
+When a provider checks an accreditation, expand to show verification fields:
 
-**Problem:** Inconsistent version tracking makes deployment verification difficult.
+```text
+┌─────────────────────────────────────────────────────┐
+│ ☑ JCAHO Accredited                    [Pending ⏳] │
+│   Joint Commission on Accreditation...             │
+│                                                     │
+│   ┌─ Verification Details ────────────────────┐   │
+│   │                                            │   │
+│   │  Organization ID *                         │   │
+│   │  ┌──────────────────────────────────────┐ │   │
+│   │  │ e.g., 123456                         │ │   │
+│   │  └──────────────────────────────────────┘ │   │
+│   │                                            │   │
+│   │  Upload Certificate (Optional)             │   │
+│   │  ┌──────────────────────────────────────┐ │   │
+│   │  │ 📄 Choose file or drag & drop        │ │   │
+│   │  └──────────────────────────────────────┘ │   │
+│   │                                            │   │
+│   │  🔗 Verify at qualitycheck.org            │   │
+│   │                                            │   │
+│   │           [Save Verification Details]      │   │
+│   └────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
 
-**Functions Missing Proper Versioning:**
-- `send-concierge-notifications` - No VERSION constant
-- `verify-concierge-payment` - No VERSION constant
-- `create-concierge-checkout` - No VERSION constant
+### 2. Verification Status Indicators
+
+Enhanced badges showing verification completeness:
+
+```text
+States:
+├── ⚪ Not Claimed - Gray checkbox
+├── 🟡 Claimed (No Details) - Yellow "Needs Info" badge
+├── 🟠 Claimed (Details Provided) - Orange "Pending Review" badge
+├── 🟢 Verified - Green "Verified ✓" badge
+└── 🔴 Rejected - Red "Rejected" badge with reason tooltip
+```
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Fix Critical Placement Edge Functions (6 functions)
+### Phase 1: Database Migration
+1. Add new columns to `facility_accreditations` table
+2. Update RLS policies for new columns
+3. Create indexes for efficient querying
 
-1. **`charge-placement-fee/index.ts`**
-   - Remove deprecated `serve` import
-   - Use `Deno.serve()`
-   - Bump VERSION to 1.0.2
+### Phase 2: Configuration & Types
+1. Create `ACCREDITATION_VERIFICATION_CONFIG` constant
+2. Update TypeScript types for new fields
+3. Add validation schemas (Zod)
 
-2. **`send-concierge-notifications/index.ts`**
-   - Remove deprecated `serve` import
-   - Use `Deno.serve()`
-   - Update CORS headers
-   - Add VERSION constant
+### Phase 3: UI Components
+1. Create `AccreditationVerificationForm` component
+2. Update `ProviderTrustForm` to use expandable verification cards
+3. Add file upload handling per-accreditation
+4. Add external verification link buttons
 
-3. **`match-concierge-intake/index.ts`**
-   - Remove deprecated `serve` import
-   - Use `Deno.serve()`
-   - Bump VERSION to 1.0.2
-
-4. **`auto-status-transition/index.ts`**
-   - Remove deprecated `serve` import
-   - Use `Deno.serve()`
-   - Bump VERSION to 1.0.2
-
-5. **`verify-concierge-payment/index.ts`**
-   - Remove deprecated `serve` import
-   - Use `Deno.serve()`
-   - Update CORS headers
-   - Add VERSION constant
-
-6. **`create-concierge-checkout/index.ts`**
-   - Remove deprecated `serve` import
-   - Use `Deno.serve()`
-   - Update CORS headers
-   - Add VERSION constant
-
-### Phase 2: Cleanup Orphaned Code
-
-1. Delete `src/components/seeker/TourRequestModal.tsx`
-2. Review `FacilityTourRequestModal` usage in `SeekerFacilityProfile.tsx`
-
-### Phase 3: Deploy and Verify
-
-1. Deploy all 6 updated edge functions
-2. Test each function with version verification
-3. Verify CORS preflight requests succeed
+### Phase 4: Admin Enhancements
+1. Update `ProviderDetailModal` to show verification details
+2. Add one-click lookup links for admins
+3. Show uploaded certificates inline
+4. Add verification/rejection workflow with notes
 
 ---
 
-## Technical Details
+## File Changes Summary
 
-### Edge Function Template (Post-Fix)
+| File | Changes |
+|------|---------|
+| `supabase/migrations/` | New migration for schema changes |
+| `src/components/trust/TrustBadge.tsx` | Add verification config export |
+| `src/components/provider/ProviderTrustForm.tsx` | Replace simple checkboxes with expandable verification cards |
+| `src/components/provider/AccreditationVerificationCard.tsx` | **New** - Individual accreditation verification form |
+| `src/components/admin/providers/ProviderDetailModal.tsx` | Show verification details, lookup links |
+| `src/integrations/supabase/types.ts` | Auto-updated after migration |
 
-```typescript
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+---
 
-const VERSION = "1.0.2";
+## Technical Considerations
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+### Backward Compatibility
+- Existing accreditations without verification details remain valid
+- New fields are nullable, won't break existing records
+- Gradual adoption: providers can add details over time
 
-const logStep = (step: string, details?: Record<string, unknown>) => {
-  console.log(`[FUNCTION-NAME] [${VERSION}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
-};
+### Storage
+- Certificates uploaded to existing `facility-images` bucket
+- Path: `{userId}/{facilityId}/accreditations/{type}-{timestamp}.{ext}`
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+### Validation
+- Number formats validated per-accreditation type
+- File type restrictions (PDF, JPG, PNG)
+- Max file size: 10MB (consistent with existing uploads)
 
-  try {
-    logStep("Function started", { version: VERSION });
-    // ... function logic ...
-    return new Response(JSON.stringify({ success: true, _version: VERSION }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message, _version: VERSION }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
-});
+---
+
+## Admin Workflow Enhancement
+
+```text
+Admin views accreditation claim:
+│
+├── See provider-submitted verification number
+├── See uploaded certificate (preview/download)
+├── One-click to open public lookup site
+├── Compare submitted info with official records
+│
+└── Actions:
+    ├── ✅ Verify - Marks as verified
+    ├── ❌ Reject - Requires reason (shown to provider)
+    └── 📝 Request More Info - Sends notification
 ```
 
----
-
-## Files to Modify
-
-| File | Change Type |
-|------|-------------|
-| `supabase/functions/charge-placement-fee/index.ts` | Edit |
-| `supabase/functions/send-concierge-notifications/index.ts` | Edit |
-| `supabase/functions/match-concierge-intake/index.ts` | Edit |
-| `supabase/functions/auto-status-transition/index.ts` | Edit |
-| `supabase/functions/verify-concierge-payment/index.ts` | Edit |
-| `supabase/functions/create-concierge-checkout/index.ts` | Edit |
-| `src/components/seeker/TourRequestModal.tsx` | Delete |
-
----
-
-## Estimated Impact
-
-- **Deployment Success Rate:** 0% → 100% for affected functions
-- **CORS Failures:** Eliminated
-- **Dead Code:** Removed
-- **Deployment Verification:** Full version tracking enabled
-
----
-
-## ✅ COMPLETED - February 4, 2026
-
-### Phase 1: Edge Functions Fixed & Deployed
-All 6 critical placement edge functions have been updated and deployed:
-- ✅ `charge-placement-fee` (v1.0.2)
-- ✅ `send-concierge-notifications` (v1.0.1)
-- ✅ `match-concierge-intake` (v1.0.2)
-- ✅ `auto-status-transition` (v1.0.2)
-- ✅ `verify-concierge-payment` (v1.0.1)
-- ✅ `create-concierge-checkout` (v1.0.1)
-
-### Phase 2: Orphaned Code Cleanup
-- ✅ `src/components/seeker/TourRequestModal.tsx` - **DELETED** (orphaned, violated brokerage model)
-- ✅ `FacilityTourRequestModal` - **REVIEWED & RETAINED** (used on public facility profiles, not placement flow)
-
-### Phase 3: Verification
-- ✅ All functions deployed successfully
-- ✅ CORS headers standardized across all functions
-- ✅ Version tracking enabled for all functions
+This approach integrates verification data directly into the accreditation workflow without breaking existing functionality or requiring a separate documents management system for accreditations.
