@@ -1714,21 +1714,6 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Zap className="h-4 w-4 text-slate-500" />}
-                      title="Unassigned Leads"
-                      description="Alert when leads need assignment"
-                    >
-                      <Switch 
-                        checked={getSetting('inapp_unassigned_leads') !== false}
-                        onCheckedChange={(checked) => updateSetting.mutate({ 
-                          key: 'inapp_unassigned_leads', 
-                          value: checked 
-                        })}
-                        disabled={updateSetting.isPending}
-                      />
-                    </SettingRow>
-                    <Separator />
-                    <SettingRow
                       icon={<FileText className="h-4 w-4 text-slate-500" />}
                       title="Flagged Content"
                       description="Notify about flagged images or content"

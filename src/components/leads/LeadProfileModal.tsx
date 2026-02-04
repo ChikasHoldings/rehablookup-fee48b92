@@ -599,35 +599,21 @@ export function LeadProfileModal({
                   </div>
                 )}
 
-                {/* Admin: Assignment Info */}
-                {isAdmin && (
+                {/* Admin: Facility Info */}
+                {isAdmin && lead.facility_id && assignedFacility && (
                   <div className="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
-                      Assignment Details
+                      Facility
                     </h3>
-                    {lead.facility_id && assignedFacility ? (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{assignedFacility.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {assignedFacility.city}, {assignedFacility.state}
-                          </p>
-                        </div>
-                        <Badge className="bg-green-100 text-green-700 border-green-200">
-                          Assigned
-                        </Badge>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">
-                          Unassigned
-                        </Badge>
-                        <p className="text-xs text-muted-foreground italic">
-                          Leads are automatically assigned by the system
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{assignedFacility.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {assignedFacility.city}, {assignedFacility.state}
                         </p>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
 
