@@ -62,5 +62,8 @@
 /insurance/united-healthcare-rehab /insurance/united-healthcare-rehab.html 200
 /insurance/medicare-rehab /insurance/medicare-rehab.html 200
 
+# Dynamic sitemap proxy to edge function
+/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities 200
+
 # Handle SPA routing - serve index.html for all other routes
 /* /index.html 200

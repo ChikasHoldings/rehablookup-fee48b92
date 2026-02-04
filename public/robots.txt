@@ -384,6 +384,7 @@ Allow: /favicon.ico
 Allow: /apple-touch-icon.png
 Allow: /sitemap.xml
 Allow: /sitemap-index.xml
+Allow: /sitemap-facilities.xml
 
 # =============================================================================
 # SITEMAPS
@@ -394,6 +395,9 @@ Sitemap: https://rehablookup.com/sitemap-index.xml
 
 # Static pages sitemap
 Sitemap: https://rehablookup.com/sitemap.xml
+
+# Dynamic facilities sitemap
+Sitemap: https://rehablookup.com/sitemap-facilities.xml
 
 # =============================================================================
 # ADDITIONAL DIRECTIVES
