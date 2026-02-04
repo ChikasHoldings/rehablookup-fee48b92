@@ -1,188 +1,207 @@
 
 
-# Lead System Audit & Cleanup Plan
+# Admin Panel Comprehensive Audit - Bug Report & Fix Plan
 
-## Current Monetization Model (Confirmed Working)
+## Executive Summary
 
-```text
-User submits inquiry on facility page
-         |
-         v
-Lead created with:
-  - facility_id: [target facility]
-  - status: "new"
-  - redistribution_status: "exclusive"
-  - exclusive_until: +24 hours
-         |
-         v
-Provider has 24hr exclusive window to unlock ($39-$49)
-         |
-         v
-If NOT unlocked after 24hrs:
-  - Lead redistributed to 2-3 nearby facilities
-  - redistribution_status: "extended"
-  - Price drops to $15
-         |
-         v
-First facility to unlock wins exclusively
+After auditing all Admin features page-by-page, I identified **1 critical bug** causing the seeker deletion to fail silently, plus **6 additional issues** that need attention.
+
+---
+
+## CRITICAL BUG: Seeker User Deletion Fails Silently
+
+**Location:** `src/hooks/admin/useUserManagement.ts`
+
+**Impact:** HIGH - When admins try to delete seeker accounts, the user's related data is deleted but the **auth.users entry remains**. The user can still log in.
+
+**Root Cause:**
+The `deleteUser` mutation in `useUserManagement.ts` attempts to delete user data directly from the client-side Supabase SDK. However, it CANNOT delete auth users because:
+1. The client SDK does not have access to `supabase.auth.admin.deleteUser()`
+2. That method requires the service role key, which is only available in edge functions
+
+**Current Broken Code:**
+```typescript
+// src/hooks/admin/useUserManagement.ts lines 22-82
+const deleteUser = useMutation({
+  mutationFn: async (user: UserProfile) => {
+    // Deletes from tables... but NOT auth.users!
+    await supabase.from("user_favorites").delete().eq("user_id", userId);
+    await supabase.from("facility_reviews").delete().eq("user_id", userId);
+    // ... more table deletions ...
+    
+    // MISSING: supabase.auth.admin.deleteUser(userId)
+    // This line CANNOT work from client-side!
+    return userId;
+  },
+});
 ```
 
----
-
-## Legacy Code to Remove
-
-### 1. Database Columns (Deprecated)
-
-These columns in the `leads` table are no longer used:
-
-| Column | Purpose (Old) | Replacement |
-|--------|---------------|-------------|
-| `qualified` | Boolean qualification flag | Removed - all leads go to facility |
-| `qualification_reason` | Why lead was (un)qualified | Removed |
-| `assignment_status` | "assigned", "pending", "unassigned" | `redistribution_status` is now the only status |
-| `assignment_reason` | Routing decision explanation | Removed |
-| `routing_order` | Priority for multi-provider routing | Removed |
-| `shared_with` | Array of facility IDs for shared leads | `lead_distributions` table |
-| `exclusivity` | Old exclusivity tracking | `redistribution_status` |
-
-### 2. Database Table
-
-- **`lead_routing_logs`** - Tracked old routing decisions, no longer needed
-
-### 3. Platform Settings
-
-- **`inapp_unassigned_leads`** - Remove this setting (no unassigned concept)
+**Solution:** Create a new edge function `admin-delete-seeker` (following the pattern of the working `admin-delete-provider` function) and update `useUserManagement.ts` to call it.
 
 ---
 
-## Files to Update
+## Other Issues Found
 
-### A. Edge Functions
+### Issue #2: Ban User Function May Have Silent Failures
 
-**1. `submit-qualified-lead/index.ts`**
-- Remove `isDirectInquiry` logic and "unassigned" status
-- All leads must have a `facility_id` (reject submissions without one)
-- Remove direct inquiry email template
-- Simplify to only handle facility-specific submissions
+**Location:** `src/hooks/admin/useUserManagement.ts` (lines 86-140)
 
-**2. `supabase/config.toml`**
-- Remove `track-request-help` function reference (already commented/disabled)
+**Issue:** The `banUser` mutation adds entries to `blocked_identifiers` table, but doesn't actually disable the user in Supabase Auth. The user's session remains valid.
 
-### B. Admin UI Components
-
-**1. `src/pages/admin/AdminLeads.tsx`**
-- Remove "Unassigned" filter button
-- Remove `unassignedFilter` state and logic
-- Remove URL param handling for `?unassigned=true`
-
-**2. `src/pages/admin/AdminAnalytics.tsx`**
-- Remove qualification rate metrics
-- Remove assignment success rate metrics
-- Remove assignment reasons breakdown
-- Remove qualification reasons breakdown
-- Keep redistribution analytics (those are still valid)
-
-**3. `src/pages/admin/AdminSettings.tsx`**
-- Remove "Unassigned Leads" notification toggle
-
-**4. `src/components/admin/AdminHeader.tsx`**
-- Remove unassigned leads notifications query
-- Remove unassigned leads count from notifications
-- Remove "New Unassigned Lead" toast
-- Remove "View Unassigned Leads" command item
-
-**5. `src/components/admin/dashboard/SuperAdminDashboard.tsx`**
-- Keep redistribution stats (exclusive/extended/expired)
-- Remove any unassigned lead references
-
-**6. `src/components/leads/LeadProfileModal.tsx`**
-- Remove "Unassigned" badge display
-- Remove "Leads are automatically assigned" message
-
-### C. Provider Components
-
-**1. `src/components/provider/leads/LeadDetailPanel.tsx`**
-- Remove `assignment_status` display
-- Remove `qualification_reason` display
-- Keep redistribution-related displays
-
-### D. Hooks & Utilities
-
-**1. `src/hooks/useAdminUserManagement.ts`**
-- Remove `lead_routing` permission from `ADMIN_PERMISSIONS`
-- Remove `lead_routing` from all `ROLE_DEFAULTS`
-
-**2. `src/hooks/useCentralizedLeadAnalytics.ts`**
-- Remove qualification/assignment analytics
-
-### E. Delete Edge Functions
-
-**1. Remove or archive:**
-- `supabase/functions/track-request-help/` (if still exists - appears disabled)
+**Fix Required:** Ban should also call an edge function to use `supabase.auth.admin.updateUserById(userId, { ban_duration: "876000h" })`.
 
 ---
 
-## Database Migration
+### Issue #3: Console Warning - FlagReviewDialog Missing forwardRef
 
-Create migration to:
+**Location:** `src/components/provider/reviews/FlagReviewDialog.tsx`
 
-1. **Clean up platform_settings:**
-```sql
-DELETE FROM public.platform_settings 
-WHERE setting_key = 'inapp_unassigned_leads';
-```
+**Issue:** React warns "Function components cannot be given refs" for both `FlagReviewDialog` and its internal `Dialog` component.
 
-2. **Note:** Keep the columns in the `leads` table for now (historical data) but stop using them in new code. A future migration can drop them after confirming no issues.
+**Fix:** Wrap component with `forwardRef` or ensure Dialog isn't receiving refs improperly.
 
 ---
 
-## Validation After Cleanup
+### Issue #4: Password Reset for Seekers May Not Work
 
-1. Submit inquiry from facility profile page
-   - Lead should be created with `facility_id` set
-   - `redistribution_status` = "exclusive"
-   - Provider receives notification
+**Location:** `src/hooks/admin/useUserManagement.ts` (lines 184-217)
 
-2. Admin dashboard should NOT show:
-   - Unassigned leads count
-   - Qualification rates
-   - Assignment reasons
-
-3. Admin leads page should NOT have:
-   - "Unassigned" filter button
-   - `?unassigned=true` URL param handling
-
-4. Lead profile modal should NOT show:
-   - "Unassigned" badge
-   - Assignment status field
+**Issue:** Uses `supabase.auth.resetPasswordForEmail()` which sends email via Supabase Auth. This should work, but verify the redirect URL `/reset-password` exists and handles the token properly.
 
 ---
 
-## Files Summary
+### Issue #5: Missing Error Handling in Some Mutations
+
+**Location:** Multiple mutations in `useUserManagement.ts`
+
+**Issue:** The delete operations don't check for errors on each table deletion. If one fails silently, subsequent operations may leave data in inconsistent state.
+
+---
+
+### Issue #6: Stale Query Cache After Seeker Operations
+
+**Location:** `src/hooks/admin/useUserManagement.ts`
+
+**Issue:** After deleting/banning a user, only `["admin-users"]` and `["admin-user-activity-stats"]` queries are invalidated. But `AdminSeekers.tsx` uses `["admin-user-activity-counts"]` which isn't invalidated.
+
+---
+
+## Features Verified as Working
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Admin Staff Create | Working | Uses `create-admin-user` edge function |
+| Admin Staff Delete | Working | Uses `manage-admin-user` edge function with `auth.admin.deleteUser()` |
+| Admin Staff Suspend | Working | Uses `manage-admin-user` edge function |
+| Provider Delete | Working | Uses `admin-delete-provider` edge function |
+| Review Moderation | Working | Direct DB operations work for non-auth data |
+| Support Tickets | Working | Status/assignment updates work |
+| Subscription Management | Working | Uses Stripe edge functions |
+| Blocked Identifiers | Working | Direct DB operations work |
+| Concierge Management | Working | Status updates and assignments work |
+
+---
+
+## Implementation Plan
+
+### Step 1: Create Edge Function for Seeker Deletion
+
+Create `supabase/functions/admin-delete-seeker/index.ts` that:
+1. Verifies caller is an admin
+2. Deletes all related data using service role
+3. Calls `adminClient.auth.admin.deleteUser(targetUserId)`
+4. Logs to admin_audit_log
+
+### Step 2: Update useUserManagement Hook
+
+Update `src/hooks/admin/useUserManagement.ts` to:
+1. Call the new edge function instead of direct DB operations
+2. Add proper error handling
+3. Invalidate all relevant query keys
+
+### Step 3: Create Edge Function for User Ban
+
+Create functionality in the admin-delete-seeker edge function (or separate `admin-manage-seeker` function) to handle:
+1. Ban action - disable user in auth + add to blocked_identifiers
+2. Unban action - re-enable user in auth + deactivate blocked_identifiers
+
+### Step 4: Fix Console Warning
+
+Update `src/components/provider/reviews/FlagReviewDialog.tsx` to properly handle refs.
+
+### Step 5: Add Missing Query Invalidations
+
+Update `useUserManagement.ts` to invalidate `["admin-user-activity-counts"]` on all mutations.
+
+---
+
+## Files to Create/Modify
 
 | File | Action |
 |------|--------|
-| `supabase/functions/submit-qualified-lead/index.ts` | Remove direct inquiry logic |
-| `supabase/config.toml` | Remove track-request-help entry |
-| `src/pages/admin/AdminLeads.tsx` | Remove unassigned filter |
-| `src/pages/admin/AdminAnalytics.tsx` | Remove qualification metrics |
-| `src/pages/admin/AdminSettings.tsx` | Remove unassigned notification setting |
-| `src/components/admin/AdminHeader.tsx` | Remove unassigned notifications |
-| `src/components/leads/LeadProfileModal.tsx` | Remove unassigned badge |
-| `src/components/provider/leads/LeadDetailPanel.tsx` | Remove assignment/qualification displays |
-| `src/hooks/useAdminUserManagement.ts` | Remove lead_routing permission |
+| `supabase/functions/admin-delete-seeker/index.ts` | **Create** |
+| `src/hooks/admin/useUserManagement.ts` | **Modify** - Call edge function |
+| `src/components/provider/reviews/FlagReviewDialog.tsx` | **Modify** - Fix ref warning |
+| `supabase/config.toml` | **Modify** - Add new function entry |
 
 ---
 
-## What to KEEP
+## Technical Details
 
-The redistribution system is still valid and should remain:
+### Edge Function Pattern (from working admin-delete-provider)
 
-- `redistribution_status` column (exclusive, extended, expired)
-- `exclusive_until` and `extended_until` columns
-- `original_facility_id` column
-- `lead_distributions` table
-- `process-lead-redistribution` edge function
-- `send-unlock-reminders` edge function
-- Redistribution analytics in admin dashboard
+```typescript
+// Pattern to follow for admin-delete-seeker:
+1. Verify auth header
+2. Check caller has admin role via RPC
+3. Validate target user is a seeker (has seeker_profiles entry)
+4. Use adminClient (service role) to delete:
+   - user_favorites
+   - facility_reviews  
+   - seeker_notifications
+   - account_activity_log
+   - review_helpful_votes
+   - user_roles
+   - seeker_profiles
+5. Call adminClient.auth.admin.deleteUser(targetUserId)
+6. Log to admin_audit_log
+7. Return success response
+```
+
+### Hook Update Pattern
+
+```typescript
+// Update deleteUser mutation to use edge function:
+const deleteUser = useMutation({
+  mutationFn: async (user: UserProfile) => {
+    const { data, error } = await supabase.functions.invoke("admin-delete-seeker", {
+      body: { targetUserId: user.user_id },
+    });
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => {
+    toast.success("User account deleted successfully");
+    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-user-activity-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-user-activity-counts"] });
+  },
+  // ... rest unchanged
+});
+```
+
+---
+
+## Verification Checklist
+
+After implementation, verify:
+
+- [ ] Admin can delete seeker account → user cannot log in anymore
+- [ ] Admin can ban seeker → user session invalidated
+- [ ] Admin can unban seeker → user can log in again
+- [ ] Admin can send password reset → email received
+- [ ] All related data cleaned up on delete (favorites, reviews, etc.)
+- [ ] Audit log entries created for all actions
+- [ ] No console warnings in provider reviews page
+- [ ] Query cache properly invalidated after operations
 
