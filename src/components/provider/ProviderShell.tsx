@@ -13,20 +13,10 @@ import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/Select
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { useUserRole } from "@/hooks/useUserRole";
-import { prefetchAdjacentRoutes } from "@/lib/routePrefetch";
+import { prefetchAdjacentRoutes, preloadProviderPages } from "@/lib/routePrefetch";
 
-// Minimal content-area loading placeholder - keeps shell visible
-function ContentLoading() {
-  return (
-    <div className="p-4 lg:p-6 space-y-4 animate-pulse">
-      <div className="h-8 w-48 bg-muted rounded" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="h-32 bg-muted rounded-lg" />
-        <div className="h-32 bg-muted rounded-lg" />
-      </div>
-    </div>
-  );
-}
+// Preload all provider pages on module load for instant navigation
+preloadProviderPages();
 
 function ProviderShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -235,7 +225,7 @@ function ProviderShellContent() {
           className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
         >
           <ProviderErrorBoundary>
-            <Suspense fallback={<ContentLoading />}>
+            <Suspense fallback={null}>
               <Outlet />
             </Suspense>
           </ProviderErrorBoundary>

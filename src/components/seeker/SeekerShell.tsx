@@ -7,20 +7,10 @@ import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useUserRole } from "@/hooks/useUserRole";
-import { prefetchAdjacentRoutes } from "@/lib/routePrefetch";
+import { prefetchAdjacentRoutes, preloadSeekerPages } from "@/lib/routePrefetch";
 
-// Minimal content-area loading - keeps shell visible
-function ContentLoading() {
-  return (
-    <div className="p-4 lg:p-6 space-y-4 animate-pulse">
-      <div className="h-8 w-48 bg-muted rounded" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="h-32 bg-muted rounded-lg" />
-        <div className="h-32 bg-muted rounded-lg" />
-      </div>
-    </div>
-  );
-}
+// Preload all seeker pages on module load for instant navigation
+preloadSeekerPages();
 
 interface SeekerProfile {
   display_name: string | null;
@@ -202,7 +192,7 @@ export function SeekerShell() {
         ref={mainContentRef} 
         className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
       >
-        <Suspense fallback={<ContentLoading />}>
+        <Suspense fallback={null}>
           <Outlet context={{ isAuthenticated, userName: displayName }} />
         </Suspense>
       </main>

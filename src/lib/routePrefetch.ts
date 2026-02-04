@@ -143,6 +143,105 @@ export function prefetchAdjacentRoutes(currentPath: string): void {
   });
 }
 
+// ============================================
+// Panel-specific eager preloading functions
+// Called on shell mount for instant navigation
+// ============================================
+
+const preloadedPanels = new Set<string>();
+
+/**
+ * Preload all provider panel pages eagerly on shell mount
+ */
+export function preloadProviderPages(): void {
+  if (preloadedPanels.has("provider")) return;
+  preloadedPanels.add("provider");
+  
+  const pages = [
+    () => import("@/pages/provider/Dashboard"),
+    () => import("@/pages/provider/MyListings"),
+    () => import("@/pages/provider/Inquiries"),
+    () => import("@/pages/provider/Reviews"),
+    () => import("@/pages/provider/Analytics"),
+    () => import("@/pages/provider/Credits"),
+    () => import("@/pages/provider/Settings"),
+    () => import("@/pages/provider/Notifications"),
+    () => import("@/pages/provider/Help"),
+    () => import("@/pages/provider/Billing"),
+    () => import("@/pages/provider/PlacementNetwork"),
+    () => import("@/pages/provider/EmbedBadge"),
+  ];
+  
+  pages.forEach((load, i) => {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => load().catch(() => {}), { timeout: 500 + i * 50 });
+    } else {
+      setTimeout(() => load().catch(() => {}), 50 + i * 50);
+    }
+  });
+}
+
+/**
+ * Preload all admin panel pages eagerly on shell mount
+ */
+export function preloadAdminPages(): void {
+  if (preloadedPanels.has("admin")) return;
+  preloadedPanels.add("admin");
+  
+  const pages = [
+    () => import("@/pages/admin/AdminDashboard"),
+    () => import("@/pages/admin/AdminAnalytics"),
+    () => import("@/pages/admin/AdminProviders"),
+    () => import("@/pages/admin/AdminLeads"),
+    () => import("@/pages/admin/AdminSubscriptions"),
+    () => import("@/pages/admin/AdminStaff"),
+    () => import("@/pages/admin/AdminSeekers"),
+    () => import("@/pages/admin/AdminAuditLog"),
+    () => import("@/pages/admin/AdminSecurityLogs"),
+    () => import("@/pages/admin/AdminSettings"),
+    () => import("@/pages/admin/AdminNotifications"),
+    () => import("@/pages/admin/AdminReviews"),
+    () => import("@/pages/admin/AdminConcierge"),
+    () => import("@/pages/admin/AdminSupport"),
+    () => import("@/pages/admin/AdminMarketing"),
+  ];
+  
+  pages.forEach((load, i) => {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => load().catch(() => {}), { timeout: 500 + i * 50 });
+    } else {
+      setTimeout(() => load().catch(() => {}), 50 + i * 50);
+    }
+  });
+}
+
+/**
+ * Preload all seeker panel pages eagerly on shell mount
+ */
+export function preloadSeekerPages(): void {
+  if (preloadedPanels.has("seeker")) return;
+  preloadedPanels.add("seeker");
+  
+  const pages = [
+    () => import("@/pages/seeker/SeekerHome"),
+    () => import("@/pages/seeker/SeekerRequests"),
+    () => import("@/pages/seeker/SeekerSaved"),
+    () => import("@/pages/seeker/SeekerReviews"),
+    () => import("@/pages/seeker/SeekerSettings"),
+    () => import("@/pages/seeker/SeekerNotifications"),
+    () => import("@/pages/seeker/SeekerHelp"),
+    () => import("@/pages/seeker/SeekerConcierge"),
+  ];
+  
+  pages.forEach((load, i) => {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => load().catch(() => {}), { timeout: 500 + i * 50 });
+    } else {
+      setTimeout(() => load().catch(() => {}), 50 + i * 50);
+    }
+  });
+}
+
 /**
  * Prefetch on visibility - for links in viewport
  */

@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
+import { preloadAdminPages } from "@/lib/routePrefetch";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
@@ -71,6 +72,11 @@ export function AdminShell() {
   // Track navigation for Sentry breadcrumbs
   useSentryBreadcrumbs();
 
+  // Preload all admin pages on mount for instant navigation
+  useEffect(() => {
+    preloadAdminPages();
+  }, []);
+
   // Scroll to top and prefetch adjacent pages on route change
   useEffect(() => {
     if (mainContentRef.current) {
@@ -120,7 +126,7 @@ export function AdminShell() {
           <div className="max-w-6xl mx-auto">
             <AdminErrorBoundary>
               {hasRouteAccess ? (
-                <Suspense fallback={<AdminPageLoading />}>
+                <Suspense fallback={null}>
                   <Outlet />
                 </Suspense>
               ) : (

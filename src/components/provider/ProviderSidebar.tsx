@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useCallback } from "react";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -19,6 +20,7 @@ import { useProStatus } from "@/hooks/useProStatus";
 import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
 import { usePendingInternationalCount } from "@/hooks/usePendingInternationalCount";
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
+import { prefetchRoute } from "@/lib/routePrefetch";
 
 interface ProviderSidebarProps {
   onNavigate?: () => void;
@@ -48,6 +50,11 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   // Combined placement count for badge
   const totalPlacementCount = pendingDomesticCount + pendingInternationalCount;
 
+  // Prefetch route on hover for instant navigation
+  const handleMouseEnter = useCallback((path: string) => {
+    prefetchRoute(path);
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
       <nav className="p-2 flex-1 overflow-y-auto">
@@ -68,6 +75,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                 <Link
                   to={item.href}
                   onClick={onNavigate}
+                  onMouseEnter={() => handleMouseEnter(item.href)}
                   className={cn(
                     "group flex items-center gap-2.5 lg:gap-3 px-2.5 lg:px-3 py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive 
