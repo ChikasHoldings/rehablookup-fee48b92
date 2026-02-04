@@ -1,70 +1,137 @@
-# Sitemap Infrastructure - FIXED ✅
 
-## Current Status (Updated 2026-02-04)
+# Embeddable Badge System for SEO Backlinks
 
-| Component | Status | Evidence |
-|-----------|--------|----------|
-| `sitemap-facilities` edge function | ✅ WORKING | Version v2.2.0 deployed, returns valid XML |
-| `?type=index` endpoint | ✅ WORKING | Returns sitemap index with 2 child sitemaps |
-| `?type=main` endpoint | ✅ WORKING | Returns main sitemap with 233 URLs |
-| `?type=facilities` endpoint | ✅ WORKING | Returns facilities sitemap with approved facilities |
-| `X-Robots-Tag: noindex` | ✅ REMOVED | No longer blocks crawler processing |
-| `_redirects` / `vercel.json` | ✅ Configured | Proxies sitemap requests to edge function |
+## Overview
+Create an embeddable "Verified on RehabLookup" badge that providers can add to their websites. When visitors click the badge, they'll be directed to the facility's profile on RehabLookup, creating valuable dofollow backlinks for SEO.
 
-## Verified Endpoints
+---
 
-All sitemap endpoints return valid XML with proper headers:
+## Features
 
-```text
-# Direct Supabase function URLs (always work):
-https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=index
-https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=main
-https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities
+### Badge Types (3 Variants)
+1. **Verified Badge** - "Verified on RehabLookup" with shield icon
+2. **Featured/Pro Badge** - "Featured Treatment Center" with star icon  
+3. **Rating Badge** - Shows star rating + review count (if available)
 
-# Production URLs (after publishing):
-https://rehablookup.com/sitemap-index.xml  → proxy to ?type=index
-https://rehablookup.com/sitemap.xml        → proxy to ?type=main  
-https://rehablookup.com/sitemap-facilities.xml → proxy to ?type=facilities
+### Badge Sizes
+- Small (120x40px) - For footers
+- Medium (180x60px) - Standard
+- Large (240x80px) - Hero sections
+
+### Badge Styles
+- Light mode (white background)
+- Dark mode (dark background)
+- Transparent (adapts to site)
+
+---
+
+## User Experience
+
+### Provider Dashboard
+New "Embed Badge" section in provider settings or dashboard with:
+- Live preview of badge variants
+- Size/style selector dropdowns
+- Copy-to-clipboard embed code
+- Instructions for WordPress, Squarespace, Wix, HTML
+
+### Embed Code Output
+```html
+<a href="https://rehablookup.com/center/{slug}?utm_source=badge&utm_medium=embed" 
+   target="_blank" rel="noopener">
+  <img src="https://rehablookup.com/api/badge/{facility-id}?style=light&size=medium" 
+       alt="Verified on RehabLookup" 
+       width="180" height="60" />
+</a>
 ```
 
-## Sitemap Architecture
+---
+
+## Technical Implementation
+
+### 1. Badge Serving Edge Function
+**File:** `supabase/functions/serve-badge/index.ts`
+- Serves SVG badge dynamically based on facility data
+- Supports query params: `style`, `size`, `type`
+- Tracks impressions (facility_id, referrer, timestamp)
+- Caches SVG output for performance
+- Returns proper content-type headers
+
+### 2. Database Table
+**Table:** `badge_impressions`
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| facility_id | uuid | FK to facilities |
+| referrer_domain | text | Source website |
+| created_at | timestamp | Impression time |
+| badge_type | text | verified/featured/rating |
+| badge_size | text | small/medium/large |
+
+### 3. Provider Dashboard Component
+**File:** `src/components/provider/EmbedBadgeWidget.tsx`
+- Badge preview with real facility data
+- Style/size/type selectors
+- Generated embed code with copy button
+- Installation instructions accordion
+
+### 4. Provider Page Integration
+**File:** `src/pages/provider/Settings.tsx` (or new `EmbedBadge.tsx`)
+- Add new tab/section for badge embed
+- Link from dashboard quick actions
+
+### 5. Badge Analytics
+- Add impressions count to provider analytics
+- Show top referrer domains
+- Track click-through rate
+
+---
+
+## SEO Benefits
+
+| Benefit | Impact |
+|---------|--------|
+| **Dofollow backlinks** | Each badge = quality backlink from treatment center websites |
+| **Brand visibility** | Logo/name on hundreds of provider sites |
+| **Referral traffic** | Direct clicks from badge to facility profiles |
+| **Trust signal** | Third-party validation visible to families |
+
+---
+
+## Files to Create/Modify
+
+### New Files
+1. `supabase/functions/serve-badge/index.ts` - Badge serving endpoint
+2. `src/components/provider/EmbedBadgeWidget.tsx` - Badge generator UI
+3. `src/pages/provider/EmbedBadge.tsx` - Full page for badge management
+
+### Modified Files
+1. `src/components/provider/ProviderSidebar.tsx` - Add nav link
+2. `public/_redirects` - Add badge endpoint proxy
+3. `vercel.json` - Add badge endpoint rewrite
+
+### Database Migration
+- Create `badge_impressions` table with RLS policies
+
+---
+
+## Badge Design Specifications
 
 ```text
-https://rehablookup.com/sitemap-index.xml
-│
-├── https://rehablookup.com/sitemap.xml (233 URLs)
-│   ├── Homepage (priority 1.0)
-│   ├── /rehab-centers (priority 0.95)
-│   ├── 30+ "near-me" landing pages
-│   ├── 50 state pages (/rehab-centers/{state})
-│   ├── 30 major city pages
-│   ├── 17+ treatment type pages
-│   ├── 13+ insurance pages
-│   ├── 17+ international SEO pages (/us-rehab/*)
-│   ├── 30+ resource articles
-│   └── Core marketing pages
-│
-└── https://rehablookup.com/sitemap-facilities.xml
-    └── /center/{slug} facility profiles (currently 2 approved)
+┌─────────────────────────────────────┐
+│  ✓  Verified on RehabLookup         │
+│     rehablookup.com                 │
+└─────────────────────────────────────┘
 ```
 
-## Changes Made
+- Uses platform brand colors (primary teal/blue)
+- Shield/checkmark icon for trust
+- Includes domain for recognition
+- Rounded corners, subtle shadow
 
-1. **Added version tracking** - `X-Sitemap-Version` header for deployment verification
-2. **Removed `X-Robots-Tag: noindex`** - Was preventing crawler processing
-3. **Added XML comment timestamps** - Helps debug caching issues
-4. **Verified all three sitemap types** - index, main, and facilities all working
+---
 
-## Next Step: Publish
+## Implementation Priority
 
-**You must publish the app** to make these changes live on rehablookup.com:
-1. Click the **Publish** button in Lovable
-2. After publishing, verify the production URLs in your browser
-3. Submit `https://rehablookup.com/sitemap-index.xml` to Google Search Console
-
-## Google Search Console Submission
-
-After publishing, submit the sitemap:
-1. Go to Google Search Console → Sitemaps
-2. Add: `https://rehablookup.com/sitemap-index.xml`
-3. Expected result: "Success" with ~235 discovered URLs
+1. **Phase 1**: Basic badge serving + embed code generator
+2. **Phase 2**: Impression tracking + analytics
+3. **Phase 3**: Multiple badge variants + customization
