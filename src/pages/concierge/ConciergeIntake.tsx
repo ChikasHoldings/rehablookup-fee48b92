@@ -4,12 +4,10 @@ import { Helmet } from "react-helmet-async";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Shield, ArrowLeft, ArrowRight, Loader2, Save, Lock, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 // Step components
 import { StepWhoNeedsHelp } from "@/components/concierge/StepWhoNeedsHelp";
@@ -18,7 +16,7 @@ import { StepLogistics } from "@/components/concierge/StepLogistics";
 import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
 import { StepContact } from "@/components/concierge/StepContact";
 import { StepReviewSubmit } from "@/components/concierge/StepReviewSubmit";
-import { IntakeProgress } from "@/components/concierge/IntakeProgress";
+import { IntakeProgress } from "@/components/international/IntakeProgress";
 
 export interface ConciergeIntakeData {
   // Step 1: Who needs help
@@ -179,7 +177,6 @@ export default function ConciergeIntake() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
-  const isMobile = useIsMobile();
   const [formData, setFormData] = useState<ConciergeIntakeData>(initialData);
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -576,150 +573,107 @@ export default function ConciergeIntake() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-muted/50 to-background">
+      <div className="min-h-screen flex flex-col bg-background">
         <PublicHeader />
 
-        <main className="flex-1 py-4 sm:py-8 md:py-12">
-          <div className="container mx-auto px-4 max-w-3xl">
-            {/* Header - Mobile Optimized */}
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-5 sm:mb-8"
-            >
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-primary font-medium mb-2 bg-primary/5 px-3 py-1.5 rounded-full">
-                <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                100% Confidential
-              </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1.5 sm:mb-2">
-                Find Your Path to Recovery
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground px-2">
-                Complete this intake form and we'll match you with programs within 48 hours
-              </p>
-            </motion.div>
-
-            {/* Progress Stepper */}
-            <div className="mb-5 sm:mb-8">
-              <IntakeProgress currentStep={currentStep} totalSteps={6} />
-            </div>
-
-            {/* Step Info Card - Mobile Compact */}
-            <motion.div 
-              key={`step-info-${currentStep}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary/5 rounded-xl border border-primary/10"
-            >
-              <div className="flex items-start gap-2.5 sm:gap-3">
-                <span className="text-xl sm:text-2xl">{STEP_CONFIG[currentStep - 1].icon}</span>
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-sm sm:text-lg text-foreground">
-                    {STEP_CONFIG[currentStep - 1].title}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                    {STEP_CONFIG[currentStep - 1].description}
-                  </p>
+        <main className="flex-1 py-6 md:py-16">
+          <div className="container mx-auto px-4 md:px-4">
+            <div className="max-w-3xl mx-auto">
+              {/* Form Container */}
+              <div className="bg-card border rounded-xl md:rounded-2xl shadow-sm overflow-hidden">
+                {/* Progress */}
+                <div className="px-4 md:px-10 pt-4 md:pt-8 pb-3 md:pb-4 border-b bg-muted/30">
+                  <IntakeProgress currentStep={currentStep} totalSteps={6} />
                 </div>
-              </div>
-            </motion.div>
 
-            {/* Form Card with Animation */}
-            <Card className="border-0 shadow-xl bg-card/80 backdrop-blur overflow-hidden">
-              <CardContent className="p-4 sm:pt-6 sm:pb-8 sm:px-6">
-                <AnimatePresence mode="wait" custom={direction}>
-                  <motion.div
-                    key={currentStep}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{
-                      x: { type: "spring", stiffness: 300, damping: 30 },
-                      opacity: { duration: 0.2 },
-                    }}
-                  >
-                    {renderStep()}
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Navigation Buttons - Mobile Optimized */}
-                {currentStep < 6 && (
-                  <div className="flex items-center gap-3 mt-6 sm:mt-10 pt-4 sm:pt-6 border-t">
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      onClick={handlePrev}
-                      disabled={currentStep === 1}
-                      className={`h-11 sm:h-12 rounded-xl transition-all ${currentStep === 1 ? "opacity-0 pointer-events-none" : ""}`}
+                {/* Step Content */}
+                <div className="px-4 md:px-10 py-6 md:py-12 min-h-[350px] md:min-h-[400px]">
+                  <div className="w-full max-w-xl mx-auto">
+                    {/* Step Header */}
+                    <motion.div
+                      key={`header-${currentStep}`}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-6 md:mb-8"
                     >
-                      <ArrowLeft className="mr-1.5 sm:mr-2 h-4 w-4" />
-                      <span className="hidden sm:inline">Previous</span>
-                      <span className="sm:hidden">Back</span>
-                    </Button>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{STEP_CONFIG[currentStep - 1].icon}</span>
+                        <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                          {STEP_CONFIG[currentStep - 1].title}
+                        </h2>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {STEP_CONFIG[currentStep - 1].description}
+                      </p>
+                    </motion.div>
 
-                    <Button 
-                      onClick={handleNext} 
-                      size="lg" 
-                      className="flex-1 h-11 sm:h-12 rounded-xl font-semibold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
+                    <AnimatePresence mode="wait" custom={direction}>
+                      <motion.div
+                        key={currentStep}
+                        custom={direction}
+                        variants={slideVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{
+                          x: { type: "spring", stiffness: 300, damping: 30 },
+                          opacity: { duration: 0.2 },
+                        }}
+                      >
+                        {renderStep()}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                {currentStep < 6 && (
+                  <div className="px-4 md:px-10 py-4 md:py-6 border-t bg-muted/20 flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
+                    {currentStep > 1 && (
+                      <Button
+                        variant="outline"
+                        onClick={handlePrev}
+                        className="h-11 md:h-12 px-5 md:px-6 order-2 sm:order-1"
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                      </Button>
+                    )}
+                    <Button
+                      onClick={handleNext}
+                      className="h-11 md:h-12 px-6 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground order-1 sm:order-2"
                     >
                       {currentStep === 5 ? "Review & Submit" : "Continue"}
-                      <ArrowRight className="ml-1.5 sm:ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 )}
 
-                {/* Back button for Step 6 */}
                 {currentStep === 6 && (
-                  <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t">
+                  <div className="px-4 md:px-10 py-3 md:py-4 border-t bg-muted/20 flex justify-center">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       onClick={handlePrev}
-                      className="w-full sm:w-auto h-11 rounded-xl"
+                      className="text-muted-foreground"
                     >
                       <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back to Edit
+                      Go back to edit
                     </Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Auto-save indicator - Mobile Compact */}
-            {lastSaved && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 sm:gap-2"
-              >
-                <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500" />
-                Auto-saved
-              </motion.div>
-            )}
-
-            {/* Trust Indicators - Mobile Optimized */}
-            <div className="mt-5 sm:mt-8 text-center">
-              <div className="inline-flex flex-wrap items-center justify-center gap-3 sm:gap-x-6 sm:gap-y-2 text-[10px] sm:text-xs text-muted-foreground">
-                <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
-                  <svg className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  SSL Encrypted
-                </span>
-                <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
-                  <svg className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  HIPAA Aware
-                </span>
-                <span className="hidden sm:flex items-center gap-1">
-                  <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Never Shared Without Consent
-                </span>
               </div>
+
+              {/* Auto-save indicator */}
+              {lastSaved && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-2"
+                >
+                  <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                  Auto-saved
+                </motion.div>
+              )}
             </div>
           </div>
         </main>
