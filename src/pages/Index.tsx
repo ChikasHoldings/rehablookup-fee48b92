@@ -12,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import { InternationalCTA } from "@/components/home/InternationalCTA";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
-const heroImage = "/hero-recovery.jpg";
+// Using WebP for ~70% smaller file size
+const heroImage = "/hero-recovery.webp";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
   Carousel,
