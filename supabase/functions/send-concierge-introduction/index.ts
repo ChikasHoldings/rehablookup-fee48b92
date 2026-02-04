@@ -250,10 +250,10 @@ const handler = async (req: Request): Promise<Response> => {
     if (facilityFull?.user_id) {
       await supabase.from("provider_notifications").insert({
         user_id: facilityFull.user_id,
-        type: "concierge_introduction",
-        title: "New Concierge Introduction",
-        message: `A potential client (${levelOfCare}) has been matched to your facility. Review and respond in your Concierge Network.`,
-        link: "/provider/concierge",
+        type: "placement_introduction",
+        title: "New Placement Introduction",
+        message: `A potential client (${levelOfCare}) has been matched to your facility. Review and respond in your Placement Network.`,
+        link: "/provider/placement-network",
         metadata: { inquiry_id: inquiryId, introduction_id: introductionId },
       });
     }

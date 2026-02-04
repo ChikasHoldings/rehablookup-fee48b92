@@ -33,8 +33,10 @@ interface PlacementStatusCardProps {
 
 const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: string; bgColor: string }> = {
   new: { label: "Submitted", icon: Clock, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500" },
+  pending: { label: "Submitted", icon: Clock, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500" },
   reviewing: { label: "Under Review", icon: Search, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-500" },
   matching: { label: "Finding Treatment Options", icon: Users, color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-500" },
+  matched: { label: "Facilities Found", icon: Users, color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-500" },
   introductions_sent: { label: "Introductions Sent", icon: Send, color: "text-indigo-600 dark:text-indigo-400", bgColor: "bg-indigo-500" },
   in_contact: { label: "In Contact", icon: MessageCircle, color: "text-teal-600 dark:text-teal-400", bgColor: "bg-teal-500" },
   confirming: { label: "Awaiting Confirmation", icon: Clock, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-500" },
@@ -42,7 +44,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: 
   closed: { label: "Closed", icon: XCircle, color: "text-muted-foreground", bgColor: "bg-muted" },
 };
 
-const TIMELINE_STEPS = ["new", "reviewing", "matching", "introductions_sent", "in_contact", "placed"];
+const TIMELINE_STEPS = ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed"];
 
 export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
   const config = STATUS_CONFIG[caseData.status] || STATUS_CONFIG.new;
