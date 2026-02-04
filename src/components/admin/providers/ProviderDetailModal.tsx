@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -150,12 +150,12 @@ export function ProviderDetailModal({
   const [sendInApp, setSendInApp] = useState(true);
 
   // Reset state when provider changes
-  useState(() => {
+  useEffect(() => {
     if (provider) {
       setAdminNotes(provider.admin_notes || "");
       setDetailTab("overview");
     }
-  });
+  }, [provider]);
 
   // Fetch provider profile for email
   const { data: providerProfile } = useQuery({
