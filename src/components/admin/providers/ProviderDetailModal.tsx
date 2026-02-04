@@ -97,6 +97,13 @@ type Accreditation = {
   verified_by: string | null;
   expiry_date: string | null;
   created_at: string | null;
+  verification_number: string | null;
+  verification_url: string | null;
+  document_url: string | null;
+  document_name: string | null;
+  issuing_authority: string | null;
+  notes: string | null;
+  rejection_reason: string | null;
 };
 
 type CredentialDocument = {
@@ -974,38 +981,113 @@ export function ProviderDetailModal({
                 <CardContent>
                   {providerAccreditations && providerAccreditations.length > 0 ? (
                     <div className="space-y-3">
-                      {providerAccreditations.map((acc) => (
-                        <div
-                          key={acc.id}
-                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Checkbox
-                              checked={!!acc.verified}
-                              onCheckedChange={(checked) => {
-                                updateAccreditationVerification.mutate({
-                                  accreditationId: acc.id,
-                                  verified: !!checked,
-                                });
-                              }}
-                            />
-                            <div>
-                              <p className="font-medium">{acc.accreditation_type}</p>
-                              {acc.expiry_date && (
-                                <p className="text-xs text-muted-foreground">
-                                  Expires: {format(new Date(acc.expiry_date), "PPP")}
-                                </p>
-                              )}
+                      {providerAccreditations.map((acc) => {
+                        const hasDetails = !!(acc.verification_number || acc.document_url);
+                        const lookupUrls: Record<string, string> = {
+                          "JCAHO": "https://www.qualitycheck.org",
+                          "CARF": "https://carf.org/providerSearch",
+                          "LegitScript": "https://www.legitscript.com/search",
+                          "NAATP": "https://www.naatp.org/membership-directory",
+                          "SAMHSA Listed": "https://findtreatment.gov",
+                        };
+                        const lookupUrl = lookupUrls[acc.accreditation_type];
+                        
+                        return (
+                          <div
+                            key={acc.id}
+                            className="p-3 border rounded-lg hover:bg-muted/30 transition-colors space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  checked={!!acc.verified}
+                                  onCheckedChange={(checked) => {
+                                    updateAccreditationVerification.mutate({
+                                      accreditationId: acc.id,
+                                      verified: !!checked,
+                                    });
+                                  }}
+                                />
+                                <div>
+                                  <p className="font-medium">{acc.accreditation_type}</p>
+                                  {acc.expiry_date && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Expires: {format(new Date(acc.expiry_date), "PPP")}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {acc.verified ? (
+                                  <Badge className="bg-emerald-100 text-emerald-700">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Verified
+                                  </Badge>
+                                ) : hasDetails ? (
+                                  <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                                    Pending Review
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    No Details
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
+                            
+                            {/* Verification Details */}
+                            {(acc.verification_number || acc.document_url || acc.notes) && (
+                              <div className="pl-9 pt-2 border-t border-dashed space-y-2">
+                                {acc.verification_number && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-muted-foreground">ID/Number:</span>
+                                    <span className="font-mono bg-muted px-2 py-0.5 rounded text-sm">
+                                      {acc.verification_number}
+                                    </span>
+                                    {lookupUrl && (
+                                      <Button size="sm" variant="ghost" className="h-6 px-2" asChild>
+                                        <a href={lookupUrl} target="_blank" rel="noopener noreferrer">
+                                          <ExternalLink className="h-3 w-3 mr-1" />
+                                          Verify
+                                        </a>
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+                                {acc.document_url && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-muted-foreground">Document:</span>
+                                    <Button size="sm" variant="outline" className="h-7" asChild>
+                                      <a href={acc.document_url} target="_blank" rel="noopener noreferrer">
+                                        <FileText className="h-3 w-3 mr-1" />
+                                        {acc.document_name || "View Certificate"}
+                                      </a>
+                                    </Button>
+                                  </div>
+                                )}
+                                {acc.notes && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Provider Notes:</span>
+                                    <p className="text-muted-foreground italic mt-1">{acc.notes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Lookup Link (when no verification number) */}
+                            {!acc.verification_number && lookupUrl && (
+                              <div className="pl-9">
+                                <Button size="sm" variant="ghost" className="h-7 text-xs" asChild>
+                                  <a href={lookupUrl} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    Open verification site
+                                  </a>
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          {acc.verified && (
-                            <Badge className="bg-emerald-100 text-emerald-700">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-8">

@@ -170,3 +170,73 @@ export const ACCREDITATION_OPTIONS: { value: AccreditationType; label: string; d
   { value: "State Licensed", label: "State Licensed", description: "Licensed by state regulatory authority" },
   { value: "SAMHSA Listed", label: "SAMHSA Listed", description: "Listed in SAMHSA's National Directory" },
 ];
+
+// Verification configuration for each accreditation type
+export interface AccreditationVerificationConfig {
+  requiresNumber: boolean;
+  numberLabel: string;
+  numberPlaceholder: string;
+  numberHint?: string;
+  lookupUrl?: string;
+  lookupLabel?: string;
+  supportsDocument: boolean;
+  documentLabel: string;
+}
+
+export const ACCREDITATION_VERIFICATION_CONFIG: Record<AccreditationType, AccreditationVerificationConfig> = {
+  "JCAHO": {
+    requiresNumber: true,
+    numberLabel: "Organization ID",
+    numberPlaceholder: "e.g., 123456",
+    numberHint: "6-digit organization number",
+    lookupUrl: "https://www.qualitycheck.org",
+    lookupLabel: "Verify at QualityCheck.org",
+    supportsDocument: true,
+    documentLabel: "JCAHO Certificate",
+  },
+  "CARF": {
+    requiresNumber: true,
+    numberLabel: "Accreditation Number",
+    numberPlaceholder: "e.g., 12345",
+    lookupUrl: "https://carf.org/providerSearch",
+    lookupLabel: "Verify at CARF.org",
+    supportsDocument: true,
+    documentLabel: "CARF Certificate",
+  },
+  "LegitScript": {
+    requiresNumber: true,
+    numberLabel: "Certification ID",
+    numberPlaceholder: "e.g., LS-12345",
+    lookupUrl: "https://www.legitscript.com/search",
+    lookupLabel: "Verify at LegitScript.com",
+    supportsDocument: true,
+    documentLabel: "LegitScript Certificate",
+  },
+  "NAATP": {
+    requiresNumber: true,
+    numberLabel: "Member ID",
+    numberPlaceholder: "e.g., NAATP-1234",
+    lookupUrl: "https://www.naatp.org/membership-directory",
+    lookupLabel: "View NAATP Directory",
+    supportsDocument: true,
+    documentLabel: "NAATP Membership Document",
+  },
+  "State Licensed": {
+    requiresNumber: true,
+    numberLabel: "License Number",
+    numberPlaceholder: "e.g., ABC-123456",
+    numberHint: "Include state prefix if applicable",
+    supportsDocument: true,
+    documentLabel: "State License Document",
+  },
+  "SAMHSA Listed": {
+    requiresNumber: false,
+    numberLabel: "Facility ID",
+    numberPlaceholder: "e.g., 12345 (optional)",
+    numberHint: "Optional - used for faster verification",
+    lookupUrl: "https://findtreatment.gov",
+    lookupLabel: "Verify at FindTreatment.gov",
+    supportsDocument: true,
+    documentLabel: "SAMHSA Listing Confirmation",
+  },
+};
