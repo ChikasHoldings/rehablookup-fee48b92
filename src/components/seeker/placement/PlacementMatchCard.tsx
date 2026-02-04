@@ -29,9 +29,9 @@ interface Facility {
 interface PlacementMatchCardProps {
   facility: Facility;
   isPlaced?: boolean;
-  onRequestTour?: () => void;
   onDismiss?: () => void;
   isDismissing?: boolean;
+  // onRequestTour removed - brokerage model requires advisor coordination
 }
 
 const FACILITY_TYPE_LABELS: Record<string, string> = {

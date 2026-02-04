@@ -29,7 +29,7 @@ interface PlacementTabsProps {
   inquiryId: string;
   matchedFacilityIds: string[] | null;
   matchedFacilities: Facility[] | undefined;
-  onRequestTour: (facility: Facility) => void;
+  // Tour request removed - all coordination goes through advisor (brokerage model)
 }
 
 export function PlacementTabs({ 

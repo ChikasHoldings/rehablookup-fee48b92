@@ -65,37 +65,7 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
     mutationFn: async () => {
       if (!selectedFacilityId) throw new Error("No facility selected");
 
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Update the inquiry with placement info
-      const { error: updateError } = await supabase
-        .from("concierge_inquiries")
-        .update({
-          status: "placed",
-          placed_facility_id: selectedFacilityId,
-          placement_confirmed: true,
-          placement_confirmed_at: new Date().toISOString(),
-          seeker_confirmed: true,
-          seeker_confirmed_at: new Date().toISOString(),
-        })
-        .eq("id", caseData.id);
-
-      if (updateError) throw updateError;
-
-      // Log the event
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: caseData.id,
-        event_type: "placement_confirmed",
-        event_data: { 
-          facility_id: selectedFacilityId,
-          admitted_at: admittedDate.toISOString(),
-          confirmed_by: "admin",
-        },
-        actor_id: user?.id,
-        actor_type: "admin",
-      });
-
-      // Generate placement invoice via edge function
+      // Use ONLY the edge function for confirmation - it handles all updates atomically
       const response = await supabase.functions.invoke("confirm-placement", {
         body: {
           inquiryId: caseData.id,
@@ -105,10 +75,10 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
         },
       });
 
-      if (response.error) {
-        console.error("Invoice generation error:", response.error);
-        // Don't fail the mutation for invoice errors
-      }
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
+      
+      return response.data;
     },
     onSuccess: () => {
       toast.success("Placement confirmed! Invoice has been generated.");
