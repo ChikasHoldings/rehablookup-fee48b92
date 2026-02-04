@@ -1,13 +1,7 @@
-import { Lock, Check, TrendingUp, Star, Award, Trophy, Gem, Shield, Heart, MessageSquare } from "lucide-react";
+import { Lock, Check, TrendingUp, Star, Award, Trophy, Gem, Shield, Heart, MessageSquare, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BadgeTier, BadgeType, BadgeTierConfig } from "@/lib/badges/badgeTypes";
 import { Progress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface BadgeCardProps {
   badge: BadgeType;
@@ -19,12 +13,48 @@ interface BadgeCardProps {
   onSelect?: () => void;
 }
 
-const TIER_STYLES: Record<BadgeTier, { bg: string; border: string; text: string; glow: string }> = {
-  locked: { bg: "bg-muted/50", border: "border-muted", text: "text-muted-foreground", glow: "" },
-  bronze: { bg: "bg-amber-950/20", border: "border-amber-700/50", text: "text-amber-600", glow: "shadow-amber-500/10" },
-  silver: { bg: "bg-slate-200/10", border: "border-slate-400/50", text: "text-slate-300", glow: "shadow-slate-400/10" },
-  gold: { bg: "bg-yellow-950/20", border: "border-yellow-500/50", text: "text-yellow-500", glow: "shadow-yellow-500/20" },
-  platinum: { bg: "bg-slate-100/10", border: "border-slate-200/50", text: "text-slate-100", glow: "shadow-slate-200/20" },
+const TIER_STYLES: Record<BadgeTier, { 
+  bg: string; 
+  border: string; 
+  text: string; 
+  iconBg: string;
+  badge: string;
+}> = {
+  locked: { 
+    bg: "bg-muted/30", 
+    border: "border-border/50", 
+    text: "text-muted-foreground",
+    iconBg: "bg-muted",
+    badge: "bg-muted text-muted-foreground"
+  },
+  bronze: { 
+    bg: "bg-gradient-to-br from-amber-950/30 to-amber-900/10", 
+    border: "border-amber-700/40", 
+    text: "text-amber-500",
+    iconBg: "bg-amber-500/10",
+    badge: "bg-gradient-to-r from-amber-700 to-amber-600 text-white"
+  },
+  silver: { 
+    bg: "bg-gradient-to-br from-slate-400/20 to-slate-300/5", 
+    border: "border-slate-400/40", 
+    text: "text-slate-300",
+    iconBg: "bg-slate-400/10",
+    badge: "bg-gradient-to-r from-slate-400 to-slate-300 text-slate-900"
+  },
+  gold: { 
+    bg: "bg-gradient-to-br from-yellow-500/20 to-yellow-400/5", 
+    border: "border-yellow-500/40", 
+    text: "text-yellow-500",
+    iconBg: "bg-yellow-500/10",
+    badge: "bg-gradient-to-r from-yellow-500 to-yellow-400 text-yellow-950"
+  },
+  platinum: { 
+    bg: "bg-gradient-to-br from-white/20 to-slate-100/5", 
+    border: "border-white/30", 
+    text: "text-white",
+    iconBg: "bg-white/10",
+    badge: "bg-gradient-to-r from-white to-slate-100 text-slate-900"
+  },
 };
 
 const BADGE_ICONS: Record<string, typeof Shield> = {
@@ -52,98 +82,96 @@ export function BadgeCard({
   const Icon = BADGE_ICONS[badge.icon] || Shield;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={onSelect}
-            disabled={isLocked}
-            className={cn(
-              "relative w-full p-4 rounded-xl border-2 transition-all duration-200 text-left",
-              styles.bg,
-              styles.border,
-              isLocked ? "opacity-60 cursor-not-allowed" : "hover:scale-[1.02] cursor-pointer",
-              isSelected && !isLocked && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-              !isLocked && `shadow-lg ${styles.glow}`
-            )}
-          >
-            {/* Lock overlay for locked badges */}
-            {isLocked && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded-xl backdrop-blur-[1px]">
-                <Lock className="h-6 w-6 text-muted-foreground" />
+    <button
+      onClick={onSelect}
+      disabled={isLocked}
+      className={cn(
+        "relative w-full p-4 rounded-xl border transition-all duration-200 text-left group",
+        styles.bg,
+        styles.border,
+        isLocked 
+          ? "opacity-70 cursor-not-allowed" 
+          : "hover:scale-[1.02] hover:shadow-lg cursor-pointer",
+        isSelected && !isLocked && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg"
+      )}
+    >
+      {/* Tier Badge */}
+      {!isLocked && (
+        <div className={cn(
+          "absolute -top-2 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm",
+          styles.badge
+        )}>
+          {tier}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex items-start gap-3">
+        {/* Icon */}
+        <div className={cn(
+          "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform",
+          styles.iconBg,
+          !isLocked && "group-hover:scale-110"
+        )}>
+          {isLocked ? (
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <Icon className={cn("h-5 w-5", styles.text)} />
+          )}
+        </div>
+
+        {/* Text Content */}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <div className="flex items-center gap-2">
+            <h4 className={cn(
+              "font-semibold text-sm truncate",
+              isLocked ? "text-muted-foreground" : "text-foreground"
+            )}>
+              {config?.label || badge.name}
+            </h4>
+            {isSelected && !isLocked && (
+              <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <Check className="h-2.5 w-2.5 text-primary-foreground" />
               </div>
             )}
-
-            {/* Tier indicator */}
-            {!isLocked && (
-              <div className={cn(
-                "absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                tier === "bronze" && "bg-amber-700 text-amber-100",
-                tier === "silver" && "bg-slate-400 text-slate-900",
-                tier === "gold" && "bg-yellow-500 text-yellow-950",
-                tier === "platinum" && "bg-gradient-to-r from-slate-200 to-white text-slate-900"
-              )}>
-                {tier}
-              </div>
-            )}
-
-            <div className="flex items-start gap-3">
-              {/* Icon */}
-              <div className={cn(
-                "p-2 rounded-lg",
-                isLocked ? "bg-muted" : styles.bg
-              )}>
-                <Icon className={cn("h-5 w-5", isLocked ? "text-muted-foreground" : styles.text)} />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <h4 className={cn(
-                  "font-semibold text-sm truncate",
-                  isLocked ? "text-muted-foreground" : "text-foreground"
-                )}>
-                  {config?.label || badge.name}
-                </h4>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                  {config?.description || badge.description}
-                </p>
-              </div>
-
-              {/* Selected indicator */}
-              {isSelected && !isLocked && (
-                <Check className="h-4 w-4 text-primary shrink-0" />
-              )}
-            </div>
-
-            {/* Progress to next tier */}
-            {nextTier && progress > 0 && progress < 1 && (
-              <div className="mt-3 space-y-1">
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>Progress to {nextTier.label}</span>
-                  <span>{Math.round(progress * 100)}%</span>
-                </div>
-                <Progress value={progress * 100} className="h-1.5" />
-              </div>
-            )}
-
-            {/* Unlock requirements for locked badges */}
-            {isLocked && nextTier && (
-              <div className="mt-3 pt-3 border-t border-muted">
-                <p className="text-[10px] text-muted-foreground">
-                  <span className="font-medium">Unlock:</span> {nextTier.description}
-                </p>
-              </div>
-            )}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[220px]">
-          <p className="text-xs">
-            {isLocked
-              ? `Complete requirements to unlock: ${nextTier?.description || badge.description}`
-              : `Click to select this badge for embedding`}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
+            {config?.description || badge.description}
           </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </div>
+      </div>
+
+      {/* Progress Bar (for unlocked with next tier) */}
+      {!isLocked && nextTier && progress > 0 && progress < 1 && (
+        <div className="mt-4 space-y-1.5">
+          <div className="flex justify-between text-[10px]">
+            <span className="text-muted-foreground">Next: {nextTier.label}</span>
+            <span className={styles.text}>{Math.round(progress * 100)}%</span>
+          </div>
+          <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
+            <div 
+              className={cn(
+                "h-full rounded-full transition-all duration-500",
+                tier === "bronze" && "bg-gradient-to-r from-amber-600 to-amber-500",
+                tier === "silver" && "bg-gradient-to-r from-slate-400 to-slate-300",
+                tier === "gold" && "bg-gradient-to-r from-yellow-500 to-yellow-400",
+                tier === "platinum" && "bg-gradient-to-r from-white to-slate-200"
+              )}
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Unlock Requirements (for locked) */}
+      {isLocked && nextTier && (
+        <div className="mt-4 pt-3 border-t border-border/50">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <ChevronRight className="h-3 w-3" />
+            <span className="line-clamp-1">{nextTier.description}</span>
+          </div>
+        </div>
+      )}
+    </button>
   );
 }
