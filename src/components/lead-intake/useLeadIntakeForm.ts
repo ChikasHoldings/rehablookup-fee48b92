@@ -14,16 +14,27 @@ interface StoredFormData {
   timestamp: number;
 }
 
-export function useLeadIntakeForm() {
+interface UseLeadIntakeFormOptions {
+  /** Override facility ID from URL params */
+  facilityIdOverride?: string;
+  /** Override facility name from URL params */
+  facilityNameOverride?: string;
+}
+
+export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   
-  // Parse facility info from URL
-  const facilityId = searchParams.get("facility");
-  const facilityName = searchParams.get("facilityName") 
+  // Parse facility info from URL, but allow overrides from props
+  const urlFacilityId = searchParams.get("facility");
+  const urlFacilityName = searchParams.get("facilityName") 
     ? decodeURIComponent(searchParams.get("facilityName")!) 
     : null;
-  const source = searchParams.get("source") || "direct";
+  
+  // Use override values if provided, otherwise use URL params
+  const facilityId = options.facilityIdOverride || urlFacilityId;
+  const facilityName = options.facilityNameOverride || urlFacilityName;
+  const source = searchParams.get("source") || (facilityId ? "facility_profile" : "direct");
   
   // Form state
   const [formData, setFormData] = useState<LeadIntakeFormData>(initialLeadIntakeFormData);

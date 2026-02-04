@@ -7,13 +7,23 @@ import { LeadIntakeFormData } from "./types";
 
 interface LeadIntakeFormProps {
   className?: string;
+  /** Facility ID - when provided, overrides URL param */
+  facilityId?: string;
+  /** Facility name - when provided, overrides URL param */
+  facilityName?: string;
   /** Custom success component to render after form submission */
   renderSuccess?: (props: { firstName: string; facilityName?: string | null }) => React.ReactNode;
   /** Custom submit handler - when provided, replaces the default submission logic */
   onCustomSubmit?: (formData: LeadIntakeFormData) => Promise<void>;
 }
 
-export function LeadIntakeForm({ className, renderSuccess, onCustomSubmit }: LeadIntakeFormProps) {
+export function LeadIntakeForm({ 
+  className, 
+  facilityId: propFacilityId,
+  facilityName: propFacilityName,
+  renderSuccess, 
+  onCustomSubmit 
+}: LeadIntakeFormProps) {
   const formSectionRef = useRef<HTMLDivElement>(null);
   const [customSubmitting, setCustomSubmitting] = useState(false);
   const [customSubmitted, setCustomSubmitted] = useState(false);
@@ -21,7 +31,8 @@ export function LeadIntakeForm({ className, renderSuccess, onCustomSubmit }: Lea
   const {
     formData,
     updateFormData,
-    facilityName,
+    facilityId: urlFacilityId,
+    facilityName: urlFacilityName,
     isSubmitting: defaultSubmitting,
     isSubmitted: defaultSubmitted,
     handleSubmit: defaultHandleSubmit,
@@ -39,7 +50,14 @@ export function LeadIntakeForm({ className, renderSuccess, onCustomSubmit }: Lea
     verifyCode,
     resetEmailVerification,
     checkAndAutoVerifyEmail,
-  } = useLeadIntakeForm();
+  } = useLeadIntakeForm({ 
+    facilityIdOverride: propFacilityId,
+    facilityNameOverride: propFacilityName,
+  });
+
+  // Use prop values if provided, otherwise use URL params
+  const facilityId = propFacilityId || urlFacilityId;
+  const facilityName = propFacilityName || urlFacilityName;
 
   // Determine which submission state to use
   const isSubmitting = onCustomSubmit ? customSubmitting : defaultSubmitting;
