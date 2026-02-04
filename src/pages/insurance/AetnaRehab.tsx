@@ -18,6 +18,13 @@ import {
   Heart,
   AlertCircle,
 } from "lucide-react";
+import { 
+  InternalLinkingSection, 
+  treatmentTypeLinks, 
+  nearMeLinks, 
+  resourceLinks 
+} from "@/components/seo/InternalLinkingSection";
+import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
 
 const coverageDetails = [
   {
@@ -351,6 +358,26 @@ export default function AetnaRehab() {
           </div>
         </div>
       </section>
+
+      {/* Featured Centers accepting Aetna */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting Aetna"
+        description="Verified facilities that work with Aetna insurance"
+        limit={8}
+        className="border-t border-border"
+      />
+
+      {/* SEO Internal Linking */}
+      <InternalLinkingSection
+        title="Explore More Resources"
+        description="Learn about treatment options and find care near you"
+        variant="grid"
+        groups={[
+          { title: "Treatment Programs", links: treatmentTypeLinks.slice(0, 5) },
+          { title: "Find Treatment Near You", links: nearMeLinks.slice(0, 5) },
+          { title: "Recovery Guides", links: resourceLinks.slice(0, 5) },
+        ]}
+      />
 
       {/* Related Links */}
       <section className="border-t border-border bg-muted/30 py-8">

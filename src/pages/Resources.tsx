@@ -20,6 +20,12 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { 
+  InternalLinkingSection, 
+  treatmentTypeLinks, 
+  nearMeLinks, 
+  insuranceLinks 
+} from "@/components/seo/InternalLinkingSection";
 
 // Import unique images for each article
 import typesOfTreatmentImg from "@/assets/articles/types-of-treatment.jpg";
@@ -899,6 +905,18 @@ const Resources = () => {
           )}
         </div>
       </section>
+
+      {/* SEO Internal Linking */}
+      <InternalLinkingSection
+        title="Explore More"
+        description="Find treatment options and coverage information"
+        variant="grid"
+        groups={[
+          { title: "Treatment Programs", links: treatmentTypeLinks.slice(0, 5) },
+          { title: "Find Treatment Near You", links: nearMeLinks.slice(0, 5) },
+          { title: "Insurance Coverage", links: insuranceLinks.slice(0, 5) },
+        ]}
+      />
 
       {/* CTA Section */}
       <section className="section-padding bg-muted/30">

@@ -29,6 +29,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { 
+  InternalLinkingSection, 
+  nearMeLinks, 
+  insuranceLinks, 
+  resourceLinks 
+} from "@/components/seo/InternalLinkingSection";
 
 const RehabCenters = () => {
   const { data: approvedFacilities = [] } = useStaticFacilities();
@@ -308,6 +314,18 @@ const RehabCenters = () => {
           </div>
         </div>
       </section>
+
+      {/* SEO Internal Linking Section */}
+      <InternalLinkingSection
+        title="Explore More Resources"
+        description="Find treatment options by location, insurance, or learn more about recovery"
+        variant="grid"
+        groups={[
+          { title: "Find Treatment Near You", links: nearMeLinks.slice(0, 5) },
+          { title: "Insurance Coverage", links: insuranceLinks.slice(0, 5) },
+          { title: "Recovery Guides", links: resourceLinks.slice(0, 5) },
+        ]}
+      />
 
       {/* CTA Banner */}
       <section className="border-t border-border bg-card py-10 md:py-12">
