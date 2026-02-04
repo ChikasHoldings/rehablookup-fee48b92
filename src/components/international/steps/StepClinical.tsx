@@ -1,8 +1,14 @@
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PRIMARY_CONCERN_OPTIONS = [
   { value: "alcohol", label: "Alcohol" },
@@ -74,49 +80,47 @@ export function StepClinical({ data, onChange }: StepClinicalProps) {
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-5 md:space-y-6">
-        {/* Primary Concern */}
+      <div className="max-w-lg mx-auto space-y-5 md:space-y-6 px-1">
+        {/* Primary Concern - Dropdown */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Primary Concern</Label>
-          <div className="flex flex-wrap gap-1.5 md:gap-2">
-            {PRIMARY_CONCERN_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ ...data, primary_concern: opt.value })}
-                className={cn(
-                  "px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border text-xs md:text-sm font-medium transition-all",
-                  data.primary_concern === opt.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-primary/50 text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Label className="text-sm font-medium mb-2 block">Primary Concern</Label>
+          <Select
+            value={data.primary_concern}
+            onValueChange={(value) => onChange({ ...data, primary_concern: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select primary concern..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {PRIMARY_CONCERN_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Co-occurring Conditions */}
+        {/* Co-occurring Conditions - Multi-select chips */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">
+          <Label className="text-sm font-medium mb-3 block">
             Co-occurring Conditions <span className="text-muted-foreground font-normal text-xs">(select all that apply)</span>
           </Label>
-          <div className="flex flex-wrap gap-1.5 md:gap-2">
+          <div className="flex flex-wrap gap-2">
             {CO_OCCURRING_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => toggleCondition(opt.value)}
                 className={cn(
-                  "px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border text-xs md:text-sm font-medium transition-all inline-flex items-center gap-1 md:gap-1.5",
+                  "px-3 py-2 rounded-full border text-sm font-medium transition-all inline-flex items-center gap-1.5",
                   data.co_occurring_conditions.includes(opt.value)
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border hover:border-primary/50 text-foreground"
                 )}
               >
                 {data.co_occurring_conditions.includes(opt.value) && (
-                  <Check className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <Check className="h-3.5 w-3.5" />
                 )}
                 {opt.label}
               </button>
@@ -124,26 +128,24 @@ export function StepClinical({ data, onChange }: StepClinicalProps) {
           </div>
         </div>
 
-        {/* Previous Treatment */}
+        {/* Previous Treatment - Dropdown */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Previous Treatment History</Label>
-          <div className="grid gap-2">
-            {PREVIOUS_TREATMENT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ ...data, previous_treatment: opt.value })}
-                className={cn(
-                  "px-3 md:px-4 py-2.5 md:py-3 rounded-lg border text-xs md:text-sm font-medium transition-all text-left",
-                  data.previous_treatment === opt.value
-                    ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                    : "border-border hover:border-primary/50"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Label className="text-sm font-medium mb-2 block">Previous Treatment History</Label>
+          <Select
+            value={data.previous_treatment}
+            onValueChange={(value) => onChange({ ...data, previous_treatment: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select treatment history..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {PREVIOUS_TREATMENT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </motion.div>

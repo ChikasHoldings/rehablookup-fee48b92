@@ -25,12 +25,12 @@ export function StepEmail({ data, onChange }: StepEmailProps) {
         </p>
       </div>
 
-      <div className="max-w-sm mx-auto space-y-4">
+      <div className="max-w-sm mx-auto space-y-4 px-1">
         <div>
           <Label htmlFor="email" className="text-sm font-medium">
             Email Address
           </Label>
-          <div className="relative mt-1.5">
+          <div className="relative mt-2">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               id="email"

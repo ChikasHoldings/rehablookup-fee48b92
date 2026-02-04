@@ -2,6 +2,13 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const SEEKING_OPTIONS = [
   { value: "self", label: "For Myself", icon: User, description: "I'm looking for treatment for myself" },
@@ -45,76 +52,72 @@ export function StepPatient({ data, onChange }: StepPatientProps) {
         </p>
       </div>
 
-      <div className="max-w-md mx-auto space-y-5 md:space-y-6">
-        {/* Who needs help */}
+      <div className="max-w-md mx-auto space-y-5 md:space-y-6 px-1">
+        {/* Who needs help - Keep as cards for visual distinction */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Who needs treatment?</Label>
-          <div className="grid grid-cols-2 gap-2.5 md:gap-3">
+          <Label className="text-sm font-medium mb-3 block">Who needs treatment?</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {SEEKING_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => onChange({ ...data, seeking_for: opt.value })}
                 className={cn(
-                  "p-3 md:p-4 rounded-lg border text-left transition-all",
+                  "p-4 rounded-lg border text-left transition-all",
                   data.seeking_for === opt.value
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                     : "border-border hover:border-primary/50"
                 )}
               >
                 <opt.icon className={cn(
-                  "h-4 w-4 md:h-5 md:w-5 mb-1.5 md:mb-2",
+                  "h-5 w-5 mb-2",
                   data.seeking_for === opt.value ? "text-primary" : "text-muted-foreground"
                 )} />
-                <p className="font-medium text-foreground text-xs md:text-sm">{opt.label}</p>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 line-clamp-2">{opt.description}</p>
+                <p className="font-medium text-foreground text-sm">{opt.label}</p>
+                <p className="text-xs text-muted-foreground mt-1">{opt.description}</p>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Age Range */}
+        {/* Age Range - Dropdown */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Age Range</Label>
-          <div className="flex flex-wrap gap-2">
-            {AGE_RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ ...data, age_range: opt.value })}
-                className={cn(
-                  "px-3 md:px-4 py-2 md:py-2.5 rounded-full border text-xs md:text-sm font-medium transition-all",
-                  data.age_range === opt.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-primary/50 text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Label className="text-sm font-medium mb-2 block">Age Range</Label>
+          <Select
+            value={data.age_range}
+            onValueChange={(value) => onChange({ ...data, age_range: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select age range..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {AGE_RANGE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Gender */}
+        {/* Gender - Dropdown */}
         <div>
-          <Label className="text-sm font-medium mb-2.5 md:mb-3 block">Gender</Label>
-          <div className="flex flex-wrap gap-2">
-            {GENDER_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onChange({ ...data, gender: opt.value })}
-                className={cn(
-                  "px-3 md:px-4 py-2 md:py-2.5 rounded-full border text-xs md:text-sm font-medium transition-all",
-                  data.gender === opt.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-primary/50 text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Label className="text-sm font-medium mb-2 block">Gender</Label>
+          <Select
+            value={data.gender}
+            onValueChange={(value) => onChange({ ...data, gender: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select gender..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {GENDER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </motion.div>

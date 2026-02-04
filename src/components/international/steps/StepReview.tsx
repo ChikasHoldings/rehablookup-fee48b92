@@ -83,9 +83,9 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-5 md:space-y-6"
+      className="space-y-4 md:space-y-6"
     >
-      <div className="text-center mb-6 md:mb-8">
+      <div className="text-center mb-4 md:mb-8">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-1.5 md:mb-2">
           Review Your Application
         </h2>
@@ -94,33 +94,35 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-4 md:space-y-6">
-        {/* Summary Cards */}
-        {sections.map((section, idx) => (
-          <div key={idx} className="border rounded-lg overflow-hidden">
-            <div className="bg-muted/50 px-3 md:px-4 py-2 border-b">
-              <h3 className="font-medium text-xs md:text-sm text-foreground">{section.title}</h3>
+      <div className="max-w-lg mx-auto space-y-3 md:space-y-4 px-1">
+        {/* Summary Cards - Collapsible on mobile */}
+        <div className="space-y-2 md:space-y-3 max-h-[200px] md:max-h-none overflow-y-auto md:overflow-visible">
+          {sections.map((section, idx) => (
+            <div key={idx} className="border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-3 py-2 border-b">
+                <h3 className="font-medium text-xs text-foreground">{section.title}</h3>
+              </div>
+              <div className="p-3 space-y-1.5">
+                {section.items.map((item, i) => (
+                  <div key={i} className="flex justify-between text-xs gap-2">
+                    <span className="text-muted-foreground shrink-0">{item.label}</span>
+                    <span className="text-foreground font-medium text-right max-w-[160px] md:max-w-[200px] capitalize truncate">
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="p-3 md:p-4 space-y-1.5 md:space-y-2">
-              {section.items.map((item, i) => (
-                <div key={i} className="flex justify-between text-xs md:text-sm gap-2">
-                  <span className="text-muted-foreground shrink-0">{item.label}</span>
-                  <span className="text-foreground font-medium text-right max-w-[180px] md:max-w-[200px] capitalize truncate">
-                    {item.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         {data.notes && (
           <div className="border rounded-lg overflow-hidden">
-            <div className="bg-muted/50 px-3 md:px-4 py-2 border-b">
-              <h3 className="font-medium text-xs md:text-sm text-foreground">Additional Notes</h3>
+            <div className="bg-muted/50 px-3 py-2 border-b">
+              <h3 className="font-medium text-xs text-foreground">Additional Notes</h3>
             </div>
-            <div className="p-3 md:p-4">
-              <p className="text-xs md:text-sm text-muted-foreground">{data.notes}</p>
+            <div className="p-3">
+              <p className="text-xs text-muted-foreground line-clamp-3">{data.notes}</p>
             </div>
           </div>
         )}
@@ -130,12 +132,12 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
               <p className="text-xs md:text-sm text-muted-foreground">Placement Service Fee</p>
-              <p className="text-2xl md:text-3xl font-bold text-foreground">$299 <span className="text-sm md:text-base font-normal text-muted-foreground">USD</span></p>
+              <p className="text-2xl md:text-3xl font-bold text-foreground">$299 <span className="text-sm font-normal text-muted-foreground">USD</span></p>
             </div>
             <CreditCard className="h-6 w-6 md:h-8 md:w-8 text-primary" />
           </div>
 
-          <ul className="space-y-1.5 md:space-y-2 mb-5 md:mb-6">
+          <ul className="space-y-1.5 md:space-y-2 mb-4 md:mb-6">
             {[
               "Personalized facility matching",
               "Direct admissions coordination", 

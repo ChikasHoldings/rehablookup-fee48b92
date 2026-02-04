@@ -9,6 +9,13 @@ import {
   Home,
   HelpCircle 
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const LEVEL_OF_CARE_OPTIONS = [
   { 
@@ -55,6 +62,8 @@ interface StepLevelOfCareProps {
 }
 
 export function StepLevelOfCare({ data, onChange }: StepLevelOfCareProps) {
+  const selectedOption = LEVEL_OF_CARE_OPTIONS.find(opt => opt.value === data.level_of_care);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -71,32 +80,66 @@ export function StepLevelOfCare({ data, onChange }: StepLevelOfCareProps) {
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto">
-        <div className="grid gap-2.5 md:gap-3">
+      <div className="max-w-lg mx-auto px-1">
+        {/* Mobile: Dropdown | Desktop: Cards */}
+        <div className="block md:hidden">
+          <Label className="text-sm font-medium mb-2 block">Level of Care</Label>
+          <Select
+            value={data.level_of_care}
+            onValueChange={(value) => onChange({ level_of_care: value })}
+          >
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select level of care..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {LEVEL_OF_CARE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                  <div className="flex flex-col py-1">
+                    <span className="font-medium">{opt.label}</span>
+                    <span className="text-xs text-muted-foreground">{opt.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Selected option description */}
+          {selectedOption && (
+            <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <selectedOption.icon className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">{selectedOption.label}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{selectedOption.description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: Card grid */}
+        <div className="hidden md:grid gap-3">
           {LEVEL_OF_CARE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => onChange({ level_of_care: opt.value })}
               className={cn(
-                "flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border text-left transition-all",
+                "flex items-start gap-4 p-4 rounded-lg border text-left transition-all",
                 data.level_of_care === opt.value
                   ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                   : "border-border hover:border-primary/50"
               )}
             >
               <div className={cn(
-                "w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center shrink-0",
+                "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
                 data.level_of_care === opt.value ? "bg-primary/10" : "bg-muted"
               )}>
                 <opt.icon className={cn(
-                  "h-4 w-4 md:h-5 md:w-5",
+                  "h-5 w-5",
                   data.level_of_care === opt.value ? "text-primary" : "text-muted-foreground"
                 )} />
               </div>
               <div className="min-w-0">
-                <p className="font-medium text-foreground text-sm md:text-base">{opt.label}</p>
-                <p className="text-xs md:text-sm text-muted-foreground mt-0.5 line-clamp-2">{opt.description}</p>
+                <p className="font-medium text-foreground text-base">{opt.label}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">{opt.description}</p>
               </div>
             </button>
           ))}

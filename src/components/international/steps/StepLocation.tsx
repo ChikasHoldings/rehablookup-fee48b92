@@ -1,6 +1,13 @@
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { Globe, Languages } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const COUNTRY_OPTIONS = [
   "Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria", "Bangladesh",
@@ -41,41 +48,49 @@ export function StepLocation({ data, onChange }: StepLocationProps) {
         </p>
       </div>
 
-      <div className="max-w-sm mx-auto space-y-4 md:space-y-5">
+      <div className="max-w-sm mx-auto space-y-4 md:space-y-5 px-1">
         <div>
-          <Label htmlFor="country" className="text-sm font-medium flex items-center gap-2">
+          <Label htmlFor="country" className="text-sm font-medium flex items-center gap-2 mb-2">
             <Globe className="h-4 w-4 text-primary" />
             Country
           </Label>
-          <select
-            id="country"
+          <Select
             value={data.country}
-            onChange={(e) => onChange({ ...data, country: e.target.value })}
-            className="w-full h-12 px-3 rounded-md border bg-background text-base mt-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20 border-input"
+            onValueChange={(value) => onChange({ ...data, country: value })}
           >
-            <option value="">Select your country...</option>
-            {COUNTRY_OPTIONS.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select your country..." />
+            </SelectTrigger>
+            <SelectContent className="max-h-[300px] bg-background z-50">
+              {COUNTRY_OPTIONS.map((c) => (
+                <SelectItem key={c} value={c} className="cursor-pointer">
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
-          <Label htmlFor="language" className="text-sm font-medium flex items-center gap-2">
+          <Label htmlFor="language" className="text-sm font-medium flex items-center gap-2 mb-2">
             <Languages className="h-4 w-4 text-primary" />
             Preferred Language
           </Label>
-          <select
-            id="language"
+          <Select
             value={data.preferred_language}
-            onChange={(e) => onChange({ ...data, preferred_language: e.target.value })}
-            className="w-full h-12 px-3 rounded-md border bg-background text-base mt-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20 border-input"
+            onValueChange={(value) => onChange({ ...data, preferred_language: value })}
           >
-            <option value="">Select language...</option>
-            {LANGUAGE_OPTIONS.map((l) => (
-              <option key={l} value={l}>{l}</option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue placeholder="Select language..." />
+            </SelectTrigger>
+            <SelectContent className="max-h-[300px] bg-background z-50">
+              {LANGUAGE_OPTIONS.map((l) => (
+                <SelectItem key={l} value={l} className="cursor-pointer">
+                  {l}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </motion.div>
