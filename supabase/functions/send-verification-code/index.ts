@@ -75,7 +75,8 @@ Deno.serve(async (req) => {
     const code = generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    console.log(`Generated code for ${normalizedEmail}: ${code.substring(0, 2)}****`);
+    // Log without exposing code for security
+    console.log(`Generated verification code for ${normalizedEmail.substring(0, 3)}***`);
 
     const { error: insertError } = await supabase
       .from("email_verification_codes")

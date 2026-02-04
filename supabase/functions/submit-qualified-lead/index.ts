@@ -77,6 +77,27 @@ function maskPhone(): string {
   return "(●●●) ●●●-●●●●";
 }
 
+// ============ INPUT SANITIZATION ============
+function sanitizeEmail(email: string): string {
+  return email.toLowerCase().trim().slice(0, 255);
+}
+
+function sanitizePhone(phone: string): string {
+  // Remove all non-digit characters and limit length
+  return phone.replace(/\D/g, "").slice(0, 15);
+}
+
+function sanitizeName(name: string): string {
+  // Remove potentially dangerous characters, limit length
+  return name.trim().replace(/[<>{}[\]\\]/g, "").slice(0, 100);
+}
+
+function sanitizeMessage(message: string | undefined): string | undefined {
+  if (!message) return undefined;
+  // Limit length and remove script tags
+  return message.trim().replace(/<script[^>]*>.*?<\/script>/gi, "").slice(0, 2000) || undefined;
+}
+
 // ============ DUPLICATE CHECK ============
 // deno-lint-ignore no-explicit-any
 async function checkForDuplicate(
@@ -88,22 +109,42 @@ async function checkForDuplicate(
 ): Promise<{ isDuplicate: boolean; reason?: string }> {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   
-  const { data: recentLeads, error } = await supabase
+  // Check by email first
+  const { data: emailLeads, error: emailError } = await supabase
     .from("leads")
     .select("id")
     .eq("facility_id", facilityId)
-    .or(`email.eq.${email},phone.eq.${phone}`)
+    .eq("email", email)
     .gte("created_at", twentyFourHoursAgo)
     .limit(1);
   
-  if (error) {
-    log(requestId, "WARN", "Duplicate check error", { error: error.message });
-    return { isDuplicate: false };
+  if (emailError) {
+    log(requestId, "WARN", "Duplicate check error (email)", { error: emailError.message });
   }
   
-  if (recentLeads && recentLeads.length > 0) {
-    log(requestId, "WARN", "Duplicate submission detected", { email, facilityId });
+  if (emailLeads && emailLeads.length > 0) {
+    log(requestId, "WARN", "Duplicate submission detected (email)", { facilityId });
     return { isDuplicate: true, reason: "You've already submitted an inquiry to this facility recently." };
+  }
+  
+  // Check by phone if provided
+  if (phone && phone.length >= 10) {
+    const { data: phoneLeads, error: phoneError } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("facility_id", facilityId)
+      .eq("phone", phone)
+      .gte("created_at", twentyFourHoursAgo)
+      .limit(1);
+    
+    if (phoneError) {
+      log(requestId, "WARN", "Duplicate check error (phone)", { error: phoneError.message });
+    }
+    
+    if (phoneLeads && phoneLeads.length > 0) {
+      log(requestId, "WARN", "Duplicate submission detected (phone)", { facilityId });
+      return { isDuplicate: true, reason: "You've already submitted an inquiry to this facility recently." };
+    }
   }
   
   return { isDuplicate: false };
@@ -384,7 +425,18 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const data: InquiryRequest = await req.json();
+    const rawData: InquiryRequest = await req.json();
+    
+    // Sanitize all inputs immediately
+    const data = {
+      ...rawData,
+      name: sanitizeName(rawData.name || ""),
+      email: sanitizeEmail(rawData.email || ""),
+      phone: sanitizePhone(rawData.phone || ""),
+      message: sanitizeMessage(rawData.message),
+      firstName: rawData.firstName ? sanitizeName(rawData.firstName) : undefined,
+      lastName: rawData.lastName ? sanitizeName(rawData.lastName) : undefined,
+    };
     
     log(requestId, "INFO", "Inquiry data received", { 
       facilityId: data.facilityId,
@@ -400,11 +452,40 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate facility_id format (UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(data.facilityId)) {
+      log(requestId, "ERROR", "Invalid facility_id format");
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid facility ID" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Validation - basic required fields
     if (!data.name || !data.email || !data.phone) {
       log(requestId, "ERROR", "Missing required fields");
       return new Response(
         JSON.stringify({ success: false, error: "Name, email, and phone are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      log(requestId, "ERROR", "Invalid email format");
+      return new Response(
+        JSON.stringify({ success: false, error: "Please provide a valid email address" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate phone (at least 10 digits)
+    if (data.phone.length < 10) {
+      log(requestId, "ERROR", "Invalid phone format");
+      return new Response(
+        JSON.stringify({ success: false, error: "Please provide a valid phone number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -432,7 +513,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check for duplicates
+    // Check for duplicates using sanitized data
     const duplicateCheck = await checkForDuplicate(supabase, data.email, data.phone, data.facilityId, requestId);
     if (duplicateCheck.isDuplicate) {
       return new Response(
@@ -446,7 +527,7 @@ Deno.serve(async (req) => {
     const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
     const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000); // 72 hours total
 
-    // Insert lead with redistribution fields
+    // Insert lead with redistribution fields (using sanitized data)
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
@@ -455,7 +536,7 @@ Deno.serve(async (req) => {
         email: data.email,
         phone: data.phone,
         preferred_contact: data.preferredContact || "phone",
-        message: data.message || null,
+        message: data.message,
         urgency: data.urgency || "not_sure",
         level_of_care: data.levelOfCare || null,
         insurance_type: data.insuranceType || null,

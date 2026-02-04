@@ -125,7 +125,8 @@ const handler = async (req: Request): Promise<Response> => {
         ? `Invalid code. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
         : "Invalid code. Too many incorrect attempts. Please request a new code.";
 
-      console.log(`Invalid code attempt for ${normalizedEmail}: expected ${verificationRecord.code.substring(0, 2)}****, got ${normalizedCode.substring(0, 2)}****`);
+      // Log without exposing codes for security
+      console.log(`Invalid code attempt for ${normalizedEmail.substring(0, 3)}***: attempt ${attempts + 1}/${MAX_ATTEMPTS}`);
 
       return new Response(
         JSON.stringify({ error: errorMessage }),
