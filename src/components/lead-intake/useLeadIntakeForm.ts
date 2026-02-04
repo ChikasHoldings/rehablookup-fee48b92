@@ -300,6 +300,47 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       return;
     }
     
+    // Validate facility ID is present (required for all submissions)
+    if (!facilityId) {
+      toast({
+        title: "Submission error",
+        description: "Please select a treatment center before submitting",
+        variant: "destructive",
+      });
+      trackAnalytics("form_submit_error", { error: "missing_facility_id" });
+      return;
+    }
+    
+    // Validate required fields
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please provide your full name",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      toast({
+        title: "Invalid email",
+        description: "Please provide a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Normalize phone to digits only for submission
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      toast({
+        title: "Invalid phone",
+        description: "Please provide a valid 10-digit phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -307,24 +348,24 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       
       const { data, error } = await supabase.functions.invoke("submit-qualified-lead", {
         body: {
-          facilityId: facilityId || undefined,
+          facilityId: facilityId,
           whoSeekingHelp: formData.whoSeekingHelp,
-          locationZip: formData.locationZip,
-          locationCityState: formData.locationCityState || undefined,
+          locationZip: formData.locationZip?.trim(),
+          locationCityState: formData.locationCityState?.trim() || undefined,
           urgency: formData.urgency,
           primarySubstance: formData.primarySubstance,
           levelOfCare: formData.levelOfCare,
           dualDiagnosis: formData.dualDiagnosis || undefined,
           insuranceType: formData.insuranceType,
-          insuranceProvider: formData.insuranceProvider || undefined,
+          insuranceProvider: formData.insuranceProvider?.trim() || undefined,
           budgetPreference: formData.budgetPreference || undefined,
           name: fullName,
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
-          phone: formData.phone.trim(),
+          phone: phoneDigits, // Send normalized phone
           email: formData.email.toLowerCase().trim(),
           preferredContact: formData.preferredContact,
-          message: formData.message || undefined,
+          message: formData.message?.trim() || undefined,
           source,
           specialNeeds: formData.specialNeeds,
           // NEW enhanced intake fields
@@ -332,7 +373,7 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
           gender: formData.gender || undefined,
           relationshipToPatient: formData.relationshipToPatient || undefined,
           previousTreatment: formData.previousTreatment || undefined,
-          previousTreatmentDetails: formData.previousTreatmentDetails || undefined,
+          previousTreatmentDetails: formData.previousTreatmentDetails?.trim() || undefined,
           coOccurringConditions: formData.coOccurringConditions?.length ? formData.coOccurringConditions : undefined,
           employmentStatus: formData.employmentStatus || undefined,
           veteranStatus: formData.veteranStatus || undefined,

@@ -245,38 +245,71 @@ Deno.serve(async (req) => {
       const currentBalance = credits?.balance_cents ?? 0;
 
       if (currentBalance < unlockPrice) {
+        logStep(requestId, "Insufficient credits", { currentBalance, required: unlockPrice });
         return new Response(JSON.stringify({ 
           error: "Insufficient credits",
           required: unlockPrice,
           current: currentBalance,
           needsCredits: unlockPrice - currentBalance,
+          requestId,
         }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Deduct credits
+      // Re-check for existing unlock (race condition protection)
+      const { data: raceCheckUnlock } = await supabaseAdmin
+        .from("lead_unlocks")
+        .select("id")
+        .eq("lead_id", leadId)
+        .eq("facility_id", facilityId)
+        .maybeSingle();
+
+      if (raceCheckUnlock) {
+        logStep(requestId, "Lead already unlocked (race condition)", { existingUnlockId: raceCheckUnlock.id });
+        return new Response(JSON.stringify({ error: "Lead already unlocked", requestId }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Atomic balance update with conditional check to prevent race conditions
+      // This ensures balance doesn't go below what we need
       const newBalance = currentBalance - unlockPrice;
-      const { error: updateError } = await supabaseAdmin
+      const { data: updateResult, error: updateError } = await supabaseAdmin
         .from("provider_credits")
-        .upsert({
-          provider_id: user.id,
-          facility_id: facilityId,
+        .update({
           balance_cents: newBalance,
           updated_at: new Date().toISOString(),
-        }, { onConflict: "provider_id" });
+        })
+        .eq("provider_id", user.id)
+        .gte("balance_cents", unlockPrice) // Only update if balance is still sufficient
+        .select("balance_cents")
+        .maybeSingle();
 
-      if (updateError) {
-        console.error("Error updating credits:", updateError);
-        return new Response(JSON.stringify({ error: "Failed to process payment" }), {
+      if (updateError || !updateResult) {
+        logStep(requestId, "Credit deduction failed - possible race condition or insufficient funds", { 
+          error: updateError?.message,
+          hadResult: !!updateResult
+        });
+        return new Response(JSON.stringify({ 
+          error: "Unable to process payment. Please try again.",
+          requestId
+        }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
+      logStep(requestId, "Credits deducted successfully", { 
+        previousBalance: currentBalance, 
+        newBalance: updateResult.balance_cents,
+        deducted: unlockPrice 
+      });
+
       // Log the credit transaction with enhanced details
-      await supabaseAdmin.from("credit_transactions").insert({
+      const { error: txError } = await supabaseAdmin.from("credit_transactions").insert({
         provider_id: user.id,
         facility_id: facilityId,
         amount_cents: -unlockPrice,
@@ -288,6 +321,11 @@ Deno.serve(async (req) => {
         discount_applied: isPro,
         discount_amount_cents: discountAmount,
       });
+
+      if (txError) {
+        logStep(requestId, "WARN - Failed to log credit transaction", { error: txError.message });
+        // Continue anyway - the deduction succeeded, this is just logging
+      }
 
     } else if (paymentMethod === 'stripe') {
       // Create Stripe PaymentIntent for direct card payment
