@@ -6,9 +6,9 @@
 # Note: This rule uses regex to catch all paths with trailing slashes
 /*/ /:splat 301!
 
-# Sitemaps - Must be served BEFORE SPA catch-all
-/sitemap.xml /sitemap.xml 200
-/sitemap-index.xml /sitemap-index.xml 200
+# Sitemaps - Proxied to edge functions for reliable XML delivery
+/sitemap.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=main 200
+/sitemap-index.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-sitemap?type=index 200
 /sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities 200
 
 # Force HTTPS and www normalization (if needed)
