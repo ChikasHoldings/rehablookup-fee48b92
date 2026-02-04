@@ -52,7 +52,7 @@ export function BadgeStyleSelector({
             )}
           >
             {/* Style Preview Mini Badge */}
-            <div className="flex justify-center mb-2">
+            <div className="flex justify-center mb-3">
               <div className={cn(
                 "w-10 h-10 rounded-full flex items-center justify-center",
                 colors.bg
@@ -66,16 +66,18 @@ export function BadgeStyleSelector({
               </div>
             </div>
 
-            {/* Style Name */}
-            <p className={cn(
-              "text-xs font-medium text-center",
-              isSelected ? "text-primary" : "text-foreground"
-            )}>
-              {config.name}
-            </p>
-            <p className="text-[10px] text-muted-foreground text-center mt-0.5">
-              {config.description}
-            </p>
+            {/* Style Name & Description */}
+            <div className="flex flex-col items-center gap-0.5">
+              <p className={cn(
+                "text-xs font-medium leading-tight",
+                isSelected ? "text-primary" : "text-foreground"
+              )}>
+                {config.name}
+              </p>
+              <p className="text-[10px] text-muted-foreground leading-tight text-center line-clamp-2">
+                {config.description}
+              </p>
+            </div>
 
             {/* Selected Indicator */}
             {isSelected && (
