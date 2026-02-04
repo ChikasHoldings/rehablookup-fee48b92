@@ -219,7 +219,7 @@ serve(async (req) => {
         preferred_city: intakeData.desiredCity || currentCity,
         payment_status: 'paid',
         payment_amount_cents: 2900,
-        status: 'pending',
+        status: 'new',
         checkout_session_id: sessionId,
         stripe_payment_intent_id: typeof session.payment_intent === 'string' 
           ? session.payment_intent 
