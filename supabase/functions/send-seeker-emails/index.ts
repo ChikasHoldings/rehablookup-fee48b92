@@ -974,4 +974,3 @@ function generateEmailFooter(): string {
             </td>
           </tr>`;
 }
-});

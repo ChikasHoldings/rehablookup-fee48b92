@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Version tracking for deployment verification - update on each deployment
@@ -7,7 +6,7 @@ const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const BASE_URL = "https://rehablookup.com";
@@ -409,7 +408,7 @@ async function generateFacilitiesSitemap(): Promise<string> {
   return sitemap;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Log version on every request for deployment verification
   console.log(`[Sitemap ${VERSION}] Request received - deployed: ${DEPLOYED_AT}`);
 
