@@ -1,15 +1,13 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Pro subscription price ID - $399/mo RehabLookup Pro
 const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
 
 const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
@@ -19,7 +17,7 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
 
 const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
   if (req.method === "OPTIONS") {

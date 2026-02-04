@@ -1,8 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +9,8 @@ const corsHeaders = {
 };
 
 const ADDITIONAL_LISTING_PRICE_ID = "price_1SvUAg9fxdThyiakhDtW2pG9";
-const LISTING_SLOT_PRICE_CENTS = 4900; // $49.00
+const LISTING_SLOT_PRICE_CENTS = 4900;
 
-// Structured logging with version and request tracking
 const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString();
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -26,7 +24,7 @@ const logError = (requestId: string, step: string, error: unknown) => {
   console.error(`[PURCHASE-LISTING-SLOT] [${VERSION}] [${requestId}] [${timestamp}] ERROR in ${step}: ${errorMessage}`, errorStack ? `\nStack: ${errorStack}` : "");
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   logStep(requestId, "Request received", { method: req.method, url: req.url });
 
