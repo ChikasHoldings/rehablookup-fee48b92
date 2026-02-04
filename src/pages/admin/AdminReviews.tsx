@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Star, 
   CheckCircle2, 
@@ -17,7 +28,8 @@ import {
   AlertTriangle,
   Flag,
   MapPin,
-  User
+  User,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -57,6 +69,7 @@ interface DisputeWithDetails {
 }
 
 export default function AdminReviews() {
+  const queryClient = useQueryClient();
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([]);
   const [disputes, setDisputes] = useState<DisputeWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +78,7 @@ export default function AdminReviews() {
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [disputeNotes, setDisputeNotes] = useState<Record<string, string>>({});
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; isOpen: boolean } | null>(null);
 
   // Get current admin user ID
   useEffect(() => {
@@ -242,6 +256,7 @@ export default function AdminReviews() {
       }
       toast.success('Review approved');
       fetchReviews();
+      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
     }
   };
 
@@ -285,26 +300,33 @@ export default function AdminReviews() {
       }
       toast.success('Review rejected');
       fetchReviews();
+      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
     }
   };
 
   const handleDelete = async (reviewId: string) => {
-    if (!confirm('Are you sure you want to delete this review?')) return;
+    setDeleteConfirm({ id: reviewId, isOpen: true });
+  };
 
-    setProcessingId(reviewId);
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+
+    setProcessingId(deleteConfirm.id);
     
     const { error } = await supabase
       .from('facility_reviews')
       .delete()
-      .eq('id', reviewId);
+      .eq('id', deleteConfirm.id);
 
     setProcessingId(null);
+    setDeleteConfirm(null);
 
     if (error) {
       toast.error('Failed to delete review');
     } else {
       toast.success('Review deleted');
       fetchReviews();
+      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
     }
   };
 
@@ -339,6 +361,7 @@ export default function AdminReviews() {
       toast.success('Dispute upheld - review hidden');
       fetchReviews();
       fetchDisputes();
+      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
     }
   };
 
@@ -368,6 +391,7 @@ export default function AdminReviews() {
       toast.success('Dispute dismissed - review remains visible');
       fetchReviews();
       fetchDisputes();
+      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
     }
   };
 
@@ -747,6 +771,25 @@ export default function AdminReviews() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirm?.isOpen ?? false} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this review? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

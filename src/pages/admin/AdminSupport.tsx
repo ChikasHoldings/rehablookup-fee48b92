@@ -12,6 +12,7 @@ import { SupportTicketModal } from "@/components/admin/SupportTicketModal";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const sourceLabels: Record<string, { label: string; icon: React.ElementType }> = {
   public_contact: { label: "Public", icon: Mail },
@@ -63,6 +64,11 @@ export default function AdminSupport() {
         .then(({ data, error }) => {
           if (data && !error) {
             setSelectedTicket(data as SupportTicket);
+          } else {
+            // Ticket not found - show error toast
+            toast.error("Support ticket not found", {
+              description: "The ticket may have been deleted or doesn't exist."
+            });
           }
           setDeepLinkLoading(false);
           // Clear the query parameter

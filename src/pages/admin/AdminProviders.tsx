@@ -53,6 +53,7 @@ export default function AdminProviders() {
     queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
     queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
   }, [queryClient]);
 
   // Real-time subscriptions
