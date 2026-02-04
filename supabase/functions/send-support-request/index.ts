@@ -1,10 +1,9 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface SupportRequest {
@@ -14,7 +13,7 @@ interface SupportRequest {
   source?: "provider" | "seeker";
 }
 
-const handler = async (req: Request): Promise<Response> => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -70,13 +69,11 @@ const handler = async (req: Request): Promise<Response> => {
     const isSeeker = source === "seeker";
     console.log("[SEND-SUPPORT-REQUEST] Request:", { userId: user.id, category, subject, source: ticketSource });
 
-    // Get user name based on account type
     let userName = "Unknown";
     let userEmail = user.email || "Unknown";
     let contextInfo = "";
 
     if (isSeeker) {
-      // Look up seeker profile
       const { data: seekerProfile } = await supabase
         .from("seeker_profiles")
         .select("first_name, last_name, email")
@@ -89,7 +86,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
       contextInfo = "Seeker Account";
     } else {
-      // Look up provider profile and facility
       const { data: profile } = await supabase
         .from("profiles")
         .select("first_name, last_name, email")
@@ -124,7 +120,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const categoryLabel = categoryLabels[category] || category;
 
-    // Insert into support_tickets table (dual-write)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const { data: ticketData, error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
       source: ticketSource,
@@ -141,7 +136,6 @@ const handler = async (req: Request): Promise<Response> => {
     } else {
       console.log("[SEND-SUPPORT-REQUEST] Support ticket created successfully");
       
-      // Notify all admins
       const { data: adminUsers } = await supabaseAdmin
         .from('admin_user_profiles')
         .select('user_id')
@@ -190,7 +184,6 @@ const handler = async (req: Request): Promise<Response> => {
           <!-- Body -->
           <tr>
             <td style="padding: 32px;">
-              <!-- Contact Info Table -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; width: 90px;">From:</td>
@@ -206,7 +199,6 @@ const handler = async (req: Request): Promise<Response> => {
                 </tr>
               </table>
               
-              <!-- Subject Box -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 10px; margin-bottom: 16px;">
                 <tr>
                   <td style="padding: 16px 20px;">
@@ -216,7 +208,6 @@ const handler = async (req: Request): Promise<Response> => {
                 </tr>
               </table>
               
-              <!-- Message Box -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 10px;">
                 <tr>
                   <td style="padding: 16px 20px;">
@@ -267,6 +258,4 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
-};
-
-serve(handler);
+});

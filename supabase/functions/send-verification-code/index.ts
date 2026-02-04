@@ -1,10 +1,9 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface VerificationRequest {
@@ -15,7 +14,7 @@ function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-const handler = async (req: Request): Promise<Response> => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -61,11 +60,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Invalidate previous codes by expiring them (NOT by setting verified: true)
-    // Setting verified: true would trick check-email-verified into false positives
     const { error: invalidateError } = await supabase
       .from("email_verification_codes")
       .update({ 
-        expires_at: new Date().toISOString() // Just expire, don't mark as verified
+        expires_at: new Date().toISOString()
       })
       .eq("email", normalizedEmail)
       .eq("verified", false);
@@ -196,7 +194,6 @@ const handler = async (req: Request): Promise<Response> => {
       
       const errorMessage = emailError.message || JSON.stringify(emailError);
       
-      // Categorize error types for better user messaging
       let userMessage: string;
       let errorCode: string;
       
@@ -240,6 +237,4 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
-};
-
-serve(handler);
+});
