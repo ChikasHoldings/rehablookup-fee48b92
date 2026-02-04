@@ -18,61 +18,39 @@ export function useUserManagement() {
   const [isBanning, setIsBanning] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
 
-  // Delete user account
+  const invalidateUserQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-user-activity-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-user-activity-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
+  };
+
+  // Delete user account via edge function
   const deleteUser = useMutation({
     mutationFn: async (user: UserProfile) => {
       setIsDeleting(true);
       
-      // Delete in order: favorites, reviews, notifications, activity log, seeker profile
-      const userId = user.user_id;
+      const { data, error } = await supabase.functions.invoke("admin-delete-seeker", {
+        body: { 
+          targetUserId: user.user_id,
+          action: "delete"
+        },
+      });
       
-      // Delete user favorites
-      await supabase.from("user_favorites").delete().eq("user_id", userId);
-      
-      // Delete facility reviews
-      await supabase.from("facility_reviews").delete().eq("user_id", userId);
-      
-      // Delete seeker notifications
-      await supabase.from("seeker_notifications").delete().eq("user_id", userId);
-      
-      // Delete account activity log
-      await supabase.from("account_activity_log").delete().eq("user_id", userId);
-      
-      // Delete review helpful votes
-      await supabase.from("review_helpful_votes").delete().eq("user_id", userId);
-      
-      // Delete user roles
-      await supabase.from("user_roles").delete().eq("user_id", userId);
-      
-      // Delete seeker profile
-      const { error: profileError } = await supabase
-        .from("seeker_profiles")
-        .delete()
-        .eq("user_id", userId);
-      
-      if (profileError) throw profileError;
-      
-      // Log admin action
-      const { data: { user: adminUser } } = await supabase.auth.getUser();
-      if (adminUser) {
-        await supabase.from("admin_audit_log").insert({
-          admin_user_id: adminUser.id,
-          action_type: "delete_user",
-          target_type: "seeker",
-          target_id: userId,
-          details: { 
-            deleted_user_name: user.display_name || `${user.first_name} ${user.last_name}`,
-            deleted_user_email: user.email 
-          },
-        });
+      if (error) {
+        console.error("Delete seeker error:", error);
+        throw new Error(error.message || "Failed to delete user");
       }
       
-      return userId;
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+      
+      return user.user_id;
     },
     onSuccess: () => {
       toast.success("User account deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-user-activity-stats"] });
+      invalidateUserQueries();
     },
     onError: (error: Error) => {
       toast.error("Failed to delete user: " + error.message);
@@ -82,54 +60,33 @@ export function useUserManagement() {
     },
   });
 
-  // Ban/suspend user
+  // Ban/suspend user via edge function
   const banUser = useMutation({
     mutationFn: async ({ user, reason }: { user: UserProfile; reason: string }) => {
       setIsBanning(true);
       
-      const { data: { user: adminUser } } = await supabase.auth.getUser();
-      if (!adminUser) throw new Error("Admin not authenticated");
-      
-      // Add to blocked identifiers table
-      const { error } = await supabase.from("blocked_identifiers").insert({
-        identifier: user.user_id,
-        identifier_type: "user_id",
-        reason: reason,
-        blocked_by: adminUser.id,
-        is_active: true,
-      });
-      
-      if (error) throw error;
-      
-      // Also block email if available
-      if (user.email) {
-        await supabase.from("blocked_identifiers").insert({
-          identifier: user.email,
-          identifier_type: "email",
-          reason: reason,
-          blocked_by: adminUser.id,
-          is_active: true,
-        });
-      }
-      
-      // Log admin action
-      await supabase.from("admin_audit_log").insert({
-        admin_user_id: adminUser.id,
-        action_type: "ban_user",
-        target_type: "seeker",
-        target_id: user.user_id,
-        details: { 
-          banned_user_name: user.display_name || `${user.first_name} ${user.last_name}`,
-          banned_user_email: user.email,
-          reason 
+      const { data, error } = await supabase.functions.invoke("admin-delete-seeker", {
+        body: { 
+          targetUserId: user.user_id,
+          action: "ban",
+          reason
         },
       });
+      
+      if (error) {
+        console.error("Ban seeker error:", error);
+        throw new Error(error.message || "Failed to ban user");
+      }
+      
+      if (data?.error) {
+        throw new Error(data.error);
+      }
       
       return user.user_id;
     },
     onSuccess: () => {
       toast.success("User has been banned");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      invalidateUserQueries();
     },
     onError: (error: Error) => {
       toast.error("Failed to ban user: " + error.message);
@@ -139,41 +96,30 @@ export function useUserManagement() {
     },
   });
 
-  // Unban user
+  // Unban user via edge function
   const unbanUser = useMutation({
     mutationFn: async (user: UserProfile) => {
-      // Deactivate blocked identifiers
-      await supabase
-        .from("blocked_identifiers")
-        .update({ is_active: false })
-        .eq("identifier", user.user_id);
+      const { data, error } = await supabase.functions.invoke("admin-delete-seeker", {
+        body: { 
+          targetUserId: user.user_id,
+          action: "unban"
+        },
+      });
       
-      if (user.email) {
-        await supabase
-          .from("blocked_identifiers")
-          .update({ is_active: false })
-          .eq("identifier", user.email);
+      if (error) {
+        console.error("Unban seeker error:", error);
+        throw new Error(error.message || "Failed to unban user");
       }
       
-      // Log admin action
-      const { data: { user: adminUser } } = await supabase.auth.getUser();
-      if (adminUser) {
-        await supabase.from("admin_audit_log").insert({
-          admin_user_id: adminUser.id,
-          action_type: "unban_user",
-          target_type: "seeker",
-          target_id: user.user_id,
-          details: { 
-            unbanned_user_name: user.display_name || `${user.first_name} ${user.last_name}`,
-          },
-        });
+      if (data?.error) {
+        throw new Error(data.error);
       }
       
       return user.user_id;
     },
     onSuccess: () => {
       toast.success("User has been unbanned");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      invalidateUserQueries();
     },
     onError: (error: Error) => {
       toast.error("Failed to unban user: " + error.message);
