@@ -52,6 +52,9 @@ export function EmbedBadgeWidget({
   const [copied, setCopied] = useState(false);
 
   const baseUrl = "https://rehablookup.com";
+  // Use edge function URL directly for preview (avoids cross-origin blocking)
+  const edgeFunctionUrl = `https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-badge/${facilityId}?style=${badgeStyle}&size=${badgeSize}&type=${badgeType}`;
+  // Use production URL for embed code (will be proxied through _redirects in production)
   const badgeUrl = `${baseUrl}/api/badge/${facilityId}?style=${badgeStyle}&size=${badgeSize}&type=${badgeType}`;
   const profileUrl = `${baseUrl}/center/${facilitySlug}?utm_source=badge&utm_medium=embed`;
 
@@ -158,7 +161,7 @@ export function EmbedBadgeWidget({
           >
             <a href={profileUrl} target="_blank" rel="noopener noreferrer">
               <img
-                src={badgeUrl}
+                src={edgeFunctionUrl}
                 alt={`${facilityName} - Verified on RehabLookup`}
                 width={BADGE_SIZES[badgeSize].width}
                 height={BADGE_SIZES[badgeSize].height}
