@@ -215,7 +215,6 @@ export default function AdminLeads() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [redistributionFilter, setRedistributionFilter] = useState("all");
-  const [unassignedFilter, setUnassignedFilter] = useState(false);
   const [datePreset, setDatePreset] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -227,11 +226,6 @@ export default function AdminLeads() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const highlightId = params.get("highlight");
-    const unassigned = params.get("unassigned");
-    
-    if (unassigned === "true") {
-      setUnassignedFilter(true);
-    }
     
     // Store highlight ID for processing after data loads
     if (highlightId && !highlightProcessedRef.current) {
@@ -240,7 +234,7 @@ export default function AdminLeads() {
     }
     
     // Clean URL params after reading
-    if (highlightId || unassigned) {
+    if (highlightId) {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -294,7 +288,7 @@ export default function AdminLeads() {
 
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-leads-count", statusFilter, urgencyFilter, redistributionFilter, unassignedFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads-count", statusFilter, urgencyFilter, redistributionFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         let query = supabase
@@ -311,11 +305,6 @@ export default function AdminLeads() {
 
         if (redistributionFilter !== "all") {
           query = query.eq("redistribution_status", redistributionFilter);
-        }
-
-        // Unassigned filter (no facility assigned)
-        if (unassignedFilter) {
-          query = query.is("facility_id", null);
         }
 
         if (searchQuery) {
@@ -342,7 +331,7 @@ export default function AdminLeads() {
 
   // Fetch leads with pagination
   const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", statusFilter, urgencyFilter, redistributionFilter, unassignedFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads", statusFilter, urgencyFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         const from = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -364,11 +353,6 @@ export default function AdminLeads() {
 
         if (redistributionFilter !== "all") {
           query = query.eq("redistribution_status", redistributionFilter);
-        }
-
-        // Unassigned filter (no facility assigned)
-        if (unassignedFilter) {
-          query = query.is("facility_id", null);
         }
 
         if (searchQuery) {
@@ -812,19 +796,6 @@ export default function AdminLeads() {
                     <SelectItem value="expired">Expired</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button
-                  variant={unassignedFilter ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setUnassignedFilter(!unassignedFilter);
-                    setCurrentPage(1);
-                  }}
-                  className="gap-2"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  Unassigned
-                  {unassignedFilter && <span className="sr-only">(Active)</span>}
-                </Button>
               </div>
             </div>
             {/* Date Range Filter */}

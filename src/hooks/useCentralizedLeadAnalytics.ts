@@ -229,7 +229,7 @@ function calculateCentralizedAnalytics(
       facilityId,
       facilityName: facilityMap.get(facilityId) || "Unknown",
       totalLeads: facilityLeads.length,
-      qualifiedLeads: facilityLeads.filter(l => l.qualified === true || (l.status !== 'rejected' && l.status !== 'duplicate')).length,
+      qualifiedLeads: facilityLeads.filter(l => l.status !== 'rejected' && l.status !== 'duplicate').length,
       convertedLeads: facilityLeads.filter(l => l.status === 'converted').length,
       thisMonthLeads: facilityLeads.filter(l => new Date(l.created_at) >= thisMonthStart).length,
     };
@@ -277,9 +277,9 @@ function calculateCentralizedAnalytics(
       percentage: leads.length > 0 ? Math.round((count / leads.length) * 100) : 0,
     }));
 
-  // Lead quality counts
-  const qualifiedLeads = leads.filter(l => l.qualified === true || (l.status !== 'rejected' && l.status !== 'duplicate')).length;
-  const rejectedLeads = leads.filter(l => l.status === 'rejected' || l.qualified === false).length;
+  // Lead quality counts - simplified without qualification logic
+  const qualifiedLeads = leads.filter(l => l.status !== 'rejected' && l.status !== 'duplicate').length;
+  const rejectedLeads = leads.filter(l => l.status === 'rejected').length;
   const duplicateLeads = leads.filter(l => l.status === 'duplicate').length;
 
   // Conversion funnel
@@ -323,10 +323,10 @@ function calculateCentralizedAnalytics(
     ? Math.round(((thisMonthLeads - lastMonthLeads) / lastMonthLeads) * 100)
     : thisMonthLeads > 0 ? 100 : 0;
 
-  // Account-level lead cap calculations
+  // Account-level lead cap calculations - simplified without qualification logic
   const currentCycleQualifiedLeads = allTimeLeads.filter(l => {
     const date = new Date(l.created_at);
-    return date >= thisMonthStart && (l.qualified !== false && l.status !== 'rejected' && l.status !== 'duplicate');
+    return date >= thisMonthStart && l.status !== 'rejected' && l.status !== 'duplicate';
   }).length;
   const leadsRemaining = Math.max(0, leadCap - currentCycleQualifiedLeads);
 
