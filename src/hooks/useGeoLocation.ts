@@ -51,7 +51,17 @@ export function useGeoLocation(): GeoData {
       }
     };
 
-    fetchGeoData();
+    // Defer geolocation fetch until after page is interactive to improve TTI
+    const deferFetch = () => {
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(() => fetchGeoData(), { timeout: 3000 });
+      } else {
+        setTimeout(fetchGeoData, 1500);
+      }
+    };
+
+    // Start deferred fetch after initial render
+    deferFetch();
   }, []);
 
   return geoData;
