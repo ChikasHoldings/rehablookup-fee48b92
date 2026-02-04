@@ -390,14 +390,8 @@ Allow: /sitemap-facilities.xml
 # SITEMAPS
 # =============================================================================
 
-# Primary sitemap index (references all other sitemaps)
+# Single canonical sitemap index - Google will discover child sitemaps from this
 Sitemap: https://rehablookup.com/sitemap-index.xml
-
-# Static pages sitemap
-Sitemap: https://rehablookup.com/sitemap.xml
-
-# Dynamic facilities sitemap
-Sitemap: https://rehablookup.com/sitemap-facilities.xml
 
 # =============================================================================
 # ADDITIONAL DIRECTIVES

@@ -6,6 +6,11 @@
 # Note: This rule uses regex to catch all paths with trailing slashes
 /*/ /:splat 301!
 
+# Sitemaps - Must be served BEFORE SPA catch-all
+/sitemap.xml /sitemap.xml 200
+/sitemap-index.xml /sitemap-index.xml 200
+/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities 200
+
 # Force HTTPS and www normalization (if needed)
 # http://rehablookup.com/* https://rehablookup.com/:splat 301!
 # http://www.rehablookup.com/* https://rehablookup.com/:splat 301!
@@ -61,9 +66,6 @@
 /insurance/cigna-rehab /insurance/cigna-rehab.html 200
 /insurance/united-healthcare-rehab /insurance/united-healthcare-rehab.html 200
 /insurance/medicare-rehab /insurance/medicare-rehab.html 200
-
-# Dynamic sitemap proxy to edge function
-/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities 200
 
 # Handle SPA routing - serve index.html for all other routes
 /* /index.html 200
