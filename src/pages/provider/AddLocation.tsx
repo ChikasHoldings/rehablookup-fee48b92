@@ -148,6 +148,12 @@ export default function AddLocationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent double submissions
+    if (isSubmitting) {
+      console.log("[AddLocation] Prevented double submission");
+      return;
+    }
+    
     if (!canAddMore) {
       toast({
         variant: "destructive",
@@ -169,21 +175,25 @@ export default function AddLocationPage() {
     }
 
     setIsSubmitting(true);
+    console.log("[AddLocation] Starting facility creation:", formData.name);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.log("[AddLocation] No session found, redirecting to login");
         toast({
           variant: "destructive",
           title: "Authentication Error",
           description: "Please log in again to continue.",
         });
+        setIsSubmitting(false);
         navigate("/login");
         return;
       }
 
       // Create new facility
+      console.log("[AddLocation] Inserting facility for user:", session.user.id.substring(0, 8) + "...");
       const { data: newFacility, error } = await supabase
         .from("facilities")
         .insert({
@@ -203,13 +213,19 @@ export default function AddLocationPage() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("[AddLocation] Facility creation error:", error);
+        throw error;
+      }
+
+      console.log("[AddLocation] Facility created successfully:", newFacility.id.substring(0, 8) + "...");
 
       // Invalidate queries to refresh facility list
       queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
 
       setSuccess(true);
+      setIsSubmitting(false);
       
       toast({
         title: "Location Added!",
@@ -221,16 +237,16 @@ export default function AddLocationPage() {
         navigate("/provider/listing");
       }, 2000);
 
-    } catch (err) {
-      console.error("Error adding location:", err);
+    } catch (err: any) {
+      console.error("[AddLocation] Unexpected error:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add location. Please try again.",
+        description: err?.message || "Failed to add location. Please try again.",
       });
-    } finally {
       setIsSubmitting(false);
     }
+    // NOTE: No finally block - each path explicitly handles setIsSubmitting(false)
   };
 
   // If can't add more, show upgrade message

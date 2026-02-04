@@ -245,12 +245,25 @@ export default function ProviderSignup() {
   };
 
   const handleSubmit = async () => {
+    // Prevent double submissions
+    if (isSubmitting) {
+      console.log("[ProviderSignup] Prevented double submission");
+      return;
+    }
+    
     setIsSubmitting(true);
+    console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
 
     try {
       // Check if email is already registered as a seeker
-      const { data: isSeeker } = await supabase.rpc('is_email_seeker', { p_email: formData.email });
-      if (isSeeker) {
+      console.log("[ProviderSignup] Checking for existing seeker account...");
+      const { data: isSeeker, error: seekerCheckError } = await supabase.rpc('is_email_seeker', { p_email: formData.email });
+      
+      if (seekerCheckError) {
+        console.error("[ProviderSignup] Seeker check error:", seekerCheckError);
+        // Non-blocking - continue with signup if check fails
+      } else if (isSeeker) {
+        console.log("[ProviderSignup] Email already registered as seeker");
         toast({
           title: "Account Exists",
           description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
@@ -261,6 +274,7 @@ export default function ProviderSignup() {
       }
 
       // 1. Create the user account
+      console.log("[ProviderSignup] Creating auth account...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -270,6 +284,7 @@ export default function ProviderSignup() {
       });
 
       if (authError) {
+        console.error("[ProviderSignup] Auth signup error:", authError.message);
         if (authError.message.includes("already registered")) {
           toast({
             title: "Account Exists",
@@ -288,6 +303,7 @@ export default function ProviderSignup() {
       }
 
       if (!authData.user) {
+        console.error("[ProviderSignup] No user returned from auth.signUp");
         toast({
           title: "Signup Failed",
           description: "Unable to create account. Please try again.",
@@ -298,8 +314,10 @@ export default function ProviderSignup() {
       }
 
       const userId = authData.user.id;
+      console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
 
       // 2. Create profile
+      console.log("[ProviderSignup] Creating provider profile...");
       const { error: profileError } = await supabase.from("profiles").insert({
         user_id: userId,
         first_name: formData.firstName,
@@ -310,16 +328,18 @@ export default function ProviderSignup() {
       });
 
       if (profileError) {
-        console.error("Profile creation error:", profileError);
-        // Profile creation is critical - notify user but continue
+        console.error("[ProviderSignup] Profile creation error:", profileError);
         toast({
           title: "Profile Notice",
           description: "Your profile was created with limited info. You can update it later in settings.",
           variant: "default",
         });
+      } else {
+        console.log("[ProviderSignup] Profile created successfully");
       }
 
       // 3. Create facility
+      console.log("[ProviderSignup] Creating facility...");
       const { data: facilityData, error: facilityError } = await supabase
         .from("facilities")
         .insert({
@@ -343,7 +363,7 @@ export default function ProviderSignup() {
         .single();
 
       if (facilityError) {
-        console.error("Facility creation error:", facilityError);
+        console.error("[ProviderSignup] Facility creation error:", facilityError);
         toast({
           title: "Partial Success",
           description: "Account created but there was an issue saving facility data. Please update in your dashboard.",
@@ -353,51 +373,62 @@ export default function ProviderSignup() {
       }
 
       const facilityId = facilityData.id;
+      console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
 
-      // 4. Insert services
+      // 4. Insert services (non-blocking)
       if (formData.selectedTreatments.length > 0) {
+        console.log("[ProviderSignup] Inserting services:", formData.selectedTreatments.length);
         const servicesData = formData.selectedTreatments.map((service) => ({
           facility_id: facilityId,
           service_name: service,
         }));
-        await supabase.from("facility_services").insert(servicesData);
+        const { error: servicesError } = await supabase.from("facility_services").insert(servicesData);
+        if (servicesError) console.error("[ProviderSignup] Services insert error:", servicesError);
       }
 
-      // 5. Insert age groups
+      // 5. Insert age groups (non-blocking)
       if (formData.ageGroups.length > 0) {
+        console.log("[ProviderSignup] Inserting age groups:", formData.ageGroups.length);
         const ageGroupsData = formData.ageGroups.map((ageGroup) => ({
           facility_id: facilityId,
           age_group: ageGroup,
         }));
-        await supabase.from("facility_age_groups").insert(ageGroupsData);
+        const { error: ageGroupsError } = await supabase.from("facility_age_groups").insert(ageGroupsData);
+        if (ageGroupsError) console.error("[ProviderSignup] Age groups insert error:", ageGroupsError);
       }
 
-      // 6. Insert insurance
+      // 6. Insert insurance (non-blocking)
       if (formData.selectedInsurance.length > 0) {
+        console.log("[ProviderSignup] Inserting insurance:", formData.selectedInsurance.length);
         const insuranceData = formData.selectedInsurance.map((insurance) => ({
           facility_id: facilityId,
           insurance_name: insurance,
         }));
-        await supabase.from("facility_insurance").insert(insuranceData);
+        const { error: insuranceError } = await supabase.from("facility_insurance").insert(insuranceData);
+        if (insuranceError) console.error("[ProviderSignup] Insurance insert error:", insuranceError);
       }
 
-      // 7. Insert credentials (legacy free-text)
+      // 7. Insert credentials (legacy free-text) - non-blocking
       if (formData.licensingInfo || formData.accreditations) {
-        await supabase.from("facility_credentials").insert({
+        console.log("[ProviderSignup] Inserting credentials...");
+        const { error: credentialsError } = await supabase.from("facility_credentials").insert({
           facility_id: facilityId,
           licensing_info: formData.licensingInfo,
           accreditations: formData.accreditations,
         });
+        if (credentialsError) console.error("[ProviderSignup] Credentials insert error:", credentialsError);
       }
 
-      // 7b. Insert structured accreditations
+      // 7b. Insert structured accreditations (non-blocking)
       if (formData.selectedAccreditations.length > 0) {
+        console.log("[ProviderSignup] Inserting accreditations:", formData.selectedAccreditations.length);
         const accreditationsData = formData.selectedAccreditations.map((accreditation) => ({
           facility_id: facilityId,
           accreditation_type: accreditation,
-          verified: false, // Pending admin verification
+          verified: false,
         }));
-        await supabase.from("facility_accreditations").insert(accreditationsData);
+        const { error: accreditationsError } = await supabase.from("facility_accreditations").insert(accreditationsData);
+        if (accreditationsError) console.error("[ProviderSignup] Accreditations insert error:", accreditationsError);
       }
 
       // 8. Upload images if provided
