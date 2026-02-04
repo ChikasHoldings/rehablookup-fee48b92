@@ -181,53 +181,90 @@ Deno.serve(async (req) => {
         to: [recipientEmail],
         subject: `${facility.name} would love to hear about your experience`,
         html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px 20px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 24px;">Share Your Experience</h1>
-              </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share Your Experience</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 36px 32px; text-align: center;">
+              <div style="font-size: 40px; margin-bottom: 12px;">⭐</div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+                Share Your Experience
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 36px 32px; background-color: #ffffff;">
+              <p style="margin: 0 0 20px 0; font-size: 17px; color: #1f2937; line-height: 1.5;">
+                Hi ${recipientName},
+              </p>
               
-              <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
-                <p style="font-size: 16px; margin-bottom: 20px;">
-                  Hi ${recipientName},
-                </p>
-                
-                <p style="font-size: 16px; margin-bottom: 20px;">
-                  We hope you're doing well! <strong>${facility.name}</strong> in ${facility.city}, ${facility.state} 
-                  would love to hear about your experience with their services.
-                </p>
-                
-                <p style="font-size: 16px; margin-bottom: 25px;">
-                  Your feedback helps others who are searching for the right care. Would you take a moment to leave a review?
-                </p>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${reviewLink}" 
-                     style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
-                            color: white; padding: 14px 35px; border-radius: 8px; text-decoration: none; 
-                            font-weight: 600; font-size: 16px;">
-                    Leave a Review
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px; color: #6b7280; margin-top: 25px;">
-                  Your review will help others find the care they need. Thank you for taking the time to share your experience.
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 25px 0;">
-                
-                <p style="font-size: 12px; color: #9ca3af; text-align: center;">
-                  This email was sent by ${facility.name} via RehabLookup.<br>
-                  If you believe you received this email in error, you can safely ignore it.
-                </p>
-              </div>
-            </body>
-          </html>
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151; line-height: 1.6;">
+                We hope you're doing well! <strong style="color: #1f2937;">${facility.name}</strong> in ${facility.city}, ${facility.state} would love to hear about your experience.
+              </p>
+              
+              <p style="margin: 0 0 28px 0; font-size: 16px; color: #374151; line-height: 1.6;">
+                Your feedback helps others who are searching for the right care. Would you take a moment to leave a review?
+              </p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td align="center">
+                    <a href="${reviewLink}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                      Leave a Review
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
+                Your review will help others find the care they need. Thank you for taking the time to share your experience.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #1B365D; padding: 24px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 8px;">
+                    <p style="margin: 0; font-size: 16px; font-weight: 700; color: #ffffff;">
+                      RehabLookup
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5;">
+                      This email was sent by ${facility.name} via RehabLookup.<br>
+                      If you believe you received this in error, you can safely ignore it.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
         `,
       });
 
