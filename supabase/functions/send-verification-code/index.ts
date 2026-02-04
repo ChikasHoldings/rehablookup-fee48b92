@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
+            <td style="background-color: #1B365D; background-image: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
                 Verify Your Email
               </h1>
