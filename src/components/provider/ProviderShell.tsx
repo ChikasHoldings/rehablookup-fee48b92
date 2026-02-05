@@ -186,7 +186,7 @@ function ProviderShellContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-background isolate" data-shell>
       {/* Fixed Header */}
       <div className="flex-shrink-0 z-50">
         <ProviderHeader
@@ -200,8 +200,8 @@ function ProviderShellContent() {
       </div>
 
       <div className="flex flex-1 min-h-0 w-full">
-        {/* Fixed Desktop Sidebar - Responsive width */}
-        <aside className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
+        {/* Fixed Desktop Sidebar - Consistent width */}
+        <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
           <ProviderSidebar />
         </aside>
 
@@ -222,7 +222,7 @@ function ProviderShellContent() {
         {/* Main Content Area - Responsive with proper overflow handling */}
         <main 
           ref={mainContentRef} 
-          className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
+          className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
         >
           <ProviderErrorBoundary>
             <Suspense fallback={null}>

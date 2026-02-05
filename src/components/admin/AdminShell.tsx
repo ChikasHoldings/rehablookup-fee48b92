@@ -101,7 +101,7 @@ export function AdminShell() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-100 isolate" data-shell>
       {/* Force password change dialog */}
       <ForcePasswordChangeDialog 
         open={forcePasswordChange} 
@@ -116,7 +116,7 @@ export function AdminShell() {
       
       <AdminHeader userEmail={user?.email} userId={user?.id} adminRole={adminRole} onLogout={logout} isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
       
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-h-0">
         <AdminSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
         
         <main

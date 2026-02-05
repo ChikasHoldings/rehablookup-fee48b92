@@ -171,7 +171,7 @@ export function SeekerShell() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-background isolate" data-shell>
       {/* Email Verification Banner */}
       {isAuthenticated && !isEmailVerified && (
         <EmailVerificationBanner email={userEmail} />
@@ -190,7 +190,7 @@ export function SeekerShell() {
       {/* Main Content Area */}
       <main 
         ref={mainContentRef} 
-        className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
+        className="flex-1 min-h-0 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
       >
         <Suspense fallback={null}>
           <Outlet context={{ isAuthenticated, userName: displayName }} />
