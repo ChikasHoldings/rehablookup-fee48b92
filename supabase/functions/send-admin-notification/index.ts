@@ -106,10 +106,10 @@ Deno.serve(async (req) => {
               </head>
               <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background-color: #f6f8fb;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <div style="background: linear-gradient(135deg, #1B365D 0%, #2a4a7a 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Message from RehabLookup</h1>
+                  <div style="background-color: #1B365D; background: #1B365D; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Arial, Helvetica, sans-serif;">Message from RehabLookup</h1>
                   </div>
-                  <div style="background: #ffffff; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <div style="background: #ffffff; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px #0000001a;">
                     ${providerName ? `<p style="margin-bottom: 20px;">Hi ${providerName},</p>` : ""}
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #1B365D;">
                       ${message.split('\n').map((line: string) => `<p style="margin: 0 0 10px 0;">${line}</p>`).join('')}

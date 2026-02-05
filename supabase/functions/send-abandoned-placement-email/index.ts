@@ -87,7 +87,7 @@ function buildAbandonedCartEmail(data: {
               ` : ''}
               
               <!-- Why Complete Now Box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 12px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ecfdf5; background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 24px;">
                     <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #065f46;">✨ Why Complete Your Placement?</p>

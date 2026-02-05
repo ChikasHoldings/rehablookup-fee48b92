@@ -106,17 +106,17 @@ Deno.serve(async (req) => {
             <html>
             <head>
               <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+                body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #0EA5E9, #10B981); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
+                .header { background-color: #1B365D; background: #1B365D; color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
                 .content { background: #fff; padding: 30px; border: 1px solid #e5e5e5; border-top: none; border-radius: 0 0 12px 12px; }
                 .case-number { background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }
-                .case-number span { font-size: 24px; font-weight: bold; font-family: monospace; color: #0EA5E9; }
+                .case-number span { font-size: 24px; font-weight: bold; font-family: monospace; color: #1B365D; }
                 .timeline { margin: 20px 0; }
                 .timeline-item { display: flex; align-items: flex-start; margin-bottom: 15px; }
-                .timeline-icon { width: 32px; height: 32px; background: #e0f2fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; }
+                .timeline-icon { width: 32px; height: 32px; background: #f0f4f8; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; }
                 .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e5e5; color: #666; font-size: 14px; }
-                a { color: #0EA5E9; }
+                a { color: #1B365D; }
               </style>
             </head>
             <body>

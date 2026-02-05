@@ -134,12 +134,12 @@ Deno.serve(async (req) => {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px #00000014;">
           
           <!-- Header -->
           <tr>
-            <td style="background-color: #1B365D; background-image: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
                 Verify Reply Email
               </h1>
             </td>
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
                 </tr>
                 <tr>
                   <td align="center">
-                    <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5;">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #cbd5e1; line-height: 1.5;">
                       Connecting families with trusted treatment providers
                     </p>
                   </td>
