@@ -1,219 +1,277 @@
 
-# Fix Listing Population After Provider Onboarding
-
-## Status: ✅ COMPLETED + ROUTE AUDIT DONE
+# Fix Page Blanking During Navigation
 
 ## Problem Summary
-After completing provider signup, listings are not populating correctly on the My Listings page. This is caused by **stale localStorage caches** and **missing cache invalidation** during the signup flow.
+Pages blank out briefly when navigating because:
+1. Suspense renders `null` while loading lazy chunks
+2. AnimatedCard components start at opacity-0 and fade in
+3. React's concurrent features aren't being used to keep old content visible
 
-## Root Cause Analysis
-
-### 1. Stale Cache Not Cleared During Signup
-The signup flow in `ProviderSignup.tsx` does NOT clear existing localStorage caches before redirecting to the dashboard. If a previous user was logged in, their cached data remains:
-- `provider-facilities-cache` - Cached facilities from previous user
-- `selectedFacilityId` / `selectedFacilityData` - Selected facility state
-- `provider-data-*` - Provider data cache
-- `rl_cached_*` - User role cache
-
-### 2. Cache Not Pre-Populated After Facility Creation
-The login flow (`ProviderLogin.tsx` lines 484-488) pre-populates the facilities cache after successful login, but the signup flow does NOT do this after creating the facility.
-
-### 3. useProviderFacilities Returns Stale Data
-When `useProviderFacilities` runs after signup:
-- It checks `placeholderData: getCachedFacilities()` first
-- If stale cache exists, it returns wrong user's data
-- If cache is empty but query has timing issues, it may return empty
-
-### 4. SelectedFacilityContext Hydration Fails
-The context relies on:
-1. localStorage cache (may be stale/empty)
-2. `useProviderFacilities` (may have stale data)
-3. If both fail, `selectedFacility` is null → dashboard shows empty state
-
-## Solution
-
-### Changes to `src/pages/ProviderSignup.tsx`
-
-**After facility creation (around line 488), add cache clearing and pre-population:**
-
-```typescript
-// Clear all provider-related caches from any previous session
-const clearProviderCaches = () => {
-  try {
-    // Clear facilities cache
-    localStorage.removeItem("provider-facilities-cache");
-    // Clear selected facility
-    localStorage.removeItem("selectedFacilityId");
-    localStorage.removeItem("selectedFacilityData");
-    // Clear provider data caches (pattern match)
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith("provider-data-")) {
-        localStorage.removeItem(key);
-      }
-    });
-    // Clear user role cache
-    localStorage.removeItem("rl_cached_role");
-    localStorage.removeItem("rl_cached_uid");
-    localStorage.removeItem("rl_cached_auth");
-    localStorage.removeItem("rl_cached_ts");
-  } catch {
-    // Silent fail
-  }
-};
-
-// Pre-populate caches with newly created facility
-const prePopulateFacilityCache = (facility: any) => {
-  try {
-    const facilityData = {
-      id: facility.id,
-      name: formData.facilityName,
-      slug: facility.slug,
-      status: "pending",
-      address: formData.address,
-      city: formData.city,
-      state: formData.state,
-      zip_code: formData.zipCode,
-      facility_type: formData.facilityType,
-      logo_url: logoUrl,
-      gallery_urls: galleryUrls.length > 0 ? galleryUrls : null,
-      featured: false,
-      created_at: new Date().toISOString(),
-    };
-    
-    // Cache for useProviderFacilities
-    localStorage.setItem("provider-facilities-cache", JSON.stringify({
-      data: [facilityData],
-      timestamp: Date.now(),
-    }));
-    
-    // Cache for SelectedFacilityContext
-    localStorage.setItem("selectedFacilityId", facility.id);
-    localStorage.setItem("selectedFacilityData", JSON.stringify(facilityData));
-    
-    // Cache user role
-    localStorage.setItem("rl_cached_role", "provider");
-    localStorage.setItem("rl_cached_uid", userId);
-    localStorage.setItem("rl_cached_auth", "true");
-    localStorage.setItem("rl_cached_ts", String(Date.now()));
-  } catch {
-    // Silent fail
-  }
-};
-```
-
-**Insert these calls in the signup flow:**
-1. Call `clearProviderCaches()` BEFORE creating the auth account (around line 277)
-2. Call `prePopulateFacilityCache(facilityData)` AFTER successful facility creation and image uploads (around line 489)
-
-### Changes to `src/hooks/useProviderFacilities.ts`
-
-**Add user-specific cache key to prevent cross-user cache pollution:**
-
-```typescript
-// Change from:
-const CACHE_KEY = "provider-facilities-cache";
-
-// To:
-const getCacheKey = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.user?.id 
-    ? `provider-facilities-cache-${session.user.id}`
-    : "provider-facilities-cache";
-};
-```
-
-This ensures each user has their own cache key, preventing stale data from other users.
-
-### Changes to `src/contexts/SelectedFacilityContext.tsx`
-
-**Reset hydration flag when user changes:**
-
-```typescript
-// Add user tracking to reset hydration when user changes
-const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-useEffect(() => {
-  const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const newUserId = session?.user?.id || null;
-    
-    if (currentUserId && newUserId && currentUserId !== newUserId) {
-      // User changed - reset hydration
-      hydratedRef.current = false;
-      setSelectedFacilityState(null);
-    }
-    setCurrentUserId(newUserId);
-  };
-  checkUser();
-}, [facilities]);
-```
-
-## Files to Modify
-
-### Implementation Status
-
-1. **`src/pages/ProviderSignup.tsx`** ✅ DONE
-   - Added `clearProviderCaches()` function (lines 45-70)
-   - Clear called before auth signup (line 304)
-   - Added cache pre-population after facility creation (lines 521-560)
-
-2. **`src/hooks/useProviderFacilities.ts`** ✅ DONE
-   - Initialize `currentUserId` from `rl_cached_uid` localStorage
-   - User-specific cache key: `provider-facilities-cache-${userId}`
-   - Fallback lookup using `rl_cached_uid` when userId not provided
-
-3. **`src/contexts/SelectedFacilityContext.tsx`** ✅ DONE
-   - Added `currentUserId` state tracking
-   - Auth state change listener for SIGNED_OUT and SIGNED_IN events
-   - Resets `hydratedRef` and clears `selectedFacilityState` on user change
-
-## Technical Flow After Fix
-
-```text
-User Completes Signup
-        ↓
-Clear all provider caches (prevents stale data)
-        ↓
-Create auth account, profile, facility
-        ↓
-Pre-populate caches with new facility data
-        ↓
-Navigate to /provider/dashboard
-        ↓
-ProviderShell loads with SelectedFacilityProvider
-        ↓
-useProviderFacilities finds pre-populated cache → instant render
-        ↓
-SelectedFacilityContext hydrates from cache → facility selected
-        ↓
-Dashboard renders with correct facility data
-        ↓
-Background query confirms/updates cache with fresh DB data
-```
-
-## Verification Steps
-
-After implementation:
-1. Complete provider signup flow end-to-end
-2. Verify dashboard shows correct facility name
-3. Navigate to My Listings - verify listing card appears
-4. Click Edit on listing - verify all data populated
-5. Log out, sign up as different user - verify no data cross-contamination
+## Solution Overview
+Implement a **navigation transition system** that keeps the current page visible while loading the next, then swaps instantly with optional subtle fade.
 
 ---
 
-## Internal Link Audit (Feb 5, 2026)
+## Implementation Plan
 
-### Fixed Issues
-- **`/provider/listing` → `/provider/listings`**: Updated 5 occurrences in Dashboard.tsx and ProviderHeader.tsx to use the canonical URL directly instead of relying on redirect.
+### 1. Create Navigation Transition Context
 
-### Verified Routes (All Working)
-- `/treatment-types/*` - All treatment type routes have matching links
-- `/insurance/*-rehab` - All insurance routes correctly linked
-- `/account/*` - All seeker panel routes valid
-- `/provider/*` - All provider panel routes valid
-- `/concierge`, `/international`, `/us-rehab/*` - All valid
-- Legacy redirects working: `/signup` → `/seeker/signup`, `/request-help` → `/concierge`, etc.
+**New file: `src/contexts/NavigationContext.tsx`**
 
-### No Broken Links Found
-All internal `<Link to="">` components point to valid routes defined in App.tsx.
+```typescript
+import { createContext, useContext, useTransition, useCallback, ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+
+interface NavigationContextType {
+  isPending: boolean;
+  navigateWithTransition: (to: string) => void;
+}
+
+const NavigationContext = createContext<NavigationContextType | null>(null);
+
+export function NavigationProvider({ children }: { children: ReactNode }) {
+  const [isPending, startTransition] = useTransition();
+  const navigate = useNavigate();
+
+  const navigateWithTransition = useCallback((to: string) => {
+    startTransition(() => {
+      navigate(to);
+    });
+  }, [navigate]);
+
+  return (
+    <NavigationContext.Provider value={{ isPending, navigateWithTransition }}>
+      {children}
+    </NavigationContext.Provider>
+  );
+}
+
+export function useNavigation() {
+  const context = useContext(NavigationContext);
+  if (!context) {
+    throw new Error("useNavigation must be used within NavigationProvider");
+  }
+  return context;
+}
+```
+
+### 2. Update App.tsx to Wrap Routes with NavigationProvider
+
+**File: `src/App.tsx`**
+
+- Move `NavigationProvider` inside `BrowserRouter` (it needs router context)
+- Keep `Suspense fallback={null}` - the transition will handle visibility
+
+```typescript
+<BrowserRouter>
+  <NavigationProvider>
+    <ScrollToTop />
+    <TrailingSlashRedirect />
+    <CookieConsentBanner />
+    <Suspense fallback={null}>
+      <Routes>
+        {/* routes */}
+      </Routes>
+    </Suspense>
+  </NavigationProvider>
+</BrowserRouter>
+```
+
+### 3. Update PrefetchLink to Use Transition Navigation
+
+**File: `src/components/ui/prefetch-link.tsx`**
+
+Make `PrefetchLink` use `startTransition` when navigating:
+
+```typescript
+import { forwardRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTransition } from "react";
+import { prefetchRoute } from "@/lib/routePrefetch";
+
+export const PrefetchLink = forwardRef<HTMLAnchorElement, PrefetchLinkProps>(
+  ({ prefetch = true, to, onClick, children, ...props }, ref) => {
+    const navigate = useNavigate();
+    const [isPending, startTransition] = useTransition();
+    const path = typeof to === "string" ? to : to.pathname || "";
+
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      onClick?.(e);
+      
+      // Navigate with transition - keeps old page visible
+      startTransition(() => {
+        navigate(path);
+      });
+    };
+
+    const handleMouseEnter = () => {
+      if (prefetch && path) {
+        prefetchRoute(path);
+      }
+    };
+
+    return (
+      <a
+        ref={ref}
+        href={path}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  }
+);
+```
+
+### 4. Make AnimatedCard Animation Optional
+
+**File: `src/components/ui/animated-card.tsx`**
+
+Add `instant` prop to skip animation (for returning visitors or fast navigation):
+
+```typescript
+interface AnimatedCardProps {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  instant?: boolean; // Skip animation
+}
+
+export function AnimatedCard({ children, className, delay = 0, instant = false }: AnimatedCardProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(instant); // Start visible if instant
+
+  useEffect(() => {
+    if (instant) return;
+    // ... existing intersection observer logic
+  }, [instant]);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        instant ? "" : "transition-all duration-500 ease-out",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+        className
+      )}
+      style={{ transitionDelay: instant ? "0ms" : isVisible ? `${delay}ms` : "0ms" }}
+    >
+      {children}
+    </div>
+  );
+}
+```
+
+### 5. Track Session Navigation for Instant Subsequent Loads
+
+**File: `src/lib/routePrefetch.ts`**
+
+Add session tracking to know if user has visited before:
+
+```typescript
+// Track visited routes in session for instant animations on return
+const visitedRoutes = new Set<string>();
+
+export function markRouteVisited(path: string): void {
+  visitedRoutes.add(path);
+}
+
+export function hasVisitedRoute(path: string): boolean {
+  return visitedRoutes.has(path);
+}
+```
+
+### 6. Create Instant Animation Hook
+
+**New file: `src/hooks/useInstantAnimation.ts`**
+
+```typescript
+import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { hasVisitedRoute, markRouteVisited } from "@/lib/routePrefetch";
+
+/**
+ * Returns true if animations should be instant (page visited before in session)
+ */
+export function useInstantAnimation(): boolean {
+  const { pathname } = useLocation();
+  const [instant, setInstant] = useState(() => hasVisitedRoute(pathname));
+
+  useEffect(() => {
+    // Mark as visited after first render
+    markRouteVisited(pathname);
+  }, [pathname]);
+
+  return instant;
+}
+```
+
+### 7. Update High-Traffic Pages to Use Instant Animation
+
+**Example: `src/pages/ProviderResources.tsx`**
+
+```typescript
+import { useInstantAnimation } from "@/hooks/useInstantAnimation";
+
+export default function ProviderResources() {
+  const instant = useInstantAnimation();
+  
+  return (
+    // ...
+    {resources.map((resource, index) => (
+      <AnimatedCard key={resource.title} delay={index * 75} instant={instant}>
+        {/* content */}
+      </AnimatedCard>
+    ))}
+  );
+}
+```
+
+---
+
+## Files to Create
+1. `src/contexts/NavigationContext.tsx` - Transition navigation provider
+2. `src/hooks/useInstantAnimation.ts` - Track visited pages for instant animations
+
+## Files to Modify
+1. `src/App.tsx` - Add NavigationProvider
+2. `src/components/ui/prefetch-link.tsx` - Use startTransition for navigation
+3. `src/components/ui/animated-card.tsx` - Add instant prop, add forwardRef support
+4. `src/lib/routePrefetch.ts` - Add visited route tracking
+5. Pages using AnimatedCard (ProviderResources, ForProviders, etc.) - Use instant animation hook
+
+---
+
+## How This Fixes the Problem
+
+```text
+BEFORE (Current):
+Click Link → Suspense renders null (BLANK) → Chunk loads → Page renders with opacity-0 → Fades in
+
+AFTER (With Fix):
+Click Link → Old page stays visible (startTransition) → Chunk loads → New page swaps in instantly
+           ↓
+     If visited before: No animations, instant content
+     If first visit: Subtle fade-in animations
+```
+
+---
+
+## Technical Details
+
+### Why startTransition Works
+React 18's `startTransition` marks the navigation as a "non-urgent" update. React keeps rendering the current UI while preparing the new one in the background. Once ready, it swaps instantly with no blank flash.
+
+### AnimatedCard forwardRef Fix
+The console error "Function components cannot be given refs" is because AnimatedCard doesn't use forwardRef. Adding it will:
+1. Fix the console warning
+2. Enable ref forwarding for parent components
+
+### Performance Impact
+- No additional network requests
+- Uses React's built-in concurrent features
+- Session memory is lightweight (Set of strings)
+- Animations only on first page visit per session
