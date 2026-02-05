@@ -352,7 +352,7 @@ const CityPage = () => {
               <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
@@ -443,7 +443,7 @@ const CityPage = () => {
                   <Button variant="outline">View All {stateData.name} Centers</Button>
                 </Link>
                 <Link to="/concierge">
-                  <Button>Get Matched</Button>
+                  <Button>Find Treatment</Button>
                 </Link>
               </div>
             </div>
@@ -682,7 +682,7 @@ const CityPage = () => {
               <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to={`/rehab-centers/${stateData.slug}`}>

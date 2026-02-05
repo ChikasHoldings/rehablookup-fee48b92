@@ -273,7 +273,7 @@ export function PlacementTermsModal({
                 </h3>
                 <div className="pl-8">
                   <p className="text-sm text-muted-foreground m-0">
-                    Network provides matching services only. Provider maintains full responsibility for clinical decisions, treatment quality, and patient outcomes. Network shall not be liable for any claims arising from treatment provided by Provider.
+                    Network provides placement services only. Provider maintains full responsibility for clinical decisions, treatment quality, and patient outcomes. Network shall not be liable for any claims arising from treatment provided by Provider.
                   </p>
                 </div>
               </section>

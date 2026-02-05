@@ -560,7 +560,7 @@ const FAQ = () => {
                 <Link to="/concierge">
                   <Button size="sm" className="h-9 gap-2 text-sm font-semibold px-4">
                     <Heart className="h-4 w-4" />
-                    Get Matched
+                    Find Treatment
                   </Button>
                 </Link>
                 <Link to="/contact">

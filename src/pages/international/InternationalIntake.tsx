@@ -264,7 +264,7 @@ export default function InternationalIntake() {
                 </div>
                 <CardTitle>Placement Intake Form</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  This information helps us match you with appropriate US facilities. All responses are confidential.
+                  This information helps us connect you with appropriate US facilities. All responses are confidential.
                 </p>
               </CardHeader>
               

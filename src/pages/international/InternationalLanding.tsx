@@ -78,7 +78,7 @@ const STEPS = [
     description: "Fill out our comprehensive intake form with your treatment needs and preferences",
   },
   {
-    title: "Get Matched",
+    title: "Get Placed",
     description: "Our team identifies best-fit U.S. facilities based on your specific criteria",
   },
   {
@@ -90,7 +90,7 @@ const STEPS = [
 const FAQ_ITEMS = [
   {
     question: "How much does placement cost?",
-    answer: "We charge a $299 service fee to begin your placement. This fee ensures we can dedicate personalized attention to every case, matching you with the right facilities, verifying clinical fit, and coordinating directly with admissions teams on your behalf. It also filters out casual inquiries so our advisors can focus on clients who are serious about treatment. Best of all, the $299 is fully refunded when you're admitted to a facility through our service.",
+    answer: "We charge a $299 service fee to begin your placement. This fee ensures we can dedicate personalized attention to every case, connecting you with the right facilities, verifying clinical fit, and coordinating directly with admissions teams on your behalf. It also filters out casual inquiries so our advisors can focus on clients who are serious about treatment. Best of all, the $299 is fully refunded when you're admitted to a facility through our service.",
   },
   {
     question: "Do you work with luxury and executive programs?",
@@ -162,7 +162,7 @@ export default function InternationalLanding() {
                 </h1>
                 
                 <p className="text-base md:text-lg text-white/85 mb-8 leading-relaxed max-w-2xl mx-auto px-2">
-                  Expert placement into America's finest treatment centers. We handle everything—from matching to admission—so you can focus on recovery.
+                  Expert placement into America's finest treatment centers. We handle everything—from placement to admission—so you can focus on recovery.
                 </p>
 
                 <Button 

@@ -94,7 +94,7 @@ const RehabUSAFromAustralia = () => {
 
       <PlacementCTA 
         title="Start Your American Recovery Journey"
-        description="Our team understands Australian patient needs. Get matched with premium US facilities today."
+        description="Our team understands Australian patient needs. Get placed in premium US facilities today."
       />
     </Layout>
   );

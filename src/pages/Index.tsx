@@ -285,7 +285,7 @@ const Index = () => {
             "@context": "https://schema.org",
             "@type": "Service",
             name: "Addiction Treatment Center Directory",
-            serviceType: "Treatment Center Matching",
+            serviceType: "Treatment Center Placement",
             provider: {
               "@type": "Organization",
               name: "RehabLookup",
@@ -299,7 +299,7 @@ const Index = () => {
               "@type": "Offer",
               price: "0",
               priceCurrency: "USD",
-              description: "Free treatment center matching service",
+              description: "Free treatment center placement service",
             },
           },
         ]}
@@ -755,11 +755,11 @@ const Index = () => {
                 <span className="block text-accent mt-1">Let Us Help.</span>
               </h2>
               <p className="text-muted-foreground mb-6 max-w-md">
-                Our specialists personally match you with verified treatment centers based on your insurance, location, and unique needs.
+                Our specialists personally connect you with verified treatment centers based on your insurance, location, and unique needs.
               </p>
               <Link to="/concierge">
                 <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
-                  Get Matched
+                  Find Treatment
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -1111,7 +1111,7 @@ const Index = () => {
                 <Link to="/concierge">
                   <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
                     <Heart className="h-4 w-4" />
-                    Get Matched
+                    Find Treatment
                   </Button>
                 </Link>
                 <Link to="/for-providers">

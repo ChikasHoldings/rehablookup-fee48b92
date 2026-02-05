@@ -58,18 +58,18 @@ const STATS = [
 const FAQ_ITEMS = [
   {
     question: "What does the $29 fee cover?",
-    answer: "The one-time fee covers personalized matching by our specialists, insurance verification assistance, direct introductions to matched programs, and ongoing support throughout your search.",
+    answer: "The one-time fee covers personalized placement by our specialists, insurance verification assistance, direct introductions to recommended programs, and ongoing support throughout your search.",
   },
   {
     question: "How quickly will I hear back?",
-    answer: "Most clients receive their first matched program recommendations within 24-48 hours of completing their intake form.",
+    answer: "Most clients receive their first program recommendations within 24-48 hours of completing their intake form.",
   },
   {
     question: "Is my information kept confidential?",
-    answer: "Absolutely. We follow HIPAA-aware practices and only share your information with programs you're matched with. Your privacy is our priority.",
+    answer: "Absolutely. We follow HIPAA-aware practices and only share your information with programs we connect you with. Your privacy is our priority.",
   },
   {
-    question: "What if I don't like the programs I'm matched with?",
+    question: "What if I don't like the programs recommended?",
     answer: "Our team will work with you to understand your concerns and find additional options. We're committed to helping you find the right fit.",
   },
 ];
@@ -83,13 +83,13 @@ export default function ConciergeLanding() {
     },
     {
       icon: Users,
-      title: "We Find Your Matches",
+      title: "We Find Your Options",
       description: "Our specialists identify programs that fit your specific requirements",
     },
     {
       icon: MessageCircle,
       title: "Get Connected",
-      description: "Matched programs reach out directly to discuss next steps with you",
+      description: "Selected programs reach out directly to discuss next steps with you",
     },
   ];
 
@@ -112,7 +112,7 @@ export default function ConciergeLanding() {
     {
       icon: Clock,
       title: "Fast Response",
-      description: "Get matched within 24-48 hours. When you're ready for help, we move quickly.",
+      description: "Get placement options within 24-48 hours. When you're ready for help, we move quickly.",
     },
   ];
 
@@ -120,9 +120,9 @@ export default function ConciergeLanding() {
     <>
       <SEO
         title="Find Treatment That Fits | Concierge Placement Service"
-        description="Stop searching alone. Our specialists match you with treatment programs that fit your needs, insurance, and location. Just $29, one-time. Get matched in 24-48 hours."
+        description="Stop searching alone. Our specialists connect you with treatment programs that fit your needs, insurance, and location. Just $29, one-time. Get placed in 24-48 hours."
         canonical="/concierge"
-        keywords={["treatment placement", "rehab concierge", "addiction treatment matching", "personalized rehab help", "find rehab near me"]}
+        keywords={["treatment placement", "rehab concierge", "addiction treatment placement", "personalized rehab help", "find rehab near me"]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Concierge", url: "/concierge" },
@@ -165,7 +165,7 @@ export default function ConciergeLanding() {
                   </h1>
                   
                   <p className="text-base md:text-lg text-white/85 mb-8 leading-relaxed max-w-2xl mx-auto px-2">
-                    Our specialists match you with programs that fit your needs, insurance, and location.
+                    Our specialists connect you with programs that fit your needs, insurance, and location.
                   </p>
                   
                   {/* CTA */}

@@ -139,7 +139,7 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
 
           <ul className="space-y-1.5 md:space-y-2 mb-4 md:mb-6">
             {[
-              "Personalized facility matching",
+              "Personalized facility placement",
               "Direct admissions coordination", 
               "24-hour advisor response",
               "Refunded upon confirmed admission"

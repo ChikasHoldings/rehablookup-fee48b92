@@ -290,7 +290,7 @@ const StatePage = () => {
               <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to={`/search-results?location=${encodeURIComponent(stateData.name)}`}>
@@ -430,7 +430,7 @@ const StatePage = () => {
                 We're actively adding verified treatment centers in {stateData.name}.
               </p>
               <Link to="/concierge" className="mt-6 inline-block">
-                <Button>Get Matched</Button>
+                <Button>Find Treatment</Button>
               </Link>
             </div>
           )}
@@ -748,7 +748,7 @@ const StatePage = () => {
               <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/rehab-centers">

@@ -344,7 +344,7 @@ export default function AdLanding() {
                 <div>
                   <h3 className="font-medium text-foreground text-sm">Free Service</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Our matching service is completely free with no obligation.
+                    Our placement service is completely free with no obligation.
                   </p>
                 </div>
               </div>
