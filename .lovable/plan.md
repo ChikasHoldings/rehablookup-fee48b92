@@ -1,7 +1,7 @@
 
 # Fix Listing Population After Provider Onboarding
 
-## Status: ✅ IMPLEMENTED
+## Status: ✅ COMPLETED + ROUTE AUDIT DONE
 
 ## Problem Summary
 After completing provider signup, listings are not populating correctly on the My Listings page. This is caused by **stale localStorage caches** and **missing cache invalidation** during the signup flow.
@@ -199,3 +199,21 @@ After implementation:
 3. Navigate to My Listings - verify listing card appears
 4. Click Edit on listing - verify all data populated
 5. Log out, sign up as different user - verify no data cross-contamination
+
+---
+
+## Internal Link Audit (Feb 5, 2026)
+
+### Fixed Issues
+- **`/provider/listing` → `/provider/listings`**: Updated 5 occurrences in Dashboard.tsx and ProviderHeader.tsx to use the canonical URL directly instead of relying on redirect.
+
+### Verified Routes (All Working)
+- `/treatment-types/*` - All treatment type routes have matching links
+- `/insurance/*-rehab` - All insurance routes correctly linked
+- `/account/*` - All seeker panel routes valid
+- `/provider/*` - All provider panel routes valid
+- `/concierge`, `/international`, `/us-rehab/*` - All valid
+- Legacy redirects working: `/signup` → `/seeker/signup`, `/request-help` → `/concierge`, etc.
+
+### No Broken Links Found
+All internal `<Link to="">` components point to valid routes defined in App.tsx.
