@@ -674,7 +674,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
       <CardHeader>
         <CardTitle>Start Your Personalized Placement</CardTitle>
         <CardDescription>
-          Complete this quick intake and pay $29 to get matched with treatment centers.
+          Complete this quick intake and pay $29 to be placed in the right treatment center.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

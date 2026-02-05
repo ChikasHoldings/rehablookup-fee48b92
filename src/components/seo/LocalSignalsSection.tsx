@@ -77,7 +77,7 @@ export function LocalSignalsSection({
               <Link to="/concierge">
                 <Button className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
             </div>

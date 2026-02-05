@@ -188,7 +188,7 @@ const HolisticTherapy = () => {
               <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2">
                   <Heart className="h-5 w-5" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/search-results?type=holistic">
@@ -462,7 +462,7 @@ const HolisticTherapy = () => {
               <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/rehab-centers">

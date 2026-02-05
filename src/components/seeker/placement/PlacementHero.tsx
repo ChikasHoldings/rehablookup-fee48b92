@@ -48,7 +48,7 @@ export function PlacementHero({ onGetStarted }: PlacementHeroProps) {
           </h1>
 
           <p className="text-muted-foreground text-lg mt-4 max-w-xl mx-auto">
-            Let our specialists match you with treatment centers that fit your unique needs.
+            Let our specialists connect you with treatment centers that fit your unique needs.
             We handle the research and introductions.
           </p>
         </motion.div>

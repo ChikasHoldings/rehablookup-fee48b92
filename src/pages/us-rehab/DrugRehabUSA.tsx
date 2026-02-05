@@ -132,7 +132,7 @@ const DrugRehabUSA = () => {
 
       <PlacementCTA 
         title="Find Your Drug Treatment Program"
-        description="Get matched with America's leading drug rehab centers. Medical detox, MAT, and comprehensive recovery support."
+        description="Get placed in America's leading drug rehab centers. Medical detox, MAT, and comprehensive recovery support."
       />
     </Layout>
   );

@@ -358,6 +358,7 @@ export default function SeekerConcierge() {
           <Helmet>
             <title>Placement Network | RehabLookup</title>
             <meta name="description" content="Get personalized treatment center matching with our placement service." />
+            <meta name="description" content="Get personalized treatment center placement with our professional placement service." />
             <meta name="robots" content="noindex, nofollow" />
           </Helmet>
           <div className="container max-w-4xl py-6 space-y-6">
@@ -417,7 +418,7 @@ export default function SeekerConcierge() {
           </div>
           <h1 className="text-3xl font-bold">Personalized Placement Assistance</h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Get matched with treatment centers that fit your needs. Sign in to get started.
+            Get connected with treatment centers that fit your needs. Sign in to get started.
           </p>
           <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
             Get Started
@@ -440,6 +441,7 @@ export default function SeekerConcierge() {
       <Helmet>
         <title>Placement Network | RehabLookup</title>
         <meta name="description" content="Track your placement progress and communicate with matched treatment facilities." />
+            <meta name="description" content="Track your placement progress and communicate with your assigned treatment facilities." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       
@@ -476,7 +478,7 @@ export default function SeekerConcierge() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Cancel your placement request?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will close your case and stop the matching process. This action cannot be undone.
+                      This will close your case and stop the placement process. This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

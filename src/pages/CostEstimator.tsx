@@ -382,7 +382,7 @@ const CostEstimator = () => {
                       {/* CTA */}
                       <div className="pt-4 space-y-3">
                         <Button asChild className="w-full">
-                          <Link to="/concierge">Get Matched</Link>
+                          <Link to="/concierge">Find Treatment</Link>
                         </Button>
                         <Button asChild variant="outline" className="w-full">
                           <Link to="/insurance">Learn About Insurance Coverage</Link>

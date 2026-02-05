@@ -363,7 +363,7 @@ const RehabCenters = () => {
               <Link to="/concierge">
                 <Button size="sm" className="w-full gap-2 sm:w-auto">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/contact">

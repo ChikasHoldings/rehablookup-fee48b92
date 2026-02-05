@@ -125,7 +125,7 @@ const LuxuryRehabAmerica = () => {
 
       <PlacementCTA 
         title="Experience Luxury Recovery"
-        description="Let us connect you with America's most exclusive treatment facilities. Personalized matching to the perfect luxury program."
+        description="Let us connect you with America's most exclusive treatment facilities. Personalized placement into the perfect luxury program."
       />
     </Layout>
   );

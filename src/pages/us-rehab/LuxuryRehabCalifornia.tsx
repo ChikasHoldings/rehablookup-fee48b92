@@ -168,7 +168,7 @@ const LuxuryRehabCalifornia = () => {
 
       <PlacementCTA 
         title="Find Your California Treatment Center"
-        description="From Malibu oceanfront to LA executive programs, we'll match you with the perfect California facility."
+        description="From Malibu oceanfront to LA executive programs, we'll place you in the perfect California facility."
       />
     </Layout>
   );

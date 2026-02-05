@@ -145,7 +145,7 @@ export default function MarketingLanding() {
                   </span>
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-xl md:max-w-2xl mx-auto leading-relaxed drop-shadow">
-                  Answer a few quick questions and we'll match you with verified treatment programs that fit your needs.
+                  Answer a few quick questions and we'll connect you with verified treatment programs that fit your needs.
                 </p>
               </div>
 

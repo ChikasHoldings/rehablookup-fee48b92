@@ -248,7 +248,7 @@ export default function InternationalIntake() {
                 <div>
                   <p className="font-medium text-green-800 dark:text-green-200">Payment Confirmed</p>
                   <p className="text-sm text-green-600 dark:text-green-400">
-                    Complete your intake to get matched with US treatment facilities.
+                    Complete your intake to be placed in US treatment facilities.
                   </p>
                 </div>
               </div>

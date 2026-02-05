@@ -132,7 +132,7 @@ const DualDiagnosisUSA = () => {
 
       <PlacementCTA 
         title="Find Integrated Treatment"
-        description="Get matched with America's top dual diagnosis programs. Expert psychiatric care meets evidence-based addiction treatment."
+        description="Get placed in America's top dual diagnosis programs. Expert psychiatric care meets evidence-based addiction treatment."
       />
     </Layout>
   );

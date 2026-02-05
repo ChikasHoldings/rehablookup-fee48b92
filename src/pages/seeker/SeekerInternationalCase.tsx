@@ -34,7 +34,7 @@ interface PlacementCase {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   "new": { label: "New", color: "bg-blue-100 text-blue-800", icon: <Clock className="h-4 w-4" /> },
   "in_review": { label: "In Review", color: "bg-yellow-100 text-yellow-800", icon: <Search className="h-4 w-4" /> },
-  "matching": { label: "Matching", color: "bg-purple-100 text-purple-800", icon: <Search className="h-4 w-4" /> },
+  "matching": { label: "Placing", color: "bg-purple-100 text-purple-800", icon: <Search className="h-4 w-4" /> },
   "introductions_sent": { label: "Introductions Sent", color: "bg-indigo-100 text-indigo-800", icon: <Mail className="h-4 w-4" /> },
   "facility_accepted": { label: "Facility Accepted", color: "bg-green-100 text-green-800", icon: <Building2 className="h-4 w-4" /> },
   "admitted": { label: "Admitted", color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-4 w-4" /> },
@@ -158,7 +158,7 @@ export default function SeekerInternationalCase() {
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
                   <span className="text-sm">
-                    Matched with {placementCase.matched_facility_ids.length} facilities
+                    Connected with {placementCase.matched_facility_ids.length} facilities
                   </span>
                 </div>
               )}
@@ -215,10 +215,10 @@ export default function SeekerInternationalCase() {
                 "Your dedicated placement advisor is reviewing your intake and will reach out within 24 hours to discuss options."
               )}
               {placementCase.status === "matching" && (
-                "We're identifying the best US treatment facilities based on your needs and preferences."
+                "We're coordinating placement with the best US treatment facilities based on your needs and preferences."
               )}
               {placementCase.status === "introductions_sent" && (
-                "We've sent your profile to matched facilities. You'll hear back with availability and next steps soon."
+                "We've sent your profile to selected facilities. You'll hear back with availability and next steps soon."
               )}
               {placementCase.status === "facility_accepted" && (
                 "Great news! A facility has accepted your case. Your advisor will contact you to finalize admission details."
