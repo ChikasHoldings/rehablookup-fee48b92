@@ -128,11 +128,11 @@ export default function ProviderUnlockHistoryPage() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Unlock History</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Unlock History</h1>
             <p className="text-sm text-muted-foreground mt-1">
               All inquiries you've unlocked
             </p>

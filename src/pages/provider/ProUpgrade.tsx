@@ -95,13 +95,13 @@ export default function ProviderProUpgradePage() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 mb-4">
             <Sparkles className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Pro Visibility</h1>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Pro Visibility</h1>
           <p className="text-muted-foreground mt-2 max-w-md mx-auto">
             Boost your facility's visibility and save on every inquiry unlock
           </p>

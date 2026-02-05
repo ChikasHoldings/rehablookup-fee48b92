@@ -55,7 +55,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
   if (isLoading || limitsLoading) {
     return (
       <div className="min-h-full bg-background">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -66,7 +66,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-2">

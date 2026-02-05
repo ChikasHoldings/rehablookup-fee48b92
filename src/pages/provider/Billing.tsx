@@ -223,7 +223,7 @@ export default function ProviderBillingPage() {
         <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Billing</h1>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Billing</h1>
           <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
             Manage subscription, credits, and payment methods
           </p>

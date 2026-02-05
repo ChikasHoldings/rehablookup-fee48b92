@@ -17,7 +17,7 @@ export function PlacementLandingHeader({ statusSlot }: PlacementLandingHeaderPro
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-foreground">Placement Network</h1>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Placement Network</h1>
               <Badge variant="secondary" className="text-xs font-medium">
                 <Sparkles className="h-3 w-3 mr-1" />
                 Beta

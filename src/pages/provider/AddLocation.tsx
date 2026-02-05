@@ -314,15 +314,15 @@ export default function AddLocationPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Add New Location</h1>
+            <h1 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Add New Location</h1>
             <p className="text-muted-foreground">
               Add another facility to your account ({usedLocations + 1} of {locationLimit})
             </p>

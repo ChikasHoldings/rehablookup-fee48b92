@@ -501,8 +501,8 @@ export default function ProviderKnowledgeBasePage() {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
-      <div className="space-y-6">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -510,7 +510,7 @@ export default function ProviderKnowledgeBasePage() {
             <Link to="/provider/help" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
+            <h1 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
               Knowledge Base
             </h1>
           </div>

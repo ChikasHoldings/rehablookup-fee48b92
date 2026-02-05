@@ -211,8 +211,8 @@ export default function ProviderNotificationsPage() {
 
   if (isLoading) {
     return (
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="max-w-4xl mx-auto space-y-6">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-9 w-32" />
@@ -237,12 +237,12 @@ export default function ProviderNotificationsPage() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Notifications</h1>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Notifications</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Stay updated with your leads and account activity
           </p>
