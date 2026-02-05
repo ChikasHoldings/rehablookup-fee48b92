@@ -137,14 +137,14 @@ export function LeadIntakeSuccess({ facilityName, firstName }: LeadIntakeSuccess
                 Want help finding the best fit?
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Our Concierge service matches you with verified treatment centers based on your unique needs.
+                Our Placement Service connects you with verified treatment centers based on your unique needs.
               </p>
             </div>
           </div>
           
           <Link to="/concierge">
             <Button className="w-full h-11 gap-2 group">
-              Get Matched
+              Find Treatment
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </Link>

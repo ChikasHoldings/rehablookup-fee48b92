@@ -94,7 +94,7 @@ const RehabUSAFromUAE = () => {
 
       <PlacementCTA 
         title="Begin Your Confidential Recovery"
-        description="Our advisors understand Middle Eastern client needs. Get matched with discreet, luxury US treatment today."
+        description="Our advisors understand Middle Eastern client needs. Get placed in discreet, luxury US treatment today."
       />
     </Layout>
   );

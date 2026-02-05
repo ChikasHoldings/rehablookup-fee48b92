@@ -29,7 +29,7 @@ export function ConciergeCTACard({ className, compact = false }: ConciergeCTACar
               Need Help Choosing?
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Get matched with the right facility
+              Find the right treatment facility
             </p>
           </div>
         </div>
@@ -60,7 +60,7 @@ export function ConciergeCTACard({ className, compact = false }: ConciergeCTACar
             )}
           >
             <Sparkles className="h-4 w-4" />
-            Get Matched Free
+            Find Treatment
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
         </Link>

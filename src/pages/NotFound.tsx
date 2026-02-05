@@ -115,7 +115,7 @@ const NotFound = () => {
               <Link to="/concierge">
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto border-primary/30 hover:bg-primary/5">
                   <Phone className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
             </div>
@@ -190,7 +190,7 @@ const NotFound = () => {
             <Link to="/concierge">
               <Button variant="default" className="gap-2">
                 <Phone className="h-4 w-4" />
-                Get Matched
+                Find Treatment
               </Button>
             </Link>
           </div>

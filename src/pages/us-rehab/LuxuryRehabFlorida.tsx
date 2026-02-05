@@ -167,7 +167,7 @@ const LuxuryRehabFlorida = () => {
 
       <PlacementCTA 
         title="Find Your Florida Treatment Center"
-        description="From Palm Beach luxury to South Florida's recovery community, we'll match you with the perfect Florida facility."
+        description="From Palm Beach luxury to South Florida's recovery community, we'll place you in the perfect Florida facility."
       />
     </Layout>
   );

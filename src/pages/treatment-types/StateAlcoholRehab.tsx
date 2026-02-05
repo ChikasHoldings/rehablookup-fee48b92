@@ -89,7 +89,7 @@ const StateAlcoholRehab = () => {
             <Button asChild size="lg" variant="secondary">
               <Link to="/concierge">
                 <Phone className="mr-2 h-4 w-4" />
-                Get Matched
+                Find Treatment
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
@@ -208,7 +208,7 @@ const StateAlcoholRehab = () => {
           <Button asChild size="lg" variant="secondary">
             <Link to="/concierge">
               <Phone className="mr-2 h-4 w-4" />
-              Get Matched
+              Find Treatment
             </Link>
           </Button>
         </div>

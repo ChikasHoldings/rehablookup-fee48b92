@@ -574,7 +574,7 @@ export default function ConciergeIntake() {
     <>
       <Helmet>
         <title>Concierge Intake | RehabLookup</title>
-        <meta name="description" content="Complete your intake form to get matched with the right treatment programs." />
+        <meta name="description" content="Complete your intake form to be placed in the right treatment programs." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 

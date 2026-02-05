@@ -94,7 +94,7 @@ const RehabUSAFromUK = () => {
 
       <PlacementCTA 
         title="Start Your American Recovery Journey"
-        description="Our UK-experienced advisors understand your needs. Get matched with premium US facilities today."
+        description="Our UK-experienced advisors understand your needs. Get placed in premium US facilities today."
       />
     </Layout>
   );

@@ -167,7 +167,7 @@ const LuxuryRehabArizona = () => {
 
       <PlacementCTA 
         title="Find Your Arizona Treatment Center"
-        description="From Sedona's spiritual healing to Scottsdale's luxury resorts, we'll match you with the perfect Arizona facility."
+        description="From Sedona's spiritual healing to Scottsdale's luxury resorts, we'll place you in the perfect Arizona facility."
       />
     </Layout>
   );

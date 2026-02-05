@@ -985,7 +985,7 @@ const SearchResults = () => {
                   <Link to="/concierge">
                     <Button size="lg" className="gap-2 shadow-md hover:shadow-lg transition-shadow">
                       <Heart className="h-5 w-5" />
-                      Get Matched
+                      Find Treatment
                     </Button>
                   </Link>
                 </div>
