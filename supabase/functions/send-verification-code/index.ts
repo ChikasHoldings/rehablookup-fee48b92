@@ -116,8 +116,8 @@ Deno.serve(async (req) => {
           
           <!-- Header -->
           <tr>
-            <td style="background-color: #1B365D; background-image: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; font-family: Arial, Helvetica, sans-serif;">
                 Verify Your Email
               </h1>
             </td>
@@ -150,18 +150,18 @@ Deno.serve(async (req) => {
           
           <!-- Footer -->
           <tr>
-            <td style="background-color: #1B365D; padding: 24px 32px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 24px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom: 8px;">
-                    <p style="margin: 0; font-size: 18px; font-weight: 700; color: #ffffff;">
+                    <p style="margin: 0; font-size: 18px; font-weight: 700; color: #ffffff; font-family: Arial, Helvetica, sans-serif;">
                       RehabLookup
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5;">
+                    <p style="margin: 0; font-size: 13px; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; line-height: 1.5;">
                       Connecting families with trusted treatment providers
                     </p>
                   </td>

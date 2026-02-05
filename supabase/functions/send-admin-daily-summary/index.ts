@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #1B365D 0%, #2a4a7f 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+            .header { background-color: #1B365D; background: #1B365D; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; font-family: Arial, Helvetica, sans-serif; }
             .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
             .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
             .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb; }
