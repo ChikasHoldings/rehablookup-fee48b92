@@ -229,13 +229,13 @@ function emailWrapper(content: string): string {
 
 function emailHeader(title: string, subtitle?: string, icon?: string): string {
   const iconHtml = icon ? `<div style="font-size: 48px; margin-bottom: 16px;">${icon}</div>` : '';
-  const subtitleHtml = subtitle ? `<p style="margin: 12px 0 0 0; color: rgba(255,255,255,0.9); font-size: 15px;">${subtitle}</p>` : '';
+  const subtitleHtml = subtitle ? `<p style="margin: 12px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 15px;">${subtitle}</p>` : '';
   
   return `
 <tr>
-  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px; text-align: center;">
+  <td style="background-color: #1B365D; background: #1B365D; padding: 32px; text-align: center;">
     ${iconHtml}
-    <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+    <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
       ${title}
     </h1>
     ${subtitleHtml}
@@ -246,11 +246,11 @@ function emailHeader(title: string, subtitle?: string, icon?: string): string {
 function emailFooter(): string {
   return `
 <tr>
-  <td style="background: #1B365D; padding: 24px; text-align: center;">
-    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
+  <td style="background-color: #1B365D; background: #1B365D; padding: 24px; text-align: center;">
+    <p style="margin: 0 0 8px 0; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
       RehabLookup Concierge
     </p>
-    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
+    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #cbd5e1;">
       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
     </p>
   </td>
@@ -262,7 +262,7 @@ function ctaButton(text: string, url: string): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
   <tr>
     <td align="center">
-      <a href="${url}" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+      <a href="${url}" style="display: inline-block; background-color: #1B365D; background: #1B365D; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
         ${text}
       </a>
     </td>

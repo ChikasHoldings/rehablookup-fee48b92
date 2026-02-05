@@ -199,8 +199,8 @@ Deno.serve(async (req) => {
             subject: "Payment Reminder - Placement Fee Due",
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-                  <h1 style="color: white; margin: 0; font-size: 24px;">Payment Reminder</h1>
+                <div style="background-color: #1B365D; background: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Arial, Helvetica, sans-serif;">Payment Reminder</h1>
                 </div>
                 <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                   <p style="color: #374151; font-size: 16px; line-height: 1.6;">
@@ -221,8 +221,8 @@ Deno.serve(async (req) => {
                     </a>
                   </div>
                 </div>
-                <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
-                  <p style="margin: 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+                <div style="background-color: #1B365D; background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+                  <p style="margin: 0; font-size: 14px; font-weight: 600; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-align: center;">RehabLookup</p>
                 </div>
               </div>
             `,

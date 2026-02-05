@@ -30,10 +30,10 @@ function get6HourReminderEmail(facilityName: string, leadName: string, dashboard
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">📬</div>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-weight: 600;">New Inquiry Waiting</h1>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">New Inquiry Waiting</h1>
             </td>
           </tr>
           <tr>
@@ -62,7 +62,7 @@ function get6HourReminderEmail(facilityName: string, leadName: string, dashboard
           </tr>
           <tr>
             <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+              <p style="margin: 0; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; font-size: 12px;">
                 © ${new Date().getFullYear()} RehabLookup. All rights reserved.
               </p>
             </td>
@@ -89,10 +89,10 @@ function get12HourReminderEmail(facilityName: string, leadName: string, dashboar
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
           <tr>
-            <td style="background: linear-gradient(135deg, #b45309 0%, #f59e0b 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <td style="background-color: #b45309; background: #b45309; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">⏰</div>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-weight: 600;">Don't Miss This Lead</h1>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">Don't Miss This Lead</h1>
             </td>
           </tr>
           <tr>
@@ -121,7 +121,7 @@ function get12HourReminderEmail(facilityName: string, leadName: string, dashboar
           </tr>
           <tr>
             <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+              <p style="margin: 0; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; font-size: 12px;">
                 © ${new Date().getFullYear()} RehabLookup. All rights reserved.
               </p>
             </td>
@@ -148,10 +148,10 @@ function get24HourReminderEmail(facilityName: string, leadName: string, dashboar
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
           <tr>
-            <td style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <td style="background-color: #dc2626; background: #dc2626; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">🚨</div>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-weight: 600;">Last Chance to Respond</h1>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">Last Chance to Respond</h1>
             </td>
           </tr>
           <tr>
@@ -181,7 +181,7 @@ function get24HourReminderEmail(facilityName: string, leadName: string, dashboar
           </tr>
           <tr>
             <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+              <p style="margin: 0; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; font-size: 12px;">
                 © ${new Date().getFullYear()} RehabLookup. All rights reserved.
               </p>
             </td>

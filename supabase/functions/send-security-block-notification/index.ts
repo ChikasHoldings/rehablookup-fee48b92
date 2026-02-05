@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
           subject: `🔓 Security: ${typeLabel} Unblocked - ${identifier}`,
           html: `
             <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 20px; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 20px;">🔓 Identifier Unblocked</h1>
+              <div style="background-color: #059669; background: #059669; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-family: Arial, Helvetica, sans-serif;">🔓 Identifier Unblocked</h1>
               </div>
               <div style="background: #ffffff; padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
                 <p style="color: #374151; margin-top: 0;">A ${typeLabel.toLowerCase()} has been manually unblocked on RehabLookup.</p>
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       });
 
       // Send block email notification
-      const iconColor = identifier_type === "ip" ? "#dc2626" : "#f59e0b";
+      const headerBgColor = identifier_type === "ip" ? "#dc2626" : "#f59e0b";
 
       try {
         await resend.emails.send({
@@ -144,8 +144,8 @@ Deno.serve(async (req) => {
           subject: `🔒 Security: ${typeLabel} Blocked - ${identifier}`,
           html: `
             <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, ${iconColor} 0%, #991b1b 100%); padding: 20px; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 20px;">🔒 Identifier Blocked</h1>
+              <div style="background-color: ${headerBgColor}; background: ${headerBgColor}; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-family: Arial, Helvetica, sans-serif;">🔒 Identifier Blocked</h1>
               </div>
               <div style="background: #ffffff; padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
                 <p style="color: #374151; margin-top: 0;">A ${typeLabel.toLowerCase()} has been blocked on RehabLookup.</p>
