@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo, useRef } from "react";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SelectedFacilityContextType {
   selectedFacility: ProviderFacility | null;
@@ -37,9 +38,50 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
   const [selectedFacility, setSelectedFacilityState] = useState<ProviderFacility | null>(getInitialFacility);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingFacilitySwitch, setPendingFacilitySwitch] = useState<ProviderFacility | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   // Track if we've already hydrated from the facilities list
   const hydratedRef = useRef(false);
+
+  // Reset hydration when user changes (prevents stale data cross-contamination)
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const newUserId = session?.user?.id || null;
+      
+      // If user changed, reset everything
+      if (currentUserId && newUserId && currentUserId !== newUserId) {
+        console.log("[SelectedFacilityContext] User changed, resetting hydration");
+        hydratedRef.current = false;
+        setSelectedFacilityState(null);
+      }
+      
+      setCurrentUserId(newUserId);
+    };
+    
+    checkUser();
+    
+    // Also listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const newUserId = session?.user?.id || null;
+      
+      if (event === 'SIGNED_OUT') {
+        console.log("[SelectedFacilityContext] User signed out, clearing state");
+        hydratedRef.current = false;
+        setSelectedFacilityState(null);
+        setCurrentUserId(null);
+      } else if (event === 'SIGNED_IN' && currentUserId && newUserId !== currentUserId) {
+        console.log("[SelectedFacilityContext] Different user signed in, resetting");
+        hydratedRef.current = false;
+        setSelectedFacilityState(null);
+        setCurrentUserId(newUserId);
+      } else if (newUserId) {
+        setCurrentUserId(newUserId);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [currentUserId]);
 
   // Update selected facility when facilities load (only once)
   useEffect(() => {
