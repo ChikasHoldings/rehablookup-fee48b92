@@ -67,15 +67,15 @@ function emailHeader(title: string, subtitle?: string, icon?: string): string {
     ? `<div style="font-size: 48px; margin-bottom: 16px;">${icon}</div>` 
     : '';
   const subtitleHtml = subtitle 
-    ? `<p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.85); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">${subtitle}</p>` 
+    ? `<p style="margin: 8px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 14px;">${subtitle}</p>` 
     : '';
 
   return `
           <tr>
-            <td style="background: linear-gradient(135deg, ${BRAND_COLORS.primary} 0%, ${BRAND_COLORS.primaryLight} 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <td style="background-color: ${BRAND_COLORS.primary}; background: ${BRAND_COLORS.primary}; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               ${iconHtml}
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP CONCIERGE</p>
-              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP CONCIERGE</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">
                 ${title}
               </h1>
               ${subtitleHtml}
@@ -97,13 +97,13 @@ function emailBody(content: string): string {
 function emailFooter(): string {
   return `
           <tr>
-            <td style="background: ${BRAND_COLORS.primary}; padding: 24px; border-radius: 0 0 12px 12px;">
+            <td style="background-color: ${BRAND_COLORS.primary}; background: ${BRAND_COLORS.primary}; padding: 24px; border-radius: 0 0 12px 12px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">RehabLookup Concierge</p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Personalized treatment matching</p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #ffffff; font-family: Arial, Helvetica, sans-serif;">RehabLookup Concierge</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif;">Personalized treatment matching</p>
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif;">
                       <a href="https://rehablookup.com" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Website</a>
                       <span style="color: rgba(255,255,255,0.4); margin: 0 8px;">|</span>
                       <a href="mailto:placement@rehablookup.com" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Support</a>
