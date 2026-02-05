@@ -304,9 +304,9 @@ Deno.serve(async (req) => {
                     <style>
                       body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                       .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                      .header { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; }
+                      .header { background-color: #1B365D; background: #1B365D; color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; }
                       .content { background: #fff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; }
-                      .provider-card { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+                      .provider-card { background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 12px 0; }
                       .risk-badge { display: inline-block; background: #dc2626; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
                       .risk-medium { background: #f59e0b; }
                       .factor-list { margin: 8px 0; padding-left: 20px; }

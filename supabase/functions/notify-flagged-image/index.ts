@@ -113,8 +113,8 @@ Deno.serve(async (req) => {
                     
                     <!-- Header -->
                     <tr>
-                      <td style="background: linear-gradient(135deg, #1B365D 0%, #2a4a7a 100%); padding: 32px 40px; text-align: center;">
-                        <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">Image Flagged for Review</h1>
+                      <td style="background-color: #1B365D; background: #1B365D; padding: 32px 40px; text-align: center;">
+                        <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">Image Flagged for Review</h1>
                       </td>
                     </tr>
                     

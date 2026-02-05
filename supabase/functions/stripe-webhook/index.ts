@@ -418,9 +418,9 @@ Deno.serve(async (req) => {
             to: [customerEmail],
             subject: "Action Required: Payment Failed",
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-                  <h1 style="color: white; margin: 0; font-size: 24px;">Payment Failed</h1>
+              <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #1B365D; background: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Arial, Helvetica, sans-serif;">Payment Failed</h1>
                 </div>
                 <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                   <p style="color: #374151;">Hi ${providerName},</p>
@@ -610,9 +610,9 @@ Deno.serve(async (req) => {
               to: ["help@rehablookup.com"],
               subject: `🎉 New Subscription - ${facilityName}`,
               html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-                    <h1 style="color: white; margin: 0; font-size: 24px;">🎉 New Subscription</h1>
+                <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background-color: #1B365D; background: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Arial, Helvetica, sans-serif;">🎉 New Subscription</h1>
                   </div>
                   <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                     <p style="color: #374151;">A new provider has subscribed!</p>
@@ -720,9 +720,9 @@ Deno.serve(async (req) => {
                   to: ["help@rehablookup.com"],
                   subject: `⚠️ Subscription Cancelled - ${facilities[0].name}`,
                   html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                      <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-                        <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ Subscription Cancelled</h1>
+                    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                      <div style="background-color: #1B365D; background: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Arial, Helvetica, sans-serif;">⚠️ Subscription Cancelled</h1>
                       </div>
                       <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                         <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
