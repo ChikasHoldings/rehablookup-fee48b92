@@ -1,82 +1,193 @@
 
-# Plan: Fix 404 Errors Across Insurance Routes
+# Fix Listing Population After Provider Onboarding
 
 ## Problem Summary
-A route mismatch is causing widespread 404 errors on insurance pages. The React Router in `App.tsx` defines short URLs (e.g., `/insurance/bcbs`) while all internal links throughout the codebase use canonical URLs (e.g., `/insurance/bcbs-treatment`).
-
-When users click links within the app, React Router handles the navigation client-side, bypassing the server-level redirects configured in `_redirects` and `vercel.json`. This results in 404 errors for all insurance detail pages.
+After completing provider signup, listings are not populating correctly on the My Listings page. This is caused by **stale localStorage caches** and **missing cache invalidation** during the signup flow.
 
 ## Root Cause Analysis
 
-| Location | URL Pattern Used |
-|----------|-----------------|
-| **App.tsx Routes** | `/insurance/bcbs`, `/insurance/aetna`, etc. |
-| **Insurance.tsx Links** | `/insurance/bcbs-treatment`, `/insurance/aetna-rehab`, etc. |
-| **InternalLinkBlock.tsx** | `/insurance/bcbs-treatment`, `/insurance/aetna-rehab`, etc. |
-| **All Insurance Page Cross-Links** | Canonical URLs with `-rehab` or `-treatment` suffix |
-| **SEO Canonical Tags** | `/insurance/bcbs-treatment`, etc. |
+### 1. Stale Cache Not Cleared During Signup
+The signup flow in `ProviderSignup.tsx` does NOT clear existing localStorage caches before redirecting to the dashboard. If a previous user was logged in, their cached data remains:
+- `provider-facilities-cache` - Cached facilities from previous user
+- `selectedFacilityId` / `selectedFacilityData` - Selected facility state
+- `provider-data-*` - Provider data cache
+- `rl_cached_*` - User role cache
 
-The server redirects only work for direct URL access or external links - not for in-app navigation via React Router's `<Link>` component.
+### 2. Cache Not Pre-Populated After Facility Creation
+The login flow (`ProviderLogin.tsx` lines 484-488) pre-populates the facilities cache after successful login, but the signup flow does NOT do this after creating the facility.
+
+### 3. useProviderFacilities Returns Stale Data
+When `useProviderFacilities` runs after signup:
+- It checks `placeholderData: getCachedFacilities()` first
+- If stale cache exists, it returns wrong user's data
+- If cache is empty but query has timing issues, it may return empty
+
+### 4. SelectedFacilityContext Hydration Fails
+The context relies on:
+1. localStorage cache (may be stale/empty)
+2. `useProviderFacilities` (may have stale data)
+3. If both fail, `selectedFacility` is null → dashboard shows empty state
 
 ## Solution
 
-Add the canonical URL routes to `App.tsx` so both short and canonical URLs work for client-side navigation. This is the cleanest fix because:
-1. All existing internal links already use canonical URLs
-2. SEO canonical tags already reference the canonical URLs
-3. Server redirects handle external traffic from short URLs
-4. No need to update dozens of files with internal links
+### Changes to `src/pages/ProviderSignup.tsx`
 
-## Implementation
+**After facility creation (around line 488), add cache clearing and pre-population:**
 
-### File: `src/App.tsx`
+```typescript
+// Clear all provider-related caches from any previous session
+const clearProviderCaches = () => {
+  try {
+    // Clear facilities cache
+    localStorage.removeItem("provider-facilities-cache");
+    // Clear selected facility
+    localStorage.removeItem("selectedFacilityId");
+    localStorage.removeItem("selectedFacilityData");
+    // Clear provider data caches (pattern match)
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith("provider-data-")) {
+        localStorage.removeItem(key);
+      }
+    });
+    // Clear user role cache
+    localStorage.removeItem("rl_cached_role");
+    localStorage.removeItem("rl_cached_uid");
+    localStorage.removeItem("rl_cached_auth");
+    localStorage.removeItem("rl_cached_ts");
+  } catch {
+    // Silent fail
+  }
+};
 
-Add the following routes after the existing insurance routes (around line 348):
+// Pre-populate caches with newly created facility
+const prePopulateFacilityCache = (facility: any) => {
+  try {
+    const facilityData = {
+      id: facility.id,
+      name: formData.facilityName,
+      slug: facility.slug,
+      status: "pending",
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      zip_code: formData.zipCode,
+      facility_type: formData.facilityType,
+      logo_url: logoUrl,
+      gallery_urls: galleryUrls.length > 0 ? galleryUrls : null,
+      featured: false,
+      created_at: new Date().toISOString(),
+    };
+    
+    // Cache for useProviderFacilities
+    localStorage.setItem("provider-facilities-cache", JSON.stringify({
+      data: [facilityData],
+      timestamp: Date.now(),
+    }));
+    
+    // Cache for SelectedFacilityContext
+    localStorage.setItem("selectedFacilityId", facility.id);
+    localStorage.setItem("selectedFacilityData", JSON.stringify(facilityData));
+    
+    // Cache user role
+    localStorage.setItem("rl_cached_role", "provider");
+    localStorage.setItem("rl_cached_uid", userId);
+    localStorage.setItem("rl_cached_auth", "true");
+    localStorage.setItem("rl_cached_ts", String(Date.now()));
+  } catch {
+    // Silent fail
+  }
+};
+```
+
+**Insert these calls in the signup flow:**
+1. Call `clearProviderCaches()` BEFORE creating the auth account (around line 277)
+2. Call `prePopulateFacilityCache(facilityData)` AFTER successful facility creation and image uploads (around line 489)
+
+### Changes to `src/hooks/useProviderFacilities.ts`
+
+**Add user-specific cache key to prevent cross-user cache pollution:**
+
+```typescript
+// Change from:
+const CACHE_KEY = "provider-facilities-cache";
+
+// To:
+const getCacheKey = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user?.id 
+    ? `provider-facilities-cache-${session.user.id}`
+    : "provider-facilities-cache";
+};
+```
+
+This ensures each user has their own cache key, preventing stale data from other users.
+
+### Changes to `src/contexts/SelectedFacilityContext.tsx`
+
+**Reset hydration flag when user changes:**
+
+```typescript
+// Add user tracking to reset hydration when user changes
+const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+useEffect(() => {
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const newUserId = session?.user?.id || null;
+    
+    if (currentUserId && newUserId && currentUserId !== newUserId) {
+      // User changed - reset hydration
+      hydratedRef.current = false;
+      setSelectedFacilityState(null);
+    }
+    setCurrentUserId(newUserId);
+  };
+  checkUser();
+}, [facilities]);
+```
+
+## Files to Modify
+
+1. **`src/pages/ProviderSignup.tsx`**
+   - Add cache clearing before signup
+   - Add cache pre-population after facility creation
+
+2. **`src/hooks/useProviderFacilities.ts`**
+   - Add user-specific cache key
+   - Clear cache if user mismatch detected
+
+3. **`src/contexts/SelectedFacilityContext.tsx`**
+   - Add user change detection to reset hydration
+
+## Technical Flow After Fix
 
 ```text
-Routes to add:
-/insurance/aetna-rehab             -> AetnaRehab
-/insurance/bcbs-treatment          -> BCBSTreatment
-/insurance/cigna-rehab             -> CignaRehab
-/insurance/united-healthcare-rehab -> UnitedHealthcareRehab
-/insurance/humana-rehab            -> HumanaRehab
-/insurance/kaiser-rehab            -> KaiserRehab
-/insurance/medicare-rehab          -> MedicareRehab
-/insurance/medicaid-rehab          -> MedicaidRehab
-/insurance/anthem-rehab            -> AnthemRehab
+User Completes Signup
+        ↓
+Clear all provider caches (prevents stale data)
+        ↓
+Create auth account, profile, facility
+        ↓
+Pre-populate caches with new facility data
+        ↓
+Navigate to /provider/dashboard
+        ↓
+ProviderShell loads with SelectedFacilityProvider
+        ↓
+useProviderFacilities finds pre-populated cache → instant render
+        ↓
+SelectedFacilityContext hydrates from cache → facility selected
+        ↓
+Dashboard renders with correct facility data
+        ↓
+Background query confirms/updates cache with fresh DB data
 ```
 
-### Code Changes
+## Verification Steps
 
-Insert after line 348 in `App.tsx`:
-```tsx
-{/* Insurance Routes - Canonical URLs */}
-<Route path="/insurance/aetna-rehab" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
-<Route path="/insurance/bcbs-treatment" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
-<Route path="/insurance/cigna-rehab" element={<PublicRouteGuard><CignaRehab /></PublicRouteGuard>} />
-<Route path="/insurance/united-healthcare-rehab" element={<PublicRouteGuard><UnitedHealthcareRehab /></PublicRouteGuard>} />
-<Route path="/insurance/humana-rehab" element={<PublicRouteGuard><HumanaRehab /></PublicRouteGuard>} />
-<Route path="/insurance/kaiser-rehab" element={<PublicRouteGuard><KaiserRehab /></PublicRouteGuard>} />
-<Route path="/insurance/medicare-rehab" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
-<Route path="/insurance/medicaid-rehab" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
-<Route path="/insurance/anthem-rehab" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
-```
-
-## Verification Checklist
-
-After implementation, verify these navigation flows work without 404 errors:
-
-1. **Insurance.tsx** - Click "View coverage details" on any insurance card
-2. **InternalLinkBlock** - Click insurance links in the "Insurance Coverage" section
-3. **Cross-page Links** - Navigate between insurance pages using "Other Insurance Options" links at page bottom
-4. **Direct URL Access** - Navigate directly to `/insurance/bcbs-treatment` and similar URLs
-
-## Files Affected
-
-- `src/App.tsx` (add 9 new route definitions)
-
-## Technical Notes
-
-- The existing short routes (`/insurance/bcbs`, etc.) remain for backward compatibility and server-side redirect targets
-- Both short and canonical URLs will resolve to the same components
-- No changes needed to `_redirects` or `vercel.json` as they already handle external traffic correctly
-- This maintains SEO best practices by keeping canonical URLs consistent across internal links and meta tags
+After implementation:
+1. Complete provider signup flow end-to-end
+2. Verify dashboard shows correct facility name
+3. Navigate to My Listings - verify listing card appears
+4. Click Edit on listing - verify all data populated
+5. Log out, sign up as different user - verify no data cross-contamination
