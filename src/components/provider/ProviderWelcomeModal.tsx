@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -11,15 +11,14 @@ import { Button } from "@/components/ui/button";
 import { 
   Building2, 
   Users, 
-  TrendingUp, 
   ArrowRight, 
-  CheckCircle2,
   Sparkles,
   BarChart3,
-  MessageSquare
+  Clock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProviderWelcomeModalProps {
   facilityId: string;
@@ -34,21 +33,18 @@ const welcomeSteps = [
     title: "Complete Your Profile",
     description: "Add photos, services, and insurance details to attract more families",
     action: "listings",
-    cta: "Edit Listing",
   },
   {
     icon: Users,
     title: "Manage Inquiries",
     description: "Review and respond to families seeking treatment",
     action: "inquiries",
-    cta: "View Inquiries",
   },
   {
     icon: BarChart3,
     title: "Track Performance",
     description: "Monitor your listing views, leads, and engagement",
     action: "analytics",
-    cta: "View Analytics",
   },
 ];
 
@@ -61,19 +57,23 @@ export function ProviderWelcomeModal({
   const [open, setOpen] = useState(isFirstLogin);
   const [isUpdating, setIsUpdating] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleDismiss = async () => {
+    if (isUpdating) return;
     setIsUpdating(true);
     
-    // Mark as celebrated so modal doesn't show again
-    await supabase
-      .from("facilities")
-      .update({ profile_completion_celebrated: true })
-      .eq("id", facilityId);
-    
-    setOpen(false);
-    setIsUpdating(false);
-    onDismiss?.();
+    try {
+      await supabase
+        .from("facilities")
+        .update({ profile_completion_celebrated: true })
+        .eq("id", facilityId);
+      
+      setOpen(false);
+      onDismiss?.();
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleNavigate = (action: string) => {
@@ -85,86 +85,92 @@ export function ProviderWelcomeModal({
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && handleDismiss()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader className="text-center pb-2">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-            <Sparkles className="h-8 w-8 text-primary" />
-          </div>
-          <DialogTitle className="text-2xl font-display">
-            Welcome to RehabLookup!
-          </DialogTitle>
-          <DialogDescription className="text-base">
-            {facilityName ? (
-              <>Your listing for <span className="font-medium text-foreground">{facilityName}</span> has been submitted for review.</>
-            ) : (
-              <>Your facility listing has been submitted for review.</>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden max-h-[90vh]">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
+          <DialogHeader className="text-center space-y-2.5">
+            <div className="mx-auto w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-lg sm:text-xl font-display text-center">
+                Welcome to RehabLookup!
+              </DialogTitle>
+              <DialogDescription className="text-[13px] sm:text-sm text-center leading-relaxed">
+                {facilityName ? (
+                  <>Your listing for <span className="font-medium text-foreground">{facilityName}</span> is under review.</>
+                ) : (
+                  <>Your facility listing is under review.</>
+                )}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+        </div>
 
-        <div className="space-y-4 py-4">
-          {/* Status Banner */}
-          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <CheckCircle2 className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">
-                  Pending Review
-                </p>
-                <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                  Our team will review your listing within 24-48 hours. You'll receive an email once approved.
-                </p>
-              </div>
+        {/* Content */}
+        <div className="px-4 sm:px-6 py-4 space-y-3.5">
+          {/* Status */}
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-amber-600 flex-shrink-0" />
+              <p className="text-xs sm:text-[13px] text-amber-800 dark:text-amber-200">
+                Review takes 24-48 hours. We'll email you once approved.
+              </p>
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Actions */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground px-1">
-              While you wait, you can:
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              While you wait
             </p>
-            {welcomeSteps.map((step, index) => (
-              <button
-                key={step.action}
-                onClick={() => handleNavigate(step.action)}
-                className={cn(
-                  "w-full flex items-center gap-4 p-3 rounded-lg border border-border",
-                  "hover:bg-accent hover:border-accent-foreground/20 transition-all",
-                  "text-left group"
-                )}
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <step.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-foreground">{step.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{step.description}</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-              </button>
-            ))}
+            <div className="grid gap-1.5">
+              {welcomeSteps.map((step) => (
+                <button
+                  key={step.action}
+                  onClick={() => handleNavigate(step.action)}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-border/50",
+                    "hover:bg-accent/50 hover:border-primary/20 transition-all",
+                    "text-left group active:scale-[0.99]"
+                  )}
+                >
+                  <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <step.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-[13px] sm:text-sm text-foreground">{step.title}</p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground">{step.description}</p>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-          <Button 
-            variant="outline" 
-            className="flex-1"
-            onClick={handleDismiss}
-            disabled={isUpdating}
-          >
-            Explore Dashboard
-          </Button>
-          <Button 
-            className="flex-1"
-            onClick={() => handleNavigate("listings")}
-            disabled={isUpdating}
-          >
-            Complete My Listing
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+        {/* Footer */}
+        <div className="px-4 sm:px-6 pb-4 pt-1">
+          <div className={cn("flex gap-2", isMobile ? "flex-col-reverse" : "flex-row")}>
+            <Button 
+              variant="outline" 
+              size={isMobile ? "default" : "sm"}
+              className="flex-1"
+              onClick={handleDismiss}
+              disabled={isUpdating}
+            >
+              Explore Dashboard
+            </Button>
+            <Button 
+              size={isMobile ? "default" : "sm"}
+              className="flex-1"
+              onClick={() => handleNavigate("listings")}
+              disabled={isUpdating}
+            >
+              Complete Listing
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
