@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -194,8 +194,21 @@ const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const MarketingLanding = lazy(() => import("./pages/MarketingLanding"));
 
-const App = () => (
-  <GlobalErrorBoundary>
+const App = () => {
+  // Global handler for unhandled promise rejections to prevent page blanking
+  useEffect(() => {
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error("Unhandled rejection:", event.reason);
+      // Prevent default browser error handling which can crash/blank the app
+      event.preventDefault();
+    };
+
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => window.removeEventListener("unhandledrejection", handleRejection);
+  }, []);
+
+  return (
+    <GlobalErrorBoundary>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
@@ -465,6 +478,7 @@ const App = () => (
       </QueryClientProvider>
     </HelmetProvider>
   </GlobalErrorBoundary>
-);
+  );
+};
 
 export default App;
