@@ -166,7 +166,7 @@ const QUESTIONS: Question[] = [
 interface SingleQuestionFlowProps {
   formData: LeadIntakeFormData;
   updateFormData: (updates: Partial<LeadIntakeFormData>) => void;
-  onSubmit: () => Promise<void>;
+  onSubmit: (options?: { skipVerificationCheck?: boolean }) => Promise<void>;
   // Email verification
   codeSent: boolean;
   isSendingCode: boolean;
@@ -309,8 +309,8 @@ export function SingleQuestionFlow({
     if (verificationCode.length === 6) {
       const success = await verifyCode(verificationCode);
       if (success) {
-        // Submit the form
-        await onSubmit();
+        // Submit the form with flag to skip verification check since we JUST verified
+        await onSubmit({ skipVerificationCheck: true });
       } else {
         setErrors({ code: "Invalid or expired code" });
       }

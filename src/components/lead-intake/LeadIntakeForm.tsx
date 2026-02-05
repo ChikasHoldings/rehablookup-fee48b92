@@ -64,7 +64,7 @@ export function LeadIntakeForm({
   const isSubmitted = onCustomSubmit ? customSubmitted : defaultSubmitted;
 
   // Handle submit - use custom handler if provided
-  const handleSubmit = async () => {
+  const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
     if (onCustomSubmit) {
       setCustomSubmitting(true);
       try {
@@ -74,7 +74,7 @@ export function LeadIntakeForm({
         setCustomSubmitting(false);
       }
     } else {
-      await defaultHandleSubmit();
+      await defaultHandleSubmit(options);
     }
   };
 
