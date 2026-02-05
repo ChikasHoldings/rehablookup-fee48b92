@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Layout stability for shells */
+[data-shell] {
+  contain: layout style;
+}
+
 @layer base {
   :root {
     /* Navy Blue & Gold Healthcare Theme */
