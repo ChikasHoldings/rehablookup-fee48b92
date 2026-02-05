@@ -1,4 +1,4 @@
- import { useRef, useEffect, useState, ReactNode, forwardRef } from "react";
+ import { useRef, useEffect, useState, ReactNode, forwardRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 interface AnimatedCardProps {
@@ -11,13 +11,30 @@ interface AnimatedCardProps {
  export const AnimatedCard = forwardRef<HTMLDivElement, AnimatedCardProps>(
    ({ children, className, delay = 0, instant = false }, forwardedRef) => {
      const internalRef = useRef<HTMLDivElement>(null);
-     const ref = (forwardedRef as React.RefObject<HTMLDivElement>) || internalRef;
      const [isVisible, setIsVisible] = useState(instant);
 
+     // Use internal ref for intersection observer
+     const elementRef = internalRef;
+ 
+     // Combine refs for forwarding
+     const setRefs = useCallback(
+       (node: HTMLDivElement | null) => {
+         // Set internal ref
+         (internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+         // Forward ref
+         if (typeof forwardedRef === 'function') {
+           forwardedRef(node);
+         } else if (forwardedRef) {
+           (forwardedRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+         }
+       },
+       [forwardedRef]
+     );
+ 
      useEffect(() => {
        if (instant) return;
        
-       const element = typeof ref === 'function' ? null : ref.current;
+       const element = elementRef.current;
        if (!element) return;
 
        const observer = new IntersectionObserver(
@@ -32,11 +49,11 @@ interface AnimatedCardProps {
 
        observer.observe(element);
        return () => observer.disconnect();
-     }, [instant, ref]);
+     }, [instant]);
 
      return (
        <div
-         ref={ref}
+         ref={setRefs}
          className={cn(
            instant ? "" : "transition-all duration-500 ease-out",
            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
