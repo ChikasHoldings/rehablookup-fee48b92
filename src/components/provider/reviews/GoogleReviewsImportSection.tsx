@@ -1,28 +1,30 @@
 import { useState, useEffect, useMemo } from "react";
-import { Star, ExternalLink, Info, Loader2, Save, AlertCircle, CheckCircle2, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Star, ExternalLink, Info, Loader2, Save, AlertCircle, CheckCircle2, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useGoogleReviews } from "@/hooks/useGoogleReviews";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface GoogleReviewsImportSectionProps {
   facilityId: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 // URL validation for Google Maps/Business URLs
@@ -61,11 +63,10 @@ const isValidReviewCount = (value: string): { valid: boolean; error?: string } =
   return { valid: true };
 };
 
-export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSectionProps) {
+export function GoogleReviewsImportSection({ facilityId, open, onOpenChange }: GoogleReviewsImportSectionProps) {
   const { toast } = useToast();
   const { reviewsConfig, isLoading, saveReviews, isSaving } = useGoogleReviews(facilityId || '');
 
-  const [isOpen, setIsOpen] = useState(false);
   const [googleUrl, setGoogleUrl] = useState("");
   const [rating, setRating] = useState("");
   const [reviewCount, setReviewCount] = useState("");
@@ -98,6 +99,14 @@ export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSe
     }
   }, [reviewsConfig]);
 
+  // Reset touched state when modal opens
+  useEffect(() => {
+    if (open) {
+      setTouched({ url: false, rating: false, count: false });
+      setHasChanges(false);
+    }
+  }, [open]);
+
   const handleSave = async () => {
     if (!canSave) return;
 
@@ -118,6 +127,7 @@ export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSe
         title: "Google Reviews saved",
         description: "Your Google Reviews will now appear on your facility profile.",
       });
+      onOpenChange(false);
     } catch (error) {
       toast({
         title: "Error saving",
@@ -136,47 +146,28 @@ export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSe
   }
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card>
-        <CollapsibleTrigger asChild>
-          <CardHeader className="pb-4 cursor-pointer hover:bg-muted/30 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
-                  <Star className="h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <CardTitle className="text-base font-semibold">Import Google Reviews</CardTitle>
-                    {reviewsConfig?.google_rating && (
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        {reviewsConfig.google_rating.toFixed(1)}
-                      </Badge>
-                    )}
-                  </div>
-                  <CardDescription className="text-xs mt-0.5">
-                    Display your Google rating on your facility profile
-                  </CardDescription>
-                </div>
-              </div>
-              {isOpen ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-              )}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
+              <Star className="h-5 w-5" />
             </div>
-          </CardHeader>
-        </CollapsibleTrigger>
+            <div>
+              <DialogTitle className="text-lg font-semibold">Import Google Reviews</DialogTitle>
+              <DialogDescription className="text-sm">
+                Display your Google rating on your facility profile
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <CollapsibleContent>
-          <CardContent className="space-y-4 pt-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-          <>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="space-y-4">
             {/* Info Box */}
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
               <div className="flex gap-2">
@@ -370,11 +361,9 @@ export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSe
                 </a>
               </Button>
             )}
-            </>
-          )}
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

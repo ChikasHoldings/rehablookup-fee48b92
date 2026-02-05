@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -17,9 +17,15 @@ import {
   Loader2,
   RefreshCw,
   Inbox,
-  Building2
+  Building2,
+  Mail,
+  Star,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { useReviewRequests } from '@/hooks/useReviewRequests';
+import { useGoogleReviews } from '@/hooks/useGoogleReviews';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
@@ -43,6 +49,15 @@ export default function ProviderReviews() {
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
+  const [requestReviewOpen, setRequestReviewOpen] = useState(false);
+  const [googleReviewsOpen, setGoogleReviewsOpen] = useState(false);
+
+  // Get the active facility ID for modals
+  const activeFacilityId = facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null;
+  
+  // Get stats for the trigger cards
+  const { stats: requestStats } = useReviewRequests(activeFacilityId);
+  const { reviewsConfig } = useGoogleReviews(activeFacilityId || '');
 
   const filteredReviews = useMemo(() => {
     return reviews.filter(r => {
@@ -132,15 +147,68 @@ export default function ProviderReviews() {
         </div>
       </div>
 
-      {/* Request Reviews & Import Google Reviews */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <RequestReviewSection 
-          facilityId={facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null}
-          facilityName={facilityFilter !== "all" ? facilities.find(f => f.id === facilityFilter)?.name : facilities[0]?.name}
-        />
-        <GoogleReviewsImportSection 
-          facilityId={facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null}
-        />
+      {/* Request Reviews & Import Google Reviews - Trigger Cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Request Reviews Trigger Card */}
+        <Card 
+          className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
+          onClick={() => setRequestReviewOpen(true)}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold">Request Reviews</CardTitle>
+                  <CardDescription className="text-xs">
+                    Send email invitations to clients
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {requestStats.sent > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {requestStats.sent} sent
+                  </Badge>
+                )}
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Import Google Reviews Trigger Card */}
+        <Card 
+          className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
+          onClick={() => setGoogleReviewsOpen(true)}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
+                  <Star className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold">Import Google Reviews</CardTitle>
+                  <CardDescription className="text-xs">
+                    Display your Google rating
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {reviewsConfig?.google_rating && (
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    {reviewsConfig.google_rating.toFixed(1)}
+                  </Badge>
+                )}
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Stats Cards */}
@@ -232,12 +300,26 @@ export default function ProviderReviews() {
       </Tabs>
 
       {/* Flag Review Dialog */}
-      {/* Flag Review Dialog */}
       <FlagReviewDialog
         review={selectedReviewForDispute}
         open={disputeDialogOpen}
         onOpenChange={setDisputeDialogOpen}
         onSubmit={handleSubmitDispute}
+      />
+
+      {/* Request Reviews Modal */}
+      <RequestReviewSection 
+        facilityId={activeFacilityId}
+        facilityName={facilityFilter !== "all" ? facilities.find(f => f.id === facilityFilter)?.name : facilities[0]?.name}
+        open={requestReviewOpen}
+        onOpenChange={setRequestReviewOpen}
+      />
+
+      {/* Google Reviews Modal */}
+      <GoogleReviewsImportSection 
+        facilityId={activeFacilityId}
+        open={googleReviewsOpen}
+        onOpenChange={setGoogleReviewsOpen}
       />
       </div>
     </div>
