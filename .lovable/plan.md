@@ -1,109 +1,44 @@
 
-# Fix Email Verification Race Condition
+# Update PlacementBenefits to Show International Fee with Pro Discount
 
-## Problem
-When users enter the correct verification code, the backend successfully verifies it, but the frontend shows "Email not verified" error due to a React state race condition.
-
-**Technical Cause:**
-- `setIsEmailVerified(true)` is asynchronous
-- `handleSubmit()` is called immediately after `verifyCode()` returns
-- The `isEmailVerified` state check fails because React hasn't re-rendered yet
-
-## Solution
-Modify `handleSubmit` to accept an optional parameter that bypasses the verification check when called directly after successful verification.
+## Overview
+Update the PlacementBenefits component to:
+1. Change the international placement fee from **$4,500** to **$3,000**
+2. Add Pro Member pricing for international placements (**$2,400** with 20% discount)
+3. Match the domestic section's layout showing both Standard and Pro pricing
 
 ---
 
 ## Changes
 
-### 1. useLeadIntakeForm.ts
+### File: `src/components/provider/placement-network/PlacementBenefits.tsx`
 
-**Update `handleSubmit` signature to accept verification bypass:**
+**Current International Section (lines 64-82):**
+- Shows only "Flat Fee: $4,500"
+- No Pro discount shown
 
-```typescript
-const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
-  // Check honeypot
-  if (formData.website) {
-    console.log("Honeypot triggered");
-    trackAnalytics("spam_blocked", { reason: "honeypot" });
-    setIsSubmitted(true);
-    return;
-  }
-  
-  // Skip verification check if explicitly told verification just succeeded
-  if (!options?.skipVerificationCheck && !isEmailVerified) {
-    toast({
-      title: "Email not verified",
-      description: "Please verify your email before submitting",
-      variant: "destructive",
-    });
-    return;
-  }
-  
-  // ... rest of submission logic unchanged
-};
-```
+**Updated International Section:**
+- Standard: $3,000
+- Pro Member: $2,400 (20% discount)
+- Same layout as the domestic section with both pricing tiers
 
-### 2. SingleQuestionFlow.tsx
-
-**Update `handleVerifyCode` to pass the bypass flag:**
-
-```typescript
-const handleVerifyCode = async () => {
-  if (verificationCode.length === 6) {
-    const success = await verifyCode(verificationCode);
-    if (success) {
-      // Pass flag to skip verification check since we JUST verified
-      await onSubmit({ skipVerificationCheck: true });
-    } else {
-      setErrors({ code: "Invalid or expired code" });
-    }
-  }
-};
-```
-
-**Update `onSubmit` prop type:**
-
-```typescript
-interface SingleQuestionFlowProps {
-  // ... existing props ...
-  onSubmit: (options?: { skipVerificationCheck?: boolean }) => Promise<void>;
-  // ...
-}
-```
-
-### 3. LeadIntakeForm.tsx
-
-**Update handleSubmit wrapper to pass options:**
-
-```typescript
-const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
-  if (onCustomSubmit) {
-    // For custom submit, still respect the flag
-    setCustomSubmitting(true);
-    try {
-      await onCustomSubmit(formData);
-      setCustomSubmitted(true);
-    } finally {
-      setCustomSubmitting(false);
-    }
-  } else {
-    await defaultHandleSubmit(options);
-  }
-};
+### Layout Update
+```text
+┌─────────────────────────────────────┐
+│ 🌐 International Placements         │
+│ Global clients seeking US treatment │
+│                                     │
+│ Standard          $3,000            │
+│ Pro Member        $2,400  (green)   │
+│                                     │
+│ Higher-value • Longer stays • PP    │
+└─────────────────────────────────────┘
 ```
 
 ---
 
-## Why This Fix Works
-
-| Before | After |
-|--------|-------|
-| `verifyCode()` sets state async | Same |
-| `handleSubmit()` checks stale state | `handleSubmit({ skipVerificationCheck: true })` bypasses check |
-| Race condition causes error | Verification success is passed explicitly |
-
-## Files to Modify
-1. `src/components/lead-intake/useLeadIntakeForm.ts` - Add options parameter
-2. `src/components/lead-intake/SingleQuestionFlow.tsx` - Pass bypass flag
-3. `src/components/lead-intake/LeadIntakeForm.tsx` - Forward options to handler
+## Summary
+| Placement Type | Standard | Pro (20% off) |
+|---------------|----------|---------------|
+| Domestic      | $1,000   | $800          |
+| International | $3,000   | $2,400        |
