@@ -96,7 +96,7 @@ export default function MarketingLanding() {
     <>
       <Helmet>
         <title>Find Treatment Today | RehabLookup</title>
-        <meta name="description" content="Get matched with top-rated treatment centers near you. Free, confidential help available 24/7." />
+        <meta name="description" content="Get placed in top-rated treatment centers near you. Free, confidential help available 24/7." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -191,7 +191,7 @@ export default function MarketingLanding() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
               {[
                 { num: "1", title: "Tell Us Your Needs", desc: "Answer a few questions about your situation and preferences." },
-                { num: "2", title: "Get Matched", desc: "We'll show you verified treatment centers that match your criteria." },
+                { num: "2", title: "Find Options", desc: "We'll show you verified treatment centers that fit your criteria." },
                 { num: "3", title: "Connect Directly", desc: "Request info from facilities with one click — they'll reach out to you." },
               ].map((step, idx) => (
                 <div key={idx} className="group bg-white rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 text-center shadow-sm border border-border/30 hover:shadow-lg hover:border-primary/20 transition-all duration-300">
@@ -217,7 +217,7 @@ export default function MarketingLanding() {
                 ))}
               </div>
               <blockquote className="text-sm sm:text-base md:text-lg text-muted-foreground italic mb-3 md:mb-4 leading-relaxed">
-                "RehabLookup made finding treatment so much easier. I was matched with several great options and got a callback within hours."
+                "RehabLookup made finding treatment so much easier. I was connected with several great options and got a callback within hours."
               </blockquote>
               <p className="font-medium text-foreground text-sm md:text-base">— Sarah M., California</p>
             </div>

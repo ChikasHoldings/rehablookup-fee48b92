@@ -129,7 +129,7 @@ const QUESTIONS: Question[] = [
     id: "previousTreatment",
     type: "choice",
     title: "Any previous treatment experience?",
-    subtitle: "This helps match you with the right approach",
+    subtitle: "This helps connect you with the right approach",
     icon: <Heart className="h-6 w-6" />,
     field: "previousTreatment",
     options: PREVIOUS_TREATMENT_OPTIONS.map(o => ({ value: o.value, label: o.label })),

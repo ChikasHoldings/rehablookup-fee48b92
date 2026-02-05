@@ -628,7 +628,7 @@ const TreatmentTypes = () => {
               <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 font-semibold">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/rehab-centers">

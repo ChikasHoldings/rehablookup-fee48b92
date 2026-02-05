@@ -379,7 +379,7 @@ const Locations = () => {
               <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/rehab-centers">

@@ -194,7 +194,7 @@ export function PlacementTabs({
               ) : (
                 <EmptyState 
                   icon={<Users className="h-12 w-12" />}
-                  title="No matches yet"
+                title="No facilities yet"
                   description="Our team is reviewing your case and finding the best treatment centers for you."
                 />
               )}

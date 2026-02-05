@@ -77,18 +77,18 @@ export function MarketingLeadSuccess({ leadId, matchedFacilities }: MarketingLea
           </h1>
           <p className="text-lg text-white/90 max-w-xl mx-auto">
             {matchedFacilities.length > 0
-              ? `We matched you with ${matchedFacilities.length} treatment centers near you. Click "Request Info" to connect with any facility.`
-              : "We're working on finding the best matches for you. Check your email for updates."}
+              ? `We found ${matchedFacilities.length} treatment centers near you. Click "Request Info" to connect with any facility.`
+              : "We're working on finding the best options for you. Check your email for updates."}
           </p>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-10 max-w-5xl">
-        {/* Matched Facilities Grid */}
+        {/* Treatment Options Grid */}
         {matchedFacilities.length > 0 && (
           <div className="mb-12">
             <h2 className="text-xl font-semibold mb-6 text-center">
-              Your Matched Treatment Centers
+              Your Treatment Options
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {matchedFacilities.map((facility) => {

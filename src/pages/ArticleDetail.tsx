@@ -1734,7 +1734,7 @@ const ArticleDetail = () => {
                 </p>
                 <Link to="/concierge">
                   <Button variant="secondary" className="w-full gap-2 bg-white text-primary hover:bg-white/90">
-                    Get Matched
+                    Find Treatment
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -1825,7 +1825,7 @@ const ArticleDetail = () => {
                 </Link>
                 <Link to="/concierge">
                   <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10">
-                    Get Matched
+                    Find Treatment
                   </Button>
                 </Link>
               </div>

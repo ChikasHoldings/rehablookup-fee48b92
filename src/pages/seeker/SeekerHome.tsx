@@ -263,7 +263,7 @@ export default function SeekerHome() {
               <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25">
                 <Link to="/account/concierge">
                   <Phone className="h-4 w-4 mr-2" />
-                  Get Matched
+                  Find Treatment
                 </Link>
               </Button>
             </CardContent>
@@ -539,7 +539,7 @@ export default function SeekerHome() {
                 {[
                   { to: "/rehab-centers", icon: Building2, label: "Browse All Centers" },
                   { to: "/insurance", icon: Shield, label: "Insurance Guide" },
-                  { to: "/account/concierge", icon: Phone, label: "Get Matched" },
+                  { to: "/account/concierge", icon: Phone, label: "Find Treatment" },
                 ].map((link) => (
                   <Link 
                     key={link.to}
@@ -561,7 +561,7 @@ export default function SeekerHome() {
                 </div>
                 <h4 className="font-semibold text-foreground mb-1">Need Help?</h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Get matched with treatment
+                  Get placed in treatment
                 </p>
                 <Button asChild size="sm" className="w-full">
                   <Link to="/account/concierge">Start Concierge</Link>

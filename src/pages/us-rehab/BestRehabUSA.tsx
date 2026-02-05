@@ -95,7 +95,7 @@ const BestRehabUSA = () => {
 
       <PlacementCTA 
         title="Find the Best Treatment for Your Needs"
-        description="Our specialists match you with America's top-rated facilities based on your specific requirements, preferences, and budget."
+        description="Our specialists connect you with America's top-rated facilities based on your specific requirements, preferences, and budget."
       />
     </Layout>
   );

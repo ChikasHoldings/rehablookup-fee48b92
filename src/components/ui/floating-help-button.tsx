@@ -48,7 +48,7 @@ export const FloatingHelpButton = forwardRef<HTMLAnchorElement>((_, ref) => {
       )}
     >
       <Heart className="h-4 w-4" />
-      <span className="text-sm font-semibold">Get Matched</span>
+      <span className="text-sm font-semibold">Find Treatment</span>
     </Link>
   );
 });

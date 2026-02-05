@@ -207,7 +207,7 @@ const OutpatientPrograms = () => {
               <Link to="/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
               <Link to="/rehab-centers">
@@ -503,7 +503,7 @@ const OutpatientPrograms = () => {
               <Link to="/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Matched
+                  Find Treatment
                 </Button>
               </Link>
             </div>

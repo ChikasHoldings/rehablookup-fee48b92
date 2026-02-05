@@ -132,7 +132,7 @@ const AlcoholRehabUSA = () => {
 
       <PlacementCTA 
         title="Find Your Alcohol Treatment Program"
-        description="Get matched with America's best alcohol rehab centers. Medical detox, luxury care, and lasting recovery."
+        description="Get placed in America's best alcohol rehab centers. Medical detox, luxury care, and lasting recovery."
       />
     </Layout>
   );

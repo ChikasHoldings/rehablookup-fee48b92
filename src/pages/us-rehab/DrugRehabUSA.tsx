@@ -46,7 +46,7 @@ const DrugRehabUSA = () => {
     },
     {
       question: "What is the success rate of US drug rehab?",
-      answer: "Success rates vary by program and individual factors. Top US facilities report 50-70% of patients maintaining sobriety at one year with proper aftercare engagement. The key is matching you with the right program and comprehensive aftercare planning."
+      answer: "Success rates vary by program and individual factors. Top US facilities report 50-70% of patients maintaining sobriety at one year with proper aftercare engagement. The key is connecting you with the right program and comprehensive aftercare planning."
     },
     {
       question: "Can I bring prescription medications to US rehab?",

@@ -76,7 +76,7 @@ export function StepClinical({ data, onChange }: StepClinicalProps) {
           Clinical Information
         </h2>
         <p className="text-sm md:text-base text-muted-foreground">
-          Help us match you with specialized programs
+          Help us connect you with specialized programs
         </p>
       </div>
 

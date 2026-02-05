@@ -212,13 +212,13 @@ export default function ConciergeThankYou() {
                     <li className="flex gap-3">
                       <User className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-muted-foreground">
-                        We will match you with treatment programs that fit your specific needs
+                        We will connect you with treatment programs that fit your specific needs
                       </span>
                     </li>
                     <li className="flex gap-3">
                       <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-muted-foreground">
-                        Matched programs will reach out via email to discuss next steps
+                        Selected programs will reach out via email to discuss next steps
                       </span>
                     </li>
                   </ul>

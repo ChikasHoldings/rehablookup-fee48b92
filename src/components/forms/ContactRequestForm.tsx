@@ -17,7 +17,7 @@ export function ContactRequestForm({ centerName }: ContactRequestFormProps) {
   const navigate = useNavigate();
 
   const handleGetHelp = () => {
-    analytics.ctaClick("Get Matched", "contact_form");
+    analytics.ctaClick("Find Treatment", "contact_form");
     navigate("/concierge");
   };
 
@@ -25,10 +25,10 @@ export function ContactRequestForm({ centerName }: ContactRequestFormProps) {
     <div className="space-y-4">
       <div className="text-center">
         <h3 className="font-semibold text-lg text-foreground mb-2">
-          Get Matched With Treatment
+          Find Your Treatment
         </h3>
         <p className="text-sm text-muted-foreground">
-          Our concierge service will match you with verified treatment centers based on your needs.
+          Our placement service will connect you with verified treatment centers based on your needs.
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export function ContactRequestForm({ centerName }: ContactRequestFormProps) {
         className="w-full gap-2"
       >
         <Heart className="h-4 w-4" />
-        Get Matched
+        Find Treatment
         <ArrowRight className="h-4 w-4" />
       </Button>
 

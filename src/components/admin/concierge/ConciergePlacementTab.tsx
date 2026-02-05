@@ -25,17 +25,17 @@ interface MatchScore {
   };
 }
 
-interface ConciergeMatchingTabProps {
+interface ConciergePlacementTabProps {
   caseData: ConciergeInquiry;
   onRefresh: () => void;
 }
 
-export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingTabProps) {
+export function ConciergePlacementTab({ caseData, onRefresh }: ConciergePlacementTabProps) {
   const [isRunning, setIsRunning] = useState(false);
 
-  // Fetch matched facilities details
-  const { data: matchedFacilities, isLoading: loadingFacilities } = useQuery({
-    queryKey: ["matched-facilities", caseData.matched_facility_ids],
+  // Fetch placement facilities details
+  const { data: placementFacilities, isLoading: loadingFacilities } = useQuery({
+    queryKey: ["placement-facilities", caseData.matched_facility_ids],
     queryFn: async () => {
       if (!caseData.matched_facility_ids || caseData.matched_facility_ids.length === 0) {
         return [];
@@ -52,7 +52,7 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
     enabled: !!caseData.matched_facility_ids?.length,
   });
 
-  const runMatchingMutation = useMutation({
+  const runPlacementMutation = useMutation({
     mutationFn: async () => {
       setIsRunning(true);
       const { data, error } = await supabase.functions.invoke("match-concierge-intake", {
@@ -63,25 +63,25 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
       return data;
     },
     onSuccess: (data) => {
-      toast.success(`Found ${data.matchCount || 0} matches`);
+      toast.success(`Found ${data.matchCount || 0} placement options`);
       onRefresh();
       setIsRunning(false);
     },
     onError: (error) => {
-      toast.error("Matching failed: " + error.message);
+      toast.error("Placement search failed: " + error.message);
       setIsRunning(false);
     },
   });
 
-  const matchScores = (caseData.match_scores as unknown as MatchScore[] | null) || [];
+  const placementScores = (caseData.match_scores as unknown as MatchScore[] | null) || [];
 
   const getScoreForFacility = (facilityId: string): MatchScore | undefined => {
-    return matchScores.find((s) => s.facilityId === facilityId);
+    return placementScores.find((s) => s.facilityId === facilityId);
   };
 
   return (
     <div className="space-y-4">
-      {/* Run Matching Button */}
+      {/* Run Placement Button */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -94,7 +94,7 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
               </p>
             </div>
             <Button
-              onClick={() => runMatchingMutation.mutate()}
+              onClick={() => runPlacementMutation.mutate()}
               disabled={isRunning}
             >
               {isRunning ? (
@@ -118,24 +118,24 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
         </CardContent>
       </Card>
 
-      {/* Matched Facilities */}
+      {/* Placement Options */}
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Building2 className="h-4 w-4" />
-            Placement Options ({matchedFacilities?.length || 0})
+            Placement Options ({placementFacilities?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent className="py-2">
           {loadingFacilities ? (
             <div className="text-center py-4 text-muted-foreground">Loading...</div>
-          ) : !matchedFacilities?.length ? (
+          ) : !placementFacilities?.length ? (
             <div className="text-center py-4 text-muted-foreground">
-              No matches yet. Run the placement engine to find suitable facilities.
+              No options yet. Run the placement engine to find suitable facilities.
             </div>
           ) : (
             <div className="space-y-3">
-              {matchedFacilities.map((facility, index) => {
+              {placementFacilities.map((facility, index) => {
                 const score = getScoreForFacility(facility.id);
                 const totalScore = score?.score || score?.totalScore || 0;
                 
@@ -195,7 +195,7 @@ export function ConciergeMatchingTab({ caseData, onRefresh }: ConciergeMatchingT
         </CardContent>
       </Card>
 
-      {/* Matching Criteria Summary */}
+      {/* Placement Criteria Summary */}
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-medium">Placement Criteria Used</CardTitle>
@@ -256,7 +256,7 @@ function CriteriaItem({ label, value, matched }: { label: string; value?: string
   return (
     <div className="flex items-center gap-2 py-1">
       {matched ? (
-        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
       ) : (
         <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       )}

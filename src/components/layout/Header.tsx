@@ -69,7 +69,7 @@ const navIcons: Record<string, React.ElementType> = {
 export function Header({ 
   navLinks = defaultNavLinks, 
   ctaLink = "/concierge",
-  ctaLabel = "Get Matched",
+  ctaLabel = "Find Treatment",
   variant = "default"
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
