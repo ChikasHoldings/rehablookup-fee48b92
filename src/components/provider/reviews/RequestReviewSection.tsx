@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Send, Users, Eye, MousePointer, CheckCircle, Loader2, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { useReviewRequests } from '@/hooks/useReviewRequests';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,15 +23,26 @@ import {
 interface RequestReviewSectionProps {
   facilityId: string | null;
   facilityName?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function RequestReviewSection({ facilityId, facilityName }: RequestReviewSectionProps) {
+export function RequestReviewSection({ facilityId, facilityName, open, onOpenChange }: RequestReviewSectionProps) {
   const { requests, isLoading, isSending, sendReviewRequest, stats } = useReviewRequests(facilityId);
-  const [isOpen, setIsOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  // Reset form state when modal closes
+  useEffect(() => {
+    if (!open) {
+      setIsFormOpen(false);
+      setRecipientName('');
+      setRecipientEmail('');
+      setIsHistoryOpen(false);
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,60 +63,44 @@ export function RequestReviewSection({ facilityId, facilityName }: RequestReview
   const canSubmit = recipientName.trim() && recipientEmail.trim() && isValidEmail(recipientEmail);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card>
-        <CollapsibleTrigger asChild>
-          <CardHeader className="pb-4 cursor-pointer hover:bg-muted/30 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary">
-                  <Mail className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base font-semibold">Request Reviews</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">
-                    Send email invitations to past clients to leave a review
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {stats.sent > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {stats.sent} sent
-                  </Badge>
-                )}
-                {isOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                )}
-              </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+              <Mail className="h-5 w-5" />
             </div>
-          </CardHeader>
-        </CollapsibleTrigger>
+            <div>
+              <DialogTitle className="text-lg font-semibold">Request Reviews</DialogTitle>
+              <DialogDescription className="text-sm">
+                Send email invitations to past clients to leave a review
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <CollapsibleContent>
-          <CardContent className="space-y-4 pt-0">
-            {/* Action Button */}
-            <div className="flex justify-end">
-              <Button
-                variant={isFormOpen ? "outline" : "default"}
-                size="sm"
-                onClick={() => setIsFormOpen(!isFormOpen)}
-              >
-                {isFormOpen ? (
-                  <>
-                    <X className="h-4 w-4 mr-1" />
-                    Cancel
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-1" />
-                    New Request
-                  </>
-                )}
-              </Button>
-            </div>
+        <div className="space-y-4">
+          {/* Action Button */}
+          <div className="flex justify-end">
+            <Button
+              variant={isFormOpen ? "outline" : "default"}
+              size="sm"
+              onClick={() => setIsFormOpen(!isFormOpen)}
+            >
+              {isFormOpen ? (
+                <>
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-1" />
+                  New Request
+                </>
+              )}
+            </Button>
+          </div>
+
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 rounded-lg bg-muted/50 text-center">
@@ -187,7 +188,7 @@ export function RequestReviewSection({ facilityId, facilityName }: RequestReview
         )}
 
         {/* Request History (Collapsible) */}
-        {requests.length > 0 && (
+        {requests.length > 0 ? (
           <Collapsible open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between hover:bg-muted/50 p-3 h-auto">
@@ -256,10 +257,8 @@ export function RequestReviewSection({ facilityId, facilityName }: RequestReview
               </div>
             </CollapsibleContent>
           </Collapsible>
-        )}
-
-        {/* Empty state when no form and no requests */}
-        {!isFormOpen && requests.length === 0 && !isLoading && (
+        ) : !isFormOpen && !isLoading && (
+          /* Empty state when no form and no requests */
           <div className="text-center py-6 px-4 rounded-lg bg-muted/30 border border-dashed">
             <Mail className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
             <p className="text-sm text-muted-foreground">
@@ -267,9 +266,8 @@ export function RequestReviewSection({ facilityId, facilityName }: RequestReview
             </p>
           </div>
         )}
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
