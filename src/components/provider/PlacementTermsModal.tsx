@@ -127,10 +127,20 @@ export function PlacementTermsModal({
                   <p className="text-sm text-muted-foreground">Provider agrees to pay the following flat fee upon confirmed placement:</p>
                   
                   <div className="p-3 bg-muted/30 rounded-lg border">
-                    <h4 className="font-medium text-sm mb-1">Placement Fee</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
+                    <h4 className="font-medium text-sm mb-2">Domestic Placements</h4>
+                    <p className="text-xs text-muted-foreground mb-2">US-based individuals and families seeking treatment</p>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0 mb-0">
                       <li>• Standard Rate: <strong className="text-foreground">$1,000</strong> per placement</li>
                       <li>• Pro Subscribers: <strong className="text-foreground">$800</strong> per placement (20% discount)</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <h4 className="font-medium text-sm mb-2 text-primary">International Placements</h4>
+                    <p className="text-xs text-muted-foreground mb-2">Global clients seeking treatment in the United States</p>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0 mb-0">
+                      <li>• Standard Rate: <strong className="text-foreground">$3,000</strong> per placement</li>
+                      <li>• Pro Subscribers: <strong className="text-foreground">$2,400</strong> per placement (20% discount)</li>
                     </ul>
                   </div>
                 </div>
