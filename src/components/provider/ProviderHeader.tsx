@@ -496,7 +496,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               {/* Quick Actions */}
               <div className="py-1.5">
                 <DropdownMenuItem asChild>
-                  <Link to="/provider/listing" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
+                  <Link to="/provider/listings" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">My Listing</span>
                   </Link>

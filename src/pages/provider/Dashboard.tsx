@@ -379,7 +379,7 @@ export default function ProviderDashboardPage() {
                         </a>
                       </Button>
                       <Button size="sm" className="h-8 text-xs gap-1.5" asChild>
-                        <Link to="/provider/listing">
+                        <Link to="/provider/listings">
                           <FileEdit className="h-3.5 w-3.5" />
                           Edit
                         </Link>
@@ -582,7 +582,7 @@ export default function ProviderDashboardPage() {
                           <p className="text-xs text-muted-foreground">{missingFields.length} items missing</p>
                         </div>
                         <Button size="sm" className="h-7 text-xs" asChild>
-                          <Link to="/provider/listing">Add</Link>
+                          <Link to="/provider/listings">Add</Link>
                         </Button>
                         <button
                           onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
@@ -625,7 +625,7 @@ export default function ProviderDashboardPage() {
               <CardContent className="p-2.5">
                 <div className="grid grid-cols-2 gap-1.5">
                   <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/listing">
+                    <Link to="/provider/listings">
                       <FileEdit className="h-3.5 w-3.5 mr-2" />
                       Listing
                     </Link>
@@ -728,7 +728,7 @@ export default function ProviderDashboardPage() {
                       </div>
                     </div>
                     <Button size="sm" className="h-9 text-sm" asChild>
-                      <Link to="/provider/listing">
+                      <Link to="/provider/listings">
                         Get Started <ArrowRight className="h-4 w-4 ml-1.5" />
                       </Link>
                     </Button>
