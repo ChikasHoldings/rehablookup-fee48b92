@@ -1191,9 +1191,9 @@ export default function ProviderSignup() {
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="All Genders">All Genders</SelectItem>
-                          <SelectItem value="Men Only">Men Only</SelectItem>
-                          <SelectItem value="Women Only">Women Only</SelectItem>
+                          <SelectItem value="all">All Genders</SelectItem>
+                          <SelectItem value="male">Men Only</SelectItem>
+                          <SelectItem value="female">Women Only</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
