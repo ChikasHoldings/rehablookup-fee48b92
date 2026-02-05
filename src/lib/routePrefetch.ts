@@ -5,6 +5,17 @@
 
 // Track prefetched routes to avoid duplicate fetches
 const prefetchedRoutes = new Set<string>();
+ 
+ // Track visited routes in session for instant animations on return
+ const visitedRoutes = new Set<string>();
+ 
+ export function markRouteVisited(path: string): void {
+   visitedRoutes.add(path);
+ }
+ 
+ export function hasVisitedRoute(path: string): boolean {
+   return visitedRoutes.has(path);
+ }
 
 // Lazy import maps for each section
 const publicPageMap: Record<string, () => Promise<unknown>> = {

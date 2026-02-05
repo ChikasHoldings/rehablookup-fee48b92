@@ -12,6 +12,7 @@ import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { queryClient } from "@/lib/queryClient";
+ import { NavigationProvider } from "@/contexts/NavigationContext";
 
 // Eagerly load homepage for instant LCP
 import Index from "./pages/Index";
@@ -214,6 +215,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+         <NavigationProvider>
         <ScrollToTop />
         <TrailingSlashRedirect />
         <CookieConsentBanner />
@@ -472,6 +474,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
+         </NavigationProvider>
       </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
