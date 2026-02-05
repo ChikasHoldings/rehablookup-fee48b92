@@ -42,9 +42,10 @@ const ImageGuidelines = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Image Guidelines</h1>
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="mb-6">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Image Guidelines</h1>
         <p className="text-muted-foreground mt-1">
           Standards for facility logo and gallery images
         </p>
@@ -224,6 +225,7 @@ const ImageGuidelines = () => {
           Violations may result in immediate account suspension and potential legal consequences.
         </AlertDescription>
       </Alert>
+      </div>
     </div>
   );
 };

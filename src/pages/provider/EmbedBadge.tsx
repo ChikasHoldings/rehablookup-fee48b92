@@ -47,7 +47,8 @@ export default function EmbedBadgePage() {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
       {/* Hero Header */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
@@ -64,7 +65,7 @@ export default function EmbedBadgePage() {
               <Trophy className="h-7 w-7 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Badge Collection</h1>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Badge Collection</h1>
               <p className="text-muted-foreground mt-1 max-w-lg">
                 Earn achievement badges by improving your facility performance. Embed them on your website to build trust and boost SEO.
               </p>
@@ -90,6 +91,7 @@ export default function EmbedBadgePage() {
         facilitySlug={selectedFacility.slug || selectedFacility.id}
         facilityName={selectedFacility.name}
       />
+      </div>
     </div>
   );
 }

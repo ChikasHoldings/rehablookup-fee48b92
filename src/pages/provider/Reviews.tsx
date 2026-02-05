@@ -89,12 +89,12 @@ export default function ProviderReviews() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
       <div className="max-w-5xl mx-auto space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">Reviews</h1>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Reviews</h1>
           <p className="text-muted-foreground mt-1">
             {facilities.length > 1 
               ? `Manage reviews across ${facilities.length} locations`

@@ -190,8 +190,8 @@ export default function BillingHistoryPage() {
 
   if (invoicesLoading) {
     return (
-      <div className="min-h-full bg-background p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <div className="min-h-full bg-background px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="max-w-5xl mx-auto space-y-6">
           <Skeleton className="h-20 w-full" />
           <div className="grid gap-4 md:grid-cols-4">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
@@ -204,11 +204,11 @@ export default function BillingHistoryPage() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Billing History</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Billing History</h1>
             <p className="text-muted-foreground mt-1">
               View invoices, payment receipts, and download statements
             </p>

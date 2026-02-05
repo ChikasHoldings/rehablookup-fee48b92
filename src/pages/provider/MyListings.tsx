@@ -33,7 +33,7 @@ export default function MyListingsPage() {
     return (
       <div className="min-h-full bg-background">
         {/* Back Button Header */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 lg:px-8 pt-4 sm:pt-6 md:pt-8">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8">
           <Button
             variant="ghost"
             size="sm"

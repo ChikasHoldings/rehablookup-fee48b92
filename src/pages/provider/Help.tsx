@@ -153,11 +153,11 @@ export default function ProviderHelpPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
-      <div className="space-y-6">
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
+        <h1 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
           Help & Support
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
