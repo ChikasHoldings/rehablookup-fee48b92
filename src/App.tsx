@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
-import { PageLoading } from "@/components/ui/page-loading";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
@@ -218,7 +217,7 @@ const App = () => {
         <ScrollToTop />
         <TrailingSlashRedirect />
         <CookieConsentBanner />
-        <Suspense fallback={<PageLoading />}>
+        <Suspense fallback={null}>
           <Routes>
             {/* Public Routes - Providers are redirected away */}
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
