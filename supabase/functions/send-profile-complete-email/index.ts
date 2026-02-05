@@ -28,9 +28,9 @@ function generateCelebrationEmail(
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 40px 32px; text-align: center;">
+            <td style="background-color: #22c55e; background: #22c55e; padding: 40px 32px; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 26px; font-weight: 700;">
                 Profile Complete!
               </h1>
             </td>
@@ -102,25 +102,25 @@ function generateCelebrationEmail(
           
           <!-- Footer -->
           <tr>
-            <td style="background: #1B365D; padding: 28px 32px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 28px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom: 12px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
                       RehabLookup
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td align="center" style="padding-bottom: 16px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #cbd5e1;">
                       Connecting families with trusted treatment providers
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #94a3b8;">
                       <a href="${dashboardUrl}/settings" style="color: #93c5fd; text-decoration: none;">Notification settings</a>
                     </p>
                   </td>

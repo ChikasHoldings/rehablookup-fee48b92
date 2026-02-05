@@ -32,11 +32,11 @@ function getNewLeadNotificationEmail(facilityName: string, leadName: string, das
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">🔔</div>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-weight: 600;">New Lead Available</h1>
-              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-size: 14px;">${facilityName}</p>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">New Lead Available</h1>
+              <p style="margin: 8px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 14px;">${facilityName}</p>
             </td>
           </tr>
           <tr>
@@ -66,9 +66,9 @@ function getNewLeadNotificationEmail(facilityName: string, leadName: string, das
             </td>
           </tr>
           <tr>
-            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0 0 12px 0; color: #ffffff; font-size: 14px; font-weight: 600;">RehabLookup</p>
-              <p style="margin: 0; color: rgba(255,255,255,0.5); font-size: 11px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0 0 12px 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 600;">RehabLookup</p>
+              <p style="margin: 0; color: #94a3b8; font-family: Arial, Helvetica, sans-serif; font-size: 11px;">
                 © ${new Date().getFullYear()} RehabLookup. All rights reserved.
               </p>
             </td>

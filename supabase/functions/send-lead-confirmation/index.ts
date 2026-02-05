@@ -44,8 +44,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 40px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700; line-height: 1.3;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 40px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 26px; font-weight: 700; line-height: 1.3;">
                 We've received your request
               </h1>
             </td>
@@ -116,25 +116,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
           
           <!-- Footer -->
           <tr>
-            <td style="background: #1B365D; padding: 32px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom: 16px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #ffffff;">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 700; color: #ffffff;">
                       RehabLookup
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td align="center" style="padding-bottom: 20px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.8);">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #cbd5e1;">
                       Connecting families with trusted treatment providers
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td align="center" style="padding-bottom: 20px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: rgba(255,255,255,0.6);">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #94a3b8;">
                       🔒 Your information is secure and confidential
                     </p>
                   </td>
@@ -144,15 +144,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
                     <table role="presentation" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 0 12px;">
-                          <a href="https://rehablookup.com/privacy-policy" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Privacy Policy</a>
+                          <a href="https://rehablookup.com/privacy-policy" style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Privacy Policy</a>
                         </td>
-                        <td style="color: rgba(255,255,255,0.3);">|</td>
+                        <td style="color: #64748b;">|</td>
                         <td style="padding: 0 12px;">
-                          <a href="https://rehablookup.com/terms-of-service" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Terms of Service</a>
+                          <a href="https://rehablookup.com/terms-of-service" style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Terms of Service</a>
                         </td>
-                        <td style="color: rgba(255,255,255,0.3);">|</td>
+                        <td style="color: #64748b;">|</td>
                         <td style="padding: 0 12px;">
-                          <a href="mailto:help@rehablookup.com" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Contact Us</a>
+                          <a href="mailto:help@rehablookup.com" style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Contact Us</a>
                         </td>
                       </tr>
                     </table>
@@ -160,7 +160,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 </tr>
                 <tr>
                   <td align="center">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #94a3b8;">
                       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
                     </p>
                   </td>
