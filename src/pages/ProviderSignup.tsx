@@ -42,6 +42,33 @@ import { compressImage, validateImageFile } from "@/lib/imageUtils";
 
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 
+// Clear all provider-related caches from any previous session
+const clearProviderCaches = () => {
+  try {
+    console.log("[ProviderSignup] Clearing provider caches...");
+    // Clear facilities cache (both global and any user-specific)
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith("provider-facilities-cache")) {
+        localStorage.removeItem(key);
+      }
+      if (key.startsWith("provider-data-")) {
+        localStorage.removeItem(key);
+      }
+    });
+    // Clear selected facility
+    localStorage.removeItem("selectedFacilityId");
+    localStorage.removeItem("selectedFacilityData");
+    // Clear user role cache
+    localStorage.removeItem("rl_cached_role");
+    localStorage.removeItem("rl_cached_uid");
+    localStorage.removeItem("rl_cached_auth");
+    localStorage.removeItem("rl_cached_ts");
+    console.log("[ProviderSignup] Provider caches cleared");
+  } catch (e) {
+    console.error("[ProviderSignup] Error clearing caches:", e);
+  }
+};
+
 const getBrowserInfo = (): { browser: string; os: string; device: string } => {
   const ua = navigator.userAgent;
   
@@ -273,6 +300,9 @@ export default function ProviderSignup() {
         return;
       }
 
+    // Clear any stale caches before creating new account
+    clearProviderCaches();
+
       // 1. Create the user account
       console.log("[ProviderSignup] Creating auth account...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -487,6 +517,47 @@ export default function ProviderSignup() {
           })
           .eq("id", facilityId);
       }
+
+    // Pre-populate caches with newly created facility data for instant dashboard render
+    try {
+      console.log("[ProviderSignup] Pre-populating facility cache...");
+      const facilityDataForCache = {
+        id: facilityId,
+        name: formData.facilityName,
+        slug: facilityData.slug,
+        status: "pending",
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zipCode,
+        facility_type: formData.facilityType,
+        logo_url: logoUrl,
+        gallery_urls: galleryUrls.length > 0 ? galleryUrls : null,
+        featured: false,
+        created_at: new Date().toISOString(),
+      };
+      
+      // Cache for useProviderFacilities (user-specific key)
+      localStorage.setItem(`provider-facilities-cache-${userId}`, JSON.stringify({
+        data: [facilityDataForCache],
+        timestamp: Date.now(),
+      }));
+      
+      // Cache for SelectedFacilityContext
+      localStorage.setItem("selectedFacilityId", facilityId);
+      localStorage.setItem("selectedFacilityData", JSON.stringify(facilityDataForCache));
+      
+      // Cache user role
+      localStorage.setItem("rl_cached_role", "provider");
+      localStorage.setItem("rl_cached_uid", userId);
+      localStorage.setItem("rl_cached_auth", "true");
+      localStorage.setItem("rl_cached_ts", String(Date.now()));
+      
+      console.log("[ProviderSignup] Facility cache pre-populated successfully");
+    } catch (cacheError) {
+      console.error("[ProviderSignup] Cache pre-population error:", cacheError);
+      // Non-blocking - continue even if cache fails
+    }
 
       // 9. Create notification preferences
       await supabase.from("notification_preferences").insert({

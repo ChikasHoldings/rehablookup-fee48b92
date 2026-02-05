@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useRef, useState } from "react";
 
 export interface ProviderFacility {
   id: string;
@@ -20,14 +21,27 @@ export interface ProviderFacility {
 
 export function useProviderFacilities() {
   const queryClient = useQueryClient();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const initializedRef = useRef(false);
 
-  // Get cached facilities for instant initial render
-  const getCachedFacilities = (): ProviderFacility[] | undefined => {
+  // Get cached facilities for instant initial render (user-specific)
+  const getCachedFacilities = (userId?: string | null): ProviderFacility[] | undefined => {
     try {
+      // Try user-specific cache first
+      if (userId) {
+        const userCache = localStorage.getItem(`provider-facilities-cache-${userId}`);
+        if (userCache) {
+          const { data, timestamp } = JSON.parse(userCache);
+          if (Date.now() - timestamp < 1000 * 60 * 5) {
+            return data;
+          }
+        }
+      }
+      
+      // Fallback to legacy global cache (for backwards compatibility during migration)
       const cached = localStorage.getItem("provider-facilities-cache");
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
-        // Return cached data if less than 5 minutes old
         if (Date.now() - timestamp < 1000 * 60 * 5) {
           return data;
         }
@@ -47,6 +61,11 @@ export function useProviderFacilities() {
         return [];
       }
 
+      // Track current user for cache management
+      if (currentUserId !== session.user.id) {
+        setCurrentUserId(session.user.id);
+      }
+
       const { data, error } = await supabase
         .from("facilities")
         .select("id, name, slug, status, address, city, state, zip_code, facility_type, logo_url, gallery_urls, featured, created_at")
@@ -57,20 +76,22 @@ export function useProviderFacilities() {
       
       const facilities = (data || []) as ProviderFacility[];
       
-      // Cache the result for instant future loads
+      // Cache the result with user-specific key
       try {
-        localStorage.setItem("provider-facilities-cache", JSON.stringify({
+        localStorage.setItem(`provider-facilities-cache-${session.user.id}`, JSON.stringify({
           data: facilities,
           timestamp: Date.now(),
         }));
+        // Also clear any stale legacy cache
+        localStorage.removeItem("provider-facilities-cache");
       } catch {
         // Ignore storage errors
       }
       
       return facilities;
     },
-    // Use cached data for instant initial render
-    placeholderData: getCachedFacilities,
+    // Use cached data for instant initial render (user-specific when available)
+    placeholderData: () => getCachedFacilities(currentUserId),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 60, // 1 hour cache
     refetchOnWindowFocus: true,
