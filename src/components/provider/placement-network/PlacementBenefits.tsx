@@ -72,9 +72,15 @@ export function PlacementBenefits() {
               <p className="text-xs text-muted-foreground mb-3">
                 Global clients seeking US treatment
               </p>
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm text-muted-foreground">Flat Fee</span>
-                <span className="text-xl font-bold text-primary">$4,500</span>
+              <div className="space-y-2">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-muted-foreground">Standard</span>
+                  <span className="text-xl font-bold text-foreground">$3,000</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-emerald-600 dark:text-emerald-400">Pro Member</span>
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">$2,400</span>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 Higher-value clients • Longer stays • Private pay
