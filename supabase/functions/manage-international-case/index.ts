@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
             admission_confirmed_at: new Date().toISOString(),
             admission_confirmed_by: user.id,
             status: "admitted",
-            facility_fee_cents: 450000, // $4,500
+            facility_fee_cents: 300000, // $3,000
             facility_fee_status: "pending",
             // Client fee resolution
             refund_type: refundType,
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
             case_id: caseId,
             facility_id: facilityId,
             provider_id: facility.user_id,
-            amount_cents: 450000,
+            amount_cents: 300000,
             status: "pending",
             issued_by: user.id,
             issued_at: new Date().toISOString(),

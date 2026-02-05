@@ -63,7 +63,7 @@ RehabLookup agrees to:
 4. PLACEMENT FEE
 
 4.1 Fee Amount
-Facility agrees to pay RehabLookup a placement fee of FOUR THOUSAND FIVE HUNDRED DOLLARS ($4,500.00 USD) per Confirmed Admission.
+Facility agrees to pay RehabLookup a placement fee of THREE THOUSAND DOLLARS ($3,000.00 USD) per Confirmed Admission.
 
 4.2 Definition of Confirmed Admission
 A "Confirmed Admission" occurs when:
@@ -316,7 +316,7 @@ Date
             </div>
           </div>
           <Badge variant="outline" className="text-lg px-4 py-2">
-            $4,500 Per Placement
+            $3,000 Per Placement
           </Badge>
         </div>
 
@@ -401,7 +401,7 @@ Date
               <div className="space-y-2">
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-muted-foreground">Placement Fee</span>
-                  <span className="font-semibold">$4,500 USD (fixed)</span>
+                  <span className="font-semibold">$3,000 USD (fixed)</span>
                 </div>
                 <div className="flex justify-between py-2 border-b">
                   <span className="text-muted-foreground">Payment Timing</span>
