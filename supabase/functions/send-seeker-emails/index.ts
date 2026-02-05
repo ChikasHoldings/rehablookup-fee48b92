@@ -259,11 +259,11 @@ function generateWelcomeEmail(name: string): string {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 40px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 40px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: 700;">
                 Welcome to RehabLookup
               </h1>
-              <p style="margin: 12px 0 0 0; color: rgba(255,255,255,0.9); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px;">
+              <p style="margin: 12px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 16px;">
                 Your journey to recovery starts here
               </p>
             </td>
@@ -299,7 +299,7 @@ function generateWelcomeEmail(name: string): string {
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
                     <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       Start Your Search
                     </a>
@@ -343,8 +343,8 @@ function generateWelcomeFollowupEmail(name: string): string {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
                 Tips for Your Treatment Search
               </h1>
             </td>
@@ -403,7 +403,7 @@ function generateWelcomeFollowupEmail(name: string): string {
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
                     <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       Browse Treatment Centers
                     </a>
@@ -443,11 +443,11 @@ function generateRequestConfirmationEmail(name: string, facilityName: string, me
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #059669 0%, #10B981 100%); padding: 36px 32px; text-align: center;">
+            <td style="background-color: #059669; background: #059669; padding: 36px 32px; text-align: center;">
               <div style="width: 64px; height: 64px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                 <span style="font-size: 32px;">✓</span>
               </div>
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
                 Your Request Was Sent!
               </h1>
             </td>
@@ -481,7 +481,7 @@ function generateRequestConfirmationEmail(name: string, facilityName: string, me
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
                     <a href="https://rehablookup.com/account/requests" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       View Your Requests
                     </a>
@@ -522,8 +522,8 @@ function generateRequestFollowupEmail(name: string, metadata?: Record<string, un
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
                 Checking In On Your Search
               </h1>
             </td>
@@ -557,7 +557,7 @@ function generateRequestFollowupEmail(name: string, metadata?: Record<string, un
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px; margin-right: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px; margin-right: 8px;">
                     <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       Find More Centers
                     </a>
@@ -597,11 +597,11 @@ function generateFacilityContactedEmail(name: string, facilityName: string, meta
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%); padding: 36px 32px; text-align: center;">
+            <td style="background-color: #7c3aed; background: #7c3aed; padding: 36px 32px; text-align: center;">
               <div style="width: 64px; height: 64px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                 <span style="font-size: 32px;">📬</span>
               </div>
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
                 You Have a Response!
               </h1>
             </td>
@@ -632,7 +632,7 @@ function generateFacilityContactedEmail(name: string, facilityName: string, meta
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
                     <a href="https://rehablookup.com/account/requests" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       View Your Requests
                     </a>
@@ -672,8 +672,8 @@ function generateTipsEmail(name: string): string {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
                 5 Questions to Ask Treatment Centers
               </h1>
             </td>
@@ -754,7 +754,7 @@ function generateTipsEmail(name: string): string {
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
                     <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       Find Treatment Centers
                     </a>
@@ -797,8 +797,8 @@ function generateWeeklyDigestEmail(name: string, metadata?: Record<string, unkno
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
                 Your Weekly Update
               </h1>
             </td>
@@ -847,7 +847,7 @@ function generateWeeklyDigestEmail(name: string, metadata?: Record<string, unkno
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
                     <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       Continue Your Search
                     </a>
@@ -887,8 +887,8 @@ function generateAccountReminderEmail(name: string): string {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
                 We're Still Here for You
               </h1>
             </td>
@@ -917,7 +917,7 @@ function generateAccountReminderEmail(name: string): string {
               
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
-                  <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 8px;">
+                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
                     <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       Continue Your Search
                     </a>
@@ -945,28 +945,28 @@ function generateEmailFooter(): string {
   return `
           <!-- Footer -->
           <tr>
-            <td style="background: #1B365D; padding: 28px 32px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 28px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom: 12px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
                       RehabLookup
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td align="center" style="padding-bottom: 16px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #cbd5e1;">
                       Connecting families with trusted treatment providers
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
-                      <a href="https://rehablookup.com/account/settings" style="color: rgba(255,255,255,0.5); text-decoration: underline;">Manage email preferences</a>
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #94a3b8;">
+                      <a href="https://rehablookup.com/account/settings" style="color: #93c5fd; text-decoration: underline;">Manage email preferences</a>
                        · 
-                      <a href="https://rehablookup.com" style="color: rgba(255,255,255,0.5); text-decoration: underline;">Visit RehabLookup</a>
+                      <a href="https://rehablookup.com" style="color: #93c5fd; text-decoration: underline;">Visit RehabLookup</a>
                     </p>
                   </td>
                 </tr>

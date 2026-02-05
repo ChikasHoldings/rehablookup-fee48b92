@@ -309,9 +309,9 @@ export function emailFooter(_options?: { includeNotificationSettings?: boolean; 
                     <p style="margin: 0 0 16px 0; font-size: 13px; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif;">Connecting families with quality treatment</p>
                     <p style="margin: 0; font-family: Arial, Helvetica, sans-serif;">
                       <a href="https://rehablookup.com" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Website</a>
-                      <span style="color: rgba(255,255,255,0.4); margin: 0 8px;">|</span>
+                      <span style="color: #64748b; margin: 0 8px;">|</span>
                       <a href="mailto:support@rehablookup.com" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Support</a>
-                      <span style="color: rgba(255,255,255,0.4); margin: 0 8px;">|</span>
+                      <span style="color: #64748b; margin: 0 8px;">|</span>
                       <a href="https://rehablookup.com/provider/settings#notifications" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Email Preferences</a>
                     </p>
                   </td>

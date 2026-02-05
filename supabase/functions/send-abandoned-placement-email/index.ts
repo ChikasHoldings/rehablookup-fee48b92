@@ -48,12 +48,12 @@ function buildAbandonedCartEmail(data: {
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 26px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 26px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">
                 You're One Step Away
               </h1>
-              <p style="margin: 12px 0 0 0; color: rgba(255,255,255,0.85); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px;">
+              <p style="margin: 12px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 15px;">
                 Your personalized placement matches are waiting
               </p>
             </td>
@@ -145,7 +145,7 @@ function buildAbandonedCartEmail(data: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${resumeUrl}" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(27, 54, 93, 0.3);">
+                    <a href="${resumeUrl}" style="display: inline-block; background-color: #1B365D; background: #1B365D; color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
                       Complete My Placement Request →
                     </a>
                   </td>
@@ -163,17 +163,17 @@ function buildAbandonedCartEmail(data: {
           
           <!-- Footer -->
           <tr>
-            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="text-align: center;">
-                    <p style="margin: 0 0 12px 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600;">
+                    <p style="margin: 0 0 12px 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 600;">
                       RehabLookup
                     </p>
-                    <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
+                    <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: Arial, Helvetica, sans-serif; font-size: 12px;">
                       Connecting families with quality care
                     </p>
-                    <p style="margin: 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
+                    <p style="margin: 0; color: #94a3b8; font-family: Arial, Helvetica, sans-serif; font-size: 11px;">
                       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
                     </p>
                   </td>
