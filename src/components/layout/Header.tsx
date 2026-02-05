@@ -98,8 +98,8 @@ export function Header({
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
         <div className="container flex h-16 items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
-          {/* Logo - Left aligned with fixed width for balance */}
-          <Link to="/" className="flex-shrink-0 w-[134px]">
+          {/* Logo - Left aligned */}
+          <Link to="/" className="flex-shrink-0">
             <img 
               src="/logo.png"
               alt="RehabLookup" 
@@ -112,7 +112,7 @@ export function Header({
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center justify-center gap-0.5 lg:gap-1 md:flex flex-1">
+          <nav className="hidden items-center gap-0.5 lg:gap-1 md:flex">
             {/* Primary nav items - always visible on md+ */}
             {primaryNavLinks.map((link) => {
               const isActive = location.pathname === link.href || 
@@ -230,7 +230,7 @@ export function Header({
           </nav>
 
           {/* CTA & Mobile Actions */}
-          <div className="flex items-center justify-end gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* Mobile Search Icon */}
             <PrefetchLink
               to="/rehab-centers"
@@ -256,8 +256,8 @@ export function Header({
               )}
             </button>
 
-            {/* Desktop CTAs - fixed width for balance with logo */}
-            <div className="hidden md:flex items-center gap-2 flex-shrink-0 w-[140px] lg:w-[200px] justify-end">
+            {/* Desktop CTAs - min-w prevents layout shift during auth loading */}
+            <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
               {isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
