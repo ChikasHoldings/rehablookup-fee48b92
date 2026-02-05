@@ -1,40 +1,109 @@
 
+# Fix Email Verification Race Condition
 
-# Fix Panel Layout Shifting
+## Problem
+When users enter the correct verification code, the backend successfully verifies it, but the frontend shows "Email not verified" error due to a React state race condition.
 
-## Summary
-Stabilize layouts across Provider, Admin, and Seeker panels by adding CSS containment, consistent widths, and proper flex constraints.
+**Technical Cause:**
+- `setIsEmailVerified(true)` is asynchronous
+- `handleSubmit()` is called immediately after `verifyCode()` returns
+- The `isEmailVerified` state check fails because React hasn't re-rendered yet
+
+## Solution
+Modify `handleSubmit` to accept an optional parameter that bypasses the verification check when called directly after successful verification.
+
+---
 
 ## Changes
 
-### 1. ProviderShell.tsx
-- Change sidebar from `w-60 xl:w-64` to consistent `w-64`
-- Add `isolate` to main container for stacking context
-- Add `min-h-0` to flex children to prevent overflow
+### 1. useLeadIntakeForm.ts
 
-### 2. AdminShell.tsx
-- Add `isolate` to root container
-- Add `min-h-0` to flex row
+**Update `handleSubmit` signature to accept verification bypass:**
 
-### 3. SeekerShell.tsx
-- Add `isolate` to root container
-- Add `min-h-0` to main content
+```typescript
+const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
+  // Check honeypot
+  if (formData.website) {
+    console.log("Honeypot triggered");
+    trackAnalytics("spam_blocked", { reason: "honeypot" });
+    setIsSubmitted(true);
+    return;
+  }
+  
+  // Skip verification check if explicitly told verification just succeeded
+  if (!options?.skipVerificationCheck && !isEmailVerified) {
+    toast({
+      title: "Email not verified",
+      description: "Please verify your email before submitting",
+      variant: "destructive",
+    });
+    return;
+  }
+  
+  // ... rest of submission logic unchanged
+};
+```
 
-### 4. index.css
-Add CSS containment rules:
-```css
-/* Layout stability for shells */
-[data-shell] {
-  contain: layout style;
+### 2. SingleQuestionFlow.tsx
+
+**Update `handleVerifyCode` to pass the bypass flag:**
+
+```typescript
+const handleVerifyCode = async () => {
+  if (verificationCode.length === 6) {
+    const success = await verifyCode(verificationCode);
+    if (success) {
+      // Pass flag to skip verification check since we JUST verified
+      await onSubmit({ skipVerificationCheck: true });
+    } else {
+      setErrors({ code: "Invalid or expired code" });
+    }
+  }
+};
+```
+
+**Update `onSubmit` prop type:**
+
+```typescript
+interface SingleQuestionFlowProps {
+  // ... existing props ...
+  onSubmit: (options?: { skipVerificationCheck?: boolean }) => Promise<void>;
+  // ...
 }
 ```
 
-## Technical Rationale
+### 3. LeadIntakeForm.tsx
 
-| Fix | Why It Works |
-|-----|--------------|
-| `w-64` (consistent) | Prevents 16px jump at 1280px breakpoint |
-| `isolate` | Creates stacking context, prevents z-index bleed |
-| `min-h-0` | Allows flex children to shrink, prevents overflow |
-| `contain: layout` | Isolates reflows to contained element |
+**Update handleSubmit wrapper to pass options:**
 
+```typescript
+const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
+  if (onCustomSubmit) {
+    // For custom submit, still respect the flag
+    setCustomSubmitting(true);
+    try {
+      await onCustomSubmit(formData);
+      setCustomSubmitted(true);
+    } finally {
+      setCustomSubmitting(false);
+    }
+  } else {
+    await defaultHandleSubmit(options);
+  }
+};
+```
+
+---
+
+## Why This Fix Works
+
+| Before | After |
+|--------|-------|
+| `verifyCode()` sets state async | Same |
+| `handleSubmit()` checks stale state | `handleSubmit({ skipVerificationCheck: true })` bypasses check |
+| Race condition causes error | Verification success is passed explicitly |
+
+## Files to Modify
+1. `src/components/lead-intake/useLeadIntakeForm.ts` - Add options parameter
+2. `src/components/lead-intake/SingleQuestionFlow.tsx` - Pass bypass flag
+3. `src/components/lead-intake/LeadIntakeForm.tsx` - Forward options to handler
