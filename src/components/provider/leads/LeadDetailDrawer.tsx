@@ -720,19 +720,32 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
               {/* Quick Actions */}
               <Separator />
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" className="gap-2" asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2" 
+                  disabled={displayInfo?.isLocked}
+                  asChild={!displayInfo?.isLocked}
+                >
+                  {displayInfo?.isLocked ? (
+                    <>
+                      <Phone className="h-4 w-4" />
+                      Unlock to Call
+                    </>
+                  ) : (
                   <a href={`tel:${lead.phone}`}>
                     <Phone className="h-4 w-4" />
                     Call Lead
                   </a>
+                  )}
                 </Button>
                 <Button 
                   variant="default" 
                   className="gap-2"
                   onClick={() => setEmailDialogOpen(true)}
+                  disabled={displayInfo?.isLocked}
                 >
                   <Mail className="h-4 w-4" />
-                  Email Lead
+                  {displayInfo?.isLocked ? "Unlock to Email" : "Email Lead"}
                 </Button>
               </div>
             </div>
@@ -740,12 +753,14 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
         </DialogContent>
       </Dialog>
 
-      {/* Email Dialog */}
-      <EmailLeadDialog
-        lead={lead}
-        open={emailDialogOpen}
-        onOpenChange={setEmailDialogOpen}
-      />
+      {/* Email Dialog - Only render with real data when unlocked */}
+      {isUnlocked && (
+        <EmailLeadDialog
+          lead={lead}
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+        />
+      )}
     </>
   );
 }
