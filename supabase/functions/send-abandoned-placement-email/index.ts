@@ -30,7 +30,7 @@ function buildAbandonedCartEmail(data: {
   const firstName = userName.split(' ')[0] || 'there';
   
   const fee = caseType === 'domestic' ? '$29' : '$299';
-  const facilityFee = caseType === 'domestic' ? '$1,000' : '$4,500';
+  const facilityFee = caseType === 'domestic' ? '$1,000' : '$3,000';
   
   const subject = `${firstName}, your placement request is almost ready – complete it now`;
   
