@@ -112,7 +112,7 @@ export function Header({
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-0.5 lg:gap-1 md:flex">
+          <nav className="hidden md:flex items-center gap-0.5 lg:gap-1">
             {/* Primary nav items - always visible on md+ */}
             {primaryNavLinks.map((link) => {
               const isActive = location.pathname === link.href || 
@@ -123,7 +123,7 @@ export function Header({
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "px-2.5 lg:px-3.5 py-2 text-sm lg:text-[15px] font-medium transition-colors whitespace-nowrap",
+                    "flex items-center h-10 px-2.5 lg:px-3.5 text-sm lg:text-[15px] font-medium transition-colors whitespace-nowrap",
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -144,7 +144,7 @@ export function Header({
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "hidden lg:block px-3.5 py-2 text-[15px] font-medium transition-colors whitespace-nowrap",
+                    "hidden lg:flex items-center h-10 px-3.5 text-[15px] font-medium transition-colors whitespace-nowrap",
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -160,7 +160,7 @@ export function Header({
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    "hidden lg:flex items-center gap-1 px-3.5 py-2 text-[15px] font-medium transition-colors whitespace-nowrap",
+                    "hidden lg:flex items-center h-10 gap-1 px-3.5 text-[15px] font-medium transition-colors whitespace-nowrap",
                     location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider")
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -193,7 +193,7 @@ export function Header({
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    "flex lg:hidden items-center gap-1 px-2.5 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                    "flex lg:hidden items-center h-10 gap-1 px-2.5 text-sm font-medium transition-colors whitespace-nowrap",
                     "text-muted-foreground hover:text-foreground"
                   )}
                 >
