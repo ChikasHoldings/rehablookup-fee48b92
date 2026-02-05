@@ -116,8 +116,8 @@ export default function ProviderDashboardPage() {
   const userName = profile?.first_name || "";
   const facilityIds = facilities?.map(f => f.id) ?? [];
 
-  // Welcome modal - show for first-time providers (use providerData.facility which includes the field)
-  const showWelcomeModal = providerData?.facility && providerData.facility.profile_completion_celebrated === false;
+  // Welcome modal - show for first-time providers (check for falsy value since null = not yet celebrated)
+  const showWelcomeModal = providerData?.facility && !providerData.facility.profile_completion_celebrated;
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
