@@ -196,9 +196,9 @@ Deno.serve(async (req) => {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 36px 32px; text-align: center;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
               <div style="font-size: 40px; margin-bottom: 12px;">⭐</div>
-              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; font-family: Arial, Helvetica, sans-serif;">
                 Share Your Experience
               </h1>
             </td>
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
                   <td align="center">
-                    <a href="${reviewLink}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                    <a href="${reviewLink}" style="display: inline-block; background-color: #1B365D; background: #1B365D; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, Helvetica, sans-serif;">
                       Leave a Review
                     </a>
                   </td>

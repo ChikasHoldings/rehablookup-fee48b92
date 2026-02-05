@@ -56,13 +56,13 @@ function generateWelcomeEmail(
 
   // Pending review notice
   email += `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
+                    <p style="margin: 0 0 6px 0; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
                       ⏳ Pending Review
                     </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #78350f; line-height: 1.5;">
+                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #78350f; line-height: 1.5;">
                       Your facility is being reviewed by our team. Once approved, your listing will be visible to families seeking treatment. We'll notify you as soon as you're approved!
                     </p>
                   </td>

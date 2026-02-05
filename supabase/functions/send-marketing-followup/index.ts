@@ -124,10 +124,10 @@ function getFollowUpEmail(firstName: string): string {
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
+            <td style="background-color: #1B365D; background: #1B365D; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">💜</div>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">
                 We're Here to Help
               </h1>
             </td>
@@ -146,30 +146,30 @@ function getFollowUpEmail(firstName: string): string {
               </p>
               
               <!-- Concierge Benefits Box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 2px solid #c4b5fd; border-radius: 12px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f9ff; background: #f0f9ff; border: 2px solid #0EA5E9; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 24px;">
-                    <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #5b21b6; text-align: center;">
+                    <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #1B365D; text-align: center; font-family: Arial, Helvetica, sans-serif;">
                       ⭐ Concierge Placement Service
                     </p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding: 8px 0; color: #6b21a8; font-size: 14px;">
+                        <td style="padding: 8px 0; color: #1B365D; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">
                           ✅ Personal matching specialist assigned to your case
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0; color: #6b21a8; font-size: 14px;">
+                        <td style="padding: 8px 0; color: #1B365D; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">
                           ✅ Insurance verification & coverage assistance
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0; color: #6b21a8; font-size: 14px;">
+                        <td style="padding: 8px 0; color: #1B365D; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">
                           ✅ Direct introductions to matched programs
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0; color: #6b21a8; font-size: 14px;">
+                        <td style="padding: 8px 0; color: #1B365D; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">
                           ✅ Support throughout the admissions process
                         </td>
                       </tr>
@@ -187,15 +187,15 @@ function getFollowUpEmail(firstName: string): string {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 8px;">
                 <tr>
                   <td align="center">
-                    <a href="https://rehablookup.com/concierge" style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);">
+                    <a href="https://rehablookup.com/concierge" style="display: inline-block; background-color: #1B365D; background: #1B365D; color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, Helvetica, sans-serif;">
                       Get Expert Help Now →
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <p style="margin: 28px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
-                Or call us directly: <a href="tel:1-800-662-4357" style="color: #7c3aed; text-decoration: none; font-weight: 600;">1-800-662-4357</a>
+              <p style="margin: 28px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                Or call us directly: <a href="tel:1-800-662-4357" style="color: #1B365D; text-decoration: none; font-weight: 600;">1-800-662-4357</a>
               </p>
             </td>
           </tr>
