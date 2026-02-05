@@ -21,7 +21,14 @@ export interface ProviderFacility {
 
 export function useProviderFacilities() {
   const queryClient = useQueryClient();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  // Initialize with cached userId for immediate placeholder data access
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("rl_cached_uid");
+    } catch {
+      return null;
+    }
+  });
   const initializedRef = useRef(false);
 
   // Get cached facilities for instant initial render (user-specific)
@@ -33,17 +40,24 @@ export function useProviderFacilities() {
         if (userCache) {
           const { data, timestamp } = JSON.parse(userCache);
           if (Date.now() - timestamp < 1000 * 60 * 5) {
+            console.log("[useProviderFacilities] Using user-specific cache for:", userId.substring(0, 8) + "...");
             return data;
           }
         }
       }
       
-      // Fallback to legacy global cache (for backwards compatibility during migration)
-      const cached = localStorage.getItem("provider-facilities-cache");
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 1000 * 60 * 5) {
-          return data;
+      // If no userId provided, try to get from cached role
+      if (!userId) {
+        const cachedUid = localStorage.getItem("rl_cached_uid");
+        if (cachedUid) {
+          const userCache = localStorage.getItem(`provider-facilities-cache-${cachedUid}`);
+          if (userCache) {
+            const { data, timestamp } = JSON.parse(userCache);
+            if (Date.now() - timestamp < 1000 * 60 * 5) {
+              console.log("[useProviderFacilities] Using cache from rl_cached_uid:", cachedUid.substring(0, 8) + "...");
+              return data;
+            }
+          }
         }
       }
     } catch {
