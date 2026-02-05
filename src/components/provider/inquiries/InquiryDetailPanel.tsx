@@ -139,12 +139,12 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
                     size="sm"
                     variant="ghost"
                     className="h-8 w-8 p-0"
-                    onClick={() => copyToClipboard(inquiry.phone, "Phone")}
+                    onClick={() => copyToClipboard(displayPhone, "Phone")}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button size="sm" className="gap-1.5" asChild>
-                    <a href={`tel:${inquiry.phone}`}>
+                    <a href={`tel:${displayPhone}`}>
                       <PhoneCall className="h-4 w-4" />
                       Call
                     </a>
@@ -168,12 +168,12 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
                     size="sm"
                     variant="ghost"
                     className="h-8 w-8 p-0"
-                    onClick={() => copyToClipboard(inquiry.email, "Email")}
+                    onClick={() => copyToClipboard(displayEmail, "Email")}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button size="sm" variant="outline" className="gap-1.5" asChild>
-                    <a href={`mailto:${inquiry.email}`}>
+                    <a href={`mailto:${displayEmail}`}>
                       <Mail className="h-4 w-4" />
                       Email
                     </a>
