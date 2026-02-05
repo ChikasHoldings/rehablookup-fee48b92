@@ -281,7 +281,7 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     setResendCooldown(0);
   }, []);
   
-  const handleSubmit = async () => {
+ const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
     // Check honeypot
     if (formData.website) {
       console.log("Honeypot triggered");
@@ -291,7 +291,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       return;
     }
     
-    if (!isEmailVerified) {
+    // Skip verification check if explicitly told verification just succeeded
+    if (!options?.skipVerificationCheck && !isEmailVerified) {
       toast({
         title: "Email not verified",
         description: "Please verify your email before submitting",
