@@ -346,6 +346,16 @@ const App = () => (
             <Route path="/insurance/medicare" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
             <Route path="/insurance/medicaid" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
             <Route path="/insurance/anthem" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
+            {/* Insurance Routes - Canonical URLs (for internal links) */}
+            <Route path="/insurance/aetna-rehab" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/bcbs-treatment" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
+            <Route path="/insurance/cigna-rehab" element={<PublicRouteGuard><CignaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/united-healthcare-rehab" element={<PublicRouteGuard><UnitedHealthcareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/humana-rehab" element={<PublicRouteGuard><HumanaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/kaiser-rehab" element={<PublicRouteGuard><KaiserRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/medicare-rehab" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/medicaid-rehab" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/anthem-rehab" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
             <Route path="/cost-estimator" element={<PublicRouteGuard><CostEstimator /></PublicRouteGuard>} />
             <Route path="/faq" element={<PublicRouteGuard><FAQ /></PublicRouteGuard>} />
             <Route path="/about" element={<PublicRouteGuard><About /></PublicRouteGuard>} />
