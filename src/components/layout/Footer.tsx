@@ -162,16 +162,12 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
             <div className="col-span-2 lg:col-span-4 space-y-4">
               <Link to="/" className="inline-block">
                 <img
-                  src="/logo-white.png"
+                  src="/logo.png"
                   alt="RehabLookup"
-                  className="h-8 w-auto"
+                  className="h-8 w-auto brightness-0 invert"
                   width={153}
                   height={32}
                   loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = "/logo.png";
-                    e.currentTarget.className = "h-8 w-auto brightness-0 invert";
-                  }}
                 />
               </Link>
               <p className="text-sm text-primary-foreground/70">
@@ -239,16 +235,12 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
           <div className="py-6 text-center border-b border-primary-foreground/10">
             <Link to="/" className="inline-block mb-3">
               <img
-                src="/logo-white.png"
+                src="/logo.png"
                 alt="RehabLookup"
-                className="h-7 w-auto mx-auto"
+                className="h-7 w-auto mx-auto brightness-0 invert"
                 width={134}
                 height={28}
                 loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.src = "/logo.png";
-                  e.currentTarget.className = "h-7 w-auto mx-auto brightness-0 invert";
-                }}
               />
             </Link>
             <p className="text-sm text-primary-foreground/70 mb-4">
