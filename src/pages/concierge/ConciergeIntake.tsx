@@ -15,6 +15,7 @@ import { StepCareNeed } from "@/components/concierge/StepCareNeed";
 import { StepLogistics } from "@/components/concierge/StepLogistics";
 import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
 import { StepContact } from "@/components/concierge/StepContact";
+import { StepEmailVerification } from "@/components/concierge/StepEmailVerification";
 import { StepReviewSubmit } from "@/components/concierge/StepReviewSubmit";
 import { IntakeProgress } from "@/components/international/IntakeProgress";
 
@@ -80,15 +81,14 @@ export interface ConciergeIntakeData {
   hipaaConsent: boolean;
 }
 
-interface PaymentState {
-  sessionId: string | null;
-  paid: boolean;
+interface EmailVerificationState {
+  verified: boolean;
   verifiedAt: string | null;
 }
 
 const STORAGE_KEY = "concierge_intake_draft";
-const PAYMENT_STATE_KEY = "concierge_payment_state";
-const SUBMITTED_SESSIONS_KEY = "concierge_submitted_sessions";
+const EMAIL_VERIFICATION_KEY = "concierge_email_verified";
+const DRAFT_ID_KEY = "concierge_draft_id";
 
 const initialData: ConciergeIntakeData = {
   ageRange: "",
@@ -143,6 +143,7 @@ const initialData: ConciergeIntakeData = {
   hipaaConsent: false,
 };
 
+// NEW: 7 steps with email verification as step 6
 const STEP_CONFIG = [
   { 
     title: "Who Needs Help", 
@@ -170,8 +171,13 @@ const STEP_CONFIG = [
     icon: "📞"
   },
   { 
-    title: "Review & Submit", 
-    description: "Confirm your information and complete payment",
+    title: "Verify Email", 
+    description: "Confirm your email to proceed to payment",
+    icon: "✉️"
+  },
+  { 
+    title: "Review & Pay", 
+    description: "Review your information and complete payment",
     icon: "✅"
   },
 ];
@@ -183,75 +189,29 @@ export default function ConciergeIntake() {
   const [direction, setDirection] = useState(1);
   const [formData, setFormData] = useState<ConciergeIntakeData>(initialData);
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [paymentState, setPaymentState] = useState<PaymentState>({
-    sessionId: null,
-    paid: false,
+  const [draftId, setDraftId] = useState<string | null>(null);
+  
+  // Email verification state
+  const [emailVerification, setEmailVerification] = useState<EmailVerificationState>({
+    verified: false,
     verifiedAt: null,
   });
 
-  // Verify payment function
-  const verifyPayment = useCallback(async (sessionId: string) => {
-    setIsVerifyingPayment(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-concierge-payment", {
-        body: { sessionId }
-      });
-
-      if (error) throw error;
-
-      if (data?.alreadySubmitted) {
-        // Already submitted, redirect to thank you
-        toast.success("Your intake was already submitted!");
-        navigate(`/concierge/thank-you?session_id=${sessionId}`);
-        return;
-      }
-
-      if (data?.paid) {
-        const newState: PaymentState = {
-          sessionId,
-          paid: true,
-          verifiedAt: new Date().toISOString(),
-        };
-        setPaymentState(newState);
-        localStorage.setItem(PAYMENT_STATE_KEY, JSON.stringify(newState));
-        setCurrentStep(6);
-        toast.success("Payment verified! Review and submit your intake.");
-        
-        // Clear session_id from URL without triggering re-render
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete("session_id");
-        setSearchParams(newParams, { replace: true });
-      } else {
-        toast.error("Payment verification failed. Please try again.");
-      }
-    } catch (err) {
-      console.error("Payment verification error:", err);
-      toast.error("Failed to verify payment. Please try again.");
-    } finally {
-      setIsVerifyingPayment(false);
-    }
-  }, [navigate, searchParams, setSearchParams]);
-
-  // Handle return from Stripe with session_id
-  useEffect(() => {
-    const sessionId = searchParams.get("session_id");
-    if (sessionId && !paymentState.paid && !isVerifyingPayment) {
-      verifyPayment(sessionId);
-    }
-  }, [searchParams, paymentState.paid, isVerifyingPayment, verifyPayment]);
-
-  // Show canceled message if returned from checkout
+  // Handle canceled payment
   useEffect(() => {
     if (searchParams.get("canceled") === "true") {
-      setCurrentStep(6); // Go to review step to show cancellation alert
+      setCurrentStep(7); // Go to review step
+      toast.info("Payment was canceled. You can try again when ready.");
+      // Clear the param
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("canceled");
+      setSearchParams(newParams, { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
-  // Load draft and payment state from localStorage
+  // Load draft from localStorage
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -266,14 +226,32 @@ export default function ConciergeIntake() {
       }
     }
 
-    const savedPayment = localStorage.getItem(PAYMENT_STATE_KEY);
-    if (savedPayment) {
+    // Load email verification state
+    const savedEmailVerification = localStorage.getItem(EMAIL_VERIFICATION_KEY);
+    if (savedEmailVerification) {
       try {
-        const parsedPayment = JSON.parse(savedPayment);
-        setPaymentState(parsedPayment);
+        const parsed = JSON.parse(savedEmailVerification);
+        // Check if verification is still valid (within 24 hours)
+        if (parsed.verifiedAt) {
+          const verifiedTime = new Date(parsed.verifiedAt).getTime();
+          const now = Date.now();
+          const hoursElapsed = (now - verifiedTime) / (1000 * 60 * 60);
+          if (hoursElapsed < 24) {
+            setEmailVerification(parsed);
+          } else {
+            // Clear expired verification
+            localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+          }
+        }
       } catch (e) {
-        console.error("Failed to parse saved payment state", e);
+        console.error("Failed to parse email verification state", e);
       }
+    }
+
+    // Load draft ID
+    const savedDraftId = localStorage.getItem(DRAFT_ID_KEY);
+    if (savedDraftId) {
+      setDraftId(savedDraftId);
     }
   }, []);
 
@@ -286,18 +264,6 @@ export default function ConciergeIntake() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     setLastSaved(new Date());
   }, [formData]);
-
-  // Block navigation during submission
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isSubmitting) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isSubmitting]);
 
   const updateFormData = (updates: Partial<ConciergeIntakeData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -356,15 +322,34 @@ export default function ConciergeIntake() {
         }
         if (!formData.hipaaConsent) errors.hipaaConsent = "You must consent to continue";
         break;
+      case 6: // Email verification
+        if (!emailVerification.verified) {
+          errors.email = "Please verify your email to continue";
+        }
+        break;
     }
 
     setStepErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  const handleEmailVerified = (verifiedAt: string) => {
+    const newState = { verified: true, verifiedAt };
+    setEmailVerification(newState);
+    localStorage.setItem(EMAIL_VERIFICATION_KEY, JSON.stringify(newState));
+  };
+
+  const handleEditEmail = () => {
+    // Clear email verification and go back to step 5
+    setEmailVerification({ verified: false, verifiedAt: null });
+    localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+    setDirection(-1);
+    setCurrentStep(5);
+  };
+
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      if (currentStep < 6) {
+      if (currentStep < 7) {
         setDirection(1);
         setCurrentStep(prev => prev + 1);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -390,7 +375,7 @@ export default function ConciergeIntake() {
 
   const handleProceedToPayment = async () => {
     // Validate all previous steps before payment
-    for (let step = 1; step <= 5; step++) {
+    for (let step = 1; step <= 6; step++) {
       if (!validateStep(step)) {
         setCurrentStep(step);
         toast.error("Please complete all required fields before payment");
@@ -401,17 +386,36 @@ export default function ConciergeIntake() {
     setIsProcessingPayment(true);
     
     try {
+      // Save draft to database first
+      const { data: draftData, error: draftError } = await supabase.functions.invoke("save-placement-draft", {
+        body: {
+          intakeData: formData,
+          emailVerifiedAt: emailVerification.verifiedAt,
+          draftId: draftId,
+        },
+      });
+
+      if (draftError) {
+        console.error("Draft save error:", draftError);
+        // Don't block payment if draft save fails
+      } else if (draftData?.draftId) {
+        setDraftId(draftData.draftId);
+        localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
+      }
+
+      // Create checkout session
       const { data, error } = await supabase.functions.invoke("create-concierge-checkout", {
         body: {
           email: formData.email,
           intakeDraftKey: STORAGE_KEY,
+          draftId: draftData?.draftId || draftId,
         },
       });
 
       if (error) throw error;
 
       if (data?.url) {
-        // Redirect in same window (will return with session_id)
+        // Redirect to Stripe (will return to thank you page after payment)
         window.location.href = data.url;
       } else {
         throw new Error("No checkout URL returned");
@@ -420,56 +424,6 @@ export default function ConciergeIntake() {
       console.error("Checkout error:", err);
       toast.error("Failed to create checkout session. Please try again.");
       setIsProcessingPayment(false);
-    }
-  };
-
-  const handleSubmitIntake = async () => {
-    if (!paymentState.paid || !paymentState.sessionId) {
-      toast.error("Please complete payment first");
-      return;
-    }
-
-    // Check if already submitted (client-side)
-    const submittedSessions = JSON.parse(localStorage.getItem(SUBMITTED_SESSIONS_KEY) || "[]");
-    if (submittedSessions.includes(paymentState.sessionId)) {
-      toast.success("Your intake was already submitted!");
-      navigate(`/concierge/thank-you?session_id=${paymentState.sessionId}`);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
-        body: {
-          sessionId: paymentState.sessionId,
-          intakeData: formData,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.alreadySubmitted) {
-        toast.success("Your intake was already submitted!");
-      } else {
-        toast.success("Your intake has been submitted successfully!");
-      }
-
-      // Track submitted sessions
-      submittedSessions.push(paymentState.sessionId);
-      localStorage.setItem(SUBMITTED_SESSIONS_KEY, JSON.stringify(submittedSessions));
-
-      // Clear drafts
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(PAYMENT_STATE_KEY);
-
-      // Navigate to thank you page
-      navigate(`/concierge/thank-you?session_id=${paymentState.sessionId}`);
-    } catch (err) {
-      console.error("Submission error:", err);
-      toast.error("Failed to submit intake. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -517,13 +471,24 @@ export default function ConciergeIntake() {
         );
       case 6:
         return (
+          <StepEmailVerification
+            email={formData.email}
+            firstName={formData.firstName}
+            onVerified={handleEmailVerified}
+            onEditEmail={handleEditEmail}
+            isVerified={emailVerification.verified}
+            verifiedAt={emailVerification.verifiedAt}
+          />
+        );
+      case 7:
+        return (
           <StepReviewSubmit
             data={formData}
-            paymentState={paymentState}
+            paymentState={{ sessionId: null, paid: false, verifiedAt: null }}
             onEdit={handleEditStep}
             onPay={handleProceedToPayment}
-            onSubmit={handleSubmitIntake}
-            isSubmitting={isSubmitting}
+            onSubmit={() => {}} // No longer used - payment redirects to thank you
+            isSubmitting={false}
             isProcessingPayment={isProcessingPayment}
           />
         );
@@ -532,27 +497,13 @@ export default function ConciergeIntake() {
     }
   };
 
-  // Show loading state while verifying payment
-  if (isVerifyingPayment) {
-    return (
-      <>
-        <Helmet>
-          <title>Verifying Payment | RehabLookup</title>
-        </Helmet>
-        <div className="min-h-screen flex flex-col bg-gradient-to-b from-muted/50 to-background">
-          <PublicHeader />
-          <main className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Verifying Payment</h2>
-              <p className="text-muted-foreground">Please wait while we confirm your payment...</p>
-            </div>
-          </main>
-          <PublicFooter />
-        </div>
-      </>
-    );
-  }
+  // Determine if we can proceed from current step
+  const canProceed = () => {
+    if (currentStep === 6) {
+      return emailVerification.verified;
+    }
+    return true;
+  };
 
   // Animation variants for step transitions
   const slideVariants = {
@@ -573,8 +524,8 @@ export default function ConciergeIntake() {
   return (
     <>
       <Helmet>
-        <title>Concierge Intake | RehabLookup</title>
-        <meta name="description" content="Complete your intake form to be placed in the right treatment programs." />
+        <title>Placement Request | RehabLookup</title>
+        <meta name="description" content="Complete your intake form to be placed with the right treatment programs." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -588,7 +539,7 @@ export default function ConciergeIntake() {
               <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
                 {/* Progress */}
                 <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 border-b bg-muted/30">
-                  <IntakeProgress currentStep={currentStep} totalSteps={6} />
+                  <IntakeProgress currentStep={currentStep} totalSteps={7} />
                 </div>
 
                 {/* Step Content */}
@@ -630,7 +581,7 @@ export default function ConciergeIntake() {
                 </div>
 
                 {/* Navigation */}
-                {currentStep < 6 && (
+                {currentStep < 7 && (
                   <div className="px-4 sm:px-6 md:px-8 py-4 border-t bg-muted/20 flex flex-col-reverse sm:flex-row justify-center gap-3">
                     {currentStep > 1 && (
                       <Button
@@ -642,17 +593,30 @@ export default function ConciergeIntake() {
                         Back
                       </Button>
                     )}
-                    <Button
-                      onClick={handleNext}
-                      className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
-                    >
-                      {currentStep === 5 ? "Review & Submit" : "Continue"}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    {currentStep === 6 ? (
+                      // Email verification step - only show Continue if verified
+                      emailVerification.verified && (
+                        <Button
+                          onClick={handleNext}
+                          className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
+                        >
+                          Continue to Review
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      )
+                    ) : (
+                      <Button
+                        onClick={handleNext}
+                        className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
+                      >
+                        {currentStep === 5 ? "Verify Email" : "Continue"}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 )}
 
-                {currentStep === 6 && (
+                {currentStep === 7 && (
                   <div className="px-4 sm:px-6 py-3 border-t bg-muted/20 flex justify-center">
                     <Button
                       variant="ghost"

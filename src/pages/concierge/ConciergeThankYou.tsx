@@ -4,11 +4,28 @@ import { Helmet } from "react-helmet-async";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CheckCircle, Loader2, User, LogIn, Clock, Mail } from "lucide-react";
+import { 
+  CheckCircle, 
+  Loader2, 
+  User, 
+  Clock, 
+  Mail, 
+  Phone,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  Shield,
+  Home,
+  Sparkles,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { ConciergeIntakeData } from "./ConciergeIntake";
+import { motion, AnimatePresence } from "framer-motion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const STORAGE_KEY = "concierge_intake_draft";
 const SUBMITTED_KEY = "concierge_submitted_sessions";
@@ -19,11 +36,20 @@ export default function ConciergeThankYou() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentVerified, setPaymentVerified] = useState(false);
-  const [intakeSubmitted, setIntakeSubmitted] = useState(false);
   const [inquiryId, setInquiryId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Password creation state
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
 
   const sessionId = searchParams.get("session_id");
 
@@ -38,8 +64,19 @@ export default function ConciergeThankYou() {
       // Check if already submitted for this session (idempotency)
       const submittedSessions = JSON.parse(localStorage.getItem(SUBMITTED_KEY) || "[]");
       if (submittedSessions.includes(sessionId)) {
+        // Load saved data from localStorage for display
+        const savedIntake = localStorage.getItem(STORAGE_KEY);
+        if (savedIntake) {
+          try {
+            const data = JSON.parse(savedIntake)?.data || JSON.parse(savedIntake);
+            setFirstName(data.firstName || null);
+            setLastName(data.lastName || null);
+            setUserEmail(data.email || null);
+          } catch (e) {
+            console.error("Failed to parse saved intake", e);
+          }
+        }
         setPaymentVerified(true);
-        setIntakeSubmitted(true);
         setIsVerifying(false);
         return;
       }
@@ -65,12 +102,14 @@ export default function ConciergeThankYou() {
         // Get intake data from localStorage
         const savedIntake = localStorage.getItem(STORAGE_KEY);
         if (!savedIntake) {
-          setError("Intake data not found. Please complete the intake form again.");
+          setError("Intake data not found. Please contact support if you completed payment.");
           setIsVerifying(false);
           return;
         }
 
-        const intakeData: ConciergeIntakeData = JSON.parse(savedIntake);
+        const intakeData = JSON.parse(savedIntake)?.data || JSON.parse(savedIntake);
+        setFirstName(intakeData.firstName || null);
+        setLastName(intakeData.lastName || null);
         setIsSubmitting(true);
 
         // Submit intake
@@ -82,16 +121,12 @@ export default function ConciergeThankYou() {
         if (submitError) throw submitError;
 
         setInquiryId(submitData.inquiryId);
-        setIntakeSubmitted(true);
 
         // Mark as submitted for idempotency
         submittedSessions.push(sessionId);
         localStorage.setItem(SUBMITTED_KEY, JSON.stringify(submittedSessions));
 
-        // Clear the draft
-        localStorage.removeItem(STORAGE_KEY);
-
-        toast.success("Your intake has been submitted successfully!");
+        toast.success("Your placement request has been submitted!");
 
       } catch (err) {
         console.error("Verification/submission error:", err);
@@ -114,6 +149,94 @@ export default function ConciergeThankYou() {
     checkAuth();
   }, []);
 
+  const handleCreateAccount = async () => {
+    if (!userEmail) {
+      toast.error("Email not available");
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setIsCreatingAccount(true);
+
+    try {
+      // Create user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userEmail,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/account`,
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            account_type: "seeker",
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create seeker profile
+        const { error: profileError } = await supabase
+          .from("seeker_profiles")
+          .insert({
+            user_id: authData.user.id,
+            first_name: firstName || "",
+            last_name: lastName || "",
+            email: userEmail,
+          });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          // Don't throw - account was created, profile can be created later
+        }
+
+        // Link inquiry to user if we have the inquiry ID
+        if (inquiryId) {
+          const { error: linkError } = await supabase
+            .from("concierge_inquiries")
+            .update({ user_id: authData.user.id })
+            .eq("id", inquiryId);
+
+          if (linkError) {
+            console.error("Inquiry link error:", linkError);
+          }
+        }
+
+        setAccountCreated(true);
+        toast.success("Account created! Check your email to verify.");
+
+        // Clear the intake draft
+        localStorage.removeItem(STORAGE_KEY);
+
+        // Wait a moment then redirect
+        setTimeout(() => {
+          navigate("/account");
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Account creation error:", err);
+      const message = err instanceof Error ? err.message : "Failed to create account";
+      
+      if (message.includes("already registered")) {
+        toast.error("An account with this email already exists. Please log in instead.");
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
   if (isVerifying || isSubmitting) {
     return (
       <>
@@ -127,7 +250,7 @@ export default function ConciergeThankYou() {
             <div className="text-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
               <p className="text-lg text-muted-foreground">
-                {isVerifying ? "Verifying your payment..." : "Submitting your intake..."}
+                {isVerifying ? "Verifying your payment..." : "Submitting your placement request..."}
               </p>
             </div>
           </main>
@@ -160,7 +283,7 @@ export default function ConciergeThankYou() {
                       <Link to="/concierge/intake">Return to Intake</Link>
                     </Button>
                     <Button variant="outline" asChild>
-                      <a href="mailto:support@rehablookup.com">Contact Support</a>
+                      <a href="mailto:placement@rehablookup.com">Contact Support</a>
                     </Button>
                   </div>
                 </CardContent>
@@ -176,87 +299,227 @@ export default function ConciergeThankYou() {
   return (
     <>
       <Helmet>
-        <title>Thank You | RehabLookup Concierge</title>
+        <title>Thank You | RehabLookup Placement</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
-      <div className="min-h-screen flex flex-col bg-muted/30">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-green-50/50 to-background dark:from-green-950/20">
         <PublicHeader />
 
-        <main className="flex-1 flex items-center justify-center py-12">
-          <div className="container mx-auto px-4 max-w-lg">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="pt-8 pb-6 text-center">
-                {/* Success Icon */}
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="h-10 w-10 text-green-600" />
+        <main className="flex-1 py-8 sm:py-12">
+          <div className="container mx-auto px-4 max-w-xl">
+            {/* Success Card */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Card className="border-0 shadow-xl overflow-hidden">
+                {/* Success Header */}
+                <div className="bg-gradient-to-br from-green-500 to-green-600 px-6 py-8 text-center text-white">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="w-20 h-20 rounded-full bg-white/20 backdrop-blur flex items-center justify-center mx-auto mb-4"
+                  >
+                    <CheckCircle className="h-10 w-10 text-white" />
+                  </motion.div>
+                  <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                    {firstName ? `Thank You, ${firstName}!` : "Thank You!"}
+                  </h1>
+                  <p className="text-green-100 text-lg">
+                    Your placement request has been received
+                  </p>
                 </div>
 
-                <h1 className="text-2xl font-bold text-foreground mb-2">
-                  Thank You!
-                </h1>
-                <p className="text-lg text-muted-foreground mb-6">
-                  Your intake has been submitted successfully.
-                </p>
+                <CardContent className="p-6">
+                  {/* What Happens Next */}
+                  <div className="mb-8">
+                    <h2 className="font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      What Happens Next
+                    </h2>
+                    <div className="space-y-4">
+                      <div className="flex gap-4 items-start">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">24-48 Hour Review</p>
+                          <p className="text-sm text-muted-foreground">
+                            A placement advisor will personally review your request
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 items-start">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">Facility Introductions</p>
+                          <p className="text-sm text-muted-foreground">
+                            We'll connect you with verified treatment programs that fit your needs
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 items-start">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Phone className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">Direct Contact</p>
+                          <p className="text-sm text-muted-foreground">
+                            Selected programs will reach out to discuss your options
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                {/* What happens next */}
-                <div className="bg-muted/50 rounded-lg p-6 mb-8 text-left">
-                  <h2 className="font-semibold text-foreground mb-4">What Happens Next?</h2>
-                  <ul className="space-y-4">
-                    <li className="flex gap-3">
-                      <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">
-                        A placement specialist will review your intake within 24-48 hours
-                      </span>
-                    </li>
-                    <li className="flex gap-3">
-                      <User className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">
-                        We will connect you with treatment programs that fit your specific needs
-                      </span>
-                    </li>
-                    <li className="flex gap-3">
-                      <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">
-                        Selected programs will reach out via email to discuss next steps
-                      </span>
-                    </li>
-                  </ul>
-                </div>
+                  {/* Create Account Section */}
+                  {!isLoggedIn && !accountCreated && (
+                    <Collapsible open={showPasswordSection} onOpenChange={setShowPasswordSection}>
+                      <div className="border rounded-lg overflow-hidden">
+                        <CollapsibleTrigger asChild>
+                          <button className="w-full px-4 py-4 flex items-center justify-between bg-muted/50 hover:bg-muted/70 transition-colors text-left">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Shield className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-foreground">Create Account</p>
+                                <p className="text-sm text-muted-foreground">Track your placement progress</p>
+                              </div>
+                            </div>
+                            {showPasswordSection ? (
+                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </button>
+                        </CollapsibleTrigger>
+                        
+                        <CollapsibleContent>
+                          <AnimatePresence>
+                            {showPasswordSection && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="px-4 pb-4 pt-2 border-t"
+                              >
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  Create a password to log in and track your placement request. Your email ({userEmail}) is already verified.
+                                </p>
+                                
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="password">Password</Label>
+                                    <div className="relative mt-1.5">
+                                      <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="At least 8 characters"
+                                        className="pr-10"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                      >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                      </button>
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                    <Input
+                                      id="confirmPassword"
+                                      type={showPassword ? "text" : "password"}
+                                      value={confirmPassword}
+                                      onChange={(e) => setConfirmPassword(e.target.value)}
+                                      placeholder="Re-enter password"
+                                      className="mt-1.5"
+                                    />
+                                  </div>
+                                  
+                                  <Button
+                                    onClick={handleCreateAccount}
+                                    disabled={isCreatingAccount || password.length < 8 || password !== confirmPassword}
+                                    className="w-full"
+                                  >
+                                    {isCreatingAccount ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating Account...
+                                      </>
+                                    ) : (
+                                      "Create Account"
+                                    )}
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  )}
 
-                {/* CTAs based on auth state */}
-                <div className="space-y-3">
-                  {isLoggedIn ? (
+                  {/* Account Created Success */}
+                  {accountCreated && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6"
+                    >
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-green-800 dark:text-green-200">Account Created!</p>
+                          <p className="text-sm text-green-700 dark:text-green-300">Redirecting to your dashboard...</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Already Logged In CTA */}
+                  {isLoggedIn && (
                     <Button asChild size="lg" className="w-full">
                       <Link to="/account">
                         <User className="mr-2 h-4 w-4" />
-                        View Your Account
+                        Go to Your Dashboard
                       </Link>
                     </Button>
-                  ) : (
-                    <>
-                      <Button asChild size="lg" className="w-full">
-                        <Link to={`/concierge/create-password?session_id=${sessionId}&email=${encodeURIComponent(userEmail || "")}`}>
-                          <User className="mr-2 h-4 w-4" />
-                          Create Account to Track Progress
-                        </Link>
-                      </Button>
-                      <Button variant="outline" asChild size="lg" className="w-full">
-                        <Link to="/">
+                  )}
+
+                  {/* Return Home */}
+                  {!isLoggedIn && !accountCreated && (
+                    <div className="mt-6 text-center">
+                      <Button variant="ghost" asChild>
+                        <Link to="/" className="text-muted-foreground">
+                          <Home className="mr-2 h-4 w-4" />
                           Return to Home
                         </Link>
                       </Button>
-                    </>
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            {/* Contact support */}
+            {/* Support Footer */}
             <div className="mt-6 text-center text-sm text-muted-foreground">
               <p>
                 Questions? Contact us at{" "}
-                <a href="mailto:placement@rehablookup.com" className="text-primary hover:underline">
+                <a 
+                  href="mailto:placement@rehablookup.com" 
+                  className="text-primary hover:underline font-medium"
+                >
                   placement@rehablookup.com
                 </a>
               </p>

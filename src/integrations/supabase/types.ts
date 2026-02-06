@@ -481,10 +481,13 @@ export type Database = {
           desired_location_state: string | null
           desired_radius_miles: number | null
           detox_needed: string | null
+          draft_id: string | null
+          email_verified_at: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           employer_name: string | null
           faith_based_preference: string | null
+          form_completed_at: string | null
           gender: string | null
           hipaa_consent: boolean | null
           holistic_interest: boolean | null
@@ -506,6 +509,7 @@ export type Database = {
           needs_transport_help: boolean | null
           notes: string | null
           payment_amount_cents: number
+          payment_reminder_count: number | null
           payment_status: string
           payment_type: string | null
           placed_facility_id: string | null
@@ -569,10 +573,13 @@ export type Database = {
           desired_location_state?: string | null
           desired_radius_miles?: number | null
           detox_needed?: string | null
+          draft_id?: string | null
+          email_verified_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           employer_name?: string | null
           faith_based_preference?: string | null
+          form_completed_at?: string | null
           gender?: string | null
           hipaa_consent?: boolean | null
           holistic_interest?: boolean | null
@@ -594,6 +601,7 @@ export type Database = {
           needs_transport_help?: boolean | null
           notes?: string | null
           payment_amount_cents?: number
+          payment_reminder_count?: number | null
           payment_status?: string
           payment_type?: string | null
           placed_facility_id?: string | null
@@ -657,10 +665,13 @@ export type Database = {
           desired_location_state?: string | null
           desired_radius_miles?: number | null
           detox_needed?: string | null
+          draft_id?: string | null
+          email_verified_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           employer_name?: string | null
           faith_based_preference?: string | null
+          form_completed_at?: string | null
           gender?: string | null
           hipaa_consent?: boolean | null
           holistic_interest?: boolean | null
@@ -682,6 +693,7 @@ export type Database = {
           needs_transport_help?: boolean | null
           notes?: string | null
           payment_amount_cents?: number
+          payment_reminder_count?: number | null
           payment_status?: string
           payment_type?: string | null
           placed_facility_id?: string | null
