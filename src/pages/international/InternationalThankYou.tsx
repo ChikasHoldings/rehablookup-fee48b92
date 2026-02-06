@@ -1,55 +1,48 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link, useSearchParams } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
-import { CheckCircle, Clock, Mail, ArrowRight, Sparkles, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { 
+  CheckCircle, 
+  Clock, 
+  ArrowRight, 
+  Sparkles, 
+  Loader2,
+  Lock,
+  User,
+  ChevronDown,
+  ChevronUp,
+  Home
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+interface LocationState {
+  firstName?: string;
+  email?: string;
+  inquiryId?: string;
+}
+
 export default function InternationalThankYou() {
-  const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState<string>("");
-  const [isResending, setIsResending] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleResendVerification = async () => {
-    if (!email) {
-      toast({
-        title: "Email Required",
-        description: "Please provide your email address to resend verification.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsResending(true);
-    try {
-      const { error } = await supabase.functions.invoke("send-verification-code", {
-        body: { email, type: "international_placement" },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Verification Sent",
-        description: "A new verification email has been sent to your inbox.",
-      });
-    } catch (err) {
-      console.error("Resend error:", err);
-      toast({
-        title: "Error",
-        description: "Failed to resend verification. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsResending(false);
-    }
-  };
+  const state = location.state as LocationState | null;
+  
+  const [firstName, setFirstName] = useState(state?.firstName || "");
+  const [email, setEmail] = useState(state?.email || "");
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
 
   useEffect(() => {
     // Trigger confetti on mount
@@ -79,45 +72,125 @@ export default function InternationalThankYou() {
 
     frame();
 
-    // Try to get email from localStorage intake data
-    try {
-      const intakeData = localStorage.getItem("international_intake_data");
-      if (intakeData) {
-        const parsed = JSON.parse(intakeData);
-        if (parsed.email) {
-          setEmail(parsed.email);
+    // Try to get data from localStorage if not in state
+    if (!firstName || !email) {
+      try {
+        const intakeData = localStorage.getItem("international_intake_data");
+        if (intakeData) {
+          const parsed = JSON.parse(intakeData);
+          if (parsed.first_name && !firstName) setFirstName(parsed.first_name);
+          if (parsed.email && !email) setEmail(parsed.email);
+          localStorage.removeItem("international_intake_data");
         }
-        // Clear the stored data
-        localStorage.removeItem("international_intake_data");
+      } catch (e) {
+        console.error("Error parsing intake data:", e);
       }
-    } catch (e) {
-      console.error("Error parsing intake data:", e);
     }
   }, []);
+
+  const handleCreateAccount = async () => {
+    if (password.length < 8) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 8 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords Don't Match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingAccount(true);
+    try {
+      // Create user account
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/account`,
+          data: {
+            first_name: firstName,
+            account_type: 'seeker',
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (signUpData.user) {
+        // Create seeker profile
+        await supabase.from("seeker_profiles").insert({
+          user_id: signUpData.user.id,
+          first_name: firstName,
+          email: email,
+        });
+
+        // Link international cases to this user
+        await supabase
+          .from("international_placement_cases")
+          .update({ user_id: signUpData.user.id })
+          .eq("client_email", email)
+          .is("user_id", null);
+
+        setAccountCreated(true);
+        toast({
+          title: "Account Created!",
+          description: "You can now track your placement progress.",
+        });
+
+        // Redirect to account after a short delay
+        setTimeout(() => {
+          navigate("/account/international");
+        }, 1500);
+      }
+    } catch (err: any) {
+      console.error("Account creation error:", err);
+      
+      let errorMessage = "Failed to create account. Please try again.";
+      if (err.message?.includes("already registered")) {
+        errorMessage = "An account with this email already exists. Please log in instead.";
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
 
   const steps = [
     {
       number: 1,
-      title: "Verify Your Email",
-      description: "Check your inbox and click the verification link",
-      active: true,
+      title: "Application Received",
+      description: "Your placement request has been submitted",
+      completed: true,
     },
     {
       number: 2,
-      title: "Advisor Review",
-      description: "Our team reviews your case within 24 hours",
-      active: false,
+      title: "Advisor Assignment",
+      description: "A dedicated advisor will review your case within 24 hours",
+      active: true,
     },
     {
       number: 3,
-      title: "Receive Matches",
-      description: "Get personalized facility recommendations",
+      title: "Facility Recommendations",
+      description: "Receive personalized US treatment center options",
       active: false,
     },
     {
       number: 4,
-      title: "Confirm Placement",
-      description: "We coordinate admission with your chosen facility",
+      title: "Placement Coordination",
+      description: "We handle admission coordination with your chosen facility",
       active: false,
     },
   ];
@@ -125,7 +198,7 @@ export default function InternationalThankYou() {
   return (
     <>
       <SEO
-        title="Application Received | International Placement"
+        title="Application Submitted | International Placement"
         description="Your international placement application has been received."
         noindex
       />
@@ -133,18 +206,18 @@ export default function InternationalThankYou() {
       <div className="min-h-screen flex flex-col bg-background">
         <PublicHeader />
         
-        <main className="flex-1 flex items-center justify-center py-12 px-4">
+        <main className="flex-1 flex items-center justify-center py-8 md:py-12 px-4">
           <div className="max-w-2xl w-full">
             {/* Success Header */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="text-center mb-8"
+              className="text-center mb-6 md:mb-8"
             >
-              <div className="relative inline-block mb-6">
-                <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
-                  <CheckCircle className="h-12 w-12 text-green-600" />
+              <div className="relative inline-block mb-4 md:mb-6">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <CheckCircle className="h-10 w-10 md:h-12 md:w-12 text-primary" />
                 </div>
                 <motion.div
                   initial={{ scale: 0 }}
@@ -152,72 +225,28 @@ export default function InternationalThankYou() {
                   transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
                   className="absolute -top-2 -right-2"
                 >
-                  <Sparkles className="h-8 w-8 text-primary" />
+                  <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                 </motion.div>
               </div>
               
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-                Application Submitted!
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2 md:mb-3">
+                {firstName ? `Thank You, ${firstName}!` : "Thank You!"}
               </h1>
               
-              <p className="text-lg text-muted-foreground">
-                Thank you for completing your placement application. Your dedicated advisor will reach out within 24 hours.
+              <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto">
+                Your international placement application has been successfully submitted. Our team will be in touch within 24 hours.
               </p>
-            </motion.div>
-
-            {/* Email Verification Alert */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card className="border-primary/20 bg-primary/5 mb-8">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Mail className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">
-                        Please Verify Your Email
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        We sent a verification link to{" "}
-                        <span className="font-medium text-foreground">
-                          {email || "your email address"}
-                        </span>
-                        . Please verify to activate your case.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={handleResendVerification}
-                        disabled={isResending || !email}
-                      >
-                        {isResending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          "Resend Verification Email"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </motion.div>
 
             {/* Timeline */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.2 }}
             >
-              <Card>
+              <Card className="mb-6">
                 <CardContent className="pt-6">
-                  <h3 className="font-semibold text-foreground mb-6 flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground mb-5 flex items-center gap-2">
                     <Clock className="h-5 w-5 text-primary" />
                     What Happens Next
                   </h3>
@@ -229,14 +258,20 @@ export default function InternationalThankYou() {
                         className={`flex gap-4 ${index !== steps.length - 1 ? "pb-4 border-b" : ""}`}
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold ${
-                          step.active 
-                            ? "bg-primary text-primary-foreground" 
-                            : "bg-muted text-muted-foreground"
+                          step.completed 
+                            ? "bg-primary/20 text-primary"
+                            : step.active 
+                              ? "bg-primary text-primary-foreground" 
+                              : "bg-muted text-muted-foreground"
                         }`}>
-                          {step.number}
+                          {step.completed ? (
+                            <CheckCircle className="h-5 w-5" />
+                          ) : (
+                            step.number
+                          )}
                         </div>
                         <div>
-                          <p className={`font-medium ${step.active ? "text-foreground" : "text-muted-foreground"}`}>
+                          <p className={`font-medium ${step.active || step.completed ? "text-foreground" : "text-muted-foreground"}`}>
                             {step.title}
                             {step.active && (
                               <span className="ml-2 text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full">
@@ -253,15 +288,137 @@ export default function InternationalThankYou() {
               </Card>
             </motion.div>
 
+            {/* Optional Password Creation */}
+            {!accountCreated && email && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="mb-6 border-primary/20">
+                  <CardContent className="pt-6">
+                    <button
+                      onClick={() => setShowPasswordSection(!showPasswordSection)}
+                      className="w-full flex items-center justify-between text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">
+                            Create an Account to Track Progress
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Optional - Set a password to monitor your placement status
+                          </p>
+                        </div>
+                      </div>
+                      {showPasswordSection ? (
+                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </button>
+
+                    <AnimatePresence>
+                      {showPasswordSection && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-6 space-y-4">
+                            <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+                              <p>Your email <span className="font-medium text-foreground">{email}</span> has already been verified. Just set a password below.</p>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div>
+                                <Label htmlFor="password">Password</Label>
+                                <div className="relative mt-1.5">
+                                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Create a password (min. 8 characters)"
+                                    className="pl-10"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                <div className="relative mt-1.5">
+                                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    id="confirmPassword"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Confirm your password"
+                                    className="pl-10"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={handleCreateAccount}
+                              disabled={isCreatingAccount || !password || !confirmPassword}
+                              className="w-full"
+                            >
+                              {isCreatingAccount ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Creating Account...
+                                </>
+                              ) : (
+                                "Create Account"
+                              )}
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Account Created Success */}
+            {accountCreated && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <Card className="mb-6 border-primary/30 bg-primary/5">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-6 w-6 text-primary" />
+                      <div>
+                        <h3 className="font-semibold text-foreground">Account Created!</h3>
+                        <p className="text-sm text-muted-foreground">Redirecting you to your dashboard...</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* Contact Info */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mt-6 p-6 bg-muted/30 rounded-xl text-center"
+              className="p-5 md:p-6 bg-muted/30 rounded-xl text-center"
             >
               <p className="text-sm text-muted-foreground mb-2">
-                Questions? Contact our international team:
+                Questions about your international placement?
               </p>
               <a 
                 href="mailto:international@rehablookup.com" 
@@ -276,16 +433,13 @@ export default function InternationalThankYou() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
+              className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
             >
-              <Button asChild size="lg">
-                <Link to="/account/international">
-                  Track Your Case
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/">Return to Homepage</Link>
+                <Link to="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Return to Homepage
+                </Link>
               </Button>
             </motion.div>
           </div>
