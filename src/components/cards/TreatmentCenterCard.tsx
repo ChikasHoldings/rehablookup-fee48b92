@@ -5,7 +5,7 @@ import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart, Sparkles } from "
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
-import { useState, useCallback, memo, useRef, useEffect } from "react";
+import { useState, useCallback, memo, useRef, useEffect, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { GoogleReviewsCompactBadge } from "@/components/reviews/GoogleReviewsBadge";
@@ -66,11 +66,14 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, featured, variant = "default" }: TreatmentCenterCardProps) {
+export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterCardProps>(
+  function TreatmentCenterCard({ center, featured, variant = "default" }, forwardedRef) {
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
-  const cardRef = useRef<HTMLElement>(null);
+  const internalRef = useRef<HTMLElement>(null);
+  // Use forwarded ref if provided, otherwise use internal ref
+  const cardRef = (forwardedRef as React.RefObject<HTMLElement>) || internalRef;
   const hasTrackedImpression = useRef(false);
   const { trackImpression } = useProviderEventTracking();
   
@@ -514,4 +517,4 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
       </div>
     </article>
   );
-}, arePropsEqual);
+}), arePropsEqual);

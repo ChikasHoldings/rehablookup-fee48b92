@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { 
   ArrowRight, 
@@ -75,16 +76,17 @@ interface InternalLinkingSectionProps {
   className?: string;
 }
 
-export function InternalLinkingSection({
-  title = "Related Resources",
-  description,
-  groups,
-  variant = "default",
-  className,
-}: InternalLinkingSectionProps) {
+export const InternalLinkingSection = forwardRef<HTMLElement, InternalLinkingSectionProps>(
+  function InternalLinkingSection({
+    title = "Related Resources",
+    description,
+    groups,
+    variant = "default",
+    className,
+  }, ref) {
   if (variant === "compact") {
     return (
-      <section className={cn("py-8 md:py-10", className)}>
+      <section ref={ref} className={cn("py-8 md:py-10", className)}>
         <div className="container">
           <div className="mb-4">
             <h2 className="text-lg font-bold text-foreground">{title}</h2>
@@ -113,7 +115,7 @@ export function InternalLinkingSection({
 
   if (variant === "grid") {
     return (
-      <section className={cn("border-t border-border bg-secondary/30 py-10 md:py-14", className)}>
+      <section ref={ref} className={cn("border-t border-border bg-secondary/30 py-10 md:py-14", className)}>
         <div className="container">
           <div className="mb-6 text-center">
             <h2 className="text-lg font-bold text-foreground md:text-xl">{title}</h2>
@@ -150,7 +152,7 @@ export function InternalLinkingSection({
 
   // Default variant
   return (
-    <section className={cn("border-t border-border py-10 md:py-14", className)}>
+    <section ref={ref} className={cn("border-t border-border py-10 md:py-14", className)}>
       <div className="container">
         <div className="mb-6">
           <h2 className="text-lg font-bold text-foreground md:text-xl">{title}</h2>
@@ -184,7 +186,7 @@ export function InternalLinkingSection({
       </div>
     </section>
   );
-}
+});
 
 // Quick cross-link bar for top of pages
 export function QuickLinksBar({ 
