@@ -156,28 +156,26 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
       {/* Main Footer Content */}
       <div className="container px-4 md:px-6 lg:px-8">
         {/* Desktop Layout */}
-        <div className="hidden md:block py-12 lg:py-16">
-          <div className="grid grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="hidden md:block py-8 lg:py-10">
+          <div className="grid grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-10">
             {/* Brand Column - Takes more space */}
-            <div className="col-span-2 lg:col-span-4 space-y-6">
+            <div className="col-span-2 lg:col-span-4 space-y-4">
               <Link to="/" className="inline-block">
                 <img
                   src="/logo-white.png"
                   alt="RehabLookup"
-                  className="h-9 w-auto"
-                  width={172}
-                  height={36}
+                  className="h-8 w-auto"
+                  width={153}
+                  height={32}
                   loading="lazy"
                   onError={(e) => {
-                    // Fallback to regular logo if white version doesn't exist
                     e.currentTarget.src = "/logo.png";
-                    e.currentTarget.className = "h-9 w-auto brightness-0 invert";
+                    e.currentTarget.className = "h-8 w-auto brightness-0 invert";
                   }}
                 />
               </Link>
-              <p className="text-sm text-primary-foreground/70 leading-relaxed max-w-xs">
-                Helping individuals and families find trusted addiction treatment
-                centers across the United States.
+              <p className="text-sm text-primary-foreground/70">
+                Find trusted addiction treatment centers nationwide.
               </p>
 
               {/* Contact Info */}
@@ -203,7 +201,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
               </div>
 
               {/* Social Links */}
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2">
                 {socialLinks.map(({ Icon, href, label }) => (
                   <a
                     key={label}
@@ -238,27 +236,27 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
         {/* Mobile Layout */}
         <div className="md:hidden">
           {/* Brand Section */}
-          <div className="py-8 text-center border-b border-primary-foreground/10">
-            <Link to="/" className="inline-block mb-4">
+          <div className="py-6 text-center border-b border-primary-foreground/10">
+            <Link to="/" className="inline-block mb-3">
               <img
                 src="/logo-white.png"
                 alt="RehabLookup"
-                className="h-8 w-auto mx-auto"
-                width={153}
-                height={32}
+                className="h-7 w-auto mx-auto"
+                width={134}
+                height={28}
                 loading="lazy"
                 onError={(e) => {
                   e.currentTarget.src = "/logo.png";
-                  e.currentTarget.className = "h-8 w-auto mx-auto brightness-0 invert";
+                  e.currentTarget.className = "h-7 w-auto mx-auto brightness-0 invert";
                 }}
               />
             </Link>
-            <p className="text-sm text-primary-foreground/70 max-w-[280px] mx-auto mb-6">
-              Helping individuals and families find trusted addiction treatment centers.
+            <p className="text-sm text-primary-foreground/70 mb-4">
+              Find trusted addiction treatment centers nationwide.
             </p>
 
             {/* Contact */}
-            <div className="flex flex-col items-center gap-3 mb-6">
+            <div className="flex flex-col items-center gap-2 mb-4">
               <a
                 href="mailto:help@rehablookup.com"
                 className="inline-flex items-center gap-2 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
@@ -276,7 +274,7 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
             </div>
 
             {/* Social Links */}
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-2">
               {socialLinks.map(({ Icon, href, label }) => (
                 <a
                   key={label}
