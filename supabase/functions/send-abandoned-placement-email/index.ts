@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
-const VERSION = "1.0.1";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +13,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[ABANDONED-PLACEMENT] [${VERSION}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// High-conversion email template
+// Professional high-conversion email template with navy blue branding
 function buildAbandonedCartEmail(data: {
   userName: string;
   userEmail: string;
@@ -30,9 +30,8 @@ function buildAbandonedCartEmail(data: {
   const firstName = userName.split(' ')[0] || 'there';
   
   const fee = caseType === 'domestic' ? '$29' : '$299';
-  const facilityFee = caseType === 'domestic' ? '$1,000' : '$3,000';
   
-  const subject = `${firstName}, your placement request is almost ready – complete it now`;
+  const subject = `${firstName}, complete your placement request – expert advisors are ready to help`;
   
   const html = `
 <!DOCTYPE html>
@@ -40,83 +39,110 @@ function buildAbandonedCartEmail(data: {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Your Placement Request</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; -webkit-font-smoothing: antialiased;">
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; -webkit-font-smoothing: antialiased; font-family: Arial, Helvetica, sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 32px 16px;">
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          <!-- Header -->
+          
+          <!-- HEADER - Dark Navy Blue -->
           <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 26px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">
-                You're One Step Away
+            <td style="background-color: #1B365D; padding: 40px 32px; border-radius: 12px 12px 0 0; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">REHABLOOKUP</p>
+              <h1 style="margin: 0 0 12px 0; font-size: 28px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 700; line-height: 1.2;">
+                Your Placement Request<br>is Almost Complete
               </h1>
-              <p style="margin: 12px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 15px;">
-                Your personalized placement matches are waiting
+              <p style="margin: 0; color: #E8EEF4; font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5;">
+                Expert advisors are standing by to connect you<br>with the right treatment program
               </p>
             </td>
           </tr>
           
-          <!-- Body -->
+          <!-- BODY -->
           <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+            <td style="background-color: #ffffff; padding: 40px 32px; font-family: Arial, Helvetica, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
               
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+              <p style="margin: 0 0 24px 0; color: #374151; font-size: 17px; line-height: 1.6;">
                 Hi ${firstName},
               </p>
               
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                We noticed you started a placement request but didn't complete the final step. <strong>Your information has been saved</strong>, and we're ready to start matching you with the right treatment facilities.
+              <p style="margin: 0 0 28px 0; color: #374151; font-size: 16px; line-height: 1.7;">
+                We noticed you started a placement request but haven't completed the final step. <strong>Your information has been saved</strong>, and our team is ready to personally review your needs and connect you with verified treatment facilities.
               </p>
               
-              <!-- What We Saved Box -->
+              <!-- Saved Request Summary -->
               ${intakeSummary.levelOfCare || intakeSummary.primaryConcern || intakeSummary.location ? `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 28px;">
                 <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1B365D;">📋 Your Request Summary</p>
-                    ${intakeSummary.primaryConcern ? `<p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;"><strong>Primary Concern:</strong> ${intakeSummary.primaryConcern}</p>` : ''}
-                    ${intakeSummary.levelOfCare ? `<p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;"><strong>Level of Care:</strong> ${intakeSummary.levelOfCare}</p>` : ''}
-                    ${intakeSummary.location ? `<p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;"><strong>Location:</strong> ${intakeSummary.location}</p>` : ''}
-                    ${intakeSummary.urgency ? `<p style="margin: 0; font-size: 14px; color: #6b7280;"><strong>Timeline:</strong> ${intakeSummary.urgency}</p>` : ''}
+                  <td style="padding: 24px;">
+                    <p style="margin: 0 0 16px 0; font-size: 15px; font-weight: 700; color: #1B365D; font-family: Arial, Helvetica, sans-serif;">📋 Your Saved Request</p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      ${intakeSummary.primaryConcern ? `
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #64748B; font-family: Arial, Helvetica, sans-serif; width: 140px; vertical-align: top;"><strong>Primary Concern:</strong></td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #334155; font-family: Arial, Helvetica, sans-serif;">${intakeSummary.primaryConcern}</td>
+                      </tr>` : ''}
+                      ${intakeSummary.levelOfCare ? `
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #64748B; font-family: Arial, Helvetica, sans-serif; width: 140px; vertical-align: top;"><strong>Level of Care:</strong></td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #334155; font-family: Arial, Helvetica, sans-serif;">${intakeSummary.levelOfCare}</td>
+                      </tr>` : ''}
+                      ${intakeSummary.location ? `
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #64748B; font-family: Arial, Helvetica, sans-serif; width: 140px; vertical-align: top;"><strong>Preferred Area:</strong></td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #334155; font-family: Arial, Helvetica, sans-serif;">${intakeSummary.location}</td>
+                      </tr>` : ''}
+                      ${intakeSummary.urgency ? `
+                      <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #64748B; font-family: Arial, Helvetica, sans-serif; width: 140px; vertical-align: top;"><strong>Timeline:</strong></td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #334155; font-family: Arial, Helvetica, sans-serif;">${intakeSummary.urgency}</td>
+                      </tr>` : ''}
+                    </table>
                   </td>
                 </tr>
               </table>
               ` : ''}
               
-              <!-- Why Complete Now Box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ecfdf5; background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; margin-bottom: 24px;">
+              <!-- Why Complete Section -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F0FDF4; border: 2px solid #22C55E; border-radius: 12px; margin-bottom: 28px;">
                 <tr>
-                  <td style="padding: 24px;">
-                    <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #065f46;">✨ Why Complete Your Placement?</p>
+                  <td style="padding: 28px;">
+                    <p style="margin: 0 0 20px 0; font-size: 17px; font-weight: 700; color: #166534; font-family: Arial, Helvetica, sans-serif;">✨ Why Complete Your Placement Request?</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding: 0 0 12px 0;">
-                          <p style="margin: 0; font-size: 14px; color: #047857; line-height: 1.5;">
-                            <strong>✓ Expert Matching</strong> – Our advisors personally review your needs and match you with facilities that specialize in your situation
+                        <td style="padding: 0 0 14px 0;">
+                          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+                            <strong>✓ Expert Placement Advisors</strong> – Our team personally reviews your unique situation and needs
                           </p>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 0 0 12px 0;">
-                          <p style="margin: 0; font-size: 14px; color: #047857; line-height: 1.5;">
-                            <strong>✓ Verified Facilities Only</strong> – Every facility in our network is vetted for quality, licensing, and patient outcomes
+                        <td style="padding: 0 0 14px 0;">
+                          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+                            <strong>✓ Verified Treatment Centers Only</strong> – Every facility in our network is vetted for quality, licensing, and outcomes
                           </p>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 0 0 12px 0;">
-                          <p style="margin: 0; font-size: 14px; color: #047857; line-height: 1.5;">
-                            <strong>✓ No Sales Pressure</strong> – We're not a treatment center. We work for you, not the facilities
+                        <td style="padding: 0 0 14px 0;">
+                          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+                            <strong>✓ No Sales Pressure</strong> – We work for you, not the facilities. Your best interest is our only priority
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0 0 14px 0;">
+                          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+                            <strong>✓ Concierge-Level Coordination</strong> – We handle the outreach, scheduling, and follow-ups so you don't have to
                           </p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 0;">
-                          <p style="margin: 0; font-size: 14px; color: #047857; line-height: 1.5;">
-                            <strong>✓ Concierge Support</strong> – Our team handles the coordination so you can focus on what matters
+                          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+                            <strong>✓ Fast Response Time</strong> – Our advisors review requests within 24-48 hours
                           </p>
                         </td>
                       </tr>
@@ -126,26 +152,26 @@ function buildAbandonedCartEmail(data: {
               </table>
               
               <!-- Pricing Clarity -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #FEF9C3; border: 1px solid #FACC15; border-radius: 10px; margin-bottom: 32px;">
                 <tr>
-                  <td style="padding: 16px;">
-                    <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.5;">
-                      <strong>💰 Simple Pricing:</strong> Your placement service fee is just <strong>${fee}</strong>. No hidden costs. Facilities pay us when they accept you – not the other way around.
+                  <td style="padding: 18px 20px;">
+                    <p style="margin: 0; font-size: 15px; color: #854D0E; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+                      <strong>💰 Simple, Transparent Pricing:</strong> Just <strong>${fee}</strong> for our placement service. No hidden fees, no surprises. We're committed to helping families find quality care affordably.
                     </p>
                   </td>
                 </tr>
               </table>
               
               <!-- Urgency Message -->
-              <p style="margin: 0 0 28px 0; color: #374151; font-size: 15px; line-height: 1.6; text-align: center;">
-                <em>Time is often critical when seeking treatment. Complete your placement request now and let us help you find the right care.</em>
+              <p style="margin: 0 0 32px 0; color: #475569; font-size: 15px; line-height: 1.7; text-align: center; font-style: italic; font-family: Arial, Helvetica, sans-serif;">
+                Time is often critical when seeking treatment. Complete your placement request now and let our expert advisors help guide you to the right care.
               </p>
               
               <!-- CTA Button -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${resumeUrl}" style="display: inline-block; background-color: #1B365D; background: #1B365D; color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                    <a href="${resumeUrl}" style="display: inline-block; background-color: #1B365D; color: #ffffff; padding: 18px 48px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 17px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0.3px;">
                       Complete My Placement Request →
                     </a>
                   </td>
@@ -153,27 +179,28 @@ function buildAbandonedCartEmail(data: {
               </table>
               
               <!-- Support Note -->
-              <p style="margin: 28px 0 0 0; color: #6b7280; font-size: 13px; line-height: 1.6; text-align: center;">
-                Questions? Reply to this email or call us at <strong>(888) 555-HELP</strong><br>
+              <p style="margin: 32px 0 0 0; color: #6B7280; font-size: 14px; line-height: 1.6; text-align: center; font-family: Arial, Helvetica, sans-serif;">
+                Questions? Reply to this email or contact us at<br>
+                <a href="mailto:placement@rehablookup.com" style="color: #1B365D; font-weight: 600;">placement@rehablookup.com</a><br>
                 We're here to help you find the right path forward.
               </p>
               
             </td>
           </tr>
           
-          <!-- Footer -->
+          <!-- FOOTER - Dark Navy Blue -->
           <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
+            <td style="background-color: #1B365D; padding: 32px; border-radius: 0 0 12px 12px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="text-align: center;">
-                    <p style="margin: 0 0 12px 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 600;">
+                    <p style="margin: 0 0 8px 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700;">
                       RehabLookup
                     </p>
-                    <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: Arial, Helvetica, sans-serif; font-size: 12px;">
-                      Connecting families with quality care
+                    <p style="margin: 0 0 16px 0; color: #E8EEF4; font-family: Arial, Helvetica, sans-serif; font-size: 13px;">
+                      Connecting families with quality treatment care
                     </p>
-                    <p style="margin: 0; color: #94a3b8; font-family: Arial, Helvetica, sans-serif; font-size: 11px;">
+                    <p style="margin: 0; color: #94A3B8; font-family: Arial, Helvetica, sans-serif; font-size: 12px;">
                       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
                     </p>
                   </td>
@@ -213,17 +240,21 @@ Deno.serve(async (req) => {
     const resend = new Resend(resendApiKey);
     
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    // 2 hours for first reminder, check form_completed_at and email_verified_at
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
-    // Find domestic abandoned carts (payment_status = 'pending', created 1-24 hours ago, no email sent)
+    // Find domestic abandoned carts with the new schema
+    // Criteria: form_completed_at AND email_verified_at are set, payment_status = 'pending'
     const { data: abandonedDomestic, error: domesticError } = await supabase
       .from("concierge_inquiries")
-      .select("id, user_email, user_name, primary_concern, level_of_care, preferred_state, preferred_city, timeline_urgency, created_at")
+      .select("id, user_email, user_name, primary_concern, level_of_care, preferred_state, preferred_city, timeline_urgency, created_at, payment_reminder_count, draft_id")
       .eq("payment_status", "pending")
-      .is("abandoned_cart_email_sent_at", null)
-      .lt("created_at", oneHourAgo.toISOString())
+      .not("form_completed_at", "is", null)
+      .not("email_verified_at", "is", null)
+      .lt("form_completed_at", twoHoursAgo.toISOString())
       .gt("created_at", twentyFourHoursAgo.toISOString())
+      .lt("payment_reminder_count", 2)
       .limit(50);
 
     if (domesticError) {
@@ -236,7 +267,7 @@ Deno.serve(async (req) => {
       .select("id, seeker_email, seeker_name, intake_data, created_at")
       .eq("status", "pending_payment")
       .is("abandoned_cart_email_sent_at", null)
-      .lt("created_at", oneHourAgo.toISOString())
+      .lt("created_at", twoHoursAgo.toISOString())
       .gt("created_at", twentyFourHoursAgo.toISOString())
       .limit(50);
 
@@ -252,6 +283,10 @@ Deno.serve(async (req) => {
       try {
         const location = [inquiry.preferred_city, inquiry.preferred_state].filter(Boolean).join(", ");
         
+        // Build resume URL with draft_id if available
+        const resumeParam = inquiry.draft_id ? `resume=${inquiry.draft_id}` : `id=${inquiry.id}`;
+        const resumeUrl = `https://rehablookup.com/concierge/intake?${resumeParam}`;
+        
         const emailData = buildAbandonedCartEmail({
           userName: inquiry.user_name,
           userEmail: inquiry.user_email,
@@ -262,7 +297,7 @@ Deno.serve(async (req) => {
             location: location || undefined,
             urgency: inquiry.timeline_urgency,
           },
-          resumeUrl: `https://rehablookup.com/placement?resume=${inquiry.id}`,
+          resumeUrl,
         });
 
         const { error: sendError } = await resend.emails.send({
@@ -276,22 +311,18 @@ Deno.serve(async (req) => {
           throw new Error(sendError.message);
         }
 
-        // Update the inquiry to mark email sent
+        // Update the inquiry to increment reminder count
+        const newCount = (inquiry.payment_reminder_count || 0) + 1;
         await supabase
           .from("concierge_inquiries")
-          .update({ abandoned_cart_email_sent_at: now.toISOString() })
+          .update({ 
+            abandoned_cart_email_sent_at: now.toISOString(),
+            payment_reminder_count: newCount,
+          })
           .eq("id", inquiry.id);
 
-        // Log in tracking table
-        await supabase.from("placement_abandoned_cart_emails").insert({
-          inquiry_id: inquiry.id,
-          email: inquiry.user_email,
-          email_type: "abandoned_cart",
-          metadata: { case_type: 'domestic' },
-        });
-
         emailsSent.push(inquiry.user_email);
-        logStep("Sent domestic abandoned cart email", { email: inquiry.user_email, inquiryId: inquiry.id });
+        logStep("Sent domestic abandoned cart email", { email: inquiry.user_email, inquiryId: inquiry.id, reminderCount: newCount });
         
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err);
@@ -315,7 +346,7 @@ Deno.serve(async (req) => {
             location: intakeData.client_country as string,
             urgency: intakeData.urgency as string,
           },
-          resumeUrl: `https://rehablookup.com/international-placement?resume=${caseData.id}`,
+          resumeUrl: `https://rehablookup.com/international/apply?resume=${caseData.id}`,
         });
 
         const { error: sendError } = await resend.emails.send({
@@ -334,14 +365,6 @@ Deno.serve(async (req) => {
           .from("international_placement_cases")
           .update({ abandoned_cart_email_sent_at: now.toISOString() })
           .eq("id", caseData.id);
-
-        // Log in tracking table
-        await supabase.from("placement_abandoned_cart_emails").insert({
-          international_case_id: caseData.id,
-          email: caseData.seeker_email,
-          email_type: "abandoned_cart",
-          metadata: { case_type: 'international' },
-        });
 
         emailsSent.push(caseData.seeker_email);
         logStep("Sent international abandoned cart email", { email: caseData.seeker_email, caseId: caseData.id });

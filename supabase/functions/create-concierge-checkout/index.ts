@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { email, intakeDraftKey, intakeData, isAuthenticated, userId: passedUserId } = body;
+    const { email, intakeDraftKey, intakeData, isAuthenticated, userId: passedUserId, draftId } = body;
     
     // Validate email
     if (!email || typeof email !== 'string' || !isValidEmail(email)) {
@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
     }
 
     const sanitizedEmail = sanitizeString(email as string, 254).toLowerCase();
+    const sanitizedDraftId = draftId ? sanitizeString(draftId as string, 100) : null;
 
     // Try to get authenticated user from request
     let authenticatedUserId: string | null = null;
@@ -162,6 +163,7 @@ Deno.serve(async (req) => {
           is_authenticated: isAuthenticated ? "true" : "false",
           has_intake_data: intakeData ? "true" : "false",
           user_id: effectiveUserId || "",
+          draft_id: sanitizedDraftId || "",
           version: VERSION,
         },
         payment_intent_data: {

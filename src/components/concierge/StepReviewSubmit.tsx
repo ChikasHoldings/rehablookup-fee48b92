@@ -207,58 +207,30 @@ export function StepReviewSubmit({
         )}
       </div>
 
-      {/* Payment / Submit Section */}
+      {/* Payment Section */}
       <div className="pt-6 border-t">
         <div className="text-center mb-4">
-          {!paymentState.paid ? (
-            <>
-              <p className="text-sm text-muted-foreground mb-4">
-                A one-time $29 placement fee is required to process your placement service.
-              </p>
-              <Button
-                onClick={onPay}
-                disabled={isProcessingPayment}
-                size="lg"
-                className="w-full sm:w-auto min-w-[250px] bg-gradient-to-r from-primary to-primary/80"
-              >
-                {isProcessingPayment ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Pay to Submit
-                  </>
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground mb-4">
-                Your payment has been verified. Submit your intake to begin your placement process within 48 hours.
-              </p>
-              <Button
-                onClick={onSubmit}
-                disabled={isSubmitting}
-                size="lg"
-                className="w-full sm:w-auto min-w-[250px] bg-gradient-to-r from-green-600 to-green-500"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Submit Intake
-                  </>
-                )}
-              </Button>
-            </>
-          )}
+          <p className="text-sm text-muted-foreground mb-4">
+            A one-time <strong>$29</strong> placement fee is required to process your request. After payment, our team will begin reviewing your intake within 24-48 hours.
+          </p>
+          <Button
+            onClick={onPay}
+            disabled={isProcessingPayment}
+            size="lg"
+            className="w-full sm:w-auto min-w-[280px] h-12 text-base bg-gradient-to-r from-primary to-primary/80"
+          >
+            {isProcessingPayment ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-5 w-5" />
+                Complete Payment – $29
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Trust Indicators */}
