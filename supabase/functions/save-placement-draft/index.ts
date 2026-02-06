@@ -1,6 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import {
+  sanitizeString,
+  sanitizePhone,
+  sanitizeEmail,
+  sanitizeStringArray,
+  isValidEmail,
+  errorResponse,
+  successResponse,
+  sanitizeIntakeData,
+} from "../_shared/validation.ts";
 
-const VERSION = "1.0.0";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,21 +22,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[SAVE-PLACEMENT-DRAFT] [${VERSION}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// Input validation
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
-};
-
-const sanitizeString = (str: string, maxLength: number = 500): string => {
-  if (!str || typeof str !== 'string') return '';
-  return str.trim().slice(0, maxLength).replace(/[<>]/g, '');
-};
-
-const sanitizePhone = (phone: string): string => {
-  if (!phone || typeof phone !== 'string') return '';
-  return phone.replace(/[^\d+\-() ]/g, '').slice(0, 20);
-};
+// Maximum request body size (100KB)
+const MAX_BODY_SIZE = 100000;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,145 +35,197 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing required environment variables");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Validate content length
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
+      logStep("ERROR: Request too large", { size: contentLength });
+      return errorResponse("Request body too large", 413, corsHeaders);
+    }
 
     // Parse and validate request body
     let body: Record<string, unknown>;
     try {
-      body = await req.json();
+      const rawBody = await req.text();
+      if (rawBody.length > MAX_BODY_SIZE) {
+        return errorResponse("Request body too large", 413, corsHeaders);
+      }
+      body = JSON.parse(rawBody);
     } catch {
       logStep("ERROR: Invalid JSON body");
-      return new Response(
-        JSON.stringify({ error: "Invalid request body" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return errorResponse("Invalid request body", 400, corsHeaders);
     }
 
     const { intakeData, emailVerifiedAt, draftId: existingDraftId } = body;
 
-    if (!intakeData || typeof intakeData !== 'object') {
+    if (!intakeData || typeof intakeData !== "object") {
       logStep("ERROR: Missing intake data");
-      return new Response(
-        JSON.stringify({ error: "Intake data is required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return errorResponse("Intake data is required", 400, corsHeaders);
     }
 
     const data = intakeData as Record<string, unknown>;
 
-    // Validate required fields
-    const email = sanitizeString(data.email as string, 254).toLowerCase();
-    if (!isValidEmail(email)) {
-      logStep("ERROR: Invalid email", { email });
-      return new Response(
-        JSON.stringify({ error: "Valid email is required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+    // Validate and sanitize required fields
+    let email: string;
+    try {
+      email = sanitizeEmail(data.email);
+    } catch {
+      logStep("ERROR: Invalid email");
+      return errorResponse("Valid email is required", 400, corsHeaders);
     }
 
-    const firstName = sanitizeString(data.firstName as string, 100);
-    const lastName = sanitizeString(data.lastName as string, 100);
-    const phone = sanitizePhone(data.phone as string);
+    const firstName = sanitizeString(data.firstName, 100);
+    const lastName = sanitizeString(data.lastName, 100);
+    const phone = sanitizePhone(data.phone);
 
-    if (!firstName || !lastName || !phone) {
-      logStep("ERROR: Missing required contact fields");
-      return new Response(
-        JSON.stringify({ error: "First name, last name, and phone are required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+    if (!firstName || !lastName) {
+      logStep("ERROR: Missing required name fields");
+      return errorResponse("First name and last name are required", 400, corsHeaders);
     }
+
+    if (!phone) {
+      logStep("ERROR: Missing phone");
+      return errorResponse("Phone number is required", 400, corsHeaders);
+    }
+
+    // Validate draft ID format if provided
+    const validatedDraftId = existingDraftId && typeof existingDraftId === "string" 
+      ? sanitizeString(existingDraftId, 50).replace(/[^a-zA-Z0-9_-]/g, "")
+      : null;
 
     // Generate draft ID if not provided
-    const draftId = existingDraftId || `draft_${crypto.randomUUID().slice(0, 12)}`;
+    const draftId = validatedDraftId || `draft_${crypto.randomUUID().slice(0, 12)}`;
 
-    // Build the intake_data JSON
+    // Rate limit check (5 drafts per email per hour)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentDrafts } = await supabaseAdmin
+      .from("concierge_inquiries")
+      .select("*", { count: "exact", head: true })
+      .eq("user_email", email)
+      .gte("created_at", oneHourAgo);
+
+    if (recentDrafts && recentDrafts >= 5 && !validatedDraftId) {
+      logStep("Rate limit exceeded", { email, count: recentDrafts });
+      return errorResponse("Too many requests. Please try again later.", 429, corsHeaders);
+    }
+
+    // Sanitize all intake data
+    const sanitizedData = sanitizeIntakeData(data);
+
+    // Build the intake_data JSON with comprehensive sanitization
     const fullIntakeData = {
       // Step 1: Who needs help
-      age_range: sanitizeString(data.ageRange as string, 50),
-      gender: sanitizeString(data.gender as string, 50),
-      preferred_language: sanitizeString(data.preferredLanguage as string, 50) || "english",
-      state: sanitizeString(data.state as string, 50),
-      city: sanitizeString(data.city as string, 100),
-      current_living_situation: sanitizeString(data.currentLivingSituation as string, 100),
-      relationship: sanitizeString(data.relationship as string, 50),
-      mobility_needs: sanitizeString(data.mobilityNeeds as string, 200),
-      
+      age_range: sanitizeString(sanitizedData.ageRange as string, 50),
+      gender: sanitizeString(sanitizedData.gender as string, 50),
+      preferred_language: sanitizeString(sanitizedData.preferredLanguage as string, 50) || "english",
+      state: sanitizeString(sanitizedData.state as string, 50),
+      city: sanitizeString(sanitizedData.city as string, 100),
+      current_living_situation: sanitizeString(sanitizedData.currentLivingSituation as string, 100),
+      relationship: sanitizeString(sanitizedData.relationship as string, 50),
+      mobility_needs: sanitizeString(sanitizedData.mobilityNeeds as string, 200),
+
       // Step 2: Care needs
-      primary_concern: sanitizeString(data.primaryConcern as string, 100),
-      substance_use_frequency: sanitizeString(data.substanceUseFrequency as string, 50),
-      substance_use_duration: sanitizeString(data.substanceUseDuration as string, 50),
-      detox_needed: sanitizeString(data.detoxNeeded as string, 50),
-      level_of_care: sanitizeString(data.levelOfCare as string, 50),
-      prior_treatment: data.priorTreatment,
-      prior_treatment_notes: sanitizeString(data.priorTreatmentNotes as string, 500),
-      current_medications: sanitizeString(data.currentMedications as string, 500),
-      co_occurring_concerns: Array.isArray(data.coOccurringConcerns) 
-        ? data.coOccurringConcerns.map(c => sanitizeString(String(c), 100))
-        : [],
-      suicide_history: sanitizeString(data.suicideHistory as string, 50),
-      
+      primary_concern: sanitizeString(sanitizedData.primaryConcern as string, 100),
+      substance_use_frequency: sanitizeString(sanitizedData.substanceUseFrequency as string, 50),
+      substance_use_duration: sanitizeString(sanitizedData.substanceUseDuration as string, 50),
+      detox_needed: sanitizeString(sanitizedData.detoxNeeded as string, 50),
+      level_of_care: sanitizeString(sanitizedData.levelOfCare as string, 50),
+      prior_treatment: typeof sanitizedData.priorTreatment === "boolean" ? sanitizedData.priorTreatment : null,
+      prior_treatment_notes: sanitizeString(sanitizedData.priorTreatmentNotes as string, 500),
+      current_medications: sanitizeString(sanitizedData.currentMedications as string, 500),
+      co_occurring_concerns: sanitizeStringArray(sanitizedData.coOccurringConcerns, 20, 100),
+      suicide_history: sanitizeString(sanitizedData.suicideHistory as string, 50),
+
       // Step 3: Logistics
-      desired_state: sanitizeString(data.desiredState as string, 50),
-      desired_city: sanitizeString(data.desiredCity as string, 100),
-      radius_miles: Number(data.radiusMiles) || 50,
-      preferred_environment: sanitizeString(data.preferredEnvironment as string, 50),
-      timeline: sanitizeString(data.timeline as string, 50),
-      faith_based_preference: sanitizeString(data.faithBasedPreference as string, 50),
-      holistic_interest: Boolean(data.holisticInterest),
-      amenity_preferences: Array.isArray(data.amenityPreferences)
-        ? data.amenityPreferences.map(a => sanitizeString(String(a), 100))
-        : [],
-      needs_transport: Boolean(data.needsTransport),
-      assessment_preference: sanitizeString(data.assessmentPreference as string, 50),
-      
+      desired_state: sanitizeString(sanitizedData.desiredState as string, 50),
+      desired_city: sanitizeString(sanitizedData.desiredCity as string, 100),
+      radius_miles: Math.max(10, Math.min(500, Number(sanitizedData.radiusMiles) || 50)),
+      preferred_environment: sanitizeString(sanitizedData.preferredEnvironment as string, 50),
+      timeline: sanitizeString(sanitizedData.timeline as string, 50),
+      faith_based_preference: sanitizeString(sanitizedData.faithBasedPreference as string, 50),
+      holistic_interest: Boolean(sanitizedData.holisticInterest),
+      amenity_preferences: sanitizeStringArray(sanitizedData.amenityPreferences, 30, 100),
+      needs_transport: Boolean(sanitizedData.needsTransport),
+      assessment_preference: sanitizeString(sanitizedData.assessmentPreference as string, 50),
+
       // Step 4: Payment
-      payment_type: sanitizeString(data.paymentType as string, 50),
-      insurance_carrier: sanitizeString(data.insuranceCarrier as string, 100),
-      insurance_member_id: sanitizeString(data.insuranceMemberId as string, 50),
-      insurance_group_number: sanitizeString(data.insuranceGroupNumber as string, 50),
-      employer_name: sanitizeString(data.employerName as string, 100),
-      benefits_verified: Boolean(data.benefitsVerified),
-      budget_range: sanitizeString(data.budgetRange as string, 50),
-      scholarship_interest: Boolean(data.scholarshipInterest),
-      willing_to_travel: Boolean(data.willingToTravel),
-      
+      payment_type: sanitizeString(sanitizedData.paymentType as string, 50),
+      insurance_carrier: sanitizeString(sanitizedData.insuranceCarrier as string, 100),
+      insurance_member_id: sanitizeString(sanitizedData.insuranceMemberId as string, 50),
+      insurance_group_number: sanitizeString(sanitizedData.insuranceGroupNumber as string, 50),
+      employer_name: sanitizeString(sanitizedData.employerName as string, 100),
+      benefits_verified: Boolean(sanitizedData.benefitsVerified),
+      budget_range: sanitizeString(sanitizedData.budgetRange as string, 50),
+      scholarship_interest: Boolean(sanitizedData.scholarshipInterest),
+      willing_to_travel: Boolean(sanitizedData.willingToTravel),
+
       // Step 5: Contact
-      best_time_to_call: sanitizeString(data.bestTimeToCall as string, 50),
-      alternative_contact_name: sanitizeString(data.alternativeContactName as string, 100),
-      alternative_contact_phone: sanitizePhone(data.alternativeContactPhone as string),
-      emergency_contact_name: sanitizeString(data.emergencyContactName as string, 100),
-      emergency_contact_phone: sanitizePhone(data.emergencyContactPhone as string),
-      notes: sanitizeString(data.notes as string, 1000),
-      referral_source: sanitizeString(data.referralSource as string, 100),
-      hipaa_consent: Boolean(data.hipaaConsent),
+      best_time_to_call: sanitizeString(sanitizedData.bestTimeToCall as string, 50),
+      alternative_contact_name: sanitizeString(sanitizedData.alternativeContactName as string, 100),
+      alternative_contact_phone: sanitizePhone(sanitizedData.alternativeContactPhone),
+      emergency_contact_name: sanitizeString(sanitizedData.emergencyContactName as string, 100),
+      emergency_contact_phone: sanitizePhone(sanitizedData.emergencyContactPhone),
+      notes: sanitizeString(sanitizedData.notes as string, 1000),
+      referral_source: sanitizeString(sanitizedData.referralSource as string, 100),
+      hipaa_consent: Boolean(sanitizedData.hipaaConsent),
     };
 
     const userName = `${firstName} ${lastName}`.trim();
     const now = new Date().toISOString();
 
+    // Validate email verified timestamp if provided
+    let validatedEmailVerifiedAt: string | null = null;
+    if (emailVerifiedAt && typeof emailVerifiedAt === "string") {
+      try {
+        const verifiedDate = new Date(emailVerifiedAt);
+        // Must be within last 24 hours and not in future
+        const hoursSince = (Date.now() - verifiedDate.getTime()) / (1000 * 60 * 60);
+        if (hoursSince >= 0 && hoursSince <= 24) {
+          validatedEmailVerifiedAt = verifiedDate.toISOString();
+        }
+      } catch {
+        logStep("Invalid emailVerifiedAt timestamp, ignoring");
+      }
+    }
+
     // Check if draft already exists by draft_id
-    if (existingDraftId) {
-      const { data: existingDraft } = await supabase
+    if (validatedDraftId) {
+      const { data: existingDraft } = await supabaseAdmin
         .from("concierge_inquiries")
         .select("id, payment_status")
-        .eq("draft_id", existingDraftId)
+        .eq("draft_id", validatedDraftId)
         .maybeSingle();
 
       if (existingDraft) {
+        // Don't update if already paid
+        if (existingDraft.payment_status === "succeeded" || existingDraft.payment_status === "paid") {
+          logStep("Draft already paid, returning existing", { draftId: validatedDraftId });
+          return successResponse({
+            success: true,
+            draftId: validatedDraftId,
+            inquiryId: existingDraft.id,
+            isUpdate: false,
+            alreadyPaid: true,
+            _version: VERSION,
+          }, corsHeaders);
+        }
+
         // Update existing draft
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
           .from("concierge_inquiries")
           .update({
             user_name: userName,
             user_email: email,
             user_phone: phone,
             intake_data: fullIntakeData,
-            email_verified_at: emailVerifiedAt || null,
+            email_verified_at: validatedEmailVerifiedAt,
             form_completed_at: now,
             updated_at: now,
             // Map normalized fields
@@ -233,21 +282,18 @@ Deno.serve(async (req) => {
 
         logStep("Draft updated", { draftId, inquiryId: existingDraft.id });
 
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            draftId,
-            inquiryId: existingDraft.id,
-            isUpdate: true,
-            _version: VERSION 
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-        );
+        return successResponse({
+          success: true,
+          draftId,
+          inquiryId: existingDraft.id,
+          isUpdate: true,
+          _version: VERSION,
+        }, corsHeaders);
       }
     }
 
     // Create new draft
-    const { data: newInquiry, error: insertError } = await supabase
+    const { data: newInquiry, error: insertError } = await supabaseAdmin
       .from("concierge_inquiries")
       .insert({
         draft_id: draftId,
@@ -258,7 +304,7 @@ Deno.serve(async (req) => {
         payment_status: "pending",
         payment_amount_cents: 2900,
         intake_data: fullIntakeData,
-        email_verified_at: emailVerifiedAt || null,
+        email_verified_at: validatedEmailVerifiedAt,
         form_completed_at: now,
         // Map all normalized fields
         age_range: fullIntakeData.age_range,
@@ -317,23 +363,16 @@ Deno.serve(async (req) => {
 
     logStep("Draft created", { draftId, inquiryId: newInquiry.id });
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        draftId,
-        inquiryId: newInquiry.id,
-        isUpdate: false,
-        _version: VERSION 
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-    );
-
+    return successResponse({
+      success: true,
+      draftId,
+      inquiryId: newInquiry.id,
+      isUpdate: false,
+      _version: VERSION,
+    }, corsHeaders);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage, _version: VERSION }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-    );
+    return errorResponse(errorMessage, 500, corsHeaders, { _version: VERSION });
   }
 });

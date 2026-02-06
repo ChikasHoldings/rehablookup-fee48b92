@@ -1,6 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import {
+  sanitizeString,
+  sanitizePhone,
+  sanitizeEmail,
+  sanitizeStringArray,
+  errorResponse,
+  successResponse,
+  sanitizeIntakeData,
+} from "../_shared/validation.ts";
 
-const VERSION = "1.0.0";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,21 +21,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[SAVE-INTL-DRAFT] [${VERSION}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// Input validation
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
-};
-
-const sanitizeString = (str: string, maxLength: number = 500): string => {
-  if (!str || typeof str !== 'string') return '';
-  return str.trim().slice(0, maxLength).replace(/[<>]/g, '');
-};
-
-const sanitizePhone = (phone: string): string => {
-  if (!phone || typeof phone !== 'string') return '';
-  return phone.replace(/[^\d+\-() ]/g, '').slice(0, 30);
-};
+// Maximum request body size (100KB)
+const MAX_BODY_SIZE = 100000;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -43,66 +39,85 @@ Deno.serve(async (req) => {
       throw new Error("Missing required environment variables");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Validate content length
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
+      logStep("ERROR: Request too large", { size: contentLength });
+      return errorResponse("Request body too large", 413, corsHeaders);
+    }
 
     // Parse and validate request body
     let body: Record<string, unknown>;
     try {
-      body = await req.json();
+      const rawBody = await req.text();
+      if (rawBody.length > MAX_BODY_SIZE) {
+        return errorResponse("Request body too large", 413, corsHeaders);
+      }
+      body = JSON.parse(rawBody);
     } catch {
       logStep("ERROR: Invalid JSON body");
-      return new Response(
-        JSON.stringify({ error: "Invalid request body" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return errorResponse("Invalid request body", 400, corsHeaders);
     }
 
     const { intakeData, emailVerifiedAt, draftId: existingDraftId } = body;
 
-    if (!intakeData || typeof intakeData !== 'object') {
+    if (!intakeData || typeof intakeData !== "object") {
       logStep("ERROR: Missing intake data");
-      return new Response(
-        JSON.stringify({ error: "Intake data is required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return errorResponse("Intake data is required", 400, corsHeaders);
     }
 
     const data = intakeData as Record<string, unknown>;
 
-    // Validate required fields
-    const email = sanitizeString(data.email as string, 254).toLowerCase();
-    if (!isValidEmail(email)) {
-      logStep("ERROR: Invalid email", { email });
-      return new Response(
-        JSON.stringify({ error: "Valid email is required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+    // Validate and sanitize required fields
+    let email: string;
+    try {
+      email = sanitizeEmail(data.email);
+    } catch {
+      logStep("ERROR: Invalid email");
+      return errorResponse("Valid email is required", 400, corsHeaders);
     }
 
-    const firstName = sanitizeString(data.first_name as string, 100);
-    const lastName = sanitizeString(data.last_name as string, 100);
-    const phone = sanitizePhone(data.phone as string);
-    const country = sanitizeString(data.country as string, 100);
-    const preferredLanguage = sanitizeString(data.preferred_language as string, 50) || "English";
+    const firstName = sanitizeString(data.first_name, 100);
+    const lastName = sanitizeString(data.last_name, 100);
+    const phone = sanitizePhone(data.phone);
+    const country = sanitizeString(data.country, 100);
+    const preferredLanguage = sanitizeString(data.preferred_language, 50) || "English";
 
     if (!firstName || !lastName) {
-      logStep("ERROR: Missing required contact fields");
-      return new Response(
-        JSON.stringify({ error: "First name and last name are required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      logStep("ERROR: Missing required name fields");
+      return errorResponse("First name and last name are required", 400, corsHeaders);
     }
 
     if (!country) {
       logStep("ERROR: Missing country");
-      return new Response(
-        JSON.stringify({ error: "Country is required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return errorResponse("Country is required", 400, corsHeaders);
     }
 
+    // Validate draft ID format if provided
+    const validatedDraftId = existingDraftId && typeof existingDraftId === "string"
+      ? sanitizeString(existingDraftId, 50).replace(/[^a-zA-Z0-9_-]/g, "")
+      : null;
+
     // Generate draft ID if not provided
-    const draftId = existingDraftId || `intl_draft_${crypto.randomUUID().slice(0, 12)}`;
+    const draftId = validatedDraftId || `intl_draft_${crypto.randomUUID().slice(0, 12)}`;
+
+    // Rate limit check (3 drafts per email per hour)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentDrafts } = await supabaseAdmin
+      .from("international_placement_cases")
+      .select("*", { count: "exact", head: true })
+      .eq("client_email", email)
+      .gte("created_at", oneHourAgo);
+
+    if (recentDrafts && recentDrafts >= 3 && !validatedDraftId) {
+      logStep("Rate limit exceeded", { email, count: recentDrafts });
+      return errorResponse("Too many requests. Please try again later.", 429, corsHeaders);
+    }
+
+    // Sanitize all intake data
+    const sanitizedData = sanitizeIntakeData(data);
 
     // Build the intake_data JSON
     const fullIntakeData = {
@@ -112,39 +127,62 @@ Deno.serve(async (req) => {
       phone: phone,
       country: country,
       preferred_language: preferredLanguage,
-      seeking_for: sanitizeString(data.seeking_for as string, 50),
-      age_range: sanitizeString(data.age_range as string, 50),
-      gender: sanitizeString(data.gender as string, 50),
-      level_of_care: sanitizeString(data.level_of_care as string, 100),
-      primary_concern: sanitizeString(data.primary_concern as string, 100),
-      co_occurring_conditions: Array.isArray(data.co_occurring_conditions) 
-        ? data.co_occurring_conditions.map(c => sanitizeString(String(c), 100))
-        : [],
-      previous_treatment: sanitizeString(data.previous_treatment as string, 50),
-      budget_range: sanitizeString(data.budget_range as string, 100),
-      rehab_style: sanitizeString(data.rehab_style as string, 100),
-      treatment_duration: sanitizeString(data.treatment_duration as string, 50),
-      amenities: Array.isArray(data.amenities)
-        ? data.amenities.map(a => sanitizeString(String(a), 100))
-        : [],
-      special_requirements: sanitizeString(data.special_requirements as string, 200),
-      notes: sanitizeString(data.notes as string, 1000),
+      seeking_for: sanitizeString(sanitizedData.seeking_for as string, 50),
+      age_range: sanitizeString(sanitizedData.age_range as string, 50),
+      gender: sanitizeString(sanitizedData.gender as string, 50),
+      level_of_care: sanitizeString(sanitizedData.level_of_care as string, 100),
+      primary_concern: sanitizeString(sanitizedData.primary_concern as string, 100),
+      co_occurring_conditions: sanitizeStringArray(sanitizedData.co_occurring_conditions, 20, 100),
+      previous_treatment: sanitizeString(sanitizedData.previous_treatment as string, 50),
+      budget_range: sanitizeString(sanitizedData.budget_range as string, 100),
+      rehab_style: sanitizeString(sanitizedData.rehab_style as string, 100),
+      treatment_duration: sanitizeString(sanitizedData.treatment_duration as string, 50),
+      amenities: sanitizeStringArray(sanitizedData.amenities, 30, 100),
+      special_requirements: sanitizeString(sanitizedData.special_requirements as string, 500),
+      notes: sanitizeString(sanitizedData.notes as string, 1000),
     };
 
     const clientName = `${firstName} ${lastName}`.trim();
     const now = new Date().toISOString();
 
+    // Validate email verified timestamp if provided
+    let validatedEmailVerifiedAt: string | null = null;
+    if (emailVerifiedAt && typeof emailVerifiedAt === "string") {
+      try {
+        const verifiedDate = new Date(emailVerifiedAt);
+        const hoursSince = (Date.now() - verifiedDate.getTime()) / (1000 * 60 * 60);
+        if (hoursSince >= 0 && hoursSince <= 24) {
+          validatedEmailVerifiedAt = verifiedDate.toISOString();
+        }
+      } catch {
+        logStep("Invalid emailVerifiedAt timestamp, ignoring");
+      }
+    }
+
     // Check if draft already exists by draft_id in metadata
-    if (existingDraftId) {
-      const { data: existingDraft } = await supabase
+    if (validatedDraftId) {
+      const { data: existingDraft } = await supabaseAdmin
         .from("international_placement_cases")
         .select("id, payment_status")
-        .contains("metadata", { draft_id: existingDraftId })
+        .contains("metadata", { draft_id: validatedDraftId })
         .maybeSingle();
 
       if (existingDraft) {
+        // Don't update if already paid
+        if (existingDraft.payment_status === "paid" || existingDraft.payment_status === "succeeded") {
+          logStep("Draft already paid, returning existing", { draftId: validatedDraftId });
+          return successResponse({
+            success: true,
+            draftId: validatedDraftId,
+            caseId: existingDraft.id,
+            isUpdate: false,
+            alreadyPaid: true,
+            _version: VERSION,
+          }, corsHeaders);
+        }
+
         // Update existing draft
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
           .from("international_placement_cases")
           .update({
             client_name: clientName,
@@ -153,12 +191,12 @@ Deno.serve(async (req) => {
             client_country: country,
             preferred_language: preferredLanguage,
             intake_data: fullIntakeData,
-            email_verified_at: emailVerifiedAt || null,
+            email_verified_at: validatedEmailVerifiedAt,
             form_completed_at: now,
             updated_at: now,
             metadata: {
               draft_id: draftId,
-              email_verified_at: emailVerifiedAt,
+              email_verified_at: validatedEmailVerifiedAt,
               form_completed_at: now,
             },
           })
@@ -171,21 +209,18 @@ Deno.serve(async (req) => {
 
         logStep("Draft updated", { draftId, caseId: existingDraft.id });
 
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            draftId,
-            caseId: existingDraft.id,
-            isUpdate: true,
-            _version: VERSION 
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-        );
+        return successResponse({
+          success: true,
+          draftId,
+          caseId: existingDraft.id,
+          isUpdate: true,
+          _version: VERSION,
+        }, corsHeaders);
       }
     }
 
     // Create new draft
-    const { data: newCase, error: insertError } = await supabase
+    const { data: newCase, error: insertError } = await supabaseAdmin
       .from("international_placement_cases")
       .insert({
         client_name: clientName,
@@ -197,12 +232,12 @@ Deno.serve(async (req) => {
         payment_status: "pending",
         payment_amount_cents: 29900,
         intake_data: fullIntakeData,
-        email_verified_at: emailVerifiedAt || null,
+        email_verified_at: validatedEmailVerifiedAt,
         form_completed_at: now,
         priority: "normal",
         metadata: {
           draft_id: draftId,
-          email_verified_at: emailVerifiedAt,
+          email_verified_at: validatedEmailVerifiedAt,
           form_completed_at: now,
         },
       })
@@ -216,23 +251,16 @@ Deno.serve(async (req) => {
 
     logStep("Draft created", { draftId, caseId: newCase.id });
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        draftId,
-        caseId: newCase.id,
-        isUpdate: false,
-        _version: VERSION 
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-    );
-
+    return successResponse({
+      success: true,
+      draftId,
+      caseId: newCase.id,
+      isUpdate: false,
+      _version: VERSION,
+    }, corsHeaders);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage, _version: VERSION }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-    );
+    return errorResponse(errorMessage, 500, corsHeaders, { _version: VERSION });
   }
 });
