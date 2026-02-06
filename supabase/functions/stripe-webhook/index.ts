@@ -152,6 +152,36 @@ Deno.serve(async (req) => {
           logStep("International payment recorded successfully");
         }
 
+        // CREATE PENDING CASE RECORD (safety net for abandoned intake forms)
+        const { data: existingCase } = await supabaseAdmin
+          .from("international_placement_cases")
+          .select("id")
+          .eq("stripe_checkout_session_id", session.id)
+          .maybeSingle();
+
+        if (!existingCase) {
+          const { error: caseError } = await supabaseAdmin
+            .from("international_placement_cases")
+            .insert({
+              client_name: clientName || "Pending Intake",
+              client_email: clientEmail || "",
+              client_country: clientCountry || "Unknown",
+              user_id: userId || null,
+              stripe_checkout_session_id: session.id,
+              stripe_payment_intent_id: paymentIntentId,
+              seeker_fee_amount_cents: 29900,
+              seeker_fee_status: "paid",
+              status: "pending_intake",
+              intake_data: {},
+            });
+
+          if (caseError) {
+            logStep("Error creating pending case", { error: caseError.message });
+          } else {
+            logStep("Pending international case created for follow-up");
+          }
+        }
+
         // Create admin notification
         await supabaseAdmin.from("admin_notifications").insert({
           type: "international_payment",
@@ -165,6 +195,84 @@ Deno.serve(async (req) => {
             client_country: clientCountry,
           },
         });
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // DOMESTIC CONCIERGE PAYMENT (safety net for abandoned intake forms)
+      if (session.mode === "payment" && session.metadata?.service === "concierge_placement") {
+        const email = session.customer_email || "";
+        const userId = session.metadata?.user_id || null;
+        const checkoutSessionId = session.id;
+        const paymentIntentId = session.payment_intent as string;
+
+        logStep("Processing domestic concierge payment", { 
+          sessionId: checkoutSessionId, 
+          email,
+          userId 
+        });
+
+        // Check if inquiry already exists for this checkout session
+        const { data: existingInquiry } = await supabaseAdmin
+          .from("concierge_inquiries")
+          .select("id, payment_status")
+          .eq("checkout_session_id", checkoutSessionId)
+          .maybeSingle();
+
+        if (existingInquiry) {
+          // Update payment status if not already succeeded
+          if (existingInquiry.payment_status !== "succeeded") {
+            await supabaseAdmin
+              .from("concierge_inquiries")
+              .update({
+                payment_status: "succeeded",
+                stripe_payment_intent_id: paymentIntentId,
+                stripe_customer_id: session.customer as string,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existingInquiry.id);
+            logStep("Updated existing inquiry payment status", { inquiryId: existingInquiry.id });
+          }
+        } else {
+          // Create pending inquiry record (safety net)
+          const { error: inquiryError } = await supabaseAdmin
+            .from("concierge_inquiries")
+            .insert({
+              user_id: userId || null,
+              user_name: "Pending Intake",
+              user_email: email,
+              user_phone: "",
+              status: "pending_intake",
+              payment_status: "succeeded",
+              payment_amount_cents: 2900,
+              checkout_session_id: checkoutSessionId,
+              stripe_payment_intent_id: paymentIntentId,
+              stripe_customer_id: session.customer as string,
+              idempotency_key: session.metadata?.idempotency_key || null,
+              intake_data: {},
+            });
+
+          if (inquiryError) {
+            logStep("Error creating pending concierge inquiry", { error: inquiryError.message });
+          } else {
+            logStep("Pending concierge inquiry created for follow-up");
+
+            // Create admin notification for abandoned payment
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "concierge_payment_pending_intake",
+              title: "Concierge Payment - Pending Intake",
+              message: `Payment received from ${email || "unknown"} but intake form not yet submitted`,
+              metadata: {
+                session_id: checkoutSessionId,
+                payment_intent_id: paymentIntentId,
+                email,
+                user_id: userId,
+              },
+            });
+          }
+        }
 
         return new Response(JSON.stringify({ received: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

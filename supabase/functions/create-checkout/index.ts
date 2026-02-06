@@ -32,8 +32,8 @@ Deno.serve(async (req) => {
   try {
     logStep(requestId, "Function started");
 
-    const { promoCode, action } = await req.json();
-    logStep(requestId, "Request received", { action, promoCode: promoCode ? "provided" : "none" });
+    const { promoCode, action, facilityId } = await req.json();
+    logStep(requestId, "Request received", { action, facilityId, promoCode: promoCode ? "provided" : "none" });
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -169,12 +169,16 @@ Deno.serve(async (req) => {
       cancel_url: `${origin}/provider/billing?canceled=true`,
       metadata: {
         user_id: user.id,
+        type: "pro_subscription",
+        facility_id: facilityId || "",
         plan: "pro",
         plan_name: "Pro",
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
+          type: "pro_subscription",
+          facility_id: facilityId || "",
           plan: "pro",
           plan_name: "Pro",
           created_via: "checkout",
