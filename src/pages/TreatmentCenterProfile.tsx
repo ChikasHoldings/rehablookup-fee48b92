@@ -37,7 +37,7 @@ function getInitials(name: string): string {
 }
 
 const TreatmentCenterProfile = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug: id } = useParams<{ slug: string }>();
   const [hasTrackedView, setHasTrackedView] = useState(false);
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   
