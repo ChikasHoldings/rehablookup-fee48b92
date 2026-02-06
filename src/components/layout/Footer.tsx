@@ -1,6 +1,6 @@
 import { forwardRef, SVGProps } from "react";
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, ChevronDown, ExternalLink } from "lucide-react";
+import { Mail, MapPin, ChevronDown, ExternalLink } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 // Popular locations for SEO
@@ -183,13 +183,6 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
                   <Mail className="h-4 w-4 flex-shrink-0" />
                   help@rehablookup.com
                 </a>
-                <a
-                  href="tel:+18005551234"
-                  className="flex items-center gap-2.5 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
-                >
-                  <Phone className="h-4 w-4 flex-shrink-0" />
-                  1-800-555-1234
-                </a>
                 <div className="flex items-start gap-2.5 text-sm text-primary-foreground/70">
                   <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
                   <span>Nationwide Coverage</span>
@@ -255,13 +248,6 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
               >
                 <Mail className="h-4 w-4" />
                 help@rehablookup.com
-              </a>
-              <a
-                href="tel:+18005551234"
-                className="inline-flex items-center gap-2 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
-              >
-                <Phone className="h-4 w-4" />
-                1-800-555-1234
               </a>
             </div>
 
