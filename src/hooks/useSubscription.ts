@@ -115,7 +115,7 @@ export const PLAN_DETAILS = {
     features: [
       "1 facility listing",
       "Receive locked inquiries",
-      "Pay per unlock ($25-39)",
+      "Pay per unlock ($39-49)",
       "Basic dashboard",
     ],
     notIncluded: [
