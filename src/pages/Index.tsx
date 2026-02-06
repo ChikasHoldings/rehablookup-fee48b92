@@ -337,12 +337,12 @@ const Index = () => {
             </p>
 
             {/* Search Form - Directory Style */}
-            <div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
+            <div className="animate-fade-in relative z-20" style={{ animationDelay: "100ms" }}>
               <SearchForm variant="directory" />
             </div>
 
             {/* Quick Links */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "150ms" }}>
               <Link 
                 to="/international" 
                 className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
