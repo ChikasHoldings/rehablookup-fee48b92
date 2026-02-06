@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { email, name, phone, country, intakeData } = await req.json();
+const { email, name, phone, country, intakeData, draftId } = await req.json();
     
     if (!email) {
       throw new Error("Email is required");
@@ -64,7 +64,8 @@ Deno.serve(async (req) => {
       name,
       country,
       userId: authenticatedUserId,
-      hasIntakeData: !!intakeData
+      hasIntakeData: !!intakeData,
+      draftId: draftId || null,
     });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -103,6 +104,7 @@ Deno.serve(async (req) => {
         client_country: country,
         idempotency_key: idempotencyKey,
         user_id: authenticatedUserId || "",
+        draft_id: draftId || "",
       },
       payment_intent_data: {
         metadata: {

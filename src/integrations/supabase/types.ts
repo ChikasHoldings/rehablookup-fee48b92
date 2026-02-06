@@ -2323,15 +2323,18 @@ export type Database = {
           closed_at: string | null
           created_at: string
           email_verified: boolean | null
+          email_verified_at: string | null
           facility_fee_cents: number
           facility_fee_status: string | null
           facility_invoice_id: string | null
+          form_completed_at: string | null
           id: string
           intake_data: Json
           intake_submitted_at: string | null
           international_payment_id: string | null
           matched_facility_ids: string[] | null
           payment_amount_cents: number
+          payment_reminder_count: number
           payment_status: string
           preferred_language: string | null
           priority: string | null
@@ -2358,15 +2361,18 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           email_verified?: boolean | null
+          email_verified_at?: string | null
           facility_fee_cents?: number
           facility_fee_status?: string | null
           facility_invoice_id?: string | null
+          form_completed_at?: string | null
           id?: string
           intake_data?: Json
           intake_submitted_at?: string | null
           international_payment_id?: string | null
           matched_facility_ids?: string[] | null
           payment_amount_cents?: number
+          payment_reminder_count?: number
           payment_status?: string
           preferred_language?: string | null
           priority?: string | null
@@ -2393,15 +2399,18 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           email_verified?: boolean | null
+          email_verified_at?: string | null
           facility_fee_cents?: number
           facility_fee_status?: string | null
           facility_invoice_id?: string | null
+          form_completed_at?: string | null
           id?: string
           intake_data?: Json
           intake_submitted_at?: string | null
           international_payment_id?: string | null
           matched_facility_ids?: string[] | null
           payment_amount_cents?: number
+          payment_reminder_count?: number
           payment_status?: string
           preferred_language?: string | null
           priority?: string | null
