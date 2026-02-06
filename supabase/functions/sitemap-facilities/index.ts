@@ -288,13 +288,27 @@ function escapeXml(str: string): string {
 }
 
 // Generate the main sitemap XML (static pages)
-function generateMainSitemap(): string {
+async function generateMainSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
   const today = new Date().toISOString().split("T")[0];
+  
+  // Fetch published articles from database for dynamic routes
+  const { data: articles } = await supabase
+    .from("blog_articles")
+    .select("slug, updated_at")
+    .eq("status", "published");
+  
+  const articleRoutes: RouteEntry[] = (articles || []).map(article => ({
+    path: `/resources/${article.slug}`,
+    priority: 0.8,
+    changefreq: "monthly"
+  }));
+  
   const allRoutes = [
     ...STATIC_ROUTES, 
     ...generateStateRoutes(),
     ...generateCityRoutes(),
-    ...generateStateNearMeRoutes()
+    ...generateStateNearMeRoutes(),
+    ...articleRoutes
   ];
   
   // Sort by priority (highest first)
@@ -304,7 +318,7 @@ function generateMainSitemap(): string {
     .map(route => generateUrlEntry(route.path, route.priority, route.changefreq, today))
     .join("\n");
 
-  console.log(`[Sitemap ${VERSION}] Generated main sitemap with ${allRoutes.length} URLs`);
+  console.log(`[Sitemap ${VERSION}] Generated main sitemap with ${allRoutes.length} URLs (including ${articleRoutes.length} articles)`);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"

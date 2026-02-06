@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Headphones,
   Megaphone,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
@@ -56,6 +57,7 @@ const navEntries: NavEntry[] = [
   { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
   { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support", countKey: "supportTickets" },
   { to: "/admin/marketing", icon: Megaphone, label: "Marketing Leads", permission: "leads", countKey: "marketingLeads" },
+  { to: "/admin/blog", icon: FileText, label: "Blog Articles", permission: "dashboard" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews", countKey: "pendingReviews" },

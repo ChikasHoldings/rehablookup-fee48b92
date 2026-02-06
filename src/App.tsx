@@ -191,6 +191,7 @@ const InternationalAgreementTemplate = lazy(() => import("./pages/admin/Internat
 const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementRevenueDashboard"));
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
+const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const MarketingLanding = lazy(() => import("./pages/MarketingLanding"));
 
 const App = () => {
@@ -464,6 +465,7 @@ const App = () => {
               <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="marketing" element={<AdminMarketing />} />
+              <Route path="blog" element={<AdminBlog />} />
             </Route>
             
             {/* Marketing Landing Page (Ad Traffic) */}
