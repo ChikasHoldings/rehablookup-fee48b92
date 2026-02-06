@@ -315,3 +315,9 @@ verify_jwt = true
 
 [functions.send-abandoned-placement-email]
 verify_jwt = false
+
+[functions.save-placement-draft]
+verify_jwt = false
+
+[functions.save-international-placement-draft]
+verify_jwt = false
