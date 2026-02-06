@@ -80,7 +80,7 @@ interface FooterColumnProps {
 function FooterColumn({ title, links }: FooterColumnProps) {
   return (
     <div>
-      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
+      <h4 className="text-sm font-semibold text-primary-foreground uppercase tracking-wider mb-4">
         {title}
       </h4>
       <ul className="space-y-3">
@@ -90,8 +90,8 @@ function FooterColumn({ title, links }: FooterColumnProps) {
               to={item.path}
               className={`text-sm transition-colors duration-200 ${
                 item.highlight
-                  ? "text-primary font-medium hover:text-primary/80 inline-flex items-center gap-1"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-accent font-medium hover:text-accent/80 inline-flex items-center gap-1"
+                  : "text-primary-foreground/70 hover:text-primary-foreground"
               }`}
             >
               {item.name}
@@ -112,10 +112,10 @@ interface MobileAccordionProps {
 
 function MobileAccordion({ title, links }: MobileAccordionProps) {
   return (
-    <details className="group border-b border-border/50 last:border-b-0">
+    <details className="group border-b border-primary-foreground/10 last:border-b-0">
       <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
-        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+        <h4 className="text-sm font-semibold text-primary-foreground">{title}</h4>
+        <ChevronDown className="h-4 w-4 text-primary-foreground/60 transition-transform duration-200 group-open:rotate-180" />
       </summary>
       <div className="px-5 pb-4">
         <ul className="space-y-3">
@@ -125,8 +125,8 @@ function MobileAccordion({ title, links }: MobileAccordionProps) {
                 to={item.path}
                 className={`text-sm transition-colors ${
                   item.highlight
-                    ? "text-primary font-medium inline-flex items-center gap-1"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "text-accent font-medium inline-flex items-center gap-1 hover:text-accent/80"
+                    : "text-primary-foreground/70 hover:text-primary-foreground"
                 }`}
               >
                 {item.name}
