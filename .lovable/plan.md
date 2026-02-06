@@ -1,84 +1,42 @@
 
-# Fix: Dropdown Click-Through Issue on Homepage Hero
+# Fix: Deploy Missing Edge Functions
 
-## Problem Summary
+## Problem Identified
+The facilities are not showing on the search page because two critical edge functions are not deployed:
+- `get-public-facilities` (returns 404)
+- `get-featured-facilities` (returns 404)
 
-When users click on the "Type of Care" or "Insurance" dropdown in the homepage hero section, the dropdown menu opens correctly. However, the "International Placement" and "List Your Treatment Center" links positioned below the search form can still receive click events, causing unintended navigation.
-
-## Root Cause Analysis
-
-The issue is a stacking context and positioning problem:
-
-1. The `MultiSelectDropdown` component uses `position: absolute` with `top-full` to render its dropdown menu below the trigger button
-2. The dropdown has `z-[9999]` which should place it above other content
-3. The "Quick Links" section exists OUTSIDE the SearchForm container, in a sibling div
-4. When the dropdown opens, it visually overlaps the Quick Links area, but the Quick Links remain clickable because they're in a different DOM subtree
-
-```text
-Hero Section (z-10)
-└── Container
-    └── SearchForm (directory variant)
-        └── MultiSelectDropdown
-            └── Trigger Button
-            └── Dropdown Menu (z-[9999], position: absolute, top-full)
-    └── Quick Links (mt-5) <-- OUTSIDE SearchForm, receives clicks!
+The console logs show:
 ```
+[useStaticFacilities] Error: FunctionsFetchError: Failed to send a request to the Edge Function
+```
+
+## Root Cause
+These edge functions exist in the codebase (`supabase/functions/`) and are configured in `supabase/config.toml`, but they were never deployed to the server. This likely happened during a previous deployment that didn't include these functions.
 
 ## Solution
+Deploy both edge functions to restore the facilities display functionality.
 
-Two-pronged fix:
+## Implementation Steps
 
-### 1. Ensure Quick Links have lower z-index
+### Step 1: Deploy Edge Functions
+Trigger deployment of the two missing edge functions:
+- `get-public-facilities` - Fetches all approved facilities from the database
+- `get-featured-facilities` - Determines which facilities should be featured/pro
 
-Add `relative z-0` to the Quick Links container so it properly participates in the stacking context and appears below the dropdown menu.
+### Step 2: Verify Deployment
+After deployment, verify the functions respond correctly by testing them.
 
-### 2. Increase dropdown isolation
+## Technical Details
+The edge functions are already properly written and configured:
+- Both have correct CORS headers
+- Both are set to `verify_jwt = false` (public access)
+- Both query the correct database views/tables
 
-Wrap the SearchForm in a container with `relative z-20` to establish a higher stacking context, ensuring all dropdowns from within appear above the Quick Links.
+No code changes are required - this is purely a deployment issue.
 
-## Files to Modify
-
-**`src/pages/Index.tsx`**
-
-```typescript
-// BEFORE (line 340-345):
-<div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
-  <SearchForm variant="directory" />
-</div>
-
-{/* Quick Links */}
-<div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in" ...>
-
-// AFTER:
-<div className="animate-fade-in relative z-20" style={{ animationDelay: "100ms" }}>
-  <SearchForm variant="directory" />
-</div>
-
-{/* Quick Links */}
-<div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" ...>
-```
-
-This change:
-- Gives the SearchForm container `z-20`, establishing a stacking context for all its dropdowns
-- Gives the Quick Links `z-0`, ensuring they render below the SearchForm's dropdowns
-- Both containers get `relative` to enable z-index participation
-
-## Why This Works
-
-With proper z-index hierarchy:
-- Hero Section: `z-10`
-- SearchForm Container: `z-20` (higher than siblings)
-- Dropdown Menu: `z-[9999]` (highest within its context)
-- Quick Links: `z-0` (lowest among siblings)
-
-The Quick Links will now properly appear behind the dropdown menu, and clicks on the dropdown area will be captured by the dropdown rather than passing through to the links.
-
-## Testing
-
-After the fix:
-1. Navigate to homepage
-2. Click "Type of Care" dropdown
-3. Verify dropdown opens and covers the Quick Links area
-4. Click within the dropdown area where Quick Links appear visually underneath
-5. Confirm the click selects a treatment type (not navigating to International Placement)
-6. Repeat for "Insurance" dropdown
+## Expected Outcome
+Once deployed, the search page will:
+1. Successfully fetch facilities from `get-public-facilities`
+2. Correctly identify Pro/Featured facilities from `get-featured-facilities`
+3. Display all facilities in the search results
