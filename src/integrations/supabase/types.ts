@@ -347,6 +347,75 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_articles: {
+        Row: {
+          author: string
+          author_date: string | null
+          category: string
+          category_label: string
+          content: Json
+          created_at: string | null
+          created_by: string | null
+          excerpt: string
+          featured: boolean | null
+          id: string
+          image_url: string | null
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          read_time: string
+          seo_keywords: string[] | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          author_date?: string | null
+          category: string
+          category_label: string
+          content?: Json
+          created_at?: string | null
+          created_by?: string | null
+          excerpt: string
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          read_time?: string
+          seo_keywords?: string[] | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          author_date?: string | null
+          category?: string
+          category_label?: string
+          content?: Json
+          created_at?: string | null
+          created_by?: string | null
+          excerpt?: string
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          read_time?: string
+          seo_keywords?: string[] | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       concierge_case_events: {
         Row: {
           actor_id: string | null

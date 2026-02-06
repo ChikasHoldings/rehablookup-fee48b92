@@ -190,6 +190,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     console.log("Approval email sent:", emailResponse);
 
+    // Submit to IndexNow for instant search engine indexing
+    if (facility?.slug) {
+      const facilityUrl = `https://rehablookup.com/center/${facility.slug}`;
+      try {
+        const indexNowResponse = await fetch(
+          `${supabaseUrl}/functions/v1/submit-indexnow`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({ urls: [facilityUrl] }),
+          }
+        );
+        const indexResult = await indexNowResponse.json();
+        console.log("IndexNow: Submitted facility URL:", facilityUrl, indexResult);
+      } catch (indexError) {
+        console.error("IndexNow submission failed (non-blocking):", indexError);
+      }
+    }
+
     const { error: notifError } = await supabase
       .from("provider_notifications")
       .insert({
@@ -208,7 +230,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Approval email sent to ${profile.email}` 
+        message: `Approval email sent to ${profile.email}`,
+        indexNowSubmitted: !!facility?.slug
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
