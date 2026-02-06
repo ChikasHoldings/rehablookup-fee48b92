@@ -1,7 +1,23 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.2.0";
+// Inline validation utilities
+const sanitizeString = (str: unknown, maxLength = 500): string => {
+  if (!str || typeof str !== "string") return "";
+  return str.trim().slice(0, maxLength).replace(/[<>]/g, "");
+};
+const sanitizeEmail = (email: unknown): string => {
+  if (!email || typeof email !== "string") throw new Error("Invalid email");
+  const cleaned = email.trim().toLowerCase().slice(0, 254);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) throw new Error("Invalid email format");
+  return cleaned;
+};
+const errorResponse = (msg: string, status: number, headers: Record<string, string>) =>
+  new Response(JSON.stringify({ error: msg }), { headers: { ...headers, "Content-Type": "application/json" }, status });
+const successResponse = (data: Record<string, unknown>, headers: Record<string, string>) =>
+  new Response(JSON.stringify(data), { headers: { ...headers, "Content-Type": "application/json" }, status: 200 });
+
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,21 +26,14 @@ const corsHeaders = {
 
 // Domestic Concierge Service - $29 seeker fee
 const CONCIERGE_PRICE_ID = "price_1SxeVg9fxdThyiakIWdVSRtT";
+const EXPECTED_AMOUNT_CENTS = 2900;
+
+// Maximum request body size (50KB)
+const MAX_BODY_SIZE = 50000;
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CONCIERGE-CHECKOUT v${VERSION}] ${step}${detailsStr}`);
-};
-
-// Input validation helpers
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
-};
-
-const sanitizeString = (str: string, maxLength: number = 500): string => {
-  if (!str || typeof str !== 'string') return '';
-  return str.trim().slice(0, maxLength).replace(/[<>]/g, '');
 };
 
 Deno.serve(async (req) => {
@@ -39,52 +48,68 @@ Deno.serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       logStep("ERROR: STRIPE_SECRET_KEY not configured");
-      return new Response(
-        JSON.stringify({ 
-          error: "Payment system not configured",
-          instructions: "Contact support to configure payment processing"
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+      return errorResponse("Payment system not configured", 500, corsHeaders);
     }
 
     // Validate key format
     if (stripeKey.startsWith("pk_")) {
       logStep("ERROR: Invalid key type - publishable key provided");
-      return new Response(
-        JSON.stringify({ error: "Payment configuration error" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+      return errorResponse("Payment configuration error", 500, corsHeaders);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    // Validate content length
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
+      logStep("ERROR: Request too large", { size: contentLength });
+      return errorResponse("Request body too large", 413, corsHeaders);
+    }
 
     // Parse and validate request body
     let body: Record<string, unknown>;
     try {
-      body = await req.json();
+      const rawBody = await req.text();
+      if (rawBody.length > MAX_BODY_SIZE) {
+        return errorResponse("Request body too large", 413, corsHeaders);
+      }
+      body = JSON.parse(rawBody);
     } catch {
       logStep("ERROR: Invalid JSON body");
-      return new Response(
-        JSON.stringify({ error: "Invalid request body" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return errorResponse("Invalid request body", 400, corsHeaders);
     }
 
     const { email, intakeDraftKey, intakeData, isAuthenticated, userId: passedUserId, draftId } = body;
     
     // Validate email
-    if (!email || typeof email !== 'string' || !isValidEmail(email)) {
+    let sanitizedEmail: string;
+    try {
+      sanitizedEmail = sanitizeEmail(email);
+    } catch {
       logStep("ERROR: Invalid email", { email: typeof email });
-      return new Response(
-        JSON.stringify({ error: "Valid email address is required" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return errorResponse("Valid email address is required", 400, corsHeaders);
     }
 
-    const sanitizedEmail = sanitizeString(email as string, 254).toLowerCase();
-    const sanitizedDraftId = draftId ? sanitizeString(draftId as string, 100) : null;
+    const sanitizedDraftId = draftId ? sanitizeString(draftId as string, 100).replace(/[^a-zA-Z0-9_-]/g, "") : null;
+
+    // Rate limiting: Check recent checkout attempts for this email
+    if (supabaseUrl && supabaseServiceKey) {
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
+      const { count: recentAttempts } = await supabaseAdmin
+        .from("concierge_inquiries")
+        .select("*", { count: "exact", head: true })
+        .eq("user_email", sanitizedEmail)
+        .gte("created_at", fiveMinutesAgo);
+
+      if (recentAttempts && recentAttempts >= 10) {
+        logStep("Rate limit exceeded for checkout attempts", { email: sanitizedEmail, count: recentAttempts });
+        return errorResponse("Too many checkout attempts. Please wait a few minutes.", 429, corsHeaders);
+      }
+    }
 
     // Try to get authenticated user from request
     let authenticatedUserId: string | null = null;
@@ -103,8 +128,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Use authenticated user ID first, then passed userId
-    const effectiveUserId = authenticatedUserId || (typeof passedUserId === 'string' ? passedUserId : null);
+    // Use authenticated user ID first, then passed userId (validate UUID format)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const effectiveUserId = authenticatedUserId || 
+      (typeof passedUserId === 'string' && uuidRegex.test(passedUserId) ? passedUserId : null);
 
     logStep("Processing checkout", { 
       email: sanitizedEmail, 
@@ -113,6 +140,18 @@ Deno.serve(async (req) => {
     });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    // Verify the price exists and matches expected amount
+    try {
+      const price = await stripe.prices.retrieve(CONCIERGE_PRICE_ID);
+      if (price.unit_amount !== EXPECTED_AMOUNT_CENTS) {
+        logStep("ERROR: Price amount mismatch", { expected: EXPECTED_AMOUNT_CENTS, actual: price.unit_amount });
+        return errorResponse("Payment configuration error", 500, corsHeaders);
+      }
+    } catch (priceErr) {
+      logStep("ERROR: Failed to verify price", { error: String(priceErr) });
+      return errorResponse("Payment configuration error", 500, corsHeaders);
+    }
 
     // Check for existing customer with retry
     let customerId: string | undefined;
@@ -126,19 +165,23 @@ Deno.serve(async (req) => {
       logStep("Customer lookup failed, proceeding without", { error: String(customerErr) });
     }
 
-    // Generate idempotency key
-    const idempotencyKey = `concierge_${sanitizedEmail}_${Date.now()}`;
+    // Generate idempotency key with timestamp
+    const idempotencyKey = `concierge_${sanitizedEmail.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
+    
+    // Validate origin
+    const allowedOrigins = ["https://rehablookup.com", "https://www.rehablookup.com"];
+    const validOrigin = allowedOrigins.includes(origin) ? origin : "https://rehablookup.com";
 
     // Determine success URL based on whether user is authenticated
     const successUrl = isAuthenticated 
-      ? `${origin}/account/concierge?session_id={CHECKOUT_SESSION_ID}&payment=success`
-      : `${origin}/concierge/intake?session_id={CHECKOUT_SESSION_ID}`;
+      ? `${validOrigin}/account/concierge?session_id={CHECKOUT_SESSION_ID}&payment=success`
+      : `${validOrigin}/concierge/thank-you?session_id={CHECKOUT_SESSION_ID}`;
     
     const cancelUrl = isAuthenticated
-      ? `${origin}/account/concierge?payment=canceled`
-      : `${origin}/concierge/intake?canceled=true`;
+      ? `${validOrigin}/account/concierge?payment=canceled`
+      : `${validOrigin}/concierge/intake?canceled=true`;
 
     // Create checkout session with timeout handling
     let session: Stripe.Checkout.Session;
@@ -165,58 +208,41 @@ Deno.serve(async (req) => {
           user_id: effectiveUserId || "",
           draft_id: sanitizedDraftId || "",
           version: VERSION,
+          expected_amount: String(EXPECTED_AMOUNT_CENTS),
         },
         payment_intent_data: {
           metadata: {
             service: "concierge_placement",
             email: sanitizedEmail,
             user_id: effectiveUserId || "",
+            expected_amount: String(EXPECTED_AMOUNT_CENTS),
           },
         },
       });
     } catch (stripeErr) {
       const errorMessage = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
       logStep("Stripe checkout creation failed", { error: errorMessage });
-      return new Response(
-        JSON.stringify({ error: "Failed to create checkout session. Please try again." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+      return errorResponse("Failed to create checkout session. Please try again.", 500, corsHeaders);
     }
 
     if (!session.url) {
       logStep("ERROR: No checkout URL returned");
-      return new Response(
-        JSON.stringify({ error: "Checkout session created but no URL returned" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+      return errorResponse("Checkout session created but no URL returned", 500, corsHeaders);
     }
 
     logStep("Checkout session created", { 
       sessionId: session.id, 
-      url: session.url,
       userId: effectiveUserId 
     });
 
-    return new Response(
-      JSON.stringify({ 
-        url: session.url, 
-        sessionId: session.id,
-        idempotencyKey 
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    return successResponse({
+      url: session.url,
+      sessionId: session.id,
+      idempotencyKey,
+    }, corsHeaders);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("UNHANDLED ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return errorResponse("An unexpected error occurred. Please try again.", 500, corsHeaders);
   }
 });
