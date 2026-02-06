@@ -321,3 +321,6 @@ verify_jwt = false
 
 [functions.save-international-placement-draft]
 verify_jwt = false
+
+[functions.seed-blog-articles]
+verify_jwt = false
