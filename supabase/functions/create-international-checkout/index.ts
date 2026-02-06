@@ -280,38 +280,3 @@ Deno.serve(async (req) => {
     return errorResponse("An unexpected error occurred. Please try again.", 500, corsHeaders);
   }
 });
-
-          if (insertError) {
-            logStep("Warning: Failed to create payment record", { error: insertError.message });
-          } else {
-            logStep("Pending payment record created");
-          }
-        }
-      } catch (dbErr) {
-        logStep("Warning: DB operation failed", { error: String(dbErr) });
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        url: session.url, 
-        sessionId: session.id,
-        idempotencyKey 
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
-  }
-});
