@@ -101,17 +101,17 @@ export default function SeekerSaved() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-rose-100">
-            <Bookmark className="h-5 w-5 text-rose-600" />
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-rose-100">
+            <Bookmark className="h-4 w-4 sm:h-5 sm:w-5 text-rose-600" />
           </div>
-          <h1 className="text-2xl font-display font-bold">Saved Facilities</h1>
+          <h1 className="text-lg sm:text-2xl font-display font-bold">Saved Facilities</h1>
         </div>
         {facilities.length > 0 && (
-          <Badge variant="secondary" className="text-xs">
-            {facilities.length} saved
+          <Badge variant="secondary" className="text-[10px] sm:text-xs">
+            {facilities.length}
           </Badge>
         )}
       </div>
