@@ -31,6 +31,7 @@ import {
   nearMeLinks, 
   insuranceLinks
 } from "@/components/seo/InternalLinkingSection";
+import { ArticleCategoryLinks } from "@/components/seo/ArticleCategoryLinks";
 
 // Content block types from JSON structure
 interface ContentBlock {
@@ -58,6 +59,7 @@ interface DBArticle {
   published_at: string | null;
   meta_title: string | null;
   meta_description: string | null;
+  seo_keywords: string[] | null;
 }
 
 // Helper function to parse content with internal links
@@ -219,6 +221,17 @@ const ArticleDetail = () => {
     return extractLinkedArticleIds(article.content);
   }, [article?.content]);
 
+  // Calculate word count from content for schema (must be before early returns)
+  const wordCount = useMemo(() => {
+    if (!article?.content) return 0;
+    let text = "";
+    article.content.forEach((block) => {
+      if (block.content) text += block.content + " ";
+      if (block.items) text += block.items.join(" ") + " ";
+    });
+    return text.split(/\s+/).filter(Boolean).length;
+  }, [article?.content]);
+
   const { data: linkedArticles } = useQuery({
     queryKey: ["linked-articles", linkedArticleIds],
     queryFn: async () => {
@@ -257,6 +270,14 @@ const ArticleDetail = () => {
   const shareTitle = encodeURIComponent(article.title);
   const defaultImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop";
   const articleImage = article.image_url || defaultImage;
+
+  // Breadcrumbs for SEO
+  const breadcrumbs = [
+    { name: "Home", url: "/" },
+    { name: "Resources", url: "/resources" },
+    { name: article.category_label, url: `/resources?category=${article.category}` },
+    { name: article.title, url: `/resources/${article.slug}` },
+  ];
 
   // Render content blocks from JSON structure
   const renderContent = () => {
@@ -329,7 +350,13 @@ const ArticleDetail = () => {
           dateModified: article.published_at || new Date().toISOString(),
           author: article.author,
           url: `https://rehablookup.com/resources/${article.slug}`,
+          keywords: article.seo_keywords || undefined,
+          category: article.category_label,
+          wordCount,
         })}
+        breadcrumbs={breadcrumbs}
+        keywords={article.seo_keywords || undefined}
+        publishedTime={article.published_at || undefined}
       />
 
       {/* Hero */}
@@ -467,6 +494,9 @@ const ArticleDetail = () => {
                   </div>
                 </div>
               )}
+
+              {/* Category-based internal links for SEO */}
+              <ArticleCategoryLinks category={article.category} variant="footer" />
             </article>
 
             {/* Sidebar */}
@@ -528,7 +558,8 @@ const ArticleDetail = () => {
                 </Link>
               </div>
 
-              {/* Browse More */}
+              {/* Category-Aware Internal Linking for SEO */}
+              <ArticleCategoryLinks category={article.category} />
               <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
                 <h3 className="font-display text-base font-semibold text-foreground mb-2">
                   Explore More
