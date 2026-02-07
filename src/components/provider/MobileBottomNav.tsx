@@ -3,7 +3,7 @@ import {
   Home, 
   Users, 
   Network,
-  BarChart3,
+  Building2,
   MoreHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ const navItems = [
   { href: "/provider/dashboard", label: "Home", icon: Home },
   { href: "/provider/inquiries", label: "Leads", icon: Users },
   { href: "/provider/placement-network", label: "Placement", icon: Network },
-  { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/provider/listings", label: "Listings", icon: Building2 },
 ];
 
 export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
