@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -130,6 +130,12 @@ function ArticlesSkeleton() {
 export default function Resources() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const queryClient = useQueryClient();
+
+  // Invalidate cache on mount to ensure fresh data
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["published-articles"] });
+  }, [queryClient]);
 
   // Fetch all published articles
   const { data: articles, isLoading } = useQuery({
@@ -146,6 +152,7 @@ export default function Resources() {
       return data as DBArticle[];
     },
     staleTime: 0,
+    gcTime: 0,
     refetchOnMount: "always",
   });
 
