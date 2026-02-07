@@ -38,50 +38,51 @@ export const ConciergeStatsCharts = forwardRef<HTMLDivElement, ConciergeStatsCha
 
   return (
     <div ref={ref} className="bg-card border rounded-lg">
-      {/* Summary Row */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <div className="flex items-center gap-6">
+      {/* Summary Row - responsive layout */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 py-2 sm:py-3 border-b gap-2 sm:gap-0">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-6">
           <button
             onClick={() => onStatusClick("all")}
             className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors",
+              "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-colors",
               activeStatus === "all" ? "bg-primary/10 text-primary" : "hover:bg-muted"
             )}
           >
-            <span className="text-2xl font-bold tabular-nums">{totalCases}</span>
-            <span className="text-sm text-muted-foreground">Total Cases</span>
+            <span className="text-lg sm:text-2xl font-bold tabular-nums">{totalCases}</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Total</span>
           </button>
           
-          <div className="h-6 w-px bg-border" />
+          <div className="hidden sm:block h-6 w-px bg-border" />
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
-            <span className="text-lg font-semibold tabular-nums">{activeCases}</span>
-            <span className="text-sm text-muted-foreground">Active</span>
+            <span className="text-base sm:text-lg font-semibold tabular-nums">{activeCases}</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Active</span>
           </div>
           
-          <div className="h-6 w-px bg-border" />
+          <div className="hidden sm:block h-6 w-px bg-border" />
           
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold tabular-nums text-success">{placementRate}%</span>
-            <span className="text-sm text-muted-foreground">Placement Rate</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-base sm:text-lg font-semibold tabular-nums text-success">{placementRate}%</span>
+            <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">Placement Rate</span>
+            <span className="text-xs text-muted-foreground sm:hidden">Rate</span>
           </div>
         </div>
         
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-success" />
+        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
+          <span className="flex items-center gap-1 sm:gap-1.5">
+            <span className="h-1.5 sm:h-2 w-1.5 sm:w-2 rounded-full bg-success" />
             {placedCount} placed
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-muted-foreground" />
+          <span className="flex items-center gap-1 sm:gap-1.5">
+            <span className="h-1.5 sm:h-2 w-1.5 sm:w-2 rounded-full bg-muted-foreground" />
             {closedCount} closed
           </span>
         </div>
       </div>
 
-      {/* Pipeline Stages */}
-      <div className="flex items-center gap-1 p-2 overflow-x-auto">
+      {/* Pipeline Stages - horizontal scroll on mobile */}
+      <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide">
         {PIPELINE_STAGES.map((stage) => {
           // For aggregated stages, sum counts from all sub-keys
           const count = 'keys' in stage && stage.keys 
@@ -94,15 +95,15 @@ export const ConciergeStatsCharts = forwardRef<HTMLDivElement, ConciergeStatsCha
               key={stage.key}
               onClick={() => onStatusClick(stage.key)}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md transition-all min-w-fit",
+                "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md transition-all min-w-fit shrink-0",
                 isActive 
                   ? "bg-accent text-accent-foreground shadow-sm" 
                   : "hover:bg-muted"
               )}
             >
-              <span className={cn("h-2 w-2 rounded-full shrink-0", stage.color)} />
-              <span className="font-medium tabular-nums">{count}</span>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{stage.label}</span>
+              <span className={cn("h-1.5 sm:h-2 w-1.5 sm:w-2 rounded-full shrink-0", stage.color)} />
+              <span className="font-medium tabular-nums text-sm sm:text-base">{count}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{stage.label}</span>
             </button>
           );
         })}
