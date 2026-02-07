@@ -433,30 +433,81 @@ export function generateArticleSchema(article: {
   dateModified?: string;
   image?: string;
   url?: string;
+  keywords?: string[];
+  category?: string;
+  wordCount?: number;
 }) {
+  const SITE_URL = "https://rehablookup.com";
+  
   return {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": ["Article", "MedicalWebPage"],
+    "@id": article.url,
     headline: article.title,
+    alternativeHeadline: article.description.slice(0, 110),
     description: article.description,
+    image: article.image ? {
+      "@type": "ImageObject",
+      url: article.image,
+      width: 1200,
+      height: 630,
+    } : undefined,
     author: {
       "@type": "Person",
       name: article.author,
+      url: `${SITE_URL}/resources`,
+      jobTitle: "Health Content Specialist",
+      worksFor: {
+        "@type": "Organization",
+        name: "RehabLookup",
+      },
     },
     publisher: {
       "@type": "Organization",
       name: "RehabLookup",
+      url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: "https://rehablookup.com/logo.png",
+        url: `${SITE_URL}/logo.svg`,
+        width: 512,
+        height: 512,
       },
     },
     datePublished: article.datePublished,
     dateModified: article.dateModified || article.datePublished,
-    image: article.image,
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": article.url,
+    },
+    // Enhanced SEO fields
+    keywords: article.keywords?.join(", "),
+    articleSection: article.category || "Health & Recovery",
+    wordCount: article.wordCount,
+    isAccessibleForFree: true,
+    inLanguage: "en-US",
+    // Medical context
+    about: {
+      "@type": "MedicalCondition",
+      name: "Substance Use Disorder",
+      alternateName: ["Addiction", "Drug Addiction", "Alcohol Use Disorder"],
+    },
+    audience: {
+      "@type": "PeopleAudience",
+      audienceType: "People seeking addiction treatment information",
+      healthCondition: {
+        "@type": "MedicalCondition",
+        name: "Substance Use Disorder",
+      },
+    },
+    // Speakable for voice search / Google Assistant
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["h1", ".prose p:first-of-type", "blockquote"],
+    },
+    // Potential actions
+    potentialAction: {
+      "@type": "ReadAction",
+      target: article.url,
     },
   };
 }
