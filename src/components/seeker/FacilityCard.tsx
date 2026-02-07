@@ -87,10 +87,10 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
 
     return (
       <article ref={ref} className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
-        <div className="flex flex-col sm:flex-row sm:min-h-[160px]">
-          {/* Image Section - Fixed dimensions for consistent card sizes */}
-          <div className="relative w-full sm:w-44 lg:w-52 shrink-0 overflow-hidden bg-muted">
-            <div className="h-32 sm:h-full w-full relative">
+        <div className="flex flex-col sm:flex-row sm:min-h-[140px]">
+          {/* Image Section - Compact on mobile */}
+          <div className="relative w-full sm:w-36 lg:w-44 shrink-0 overflow-hidden bg-muted">
+            <div className="h-28 sm:h-full w-full relative">
               {hasHeroImage ? (
                 <>
                   <img 
@@ -104,8 +104,8 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                 </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-sm">
-                    <span className="font-display text-xl font-bold text-primary/70">
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-sm">
+                    <span className="font-display text-lg sm:text-xl font-bold text-primary/70">
                       {initials}
                     </span>
                   </div>
@@ -113,12 +113,12 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
               )}
               
               {/* Top-right icons: Favorite + Years */}
-              <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1.5">
+              <div className="absolute top-1.5 right-1.5 z-10 flex flex-col items-end gap-1">
                 {/* Favorite button */}
                 <button
                   onClick={handleFavoriteClick}
                   className={cn(
-                    "transition-all duration-200",
+                    "transition-all duration-200 p-1",
                     showRemoveButton
                       ? "text-rose-500 hover:text-rose-600"
                       : isFavorite(facility.id)
@@ -127,21 +127,21 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                   )}
                   aria-label={showRemoveButton ? "Remove from saved" : isFavorite(facility.id) ? "Remove from favorites" : "Add to favorites"}
                 >
-                  <Heart className={cn("h-6 w-6", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
+                  <Heart className={cn("h-5 w-5", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
                 </button>
 
                 {/* Years badge */}
                 {yearsInBusiness && yearsInBusiness > 0 && (
-                  <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm">
-                    <Clock className="h-2.5 w-2.5 text-blue-600" />
-                    <span className="text-[9px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
+                  <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-sm rounded px-1 py-0.5 shadow-sm">
+                    <Clock className="h-2 w-2 text-blue-600" />
+                    <span className="text-[8px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
                   </div>
                 )}
               </div>
 
               {/* Logo overlay */}
-              <div className="absolute bottom-2 left-2 z-10">
-                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-card shadow-md">
+              <div className="absolute bottom-1.5 left-1.5 z-10">
+                <div className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 overflow-hidden rounded-md border-2 border-white bg-card shadow-md">
                   {hasLogo ? (
                     <img 
                       src={facility.logo_url!}
@@ -152,7 +152,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                      <span className="font-display text-xs font-bold text-primary">
+                      <span className="font-display text-[10px] font-bold text-primary">
                         {initials}
                       </span>
                     </div>
@@ -163,61 +163,61 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
           </div>
 
           {/* Content Section */}
-          <div className="flex flex-1 flex-col p-3 sm:p-4 min-w-0">
+          <div className="flex flex-1 flex-col p-2.5 sm:p-3 min-w-0">
             {/* Header row */}
-            <div className="flex items-start gap-3 mb-2">
+            <div className="flex items-start gap-2 mb-1.5">
               <div className="flex-1 min-w-0">
                 <Link to={facilityLink}>
-                  <h3 className="font-display text-sm sm:text-base font-bold leading-tight truncate mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-display text-[13px] sm:text-sm font-bold leading-tight truncate mb-0.5 group-hover:text-primary transition-colors">
                     {facility.name}
                   </h3>
                 </Link>
-                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-                  <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                <div className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
+                  <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 text-primary" />
                   <span className="font-medium truncate">{facility.city}, {facility.state}</span>
                 </div>
               </div>
             </div>
 
             {/* Badges */}
-            <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <div className="flex items-center gap-1 flex-wrap mb-1.5">
               {/* Rating badge - prominent position */}
               <RatingBadge rating={averageRating} reviewCount={reviewCount} size="sm" />
               
               {/* Pro badge (replaces old Featured/Professional badges) */}
               {isPro && (
-                <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
-                  <Sparkles className="h-2.5 w-2.5" />
+                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
+                  <Sparkles className="h-2 w-2" />
                   Pro
                 </Badge>
               )}
               {facility.verified && (
-                <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
-                  <Shield className="h-2.5 w-2.5" />
+                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
+                  <Shield className="h-2 w-2" />
                   Verified
                 </Badge>
               )}
               {facility.facility_type && (
-                <Badge variant="secondary" className="gap-1 px-1.5 py-0.5 text-[10px] font-semibold border border-border/60">
-                  <Building2 className="h-2.5 w-2.5" />
-                  <span className="truncate max-w-[100px]">{facility.facility_type}</span>
+                <Badge variant="secondary" className="gap-0.5 px-1 py-0 text-[9px] font-semibold border border-border/60 hidden sm:flex">
+                  <Building2 className="h-2 w-2" />
+                  <span className="truncate max-w-[80px]">{facility.facility_type}</span>
                 </Badge>
               )}
             </div>
 
             {/* Description */}
             {facility.description && (
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3 flex-1">
+              <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 flex-1">
                 {facility.description}
               </p>
             )}
 
             {/* Action */}
-            <div className="mt-auto pt-1">
+            <div className="mt-auto">
               <Link to={facilityLink}>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 text-xs group/btn">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1 text-[11px] sm:text-xs h-7 sm:h-8 group/btn">
                   View Details
-                  <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
+                  <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transition-transform group-hover/btn:translate-x-0.5" />
                 </Button>
               </Link>
             </div>
@@ -232,10 +232,10 @@ export const FacilityCardSkeleton = forwardRef<HTMLDivElement, React.HTMLAttribu
   function FacilityCardSkeleton(props, ref) {
     return (
       <div ref={ref} {...props} className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:min-h-[160px]">
-          <div className="h-32 sm:h-full w-full sm:w-44 lg:w-52 bg-muted animate-pulse shrink-0" />
-          <div className="p-3 sm:p-4 flex-1 space-y-2.5 min-w-0">
-            <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+        <div className="flex flex-col sm:flex-row sm:min-h-[140px]">
+          <div className="h-28 sm:h-full w-full sm:w-36 lg:w-44 bg-muted animate-pulse shrink-0" />
+          <div className="p-2.5 sm:p-3 flex-1 space-y-2 min-w-0">
+            <div className="h-3.5 w-3/4 bg-muted rounded animate-pulse" />
             <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
             <div className="h-3 w-full bg-muted rounded animate-pulse" />
             <div className="h-7 w-20 bg-muted rounded animate-pulse mt-auto" />

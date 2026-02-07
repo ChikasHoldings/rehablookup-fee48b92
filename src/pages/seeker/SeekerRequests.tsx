@@ -378,20 +378,20 @@ export default function SeekerRequests() {
       <meta name="description" content="Track and manage your treatment center inquiries. View request status, facility responses, and send new requests." />
       <meta name="robots" content="noindex, nofollow" />
     </Helmet>
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-100">
-            <Send className="h-5 w-5 text-blue-600" />
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100">
+            <Send className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-display font-bold">My Requests</h1>
-            <p className="text-sm text-muted-foreground">Track your facility inquiries</p>
+            <h1 className="text-lg sm:text-2xl font-display font-bold">My Requests</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Track inquiries</p>
           </div>
         </div>
         {requests.length > 0 && (
-          <Badge variant="secondary" className="text-xs shrink-0">
-            {requests.length} request{requests.length !== 1 ? 's' : ''}
+          <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">
+            {requests.length}
           </Badge>
         )}
       </div>
@@ -441,7 +441,7 @@ export default function SeekerRequests() {
 
       {/* New Request Dialog */}
       <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="sr-only">Send Request</DialogTitle>
           </DialogHeader>

@@ -285,37 +285,36 @@ export default function SeekerHome() {
     <div className="min-h-full">
       {/* Search Header */}
       <div className="bg-gradient-to-b from-primary/5 to-background border-b border-border/50">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-2xl">
               <div className="relative flex-1 group">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center">
-                  <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Search className="absolute left-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type="text"
-                    placeholder="Search by city, state, or facility name..."
+                    placeholder="Search city, state, or name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-11 bg-background border-border/60 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                    className="pl-9 h-10 sm:h-11 bg-background border-border/60 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
                   />
                 </div>
               </div>
-              <Button type="submit" size="lg" className="h-11 px-5 shadow-sm">
-                <Search className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Search</span>
+              <Button type="submit" size="default" className="h-10 sm:h-11 px-4 sm:px-5 shadow-sm">
+                <Search className="h-4 w-4" />
               </Button>
             </form>
             <Button
               variant={showFilters ? "default" : "outline"}
-              size="lg"
+              size="default"
               onClick={() => setShowFilters(!showFilters)}
-              className="h-11 gap-2 shrink-0 shadow-sm"
+              className="h-10 sm:h-11 gap-1.5 sm:gap-2 shrink-0 shadow-sm"
             >
               <SlidersHorizontal className="h-4 w-4" />
-              <span className="hidden sm:inline">Filters</span>
+              <span className="text-sm">Filters</span>
               {activeFiltersCount > 0 && (
-                <Badge variant={showFilters ? "secondary" : "default"} className="ml-1 h-5 min-w-5 px-1.5 flex items-center justify-center text-xs rounded-full">
+                <Badge variant={showFilters ? "secondary" : "default"} className="ml-0.5 h-5 min-w-5 px-1 flex items-center justify-center text-[10px] rounded-full">
                   {activeFiltersCount}
                 </Badge>
               )}
@@ -324,20 +323,20 @@ export default function SeekerHome() {
 
           {/* Filter Panel */}
           {showFilters && (
-            <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
+            <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className="font-semibold text-xs sm:text-sm text-foreground flex items-center gap-1.5">
+                  <Filter className="h-3.5 w-3.5" />
                   Filter Results
                 </h3>
                 {activeFiltersCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-[11px] gap-1 px-2">
                     <X className="h-3 w-3" />
-                    Clear All
+                    Clear
                   </Button>
                 )}
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {/* Facility Type Filter */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Facility Type</label>
@@ -431,16 +430,16 @@ export default function SeekerHome() {
       </div>
 
       {/* Main Content with Sidebar */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Main Feed */}
           <div className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg sm:text-xl font-display font-bold text-foreground flex items-center gap-2 truncate">
-                <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-                <span className="truncate">Treatment Centers For You</span>
+            <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-lg lg:text-xl font-display font-bold text-foreground flex items-center gap-1.5 sm:gap-2 truncate">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                <span className="truncate">Treatment Centers</span>
               </h2>
-              <Badge variant="secondary" className="text-xs shrink-0">
+              <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">
                 {filteredFacilities.length} result{filteredFacilities.length !== 1 ? 's' : ''}
               </Badge>
             </div>
@@ -465,7 +464,7 @@ export default function SeekerHome() {
                 </Button>
               </Card>
             ) : (
-              <div className="grid gap-4">
+              <div className="grid gap-3 sm:gap-4">
                 {filteredFacilities.map((facility) => (
                   <FacilityCard key={facility.id} facility={facility} />
                 ))}
@@ -485,10 +484,44 @@ export default function SeekerHome() {
             )}
           </div>
 
-          {/* Sidebar */}
-          <aside className="w-full lg:w-72 xl:w-80 shrink-0 space-y-4">
-            {/* Quick Stats */}
-            <Card className="border-border/50">
+          {/* Sidebar - horizontal scroll on mobile */}
+          <aside className="w-full lg:w-72 xl:w-80 shrink-0 space-y-3 sm:space-y-4">
+            {/* Quick Stats - horizontal scroll on mobile */}
+            <div className="lg:hidden">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Your Activity</p>
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
+                <Link to="/account/saved" className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/50 hover:bg-muted transition-colors shrink-0 snap-start min-w-[140px]">
+                  <div className="p-1.5 rounded-lg bg-rose-100 text-rose-600">
+                    <Bookmark className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{favoritesCount}</p>
+                    <p className="text-[10px] text-muted-foreground">Saved</p>
+                  </div>
+                </Link>
+                <Link to="/account/requests" className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/50 hover:bg-muted transition-colors shrink-0 snap-start min-w-[140px]">
+                  <div className="p-1.5 rounded-lg bg-blue-100 text-blue-600">
+                    <Send className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Requests</p>
+                    <p className="text-[10px] text-muted-foreground">Track</p>
+                  </div>
+                </Link>
+                <Link to="/account/reviews" className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/50 hover:bg-muted transition-colors shrink-0 snap-start min-w-[140px]">
+                  <div className="p-1.5 rounded-lg bg-amber-100 text-amber-600">
+                    <Star className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Reviews</p>
+                    <p className="text-[10px] text-muted-foreground">View</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Desktop sidebar cards */}
+            <Card className="border-border/50 hidden lg:block">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                   Your Activity
@@ -553,8 +586,8 @@ export default function SeekerHome() {
               </CardContent>
             </Card>
 
-            {/* CTA Card */}
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            {/* CTA Card - hidden on mobile, shown on desktop */}
+            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hidden lg:block">
               <CardContent className="p-4 text-center">
                 <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-3">
                   <Heart className="h-5 w-5 text-primary" />

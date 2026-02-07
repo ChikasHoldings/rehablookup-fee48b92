@@ -602,8 +602,8 @@ export default function SeekerSettings() {
         <meta name="description" content="Manage your account settings, profile information, notification preferences, and security options." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-display font-bold mb-6">Settings</h1>
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <h1 className="text-lg sm:text-2xl font-display font-bold mb-4 sm:mb-6">Settings</h1>
 
       <div className="space-y-6">
         {/* Profile Settings */}
@@ -731,25 +731,25 @@ export default function SeekerSettings() {
             <Separator />
 
             {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <Label htmlFor="first-name">First Name</Label>
+                <Label htmlFor="first-name" className="text-xs sm:text-sm">First Name</Label>
                 <Input
                   id="first-name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="First name"
-                  className="mt-1"
+                  className="mt-1 h-9 sm:h-10"
                 />
               </div>
               <div>
-                <Label htmlFor="last-name">Last Name</Label>
+                <Label htmlFor="last-name" className="text-xs sm:text-sm">Last Name</Label>
                 <Input
                   id="last-name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Last name"
-                  className="mt-1"
+                  className="mt-1 h-9 sm:h-10"
                 />
               </div>
             </div>
