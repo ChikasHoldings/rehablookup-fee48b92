@@ -28,6 +28,37 @@ import {
   nearMeLinks, 
   insuranceLinks 
 } from "@/components/seo/InternalLinkingSection";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+
+// Generate ItemList schema for article listing pages
+function generateArticleListSchema(articles: DBArticle[]) {
+  const SITE_URL = "https://rehablookup.com";
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Recovery Resources & Guides",
+    description: "Expert guides on addiction treatment, recovery support, and mental health resources.",
+    numberOfItems: articles.length,
+    itemListElement: articles.slice(0, 10).map((article, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Article",
+        "@id": `${SITE_URL}/resources/${article.slug}`,
+        name: article.title,
+        headline: article.title,
+        description: article.excerpt,
+        url: `${SITE_URL}/resources/${article.slug}`,
+        image: article.image_url || `${SITE_URL}/og-image.jpg`,
+        datePublished: new Date().toISOString(),
+        author: {
+          "@type": "Organization",
+          name: "RehabLookup",
+        },
+      },
+    })),
+  };
+}
 
 interface DBArticle {
   id: string;
@@ -179,13 +210,31 @@ export default function Resources() {
     return articles?.filter(a => a.featured).slice(0, 3) || [];
   }, [articles]);
 
+  // Generate structured data for article list
+  const articleListSchema = useMemo(() => {
+    if (!articles || articles.length === 0) return null;
+    return generateArticleListSchema(articles);
+  }, [articles]);
+
   return (
     <Layout>
       <SEO
         title="Recovery Resources & Guides | RehabLookup"
         description="Expert guides on addiction treatment, recovery support, and mental health. Find comprehensive resources to help you or your loved one on the path to recovery."
         canonical="/resources"
+        structuredData={articleListSchema || undefined}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Resources", url: "/resources" },
+        ]}
       />
+
+      {/* Visual Breadcrumb Navigation */}
+      <div className="bg-muted/30 border-b">
+        <div className="container py-3">
+          <BreadcrumbNav items={[{ label: "Resources" }]} />
+        </div>
+      </div>
 
       {/* Hero Section - Compact navy style matching platform pages */}
       <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
@@ -195,24 +244,15 @@ export default function Resources() {
         </div>
         
         <div className="container relative">
-          {/* Breadcrumb */}
-          <nav className="mb-4 text-center">
-            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
-              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-              <span className="text-white/50">/</span>
-              <span className="text-white font-medium">Resources</span>
-            </span>
-          </nav>
-          
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
               <BookOpen className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Recovery Resources</span>
             </div>
-            <h1 className="mb-2 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
+            <h1 className="speakable-headline mb-2 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
               Expert Guides for Recovery
             </h1>
-            <p className="text-base text-primary-foreground/80 leading-relaxed max-w-xl mx-auto">
+            <p className="speakable-summary text-base text-primary-foreground/80 leading-relaxed max-w-xl mx-auto">
               Comprehensive articles on addiction treatment, family support, and mental health.
             </p>
           </div>
