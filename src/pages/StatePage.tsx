@@ -42,6 +42,7 @@ const treatmentTypesData = [
   { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types", param: "?type=holistic" },
 ];
 import { cn } from "@/lib/utils";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 // State capital images mapping
 const stateCapitalImages: Record<string, string> = {

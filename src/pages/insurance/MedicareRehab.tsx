@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import {
   Shield,
   CheckCircle,
@@ -137,6 +138,18 @@ export default function MedicareRehab() {
         ]}
         structuredData={faqSchema}
       />
+
+      {/* Visual Breadcrumb Navigation */}
+      <div className="bg-muted/30 border-b">
+        <div className="container py-3">
+          <BreadcrumbNav
+            items={[
+              { label: "Insurance", href: "/insurance" },
+              { label: "Medicare Rehab Coverage" },
+            ]}
+          />
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section className="bg-primary py-10 md:py-14">
