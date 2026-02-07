@@ -154,36 +154,37 @@ export function SupportTicketModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[85vh] flex flex-col overflow-hidden p-0">
-        <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
-          <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <SourceIcon className="h-4 w-4" />
+      <DialogContent className="w-[95vw] max-w-2xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 mb-1">
+            <SourceIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span>{source?.label}</span>
             <span>·</span>
-            <span>{format(new Date(ticket.created_at), "MMM d, yyyy h:mm a")}</span>
+            <span className="hidden sm:inline">{format(new Date(ticket.created_at), "MMM d, yyyy h:mm a")}</span>
+            <span className="sm:hidden">{format(new Date(ticket.created_at), "MMM d, h:mm a")}</span>
           </div>
-          <DialogTitle className="text-xl">{ticket.category}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">{ticket.category}</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 px-6">
-          <div className="space-y-6 pb-4">
+        <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6">
+          <div className="space-y-4 sm:space-y-6 pb-4">
             {/* Sender Info */}
-            <div className="bg-slate-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
+            <div className="bg-slate-50 rounded-lg p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                 <div>
-                  <p className="font-medium text-slate-900">{ticket.sender_name}</p>
+                  <p className="font-medium text-slate-900 text-sm sm:text-base">{ticket.sender_name}</p>
                   <a
                     href={`mailto:${ticket.sender_email}`}
-                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                    className="text-xs sm:text-sm text-primary hover:underline flex items-center gap-1"
                   >
                     {ticket.sender_email}
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   </a>
                 </div>
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" asChild className="self-start sm:self-auto text-xs sm:text-sm h-8 sm:h-9">
                   <a href={`mailto:${ticket.sender_email}?subject=Re: ${ticket.category}`}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Reply via Email
+                    <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                    Reply
                   </a>
                 </Button>
               </div>
@@ -191,26 +192,26 @@ export function SupportTicketModal({
 
             {/* Message */}
             <div>
-              <h4 className="text-sm font-medium text-slate-500 mb-2">Message</h4>
-              <div className="bg-white border border-slate-200 rounded-lg p-4">
-                <p className="text-slate-700 whitespace-pre-wrap">{ticket.message}</p>
+              <h4 className="text-xs sm:text-sm font-medium text-slate-500 mb-1.5 sm:mb-2">Message</h4>
+              <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4">
+                <p className="text-sm sm:text-base text-slate-700 whitespace-pre-wrap">{ticket.message}</p>
               </div>
             </div>
 
-            {/* Controls */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Controls - stack on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                <label className="text-[10px] sm:text-xs font-medium text-slate-500 mb-1 sm:mb-1.5 block">
                   Status
                 </label>
                 <Select value={ticket.status} onValueChange={handleStatusChange}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {statusOptions.map((status) => (
                       <SelectItem key={status.value} value={status.value}>
-                        <Badge variant="outline" className={cn("mr-2", status.color)}>
+                        <Badge variant="outline" className={cn("mr-2 text-[10px] sm:text-xs", status.color)}>
                           {status.label}
                         </Badge>
                       </SelectItem>
@@ -220,11 +221,11 @@ export function SupportTicketModal({
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                <label className="text-[10px] sm:text-xs font-medium text-slate-500 mb-1 sm:mb-1.5 block">
                   Priority
                 </label>
                 <Select value={ticket.priority} onValueChange={handlePriorityChange}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -238,14 +239,14 @@ export function SupportTicketModal({
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                <label className="text-[10px] sm:text-xs font-medium text-slate-500 mb-1 sm:mb-1.5 block">
                   Assigned To
                 </label>
                 <Select
                   value={ticket.assigned_to || "unassigned"}
                   onValueChange={handleAssign}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="Unassigned" />
                   </SelectTrigger>
                   <SelectContent>
@@ -253,9 +254,9 @@ export function SupportTicketModal({
                     {adminStaff.map((staff) => (
                       <SelectItem key={staff.user_id} value={staff.user_id}>
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-5 w-5">
+                          <Avatar className="h-4 w-4 sm:h-5 sm:w-5">
                             <AvatarImage src={staff.avatar_url || undefined} />
-                            <AvatarFallback className="text-[10px]">
+                            <AvatarFallback className="text-[8px] sm:text-[10px]">
                               {staff.display_name
                                 ?.split(" ")
                                 .map((n) => n[0])
@@ -263,7 +264,7 @@ export function SupportTicketModal({
                                 .toUpperCase() || "?"}
                             </AvatarFallback>
                           </Avatar>
-                          {staff.display_name || "Unknown"}
+                          <span className="text-xs sm:text-sm">{staff.display_name || "Unknown"}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -276,22 +277,22 @@ export function SupportTicketModal({
 
             {/* Internal Notes */}
             <div>
-              <h4 className="text-sm font-medium text-slate-900 mb-3 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
+              <h4 className="text-xs sm:text-sm font-medium text-slate-900 mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Internal Notes ({notes.length})
               </h4>
 
               {notes.length > 0 && (
-                <div className="space-y-3 mb-4">
+                <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
                   {notes.map((note) => (
                     <div
                       key={note.id}
-                      className="bg-slate-50 rounded-lg p-3 text-sm"
+                      className="bg-slate-50 rounded-lg p-2.5 sm:p-3 text-xs sm:text-sm"
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Avatar className="h-5 w-5">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                        <Avatar className="h-4 w-4 sm:h-5 sm:w-5">
                           <AvatarImage src={note.author?.avatar_url || undefined} />
-                          <AvatarFallback className="text-[10px]">
+                          <AvatarFallback className="text-[8px] sm:text-[10px]">
                             {note.author?.display_name
                               ?.split(" ")
                               .map((n) => n[0])
@@ -299,14 +300,14 @@ export function SupportTicketModal({
                               .toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium text-slate-700">
+                        <span className="font-medium text-slate-700 text-xs sm:text-sm">
                           {note.author?.display_name || "Unknown"}
                         </span>
-                        <span className="text-slate-400 text-xs">
+                        <span className="text-slate-400 text-[10px] sm:text-xs">
                           {format(new Date(note.created_at), "MMM d, h:mm a")}
                         </span>
                       </div>
-                      <p className="text-slate-600 whitespace-pre-wrap">{note.content}</p>
+                      <p className="text-slate-600 whitespace-pre-wrap text-xs sm:text-sm">{note.content}</p>
                     </div>
                   ))}
                 </div>
@@ -318,14 +319,15 @@ export function SupportTicketModal({
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   rows={2}
-                  className="resize-none"
+                  className="resize-none text-xs sm:text-sm"
                 />
                 <Button
                   size="icon"
                   onClick={handleAddNote}
                   disabled={!newNote.trim() || addNote.isPending}
+                  className="h-9 w-9 shrink-0"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
@@ -333,18 +335,19 @@ export function SupportTicketModal({
         </ScrollArea>
 
         {/* Footer Actions */}
-        <div className="flex-shrink-0 flex justify-between px-6 py-4 border-t bg-background">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex-shrink-0 flex justify-between px-4 sm:px-6 py-3 sm:py-4 border-t bg-background">
+          <Button variant="outline" onClick={() => onOpenChange(false)} size="sm" className="text-xs sm:text-sm h-8 sm:h-9">
             Close
           </Button>
           {ticket.status !== "resolved" && ticket.status !== "closed" && (
             <Button
               onClick={handleResolve}
               disabled={resolveTicket.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm h-8 sm:h-9"
+              size="sm"
             >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Mark as Resolved
+              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+              Resolved
             </Button>
           )}
         </div>

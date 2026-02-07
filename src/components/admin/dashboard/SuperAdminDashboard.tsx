@@ -276,18 +276,18 @@ export function SuperAdminDashboard() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
-          <Shield className="h-5 w-5 text-white" />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shrink-0">
+          <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Super Admin Dashboard</h1>
-            <Sparkles className="h-4 w-4 text-amber-500" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground truncate">Super Admin Dashboard</h1>
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
           </div>
-          <p className="text-sm text-muted-foreground">Full platform overview with all metrics and controls</p>
+          <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Full platform overview with all metrics and controls</p>
         </div>
       </div>
 

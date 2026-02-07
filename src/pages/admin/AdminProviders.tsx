@@ -457,11 +457,11 @@ export default function AdminProviders() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Provider Management</h1>
-        <p className="text-muted-foreground">Manage facilities, subscriptions, and placement network</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Provider Management</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">Manage facilities, subscriptions, and placement network</p>
       </div>
 
       {/* Interactive Stats Charts */}
@@ -472,13 +472,13 @@ export default function AdminProviders() {
       />
 
       {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="relative w-full sm:max-w-md">
+        <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name, city, or email..."
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-9"
+          className="pl-8 sm:pl-9 h-9 text-sm"
         />
       </div>
 

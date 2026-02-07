@@ -131,34 +131,34 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
   const totalMonthlyRevenue = (revenueStats?.monthlyRevenue || 0) + ((leadStats?.unlockRevenueMonth || 0) / 100);
 
   return (
-    <div ref={ref} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div ref={ref} className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
       {/* Revenue - Combined from Stripe + Lead Unlocks */}
       <Card className="border-0 bg-primary text-primary-foreground shadow-md overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium opacity-90 truncate pr-2">Monthly Revenue</CardTitle>
-          <DollarSign className="h-4 w-4 opacity-70 shrink-0" />
+        <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+          <CardTitle className="text-[10px] sm:text-sm font-medium opacity-90 truncate pr-1">Monthly Revenue</CardTitle>
+          <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-70 shrink-0" />
         </CardHeader>
-        <CardContent className="min-h-[60px]">
+        <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
           {loadingRevenue || loadingLeads ? (
-            <Skeleton className="h-8 w-24 bg-white/20" />
+            <Skeleton className="h-6 sm:h-8 w-20 sm:w-24 bg-white/20" />
           ) : (
             <>
-              <div className="text-2xl font-bold truncate">
+              <div className="text-lg sm:text-2xl font-bold truncate">
                 ${totalMonthlyRevenue?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || "0"}
               </div>
-              <p className="text-xs opacity-70 mt-1 flex items-center gap-1 truncate">
+              <p className="text-[9px] sm:text-xs opacity-70 mt-0.5 sm:mt-1 flex items-center gap-0.5 sm:gap-1 truncate">
                 {revenueStats?.percentChange && revenueStats.percentChange >= 0 ? (
-                  <TrendingUp className="h-3 w-3 shrink-0" />
+                  <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 shrink-0" />
+                  <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                 )}
                 <span className="truncate">
-                  {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last month
+                  {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last
                 </span>
               </p>
               {leadStats?.unlockRevenueMonth ? (
-                <p className="text-[10px] opacity-60 mt-0.5">
-                  Incl. ${(leadStats.unlockRevenueMonth / 100).toLocaleString()} lead unlocks
+                <p className="text-[8px] sm:text-[10px] opacity-60 mt-0.5 hidden sm:block">
+                  Incl. ${(leadStats.unlockRevenueMonth / 100).toLocaleString()} unlocks
                 </p>
               ) : null}
             </>
@@ -168,78 +168,78 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
 
       {/* Providers - Show Pro/Placement breakdown */}
       <Card className="border shadow-sm overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Providers</CardTitle>
-          <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+        <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+          <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Providers</CardTitle>
+          <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
         </CardHeader>
-        <CardContent className="pb-0 min-h-[40px]">
+        <CardContent className="pb-0 min-h-[30px] sm:min-h-[40px] p-3 pt-0 sm:p-6 sm:pt-0">
           {loadingProviders ? (
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-6 sm:h-8 w-16 sm:w-20" />
           ) : (
             <>
-              <div className="text-2xl font-bold tabular-nums">{providerStats?.total?.toLocaleString()}</div>
-              <div className="flex gap-2 text-[10px] text-muted-foreground mt-0.5">
+              <div className="text-lg sm:text-2xl font-bold tabular-nums">{providerStats?.total?.toLocaleString()}</div>
+              <div className="flex gap-1 sm:gap-2 text-[8px] sm:text-[10px] text-muted-foreground mt-0.5">
                 <span className="text-success">{providerStats?.pro || 0} Pro</span>
-                <span>•</span>
-                <span className="text-info">{providerStats?.placement || 0} Placement</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="text-info hidden sm:inline">{providerStats?.placement || 0} Placement</span>
               </div>
             </>
           )}
         </CardContent>
         {weeklyTrends?.providers && (
-          <div className="mt-2 -mx-6 -mb-6">
-            <Sparkline data={weeklyTrends.providers} color={CHART_COLORS.info} height={40} />
+          <div className="mt-1 sm:mt-2 -mx-3 sm:-mx-6 -mb-3 sm:-mb-6">
+            <Sparkline data={weeklyTrends.providers} color={CHART_COLORS.info} height={32} />
           </div>
         )}
       </Card>
 
       {/* Leads - Show unlock metrics */}
       <Card className="border shadow-sm overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Leads</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+        <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+          <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Leads</CardTitle>
+          <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
         </CardHeader>
-        <CardContent className="pb-0 min-h-[40px]">
+        <CardContent className="pb-0 min-h-[30px] sm:min-h-[40px] p-3 pt-0 sm:p-6 sm:pt-0">
           {loadingLeads ? (
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-6 sm:h-8 w-16 sm:w-20" />
           ) : (
             <>
-              <div className="text-2xl font-bold tabular-nums">{leadStats?.totalAll?.toLocaleString()}</div>
-              <div className="flex gap-2 text-[10px] text-muted-foreground mt-0.5">
-                <span>{leadStats?.totalMonth?.toLocaleString()} this month</span>
-                <span>•</span>
-                <span className="text-success">{leadStats?.unlockedMonth || 0} unlocked</span>
+              <div className="text-lg sm:text-2xl font-bold tabular-nums">{leadStats?.totalAll?.toLocaleString()}</div>
+              <div className="flex gap-1 sm:gap-2 text-[8px] sm:text-[10px] text-muted-foreground mt-0.5">
+                <span>{leadStats?.totalMonth?.toLocaleString()} this mo</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="text-success hidden sm:inline">{leadStats?.unlockedMonth || 0} unlocked</span>
               </div>
             </>
           )}
         </CardContent>
         {weeklyTrends?.leads && (
-          <div className="mt-2 -mx-6 -mb-6">
-            <Sparkline data={weeklyTrends.leads} color={CHART_COLORS.accent} height={40} />
+          <div className="mt-1 sm:mt-2 -mx-3 sm:-mx-6 -mb-3 sm:-mb-6">
+            <Sparkline data={weeklyTrends.leads} color={CHART_COLORS.accent} height={32} />
           </div>
         )}
       </Card>
 
       {/* Actions Needed */}
       <Card className={`border shadow-sm overflow-hidden ${actionItemsCount > 0 ? "border-warning/50 bg-warning/5" : ""}`}>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">Actions Needed</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground shrink-0" />
+        <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+          <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Actions</CardTitle>
+          <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
         </CardHeader>
-        <CardContent className="min-h-[60px]">
+        <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
           {loadingProviders || loadingLeads ? (
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-6 sm:h-8 w-16 sm:w-20" />
           ) : (
             <>
-              <div className="text-2xl font-bold tabular-nums">{actionItemsCount}</div>
-              <div className="flex flex-wrap gap-1.5 mt-1">
+              <div className="text-lg sm:text-2xl font-bold tabular-nums">{actionItemsCount}</div>
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
                 {providerStats?.pending ? (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-warning/20 text-warning-foreground hover:bg-warning/20 whitespace-nowrap">
-                    {providerStats.pending} pending
+                  <Badge variant="secondary" className="text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0 sm:py-0.5 bg-warning/20 text-warning-foreground hover:bg-warning/20 whitespace-nowrap">
+                    {providerStats.pending} pend
                   </Badge>
                 ) : null}
                 {leadStats?.newLeads ? (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-info/20 text-info-foreground hover:bg-info/20 whitespace-nowrap">
+                  <Badge variant="secondary" className="text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0 sm:py-0.5 bg-info/20 text-info-foreground hover:bg-info/20 whitespace-nowrap">
                     {leadStats.newLeads} new
                   </Badge>
                 ) : null}

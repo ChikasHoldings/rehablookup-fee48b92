@@ -272,14 +272,14 @@ export function SubscriptionDetailModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <DialogTitle className="text-xl">{subscription.facility_name}</DialogTitle>
-                <p className="text-sm text-muted-foreground">{subscription.customer_email}</p>
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] p-0">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+              <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                <DialogTitle className="text-lg sm:text-xl truncate">{subscription.facility_name}</DialogTitle>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{subscription.customer_email}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <PlanBadge plan={subscription.plan} />
                 <StatusBadge 
                   status={isCanceling ? "canceled" : subscription.status} 
@@ -290,45 +290,45 @@ export function SubscriptionDetailModal({
                 {details?.subscription?.id && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Button variant="outline" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
                         {manageMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                         ) : (
-                          <MoreVertical className="h-4 w-4" />
+                          <MoreVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         )}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       {isPaused ? (
-                        <DropdownMenuItem onClick={() => handleAction("resume")}>
-                          <Play className="h-4 w-4 mr-2" />
+                        <DropdownMenuItem onClick={() => handleAction("resume")} className="text-xs sm:text-sm">
+                          <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                           Resume Subscription
                         </DropdownMenuItem>
                       ) : isActive ? (
                         <>
-                          <DropdownMenuItem onClick={() => handleAction("pause")}>
-                            <Pause className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem onClick={() => handleAction("pause")} className="text-xs sm:text-sm">
+                            <Pause className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                             Pause Subscription
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={() => handleAction("cancel")}
-                            className="text-amber-600 focus:text-amber-600"
+                            className="text-amber-600 focus:text-amber-600 text-xs sm:text-sm"
                           >
-                            <Ban className="h-4 w-4 mr-2" />
+                            <Ban className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                             Cancel at Period End
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleAction("cancel_immediately")}
-                            className="text-red-600 focus:text-red-600"
+                            className="text-red-600 focus:text-red-600 text-xs sm:text-sm"
                           >
-                            <XCircle className="h-4 w-4 mr-2" />
+                            <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                             Cancel Immediately
                           </DropdownMenuItem>
                         </>
                       ) : isCanceling ? (
-                        <DropdownMenuItem onClick={() => handleAction("reactivate")}>
-                          <RotateCcw className="h-4 w-4 mr-2" />
+                        <DropdownMenuItem onClick={() => handleAction("reactivate")} className="text-xs sm:text-sm">
+                          <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                           Reactivate Subscription
                         </DropdownMenuItem>
                       ) : null}
@@ -340,70 +340,74 @@ export function SubscriptionDetailModal({
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <div className="px-6 border-b">
-              <TabsList className="h-10 bg-transparent p-0 w-full justify-start gap-4">
+            <div className="px-4 sm:px-6 border-b overflow-x-auto scrollbar-hide">
+              <TabsList className="h-9 sm:h-10 bg-transparent p-0 w-auto inline-flex sm:w-full sm:justify-start gap-3 sm:gap-4">
                 <TabsTrigger 
                   value="overview" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-3"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2 sm:pb-3 text-xs sm:text-sm whitespace-nowrap"
                 >
                   Overview
                 </TabsTrigger>
                 <TabsTrigger 
                   value="payments" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-3"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2 sm:pb-3 text-xs sm:text-sm whitespace-nowrap"
                 >
                   Payments
                 </TabsTrigger>
                 <TabsTrigger 
                   value="invoices" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-3"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2 sm:pb-3 text-xs sm:text-sm whitespace-nowrap"
                 >
                   Invoices
                 </TabsTrigger>
                 <TabsTrigger 
                   value="timeline" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-3"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2 sm:pb-3 text-xs sm:text-sm whitespace-nowrap"
                 >
                   Timeline
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <ScrollArea className="h-[500px]">
-              <div className="p-6">
+            <ScrollArea className="h-[400px] sm:h-[500px]">
+              <div className="p-4 sm:p-6">
                 {/* Overview Tab */}
-                <TabsContent value="overview" className="m-0 space-y-6">
+                <TabsContent value="overview" className="m-0 space-y-4 sm:space-y-6">
                   {isLoading ? (
-                    <div className="space-y-4">
-                      <Skeleton className="h-24 w-full" />
-                      <Skeleton className="h-24 w-full" />
+                    <div className="space-y-3 sm:space-y-4">
+                      <Skeleton className="h-20 sm:h-24 w-full" />
+                      <Skeleton className="h-20 sm:h-24 w-full" />
                     </div>
                   ) : (
                     <>
                       {/* Status Alerts */}
                       {isPaused && (
-                        <div className="flex items-center gap-3 p-4 rounded-lg border border-purple-200 bg-purple-50">
-                          <Pause className="h-5 w-5 text-purple-600" />
-                          <div className="flex-1">
-                            <p className="font-medium text-purple-900">Subscription Paused</p>
-                            <p className="text-sm text-purple-700">Billing is paused. No charges will be made until resumed.</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-purple-200 bg-purple-50">
+                          <div className="flex items-center gap-2 flex-1">
+                            <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 shrink-0" />
+                            <div>
+                              <p className="font-medium text-purple-900 text-sm sm:text-base">Subscription Paused</p>
+                              <p className="text-xs sm:text-sm text-purple-700">Billing is paused. No charges will be made until resumed.</p>
+                            </div>
                           </div>
-                          <Button size="sm" onClick={() => handleAction("resume")} disabled={manageMutation.isPending}>
+                          <Button size="sm" onClick={() => handleAction("resume")} disabled={manageMutation.isPending} className="self-start sm:self-auto text-xs sm:text-sm h-8">
                             Resume
                           </Button>
                         </div>
                       )}
 
                       {isCanceling && (
-                        <div className="flex items-center gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
-                          <AlertCircle className="h-5 w-5 text-amber-600" />
-                          <div className="flex-1">
-                            <p className="font-medium text-amber-900">Cancellation Scheduled</p>
-                            <p className="text-sm text-amber-700">
-                              Will cancel on {format(new Date(subscription.current_period_end), "MMM d, yyyy")}
-                            </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-amber-200 bg-amber-50">
+                          <div className="flex items-center gap-2 flex-1">
+                            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 shrink-0" />
+                            <div>
+                              <p className="font-medium text-amber-900 text-sm sm:text-base">Cancellation Scheduled</p>
+                              <p className="text-xs sm:text-sm text-amber-700">
+                                Will cancel on {format(new Date(subscription.current_period_end), "MMM d, yyyy")}
+                              </p>
+                            </div>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => handleAction("reactivate")} disabled={manageMutation.isPending}>
+                          <Button size="sm" variant="outline" onClick={() => handleAction("reactivate")} disabled={manageMutation.isPending} className="self-start sm:self-auto text-xs sm:text-sm h-8">
                             Reactivate
                           </Button>
                         </div>

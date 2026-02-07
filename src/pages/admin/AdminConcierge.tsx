@@ -147,57 +147,59 @@ export default function AdminConcierge() {
   };
 
   return (
-    <div className="space-y-5">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <HeartHandshake className="h-5 w-5 text-primary" />
+    <div className="space-y-4 sm:space-y-5">
+      {/* Page Header - responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <HeartHandshake className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">Placement Command Center</h1>
-            <p className="text-sm text-muted-foreground">Manage domestic & international placements, network providers, and billing</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate">Placement Command Center</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Manage domestic & international placements, network providers, and billing</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
+        <Button variant="outline" size="sm" onClick={() => refetch()} className="self-start sm:self-auto">
+          <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+          <span className="text-xs sm:text-sm">Refresh</span>
         </Button>
       </div>
 
-      {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 max-w-lg">
-          <TabsTrigger value="domestic" className="flex items-center gap-2">
-            <Flag className="h-4 w-4" />
-            Domestic
-          </TabsTrigger>
-          <TabsTrigger value="international" className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            Intl
-            {internationalCount ? (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                {internationalCount}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="providers" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Network
-            {networkCount ? (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                {networkCount}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex items-center gap-2">
-            <Receipt className="h-4 w-4" />
-            Invoices
-          </TabsTrigger>
-        </TabsList>
+      {/* Main Tabs - horizontally scrollable on mobile */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+          <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-4 sm:max-w-lg">
+            <TabsTrigger value="domestic" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+              <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">Domestic</span>
+            </TabsTrigger>
+            <TabsTrigger value="international" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+              <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">Intl</span>
+              {internationalCount ? (
+                <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
+                  {internationalCount}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+              <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">Network</span>
+              {networkCount ? (
+                <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
+                  {networkCount}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+              <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">Invoices</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Domestic Cases Tab */}
-        <TabsContent value="domestic" className="space-y-4">
+        <TabsContent value="domestic" className="space-y-3 sm:space-y-4">
           {/* Pipeline Stats */}
           <ConciergeStatsCharts 
             stats={stats} 
@@ -207,21 +209,21 @@ export default function AdminConcierge() {
 
           {/* Search & Table */}
           <Card>
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b gap-2">
+              <div className="relative w-full sm:w-auto">
+                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, email, or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-[300px]"
+                  className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
                 />
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs sm:text-sm text-muted-foreground">
                 {filteredCases?.length || 0} domestic cases
               </span>
             </div>
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               {isLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading...</div>
               ) : filteredCases?.length === 0 ? (
