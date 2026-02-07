@@ -427,4 +427,40 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* ==========================================================================
+     SEO Speakable Classes - For Voice Search Optimization
+     These classes mark content for Google Assistant / voice search.
+     Used in conjunction with SpeakableSpecification schema.
+     ========================================================================== */
+  
+  /* Primary headline marker - used for main H1 content */
+  .speakable-headline {
+    /* No visual styling - semantic marker only */
+  }
+  
+  /* Summary/description marker - used for page introductions */
+  .speakable-summary {
+    /* No visual styling - semantic marker only */
+  }
+  
+  /* Article intro marker - first paragraph of articles */
+  .article-summary {
+    /* No visual styling - semantic marker only */
+  }
+  
+  /* Treatment description marker - facility/treatment descriptions */
+  .speakable-description {
+    /* No visual styling - semantic marker only */
+  }
+  
+  /* FAQ answer marker - for FAQ content */
+  .speakable-faq {
+    /* No visual styling - semantic marker only */
+  }
+  
+  /* Contact info marker - phone/address for local search */
+  .speakable-contact {
+    /* No visual styling - semantic marker only */
+  }
 }

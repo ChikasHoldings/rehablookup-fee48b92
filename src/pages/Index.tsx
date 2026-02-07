@@ -327,12 +327,12 @@ const Index = () => {
         <div className="container relative py-10 md:py-12 lg:py-14 px-4 md:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
-            <h1 className="mb-3 font-display text-[1.875rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
+            <h1 className="speakable-headline mb-3 font-display text-[1.875rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
               Find the Right<br className="sm:hidden" /> Treatment & Rehab
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-6 md:mb-8 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
+            <p className="speakable-summary mb-6 md:mb-8 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
               Compare verified treatment centers and check your insurance coverage.
             </p>
 
