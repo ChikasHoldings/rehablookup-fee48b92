@@ -13,7 +13,6 @@ import {
 import {
   FileText,
   BookOpen,
-  Video,
   Download,
   HelpCircle,
   Users,
@@ -44,39 +43,31 @@ const resources = [
     icon: BookOpen,
     title: "Best Practices Guide",
     description: "Industry best practices for treatment centers to improve patient outcomes and boost your online presence.",
-    link: "#",
-    badge: null,
+    link: "/resources/grow-treatment-center-census",
+    badge: "Popular",
     color: "from-purple-500/20 to-pink-500/20",
   },
   {
-    icon: Video,
-    title: "Training Videos",
-    description: "Step-by-step video tutorials on managing your provider dashboard, updating listings, and responding to leads.",
-    link: "#videos",
-    badge: "Popular",
-    color: "from-orange-500/20 to-red-500/20",
-  },
-  {
     icon: Download,
-    title: "Marketing Materials",
-    description: "Download brochures, flyers, and digital assets to promote your facility and partnership with RehabLookup.",
-    link: "#",
+    title: "Success Rate Insights",
+    description: "Understand treatment success metrics and how to communicate outcomes effectively to prospective clients.",
+    link: "/resources/rehab-success-rates",
     badge: null,
     color: "from-green-500/20 to-emerald-500/20",
   },
   {
     icon: TrendingUp,
-    title: "Analytics & Insights",
-    description: "Understand your listing performance with detailed metrics on views, leads, and engagement patterns.",
-    link: "#",
+    title: "What to Expect Guide",
+    description: "Help families understand the treatment journey with our comprehensive guide to share with prospective patients.",
+    link: "/resources/what-to-expect-in-rehab",
     badge: null,
     color: "from-indigo-500/20 to-violet-500/20",
   },
   {
     icon: Shield,
-    title: "Compliance Resources",
-    description: "Stay up-to-date with regulatory requirements, HIPAA guidelines, and industry compliance standards.",
-    link: "#",
+    title: "Accreditation Resources",
+    description: "Stay up-to-date with JCAHO, CARF accreditation requirements and industry compliance standards.",
+    link: "/resources/rehab-accreditation-guide",
     badge: "Updated",
     color: "from-teal-500/20 to-cyan-500/20",
   },
@@ -250,12 +241,10 @@ export default function ProviderResources() {
             </div>
 
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {resources.map((resource, index) => (
-                <AnimatedCard key={resource.title} delay={index * 75}>
-                  <a 
-                    href={resource.link}
-                    className="group block h-full rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-accent/30 hover:shadow-elevated hover:-translate-y-1"
-                  >
+              {resources.map((resource, index) => {
+                const isInternalLink = resource.link.startsWith('/');
+                const cardContent = (
+                  <>
                     <div className="flex items-center gap-3 mb-4">
                       <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${resource.color} border border-white/50 transition-transform group-hover:scale-110`}>
                         <resource.icon className="h-5 w-5 text-accent" />
@@ -275,12 +264,32 @@ export default function ProviderResources() {
                       {resource.description}
                     </p>
                     <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent group-hover:gap-3 transition-all pl-14">
-                      Learn more
+                      {isInternalLink ? 'Read article' : 'Learn more'}
                       <ArrowRight className="h-4 w-4" />
                     </div>
-                  </a>
-                </AnimatedCard>
-              ))}
+                  </>
+                );
+                
+                return (
+                  <AnimatedCard key={resource.title} delay={index * 75}>
+                    {isInternalLink ? (
+                      <Link 
+                        to={resource.link}
+                        className="group block h-full rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-accent/30 hover:shadow-elevated hover:-translate-y-1"
+                      >
+                        {cardContent}
+                      </Link>
+                    ) : (
+                      <a 
+                        href={resource.link}
+                        className="group block h-full rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-accent/30 hover:shadow-elevated hover:-translate-y-1"
+                      >
+                        {cardContent}
+                      </a>
+                    )}
+                  </AnimatedCard>
+                );
+              })}
             </div>
           </div>
         </section>
