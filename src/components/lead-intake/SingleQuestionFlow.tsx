@@ -11,6 +11,7 @@ import { EmailInput } from "@/components/ui/email-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
 import { isValidEmail } from "@/lib/emailUtils";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
+import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { cn } from "@/lib/utils";
 import {
   LeadIntakeFormData,
@@ -230,7 +231,7 @@ export function SingleQuestionFlow({
       setDirection(1);
       setCurrentIndex(prev => prev + 1);
       // Scroll to top of form section
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     }
   }, [currentIndex, activeQuestions.length]);
   
@@ -239,7 +240,7 @@ export function SingleQuestionFlow({
       setDirection(-1);
       setCurrentIndex(prev => prev - 1);
       // Scroll to top of form section
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     }
   }, [currentIndex]);
   

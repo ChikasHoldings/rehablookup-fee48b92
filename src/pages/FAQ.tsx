@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import {
   Accordion,
   AccordionContent,
@@ -425,7 +426,7 @@ const FAQ = () => {
             <button
               onClick={() => {
                 setSelectedCategory(null);
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                scrollToTopSmooth();
               }}
               className="h-8 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 bg-primary text-primary-foreground"
             >

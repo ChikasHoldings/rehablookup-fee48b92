@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 
 // Step components
 import { StepWhoNeedsHelp } from "@/components/concierge/StepWhoNeedsHelp";
@@ -352,7 +353,7 @@ export default function ConciergeIntake() {
       if (currentStep < 7) {
         setDirection(1);
         setCurrentStep(prev => prev + 1);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollToTopSmooth();
       }
     } else {
       toast.error("Please fill in all required fields");
@@ -363,14 +364,14 @@ export default function ConciergeIntake() {
     if (currentStep > 1) {
       setDirection(-1);
       setCurrentStep(prev => prev - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     }
   };
 
   const handleEditStep = (step: number) => {
     setDirection(step > currentStep ? 1 : -1);
     setCurrentStep(step);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToTopSmooth();
   };
 
   const handleProceedToPayment = async () => {

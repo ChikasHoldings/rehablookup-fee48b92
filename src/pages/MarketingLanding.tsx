@@ -8,6 +8,7 @@ import { MarketingLeadSuccess } from "@/components/marketing/MarketingLeadSucces
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { OptimizedBackground } from "@/components/ui/optimized-image";
+import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import heroImage from "@/assets/marketing-hero.jpg";
 
 interface MatchedFacility {
@@ -230,7 +231,7 @@ export default function MarketingLanding() {
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-3 md:mb-4">Ready to find the right treatment?</p>
             <a 
               href="#" 
-              onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              onClick={(e) => { e.preventDefault(); scrollToTopSmooth(); }}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2.5 md:py-3 rounded-full font-medium text-sm md:text-base hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
             >
               Get Started Now

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useUserRole } from "@/hooks/useUserRole";
 import { prefetchAdjacentRoutes, preloadSeekerPages } from "@/lib/routePrefetch";
+import { scrollContainerToTop } from "@/hooks/useScrollToTop";
 
 // Preload all seeker pages on module load for instant navigation
 preloadSeekerPages();
@@ -55,9 +56,7 @@ export function SeekerShell() {
 
   // Scroll content area to top and prefetch adjacent routes on navigation
   useEffect(() => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTo(0, 0);
-    }
+    scrollContainerToTop(mainContentRef.current);
     // Prefetch adjacent routes for faster navigation
     prefetchAdjacentRoutes(location.pathname);
   }, [location.pathname]);

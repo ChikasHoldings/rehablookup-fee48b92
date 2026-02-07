@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
+import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 
 interface MobileStepFlowProps {
   currentStep: number;
@@ -121,7 +122,7 @@ export function MobileStepFlow({
           size="lg"
           onClick={() => {
             onPrev();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            scrollToTopSmooth();
           }}
           disabled={isFirstStep || isSubmitting}
           className={cn(
@@ -138,7 +139,7 @@ export function MobileStepFlow({
           size="lg"
           onClick={() => {
             onNext();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            scrollToTopSmooth();
           }}
           disabled={!canProceed || isSubmitting}
           className="flex-[2] h-12 rounded-xl font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
