@@ -158,6 +158,34 @@ function ArticlesSkeleton() {
   );
 }
 
+// Topic Link Card for internal linking
+function TopicLinkCard({ 
+  title, 
+  links 
+}: { 
+  title: string; 
+  links: { title: string; href: string }[];
+}) {
+  return (
+    <div className="rounded-xl border border-border/50 bg-card p-5">
+      <h3 className="font-semibold text-foreground text-sm mb-3">{title}</h3>
+      <ul className="space-y-2">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              to={link.href}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+            >
+              <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="line-clamp-1">{link.title}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function Resources() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -366,6 +394,49 @@ export default function Resources() {
         ]}
         variant="grid"
       />
+
+      {/* Popular Topics Grid for SEO Internal Linking */}
+      <section className="py-12 bg-muted/20 border-t border-border">
+        <div className="container">
+          <h2 className="font-display text-xl font-bold text-foreground mb-6">
+            Browse by Topic
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <TopicLinkCard
+              title="Detox & Withdrawal"
+              links={[
+                { title: "Detox Timeline Guide", href: "/resources/detox-timeline" },
+                { title: "Alcohol Withdrawal Guide", href: "/resources/alcohol-withdrawal-guide" },
+                { title: "What to Expect in Detox", href: "/resources/what-to-expect-in-detox" },
+              ]}
+            />
+            <TopicLinkCard
+              title="Treatment Types"
+              links={[
+                { title: "Inpatient vs Outpatient", href: "/resources/inpatient-vs-outpatient" },
+                { title: "PHP vs IOP Programs", href: "/resources/php-vs-iop" },
+                { title: "MAT Treatment Guide", href: "/resources/medication-assisted-treatment-guide" },
+              ]}
+            />
+            <TopicLinkCard
+              title="Getting Help"
+              links={[
+                { title: "How to Help a Loved One", href: "/resources/how-to-help-loved-one" },
+                { title: "Intervention Guide", href: "/resources/intervention-guide" },
+                { title: "Questions to Ask Rehab", href: "/resources/questions-to-ask-rehab" },
+              ]}
+            />
+            <TopicLinkCard
+              title="Paying for Treatment"
+              links={[
+                { title: "Insurance Coverage Guide", href: "/resources/insurance-coverage-guide" },
+                { title: "Paying for Rehab", href: "/resources/paying-for-rehab" },
+                { title: "Free Rehab Options", href: "/resources/free-rehab-options" },
+              ]}
+            />
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="py-16 md:py-20">
