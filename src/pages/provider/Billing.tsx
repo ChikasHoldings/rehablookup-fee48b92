@@ -445,56 +445,57 @@ export default function ProviderBillingPage() {
 
         {/* Purchase Credits Modal */}
         <Dialog open={showPurchaseModal} onOpenChange={setShowPurchaseModal}>
-          <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+          <DialogContent className="w-[95vw] sm:max-w-lg p-0 overflow-hidden">
             {/* Header with balance */}
-            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 border-b">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-primary/15 flex items-center justify-center">
-                  <Wallet className="h-7 w-7 text-primary" />
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 sm:p-6 border-b">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Wallet className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground font-medium">Current Balance</p>
-                  <p className="text-3xl font-bold text-foreground">{balanceFormatted}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground font-medium">Current Balance</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">{balanceFormatted}</p>
                 </div>
               </div>
             </div>
             
             {/* Package Selection */}
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
               <div>
-                <h3 className="font-semibold text-lg mb-1">Add Credits</h3>
-                <p className="text-sm text-muted-foreground">Select a package to add credits to your account</p>
+                <h3 className="font-semibold text-base sm:text-lg mb-0.5 sm:mb-1">Add Credits</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">Select a package to add credits to your account</p>
               </div>
               
-              <div className="grid gap-3">
+              <div className="grid gap-2 sm:gap-3">
                 {CREDIT_PACKAGES.map((pkg) => (
                   <button
                     key={pkg.amountCents}
                     onClick={() => handlePurchase(pkg.amountCents)}
                     disabled={purchaseLoading !== null}
                     className={cn(
-                      "flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left",
+                      "flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all text-left",
                       "hover:border-primary/50 hover:bg-primary/5",
                       "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                       purchaseLoading === pkg.amountCents && "border-primary bg-primary/5"
                     )}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                        <Wallet className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-md sm:rounded-lg bg-muted flex items-center justify-center">
+                        <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground">{pkg.label}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-semibold text-sm sm:text-base text-foreground">{pkg.label}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {pkg.amountCents / 100} credits
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       {pkg.bonus && (
                         <Badge 
                           variant={pkg.bonus === "Popular" ? "default" : "secondary"}
                           className={cn(
+                            "text-[10px] sm:text-xs",
                             pkg.bonus === "Popular" && "bg-primary",
                             pkg.bonus === "Best Value" && "bg-emerald-600 text-white border-0"
                           )}
@@ -503,16 +504,16 @@ export default function ProviderBillingPage() {
                         </Badge>
                       )}
                       {purchaseLoading === pkg.amountCents ? (
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                       )}
                     </div>
                   </button>
                 ))}
               </div>
               
-              <p className="text-xs text-center text-muted-foreground pt-2">
+              <p className="text-[10px] sm:text-xs text-center text-muted-foreground pt-1 sm:pt-2">
                 Credits never expire • Secure checkout via Stripe
               </p>
             </div>
@@ -528,16 +529,16 @@ export default function ProviderBillingPage() {
 
         {/* Delete Card Confirmation Dialog */}
         <AlertDialog open={deleteCardConfirm.isOpen} onOpenChange={(open) => setDeleteCardConfirm(prev => ({ ...prev, isOpen: open }))}>
-          <AlertDialogContent>
+          <AlertDialogContent className="w-[95vw] sm:max-w-md">
             <AlertDialogHeader>
-              <AlertDialogTitle>Remove Payment Method</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-base sm:text-lg">Remove Payment Method</AlertDialogTitle>
+              <AlertDialogDescription className="text-xs sm:text-sm">
                 Are you sure you want to remove this card? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteCard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogFooter className="gap-2 sm:gap-0">
+              <AlertDialogCancel className="h-9 sm:h-10 text-sm">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteCard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-9 sm:h-10 text-sm">
                 Remove Card
               </AlertDialogAction>
             </AlertDialogFooter>
