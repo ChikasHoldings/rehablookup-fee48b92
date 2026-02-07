@@ -55,7 +55,7 @@
 /about /about.html 200
 /contact /contact.html 200
 /how-it-works /how-it-works.html 200
-/resources /resources.html 200
+# /resources - Now served by React SPA (removed static redirect to fix image display)
 /concierge /concierge.html 200
 /international /international.html 200
 /treatment-types /treatment-types.html 200
