@@ -506,6 +506,9 @@ const CenterProfile = () => {
           verified: facility.verified || false,
           featured: facility.featured,
           accreditations: facility.facility_accreditations?.map(a => a.accreditation_type) || [],
+          // Include review ratings for rich snippets when available
+          rating: ratingData.averageRating || undefined,
+          reviewCount: ratingData.reviewCount || undefined,
         })}
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -610,10 +613,10 @@ const CenterProfile = () => {
                   
                   {/* Name and Location */}
                   <div className="flex-1 min-w-0 pb-1">
-                    <h1 className="font-display text-xl md:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
+                    <h1 className="speakable-headline font-display text-xl md:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
                       {facility.name}
                     </h1>
-                    <div className="flex items-center gap-2 mt-1.5">
+                    <div className="speakable-contact flex items-center gap-2 mt-1.5">
                       <MapPin className="h-4 w-4 text-white/80 shrink-0" />
                       <span className="text-sm md:text-base text-white/90 font-medium">{facility.city}, {facility.state}</span>
                     </div>

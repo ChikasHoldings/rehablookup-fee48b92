@@ -233,27 +233,28 @@ https://rehablookup.com/
 
 ### High Priority
 
-1. **Add NewsArticle Schema for Time-Sensitive Content**
-   - Articles about treatment news/updates should use NewsArticle type
-   - Enables Google News eligibility
+1. ✅ **Add NewsArticle Schema for Time-Sensitive Content** — IMPLEMENTED
+   - Added `generateNewsArticleSchema()` function
+   - Enables Google News eligibility for news-type articles
 
-2. **Implement HowTo Schema on Guide Articles**
-   - "How to find rehab" type articles should use HowTo schema
-   - Enables step-by-step rich snippets
+2. ✅ **Implement HowTo Schema on Guide Articles** — IMPLEMENTED
+   - Enhanced `generateArticleSchema()` with `isHowTo` and `steps` support
+   - Returns combined Article + HowTo schemas for guide content
 
-3. **Add Review Schema to Facility Profiles**
-   - When facilities have verified reviews, add Review schema
-   - Enables star ratings in search results
+3. ✅ **Add Review Schema to Facility Profiles** — IMPLEMENTED
+   - CenterProfile.tsx now passes `rating` and `reviewCount` to schema
+   - Star ratings appear in search results when facilities have reviews
 
 ### Medium Priority
 
-4. **Enhanced Speakable Sections**
-   - Add `.speakable-headline` and `.speakable-summary` CSS classes
-   - Improve voice search optimization
+4. ✅ **Enhanced Speakable Sections** — IMPLEMENTED
+   - Added `.speakable-headline`, `.speakable-summary`, `.speakable-contact` CSS classes
+   - Applied to Index.tsx, ArticleDetail.tsx, CenterProfile.tsx
 
 5. **Video Schema for Embedded Content**
    - Any facility videos should have VideoObject schema
    - Enables video thumbnails in search
+   - `generateVideoSchema()` already available
 
 6. **Breadcrumb Consistency**
    - Ensure all deep pages have complete breadcrumb trails
@@ -277,7 +278,8 @@ The `src/components/SEO.tsx` file exports these schema generators:
 |-----------|-------|-------------|
 | `generateFAQSchema` | FAQ rich snippets | Insurance, Treatment Types |
 | `generateLocalBusinessSchema` | Facility profiles | Center profiles |
-| `generateArticleSchema` | Blog articles | All articles |
+| `generateArticleSchema` | Blog articles (with HowTo support) | All articles |
+| `generateNewsArticleSchema` | News/time-sensitive content | News articles |
 | `generateServiceSchema` | Treatment services | Treatment type pages |
 | `generateHowToSchema` | Step-by-step guides | Guide articles |
 | `generateCollectionSchema` | Listing pages | State/city pages |
