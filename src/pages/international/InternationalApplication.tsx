@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 
 import { IntakeProgress } from "@/components/international/IntakeProgress";
 import { StepContact } from "@/components/international/steps/StepContact";
@@ -185,14 +186,14 @@ export default function InternationalApplication() {
   const handleNext = () => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
       setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSmooth();
     }
   };
 

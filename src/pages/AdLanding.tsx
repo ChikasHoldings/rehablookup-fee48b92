@@ -18,6 +18,7 @@ import { LazyVideoEmbed } from "@/components/ui/lazy-video-embed";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/logo.png";
 import { LeadIntakeForm } from "@/components/lead-intake";
+import { scrollToTopInstant } from "@/hooks/useScrollToTop";
 
 // Configure your video here - replace with your actual video ID
 const VIDEO_CONFIG = {
@@ -249,7 +250,7 @@ export default function AdLanding() {
   // Custom success renderer that scrolls to top and shows landing-specific success
   const renderSuccess = ({ firstName }: { firstName: string }) => {
     // Scroll to top when showing success
-    window.scrollTo({ top: 0, behavior: "instant" });
+    scrollToTopInstant();
     return <LandingSuccessView firstName={firstName} />;
   };
   

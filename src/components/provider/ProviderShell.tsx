@@ -14,6 +14,7 @@ import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { useUserRole } from "@/hooks/useUserRole";
 import { prefetchAdjacentRoutes, preloadProviderPages } from "@/lib/routePrefetch";
+import { scrollContainerToTop } from "@/hooks/useScrollToTop";
 
 // Preload all provider pages on module load for instant navigation
 preloadProviderPages();
@@ -38,9 +39,7 @@ function ProviderShellContent() {
 
   // Scroll content area to top and prefetch on route change
   useEffect(() => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTo(0, 0);
-    }
+    scrollContainerToTop(mainContentRef.current);
     prefetchAdjacentRoutes(location.pathname);
   }, [location.pathname]);
 

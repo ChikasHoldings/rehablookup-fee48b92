@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
 import { preloadAdminPages } from "@/lib/routePrefetch";
+import { scrollContainerToTop } from "@/hooks/useScrollToTop";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
@@ -79,9 +80,7 @@ export function AdminShell() {
 
   // Scroll to top and prefetch adjacent pages on route change
   useEffect(() => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTo({ top: 0, behavior: "instant" });
-    }
+    scrollContainerToTop(mainContentRef.current);
     // Prefetch adjacent pages after the current page has loaded
     prefetchAdjacentPages(location.pathname);
   }, [location.pathname]);

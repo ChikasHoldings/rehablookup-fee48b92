@@ -6,6 +6,7 @@ import { SearchResultCard } from "@/components/cards/SearchResultCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
+import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { 
   Heart, 
   MapPin, 
@@ -401,7 +402,7 @@ const SearchResults = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("page", page.toString());
     setSearchParams(newParams);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToTopSmooth();
   };
 
   const clearFilter = (filterKey: string) => {
