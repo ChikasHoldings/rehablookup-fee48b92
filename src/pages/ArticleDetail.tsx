@@ -353,6 +353,7 @@ const ArticleDetail = () => {
           keywords: article.seo_keywords || undefined,
           category: article.category_label,
           wordCount,
+          readTime: article.read_time,
         })}
         breadcrumbs={breadcrumbs}
         keywords={article.seo_keywords || undefined}

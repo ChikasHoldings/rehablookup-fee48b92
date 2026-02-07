@@ -436,22 +436,31 @@ export function generateArticleSchema(article: {
   keywords?: string[];
   category?: string;
   wordCount?: number;
+  readTime?: string;
+  isHowTo?: boolean;
+  steps?: { name: string; text: string }[];
 }) {
   const SITE_URL = "https://rehablookup.com";
+  const currentYear = new Date().getFullYear();
   
-  return {
+  // Base article schema with comprehensive rich snippet support
+  const baseSchema = {
     "@context": "https://schema.org",
     "@type": ["Article", "MedicalWebPage"],
     "@id": article.url,
     headline: article.title,
     alternativeHeadline: article.description.slice(0, 110),
+    name: article.title,
     description: article.description,
+    articleBody: article.description, // Helps with snippet generation
     image: article.image ? {
       "@type": "ImageObject",
       url: article.image,
       width: 1200,
       height: 630,
+      caption: article.title,
     } : undefined,
+    thumbnailUrl: article.image, // For Google Discover
     author: {
       "@type": "Person",
       name: article.author,
@@ -460,6 +469,7 @@ export function generateArticleSchema(article: {
       worksFor: {
         "@type": "Organization",
         name: "RehabLookup",
+        url: SITE_URL,
       },
     },
     publisher: {
@@ -479,13 +489,26 @@ export function generateArticleSchema(article: {
       "@type": "WebPage",
       "@id": article.url,
     },
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "RehabLookup",
+      url: SITE_URL,
+    },
     // Enhanced SEO fields
     keywords: article.keywords?.join(", "),
     articleSection: article.category || "Health & Recovery",
     wordCount: article.wordCount,
+    timeRequired: article.readTime ? `PT${parseInt(article.readTime)}M` : undefined,
     isAccessibleForFree: true,
     inLanguage: "en-US",
-    // Medical context
+    // Copyright information
+    copyrightHolder: {
+      "@type": "Organization",
+      name: "RehabLookup",
+    },
+    copyrightYear: currentYear,
+    // Medical context for health authority
     about: {
       "@type": "MedicalCondition",
       name: "Substance Use Disorder",
@@ -499,16 +522,101 @@ export function generateArticleSchema(article: {
         name: "Substance Use Disorder",
       },
     },
+    // Educational context
+    educationalLevel: "beginner",
+    learningResourceType: "Article",
     // Speakable for voice search / Google Assistant
     speakable: {
       "@type": "SpeakableSpecification",
-      cssSelector: ["h1", ".prose p:first-of-type", "blockquote"],
+      cssSelector: ["h1", ".prose p:first-of-type", "blockquote", ".article-summary"],
     },
-    // Potential actions
-    potentialAction: {
-      "@type": "ReadAction",
-      target: article.url,
+    // Potential actions for engagement
+    potentialAction: [
+      {
+        "@type": "ReadAction",
+        target: article.url,
+      },
+      {
+        "@type": "ShareAction",
+        target: article.url,
+      },
+    ],
+    // Citation/source attribution
+    citation: {
+      "@type": "CreativeWork",
+      name: "RehabLookup Editorial Standards",
+      url: `${SITE_URL}/about`,
     },
+  };
+
+  // If article is a how-to guide, add HowTo schema
+  if (article.isHowTo && article.steps && article.steps.length > 0) {
+    return [
+      baseSchema,
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        name: article.title,
+        description: article.description,
+        image: article.image,
+        totalTime: article.readTime ? `PT${parseInt(article.readTime)}M` : "PT15M",
+        step: article.steps.map((step, index) => ({
+          "@type": "HowToStep",
+          position: index + 1,
+          name: step.name,
+          text: step.text,
+          url: `${article.url}#step-${index + 1}`,
+        })),
+        tool: {
+          "@type": "HowToTool",
+          name: "Insurance information (optional)",
+        },
+      },
+    ];
+  }
+
+  return baseSchema;
+}
+
+// Generate NewsArticle schema for time-sensitive content
+export function generateNewsArticleSchema(article: {
+  title: string;
+  description: string;
+  author: string;
+  datePublished: string;
+  dateModified?: string;
+  image?: string;
+  url?: string;
+  keywords?: string[];
+}) {
+  const SITE_URL = "https://rehablookup.com";
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "@id": article.url,
+    headline: article.title,
+    description: article.description,
+    image: article.image ? [article.image] : undefined,
+    datePublished: article.datePublished,
+    dateModified: article.dateModified || article.datePublished,
+    author: {
+      "@type": "Person",
+      name: article.author,
+      url: `${SITE_URL}/resources`,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "RehabLookup",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.svg`,
+      },
+    },
+    mainEntityOfPage: article.url,
+    keywords: article.keywords?.join(", "),
+    isAccessibleForFree: true,
+    inLanguage: "en-US",
   };
 }
 
