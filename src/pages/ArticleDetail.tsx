@@ -22,6 +22,7 @@ import {
   MapPin,
   Stethoscope,
   Shield,
+  Sparkles,
 } from "lucide-react";
 import { ReactNode, useState, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
@@ -33,6 +34,14 @@ import {
 } from "@/components/seo/InternalLinkingSection";
 import { ArticleCategoryLinks } from "@/components/seo/ArticleCategoryLinks";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { 
+  PillarContentLinks, 
+  CrossCategoryLinks,
+  TopicHubLinks,
+  topicArticleMatrix,
+} from "@/components/seo/ArticleInterlinks";
+import { useRelatedArticles, useCrossCategoryArticles } from "@/hooks/useRelatedArticles";
+import { EnhancedRelatedArticles, YouMayAlsoLike } from "@/components/articles/EnhancedRelatedArticles";
 
 // Content block types from JSON structure
 interface ContentBlock {
@@ -186,21 +195,20 @@ const ArticleDetail = () => {
     enabled: !!id,
   });
 
-  // Fetch related articles (same category, excluding current)
-  const { data: relatedArticles } = useQuery({
-    queryKey: ["related-articles", article?.category, article?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("blog_articles")
-        .select("slug, title, excerpt, category_label, read_time, image_url")
-        .eq("status", "published")
-        .eq("category", article!.category)
-        .neq("id", article!.id)
-        .limit(3);
-      return data || [];
-    },
-    enabled: !!article,
-  });
+  // ENHANCED: Smart related articles using keyword/topic matching
+  const { data: smartRelatedArticles } = useRelatedArticles(
+    article?.slug || "",
+    article?.category || "",
+    article?.seo_keywords || [],
+    6
+  );
+
+  // Cross-category articles for broader internal linking
+  const { data: crossCategoryArticles } = useCrossCategoryArticles(
+    article?.category || "",
+    article?.slug || "",
+    4
+  );
 
   // Fetch all articles for sidebar navigation
   const { data: allArticles } = useQuery({
@@ -232,6 +240,18 @@ const ArticleDetail = () => {
     });
     return text.split(/\s+/).filter(Boolean).length;
   }, [article?.content]);
+
+  // Detect primary topic from keywords for topic hub linking
+  const primaryTopic = useMemo(() => {
+    if (!article?.seo_keywords) return null;
+    const keywords = article.seo_keywords.map(k => k.toLowerCase());
+    for (const topic of Object.keys(topicArticleMatrix)) {
+      if (keywords.some(k => k.includes(topic) || topic.includes(k))) {
+        return topic;
+      }
+    }
+    return null;
+  }, [article?.seo_keywords]);
 
   const { data: linkedArticles } = useQuery({
     queryKey: ["linked-articles", linkedArticleIds],
@@ -470,38 +490,31 @@ const ArticleDetail = () => {
                 </div>
               </div>
 
-              {/* Related Articles */}
-              {relatedArticles && relatedArticles.length > 0 && (
-                <div className="mt-12">
-                  <h3 className="font-display text-xl font-bold text-foreground mb-6">Related Articles</h3>
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {relatedArticles.map((related) => (
-                      <Link
-                        key={related.slug}
-                        to={`/resources/${related.slug}`}
-                        className="group rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:border-primary/30"
-                      >
-                        {related.image_url && (
-                          <div className="relative rounded-lg overflow-hidden mb-3 aspect-[16/10]">
-                            <img
-                              src={related.image_url}
-                              alt={related.title}
-                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                            />
-                          </div>
-                        )}
-                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary mb-2">
-                          {related.category_label}
-                        </span>
-                        <h4 className="font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                          {related.title}
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">{related.read_time}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+              {/* Enhanced Related Articles with Smart Linking */}
+              {smartRelatedArticles && smartRelatedArticles.length > 0 && (
+                <EnhancedRelatedArticles
+                  articles={smartRelatedArticles}
+                  title="Related Articles"
+                  description="Continue exploring topics related to this guide."
+                  variant="grid"
+                  showImages={true}
+                  className="mt-12"
+                />
               )}
+
+              {/* You May Also Like - Cross-category suggestions */}
+              {crossCategoryArticles && crossCategoryArticles.length > 0 && (
+                <YouMayAlsoLike
+                  articles={crossCategoryArticles}
+                  className="mt-10"
+                />
+              )}
+
+              {/* Pillar Content Links for SEO Authority */}
+              <PillarContentLinks currentSlug={article.slug} />
+
+              {/* Cross-Category Navigation */}
+              <CrossCategoryLinks currentCategory={article.category} className="mb-6" />
 
               {/* Category-based internal links for SEO */}
               <ArticleCategoryLinks category={article.category} variant="footer" />
@@ -509,10 +522,19 @@ const ArticleDetail = () => {
 
             {/* Sidebar */}
             <aside className="lg:w-80 flex-shrink-0 space-y-6">
+              {/* Topic Hub Links - Dynamic based on article topic */}
+              {primaryTopic && (
+                <TopicHubLinks
+                  topic={primaryTopic}
+                  currentSlug={article.slug}
+                />
+              )}
+
               {/* Further Reading */}
               {linkedArticles && linkedArticles.length > 0 && (
                 <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
-                  <h3 className="font-display text-base font-semibold text-foreground mb-4">
+                  <h3 className="font-display text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-primary" />
                     Further Reading
                   </h3>
                   <div className="space-y-3">
@@ -532,9 +554,19 @@ const ArticleDetail = () => {
                 </div>
               )}
 
+              {/* Smart Related - Compact Sidebar Version */}
+              {smartRelatedArticles && smartRelatedArticles.length > 0 && (
+                <EnhancedRelatedArticles
+                  articles={smartRelatedArticles.slice(0, 5)}
+                  title="You Might Also Like"
+                  variant="compact"
+                />
+              )}
+
               {/* Quick Links */}
               <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
-                <h3 className="font-display text-base font-semibold text-foreground mb-4">
+                <h3 className="font-display text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
                   Popular Articles
                 </h3>
                 <div className="space-y-2">
@@ -542,9 +574,10 @@ const ArticleDetail = () => {
                     <Link
                       key={a.slug}
                       to={`/resources/${a.slug}`}
-                      className="block py-2 px-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors line-clamp-2"
+                      className="flex items-center gap-2 py-2 px-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors group"
                     >
-                      {a.title}
+                      <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <span className="line-clamp-2">{a.title}</span>
                     </Link>
                   ))}
                 </div>
