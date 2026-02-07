@@ -1,87 +1,84 @@
 
-# Fix: Persistent Article Image Caching Issue
 
-## Problem Analysis
+# Fix: Static HTML Serving Old Content on /resources
 
-The articles on `/resources` page show old images despite database having correct Unsplash URLs. The root cause is **React Query's client-side caching** combined with insufficient cache invalidation.
+## Root Cause Identified
 
-### Investigation Findings
+The `/resources` page is showing "old images" because **users never see the React application**. Instead, they receive a **static HTML file** (`public/resources.html`) that was hardcoded with placeholder content.
 
-| Check | Result | Status |
-|-------|--------|--------|
-| Database `image_url` values | Correct Unsplash URLs | OK |
-| API network response | Returns correct URLs | OK |
-| Component code | Uses `article.image_url` correctly | OK |
-| React Query cache | Shows stale data | ISSUE |
+### Evidence
 
-### Why Hard Refresh Didn't Work
+| File | Line | Code | Impact |
+|------|------|------|--------|
+| `public/_redirects` | 58 | `/resources /resources.html 200` | ALL users get static HTML |
+| `public/resources.html` | 97-102 | Emoji placeholders (`📚 🏥 📅`) | No actual images |
 
-1. React Query stores data in JavaScript memory, not browser cache
-2. Hard refresh clears browser cache but React Query re-initializes with persisted state
-3. The `staleTime: 0` setting added earlier only works if it was deployed before the refresh
+The redirect rule serves static HTML to every visitor, completely bypassing the React SPA and database.
+
+---
 
 ## Solution
 
-### 1. Force Fresh Data on Resources Page
+### Option A: Remove Static Redirect (Recommended)
 
-Add explicit cache invalidation when the component mounts to ensure data is always fetched fresh:
+Remove line 58 from `public/_redirects` so the React SPA handles `/resources`:
 
-```text
-Changes to src/pages/Resources.tsx:
-- Import useQueryClient from @tanstack/react-query
-- Add useEffect to invalidate the query on mount
-- This ensures any cached data is cleared before fetching
+**File: `public/_redirects`**
+
+Delete this line:
+```
+/resources /resources.html 200
 ```
 
-### 2. Update Query Configuration
+This allows the fallback rule `/* /index.html 200` to serve the React app, which fetches real data from the database.
 
-Strengthen the query settings to prevent caching issues:
+### Option B: Redirect Static to SPA
 
-```text
-useQuery Configuration:
-- gcTime: 0 (don't keep data in garbage collection)
-- staleTime: 0 (data is immediately stale)
-- refetchOnMount: "always" (always refetch)
+If the static file must exist for some reason, change it to redirect users to the SPA:
+
+```
+/resources /index.html 200
 ```
 
-### 3. Add Cache-Busting Query Key (Optional)
+---
 
-For critical freshness, include a timestamp in the query key:
+## Implementation Steps
 
-```text
-queryKey: ["published-articles", Date.now()]
+1. **Edit `public/_redirects`**: Remove or modify the `/resources` redirect rule (line 58)
+2. **Optionally delete `public/resources.html`**: If no longer needed for SEO
+3. **Test**: Visit `/resources` on published site to confirm React SPA loads with database images
+
+---
+
+## Technical Details
+
+### Current Flow (Broken)
 ```
-This forces a new cache entry on every page load.
-
-## Technical Implementation
-
-### File: src/pages/Resources.tsx
-
-1. Add `useQueryClient` import
-2. Add `useEffect` with cache invalidation on mount
-3. Update query settings for stronger cache prevention
-
-```text
-// At component start:
-const queryClient = useQueryClient();
-
-useEffect(() => {
-  queryClient.invalidateQueries({ queryKey: ["published-articles"] });
-}, [queryClient]);
-
-// Query configuration:
-const { data: articles, isLoading } = useQuery({
-  queryKey: ["published-articles"],
-  queryFn: async () => { ... },
-  staleTime: 0,
-  gcTime: 0,
-  refetchOnMount: "always",
-});
+User visits /resources
+    → Server matches `/resources /resources.html 200`
+    → Static HTML served (emoji placeholders)
+    → React app never loads
+    → Database never queried
 ```
 
-## Expected Outcome
+### Fixed Flow
+```
+User visits /resources
+    → No specific redirect found
+    → Falls through to `/* /index.html 200`
+    → React SPA loads
+    → React Query fetches from database
+    → Correct Unsplash images displayed
+```
 
-After this fix:
-- Images will always show current database values
-- No stale cache will persist between sessions
-- Hard refresh will work as expected
+### Files to Modify
+
+| File | Action |
+|------|--------|
+| `public/_redirects` | Remove line 58 (`/resources /resources.html 200`) |
+| `public/resources.html` | Optional: Delete if not needed for SEO bots |
+
+### SEO Consideration
+
+If the static file was intended for search engine crawlers, the existing `prerender-for-bots` edge function already handles bot requests separately. The static file is redundant and causes this bug for real users.
+
