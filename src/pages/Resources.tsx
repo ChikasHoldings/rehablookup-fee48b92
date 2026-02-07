@@ -178,30 +178,43 @@ export default function Resources() {
         canonical="/resources"
       />
 
-      {/* Hero Section */}
-      <section className="relative py-16 md:py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/3" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-2xl" />
+      {/* Hero Section - Compact navy style matching platform pages */}
+      <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
+        </div>
         
         <div className="container relative">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <BookOpen className="h-4 w-4" />
-              Recovery Resources
+          {/* Breadcrumb */}
+          <nav className="mb-4 text-center">
+            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
+              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
+              <span className="text-white/50">/</span>
+              <span className="text-white font-medium">Resources</span>
+            </span>
+          </nav>
+          
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+              <BookOpen className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Recovery Resources</span>
             </div>
-            <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl mb-6">
-              Expert Guides for Your
-              <span className="text-primary block">Recovery Journey</span>
+            <h1 className="mb-2 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
+              Expert Guides for Recovery
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive articles on addiction treatment, family support, and mental health. 
-              Written by experts to help you make informed decisions.
+            <p className="text-base text-primary-foreground/80 leading-relaxed max-w-xl mx-auto">
+              Comprehensive articles on addiction treatment, family support, and mental health.
             </p>
           </div>
+        </div>
+      </section>
 
+      {/* Search & Filters Section */}
+      <section className="py-6 md:py-8 border-b bg-muted/30">
+        <div className="container">
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
+          <div className="max-w-xl mx-auto mb-6">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
@@ -209,13 +222,13 @@ export default function Resources() {
                 placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-14 text-lg rounded-xl border-border/50 bg-background/80 backdrop-blur-sm"
+                className="pl-12 h-12 text-base rounded-xl border-border/50 bg-background"
               />
             </div>
           </div>
 
           {/* Category Filters */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <div className="flex flex-wrap justify-center gap-2">
             {categories.map((category) => {
               const Icon = category.icon;
               const isActive = selectedCategory === category.id;
@@ -223,13 +236,13 @@ export default function Resources() {
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-md"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                      : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5" />
                   {category.label}
                 </button>
               );
