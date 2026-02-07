@@ -32,6 +32,15 @@ import {
   insuranceLinks
 } from "@/components/seo/InternalLinkingSection";
 
+// Content block types from JSON structure
+interface ContentBlock {
+  type: "paragraph" | "heading" | "list" | "quote" | "callout";
+  content?: string;
+  level?: number;
+  items?: string[];
+  style?: string;
+}
+
 interface DBArticle {
   id: string;
   slug: string;
@@ -43,7 +52,7 @@ interface DBArticle {
   image_url: string | null;
   author: string;
   author_date: string | null;
-  content: string[];
+  content: ContentBlock[];
   status: string;
   featured: boolean;
   published_at: string | null;
@@ -86,14 +95,23 @@ const parseContentWithLinks = (text: string): ReactNode => {
 };
 
 // Helper function to extract linked article IDs from content
-const extractLinkedArticleIds = (content: string[]): string[] => {
+const extractLinkedArticleIds = (content: ContentBlock[]): string[] => {
   const linkPattern = /\[\[([^\]|]+)\|[^\]]+\]\]/g;
   const ids = new Set<string>();
   
-  content.forEach((paragraph) => {
+  content.forEach((block) => {
+    const text = block.content || "";
     let match;
-    while ((match = linkPattern.exec(paragraph)) !== null) {
+    while ((match = linkPattern.exec(text)) !== null) {
       ids.add(match[1]);
+    }
+    // Also check list items
+    if (block.items) {
+      block.items.forEach((item) => {
+        while ((match = linkPattern.exec(item)) !== null) {
+          ids.add(match[1]);
+        }
+      });
     }
   });
   
@@ -155,7 +173,12 @@ const ArticleDetail = () => {
         .single();
       
       if (error) throw error;
-      return data as DBArticle;
+      
+      // Cast content from Json to ContentBlock[]
+      return {
+        ...data,
+        content: data.content as unknown as ContentBlock[],
+      } as DBArticle;
     },
     enabled: !!id,
   });
@@ -235,26 +258,55 @@ const ArticleDetail = () => {
   const defaultImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop";
   const articleImage = article.image_url || defaultImage;
 
-  // Render content paragraphs with markdown-like headers
+  // Render content blocks from JSON structure
   const renderContent = () => {
-    return article.content.map((paragraph, index) => {
-      // Check if it's a heading
-      if (paragraph.startsWith("## ")) {
+    return article.content.map((block, index) => {
+      const isAfterMidpoint = index === Math.floor(article.content.length / 2);
+      
+      // Handle heading blocks
+      if (block.type === "heading") {
+        const HeadingTag = block.level === 3 ? "h3" : "h2";
+        const headingClass = block.level === 3 
+          ? "font-display text-lg font-semibold text-foreground mt-6 mb-3 scroll-mt-20"
+          : "font-display text-xl font-bold text-foreground mt-8 mb-4 scroll-mt-20";
         return (
-          <h2 key={index} className="font-display text-xl font-bold text-foreground mt-8 mb-4 scroll-mt-20">
-            {paragraph.replace("## ", "")}
-          </h2>
+          <HeadingTag key={index} className={headingClass}>
+            {block.content}
+          </HeadingTag>
         );
       }
 
-      // Regular paragraph with internal link parsing
-      const isAfterMidpoint = index === Math.floor(article.content.length / 2);
-      
+      // Handle list blocks
+      if (block.type === "list" && block.items) {
+        return (
+          <div key={index}>
+            {isAfterMidpoint && <MidArticleCTA />}
+            <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+              {block.items.map((item, i) => (
+                <li key={i} className="leading-relaxed">
+                  {parseContentWithLinks(item)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
+
+      // Handle quote/callout blocks
+      if (block.type === "quote" || block.type === "callout") {
+        return (
+          <blockquote key={index} className="border-l-4 border-primary/30 pl-4 py-2 my-6 italic text-muted-foreground bg-muted/30 rounded-r-lg">
+            {parseContentWithLinks(block.content || "")}
+          </blockquote>
+        );
+      }
+
+      // Default: paragraph blocks
       return (
         <div key={index}>
           {isAfterMidpoint && <MidArticleCTA />}
           <p className="text-muted-foreground leading-relaxed">
-            {parseContentWithLinks(paragraph)}
+            {parseContentWithLinks(block.content || "")}
           </p>
         </div>
       );
