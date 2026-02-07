@@ -145,6 +145,8 @@ export default function Resources() {
       if (error) throw error;
       return data as DBArticle[];
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // Filter articles based on search and category
