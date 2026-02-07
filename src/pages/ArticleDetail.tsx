@@ -32,6 +32,7 @@ import {
   insuranceLinks
 } from "@/components/seo/InternalLinkingSection";
 import { ArticleCategoryLinks } from "@/components/seo/ArticleCategoryLinks";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 // Content block types from JSON structure
 interface ContentBlock {
@@ -360,17 +361,23 @@ const ArticleDetail = () => {
         publishedTime={article.published_at || undefined}
       />
 
+      {/* Visual Breadcrumb Navigation */}
+      <div className="bg-muted/30 border-b">
+        <div className="container py-3">
+          <BreadcrumbNav
+            items={[
+              { label: "Resources", href: "/resources" },
+              { label: article.category_label, href: `/resources?category=${article.category}` },
+              { label: article.title },
+            ]}
+          />
+        </div>
+      </div>
+
       {/* Hero */}
       <div className="bg-gradient-to-b from-muted/60 via-muted/30 to-background py-12 md:py-16">
         <div className="container">
           <div className="max-w-4xl mx-auto">
-            <Link
-              to="/resources"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Resources
-            </Link>
 
             <div className="mb-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">

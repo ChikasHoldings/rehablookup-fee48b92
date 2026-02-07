@@ -48,6 +48,7 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 interface FacilityData {
   id: string;
@@ -518,6 +519,19 @@ const CenterProfile = () => {
         ]}
         modifiedTime={facility.updated_at}
       />
+
+      {/* Visual Breadcrumb Navigation */}
+      <div className="bg-muted/30 border-b">
+        <div className="container py-3">
+          <BreadcrumbNav
+            items={[
+              { label: "Find Rehab", href: "/rehab-centers" },
+              { label: facility.state, href: `/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}` },
+              { label: facility.name },
+            ]}
+          />
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-8">

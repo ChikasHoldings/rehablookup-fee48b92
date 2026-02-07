@@ -270,7 +270,31 @@ https://rehablookup.com/
 
 ---
 
-## 7. Schema Generators Available
+## 7. Breadcrumb Implementation Status
+
+### ✅ Visual Breadcrumbs Added (February 2026)
+
+The following pages now have both JSON-LD structured data AND visual breadcrumb navigation:
+
+| Page Type | Component Used | JSON-LD | Visual Nav |
+|-----------|---------------|---------|------------|
+| Article Detail | BreadcrumbNav | ✅ | ✅ |
+| Facility Profile | BreadcrumbNav | ✅ | ✅ |
+| State Pages | Inline styled | ✅ | ✅ |
+| Treatment Types | Inline styled | ✅ | ✅ |
+| Insurance Pages | BreadcrumbNav | ✅ | ✅ |
+| City Treatment Pages | BreadcrumbNav | ✅ | ✅ |
+
+### Breadcrumb Best Practices Implemented:
+- JSON-LD BreadcrumbList schema on all pages
+- Microdata attributes (itemscope, itemtype, itemprop)
+- Semantic navigation with `aria-label="Breadcrumb"`
+- Current page marked with `aria-current="page"`
+- Home icon with accessible text for screen readers
+
+---
+
+## 8. Schema Generators Available
 
 The `src/components/SEO.tsx` file exports these schema generators:
 
