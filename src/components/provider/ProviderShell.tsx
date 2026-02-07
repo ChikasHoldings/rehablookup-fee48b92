@@ -205,12 +205,36 @@ function ProviderShellContent() {
           <ProviderSidebar />
         </aside>
 
-        {/* Mobile Sidebar Sheet */}
+        {/* Mobile Sidebar Sheet - slides from right */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-[280px] sm:w-72 p-0 border-r-0">
+          <SheetContent 
+            side="right" 
+            className="w-[80vw] max-w-[320px] p-0 border-l border-border/50 [&>button]:hidden"
+          >
             <div className="flex flex-col h-full bg-card">
-              <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between p-4 border-b border-border">
                 <p className="font-display font-semibold text-foreground">Menu</p>
+                <button
+                  onClick={handleCloseSidebar}
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-muted-foreground"
+                  >
+                    <path d="M18 6 6 18"/>
+                    <path d="m6 6 12 12"/>
+                  </svg>
+                </button>
               </div>
               <div className="flex-1 overflow-y-auto">
                 <ProviderSidebar onNavigate={handleCloseSidebar} />
