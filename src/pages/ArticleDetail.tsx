@@ -19,9 +19,18 @@ import {
   Linkedin,
   Copy,
   Check,
+  MapPin,
+  Stethoscope,
+  Shield,
 } from "lucide-react";
 import { ReactNode, useState, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
+import { 
+  InternalLinkingSection, 
+  treatmentTypeLinks, 
+  nearMeLinks, 
+  insuranceLinks
+} from "@/components/seo/InternalLinkingSection";
 
 interface DBArticle {
   id: string;
@@ -487,21 +496,33 @@ const ArticleDetail = () => {
         </div>
       </section>
 
+      {/* Internal Linking Section for SEO */}
+      <InternalLinkingSection
+        title="Explore More Recovery Resources"
+        description="Find comprehensive guides and treatment options to support your recovery journey."
+        groups={[
+          { title: "Treatment Types", links: treatmentTypeLinks },
+          { title: "Find Treatment Near You", links: nearMeLinks.slice(0, 6) },
+          { title: "Insurance Coverage", links: insuranceLinks },
+        ]}
+        variant="grid"
+      />
+
       {/* CTA */}
-      <section className="py-16 md:py-20 bg-muted/50">
+      <section className="py-12 md:py-16">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-primary to-primary/90 p-8 md:p-12 text-center text-white shadow-xl shadow-primary/20 relative overflow-hidden">
+          <div className="mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-primary to-primary/90 p-8 md:p-10 text-center text-white shadow-xl shadow-primary/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
             
             <div className="relative">
-              <div className="mb-4 mx-auto h-14 w-14 rounded-2xl bg-white/15 flex items-center justify-center">
-                <Heart className="h-7 w-7" />
+              <div className="mb-3 mx-auto h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center">
+                <Heart className="h-6 w-6" />
               </div>
-              <h2 className="mb-3 font-display text-2xl font-bold md:text-3xl">
-                Ready to Start Your Recovery Journey?
+              <h2 className="mb-2 font-display text-xl font-bold md:text-2xl">
+                Ready to Start Your Recovery?
               </h2>
-              <p className="mb-8 text-white/80 max-w-xl mx-auto">
+              <p className="mb-6 text-sm text-white/80 max-w-md mx-auto">
                 Find verified treatment centers near you and take the first step toward a healthier future.
               </p>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -513,7 +534,7 @@ const ArticleDetail = () => {
                 </Link>
                 <Link to="/concierge">
                   <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10">
-                    Find Treatment
+                    Get Free Help
                   </Button>
                 </Link>
               </div>

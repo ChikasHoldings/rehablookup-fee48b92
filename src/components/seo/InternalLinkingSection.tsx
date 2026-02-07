@@ -59,6 +59,15 @@ export const insuranceLinks: LinkItem[] = [
   { title: "Medicaid Rehab", href: "/insurance/medicaid-rehab", icon: CreditCard },
 ];
 
+export const topStateLinks: LinkItem[] = [
+  { title: "California Rehab", href: "/rehab-centers/california", icon: MapPin },
+  { title: "Florida Rehab", href: "/rehab-centers/florida", icon: MapPin },
+  { title: "Texas Rehab", href: "/rehab-centers/texas", icon: MapPin },
+  { title: "New York Rehab", href: "/rehab-centers/new-york", icon: MapPin },
+  { title: "Arizona Rehab", href: "/rehab-centers/arizona", icon: MapPin },
+  { title: "Colorado Rehab", href: "/rehab-centers/colorado", icon: MapPin },
+];
+
 export const resourceLinks: LinkItem[] = [
   { title: "Types of Treatment", href: "/resources/types-of-addiction-treatment", icon: BookOpen },
   { title: "Choosing a Rehab", href: "/resources/choosing-rehab-center", icon: BookOpen },
