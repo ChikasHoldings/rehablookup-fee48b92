@@ -93,23 +93,23 @@ export function AddListingCard({
     if (canPurchaseSlot) {
       return (
         <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Plus className="h-7 w-7 text-primary" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+              <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-semibold text-foreground mb-1">
+                <h3 className="font-semibold text-foreground text-sm sm:text-base mb-0.5 sm:mb-1">
                   Add Another Listing
                 </h3>
-                <p className="text-sm text-muted-foreground">
-                  You've used all {limit} listings. Purchase additional slots for $49 each (one-time).
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  You've used all {limit} listings. Purchase additional slots for $49 each.
                 </p>
               </div>
               <Button 
                 onClick={handlePurchaseSlot}
                 disabled={isPurchasing}
-                className="gap-2 shrink-0"
+                className="gap-2 shrink-0 w-full sm:w-auto h-9 sm:h-10 text-sm"
               >
                 {isPurchasing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -127,20 +127,20 @@ export function AddListingCard({
     // Free user at capacity - show upgrade prompt
     return (
       <Card className="border-2 border-dashed border-amber-300/50 bg-amber-50/30 dark:bg-amber-950/10">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-              <Lock className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+            <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+              <Lock className="h-5 w-5 sm:h-7 sm:w-7 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <h3 className="font-semibold text-foreground mb-1">
+              <h3 className="font-semibold text-foreground text-sm sm:text-base mb-0.5 sm:mb-1">
                 Listing Limit Reached
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Free accounts are limited to 1 listing. Upgrade to Pro for up to 5 listings.
               </p>
             </div>
-            <Button asChild className="gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shrink-0">
+            <Button asChild className="gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shrink-0 w-full sm:w-auto h-9 sm:h-10 text-sm">
               <Link to="/provider/billing">
                 <Sparkles className="h-4 w-4" />
                 Upgrade to Pro
@@ -157,20 +157,20 @@ export function AddListingCard({
       className="border-2 border-dashed border-primary/30 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 transition-all duration-200 cursor-pointer group"
       onClick={onAddClick}
     >
-      <CardContent className="p-6">
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors shrink-0">
-            <Plus className="h-7 w-7 text-primary" />
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+          <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors shrink-0">
+            <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base mb-0.5 sm:mb-1 group-hover:text-primary transition-colors">
               Add New Listing
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Create another facility listing ({used} of {limit} used)
             </p>
           </div>
-          <Button className="gap-2 shrink-0">
+          <Button className="gap-2 shrink-0 w-full sm:w-auto h-9 sm:h-10 text-sm">
             <Building2 className="h-4 w-4" />
             Add Facility
           </Button>

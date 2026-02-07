@@ -209,24 +209,24 @@ function ProviderShellContent() {
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent 
             side="right" 
-            className="w-[80vw] max-w-[320px] p-0 border-l border-border/50 [&>button]:hidden"
+            className="w-[80vw] max-w-[300px] p-0 border-l border-border/50 [&>button]:hidden"
           >
             <div className="flex flex-col h-full bg-card">
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <p className="font-display font-semibold text-foreground">Menu</p>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <p className="font-display font-semibold text-foreground text-sm">Menu</p>
                 <button
                   onClick={handleCloseSidebar}
-                  className="flex items-center justify-center h-8 w-8 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  className="flex items-center justify-center h-7 w-7 rounded-full bg-muted/80 hover:bg-muted transition-colors"
                   aria-label="Close menu"
                 >
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    width="16" 
-                    height="16" 
+                    width="14" 
+                    height="14" 
                     viewBox="0 0 24 24" 
                     fill="none" 
                     stroke="currentColor" 
-                    strokeWidth="2" 
+                    strokeWidth="2.5" 
                     strokeLinecap="round" 
                     strokeLinejoin="round"
                     className="text-muted-foreground"

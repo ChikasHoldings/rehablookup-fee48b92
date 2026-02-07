@@ -113,7 +113,7 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row">
           {/* Image Section */}
-          <div className="relative w-full sm:w-44 lg:w-52 h-36 sm:h-auto sm:min-h-[160px] bg-muted/30 shrink-0 overflow-hidden">
+          <div className="relative w-full sm:w-40 lg:w-48 h-32 sm:h-auto sm:min-h-[140px] bg-muted/30 shrink-0 overflow-hidden">
             {mainImage ? (
               <img
                 src={mainImage}
@@ -122,14 +122,14 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
-                <Building2 className="h-16 w-16 text-primary/30" />
+                <Building2 className="h-12 w-12 sm:h-16 sm:w-16 text-primary/30" />
               </div>
             )}
             {/* Gradient overlay for better badge visibility */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
             {/* Status Badge */}
-            <div className="absolute top-3 left-3">
-              <Badge variant="outline" className={cn("gap-1.5 text-xs font-medium backdrop-blur-md bg-background/90 shadow-sm", statusConfig.badgeClass)}>
+            <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+              <Badge variant="outline" className={cn("gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-medium backdrop-blur-md bg-background/90 shadow-sm", statusConfig.badgeClass)}>
                 <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse", statusConfig.dotColor)} />
                 {statusConfig.label}
               </Badge>
@@ -137,65 +137,65 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
           </div>
 
           {/* Content Section */}
-          <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between min-h-[160px]">
-            <div className="space-y-2">
+          <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-h-[130px] sm:min-h-[140px]">
+            <div className="space-y-1.5 sm:space-y-2">
               {/* Header: Name & Type Badge */}
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-foreground text-base leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                  <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-1">
                     {facility.name}
                   </h3>
-                  <Badge variant="secondary" className="text-xs font-normal">
+                  <Badge variant="secondary" className="text-[10px] sm:text-xs font-normal">
                     {facility.facility_type || "Treatment Center"}
                   </Badge>
                 </div>
               </div>
               
               {/* Full Address */}
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/60" />
+              <div className="flex items-start gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 mt-0.5 text-primary/60" />
                 <span className="line-clamp-1">{fullAddress}</span>
               </div>
 
               {/* KPI Stats */}
-              <div className="flex items-center gap-2 pt-1">
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/60 border border-border/40">
-                  <Eye className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-sm font-medium">{viewsData ?? 0}</span>
-                  <span className="text-xs text-muted-foreground">views</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
+                <div className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg bg-muted/60 border border-border/40">
+                  <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+                  <span className="text-xs sm:text-sm font-medium">{viewsData ?? 0}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">views</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/60 border border-border/40">
-                  <Users className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-sm font-medium">{leadsData ?? 0}</span>
-                  <span className="text-xs text-muted-foreground">leads</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg bg-muted/60 border border-border/40">
+                  <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+                  <span className="text-xs sm:text-sm font-medium">{leadsData ?? 0}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">leads</span>
                 </div>
               </div>
             </div>
 
             {/* Footer: Date & Actions */}
-            <div className="flex items-center justify-between pt-3 mt-2 border-t border-border/50">
-              <span className="text-xs text-muted-foreground">
+            <div className="flex items-center justify-between pt-2 sm:pt-3 mt-1.5 sm:mt-2 border-t border-border/50">
+              <span className="text-[10px] sm:text-xs text-muted-foreground">
                 Added {createdDate}
               </span>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {facility.slug && onPreview && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 h-8 px-2.5"
+                    className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2 sm:px-2.5 text-[11px] sm:text-xs"
                     onClick={() => onPreview({ name: facility.name, slug: facility.slug! })}
                   >
-                    <Eye className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Preview</span>
+                    <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="hidden xs:inline sm:inline">Preview</span>
                   </Button>
                 )}
                 <Button
                   size="sm"
-                  className="gap-1.5 h-8 px-3"
+                  className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs"
                   onClick={() => onSelect(facility.id)}
                 >
-                  <Edit3 className="h-3.5 w-3.5" />
+                  <Edit3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   <span>Edit</span>
                 </Button>
               </div>

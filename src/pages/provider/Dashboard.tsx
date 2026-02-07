@@ -61,25 +61,25 @@ function MetricCard({
 }) {
   return (
     <Card className="border-border/40 hover:border-border/60 transition-colors">
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex items-center gap-3">
-          <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", iconBg)}>
-            <Icon className={cn("h-4.5 w-4.5", iconColor)} />
+      <CardContent className="p-2.5 sm:p-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className={cn("h-9 w-9 sm:h-10 sm:w-10 rounded-lg flex items-center justify-center shrink-0", iconBg)}>
+            <Icon className={cn("h-4 w-4 sm:h-[18px] sm:w-[18px]", iconColor)} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
             {isLoading ? (
-              <Skeleton className="h-6 w-12 mt-0.5" />
+              <Skeleton className="h-5 sm:h-6 w-10 sm:w-12 mt-0.5" />
             ) : (
-              <p className="text-xl font-bold text-foreground leading-tight">{value}</p>
+              <p className="text-lg sm:text-xl font-bold text-foreground leading-tight">{value}</p>
             )}
-            {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
+            {subtitle && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
           </div>
           {action && (
-            <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs" asChild>
+            <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-2.5 text-[10px] sm:text-xs hidden sm:flex" asChild>
               <Link to={action.href}>
                 {action.label}
-                <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 ml-0.5" />
               </Link>
             </Button>
           )}

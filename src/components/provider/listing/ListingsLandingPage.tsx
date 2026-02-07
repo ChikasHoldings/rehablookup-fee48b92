@@ -68,16 +68,16 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
     <div className="min-h-full bg-background">
       <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-primary" />
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-1 sm:mb-2">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
                 My Listings
               </h1>
-              <p className="text-muted-foreground text-sm sm:text-base">
+              <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
                 Manage your facility listings ({used} of {limit})
               </p>
             </div>

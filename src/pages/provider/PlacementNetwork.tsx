@@ -476,26 +476,26 @@ export default function ProviderPlacementNetworkPage() {
         ) : (
           /* Opted-In View */
           <Tabs defaultValue="domestic" className="space-y-4 sm:space-y-6">
-            <TabsList className="w-full grid grid-cols-5 h-10 sm:h-11">
-              <TabsTrigger value="domestic" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 relative font-semibold">
-                <Bell className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Domestic</span>
+            <TabsList className="w-full grid grid-cols-5 h-11 sm:h-12 p-1 bg-muted/50">
+              <TabsTrigger value="domestic" className="gap-1.5 text-[11px] sm:text-sm px-1.5 sm:px-3 relative font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline">Domestic</span>
               </TabsTrigger>
-              <TabsTrigger value="international" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2 font-semibold">
-                <Globe className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">International</span>
+              <TabsTrigger value="international" className="gap-1.5 text-[11px] sm:text-sm px-1.5 sm:px-3 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline">Intl</span>
               </TabsTrigger>
-              <TabsTrigger value="placed" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
-                <Building2 className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Placed</span>
+              <TabsTrigger value="placed" className="gap-1.5 text-[11px] sm:text-sm px-1.5 sm:px-3 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline">Placed</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
-                <Settings className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Profile</span>
+              <TabsTrigger value="profile" className="gap-1.5 text-[11px] sm:text-sm px-1.5 sm:px-3 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="billing" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-2">
-                <CreditCard className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Billing</span>
+              <TabsTrigger value="billing" className="gap-1.5 text-[11px] sm:text-sm px-1.5 sm:px-3 font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden sm:inline">Billing</span>
               </TabsTrigger>
             </TabsList>
 
