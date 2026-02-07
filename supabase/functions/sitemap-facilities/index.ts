@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Version tracking for deployment verification - update on each deployment
-const VERSION = "v2.3.0";
+const VERSION = "v2.3.1";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -437,14 +437,20 @@ Deno.serve(async (req) => {
 
     console.log(`[Sitemap ${VERSION}] Request for type: ${type}, URL: ${req.url}`);
 
+    // Initialize Supabase client for database queries
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     let xmlContent: string;
 
     switch (type) {
       case "index":
+      case "sitemap-index":
         xmlContent = generateSitemapIndex();
         break;
       case "main":
-        xmlContent = generateMainSitemap();
+        xmlContent = await generateMainSitemap(supabase);
         break;
       case "facilities":
       default:
