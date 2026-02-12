@@ -173,14 +173,18 @@ const ArticleDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [copied, setCopied] = useState(false);
 
+  // Normalize slug to lowercase for case-insensitive matching
+  const normalizedSlug = id?.toLowerCase();
+  const needsRedirect = !!(id && id !== normalizedSlug);
+
   // Fetch article from database
   const { data: article, isLoading, error } = useQuery({
-    queryKey: ["article", id],
+    queryKey: ["article", normalizedSlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_articles")
         .select("*")
-        .eq("slug", id)
+        .eq("slug", normalizedSlug)
         .eq("status", "published")
         .single();
       
@@ -192,7 +196,7 @@ const ArticleDetail = () => {
         content: data.content as unknown as ContentBlock[],
       } as DBArticle;
     },
-    enabled: !!id,
+    enabled: !!normalizedSlug && !needsRedirect,
   });
 
   // ENHANCED: Smart related articles using keyword/topic matching
@@ -278,6 +282,11 @@ const ArticleDetail = () => {
       toast({ title: "Failed to copy link", variant: "destructive" });
     }
   };
+
+  // Redirect if slug has uppercase characters (SEO canonical fix)
+  if (needsRedirect) {
+    return <Navigate to={`/resources/${normalizedSlug}`} replace />;
+  }
 
   if (isLoading) {
     return <ArticleSkeleton />;
