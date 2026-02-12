@@ -307,12 +307,14 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
               >
                 Contact Us
               </Link>
-              <Link
-                to="/sitemap"
+              <a
+                href="/sitemap.xml"
                 className="text-xs text-primary-foreground/60 hover:text-primary-foreground transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Sitemap
-              </Link>
+              </a>
             </nav>
           </div>
         </div>

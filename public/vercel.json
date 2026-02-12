@@ -53,6 +53,11 @@
       "permanent": true
     },
     {
+      "source": "/sitemap",
+      "destination": "/sitemap.xml",
+      "permanent": true
+    },
+    {
       "source": "/request-help",
       "destination": "/concierge",
       "permanent": true
