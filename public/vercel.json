@@ -58,6 +58,26 @@
       "permanent": true
     },
     {
+      "source": "/treatment/dual-diagnosis",
+      "destination": "/treatment-types/dual-diagnosis-treatment",
+      "permanent": true
+    },
+    {
+      "source": "/treatment/dual-diagnosis/:state",
+      "destination": "/treatment-types/dual-diagnosis-treatment/:state",
+      "permanent": true
+    },
+    {
+      "source": "/treatment/detox",
+      "destination": "/treatment-types/detox-programs",
+      "permanent": true
+    },
+    {
+      "source": "/treatment/detox/:state",
+      "destination": "/treatment-types/detox-programs/:state",
+      "permanent": true
+    },
+    {
       "source": "/request-help",
       "destination": "/concierge",
       "permanent": true
