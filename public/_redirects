@@ -33,8 +33,16 @@
 /insurance/medicaid /insurance/medicaid-rehab 301!
 /insurance/united-healthcare /insurance/united-healthcare-rehab 301!
 
+# Redirect legacy /treatment/ URLs to canonical /treatment-types/ versions
+/treatment/dual-diagnosis /treatment-types/dual-diagnosis-treatment 301!
+/treatment/dual-diagnosis/:state /treatment-types/dual-diagnosis-treatment/:state 301!
+/treatment/detox /treatment-types/detox-programs 301!
+/treatment/detox/:state /treatment-types/detox-programs/:state 301!
+
 # Redirect old/deprecated URLs to canonical versions
-# Note: /request-help and /placement-help redirects are handled in React Router
+/request-help /concierge 301!
+/request-help/* /concierge 301!
+/placement-help /concierge 301!
 /my-account /account 301!
 
 # =============================================================================

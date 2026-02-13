@@ -308,6 +308,12 @@ const App = () => {
             <Route path="/request-help/thank-you" element={<Navigate to="/concierge/thank-you" replace />} />
             <Route path="/request-help/create-password" element={<Navigate to="/concierge/create-password" replace />} />
             
+            {/* Legacy /treatment/ redirects to /treatment-types/ */}
+            <Route path="/treatment/dual-diagnosis" element={<Navigate to="/treatment-types/dual-diagnosis-treatment" replace />} />
+            <Route path="/treatment/dual-diagnosis/:stateSlug" element={<Navigate to="/treatment-types/dual-diagnosis-treatment" replace />} />
+            <Route path="/treatment/detox" element={<Navigate to="/treatment-types/detox-programs" replace />} />
+            <Route path="/treatment/detox/:stateSlug" element={<Navigate to="/treatment-types/detox-programs" replace />} />
+
             {/* International Placement Routes */}
             <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
             <Route path="/international/apply" element={<PublicRouteGuard><InternationalApplication /></PublicRouteGuard>} />
