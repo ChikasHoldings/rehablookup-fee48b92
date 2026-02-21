@@ -1,4 +1,5 @@
 import { forwardRef, SVGProps } from "react";
+import logoDarkBg from "@/assets/logo-dark-bg.png";
 import { Link } from "react-router-dom";
 import { Mail, MapPin, ChevronDown, ExternalLink } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -162,9 +163,9 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
             <div className="col-span-2 lg:col-span-4 space-y-4">
               <Link to="/" className="inline-block">
                 <img
-                  src="/logo.png"
+                  src={logoDarkBg}
                   alt="RehabLookup"
-                  className="h-8 w-auto brightness-0 invert"
+                  className="h-8 w-auto"
                   width={153}
                   height={32}
                   loading="lazy"
@@ -228,9 +229,9 @@ export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Fo
           <div className="py-6 text-center border-b border-primary-foreground/10">
             <Link to="/" className="inline-block mb-3">
               <img
-                src="/logo.png"
+                src={logoDarkBg}
                 alt="RehabLookup"
-                className="h-7 w-auto mx-auto brightness-0 invert"
+                className="h-7 w-auto mx-auto"
                 width={134}
                 height={28}
                 loading="lazy"

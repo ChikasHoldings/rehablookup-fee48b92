@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logoDarkBg from "@/assets/logo-dark-bg.png";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { 
@@ -161,9 +162,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         {/* Left - Logo */}
         <div className="flex items-center shrink-0">
           <img 
-            src="/logo.png" 
+            src={logoDarkBg} 
             alt="RehabLookup" 
-            className="h-6 sm:h-7 md:h-8 w-auto brightness-0 invert"
+            className="h-6 sm:h-7 md:h-8 w-auto"
           />
         </div>
 
