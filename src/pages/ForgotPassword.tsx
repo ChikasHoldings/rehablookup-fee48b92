@@ -1,4 +1,5 @@
 import { useState } from "react";
+import headerLogo from "@/assets/logo-header.png";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -103,7 +104,7 @@ export default function ForgotPassword() {
         <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
           <div className="container h-14 flex items-center">
             <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="RehabLookup" className="h-8 md:h-9 w-auto" />
+              <img src={headerLogo} alt="RehabLookup" className="h-8 md:h-9 w-auto" />
             </Link>
           </div>
         </header>
@@ -150,7 +151,7 @@ export default function ForgotPassword() {
       <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="container h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="RehabLookup" className="h-8 md:h-9 w-auto" />
+            <img src={headerLogo} alt="RehabLookup" className="h-8 md:h-9 w-auto" />
           </Link>
           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Back to Sign In
