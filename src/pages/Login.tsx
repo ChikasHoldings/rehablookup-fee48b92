@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import headerLogo from "@/assets/logo-header.png";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
@@ -531,7 +532,7 @@ export default function Login() {
       <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="container h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="RehabLookup" className="h-8 md:h-9 w-auto" />
+            <img src={headerLogo} alt="RehabLookup" className="h-8 md:h-9 w-auto" />
           </Link>
           <div className="text-sm text-muted-foreground">
             <span className="hidden sm:inline">Don't have an account?{" "}</span>
