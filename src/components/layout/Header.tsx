@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import headerLogo from "@/assets/logo-header.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
@@ -101,7 +102,7 @@ export function Header({
           {/* Logo - Left aligned */}
           <Link to="/" className="flex-shrink-0">
             <img 
-              src="/logo.png"
+              src={headerLogo}
               alt="RehabLookup" 
               className="h-8 w-auto"
               width={134}
