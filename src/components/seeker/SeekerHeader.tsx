@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import logoDarkBg from "@/assets/logo-dark-bg.png";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { 
@@ -172,9 +173,9 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
         <div className="flex items-center shrink-0">
           <Link to="/" className="flex items-center">
             <img 
-              src="/logo.png" 
+              src={logoDarkBg} 
               alt="RehabLookup" 
-              className="h-7 sm:h-8 md:h-9 w-auto brightness-0 invert"
+              className="h-7 sm:h-8 md:h-9 w-auto"
             />
           </Link>
         </div>

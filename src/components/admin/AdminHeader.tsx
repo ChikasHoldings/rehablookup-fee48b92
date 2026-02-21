@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useCallback, useRef, useMemo } from "react";
+import logoDarkBg from "@/assets/logo-dark-bg.png";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert, Mail, Phone, MapPin, Loader2, BarChart3, UserSearch, UserPlus, MessageSquare, ClipboardList } from "lucide-react";
 import {
@@ -422,9 +423,9 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
         <div className="flex items-center gap-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             <img 
-              src="/logo.png" 
+              src={logoDarkBg} 
               alt="RehabLookup" 
-              className="h-7 sm:h-8 w-auto brightness-0 invert"
+              className="h-7 sm:h-8 w-auto"
             />
             <span className="text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 px-2.5 py-1 rounded-md font-semibold uppercase tracking-wide shadow-sm">
               Admin
