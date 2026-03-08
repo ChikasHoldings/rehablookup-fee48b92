@@ -973,7 +973,7 @@ export default function ProviderSettingsPage() {
                       className="h-10 bg-muted/50"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Additional languages coming soon
+                      English (US) is currently supported
                     </p>
                   </div>
                 </div>
