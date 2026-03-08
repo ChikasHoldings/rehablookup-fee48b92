@@ -149,11 +149,11 @@ const socialLinks = [
   { Icon: LinkedInIcon, href: "https://linkedin.com/company/rehablookup", label: "LinkedIn" },
 ];
 
-export const Footer = forwardRef<HTMLElement, Record<string, never>>(function Footer(_props, ref) {
+export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer ref={ref} className="bg-primary text-primary-foreground">
+    <footer className="bg-primary text-primary-foreground">
       {/* Main Footer Content */}
       <div className="container px-4 md:px-6 lg:px-8">
         {/* Desktop Layout */}
