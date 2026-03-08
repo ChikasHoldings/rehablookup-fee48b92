@@ -182,7 +182,7 @@ export default function ProviderSignup() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/provider-dashboard");
+        navigate("/provider/dashboard");
       }
     });
   }, [navigate]);
@@ -309,7 +309,7 @@ export default function ProviderSignup() {
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/provider-dashboard`,
+          emailRedirectTo: `${window.location.origin}/provider/dashboard`,
         },
       });
 
@@ -398,7 +398,7 @@ export default function ProviderSignup() {
           title: "Partial Success",
           description: "Account created but there was an issue saving facility data. Please update in your dashboard.",
         });
-        navigate("/provider-dashboard");
+        navigate("/provider/dashboard");
         return;
       }
 
