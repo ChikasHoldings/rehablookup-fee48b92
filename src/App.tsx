@@ -4,11 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
-
-function LegacyCenterRedirect() {
-  const { slug } = useParams();
-  return <Navigate to={`/center/${slug}`} replace />;
-}
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
@@ -198,6 +193,11 @@ const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const MarketingLanding = lazy(() => import("./pages/MarketingLanding"));
+
+function LegacyCenterRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/center/${slug}`} replace />;
+}
 
 const App = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
