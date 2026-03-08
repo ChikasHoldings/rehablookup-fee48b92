@@ -398,7 +398,7 @@ export default function ProviderSignup() {
           title: "Partial Success",
           description: "Account created but there was an issue saving facility data. Please update in your dashboard.",
         });
-        navigate("/provider-dashboard");
+        navigate("/provider/dashboard");
         return;
       }
 
