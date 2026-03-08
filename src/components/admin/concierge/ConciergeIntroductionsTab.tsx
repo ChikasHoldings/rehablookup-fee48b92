@@ -328,7 +328,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                           {(intro.facility as any)?.city}, {(intro.facility as any)?.state}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Sent: {format(new Date(intro.sent_at), "MMM d, yyyy h:mm a")}
+                          Sent: {intro.sent_at ? format(new Date(intro.sent_at), "MMM d, yyyy h:mm a") : format(new Date(intro.created_at || Date.now()), "MMM d, yyyy h:mm a")}
                         </p>
                       </div>
                       <Badge variant={status.variant} className="flex items-center gap-1">
