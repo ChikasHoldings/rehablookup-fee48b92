@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
               user_email: email,
               user_phone: "",
               status: "pending_intake",
-              payment_status: "succeeded",
+              payment_status: "paid",
               payment_amount_cents: 2900,
               checkout_session_id: checkoutSessionId,
               stripe_payment_intent_id: paymentIntentId,
