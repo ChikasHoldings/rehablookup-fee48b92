@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate confirmation type
-    const validConfirmationTypes = ['admin_confirm', 'placement_confirm'];
+    const validConfirmationTypes = ['admin', 'admin_confirm', 'placement_confirm'];
     if (!validConfirmationTypes.includes(confirmationType)) {
       throw new Error("Invalid confirmation type");
     }

@@ -73,7 +73,10 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
       supabase
         .from("concierge_threads")
         .update({ admin_last_read_at: new Date().toISOString() })
-        .eq("id", selectedThread.id);
+        .eq("id", selectedThread.id)
+        .then(({ error }) => {
+          if (error) console.error("[MessagesTab] Mark-as-read error:", error.message);
+        });
     }
   }, [selectedThread?.id]);
 
