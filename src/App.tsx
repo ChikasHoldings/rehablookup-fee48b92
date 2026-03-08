@@ -194,6 +194,11 @@ const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const MarketingLanding = lazy(() => import("./pages/MarketingLanding"));
 
+function LegacyCenterRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/center/${slug}`} replace />;
+}
+
 const App = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
