@@ -229,7 +229,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
               <Badge variant={STATUS_CONFIG[caseData.status]?.variant || "secondary"}>
                 {STATUS_CONFIG[caseData.status]?.label || caseData.status}
               </Badge>
-              <Badge variant={caseData.payment_status === "paid" ? "default" : "outline"}>
+              <Badge variant={(caseData.payment_status === "paid" || caseData.payment_status === "succeeded") ? "default" : "outline"}>
                 ${(caseData.payment_amount_cents / 100).toFixed(0)} {caseData.payment_status}
               </Badge>
               {caseData.refund_type && <Badge variant="secondary">Fee {caseData.refund_type}</Badge>}
