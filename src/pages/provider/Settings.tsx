@@ -1118,19 +1118,6 @@ export default function ProviderSettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Two-Factor Authentication - Planned Feature */}
-            <Card className="border-border shadow-sm opacity-60">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                  Two-Factor Authentication
-                  <Badge variant="secondary" className="text-xs ml-2">Coming Soon</Badge>
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  Enhanced account security will be available in a future update
-                </CardDescription>
-              </CardHeader>
-            </Card>
 
             {/* Sessions */}
             <Card className="border-border shadow-sm">

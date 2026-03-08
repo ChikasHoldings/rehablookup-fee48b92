@@ -224,7 +224,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                     "text-[11px] font-medium",
                     showFeaturedBadge ? "text-amber-600" : "text-muted-foreground"
                   )}>
-                    Photo coming soon
+                    No photo available
                   </span>
                 </div>
               </div>
