@@ -18,7 +18,7 @@ import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
 import { StepContact } from "@/components/concierge/StepContact";
 import { StepEmailVerification } from "@/components/concierge/StepEmailVerification";
 import { StepReviewSubmit } from "@/components/concierge/StepReviewSubmit";
-import { IntakeProgress } from "@/components/international/IntakeProgress";
+import { IntakeProgress } from "@/components/concierge/IntakeProgress";
 
 export interface ConciergeIntakeData {
   // Step 1: Who needs help

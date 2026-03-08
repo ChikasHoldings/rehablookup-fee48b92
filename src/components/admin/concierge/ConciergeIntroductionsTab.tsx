@@ -28,6 +28,7 @@ interface ConciergeIntroductionsTabProps {
 const RESPONSE_STATUS = {
   pending: { label: "Pending", icon: Clock, variant: "secondary" as const },
   interested: { label: "Accepted", icon: CheckCircle, variant: "default" as const },
+  not_available: { label: "Declined", icon: XCircle, variant: "destructive" as const },
   declined: { label: "Declined", icon: XCircle, variant: "destructive" as const },
   no_response: { label: "No Response", icon: Clock, variant: "outline" as const },
 };
@@ -97,6 +98,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
           inquiry_id: caseData.id,
           facility_id: facilityId,
           sent_by: user?.id,
+          sent_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -326,7 +328,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                           {(intro.facility as any)?.city}, {(intro.facility as any)?.state}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Sent: {format(new Date(intro.sent_at), "MMM d, yyyy h:mm a")}
+                          Sent: {intro.sent_at ? format(new Date(intro.sent_at), "MMM d, yyyy h:mm a") : format(new Date(intro.created_at || Date.now()), "MMM d, yyyy h:mm a")}
                         </p>
                       </div>
                       <Badge variant={status.variant} className="flex items-center gap-1">
@@ -354,7 +356,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="interested">Accepted</SelectItem>
-                            <SelectItem value="declined">Declined</SelectItem>
+                            <SelectItem value="not_available">Declined</SelectItem>
                             <SelectItem value="no_response">No Response</SelectItem>
                           </SelectContent>
                         </Select>
