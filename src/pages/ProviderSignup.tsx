@@ -1135,75 +1135,93 @@ export default function ProviderSignup() {
 
             {/* Step 4: Branding */}
             {currentStep === 4 && (
-              <div key="step-4" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
-                <div className="space-y-5">
-                  {/* Logo Upload */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Facility Logo</Label>
-                    {formData.logoPreview ? (
-                      <div className="flex items-center gap-4">
+              <div key="step-4" className="animate-step-enter space-y-6">
+                {/* Section 1: Logo */}
+                <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">1</div>
+                    <div>
+                      <h3 className="text-base font-semibold text-foreground">Facility Logo</h3>
+                      <p className="text-sm text-muted-foreground">Your logo appears on search results and your profile card. Use a square image for best results.</p>
+                    </div>
+                  </div>
+                  {formData.logoPreview ? (
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={formData.logoPreview}
+                        alt="Logo preview"
+                        className="h-16 w-16 rounded-lg object-cover border"
+                      />
+                      <Button variant="outline" size="sm" onClick={removeLogo}>
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="border-2 border-dashed border-border rounded-lg p-6 text-center block cursor-pointer hover:border-primary/50 transition-colors">
+                      <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                      <span className="text-primary hover:underline text-sm font-medium">
+                        Upload logo
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoSelect}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        PNG, JPG, or WebP (max 5MB)
+                      </p>
+                    </label>
+                  )}
+                </div>
+
+                {/* Section 2: Gallery Photos */}
+                <div className="rounded-xl border-2 border-primary/20 bg-card p-6 shadow-sm">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">2</div>
+                    <div>
+                      <h3 className="text-base font-semibold text-foreground">Facility Photos ({formData.galleryPreviews.length}/5)</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Show families what your facility looks like. Upload photos of your building, rooms, common areas, or outdoor spaces. <span className="font-medium text-foreground">Listings with photos get 3× more inquiries.</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {formData.galleryPreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
                         <img
-                          src={formData.logoPreview}
-                          alt="Logo preview"
-                          className="h-16 w-16 rounded-lg object-cover border"
+                          src={preview}
+                          alt={`Gallery ${index + 1}`}
+                          className="aspect-video w-full rounded-lg object-cover border"
                         />
-                        <Button variant="outline" size="sm" onClick={removeLogo}>
-                          Remove
-                        </Button>
+                        <button
+                          onClick={() => removeGalleryImage(index)}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <CheckCircle className="h-3 w-3" />
+                        </button>
                       </div>
-                    ) : (
-                      <label className="border-2 border-dashed border-border rounded-lg p-6 text-center block cursor-pointer hover:border-primary/50 transition-colors">
-                        <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-primary hover:underline text-sm font-medium">
-                          Upload logo
-                        </span>
+                    ))}
+                    {formData.galleryPreviews.length < 5 && (
+                      <label className="border-2 border-dashed border-primary/30 rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                        <ImageIcon className="h-6 w-6 text-primary/60 mb-1" />
+                        <span className="text-xs font-medium text-primary/80">Add facility photo</span>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={handleLogoSelect}
+                          multiple
+                          onChange={handleGallerySelect}
                           className="hidden"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          PNG, JPG, or WebP (max 5MB)
-                        </p>
                       </label>
                     )}
                   </div>
-
-                  {/* Gallery Upload */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Gallery Images ({formData.galleryPreviews.length}/5)</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {formData.galleryPreviews.map((preview, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={preview}
-                            alt={`Gallery ${index + 1}`}
-                            className="aspect-video w-full rounded-lg object-cover border"
-                          />
-                          <button
-                            onClick={() => removeGalleryImage(index)}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <CheckCircle className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                      {formData.galleryPreviews.length < 5 && (
-                        <label className="border-2 border-dashed border-border rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
-                          <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
-                          <span className="text-xs text-muted-foreground">Add image</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleGallerySelect}
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-                    </div>
-                  </div>
+                  {formData.galleryPreviews.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-3 flex items-center gap-1">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Tip: Adding at least one facility photo is highly recommended
+                    </p>
+                  )}
                 </div>
               </div>
             )}
