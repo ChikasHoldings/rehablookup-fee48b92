@@ -222,12 +222,12 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (existingInquiry) {
-          // Update payment status if not already succeeded
-          if (existingInquiry.payment_status !== "succeeded") {
+          // Update payment status if not already paid
+          if (existingInquiry.payment_status !== "paid" && existingInquiry.payment_status !== "succeeded") {
             await supabaseAdmin
               .from("concierge_inquiries")
               .update({
-                payment_status: "succeeded",
+                payment_status: "paid",
                 stripe_payment_intent_id: paymentIntentId,
                 stripe_customer_id: session.customer as string,
                 updated_at: new Date().toISOString(),
