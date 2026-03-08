@@ -117,7 +117,7 @@ export default function SeekerConcierge() {
           seeker_feedback, user_name
         `)
         .eq("user_id", user.id)
-        .eq("payment_status", "paid")
+        .in("payment_status", ["paid", "succeeded"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;

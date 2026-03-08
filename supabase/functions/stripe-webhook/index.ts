@@ -222,12 +222,12 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (existingInquiry) {
-          // Update payment status if not already succeeded
-          if (existingInquiry.payment_status !== "succeeded") {
+          // Update payment status if not already paid
+          if (existingInquiry.payment_status !== "paid" && existingInquiry.payment_status !== "succeeded") {
             await supabaseAdmin
               .from("concierge_inquiries")
               .update({
-                payment_status: "succeeded",
+                payment_status: "paid",
                 stripe_payment_intent_id: paymentIntentId,
                 stripe_customer_id: session.customer as string,
                 updated_at: new Date().toISOString(),
@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
               user_email: email,
               user_phone: "",
               status: "pending_intake",
-              payment_status: "succeeded",
+              payment_status: "paid",
               payment_amount_cents: 2900,
               checkout_session_id: checkoutSessionId,
               stripe_payment_intent_id: paymentIntentId,
@@ -451,6 +451,36 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ received: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+    }
+
+    // ==========================================
+    // Handle customer.subscription.updated
+    // Keeps current_period_end and status in sync on renewals/changes
+    // ==========================================
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
+
+      const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      const mappedStatus = subscription.status === "active" ? "active" 
+        : subscription.status === "past_due" ? "past_due"
+        : subscription.status === "canceled" ? "canceled"
+        : subscription.status;
+
+      const { error: updateError } = await supabaseAdmin
+        .from("pro_subscriptions")
+        .update({
+          status: mappedStatus,
+          current_period_end: currentPeriodEnd,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("stripe_subscription_id", subscription.id);
+
+      if (updateError) {
+        logStep("Error updating subscription", { error: updateError.message });
+      } else {
+        logStep("Subscription updated successfully", { status: mappedStatus, currentPeriodEnd });
       }
     }
 

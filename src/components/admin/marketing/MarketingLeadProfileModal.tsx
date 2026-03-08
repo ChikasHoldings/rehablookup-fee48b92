@@ -813,7 +813,7 @@ export function MarketingLeadProfileModal({
                             </div>
                             <Badge variant="outline" className={cn(
                               "text-xs",
-                              inquiry.payment_status === "paid" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+                              (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded") ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
                             )}>
                               {inquiry.status}
                             </Badge>
