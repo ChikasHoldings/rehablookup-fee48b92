@@ -109,7 +109,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           </div>
           <span className={cn(
             "text-[10px] font-medium transition-colors",
-            isMoreActive ? "text-white font-semibold" : "text-slate-400"
+            isMoreActive ? "text-primary font-semibold" : "text-muted-foreground"
           )}>
             More
           </span>
