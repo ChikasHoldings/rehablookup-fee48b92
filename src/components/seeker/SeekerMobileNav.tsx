@@ -58,7 +58,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
   ];
 
   return (
-    <nav {...props} className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 backdrop-blur-lg border-t border-slate-800 safe-area-bottom shadow-2xl">
+    <nav {...props} className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card backdrop-blur-lg border-t border-border safe-area-bottom shadow-2xl">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const isActive = item.href === "/account" 
@@ -74,8 +74,8 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
                 isActive 
-                  ? "text-white" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "text-primary" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
@@ -86,7 +86,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               </div>
               <span className={cn(
                 "text-[10px] font-medium transition-colors",
-                isActive ? "text-white font-semibold" : "text-slate-400"
+                isActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 {item.label}
               </span>
@@ -101,8 +101,8 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
                 isMoreActive 
-                  ? "text-white" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "text-primary" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
@@ -113,7 +113,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               </div>
               <span className={cn(
                 "text-[10px] font-medium transition-colors",
-                isMoreActive ? "text-white font-semibold" : "text-slate-400"
+                isMoreActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 More
               </span>
