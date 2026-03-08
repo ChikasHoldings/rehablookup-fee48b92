@@ -321,7 +321,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                       <Building2 className="h-3.5 w-3.5 mr-1" /> Confirm Admission
                     </Button>
                   )}
-                  {caseData.payment_status === "paid" && !caseData.refund_type && (
+                  {(caseData.payment_status === "paid" || caseData.payment_status === "succeeded") && !caseData.refund_type && (
                     <Button size="sm" variant="outline" onClick={() => setActionDialog("refund")}>
                       <CreditCard className="h-3.5 w-3.5 mr-1" /> Refund/Credit $299
                     </Button>
