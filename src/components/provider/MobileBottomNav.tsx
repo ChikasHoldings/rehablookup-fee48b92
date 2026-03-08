@@ -35,11 +35,15 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   const totalPlacementCount = pendingDomesticCount + pendingInternationalCount;
 
   const isMoreActive = [
-    "/provider/listings",
     "/provider/billing", 
     "/provider/settings", 
     "/provider/reviews",
-    "/provider/embed-badge"
+    "/provider/analytics",
+    "/provider/embed-badge",
+    "/provider/help",
+    "/provider/knowledge-base",
+    "/provider/notifications",
+    "/provider/credits",
   ].some(path => location.pathname.startsWith(path));
 
   return (
