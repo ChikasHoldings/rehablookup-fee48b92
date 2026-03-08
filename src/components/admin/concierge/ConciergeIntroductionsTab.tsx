@@ -356,7 +356,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="interested">Accepted</SelectItem>
-                            <SelectItem value="declined">Declined</SelectItem>
+                            <SelectItem value="not_available">Declined</SelectItem>
                             <SelectItem value="no_response">No Response</SelectItem>
                           </SelectContent>
                         </Select>

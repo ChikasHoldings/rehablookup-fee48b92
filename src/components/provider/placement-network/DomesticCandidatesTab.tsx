@@ -316,10 +316,10 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Badge
-                        variant={intro.provider_response === "accepted" ? "default" : "secondary"}
+                        variant={intro.provider_response === "interested" ? "default" : "secondary"}
                         className="capitalize"
                       >
-                        {intro.provider_response === "accepted" ? (
+                        {intro.provider_response === "interested" ? (
                           <>
                             <CheckCircle className="h-3 w-3 mr-1" /> Accepted
                           </>
