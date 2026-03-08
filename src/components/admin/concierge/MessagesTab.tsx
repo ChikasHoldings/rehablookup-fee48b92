@@ -100,8 +100,14 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
       const fileName = `${user.id}/${caseData.id}/${Date.now()}.${fileExt}`;
       const { error } = await supabase.storage.from("concierge-attachments").upload(fileName, attachment);
       if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("concierge-attachments").getPublicUrl(fileName);
-      return { url: publicUrl, name: attachment.name };
+      // Use signed URL since concierge-attachments bucket is private
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from("concierge-attachments")
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year expiry
+      if (signedError || !signedData?.signedUrl) {
+        throw new Error("Failed to generate signed URL");
+      }
+      return { url: signedData.signedUrl, name: attachment.name };
     } catch (error) {
       console.error("Upload error:", error);
       return null;
