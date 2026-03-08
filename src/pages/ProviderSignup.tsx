@@ -182,7 +182,7 @@ export default function ProviderSignup() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/provider-dashboard");
+        navigate("/provider/dashboard");
       }
     });
   }, [navigate]);
