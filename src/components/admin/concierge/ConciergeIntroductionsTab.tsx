@@ -98,6 +98,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
           inquiry_id: caseData.id,
           facility_id: facilityId,
           sent_by: user?.id,
+          sent_at: new Date().toISOString(),
         })
         .select()
         .single();
