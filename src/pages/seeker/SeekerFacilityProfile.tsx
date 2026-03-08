@@ -139,7 +139,7 @@ function ReviewsSection({ facilityId, facilityName }: { facilityId: string; faci
 }
 
 export default function SeekerFacilityProfile() {
-  const { slug } = useParams<{ slug: string }>();
+  const { facilityId: slug } = useParams<{ facilityId: string }>();
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
   const [logoError, setLogoError] = useState(false);
