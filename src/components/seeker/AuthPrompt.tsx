@@ -17,7 +17,8 @@ export function AuthPrompt({
   returnTo
 }: AuthPromptProps) {
   const IconComponent = icon === "heart" ? Heart : icon === "star" ? Star : icon === "send" ? Send : Lock;
-  const authUrl = returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login";
+  const loginUrl = returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login";
+  const signupUrl = returnTo ? `/signup?returnTo=${encodeURIComponent(returnTo)}` : "/signup";
 
   return (
     <div className="flex items-center justify-center min-h-[60vh] p-4">
