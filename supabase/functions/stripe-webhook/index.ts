@@ -455,6 +455,36 @@ Deno.serve(async (req) => {
     }
 
     // ==========================================
+    // Handle customer.subscription.updated
+    // Keeps current_period_end and status in sync on renewals/changes
+    // ==========================================
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
+
+      const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      const mappedStatus = subscription.status === "active" ? "active" 
+        : subscription.status === "past_due" ? "past_due"
+        : subscription.status === "canceled" ? "canceled"
+        : subscription.status;
+
+      const { error: updateError } = await supabaseAdmin
+        .from("pro_subscriptions")
+        .update({
+          status: mappedStatus,
+          current_period_end: currentPeriodEnd,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("stripe_subscription_id", subscription.id);
+
+      if (updateError) {
+        logStep("Error updating subscription", { error: updateError.message });
+      } else {
+        logStep("Subscription updated successfully", { status: mappedStatus, currentPeriodEnd });
+      }
+    }
+
+    // ==========================================
     // Handle invoice.payment_failed
     // ==========================================
     if (event.type === "invoice.payment_failed") {
