@@ -337,53 +337,65 @@ Deno.serve(async (req) => {
         if (amountCents > 0 && userId && facilityId) {
           logStep("Processing credit purchase", { amountCents, facilityId, userId });
 
-          // Get current credit balance
-          const { data: existingCredits } = await supabaseAdmin
-            .from("provider_credits")
-            .select("balance_cents")
-            .eq("provider_id", userId)
+          // Idempotency check: prevent double-crediting from duplicate webhooks
+          const { data: existingTx } = await supabaseAdmin
+            .from("credit_transactions")
+            .select("id")
+            .eq("reference_id", session.id)
+            .eq("transaction_type", "purchase")
             .maybeSingle();
 
-          const currentBalance = existingCredits?.balance_cents ?? 0;
-          const newBalance = currentBalance + amountCents;
-
-          // Upsert credit balance
-          const { error: creditError } = await supabaseAdmin
-            .from("provider_credits")
-            .upsert({
-              provider_id: userId,
-              facility_id: facilityId,
-              balance_cents: newBalance,
-              updated_at: new Date().toISOString(),
-            }, { onConflict: "provider_id" });
-
-          if (creditError) {
-            logStep("Error updating credits", { error: creditError.message });
+          if (existingTx) {
+            logStep("Credit purchase already processed (duplicate webhook), skipping", { sessionId: session.id, existingTxId: existingTx.id });
           } else {
-            logStep("Credits added successfully", { previousBalance: currentBalance, newBalance });
+            // Get current credit balance
+            const { data: existingCredits } = await supabaseAdmin
+              .from("provider_credits")
+              .select("balance_cents")
+              .eq("provider_id", userId)
+              .maybeSingle();
 
-            // Log the credit transaction
-            await supabaseAdmin.from("credit_transactions").insert({
-              provider_id: userId,
-              facility_id: facilityId,
-              amount_cents: amountCents,
-              transaction_type: "purchase",
-              reference_id: session.id,
-              description: `Purchased $${(amountCents / 100).toFixed(2)} in credits`,
-              stripe_payment_intent_id: session.payment_intent as string,
-            });
+            const currentBalance = existingCredits?.balance_cents ?? 0;
+            const newBalance = currentBalance + amountCents;
 
-            // Create provider notification
-            await supabaseAdmin.from("provider_notifications").insert({
-              user_id: userId,
-              facility_id: facilityId,
-              type: "credits_added",
-              title: "Credits Added",
-              message: `$${(amountCents / 100).toFixed(2)} credits have been added to your account.`,
-              metadata: { amount_cents: amountCents, new_balance: newBalance },
-            });
+            // Upsert credit balance
+            const { error: creditError } = await supabaseAdmin
+              .from("provider_credits")
+              .upsert({
+                provider_id: userId,
+                facility_id: facilityId,
+                balance_cents: newBalance,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: "provider_id" });
 
-            logStep("Credit purchase fully processed");
+            if (creditError) {
+              logStep("Error updating credits", { error: creditError.message });
+            } else {
+              logStep("Credits added successfully", { previousBalance: currentBalance, newBalance });
+
+              // Log the credit transaction
+              await supabaseAdmin.from("credit_transactions").insert({
+                provider_id: userId,
+                facility_id: facilityId,
+                amount_cents: amountCents,
+                transaction_type: "purchase",
+                reference_id: session.id,
+                description: `Purchased $${(amountCents / 100).toFixed(2)} in credits`,
+                stripe_payment_intent_id: session.payment_intent as string,
+              });
+
+              // Create provider notification
+              await supabaseAdmin.from("provider_notifications").insert({
+                user_id: userId,
+                facility_id: facilityId,
+                type: "credits_added",
+                title: "Credits Added",
+                message: `$${(amountCents / 100).toFixed(2)} credits have been added to your account.`,
+                metadata: { amount_cents: amountCents, new_balance: newBalance },
+              });
+
+              logStep("Credit purchase fully processed");
+            }
           }
         }
         
