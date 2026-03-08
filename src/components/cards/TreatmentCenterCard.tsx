@@ -359,7 +359,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
                 "text-xs font-medium",
                 showFeaturedBadge ? "text-amber-500/80" : "text-muted-foreground/50"
               )}>
-                Photo coming soon
+                No photo available
               </span>
             </div>
           </div>
