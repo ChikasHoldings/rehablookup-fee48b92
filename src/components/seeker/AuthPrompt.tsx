@@ -33,13 +33,13 @@ export function AuthPrompt({
         <CardContent className="space-y-4 pt-4">
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="gap-2">
-              <Link to={authUrl}>
+              <Link to={loginUrl}>
                 <LogIn className="h-4 w-4" />
                 Sign In
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2">
-              <Link to={authUrl}>
+              <Link to={signupUrl}>
                 <UserPlus className="h-4 w-4" />
                 Create Account
               </Link>
