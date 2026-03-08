@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, Suspense } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell, Headphones } from "lucide-react";
+import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell, Headphones, UserSearch, UserPlus, MessageSquare, FileText, Megaphone, ShieldAlert } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
@@ -20,16 +20,20 @@ import { scrollContainerToTop } from "@/hooks/useScrollToTop";
 
 const mobileNavItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
-  { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
-  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
-  { to: "/admin/featured", icon: Star, label: "Featured", permission: "featured" },
+  { to: "/admin/seekers", icon: UserSearch, label: "Users", permission: "seekers" },
+  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
+  { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements" },
   { to: "/admin/support", icon: Headphones, label: "Support", permission: "support" },
+  { to: "/admin/marketing", icon: Megaphone, label: "Marketing", permission: "leads" },
+  { to: "/admin/blog", icon: FileText, label: "Blog", permission: "dashboard" },
+  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
+  { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
+  { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", permission: "reviews" },
+  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "dashboard" },
   { to: "/admin/notifications", icon: Bell, label: "Notifications", permission: "notifications" },
-  { to: "/admin/users", icon: Users, label: "User Mgmt", permission: "users" },
+  { to: "/admin/users", icon: ShieldAlert, label: "Admin Staff", permission: "users" },
   { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
-  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
 ];
 
 function AccessDenied() {

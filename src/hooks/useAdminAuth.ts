@@ -68,6 +68,10 @@ const routePermissionMap: Record<string, string> = {
   "/admin/placement-revenue": "placements",
   "/admin/credentials": "credentials",
   "/admin/security-logs": "security_logs",
+  "/admin/support": "support",
+  "/admin/marketing": "leads",
+  "/admin/blog": "dashboard",
+  "/admin/international": "placements",
 };
 
 // Admin role type matching database enum
