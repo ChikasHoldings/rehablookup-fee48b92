@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Version tracking for deployment verification - update on each deployment
-const VERSION = "v2.3.1";
+const VERSION = "v2.4.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -149,22 +149,22 @@ const STATIC_ROUTES: RouteEntry[] = [
   
   // ==================== INTERNATIONAL SEO PAGES ====================
   { path: "/us-rehab", priority: 0.8, changefreq: "weekly" },
-  { path: "/us-rehab/california", priority: 0.8, changefreq: "weekly" },
-  { path: "/us-rehab/florida", priority: 0.8, changefreq: "weekly" },
-  { path: "/us-rehab/arizona", priority: 0.8, changefreq: "weekly" },
-  { path: "/us-rehab/malibu", priority: 0.75, changefreq: "weekly" },
-  { path: "/us-rehab/from-uk", priority: 0.8, changefreq: "weekly" },
-  { path: "/us-rehab/from-uae", priority: 0.75, changefreq: "weekly" },
-  { path: "/us-rehab/from-australia", priority: 0.75, changefreq: "weekly" },
-  { path: "/us-rehab/alcohol", priority: 0.8, changefreq: "weekly" },
-  { path: "/us-rehab/drug", priority: 0.8, changefreq: "weekly" },
-  { path: "/us-rehab/dual-diagnosis", priority: 0.75, changefreq: "weekly" },
-  { path: "/us-rehab/celebrity", priority: 0.7, changefreq: "weekly" },
-  { path: "/us-rehab/executives", priority: 0.7, changefreq: "weekly" },
-  { path: "/us-rehab/luxury", priority: 0.75, changefreq: "weekly" },
-  { path: "/us-rehab/private", priority: 0.7, changefreq: "weekly" },
-  { path: "/us-rehab/cost", priority: 0.75, changefreq: "weekly" },
-  { path: "/us-rehab/insurance", priority: 0.75, changefreq: "weekly" },
+  { path: "/us-rehab/best-rehab-usa", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/luxury-rehab-america", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/luxury-rehab-california", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/luxury-rehab-florida", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/luxury-rehab-arizona", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/malibu-rehab", priority: 0.75, changefreq: "weekly" },
+  { path: "/us-rehab/executive-rehab", priority: 0.75, changefreq: "weekly" },
+  { path: "/us-rehab/private-rehab-america", priority: 0.75, changefreq: "weekly" },
+  { path: "/us-rehab/international-patients", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/celebrity-rehab-usa", priority: 0.7, changefreq: "weekly" },
+  { path: "/us-rehab/uk-patients", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/uae-middle-east", priority: 0.75, changefreq: "weekly" },
+  { path: "/us-rehab/australian-patients", priority: 0.75, changefreq: "weekly" },
+  { path: "/us-rehab/alcohol-rehab-usa", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/drug-rehab-usa", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/dual-diagnosis-usa", priority: 0.75, changefreq: "weekly" },
   
   // ==================== RESOURCE ARTICLES ====================
   { path: "/resources/signs-of-addiction", priority: 0.8, changefreq: "monthly" },

@@ -1,5 +1,6 @@
-import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { 
   InternationalHero,
   CountriesServed,
@@ -34,25 +35,21 @@ const USRehabHub = () => {
 
   return (
     <Layout>
-      <Helmet>
-        <title>US Rehab for International Patients | Best Addiction Treatment in America | RehabLookup</title>
-        <meta 
-          name="description" 
-          content="Find world-class addiction treatment in the United States. Luxury rehab centers, executive programs, and confidential care for international patients. 200+ vetted facilities. 24-hour placement assistance." 
-        />
-        <meta 
-          name="keywords" 
-          content="rehab in USA, American rehab for foreigners, luxury rehab California, best rehab USA, US addiction treatment international, private rehab America, treatment centers USA" 
-        />
-        <link rel="canonical" href="https://rehablookup.com/us-rehab" />
-        <meta property="og:title" content="US Rehab for International Patients | Best Addiction Treatment in America" />
-        <meta property="og:description" content="Find world-class addiction treatment in the United States. Luxury rehab centers, executive programs, and confidential care for international patients." />
-        <meta property="og:url" content="https://rehablookup.com/us-rehab" />
-        <meta property="og:type" content="website" />
-        <script type="application/ld+json">
-          {JSON.stringify(schemaData)}
-        </script>
-      </Helmet>
+      <SEO
+        title="US Rehab for International Patients | Best Addiction Treatment in America"
+        description="Find world-class addiction treatment in the United States. Luxury rehab centers, executive programs, and confidential care for international patients. 200+ vetted facilities."
+        canonical="/us-rehab"
+        keywords={["rehab in USA", "American rehab for foreigners", "luxury rehab California", "best rehab USA", "US addiction treatment international", "private rehab America", "treatment centers USA"]}
+        structuredData={schemaData}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "US Rehab", url: "/us-rehab" },
+        ]}
+      />
+
+      <div className="container mx-auto px-4 pt-4">
+        <BreadcrumbNav items={[{ label: "US Rehab" }]} />
+      </div>
 
       <InternationalHero
         title="Find Addiction Treatment in the United States"
@@ -62,15 +59,10 @@ const USRehabHub = () => {
       />
 
       <WhyUSATreatment />
-
       <StateDestinations />
-
       <TreatmentCategories />
-
       <CountriesServed />
-
       <InternationalFAQ schemaId="us-rehab-faq" />
-
       <PlacementCTA />
     </Layout>
   );
