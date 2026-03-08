@@ -5349,6 +5349,54 @@ export type Database = {
         }
         Relationships: []
       }
+      public_facility_staff: {
+        Row: {
+          bio: string | null
+          display_order: number | null
+          facility_id: string | null
+          id: string | null
+          is_visible: boolean | null
+          job_title: string | null
+          name: string | null
+          photo_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          display_order?: number | null
+          facility_id?: string | null
+          id?: string | null
+          is_visible?: boolean | null
+          job_title?: string | null
+          name?: string | null
+          photo_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          display_order?: number | null
+          facility_id?: string | null
+          id?: string | null
+          is_visible?: boolean | null
+          job_title?: string | null
+          name?: string | null
+          photo_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_staff_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_staff_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_access_lead: {
