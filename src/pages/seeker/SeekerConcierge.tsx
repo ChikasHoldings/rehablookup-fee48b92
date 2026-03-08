@@ -357,7 +357,6 @@ export default function SeekerConcierge() {
         <>
           <Helmet>
             <title>Placement Network | RehabLookup</title>
-            <meta name="description" content="Get personalized treatment center matching with our placement service." />
             <meta name="description" content="Get personalized treatment center placement with our professional placement service." />
             <meta name="robots" content="noindex, nofollow" />
           </Helmet>
