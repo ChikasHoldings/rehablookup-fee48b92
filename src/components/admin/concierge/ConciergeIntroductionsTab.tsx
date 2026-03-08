@@ -28,6 +28,7 @@ interface ConciergeIntroductionsTabProps {
 const RESPONSE_STATUS = {
   pending: { label: "Pending", icon: Clock, variant: "secondary" as const },
   interested: { label: "Accepted", icon: CheckCircle, variant: "default" as const },
+  not_available: { label: "Declined", icon: XCircle, variant: "destructive" as const },
   declined: { label: "Declined", icon: XCircle, variant: "destructive" as const },
   no_response: { label: "No Response", icon: Clock, variant: "outline" as const },
 };
