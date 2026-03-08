@@ -101,8 +101,8 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
                 isMoreActive 
-                  ? "text-white" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "text-primary" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
