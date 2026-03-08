@@ -346,7 +346,7 @@ const App = () => {
             <Route path="/treatment-centers/:slug" element={<PublicRouteGuard><TreatmentCenterProfile /></PublicRouteGuard>} />
             
             {/* Legacy center URLs redirect */}
-            <Route path="/centers/:slug" element={<Navigate to="/center/:slug" replace />} />
+            <Route path="/centers/:slug" element={<LegacyCenterRedirect />} />
             
             {/* Ad Landing Pages */}
             <Route path="/ads/:slug" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />

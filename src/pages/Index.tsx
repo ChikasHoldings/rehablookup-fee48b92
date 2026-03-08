@@ -236,7 +236,7 @@ const Index = () => {
   return (
     <Layout>
       <SEO
-        title="Find Drug & Alcohol Rehab Centers Near You | RehabLookup"
+        title="Find Drug & Alcohol Rehab Centers Near You"
         description="Search 15,000+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
         canonical="/"
         keywords={[
