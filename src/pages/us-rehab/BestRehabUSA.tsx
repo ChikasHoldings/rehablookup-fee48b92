@@ -1,5 +1,6 @@
-import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { 
   InternationalHero,
   CountriesServed,
@@ -51,24 +52,25 @@ const BestRehabUSA = () => {
 
   return (
     <Layout>
-      <Helmet>
-        <title>Best Rehab in USA | Top-Rated Addiction Treatment Centers America | RehabLookup</title>
-        <meta 
-          name="description" 
-          content="Find the best rehab centers in the USA. Top-rated addiction treatment facilities with proven outcomes, world-class staff, and luxury amenities. Expert placement for international patients." 
-        />
-        <meta 
-          name="keywords" 
-          content="best rehab in USA, top rehab centers America, best addiction treatment USA, highest rated rehab USA, best drug rehab America, best alcohol rehab USA" 
-        />
-        <link rel="canonical" href="https://rehablookup.com/us-rehab/best-rehab-usa" />
-        <meta property="og:title" content="Best Rehab in USA | Top-Rated Addiction Treatment Centers" />
-        <meta property="og:description" content="Find the best rehab centers in the USA. Top-rated addiction treatment facilities with proven outcomes and luxury amenities." />
-        <meta property="og:url" content="https://rehablookup.com/us-rehab/best-rehab-usa" />
-        <script type="application/ld+json">
-          {JSON.stringify(schemaData)}
-        </script>
-      </Helmet>
+      <SEO
+        title="Best Rehab in USA | Top-Rated Addiction Treatment Centers America"
+        description="Find the best rehab centers in the USA. Top-rated addiction treatment facilities with proven outcomes, world-class staff, and luxury amenities. Expert placement for international patients."
+        canonical="/us-rehab/best-rehab-usa"
+        keywords={["best rehab in USA", "top rehab centers America", "best addiction treatment USA", "highest rated rehab USA", "best drug rehab America", "best alcohol rehab USA"]}
+        structuredData={schemaData}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "US Rehab", url: "/us-rehab" },
+          { name: "Best Rehab USA", url: "/us-rehab/best-rehab-usa" },
+        ]}
+      />
+
+      <div className="container mx-auto px-4 pt-4">
+        <BreadcrumbNav items={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Best Rehab USA" },
+        ]} />
+      </div>
 
       <InternationalHero
         title="Best Rehab Centers in the USA"
