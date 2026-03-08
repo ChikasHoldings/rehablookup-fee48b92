@@ -35,15 +35,19 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   const totalPlacementCount = pendingDomesticCount + pendingInternationalCount;
 
   const isMoreActive = [
-    "/provider/listings",
     "/provider/billing", 
     "/provider/settings", 
     "/provider/reviews",
-    "/provider/embed-badge"
+    "/provider/analytics",
+    "/provider/embed-badge",
+    "/provider/help",
+    "/provider/knowledge-base",
+    "/provider/notifications",
+    "/provider/credits",
   ].some(path => location.pathname.startsWith(path));
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 backdrop-blur-lg border-t border-slate-800 safe-area-bottom shadow-2xl">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card backdrop-blur-lg border-t border-border safe-area-bottom shadow-2xl">
       <div className="flex items-center justify-around h-16 px-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
@@ -60,8 +64,8 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-xl min-w-[56px] transition-all duration-200 active:scale-95",
                 isActive 
-                  ? "text-white" 
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "text-primary" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className="relative">
@@ -79,7 +83,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               </div>
               <span className={cn(
                 "text-[10px] font-medium transition-colors",
-                isActive ? "text-white font-semibold" : "text-slate-400"
+                isActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 {item.label}
               </span>
@@ -93,8 +97,8 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           className={cn(
             "flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-xl min-w-[56px] transition-all duration-200 active:scale-95",
             isMoreActive 
-              ? "text-white" 
-              : "text-slate-400 hover:text-slate-200"
+              ? "text-primary" 
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           <div className={cn(
@@ -105,7 +109,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           </div>
           <span className={cn(
             "text-[10px] font-medium transition-colors",
-            isMoreActive ? "text-white font-semibold" : "text-slate-400"
+            isMoreActive ? "text-primary font-semibold" : "text-muted-foreground"
           )}>
             More
           </span>
