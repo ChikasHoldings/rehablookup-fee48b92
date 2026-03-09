@@ -259,6 +259,39 @@ const AppInner = () => {
     return () => window.removeEventListener("unhandledrejection", handleRejection);
   }, []);
 
+  // Dev-only: filter noisy ref-injection warnings so real provider errors stand out.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    const originalError = console.error;
+    console.error = (...args: any[]) => {
+      const first = args[0];
+      if (
+        typeof first === "string" &&
+        first.includes("Function components cannot be given refs")
+      ) {
+        return;
+      }
+      originalError(...args);
+    };
+
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
+
+  return (
+
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error("Unhandled rejection:", event.reason);
+      // Prevent default browser error handling which can crash/blank the app
+      event.preventDefault();
+    };
+
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => window.removeEventListener("unhandledrejection", handleRejection);
+  }, []);
+
   return (
     <GlobalErrorBoundary>
       <HelmetProvider>
