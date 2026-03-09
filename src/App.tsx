@@ -234,13 +234,17 @@ const SafeTooltipProvider = React.forwardRef<HTMLDivElement, TooltipProviderProp
 SafeTooltipProvider.displayName = "SafeTooltipProvider";
 
 
-const SafeBrowserRouter = React.forwardRef<
-  unknown,
-  React.ComponentProps<typeof BrowserRouter>
->(({ children, ...props }, _ref) => {
-  return <BrowserRouter {...props}>{children}</BrowserRouter>;
-});
+const SafeBrowserRouter = React.forwardRef<HTMLDivElement, BrowserRouterProps>(
+  ({ children, ...props }, ref) => {
+    return (
+      <div ref={ref} className="contents" data-ref-sink="browser-router">
+        <BrowserRouter {...props}>{children}</BrowserRouter>
+      </div>
+    );
+  }
+);
 SafeBrowserRouter.displayName = "SafeBrowserRouter";
+
 
 const App = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
