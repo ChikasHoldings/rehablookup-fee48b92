@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -199,6 +199,32 @@ function LegacyCenterRedirect() {
   return <Navigate to={`/center/${slug}`} replace />;
 }
 
+// Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
+// so we don't get noisy "Function components cannot be given refs" warnings.
+const SafeQueryClientProvider = React.forwardRef<
+  unknown,
+  React.ComponentProps<typeof QueryClientProvider>
+>(({ children, ...props }, _ref) => {
+  return <QueryClientProvider {...props}>{children}</QueryClientProvider>;
+});
+SafeQueryClientProvider.displayName = "SafeQueryClientProvider";
+
+const SafeTooltipProvider = React.forwardRef<
+  unknown,
+  React.ComponentProps<typeof TooltipProvider>
+>(({ children, ...props }, _ref) => {
+  return <TooltipProvider {...props}>{children}</TooltipProvider>;
+});
+SafeTooltipProvider.displayName = "SafeTooltipProvider";
+
+const SafeBrowserRouter = React.forwardRef<
+  unknown,
+  React.ComponentProps<typeof BrowserRouter>
+>(({ children, ...props }, _ref) => {
+  return <BrowserRouter {...props}>{children}</BrowserRouter>;
+});
+SafeBrowserRouter.displayName = "SafeBrowserRouter";
+
 const App = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
@@ -214,14 +240,14 @@ const App = () => {
 
   return (
     <GlobalErrorBoundary>
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-         <NavigationProvider>
-        <ScrollToTop />
+      <HelmetProvider>
+        <SafeQueryClientProvider client={queryClient}>
+          <SafeTooltipProvider>
+            <Toaster />
+            <Sonner />
+            <SafeBrowserRouter>
+              <NavigationProvider>
+                <ScrollToTop />
         <TrailingSlashRedirect />
         <CookieConsentBanner />
         <Suspense fallback={null}>
@@ -486,12 +512,12 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-         </NavigationProvider>
-      </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
-  </GlobalErrorBoundary>
+              </NavigationProvider>
+            </SafeBrowserRouter>
+          </SafeTooltipProvider>
+        </SafeQueryClientProvider>
+      </HelmetProvider>
+    </GlobalErrorBoundary>
   );
 };
 
