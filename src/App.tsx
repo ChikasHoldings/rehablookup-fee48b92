@@ -512,12 +512,12 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-         </NavigationProvider>
-      </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
-  </GlobalErrorBoundary>
+              </NavigationProvider>
+            </SafeBrowserRouter>
+          </SafeTooltipProvider>
+        </SafeQueryClientProvider>
+      </HelmetProvider>
+    </GlobalErrorBoundary>
   );
 };
 
