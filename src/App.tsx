@@ -246,7 +246,7 @@ const SafeBrowserRouter = React.forwardRef<HTMLDivElement, BrowserRouterProps>(
 SafeBrowserRouter.displayName = "SafeBrowserRouter";
 
 
-const App = () => {
+const AppInner = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
