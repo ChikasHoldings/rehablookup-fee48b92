@@ -201,13 +201,26 @@ function LegacyCenterRedirect() {
 
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
 // so we don't get noisy "Function components cannot be given refs" warnings.
-const SafeQueryClientProvider = React.forwardRef<
-  unknown,
-  React.ComponentProps<typeof QueryClientProvider>
->(({ children, ...props }, _ref) => {
-  return <QueryClientProvider {...props}>{children}</QueryClientProvider>;
-});
+//
+// Some instrumentation attaches refs to the *top-level element returned* by a component.
+// If that element is a function component (e.g. QueryClientProvider), React warns.
+// We therefore return a ref-friendly DOM sink (div.contents) as the top-level element.
+
+type QueryClientProviderProps = React.ComponentProps<typeof QueryClientProvider>;
+type TooltipProviderProps = React.ComponentProps<typeof TooltipProvider>;
+type BrowserRouterProps = React.ComponentProps<typeof BrowserRouter>;
+
+const SafeQueryClientProvider = React.forwardRef<HTMLDivElement, QueryClientProviderProps>(
+  ({ children, ...props }, ref) => {
+    return (
+      <div ref={ref} className="contents" data-ref-sink="query-client-provider">
+        <QueryClientProvider {...props}>{children}</QueryClientProvider>
+      </div>
+    );
+  }
+);
 SafeQueryClientProvider.displayName = "SafeQueryClientProvider";
+
 
 const SafeTooltipProvider = React.forwardRef<
   unknown,
