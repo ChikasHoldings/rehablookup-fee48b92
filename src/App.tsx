@@ -222,13 +222,17 @@ const SafeQueryClientProvider = React.forwardRef<HTMLDivElement, QueryClientProv
 SafeQueryClientProvider.displayName = "SafeQueryClientProvider";
 
 
-const SafeTooltipProvider = React.forwardRef<
-  unknown,
-  React.ComponentProps<typeof TooltipProvider>
->(({ children, ...props }, _ref) => {
-  return <TooltipProvider {...props}>{children}</TooltipProvider>;
-});
+const SafeTooltipProvider = React.forwardRef<HTMLDivElement, TooltipProviderProps>(
+  ({ children, ...props }, ref) => {
+    return (
+      <div ref={ref} className="contents" data-ref-sink="tooltip-provider">
+        <TooltipProvider {...props}>{children}</TooltipProvider>
+      </div>
+    );
+  }
+);
 SafeTooltipProvider.displayName = "SafeTooltipProvider";
+
 
 const SafeBrowserRouter = React.forwardRef<
   unknown,
