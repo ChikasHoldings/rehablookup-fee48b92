@@ -281,19 +281,8 @@ const AppInner = () => {
   }, []);
 
   return (
-
-    const handleRejection = (event: PromiseRejectionEvent) => {
-      console.error("Unhandled rejection:", event.reason);
-      // Prevent default browser error handling which can crash/blank the app
-      event.preventDefault();
-    };
-
-    window.addEventListener("unhandledrejection", handleRejection);
-    return () => window.removeEventListener("unhandledrejection", handleRejection);
-  }, []);
-
-  return (
     <GlobalErrorBoundary>
+
       <HelmetProvider>
         <SafeQueryClientProvider client={queryClient}>
           <SafeTooltipProvider>
