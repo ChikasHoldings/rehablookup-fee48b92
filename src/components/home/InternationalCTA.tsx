@@ -49,13 +49,17 @@ export function InternationalCTA() {
                 
                 {/* CTA Button */}
                 <div className="flex justify-center lg:justify-start">
-                  <Link to="/international">
-                    <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2 font-semibold shadow-md hover:shadow-lg transition-all">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2 font-semibold shadow-md hover:shadow-lg transition-all"
+                  >
+                    <Link to="/international">
                       <Plane className="h-4 w-4" />
                       Find US Treatment
                       <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </div>
               
