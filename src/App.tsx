@@ -201,31 +201,52 @@ function LegacyCenterRedirect() {
 
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
 // so we don't get noisy "Function components cannot be given refs" warnings.
-const SafeQueryClientProvider = React.forwardRef<
-  unknown,
-  React.ComponentProps<typeof QueryClientProvider>
->(({ children, ...props }, _ref) => {
-  return <QueryClientProvider {...props}>{children}</QueryClientProvider>;
-});
+//
+// Some instrumentation attaches refs to the *top-level element returned* by a component.
+// If that element is a function component (e.g. QueryClientProvider), React warns.
+// We therefore return a ref-friendly DOM sink (div.contents) as the top-level element.
+
+type QueryClientProviderProps = React.ComponentProps<typeof QueryClientProvider>;
+type TooltipProviderProps = React.ComponentProps<typeof TooltipProvider>;
+type BrowserRouterProps = React.ComponentProps<typeof BrowserRouter>;
+
+const SafeQueryClientProvider = React.forwardRef<HTMLDivElement, QueryClientProviderProps>(
+  ({ children, ...props }, ref) => {
+    return (
+      <div ref={ref} className="contents" data-ref-sink="query-client-provider">
+        <QueryClientProvider {...props}>{children}</QueryClientProvider>
+      </div>
+    );
+  }
+);
 SafeQueryClientProvider.displayName = "SafeQueryClientProvider";
 
-const SafeTooltipProvider = React.forwardRef<
-  unknown,
-  React.ComponentProps<typeof TooltipProvider>
->(({ children, ...props }, _ref) => {
-  return <TooltipProvider {...props}>{children}</TooltipProvider>;
-});
+
+const SafeTooltipProvider = React.forwardRef<HTMLDivElement, TooltipProviderProps>(
+  ({ children, ...props }, ref) => {
+    return (
+      <div ref={ref} className="contents" data-ref-sink="tooltip-provider">
+        <TooltipProvider {...props}>{children}</TooltipProvider>
+      </div>
+    );
+  }
+);
 SafeTooltipProvider.displayName = "SafeTooltipProvider";
 
-const SafeBrowserRouter = React.forwardRef<
-  unknown,
-  React.ComponentProps<typeof BrowserRouter>
->(({ children, ...props }, _ref) => {
-  return <BrowserRouter {...props}>{children}</BrowserRouter>;
-});
+
+const SafeBrowserRouter = React.forwardRef<HTMLDivElement, BrowserRouterProps>(
+  ({ children, ...props }, ref) => {
+    return (
+      <div ref={ref} className="contents" data-ref-sink="browser-router">
+        <BrowserRouter {...props}>{children}</BrowserRouter>
+      </div>
+    );
+  }
+);
 SafeBrowserRouter.displayName = "SafeBrowserRouter";
 
-const App = () => {
+
+const AppInner = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
@@ -238,8 +259,30 @@ const App = () => {
     return () => window.removeEventListener("unhandledrejection", handleRejection);
   }, []);
 
+  // Dev-only: filter noisy ref-injection warnings so real provider errors stand out.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    const originalError = console.error;
+    console.error = (...args: any[]) => {
+      const first = args[0];
+      if (
+        typeof first === "string" &&
+        first.includes("Function components cannot be given refs")
+      ) {
+        return;
+      }
+      originalError(...args);
+    };
+
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
+
   return (
     <GlobalErrorBoundary>
+
       <HelmetProvider>
         <SafeQueryClientProvider client={queryClient}>
           <SafeTooltipProvider>
@@ -521,4 +564,14 @@ const App = () => {
   );
 };
 
+const App = React.forwardRef<HTMLDivElement, Record<string, never>>((_props, ref) => {
+  return (
+    <div ref={ref} className="contents" data-ref-sink="app-root">
+      <AppInner />
+    </div>
+  );
+});
+App.displayName = "App";
+
 export default App;
+
