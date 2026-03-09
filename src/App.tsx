@@ -199,6 +199,32 @@ function LegacyCenterRedirect() {
   return <Navigate to={`/center/${slug}`} replace />;
 }
 
+// Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
+// so we don't get noisy "Function components cannot be given refs" warnings.
+const SafeQueryClientProvider = React.forwardRef<
+  unknown,
+  React.ComponentProps<typeof QueryClientProvider>
+>(({ children, ...props }, _ref) => {
+  return <QueryClientProvider {...props}>{children}</QueryClientProvider>;
+});
+SafeQueryClientProvider.displayName = "SafeQueryClientProvider";
+
+const SafeTooltipProvider = React.forwardRef<
+  unknown,
+  React.ComponentProps<typeof TooltipProvider>
+>(({ children, ...props }, _ref) => {
+  return <TooltipProvider {...props}>{children}</TooltipProvider>;
+});
+SafeTooltipProvider.displayName = "SafeTooltipProvider";
+
+const SafeBrowserRouter = React.forwardRef<
+  unknown,
+  React.ComponentProps<typeof BrowserRouter>
+>(({ children, ...props }, _ref) => {
+  return <BrowserRouter {...props}>{children}</BrowserRouter>;
+});
+SafeBrowserRouter.displayName = "SafeBrowserRouter";
+
 const App = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
