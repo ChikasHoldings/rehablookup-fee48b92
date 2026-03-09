@@ -240,14 +240,14 @@ const App = () => {
 
   return (
     <GlobalErrorBoundary>
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-         <NavigationProvider>
-        <ScrollToTop />
+      <HelmetProvider>
+        <SafeQueryClientProvider client={queryClient}>
+          <SafeTooltipProvider>
+            <Toaster />
+            <Sonner />
+            <SafeBrowserRouter>
+              <NavigationProvider>
+                <ScrollToTop />
         <TrailingSlashRedirect />
         <CookieConsentBanner />
         <Suspense fallback={null}>
