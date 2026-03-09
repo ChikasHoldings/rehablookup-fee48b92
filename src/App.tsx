@@ -542,4 +542,14 @@ const AppInner = () => {
   );
 };
 
+const App = React.forwardRef<HTMLDivElement, Record<string, never>>((_props, ref) => {
+  return (
+    <div ref={ref} className="contents" data-ref-sink="app-root">
+      <AppInner />
+    </div>
+  );
+});
+App.displayName = "App";
+
 export default App;
+
