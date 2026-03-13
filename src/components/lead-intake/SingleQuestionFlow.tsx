@@ -633,15 +633,6 @@ export function SingleQuestionFlow({
   return (
     <div className="w-full max-w-lg mx-auto px-1">
       
-      {/* Facility badge */}
-      {facilityName && currentIndex === 0 && (
-        <div className="mb-3 sm:mb-4 text-center">
-          <span className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-muted text-xs sm:text-sm max-w-full">
-            <span className="shrink-0">Requesting info from</span>
-            <span className="font-semibold truncate max-w-[200px] sm:max-w-[280px]">{facilityName}</span>
-          </span>
-        </div>
-      )}
       
       {/* Question content */}
       <div className="relative min-h-[350px] sm:min-h-[400px]">
