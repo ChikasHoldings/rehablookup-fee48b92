@@ -439,7 +439,7 @@ export function RequestInfoModal({
         
         {/* Compact Facility Header */}
         <div className="px-6 pr-12 pt-5 pb-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             <div className={cn(
               "h-10 w-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden",
               isPro ? "bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200/50" : "bg-muted"
@@ -450,16 +450,19 @@ export function RequestInfoModal({
                 <Building2 className={cn("h-4 w-4", isPro ? "text-amber-600" : "text-muted-foreground")} />
               )}
             </div>
+
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-foreground text-sm truncate">{facility.name}</h3>
+              <div className="flex items-center gap-2 min-w-0">
+                <h3 className="font-medium text-foreground text-sm truncate flex-1 min-w-0 max-w-[220px] sm:max-w-[320px]" title={facility.name}>{facility.name}</h3>
+                {isPro && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] px-1.5 py-0.5 shrink-0">
+                    <Crown className="h-2.5 w-2.5 mr-0.5" />
+                    Pro
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground truncate">{facility.city}, {facility.state}</p>
             </div>
-            {isPro && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] px-1.5 py-0.5 shrink-0">
-                <Crown className="h-2.5 w-2.5 mr-0.5" />
-                Pro
-              </Badge>
-            )}
           </div>
         </div>
         
