@@ -113,6 +113,15 @@ export interface Lead {
   legal_involvement: string | null;
   readiness_level: string | null;
   best_time_to_call: string | null;
+  // Redistribution fields
+  redistribution_status: string | null;
+  exclusive_until: string | null;
+  extended_until: string | null;
+  original_facility_id: string | null;
+  provider_response_status: string | null;
+  provider_responded_at: string | null;
+  inquiry_type: string | null;
+  is_unlocked?: boolean;
 }
 
 interface LeadNote {

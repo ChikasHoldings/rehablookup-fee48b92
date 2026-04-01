@@ -109,7 +109,12 @@ function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     new: { label: "New", className: "bg-blue-50 text-blue-700 border-blue-200" },
     contacted: { label: "Contacted", className: "bg-purple-50 text-purple-700 border-purple-200" },
+    in_progress: { label: "In Progress", className: "bg-amber-50 text-amber-700 border-amber-200" },
+    scheduled: { label: "Scheduled", className: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+    admitted: { label: "Admitted", className: "bg-green-50 text-green-700 border-green-200" },
     converted: { label: "Converted", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    closed: { label: "Closed", className: "bg-slate-50 text-slate-500 border-slate-200" },
+    expired: { label: "Expired", className: "bg-gray-50 text-gray-500 border-gray-200" },
     lost: { label: "Lost", className: "bg-slate-50 text-slate-600 border-slate-200" },
   };
 
