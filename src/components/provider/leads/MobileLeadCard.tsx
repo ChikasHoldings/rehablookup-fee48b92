@@ -17,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, type LeadStatus } from "./LeadStatusBadge";
-import { maskLeadName } from "@/lib/leadMasking";
 import type { Lead } from "./LeadDetailPanel";
 
 interface MobileLeadCardProps {
@@ -225,7 +224,7 @@ export const MobileLeadCard = memo(function MobileLeadCard({
                   "font-semibold text-base truncate leading-tight",
                   isSelected ? "text-primary" : "text-foreground"
                 )}>
-                  {isLocked ? maskLeadName(lead.name) : lead.name}
+                  {lead.name}
                 </h4>
                 {location && !isLocked && (
                   <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">

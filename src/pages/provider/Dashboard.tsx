@@ -132,15 +132,14 @@ export default function ProviderDashboardPage() {
     }
   }, [facilityId]);
 
-  // Fetch recent leads
+  // Fetch recent leads using PII-safe view (masks locked lead contact info at DB level)
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
       if (!facilityId) return [];
       const { data, error } = await supabase
-        .from("leads")
+        .from("leads_provider_view")
         .select("*")
-        .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);
       if (error) throw error;
@@ -452,7 +451,8 @@ export default function ProviderDashboardPage() {
                   <div className="divide-y">
                     {recentLeads.slice(0, 4).map((lead, index) => {
                       const isUnlocked = unlockedLeadIds.has(lead.id);
-                      const displayName = isUnlocked ? lead.name : maskName(lead.name);
+                      // View data is already masked/unmasked at DB level
+                      const displayName = lead.name;
                       const displayContact = isUnlocked 
                         ? (lead.preferred_contact === "call" ? lead.phone : lead.email)
                         : "••••••••••";
