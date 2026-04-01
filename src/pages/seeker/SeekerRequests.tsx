@@ -320,15 +320,19 @@ export default function SeekerRequests() {
       case 'new':
         return <Badge className="bg-blue-100 text-blue-700 border-0 text-[10px]">Pending Review</Badge>;
       case 'contacted':
-        return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Contacted</Badge>;
+        return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Facility Responded</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-amber-100 text-amber-700 border-0 text-[10px]">In Progress</Badge>;
       case 'scheduled':
         return <Badge className="bg-purple-100 text-purple-700 border-0 text-[10px]">Scheduled</Badge>;
       case 'admitted':
         return <Badge className="bg-green-100 text-green-700 border-0 text-[10px]">Admitted</Badge>;
       case 'closed':
         return <Badge className="bg-gray-100 text-gray-700 border-0 text-[10px]">Closed</Badge>;
+      case 'expired':
+        return <Badge className="bg-gray-100 text-gray-500 border-0 text-[10px]">Expired</Badge>;
       default:
-        return <Badge variant="secondary" className="text-[10px]">{status}</Badge>;
+        return <Badge variant="secondary" className="text-[10px]">Submitted</Badge>;
     }
   };
 
