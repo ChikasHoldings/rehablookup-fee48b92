@@ -66,6 +66,11 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
 
   const updateCaseMutation = useMutation({
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {
+      // Guard: prevent reverting placed/closed cases to earlier states
+      if (updates.status && caseData.status === 'placed' && updates.status !== 'placed' && updates.status !== 'closed') {
+        throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
+      }
+
       const { error } = await supabase
         .from("concierge_inquiries")
         .update(updates)

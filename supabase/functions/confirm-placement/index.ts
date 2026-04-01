@@ -97,8 +97,28 @@ Deno.serve(async (req) => {
       throw new Error("Inquiry not found");
     }
 
+    // Guard: prevent confirming already-placed or closed cases
+    if (inquiry.status === 'placed') {
+      logStep(requestId, "Case already placed - idempotent return", { inquiryId });
+      return new Response(JSON.stringify({ 
+        success: true, 
+        alreadyPlaced: true,
+        requestId,
+        _version: VERSION,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (inquiry.status === 'closed') {
+      throw new Error("Cannot confirm placement for a closed case");
+    }
+
     // Verify the facility is in the matched list
-    const matchedFacilityIds = inquiry.matched_facility_ids || [];
+    const matchedFacilityIds = [
+      ...(inquiry.matched_facility_ids || []),
+      ...(inquiry.admin_matched_facility_ids || []),
+    ];
     if (!matchedFacilityIds.includes(facilityId)) {
       throw new Error("Facility not in matched list for this inquiry");
     }
