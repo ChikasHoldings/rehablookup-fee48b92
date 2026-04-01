@@ -331,7 +331,7 @@ async function sendIntakeReceivedEmail(
     results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
   }
 
-  // Create in-app notification
+  // Create in-app notification for seeker
   if (inquiry.user_id) {
     const { data: notif } = await supabase.from('seeker_notifications').insert({
       user_id: inquiry.user_id,
@@ -344,6 +344,14 @@ async function sendIntakeReceivedEmail(
     
     if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
   }
+
+  // Admin/advisor notification for new intake
+  await createAdminNotification(supabase, {
+    type: 'concierge_new_intake',
+    title: 'New Placement Intake',
+    message: `New placement request from ${inquiry.user_name} (Case #${caseId}). Level of care: ${inquiry.level_of_care || 'Not specified'}.`,
+    metadata: { inquiry_id: inquiry.id },
+  });
 }
 
 async function sendMatchesFoundEmail(
