@@ -31,13 +31,18 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 export default function AdminConcierge() {
+  const { user, adminRole } = useAdminAuth();
+  const isAdvisor = adminRole === "advisor";
+  
   const [activeTab, setActiveTab] = useState("domestic");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  // Advisors default to seeing only their cases
+  const [advisorFilter, setAdvisorFilter] = useState<"mine" | "all">(isAdvisor ? "mine" : "all");
 
   const { data: cases, isLoading, refetch } = useQuery({
-    queryKey: ["admin-concierge-cases", statusFilter],
+    queryKey: ["admin-concierge-cases", statusFilter, advisorFilter, user?.id],
     queryFn: async () => {
       let query = supabase
         .from("concierge_inquiries")
@@ -48,6 +53,11 @@ export default function AdminConcierge() {
         query = query.in("status", IN_PROGRESS_STATUSES);
       } else if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
+      }
+
+      // Filter to advisor's own cases
+      if (advisorFilter === "mine" && user?.id) {
+        query = query.eq("assigned_advisor_id", user.id);
       }
 
       const { data, error } = await query;
