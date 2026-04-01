@@ -38,7 +38,13 @@ export function useProStatus(facilityId?: string) {
           queryBuilder = queryBuilder.eq("facility_id", facilityId);
         }
 
-        const { data, error } = await queryBuilder.maybeSingle();
+        // Use order + limit(1) instead of maybeSingle() to handle providers
+        // with multiple facilities that may each have a pro_subscription row
+        const { data: rows, error } = await queryBuilder
+          .order("current_period_end", { ascending: false, nullsFirst: false })
+          .limit(1);
+
+        const data = rows?.[0] ?? null;
 
         if (error) {
           console.error("[useProStatus] Database error:", error.message);
