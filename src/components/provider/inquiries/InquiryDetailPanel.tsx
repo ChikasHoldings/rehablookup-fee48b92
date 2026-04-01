@@ -70,9 +70,10 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
   };
 
   const currentStatus = (inquiry.provider_response_status || 'pending') as ResponseStatus;
-  const displayName = isUnlocked ? inquiry.name : maskLeadName(inquiry.name);
-  const displayEmail = isUnlocked ? inquiry.email : maskEmail(inquiry.email);
-  const displayPhone = isUnlocked ? inquiry.phone : maskPhone(inquiry.phone);
+  // Data from leads_provider_view is already masked/unmasked at the DB level
+  const displayName = inquiry.name;
+  const displayEmail = inquiry.email;
+  const displayPhone = inquiry.phone;
 
   const statusButtons = [
     { status: 'contacted' as ResponseStatus, label: 'Contacted', icon: PhoneCall, activeClass: 'bg-blue-600 text-white hover:bg-blue-700' },
