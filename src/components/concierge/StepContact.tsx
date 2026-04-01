@@ -110,7 +110,6 @@ export function StepContact({ data, errors, onChange }: Props) {
               maxLength={254}
               className={`h-11 ${errors.email ? "border-destructive ring-1 ring-destructive" : ""}`}
             />
-            />
             {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
           </div>
         </div>
