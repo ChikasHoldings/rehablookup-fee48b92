@@ -111,7 +111,7 @@ interface MobileAccordionProps {
   links: { name: string; path: string; highlight?: boolean }[];
 }
 
-function MobileAccordion({ title, links }: MobileAccordionProps) {
+const MobileAccordion = React.forwardRef<HTMLDetailsElement, MobileAccordionProps>(function MobileAccordion({ title, links }, ref) {
   return (
     <details className="group border-b border-primary-foreground/10 last:border-b-0">
       <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
