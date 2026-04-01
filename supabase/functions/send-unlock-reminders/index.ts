@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
         if (email) {
           try {
             await resend.emails.send({
-              from: "RehabLookup <notifications@rehablookup.com>",
+              from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
               subject: `New inquiry waiting for you - ${facility.name}`,
               html: get6HourReminderEmail(facility.name, maskLeadName(lead.name), dashboardUrl),
