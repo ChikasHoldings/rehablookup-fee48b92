@@ -109,44 +109,56 @@ function buildAbandonedCartEmail(data: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F0FDF4; border: 2px solid #22C55E; border-radius: 12px; margin-bottom: 28px;">
                 <tr>
                   <td style="padding: 28px;">
-                    <p style="margin: 0 0 20px 0; font-size: 17px; font-weight: 700; color: #166534; font-family: Arial, Helvetica, sans-serif;">✨ Why Complete Your Placement Request?</p>
+                    <p style="margin: 0 0 20px 0; font-size: 17px; font-weight: 700; color: #166534; font-family: Arial, Helvetica, sans-serif;">What You Get With Our Placement Service</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 0 0 14px 0;">
                           <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                            <strong>✓ Expert Placement Advisors</strong> – Our team personally reviews your unique situation and needs
+                            <strong>&#10003; A Dedicated Placement Advisor</strong> - A real person who reviews your unique situation, not an algorithm. Your advisor personally evaluates your needs, preferences, and circumstances to find the best-fit programs.
                           </p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 0 0 14px 0;">
                           <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                            <strong>✓ Verified Treatment Centers Only</strong> – Every facility in our network is vetted for quality, licensing, and outcomes
+                            <strong>&#10003; Verified, Quality Treatment Centers</strong> - Every facility in our network has been vetted for proper licensing, accreditation, staff qualifications, and treatment outcomes. We do the research so you don't have to.
                           </p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 0 0 14px 0;">
                           <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                            <strong>✓ No Sales Pressure</strong> – We work for you, not the facilities. Your best interest is our only priority
+                            <strong>&#10003; No Sales Pressure, Ever</strong> - We work for you, not the facilities. Unlike brokers who push high-commission programs, our advisors recommend what is genuinely right for your situation.
                           </p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 0 0 14px 0;">
                           <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                            <strong>✓ Concierge-Level Coordination</strong> – We handle the outreach, scheduling, and follow-ups so you don't have to
+                            <strong>&#10003; Full Concierge Coordination</strong> - Your advisor handles all the outreach to facilities, schedules calls and tours on your behalf, verifies insurance acceptance, and manages every detail of the intake process.
                           </p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 0;">
                           <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                            <strong>✓ Fast Response Time</strong> – Our advisors review requests within 24-48 hours
+                            <strong>&#10003; Fast 24-48 Hour Response</strong> - Once you submit your request, our team begins reviewing and identifying the best options for you within one to two business days.
                           </p>
                         </td>
                       </tr>
                     </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Refund Guarantee -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #EFF6FF; border: 2px solid #3B82F6; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <p style="margin: 0 0 12px 0; font-size: 17px; font-weight: 700; color: #1E40AF; font-family: Arial, Helvetica, sans-serif;">&#128274; 100% Refundable Guarantee</p>
+                    <p style="margin: 0; font-size: 15px; color: #1E40AF; line-height: 1.7; font-family: Arial, Helvetica, sans-serif;">
+                      Your ${fee} placement fee is <strong>fully refundable</strong> if we are unable to connect you with a suitable treatment program. There is zero risk to you. If our advisors cannot find the right match for your needs, you get your money back. It is that simple.
+                    </p>
                   </td>
                 </tr>
               </table>
@@ -156,7 +168,7 @@ function buildAbandonedCartEmail(data: {
                 <tr>
                   <td style="padding: 18px 20px;">
                     <p style="margin: 0; font-size: 15px; color: #854D0E; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                      <strong>💰 Simple, Transparent Pricing:</strong> Just <strong>${fee}</strong> for our placement service. No hidden fees, no surprises. We're committed to helping families find quality care affordably.
+                      <strong>Transparent Pricing:</strong> Just <strong>${fee}</strong> for our full placement service. No hidden fees, no recurring charges, no surprises. This one-time fee covers your dedicated advisor, facility matching, outreach, and coordination from start to finish.
                     </p>
                   </td>
                 </tr>
