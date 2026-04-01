@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
 
     // ==========================================
     // Handle checkout.session.completed
-    // Handles: Credit purchases, Pro subscriptions, Additional listing slots
+    // Handles: Lead unlocks, Credit purchases, Pro subscriptions, Additional listing slots
     // ==========================================
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
