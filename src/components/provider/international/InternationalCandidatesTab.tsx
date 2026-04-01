@@ -153,8 +153,13 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-2xl font-bold text-violet-600">$3,000</p>
+              <p className="text-2xl font-bold text-violet-600">
+                {hasPro ? "$2,400" : "$3,000"}
+              </p>
               <p className="text-xs text-muted-foreground">per confirmed admission</p>
+              {hasPro && (
+                <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Pro: Save $600</p>
+              )}
             </div>
           </div>
         </CardContent>

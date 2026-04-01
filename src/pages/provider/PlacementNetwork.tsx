@@ -506,7 +506,7 @@ export default function ProviderPlacementNetworkPage() {
 
             {/* International Candidates Tab */}
             <TabsContent value="international" className="space-y-4">
-              <InternationalCandidatesTab />
+              <InternationalCandidatesTab hasPro={!!proSubscription} />
             </TabsContent>
 
             {/* Profile Tab */}
