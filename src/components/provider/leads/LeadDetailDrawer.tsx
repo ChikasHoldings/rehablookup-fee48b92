@@ -49,7 +49,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
-import { getLeadDisplayInfo } from "@/lib/leadMasking";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { Lead } from "./LeadDetailPanel";

@@ -60,7 +60,6 @@ import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatus
 import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";
-import { getLeadDisplayInfo, maskLeadName } from "@/lib/leadMasking";
 import { formatSourceLabel } from "@/lib/sourceLabels";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
