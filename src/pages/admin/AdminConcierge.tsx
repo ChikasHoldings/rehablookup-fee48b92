@@ -265,6 +265,18 @@ export default function AdminConcierge() {
                               {STATUS_CONFIG[c.status]?.label || c.status}
                             </Badge>
                           </td>
+                          <td className="py-3">
+                            <Badge 
+                              variant="outline" 
+                              className={
+                                (c.payment_status === 'paid' || c.payment_status === 'succeeded') 
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" 
+                                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                              }
+                            >
+                              {(c.payment_status === 'paid' || c.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}
+                            </Badge>
+                          </td>
                           <td className="py-3 text-sm text-muted-foreground">
                             {getAdvisorName(c.assigned_advisor_id)}
                           </td>
