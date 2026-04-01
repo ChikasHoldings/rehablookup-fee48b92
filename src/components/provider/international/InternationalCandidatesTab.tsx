@@ -101,9 +101,9 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["international-matches"] });
-      toast.success(responseAction === "accepted" ? "Interest submitted!" : "Response recorded");
+      toast.success(variables.response === "accepted" ? "Interest submitted!" : "Response recorded");
       setSelectedMatch(null);
       setResponseNotes("");
       setResponseAction(null);
@@ -113,11 +113,12 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
     },
   });
 
-  const handleRespond = () => {
-    if (!selectedMatch || !responseAction) return;
+  const handleRespond = (action: "accepted" | "declined") => {
+    if (!selectedMatch) return;
+    setResponseAction(action);
     respondMutation.mutate({
       matchId: selectedMatch.id,
-      response: responseAction,
+      response: action,
       notes: responseNotes,
     });
   };
