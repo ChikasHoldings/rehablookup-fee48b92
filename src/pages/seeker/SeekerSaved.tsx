@@ -101,6 +101,7 @@ export default function SeekerSaved() {
     );
   }
 
+  return (
     <>
     <Helmet>
       <title>Saved Facilities | RehabLookup</title>
