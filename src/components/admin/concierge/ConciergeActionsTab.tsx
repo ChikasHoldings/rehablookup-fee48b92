@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Save, XCircle, Loader2, History } from "lucide-react";
+import { Save, XCircle, Loader2, History, AlertTriangle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
