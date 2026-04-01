@@ -113,11 +113,15 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearching(true);
       try {
+        // Sanitize search query to prevent PostgREST filter injection
+        const sanitized = searchQuery.replace(/[%_(),.]/g, "").trim().slice(0, 100);
+        if (!sanitized) { setIsSearching(false); return; }
+        
         const { data, error } = await supabase
           .from('facilities')
           .select('id, name, city, state, slug')
           .eq('status', 'approved')
-          .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
+          .or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,state.ilike.%${sanitized}%`)
           .limit(6);
 
         if (!error && data) {
