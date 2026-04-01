@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFileAttachment } from "@/hooks/useFileAttachment";
 import { MessageAttachment } from "@/components/shared/MessageAttachment";
 import { RefreshableAttachment } from "@/components/shared/RefreshableAttachment";
-import { MessageCircle, Send, User, Building2, HeadphonesIcon, Loader2, Paperclip } from "lucide-react";
+import { MessageCircle, Send, User, HeadphonesIcon, Loader2, Paperclip, ShieldCheck } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 
 interface Thread {
@@ -24,9 +23,6 @@ interface Thread {
   last_message_at: string | null;
   user_last_read_at: string | null;
   created_at: string;
-  facility?: {
-    name: string;
-  } | null;
 }
 
 interface Message {
@@ -45,10 +41,17 @@ interface ConciergeMessagingProps {
   matchedFacilityIds?: string[];
 }
 
-export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: ConciergeMessagingProps) {
+/**
+ * Seeker-facing messaging component for concierge placement cases.
+ * 
+ * BROKERAGE MODEL ENFORCEMENT:
+ * Seekers can ONLY message their placement advisor.
+ * All facility communication is coordinated through the advisor.
+ * Direct seeker-to-facility messaging is prohibited.
+ */
+export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [messageContent, setMessageContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -62,50 +65,38 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     openFilePicker,
   } = useFileAttachment({ inquiryId });
 
-  // Fetch threads
-  const { data: threads, isLoading: threadsLoading } = useQuery({
-    queryKey: ["concierge-threads", inquiryId],
+  // Fetch advisor thread ONLY - no facility threads for seekers
+  const { data: thread, isLoading: threadLoading } = useQuery({
+    queryKey: ["concierge-advisor-thread", inquiryId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("concierge_threads")
-        .select(`
-          id, inquiry_id, thread_type, facility_id, user_id,
-          last_message_at, user_last_read_at, created_at,
-          facility:facilities(name)
-        `)
+        .select("id, inquiry_id, thread_type, user_id, last_message_at, user_last_read_at, created_at")
         .eq("inquiry_id", inquiryId)
-        .order("last_message_at", { ascending: false, nullsFirst: false });
+        .eq("thread_type", "advisor")
+        .maybeSingle();
 
       if (error) throw error;
-      return (data || []) as unknown as Thread[];
+      return data as Thread | null;
     },
   });
 
-  // Select first thread by default
-  useEffect(() => {
-    if (threads?.length && !selectedThreadId) {
-      setSelectedThreadId(threads[0].id);
-    }
-  }, [threads, selectedThreadId]);
-
-  const selectedThread = threads?.find(t => t.id === selectedThreadId);
-
-  // Fetch messages for selected thread
+  // Fetch messages
   const { data: messages, isLoading: messagesLoading } = useQuery({
-    queryKey: ["concierge-messages", selectedThreadId],
+    queryKey: ["concierge-messages", thread?.id],
     queryFn: async () => {
-      if (!selectedThreadId) return [];
+      if (!thread?.id) return [];
       
       const { data, error } = await supabase
         .from("concierge_messages")
         .select("id, thread_id, sender_id, sender_type, content, created_at, attachment_url, attachment_name")
-        .eq("thread_id", selectedThreadId)
+        .eq("thread_id", thread.id)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
       return (data || []) as Message[];
     },
-    enabled: !!selectedThreadId,
+    enabled: !!thread?.id,
   });
 
   // Scroll to bottom when messages change
@@ -113,58 +104,27 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Subscribe to realtime message updates for the selected thread
+  // Realtime updates
   useEffect(() => {
-    if (!selectedThreadId) return;
+    if (!thread?.id) return;
 
     const channel = supabase
-      .channel(`messages-${selectedThreadId}`)
+      .channel(`messages-${thread.id}`)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "concierge_messages",
-          filter: `thread_id=eq.${selectedThreadId}`,
-        },
+        { event: "INSERT", schema: "public", table: "concierge_messages", filter: `thread_id=eq.${thread.id}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["concierge-messages", selectedThreadId] });
+          queryClient.invalidateQueries({ queryKey: ["concierge-messages", thread.id] });
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedThreadId, queryClient]);
+    return () => { supabase.removeChannel(channel); };
+  }, [thread?.id, queryClient]);
 
-  // Subscribe to new thread creation (from providers/admins)
-  useEffect(() => {
-    if (!inquiryId) return;
-
-    const channel = supabase
-      .channel(`threads-new-${inquiryId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "concierge_threads",
-          filter: `inquiry_id=eq.${inquiryId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [inquiryId, queryClient]);
-  // Create thread if needed
+  // Create advisor thread
   const createThreadMutation = useMutation({
-    mutationFn: async ({ threadType, facilityId }: { threadType: string; facilityId?: string }) => {
+    mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -172,8 +132,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
         .from("concierge_threads")
         .insert({
           inquiry_id: inquiryId,
-          thread_type: threadType,
-          facility_id: facilityId || null,
+          thread_type: "advisor", // ONLY advisor threads
           user_id: user.id,
         })
         .select()
@@ -182,23 +141,28 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
-      setSelectedThreadId(data.id);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["concierge-advisor-thread", inquiryId] });
     },
   });
 
   // Send message
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedThreadId || (!messageContent.trim() && !attachment)) return;
+      let threadId = thread?.id;
+      
+      if (!threadId) {
+        const newThread = await createThreadMutation.mutateAsync();
+        threadId = newThread.id;
+      }
+
+      if (!threadId || (!messageContent.trim() && !attachment)) return;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const trimmedContent = messageContent.trim();
       
-      // Upload attachment if present
       let attachmentData: { url: string; name: string } | null = null;
       if (attachment) {
         attachmentData = await uploadFile();
@@ -208,7 +172,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
       }
 
       const { error } = await supabase.from("concierge_messages").insert({
-        thread_id: selectedThreadId,
+        thread_id: threadId,
         sender_id: user.id,
         sender_type: "seeker",
         content: trimmedContent || (attachmentData ? `Sent an attachment: ${attachmentData.name}` : ""),
@@ -218,39 +182,32 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
 
       if (error) throw error;
 
-      // Update thread last_message_at and user_last_read_at
       await supabase
         .from("concierge_threads")
         .update({ 
           last_message_at: new Date().toISOString(),
           user_last_read_at: new Date().toISOString(),
         })
-        .eq("id", selectedThreadId);
-
-      // Send notification to recipient
-      const notificationType = selectedThread?.thread_type === "advisor" 
-        ? "message_to_advisor" 
-        : "message_to_facility";
+        .eq("id", threadId);
 
       try {
         await supabase.functions.invoke("send-message-notifications", {
           body: {
-            notificationType,
-            threadId: selectedThreadId,
+            notificationType: "message_to_advisor",
+            threadId,
             messageContent: trimmedContent || `Sent an attachment: ${attachmentData?.name}`,
             senderType: "seeker",
           },
         });
       } catch {
-        // Notification is best-effort, don't block message send
+        // Best-effort
       }
     },
     onSuccess: () => {
       setMessageContent("");
       clearAttachment();
-      queryClient.invalidateQueries({ queryKey: ["concierge-messages", selectedThreadId] });
-      queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
-      queryClient.invalidateQueries({ queryKey: ["unread-message-count", inquiryId] });
+      queryClient.invalidateQueries({ queryKey: ["concierge-messages", thread?.id] });
+      queryClient.invalidateQueries({ queryKey: ["concierge-advisor-thread", inquiryId] });
     },
     onError: () => {
       toast({
@@ -268,21 +225,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     return format(date, "MMM d, h:mm a");
   };
 
-  const getThreadIcon = (thread: Thread) => {
-    if (thread.thread_type === "advisor") {
-      return <HeadphonesIcon className="h-4 w-4" />;
-    }
-    return <Building2 className="h-4 w-4" />;
-  };
-
-  const getThreadName = (thread: Thread) => {
-    if (thread.thread_type === "advisor") {
-      return "Placement Advisor";
-    }
-    return thread.facility?.name || "Facility";
-  };
-
-  if (threadsLoading) {
+  if (threadLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-12 w-full" />
@@ -291,105 +234,20 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     );
   }
 
-  // Fetch matched facility names for thread creation
-  const { data: matchedFacilityDetails } = useQuery({
-    queryKey: ["matched-facilities-for-threads", matchedFacilityIds],
-    queryFn: async () => {
-      if (!matchedFacilityIds.length) return [];
-      const { data, error } = await supabase
-        .from("facilities")
-        .select("id, name")
-        .in("id", matchedFacilityIds);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: matchedFacilityIds.length > 0,
-  });
-
-  // No threads yet - show start buttons
-  if (!threads?.length) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            Messages
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground text-sm">
-            Start a conversation with your placement advisor or matched facilities.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => createThreadMutation.mutate({ threadType: "advisor" })}
-              disabled={createThreadMutation.isPending}
-              className="gap-2"
-            >
-              <HeadphonesIcon className="h-4 w-4" />
-              Message Advisor
-            </Button>
-            {matchedFacilityDetails?.map((facility) => (
-              <Button
-                key={facility.id}
-                variant="outline"
-                onClick={() => createThreadMutation.mutate({ threadType: "facility", facilityId: facility.id })}
-                disabled={createThreadMutation.isPending}
-                className="gap-2"
-              >
-                <Building2 className="h-4 w-4" />
-                {facility.name}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="flex flex-col h-[500px]">
-      {/* Thread Tabs */}
-      <div className="flex border-b overflow-x-auto">
-        {threads.map((thread) => {
-          const isSelected = selectedThreadId === thread.id;
-          return (
-            <button
-              key={thread.id}
-              onClick={() => setSelectedThreadId(thread.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                isSelected
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {getThreadIcon(thread)}
-              {getThreadName(thread)}
-            </button>
-          );
-        })}
-        {/* Add new thread button */}
-        {matchedFacilityIds.length > (threads?.filter(t => t.thread_type === "facility").length || 0) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-            onClick={() => {
-              // Find a facility that doesn't have a thread yet
-              const existingFacilityIds = threads
-                .filter(t => t.thread_type === "facility")
-                .map(t => t.facility_id);
-              const newFacilityId = matchedFacilityIds.find(id => !existingFacilityIds.includes(id));
-              if (newFacilityId) {
-                createThreadMutation.mutate({ threadType: "facility", facilityId: newFacilityId });
-              }
-            }}
-          >
-            + New
-          </Button>
-        )}
-      </div>
+      <CardHeader className="border-b py-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <HeadphonesIcon className="h-5 w-5 text-primary" />
+          Your Placement Advisor
+        </CardTitle>
+        <div className="flex items-start gap-2 mt-1 p-2 bg-muted/50 rounded-md">
+          <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            All facility communication is coordinated through your dedicated advisor to ensure the best outcomes and protect your privacy.
+          </p>
+        </div>
+      </CardHeader>
 
       {/* Messages Area */}
       <ScrollArea className="flex-1 p-4">
@@ -398,15 +256,17 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
             <Skeleton className="h-16 w-3/4" />
             <Skeleton className="h-16 w-3/4 ml-auto" />
           </div>
-        ) : messages?.length === 0 ? (
+        ) : (!messages || messages.length === 0) ? (
           <div className="text-center text-muted-foreground py-8">
             <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p>No messages yet</p>
-            <p className="text-sm">Send a message to start the conversation</p>
+            <p className="font-medium">Start a conversation</p>
+            <p className="text-sm mt-1">
+              Your advisor will coordinate calls, tours, and next steps with facilities on your behalf.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {messages?.map((message) => {
+            {messages.map((message) => {
               const isOwn = message.sender_type === "seeker";
               return (
                 <div
@@ -414,8 +274,8 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
                   className={`flex gap-2 ${isOwn ? "flex-row-reverse" : ""}`}
                 >
                   <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className={isOwn ? "bg-primary text-white" : "bg-muted"}>
-                      {isOwn ? <User className="h-4 w-4" /> : getThreadIcon(selectedThread!)}
+                    <AvatarFallback className={isOwn ? "bg-primary text-primary-foreground" : "bg-muted"}>
+                      {isOwn ? <User className="h-4 w-4" /> : <HeadphonesIcon className="h-4 w-4" />}
                     </AvatarFallback>
                   </Avatar>
                   <div className={`max-w-[70%] ${isOwn ? "text-right" : ""}`}>
@@ -478,7 +338,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
             <Paperclip className="h-4 w-4" />
           </Button>
           <Input
-            placeholder="Type a message..."
+            placeholder="Message your advisor..."
             value={messageContent}
             onChange={(e) => setMessageContent(e.target.value)}
             disabled={sendMessageMutation.isPending || uploading}
