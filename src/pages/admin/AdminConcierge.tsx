@@ -238,6 +238,7 @@ export default function AdminConcierge() {
                         <th className="pb-3 font-medium">Care Type</th>
                         <th className="pb-3 font-medium">Location</th>
                         <th className="pb-3 font-medium">Status</th>
+                        <th className="pb-3 font-medium">Payment</th>
                         <th className="pb-3 font-medium">Advisor</th>
                         <th className="pb-3 font-medium">Matches</th>
                         <th className="pb-3 font-medium">Date</th>
@@ -262,6 +263,18 @@ export default function AdminConcierge() {
                           <td className="py-3">
                             <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
                               {STATUS_CONFIG[c.status]?.label || c.status}
+                            </Badge>
+                          </td>
+                          <td className="py-3">
+                            <Badge 
+                              variant="outline" 
+                              className={
+                                (c.payment_status === 'paid' || c.payment_status === 'succeeded') 
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" 
+                                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                              }
+                            >
+                              {(c.payment_status === 'paid' || c.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}
                             </Badge>
                           </td>
                           <td className="py-3 text-sm text-muted-foreground">

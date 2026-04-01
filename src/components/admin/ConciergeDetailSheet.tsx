@@ -43,11 +43,23 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <SheetContent className="w-full sm:max-w-2xl overflow-hidden flex flex-col">
         <SheetHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <SheetTitle className="text-xl">{caseData.user_name}</SheetTitle>
-            <Badge variant={STATUS_CONFIG[caseData.status]?.variant || "secondary"}>
-              {STATUS_CONFIG[caseData.status]?.label || caseData.status}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge 
+                variant="outline" 
+                className={
+                  (caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') 
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" 
+                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                }
+              >
+                {(caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}
+              </Badge>
+              <Badge variant={STATUS_CONFIG[caseData.status]?.variant || "secondary"}>
+                {STATUS_CONFIG[caseData.status]?.label || caseData.status}
+              </Badge>
+            </div>
           </div>
           <div className="text-sm text-muted-foreground">
             {caseData.user_email} • {caseData.user_phone}

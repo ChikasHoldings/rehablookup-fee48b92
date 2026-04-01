@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -25,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Save, XCircle, Loader2, History } from "lucide-react";
+import { Save, XCircle, Loader2, History, AlertTriangle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
@@ -110,9 +111,21 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
     });
   };
 
+  const isUnpaid = caseData.payment_status !== 'paid' && caseData.payment_status !== 'succeeded';
+
   return (
     <div className="space-y-4">
-      {/* Advisor Assignment */}
+      {/* Unpaid Warning */}
+      {isUnpaid && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Payment Not Received</AlertTitle>
+          <AlertDescription>
+            This case has not been paid ($29 intake fee). The seeker may have abandoned checkout. 
+            Avoid sending introductions until payment is confirmed.
+          </AlertDescription>
+        </Alert>
+      )}
       <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
 
       {/* Admin Confirm Placement - ONLY admins can confirm */}
