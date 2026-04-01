@@ -297,7 +297,8 @@ export default function ProviderPlacementNetworkPage() {
           provider_responded_at: new Date().toISOString(),
           provider_notes: notes || null,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("facility_id", selectedFacility?.id); // Security: ensure facility ownership
 
       if (error) throw error;
     },
