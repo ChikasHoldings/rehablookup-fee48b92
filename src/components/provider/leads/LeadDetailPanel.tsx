@@ -150,12 +150,21 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
   const [lostReason, setLostReason] = useState("");
   const queryClient = useQueryClient();
   
-  // Lead unlock status
+  // Lead unlock status - used for UI control (show/hide buttons), not for masking
+  // Data from leads_provider_view is already masked/unmasked at the DB level
   const { isLeadUnlocked } = useLeadUnlocks(lead?.facility_id);
   const isUnlocked = lead ? isLeadUnlocked(lead.id) : false;
   
-  // Get masked or unmasked display info based on unlock status
-  const displayInfo = lead ? getLeadDisplayInfo(lead, isUnlocked) : null;
+  // Display info directly from view data (already masked/unmasked by DB)
+  const displayInfo = lead ? {
+    name: lead.name,
+    email: lead.email,
+    phone: lead.phone,
+    initials: isUnlocked 
+      ? lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+      : "??",
+    isLocked: !isUnlocked,
+  } : null;
 
   const { data: notes = [] } = useQuery({
     queryKey: ["lead-notes", lead?.id],
