@@ -756,6 +756,15 @@ async function sendPlacementCompleteEmails(
   await sendProviderSmsNotification(supabase, facility.user_id, "general", {
     customMessage: `RehabLookup: Placement complete! ${inquiry.user_name.split(' ')[0]} admitted to ${facility.name}. Invoice will be generated.`,
   });
+
+  // Admin notification for placement completion
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  await createAdminNotification(supabase, {
+    type: 'concierge_placement_complete',
+    title: 'Placement Completed',
+    message: `${inquiry.user_name} placed at ${facility.name} (Case #${caseId}). Fee invoice will be generated.`,
+    metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
+  });
 }
 
 async function sendInvoiceIssuedEmail(
