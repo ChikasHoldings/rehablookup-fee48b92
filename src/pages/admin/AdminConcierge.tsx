@@ -179,7 +179,7 @@ export default function AdminConcierge() {
       {/* Main Tabs - horizontally scrollable on mobile */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-          <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-4 sm:max-w-lg">
+          <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-2 sm:max-w-xs" : "sm:grid-cols-4 sm:max-w-lg"}`}>
             <TabsTrigger value="domestic" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
               <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="text-xs sm:text-sm">Domestic</span>
@@ -193,19 +193,23 @@ export default function AdminConcierge() {
                 </Badge>
               ) : null}
             </TabsTrigger>
-            <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-              <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Network</span>
-              {networkCount ? (
-                <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
-                  {networkCount}
-                </Badge>
-              ) : null}
-            </TabsTrigger>
-            <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-              <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Invoices</span>
-            </TabsTrigger>
+            {!isAdvisor && (
+              <>
+                <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+                  <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Network</span>
+                  {networkCount ? (
+                    <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
+                      {networkCount}
+                    </Badge>
+                  ) : null}
+                </TabsTrigger>
+                <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+                  <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Invoices</span>
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
         </div>
 
