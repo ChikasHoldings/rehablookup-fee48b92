@@ -313,7 +313,7 @@ Deno.serve(async (req) => {
         });
 
         const { error: sendError } = await resend.emails.send({
-          from: "RehabLookup Placement <placement@rehablookup.com>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: [inquiry.user_email],
           subject: emailData.subject,
           html: emailData.html,
@@ -362,7 +362,7 @@ Deno.serve(async (req) => {
         });
 
         const { error: sendError } = await resend.emails.send({
-          from: "RehabLookup Placement <placement@rehablookup.com>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: [caseData.seeker_email],
           subject: emailData.subject,
           html: emailData.html,
