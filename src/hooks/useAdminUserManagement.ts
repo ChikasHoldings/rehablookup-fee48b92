@@ -73,6 +73,7 @@ export const ADMIN_PERMISSIONS = {
   reviews: { label: "Review Moderation", description: "Moderate facility reviews" },
   seekers: { label: "User Management", description: "View and manage seeker accounts" },
   placements: { label: "Concierge/Placements", description: "Manage placement cases and concierge" },
+  support: { label: "Support Inbox", description: "Handle support tickets and seeker communications" },
   security_logs: { label: "Security Logs", description: "View security and rate limit logs" },
   users: { label: "Admin Staff", description: "Create and manage admin users (Super Admin only)" },
   audit_log: { label: "Audit Log", description: "View system audit logs" },

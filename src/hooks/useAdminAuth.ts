@@ -65,6 +65,7 @@ const routePermissionMap: Record<string, string> = {
   "/admin/profile": "dashboard",
   "/admin/reviews": "reviews",
   "/admin/concierge": "placements",
+  "/admin/support": "support",
   "/admin/placement-revenue": "placements",
   "/admin/credentials": "credentials",
   "/admin/security-logs": "security_logs",
