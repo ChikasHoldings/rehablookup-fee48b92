@@ -78,6 +78,30 @@ export default function SeekerInternationalCase() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">International Placement</h1>
+          <p className="text-muted-foreground">Get placed into top US treatment facilities</p>
+        </div>
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="py-12 text-center">
+            <Globe className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-lg font-semibold mb-1">Unable to load your placement case</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              This may be a temporary issue. Please try again.
+            </p>
+            <Button variant="outline" onClick={() => refetch()} className="gap-2">
+              <ArrowRight className="h-4 w-4" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!placementCase) {
     return (
       <div className="space-y-6">
