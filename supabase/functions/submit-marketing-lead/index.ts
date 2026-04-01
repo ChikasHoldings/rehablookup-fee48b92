@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     let sanitizedEmail: string;
     try {
       sanitizedEmail = sanitizeEmail(body.email);
-    } catch {
+    } catch (_e) {
       return new Response(
         JSON.stringify({ error: "Valid email address is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
