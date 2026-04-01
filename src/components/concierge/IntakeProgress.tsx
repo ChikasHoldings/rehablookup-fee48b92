@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Check, User, Heart, MapPin, CreditCard, Phone, ClipboardCheck } from "lucide-react";
+import { Check, User, Heart, MapPin, CreditCard, Phone, Mail, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface IntakeProgressProps {
@@ -13,6 +13,7 @@ const STEPS = [
   { icon: MapPin, label: "Location" },
   { icon: CreditCard, label: "Payment" },
   { icon: Phone, label: "Contact" },
+  { icon: Mail, label: "Verify" },
   { icon: ClipboardCheck, label: "Review" },
 ];
 
