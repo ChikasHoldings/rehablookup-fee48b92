@@ -146,14 +146,18 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
                 </span>
               </div>
               {event.data && Object.keys(event.data).length > 0 && (
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {event.data.from && event.data.to && (
-                    <span>{event.data.from} → {event.data.to}</span>
+                <div className="text-xs text-muted-foreground mt-0.5 space-x-2">
+                  {(event.data.from_status || event.data.from) && (event.data.to_status || event.data.to) && (
+                    <span className="capitalize">
+                      {(event.data.from_status || event.data.from).replace(/_/g, " ")} → {(event.data.to_status || event.data.to).replace(/_/g, " ")}
+                    </span>
                   )}
-                  {event.data.count && <span>{event.data.count} items</span>}
+                  {event.data.match_count && <span>{event.data.match_count} matches</span>}
+                  {event.data.count && !event.data.match_count && <span>{event.data.count} items</span>}
                   {event.data.facility_name && <span>{event.data.facility_name}</span>}
                   {event.data.notes && <span className="italic">"{event.data.notes}"</span>}
                   {event.data.reason && <span>Reason: {event.data.reason}</span>}
+                  {event.data.trigger && !event.data.from_status && <span className="capitalize">({event.data.trigger.replace(/_/g, " ")})</span>}
                 </div>
               )}
               {event.actor && event.actor !== "system" && (
