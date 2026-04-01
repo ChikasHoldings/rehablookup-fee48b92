@@ -315,11 +315,16 @@ export function SingleQuestionFlow({
   
   // Handle verification
   const handleVerifyCode = async () => {
+    if (isSubmittingRef.current) return;
     if (verificationCode.length === 6) {
       const success = await verifyCode(verificationCode);
       if (success) {
-        // Submit the form with flag to skip verification check since we JUST verified
-        await onSubmit({ skipVerificationCheck: true });
+        isSubmittingRef.current = true;
+        try {
+          await onSubmit({ skipVerificationCheck: true });
+        } finally {
+          isSubmittingRef.current = false;
+        }
       } else {
         setErrors({ code: "Invalid or expired code" });
       }
