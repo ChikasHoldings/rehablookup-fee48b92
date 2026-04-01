@@ -327,6 +327,84 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // LEAD UNLOCK VIA STRIPE (card payment)
+      if (session.mode === "payment" && metadataType === "lead_unlock") {
+        const leadId = session.metadata?.lead_id;
+        const facilityId = session.metadata?.facility_id;
+        const userId = session.metadata?.user_id;
+        const paymentIntentId = session.payment_intent as string;
+
+        if (leadId && facilityId && userId) {
+          logStep("Processing lead unlock payment", { leadId, facilityId, userId });
+
+          // Idempotency: check if already unlocked
+          const { data: existingUnlock } = await supabaseAdmin
+            .from("lead_unlocks")
+            .select("id")
+            .eq("lead_id", leadId)
+            .eq("facility_id", facilityId)
+            .maybeSingle();
+
+          if (existingUnlock) {
+            logStep("Lead already unlocked (duplicate webhook), skipping", { leadId, existingUnlockId: existingUnlock.id });
+          } else {
+            // Get the lead to determine price
+            const amountTotal = session.amount_total || 0;
+
+            // Create unlock record
+            const { error: unlockError } = await supabaseAdmin
+              .from("lead_unlocks")
+              .insert({
+                lead_id: leadId,
+                provider_id: userId,
+                facility_id: facilityId,
+                unlock_price_cents: amountTotal,
+                payment_method: "stripe",
+                stripe_payment_intent_id: paymentIntentId,
+              });
+
+            if (unlockError) {
+              logStep("Error creating lead unlock", { error: unlockError.message });
+            } else {
+              logStep("Lead unlock created via Stripe", { leadId, facilityId, priceCents: amountTotal });
+
+              // Update lead_distributions
+              await supabaseAdmin
+                .from("lead_distributions")
+                .update({ unlocked_at: new Date().toISOString() })
+                .eq("lead_id", leadId)
+                .eq("facility_id", facilityId);
+
+              // Log credit transaction for record keeping
+              await supabaseAdmin.from("credit_transactions").insert({
+                provider_id: userId,
+                facility_id: facilityId,
+                amount_cents: -amountTotal,
+                transaction_type: "unlock",
+                reference_id: leadId,
+                description: "Lead unlocked via card payment",
+                stripe_payment_intent_id: paymentIntentId,
+              });
+
+              // Create provider notification
+              await supabaseAdmin.from("provider_notifications").insert({
+                user_id: userId,
+                facility_id: facilityId,
+                type: "lead_unlocked",
+                title: "Lead Unlocked",
+                message: `A lead has been unlocked via card payment ($${(amountTotal / 100).toFixed(2)}).`,
+                metadata: { lead_id: leadId, amount_cents: amountTotal },
+              });
+
+              logStep("Lead unlock fully processed via Stripe");
+            }
+          }
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       // CREDIT PURCHASE FULFILLMENT
       if (session.mode === "payment" && metadataType === "credit_purchase") {
