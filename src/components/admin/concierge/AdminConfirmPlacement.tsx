@@ -184,7 +184,7 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
                 <DollarSign className="h-4 w-4 text-amber-600 mt-0.5" />
                 <div>
                   <p className="font-medium text-amber-800 dark:text-amber-400">
-                    Placement Fee: Domestic $1,000 / International $4,500
+                    Placement Fee: Domestic $1,000 / International $3,000
                   </p>
                   <p className="text-amber-700 dark:text-amber-500 text-xs mt-1">
                     Invoice auto-generated. Pro facilities receive discounted domestic rates.
