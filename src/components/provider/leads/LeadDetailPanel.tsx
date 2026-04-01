@@ -418,12 +418,14 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
 
       </div>
 
-      {/* Email Dialog */}
-      <EmailLeadDialog
-        open={showEmailDialog}
-        onOpenChange={setShowEmailDialog}
-        lead={lead}
-      />
+      {/* Email Dialog - Only render with real data when unlocked */}
+      {isUnlocked && (
+        <EmailLeadDialog
+          open={showEmailDialog}
+          onOpenChange={setShowEmailDialog}
+          lead={lead}
+        />
+      )}
 
       {/* Status Change Confirmation Dialog */}
       <AlertDialog 
