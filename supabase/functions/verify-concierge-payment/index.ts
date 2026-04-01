@@ -38,6 +38,11 @@ Deno.serve(async (req) => {
       throw new Error("Session ID is required");
     }
 
+    // Validate sessionId format (Stripe checkout session IDs start with cs_)
+    if (typeof sessionId !== 'string' || !sessionId.startsWith('cs_') || sessionId.length > 200) {
+      throw new Error("Invalid session ID format");
+    }
+
     logStep("Verifying session", { sessionId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });

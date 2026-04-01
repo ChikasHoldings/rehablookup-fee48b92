@@ -44,12 +44,37 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseKey || !supabaseAnonKey) {
       throw new Error("Supabase configuration missing");
     }
-    
+
+    // Authenticate caller - must be admin
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header");
+
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await anonClient.auth.getUser(token);
+    if (userError || !userData.user) throw new Error("Authentication failed");
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify admin role
+    const { data: adminRole } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userData.user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (!adminRole) {
+      throw new Error("Only administrators can send introductions");
+    }
+
+    logStep(requestId, "Admin authenticated", { adminId: userData.user.id });
+
     const resend = new Resend(resendKey);
     
     const body = await req.json();
