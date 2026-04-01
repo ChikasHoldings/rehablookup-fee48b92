@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
-import { maskLeadName, maskEmail, maskPhone } from "@/lib/leadMasking";
 import { formatSourceLabel } from "@/lib/sourceLabels";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
