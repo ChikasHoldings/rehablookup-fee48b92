@@ -200,15 +200,14 @@ export default function ConciergeThankYou() {
           // Don't throw - account was created, profile can be created later
         }
 
-        // Link inquiry to user if we have the inquiry ID
+        // Link inquiry to user via edge function (server-side, not client-side update)
         if (inquiryId) {
-          const { error: linkError } = await supabase
-            .from("concierge_inquiries")
-            .update({ user_id: authData.user.id })
-            .eq("id", inquiryId);
-
-          if (linkError) {
-            console.error("Inquiry link error:", linkError);
+          try {
+            await supabase.functions.invoke("link-inquiry-to-user", {
+              body: { inquiryId, userId: authData.user.id },
+            });
+          } catch (linkErr) {
+            console.error("Inquiry link error:", linkErr);
           }
         }
 

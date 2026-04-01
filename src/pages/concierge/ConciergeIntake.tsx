@@ -310,16 +310,27 @@ export default function ConciergeIntake() {
         }
         break;
       case 5: // Contact
-        if (!formData.firstName) errors.firstName = "First name is required";
-        if (!formData.lastName) errors.lastName = "Last name is required";
+        if (!formData.firstName || formData.firstName.trim().length < 1) errors.firstName = "First name is required";
+        if (formData.firstName && formData.firstName.length > 100) errors.firstName = "First name is too long";
+        if (!formData.lastName || formData.lastName.trim().length < 1) errors.lastName = "Last name is required";
+        if (formData.lastName && formData.lastName.length > 100) errors.lastName = "Last name is too long";
         if (!formData.phone) errors.phone = "Phone is required";
+        if (formData.phone && formData.phone.replace(/\D/g, "").length < 10) {
+          errors.phone = "Please enter a valid 10-digit phone number";
+        }
         if (!formData.email) errors.email = "Email is required";
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
           errors.email = "Please enter a valid email";
         }
+        if (formData.email && formData.email.length > 254) {
+          errors.email = "Email address is too long";
+        }
         if (!formData.bestTimeToCall) errors.bestTimeToCall = "Best time to call is required";
-        if (!formData.notes || formData.notes.length < 10) {
+        if (!formData.notes || formData.notes.trim().length < 10) {
           errors.notes = "Please add at least 10 characters of notes";
+        }
+        if (formData.notes && formData.notes.length > 1000) {
+          errors.notes = "Notes must be 1000 characters or less";
         }
         if (!formData.hipaaConsent) errors.hipaaConsent = "You must consent to continue";
         break;

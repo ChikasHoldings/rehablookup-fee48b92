@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Phone, Mail, User, AlertCircle } from "lucide-react";
 import type { ConciergeIntakeData } from "@/pages/concierge/ConciergeIntake";
+import { formatEmailInput } from "@/lib/emailUtils";
 
 const BEST_TIMES = [
   { value: "morning", label: "Morning (8am - 12pm)" },
@@ -104,8 +105,9 @@ export function StepContact({ data, errors, onChange }: Props) {
             <Input
               type="email"
               value={data.email}
-              onChange={(e) => onChange({ email: e.target.value })}
+              onChange={(e) => onChange({ email: formatEmailInput(e.target.value) })}
               placeholder="you@example.com"
+              maxLength={254}
               className={`h-11 ${errors.email ? "border-destructive ring-1 ring-destructive" : ""}`}
             />
             {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
@@ -184,8 +186,9 @@ export function StepContact({ data, errors, onChange }: Props) {
         </div>
         <Textarea
           value={data.notes}
-          onChange={(e) => onChange({ notes: e.target.value })}
+          onChange={(e) => onChange({ notes: e.target.value.slice(0, 1000) })}
           rows={3}
+          maxLength={1000}
           placeholder="Share any details that will help us process your placement..."
           className={`resize-none ${errors.notes ? "border-destructive ring-1 ring-destructive" : ""}`}
         />
