@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Heart, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -101,6 +102,12 @@ export default function SeekerSaved() {
   }
 
   return (
+    <>
+    <Helmet>
+      <title>Saved Facilities | RehabLookup</title>
+      <meta name="description" content="View and manage your saved treatment centers." />
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
       <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -152,5 +159,6 @@ export default function SeekerSaved() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -274,10 +274,14 @@ export default function SeekerConcierge() {
         throw new Error("Feedback already submitted");
       }
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("concierge_inquiries")
         .update({ seeker_rating: rating, seeker_feedback: feedback })
         .eq("id", selectedCase!.id)
+        .eq("user_id", user.id)
         .is("seeker_feedback", null)
         .select("id")
         .single();
@@ -302,15 +306,20 @@ export default function SeekerConcierge() {
     },
   });
 
-  // Cancel case mutation
+  // Cancel case mutation - verified against current user
   const cancelCaseMutation = useMutation({
     mutationFn: async () => {
       if (!selectedCase) throw new Error("No case selected");
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Only allow cancellation of own cases (RLS enforces this too)
       const { error } = await supabase
         .from("concierge_inquiries")
         .update({ status: "closed", closed_at: new Date().toISOString() })
-        .eq("id", selectedCase.id);
+        .eq("id", selectedCase.id)
+        .eq("user_id", user.id);
       
       if (error) throw error;
 
@@ -319,6 +328,7 @@ export default function SeekerConcierge() {
         event_type: "seeker_cancelled",
         event_data: { reason: "Cancelled by seeker" },
         actor_type: "seeker",
+        actor_id: user.id,
       });
     },
     onSuccess: () => {
@@ -429,7 +439,7 @@ export default function SeekerConcierge() {
 
   // ========== STATE B & C: Case exists ==========
   const showMatchedFacilities = selectedCase && 
-    ["matching", "matched", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
+    ["placing", "facilities_found", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
   const showConfirmation = selectedCase?.status === "in_contact" && !selectedCase.seeker_confirmed;
   const showAwaitingProvider = selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed;
   const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback && !feedbackSubmitted;
