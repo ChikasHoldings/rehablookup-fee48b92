@@ -193,7 +193,6 @@ export default function ProviderInquiriesPage() {
   };
 
   const handleUnlockSuccess = () => {
-    refetchUnlocks();
     queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
     queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
     queryClient.invalidateQueries({ queryKey: ["provider-credits"] });

@@ -98,11 +98,11 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
         {/* Contact preview */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
           <span className="font-medium truncate">
-            {isUnlocked ? inquiry.name : maskLeadName(inquiry.name)}
+            {inquiry.name}
           </span>
           <span className="flex items-center gap-1">
             <Phone className="h-3 w-3" />
-            {isUnlocked ? inquiry.phone : maskPhone(inquiry.phone)}
+            {inquiry.phone}
           </span>
         </div>
 
