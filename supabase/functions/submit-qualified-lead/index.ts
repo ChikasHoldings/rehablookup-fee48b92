@@ -613,7 +613,7 @@ Deno.serve(async (req) => {
     const firstName = data.name.split(" ")[0];
     try {
       await resend.emails.send({
-        from: "RehabLookup <notifications@rehablookup.com>",
+        from: "RehabLookup <no-reply@rehablookup.com>",
         to: data.email,
         subject: `Your inquiry to ${facility.name} has been received`,
         html: getSeekerConfirmationEmail(data.name, facility.name),
