@@ -774,7 +774,12 @@ export default function AdminLeads() {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="new">New</SelectItem>
                     <SelectItem value="contacted">Contacted</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="admitted">Admitted</SelectItem>
                     <SelectItem value="converted">Converted</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
                     <SelectItem value="lost">Lost</SelectItem>
                   </SelectContent>
                 </Select>
