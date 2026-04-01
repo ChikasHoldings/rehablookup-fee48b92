@@ -24,7 +24,8 @@ import {
   XCircle,
   Loader2,
   ArrowLeft,
-  HeartHandshake
+  HeartHandshake,
+  AlertTriangle
 } from "lucide-react";
 import { 
   PlacementStatusCard, 
