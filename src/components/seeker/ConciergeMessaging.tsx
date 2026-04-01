@@ -104,6 +104,20 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Mark thread as read when seeker views messages
+  useEffect(() => {
+    if (!thread?.id || !messages || messages.length === 0) return;
+    
+    const markAsRead = async () => {
+      await supabase
+        .from("concierge_threads")
+        .update({ user_last_read_at: new Date().toISOString() })
+        .eq("id", thread.id);
+    };
+    
+    markAsRead();
+  }, [thread?.id, messages?.length]);
+
   // Realtime updates
   useEffect(() => {
     if (!thread?.id) return;
