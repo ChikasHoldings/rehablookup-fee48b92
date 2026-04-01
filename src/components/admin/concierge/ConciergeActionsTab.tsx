@@ -47,7 +47,7 @@ const STATUS_OPTIONS = [
   { value: "matched", label: "Facilities Found" },
   { value: "introductions_sent", label: "Introductions Sent" },
   { value: "in_contact", label: "In Contact" },
-  { value: "placed", label: "Placed" },
+  // "placed" is intentionally excluded — use the Confirm Placement action instead
   { value: "closed", label: "Closed" },
 ];
 
