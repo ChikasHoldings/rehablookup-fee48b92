@@ -40,6 +40,7 @@ export function UnlockLeadButton({
   hidePrice = false,
   onUnlockSuccess,
 }: UnlockLeadButtonProps) {
+  const navigate = useNavigate();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { unlockLead, isUnlocking, isLeadUnlocked } = useLeadUnlocks(facilityId);
   const { balance } = useProviderCredits(facilityId);
