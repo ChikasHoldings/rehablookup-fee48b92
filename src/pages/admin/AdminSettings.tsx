@@ -83,7 +83,6 @@ interface SettingRowProps {
   title: string;
   description: string;
   children: React.ReactNode;
-  comingSoon?: boolean;
 }
 
 interface PlatformSetting {
@@ -96,13 +95,10 @@ interface PlatformSetting {
 }
 
 const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(
-  ({ icon, title, description, children, comingSoon }, ref) => (
+  ({ icon, title, description, children }, ref) => (
     <div 
       ref={ref}
-      className={cn(
-        "flex items-center justify-between py-4",
-        comingSoon && "opacity-60"
-      )}
+      className="flex items-center justify-between py-4"
     >
       <div className="flex items-start gap-3">
         <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
@@ -111,9 +107,6 @@ const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(
         <div>
           <div className="flex items-center gap-2">
             <p className="font-medium">{title}</p>
-            {comingSoon && (
-              <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-            )}
           </div>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>

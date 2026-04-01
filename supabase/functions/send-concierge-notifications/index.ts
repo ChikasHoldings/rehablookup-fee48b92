@@ -430,7 +430,7 @@ async function sendMatchesFoundEmail(
       user_id: inquiry.user_id,
       type: 'concierge_matches_found',
       title: 'Matches Found!',
-      message: `We found ${matchCount} facilities that match your needs. Introductions coming soon.`,
+      message: `We found ${matchCount} facilities that match your needs. Your advisor will coordinate introductions shortly.`,
       link: '/account/concierge',
       metadata: { inquiry_id: inquiry.id, match_count: matchCount },
     }).select('id').single();
