@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
         const unsubToken = crypto.randomUUID();
         
         await resend.emails.send({
-          from: "RehabLookup <support@rehablookup.com>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: [lead.email],
           subject: "Still looking for treatment help? We can help.",
           html: getFollowUpEmail(lead.first_name, unsubToken),

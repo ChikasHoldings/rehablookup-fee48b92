@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
     if (facilityEmail) {
       try {
         await resend.emails.send({
-          from: "RehabLookup <leads@rehablookup.com>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: [facilityEmail],
           subject: `New Inquiry for ${facility.name}`,
           html: getFacilityNotificationEmail(marketingLead.first_name, facility.name),
