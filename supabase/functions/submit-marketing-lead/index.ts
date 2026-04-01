@@ -154,7 +154,6 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Lead location determined", { state: leadState, zip: body.locationZip });
 
-    }
 
     // Store the marketing lead with sanitized data
     const { data: lead, error: insertError } = await supabase
