@@ -543,7 +543,7 @@ Deno.serve(async (req) => {
     const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
     const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000); // 72 hours total
 
-    // Insert lead with redistribution fields (using sanitized data)
+    // Insert lead with redistribution fields and enhanced intake data (using sanitized data)
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
@@ -569,6 +569,20 @@ Deno.serve(async (req) => {
         exclusive_until: exclusiveUntil.toISOString(),
         extended_until: extendedUntil.toISOString(),
         redistribution_status: "exclusive",
+        // Enhanced intake fields
+        age_range: data.ageRange || null,
+        gender: data.gender || null,
+        relationship_to_patient: data.relationshipToPatient || null,
+        previous_treatment: data.previousTreatment || null,
+        previous_treatment_details: data.previousTreatmentDetails || null,
+        co_occurring_conditions: data.coOccurringConditions || null,
+        employment_status: data.employmentStatus || null,
+        veteran_status: data.veteranStatus || null,
+        legal_involvement: data.legalInvolvement || null,
+        readiness_level: data.readinessLevel || null,
+        best_time_to_call: data.bestTimeToCall || null,
+        budget_preference: data.budgetPreference || null,
+        special_needs: data.specialNeeds || [],
       })
       .select("id")
       .single();

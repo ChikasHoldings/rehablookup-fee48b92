@@ -293,8 +293,8 @@ export function SingleQuestionFlow({
     const alreadyVerified = await checkAndAutoVerifyEmail(formData.email);
     
     if (alreadyVerified) {
-      // Email already verified - submit directly
-      await onSubmit();
+      // Email already verified - submit directly with skip flag to avoid React state race condition
+      await onSubmit({ skipVerificationCheck: true });
       return;
     }
     
