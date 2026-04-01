@@ -464,6 +464,10 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
       setEmailSent(true);
       queryClient.invalidateQueries({ queryKey: ["lead-emails"] });
       queryClient.invalidateQueries({ queryKey: ["lead-sent-templates", lead?.id] });
+      // Refresh lead lists to reflect auto-status update (new → contacted)
+      queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
       toast({
         title: "Email sent successfully!",
         description: data.message || `Your message has been delivered to ${lead?.name}`,
