@@ -17,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, type LeadStatus } from "./LeadStatusBadge";
-import { maskLeadName } from "@/lib/leadMasking";
 import type { Lead } from "./LeadDetailPanel";
 
 interface MobileLeadCardProps {
