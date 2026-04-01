@@ -154,37 +154,39 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Lead location determined", { state: leadState, zip: body.locationZip });
 
-    // Store the marketing lead
+    }
+
+    // Store the marketing lead with sanitized data
     const { data: lead, error: insertError } = await supabase
       .from("marketing_leads")
       .insert({
-        first_name: body.firstName.trim(),
-        last_name: body.lastName.trim(),
-        email: body.email.toLowerCase().trim(),
-        phone: body.phone.trim(),
-        preferred_contact: body.preferredContact || "phone",
-        urgency: body.urgency,
-        who_seeking_help: body.whoSeekingHelp,
-        location_zip: body.locationZip,
-        location_city_state: body.locationCityState,
-        level_of_care: body.levelOfCare,
-        insurance_type: body.insuranceType,
-        insurance_provider: body.insuranceProvider,
-        primary_substance: body.primarySubstance || [],
-        dual_diagnosis: body.dualDiagnosis,
-        age_range: body.ageRange,
-        gender: body.gender,
-        previous_treatment: body.previousTreatment,
-        co_occurring_conditions: body.coOccurringConditions || [],
-        employment_status: body.employmentStatus,
-        message: body.message,
+        first_name: firstName,
+        last_name: lastName,
+        email: sanitizedEmail,
+        phone: phone,
+        preferred_contact: sanitizeStr(body.preferredContact, 20) || "phone",
+        urgency: sanitizeStr(body.urgency, 30),
+        who_seeking_help: sanitizeStr(body.whoSeekingHelp, 30),
+        location_zip: sanitizeStr(body.locationZip, 10),
+        location_city_state: sanitizeStr(body.locationCityState, 100),
+        level_of_care: sanitizeStr(body.levelOfCare, 50),
+        insurance_type: sanitizeStr(body.insuranceType, 50),
+        insurance_provider: sanitizeStr(body.insuranceProvider, 100),
+        primary_substance: Array.isArray(body.primarySubstance) ? body.primarySubstance.map(s => sanitizeStr(s, 50)).filter(Boolean).slice(0, 10) : [],
+        dual_diagnosis: sanitizeStr(body.dualDiagnosis, 30),
+        age_range: sanitizeStr(body.ageRange, 20),
+        gender: sanitizeStr(body.gender, 20),
+        previous_treatment: sanitizeStr(body.previousTreatment, 30),
+        co_occurring_conditions: Array.isArray(body.coOccurringConditions) ? body.coOccurringConditions.map(s => sanitizeStr(s, 50)).filter(Boolean).slice(0, 10) : [],
+        employment_status: sanitizeStr(body.employmentStatus, 30),
+        message: sanitizeStr(body.message, 2000),
         source: "marketing",
-        utm_source: body.utmSource,
-        utm_medium: body.utmMedium,
-        utm_campaign: body.utmCampaign,
-        utm_term: body.utmTerm,
-        utm_content: body.utmContent,
-        landing_page: body.landingPage,
+        utm_source: sanitizeStr(body.utmSource, 100),
+        utm_medium: sanitizeStr(body.utmMedium, 100),
+        utm_campaign: sanitizeStr(body.utmCampaign, 100),
+        utm_term: sanitizeStr(body.utmTerm, 100),
+        utm_content: sanitizeStr(body.utmContent, 100),
+        landing_page: sanitizeStr(body.landingPage, 500),
         status: "new",
       })
       .select()
