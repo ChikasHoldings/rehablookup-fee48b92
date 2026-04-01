@@ -24,7 +24,8 @@ import {
   XCircle,
   Loader2,
   ArrowLeft,
-  HeartHandshake
+  HeartHandshake,
+  AlertTriangle
 } from "lucide-react";
 import { 
   PlacementStatusCard, 
@@ -100,7 +101,7 @@ export default function SeekerConcierge() {
   const userPhone = currentUser?.user_metadata?.phone || "";
 
   // Fetch user's concierge cases
-  const { data: cases, isLoading: casesLoading, refetch } = useQuery({
+  const { data: cases, isLoading: casesLoading, isError: casesError, refetch } = useQuery({
     queryKey: ["seeker-concierge-cases"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -384,6 +385,27 @@ export default function SeekerConcierge() {
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-48 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (casesError) {
+    return (
+      <div className="container max-w-4xl py-8">
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="py-12 text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-3" />
+            <h2 className="text-lg font-semibold mb-1">Unable to load your placement cases</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              This may be a temporary issue. Please try again.
+            </p>
+            <Button variant="outline" onClick={() => refetch()} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
