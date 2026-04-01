@@ -69,6 +69,22 @@ interface MatchedFacility {
   facilityType: string;
 }
 
+// ============ INPUT SANITIZATION ============
+function sanitizeStr(str: unknown, maxLen = 200): string {
+  if (!str || typeof str !== "string") return "";
+  return str.trim().replace(/[<>]/g, "").slice(0, maxLen);
+}
+function sanitizeEmail(email: unknown): string {
+  if (!email || typeof email !== "string") throw new Error("Invalid email");
+  const cleaned = email.trim().toLowerCase().slice(0, 254);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) throw new Error("Invalid email format");
+  return cleaned;
+}
+function sanitizePhone(phone: unknown): string {
+  if (!phone || typeof phone !== "string") return "";
+  return phone.replace(/[^\d+\-() ]/g, "").slice(0, 20);
+}
+
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
@@ -86,11 +102,41 @@ Deno.serve(async (req) => {
 
     const body: MarketingLeadRequest = await req.json();
     
-    // Validation
-    if (!body.firstName || !body.lastName || !body.email || !body.phone) {
+    // Validate & sanitize required fields
+    let sanitizedEmail: string;
+    try {
+      sanitizedEmail = sanitizeEmail(body.email);
+    } catch {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Valid email address is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const firstName = sanitizeStr(body.firstName, 50);
+    const lastName = sanitizeStr(body.lastName, 50);
+    const phone = sanitizePhone(body.phone);
+
+    if (!firstName || !lastName || !phone || phone.replace(/\D/g, "").length < 10) {
+      return new Response(
+        JSON.stringify({ error: "First name, last name, and valid phone are required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Rate limiting: max 5 submissions per email per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentSubmissions } = await supabase
+      .from("marketing_leads")
+      .select("*", { count: "exact", head: true })
+      .eq("email", sanitizedEmail)
+      .gte("created_at", oneHourAgo);
+
+    if (recentSubmissions && recentSubmissions >= 5) {
+      log(requestId, "WARN", "Rate limit exceeded", { email: sanitizedEmail });
+      return new Response(
+        JSON.stringify({ error: "Too many submissions. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
