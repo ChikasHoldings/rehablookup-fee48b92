@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
+const VERSION = "1.1.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    log(requestId, "INFO", "Starting marketing follow-up email job");
+    log(requestId, "INFO", `Starting marketing follow-up email job v${VERSION}`);
     
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -59,16 +60,52 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Found unengaged marketing leads", { count: unengagedLeads.length });
 
+    // Check suppressed emails to avoid sending to bounced/complained/unsubscribed addresses
+    const emails = unengagedLeads.map((l) => l.email);
+    let suppressedSet = new Set<string>();
+    if (emails.length > 0) {
+      const { data: suppressed } = await supabase
+        .from("suppressed_emails")
+        .select("email")
+        .in("email", emails);
+      if (suppressed) {
+        suppressedSet = new Set(suppressed.map((s: { email: string }) => s.email.toLowerCase()));
+      }
+    }
+
     let sent = 0;
     let failed = 0;
+    let suppressed_count = 0;
 
     for (const lead of unengagedLeads) {
+      // Skip suppressed emails
+      if (suppressedSet.has(lead.email.toLowerCase())) {
+        suppressed_count++;
+        log(requestId, "INFO", "Skipping suppressed email", { leadId: lead.id, email: lead.email });
+        // Mark as sent to avoid retrying
+        await supabase
+          .from("marketing_leads")
+          .update({
+            followup_email_sent: true,
+            followup_email_sent_at: new Date().toISOString(),
+          })
+          .eq("id", lead.id);
+        continue;
+      }
+
       try {
+        // Generate a simple unsubscribe token for this email
+        const unsubToken = crypto.randomUUID();
+        
         await resend.emails.send({
           from: "RehabLookup <support@rehablookup.com>",
           to: [lead.email],
           subject: "Still looking for treatment help? We can help.",
-          html: getFollowUpEmail(lead.first_name),
+          html: getFollowUpEmail(lead.first_name, unsubToken),
+          headers: {
+            "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
 
         // Mark as sent
@@ -88,14 +125,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    log(requestId, "INFO", "Marketing follow-up job complete", { sent, failed, total: unengagedLeads.length });
+    log(requestId, "INFO", "Marketing follow-up job complete", { sent, failed, suppressed: suppressed_count, total: unengagedLeads.length });
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         processed: unengagedLeads.length,
         sent,
-        failed 
+        failed,
+        suppressed: suppressed_count,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
@@ -109,7 +147,7 @@ Deno.serve(async (req) => {
   }
 });
 
-function getFollowUpEmail(firstName: string): string {
+function getFollowUpEmail(firstName: string, unsubToken: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -211,8 +249,13 @@ function getFollowUpEmail(firstName: string): string {
                     <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
                       Connecting families with quality care
                     </p>
-                    <p style="margin: 0 0 8px 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
-                      You received this because you requested treatment information.
+                    <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
+                      You received this because you requested treatment information on RehabLookup.
+                    </p>
+                    <p style="margin: 0 0 8px 0;">
+                      <a href="https://rehablookup.com/unsubscribe?token=${unsubToken}" style="color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; text-decoration: underline;">
+                        Unsubscribe from these emails
+                      </a>
                     </p>
                     <p style="margin: 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
                       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
