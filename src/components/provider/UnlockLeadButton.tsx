@@ -66,7 +66,7 @@ export function UnlockLeadButton({
   const handleUnlock = async () => {
     if (!hasEnoughCredits) {
       // Redirect to billing page to purchase credits
-      window.location.href = `/provider/billing?purchase_credits=true&amount=${finalPrice}`;
+      navigate(`/provider/billing?purchase_credits=true&amount=${finalPrice}`);
       return;
     }
 
