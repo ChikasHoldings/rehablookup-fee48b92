@@ -45,6 +45,7 @@ interface Lead {
   inquiry_type: InquiryType | null;
   provider_response_status: string | null;
   provider_responded_at: string | null;
+  is_unlocked: boolean | null;
 }
 
 interface LeadWithFacility extends Lead {
