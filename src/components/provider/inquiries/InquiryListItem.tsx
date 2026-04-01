@@ -3,7 +3,7 @@ import { MapPin, Lock, Unlock, Phone, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
-import { maskLeadName, maskEmail, maskPhone } from "@/lib/leadMasking";
+
 
 interface InquiryListItemProps {
   inquiry: {

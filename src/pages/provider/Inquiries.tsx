@@ -69,31 +69,13 @@ export default function ProviderInquiriesPage() {
   const { facilities } = useProviderFacilities();
   const isMobile = useIsMobile();
 
-  // Get all facility IDs for unlock checking
+  // Get all facility IDs
   const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
 
-  // Fetch all unlocks for ALL provider facilities (not just one)
-  const { data: allUnlocks = [], refetch: refetchUnlocks } = useQuery({
-    queryKey: ["provider-lead-unlocks", facilityIds],
-    queryFn: async () => {
-      if (facilityIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from("lead_unlocks")
-        .select("lead_id, facility_id")
-        .in("facility_id", facilityIds);
-      if (error) {
-        console.error("[Inquiries] Error fetching unlocks:", error);
-        return [];
-      }
-      return data || [];
-    },
-    enabled: facilityIds.length > 0,
-    staleTime: 1000 * 60 * 2,
-  });
-
-  // Helper to check if a lead is unlocked
+  // Helper to check if a lead is unlocked using the view's is_unlocked field
   const isLeadUnlocked = (leadId: string): boolean => {
-    return allUnlocks.some(u => u.lead_id === leadId);
+    const inquiry = inquiries.find(i => i.id === leadId);
+    return inquiry?.is_unlocked === true;
   };
 
   // Create facility lookup map
