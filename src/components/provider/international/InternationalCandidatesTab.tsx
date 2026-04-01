@@ -64,7 +64,7 @@ const BUDGET_LABELS: Record<string, string> = {
   "100k+": "$100K+/month",
 };
 
-export function InternationalCandidatesTab() {
+export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolean }) {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const [selectedMatch, setSelectedMatch] = useState<InternationalMatch | null>(null);
@@ -153,8 +153,13 @@ export function InternationalCandidatesTab() {
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-2xl font-bold text-violet-600">$3,000</p>
+              <p className="text-2xl font-bold text-violet-600">
+                {hasPro ? "$2,400" : "$3,000"}
+              </p>
               <p className="text-xs text-muted-foreground">per confirmed admission</p>
+              {hasPro && (
+                <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Pro: Save $600</p>
+              )}
             </div>
           </div>
         </CardContent>
