@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Lock, Zap, CreditCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -39,6 +40,7 @@ export function UnlockLeadButton({
   hidePrice = false,
   onUnlockSuccess,
 }: UnlockLeadButtonProps) {
+  const navigate = useNavigate();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { unlockLead, isUnlocking, isLeadUnlocked } = useLeadUnlocks(facilityId);
   const { balance } = useProviderCredits(facilityId);
@@ -64,7 +66,7 @@ export function UnlockLeadButton({
   const handleUnlock = async () => {
     if (!hasEnoughCredits) {
       // Redirect to billing page to purchase credits
-      window.location.href = `/provider/billing?purchase_credits=true&amount=${finalPrice}`;
+      navigate(`/provider/billing?purchase_credits=true&amount=${finalPrice}`);
       return;
     }
 
