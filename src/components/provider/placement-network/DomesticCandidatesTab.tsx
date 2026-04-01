@@ -125,6 +125,23 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         throw new Error("Invalid response value");
       }
 
+      // First verify the introduction hasn't already been responded to (race condition guard)
+      const { data: current } = await supabase
+        .from("concierge_introductions")
+        .select("provider_response, concierge_inquiries(status)")
+        .eq("id", id)
+        .eq("facility_id", selectedFacility?.id)
+        .maybeSingle();
+
+      if (current?.provider_response && current.provider_response !== "pending") {
+        throw new Error("You've already responded to this candidate");
+      }
+
+      const caseStatus = (current?.concierge_inquiries as any)?.status;
+      if (caseStatus === "closed" || caseStatus === "placed") {
+        throw new Error("This case is no longer active");
+      }
+
       const { error } = await supabase
         .from("concierge_introductions")
         .update({
