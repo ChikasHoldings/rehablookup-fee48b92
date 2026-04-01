@@ -111,9 +111,21 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
     });
   };
 
+  const isUnpaid = caseData.payment_status !== 'paid' && caseData.payment_status !== 'succeeded';
+
   return (
     <div className="space-y-4">
-      {/* Advisor Assignment */}
+      {/* Unpaid Warning */}
+      {isUnpaid && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Payment Not Received</AlertTitle>
+          <AlertDescription>
+            This case has not been paid ($29 intake fee). The seeker may have abandoned checkout. 
+            Avoid sending introductions until payment is confirmed.
+          </AlertDescription>
+        </Alert>
+      )}
       <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
 
       {/* Admin Confirm Placement - ONLY admins can confirm */}
