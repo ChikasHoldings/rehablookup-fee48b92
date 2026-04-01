@@ -82,7 +82,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
 
   const handlePrefetch = useCallback((path: string) => {
