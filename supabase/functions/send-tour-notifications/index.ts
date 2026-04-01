@@ -150,7 +150,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (resend && facilityEmail) {
           try {
             const emailResult = await resend.emails.send({
-              from: "RehabLookup Concierge <placement@rehablookup.com>",
+              from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: [facilityEmail],
               subject: `New Tour Request - ${emailData.seekerName}`,
               html: tourRequestedFacilityEmail(emailData),
@@ -194,7 +194,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (resend) {
           try {
             await resend.emails.send({
-              from: "RehabLookup Concierge <placement@rehablookup.com>",
+              from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: ["placement@rehablookup.com"],
               subject: `[Tour Requested] ${emailData.seekerName} → ${emailData.facilityName}`,
               html: tourRequestedAdminEmail(emailData),
@@ -215,7 +215,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (resend && userEmail) {
           try {
             const emailResult = await resend.emails.send({
-              from: "RehabLookup Concierge <placement@rehablookup.com>",
+              from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: [userEmail],
               subject: `Tour Time Proposed - ${emailData.facilityName}`,
               html: tourProposedUserEmail(emailData),
@@ -264,7 +264,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (resend && facilityEmail) {
           try {
             const emailResult = await resend.emails.send({
-              from: "RehabLookup Concierge <placement@rehablookup.com>",
+              from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: [facilityEmail],
               subject: `Tour Confirmed - ${emailData.seekerName}`,
               html: tourConfirmedFacilityEmail(emailData),
@@ -308,7 +308,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (resend) {
           try {
             await resend.emails.send({
-              from: "RehabLookup Concierge <placement@rehablookup.com>",
+              from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: ["placement@rehablookup.com"],
               subject: `[Tour Confirmed] ${emailData.seekerName} → ${emailData.facilityName}`,
               html: `<div style="font-family: Arial; padding: 20px;">
@@ -337,7 +337,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           if (facilityEmail) {
             try {
               await resend.emails.send({
-                from: "RehabLookup Concierge <placement@rehablookup.com>",
+                from: "RehabLookup Concierge <no-reply@rehablookup.com>",
                 to: [facilityEmail],
                 subject: `Tour Cancelled - ${emailData.seekerName}`,
                 html: tourCancelledFacilityEmail(emailData),
@@ -372,7 +372,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           if (userEmail) {
             try {
               await resend.emails.send({
-                from: "RehabLookup Concierge <placement@rehablookup.com>",
+                from: "RehabLookup Concierge <no-reply@rehablookup.com>",
                 to: [userEmail],
                 subject: `Tour Update - ${emailData.facilityName}`,
                 html: tourCancelledUserEmail(emailData),
@@ -413,7 +413,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (resend) {
           try {
             await resend.emails.send({
-              from: "RehabLookup Concierge <placement@rehablookup.com>",
+              from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: ["placement@rehablookup.com"],
               subject: `[Tour Cancelled] ${emailData.seekerName} → ${emailData.facilityName}`,
               html: `<div style="font-family: Arial; padding: 20px;">

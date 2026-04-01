@@ -343,7 +343,7 @@ async function sendIntakeReceivedEmail(
   `);
 
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "RehabLookup Concierge <concierge@rehablookup.com>",
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `We've Received Your Request - Case #${caseId}`,
     html,
@@ -415,7 +415,7 @@ async function sendMatchesFoundEmail(
   `);
 
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "RehabLookup Concierge <concierge@rehablookup.com>",
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `We Found ${matchCount} Matches for You - Case #${caseId}`,
     html,
@@ -475,7 +475,7 @@ async function sendProviderInterestedEmail(
   `);
 
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "RehabLookup Concierge <concierge@rehablookup.com>",
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `${facility.name} Wants to Connect - Case #${caseId}`,
     html,
@@ -536,7 +536,7 @@ async function sendSeekerConfirmedEmail(
   `);
 
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "RehabLookup Concierge <concierge@rehablookup.com>",
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Client Confirmed Admission - Case #${caseId}`,
     html,
@@ -600,7 +600,7 @@ async function sendProviderConfirmedEmail(
   `);
 
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "RehabLookup Concierge <concierge@rehablookup.com>",
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `${facility.name} Confirmed Your Placement - Case #${caseId}`,
     html,
@@ -678,7 +678,7 @@ async function sendPlacementCompleteEmails(
   `);
 
   const { data: seekerEmailData, error: seekerEmailError } = await resend.emails.send({
-    from: "RehabLookup Concierge <concierge@rehablookup.com>",
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Congratulations! Your Placement is Complete - Case #${caseId}`,
     html: seekerHtml,
@@ -714,7 +714,7 @@ async function sendPlacementCompleteEmails(
     `);
 
     const { data: providerEmailData, error: providerEmailError } = await resend.emails.send({
-      from: "RehabLookup Concierge <concierge@rehablookup.com>",
+      from: "RehabLookup Concierge <no-reply@rehablookup.com>",
       to: [recipientEmail],
       subject: `Placement Complete - Case #${caseId}`,
       html: providerHtml,
@@ -833,7 +833,7 @@ async function sendInvoiceIssuedEmail(
   `);
 
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "RehabLookup Billing <billing@rehablookup.com>",
+    from: "RehabLookup <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Placement Fee Invoice - ${amountFormatted} - Case #${caseId}`,
     html,
@@ -908,7 +908,7 @@ async function sendInvoicePaidEmail(
   `);
 
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: "RehabLookup Billing <billing@rehablookup.com>",
+    from: "RehabLookup <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Payment Received - ${amountFormatted} - Case #${caseId}`,
     html,

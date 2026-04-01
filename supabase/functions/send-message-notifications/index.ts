@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
     for (const email of emails) {
       try {
         const result = await resend.emails.send({
-          from: "RehabLookup Concierge <placement@rehablookup.com>",
+          from: "RehabLookup Concierge <no-reply@rehablookup.com>",
           to: [email.to],
           subject: email.subject,
           html: email.html,

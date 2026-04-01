@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       
       try {
         await resend.emails.send({
-          from: "RehabLookup Placement <placement@rehablookup.com>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: [body.seekerEmail],
           subject: `Your Placement Request Received - Case #${caseNumber}`,
           html: `
