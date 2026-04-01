@@ -522,6 +522,22 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Global rate limit: max 10 submissions per email per hour (across all facilities)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: globalEmailCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("email", data.email)
+      .gte("created_at", oneHourAgo);
+
+    if (globalEmailCount && globalEmailCount >= 10) {
+      log(requestId, "WARN", "Global rate limit exceeded", { email: data.email.substring(0, 3) + "***" });
+      return new Response(
+        JSON.stringify({ success: false, error: "Too many inquiries. Please wait before submitting again." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Calculate expiry timestamps for redistribution
     const now = new Date();
     const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours

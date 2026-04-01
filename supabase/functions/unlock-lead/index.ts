@@ -91,6 +91,19 @@ Deno.serve(async (req) => {
 
     const { leadId, facilityId, paymentMethod = 'credits' } = await req.json();
     
+    // UUID validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!leadId || !uuidRegex.test(leadId)) {
+      return new Response(JSON.stringify({ error: "Invalid lead ID format", requestId }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!facilityId || !uuidRegex.test(facilityId)) {
+      return new Response(JSON.stringify({ error: "Invalid facility ID format", requestId }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Validate payment method against whitelist
     const ALLOWED_PAYMENT_METHODS = ['credits', 'stripe'];
     if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
@@ -102,14 +115,6 @@ Deno.serve(async (req) => {
     }
     
     logStep(requestId, "Processing unlock request", { leadId, facilityId, paymentMethod });
-
-    if (!leadId || !facilityId) {
-      logStep(requestId, "Missing required fields");
-      return new Response(JSON.stringify({ error: "Missing leadId or facilityId", requestId }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     // Create admin client for database operations
     const supabaseAdmin = createClient(

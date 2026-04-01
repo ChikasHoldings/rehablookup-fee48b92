@@ -69,6 +69,22 @@ interface MatchedFacility {
   facilityType: string;
 }
 
+// ============ INPUT SANITIZATION ============
+function sanitizeStr(str: unknown, maxLen = 200): string {
+  if (!str || typeof str !== "string") return "";
+  return str.trim().replace(/[<>]/g, "").slice(0, maxLen);
+}
+function sanitizeEmail(email: unknown): string {
+  if (!email || typeof email !== "string") throw new Error("Invalid email");
+  const cleaned = email.trim().toLowerCase().slice(0, 254);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) throw new Error("Invalid email format");
+  return cleaned;
+}
+function sanitizePhone(phone: unknown): string {
+  if (!phone || typeof phone !== "string") return "";
+  return phone.replace(/[^\d+\-() ]/g, "").slice(0, 20);
+}
+
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
@@ -86,11 +102,41 @@ Deno.serve(async (req) => {
 
     const body: MarketingLeadRequest = await req.json();
     
-    // Validation
-    if (!body.firstName || !body.lastName || !body.email || !body.phone) {
+    // Validate & sanitize required fields
+    let sanitizedEmail: string;
+    try {
+      sanitizedEmail = sanitizeEmail(body.email);
+    } catch (_e) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Valid email address is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const firstName = sanitizeStr(body.firstName, 50);
+    const lastName = sanitizeStr(body.lastName, 50);
+    const phone = sanitizePhone(body.phone);
+
+    if (!firstName || !lastName || !phone || phone.replace(/\D/g, "").length < 10) {
+      return new Response(
+        JSON.stringify({ error: "First name, last name, and valid phone are required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Rate limiting: max 5 submissions per email per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentSubmissions } = await supabase
+      .from("marketing_leads")
+      .select("*", { count: "exact", head: true })
+      .eq("email", sanitizedEmail)
+      .gte("created_at", oneHourAgo);
+
+    if (recentSubmissions && recentSubmissions >= 5) {
+      log(requestId, "WARN", "Rate limit exceeded", { email: sanitizedEmail });
+      return new Response(
+        JSON.stringify({ error: "Too many submissions. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -108,37 +154,38 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Lead location determined", { state: leadState, zip: body.locationZip });
 
-    // Store the marketing lead
+
+    // Store the marketing lead with sanitized data
     const { data: lead, error: insertError } = await supabase
       .from("marketing_leads")
       .insert({
-        first_name: body.firstName.trim(),
-        last_name: body.lastName.trim(),
-        email: body.email.toLowerCase().trim(),
-        phone: body.phone.trim(),
-        preferred_contact: body.preferredContact || "phone",
-        urgency: body.urgency,
-        who_seeking_help: body.whoSeekingHelp,
-        location_zip: body.locationZip,
-        location_city_state: body.locationCityState,
-        level_of_care: body.levelOfCare,
-        insurance_type: body.insuranceType,
-        insurance_provider: body.insuranceProvider,
-        primary_substance: body.primarySubstance || [],
-        dual_diagnosis: body.dualDiagnosis,
-        age_range: body.ageRange,
-        gender: body.gender,
-        previous_treatment: body.previousTreatment,
-        co_occurring_conditions: body.coOccurringConditions || [],
-        employment_status: body.employmentStatus,
-        message: body.message,
+        first_name: firstName,
+        last_name: lastName,
+        email: sanitizedEmail,
+        phone: phone,
+        preferred_contact: sanitizeStr(body.preferredContact, 20) || "phone",
+        urgency: sanitizeStr(body.urgency, 30),
+        who_seeking_help: sanitizeStr(body.whoSeekingHelp, 30),
+        location_zip: sanitizeStr(body.locationZip, 10),
+        location_city_state: sanitizeStr(body.locationCityState, 100),
+        level_of_care: sanitizeStr(body.levelOfCare, 50),
+        insurance_type: sanitizeStr(body.insuranceType, 50),
+        insurance_provider: sanitizeStr(body.insuranceProvider, 100),
+        primary_substance: Array.isArray(body.primarySubstance) ? body.primarySubstance.map(s => sanitizeStr(s, 50)).filter(Boolean).slice(0, 10) : [],
+        dual_diagnosis: sanitizeStr(body.dualDiagnosis, 30),
+        age_range: sanitizeStr(body.ageRange, 20),
+        gender: sanitizeStr(body.gender, 20),
+        previous_treatment: sanitizeStr(body.previousTreatment, 30),
+        co_occurring_conditions: Array.isArray(body.coOccurringConditions) ? body.coOccurringConditions.map(s => sanitizeStr(s, 50)).filter(Boolean).slice(0, 10) : [],
+        employment_status: sanitizeStr(body.employmentStatus, 30),
+        message: sanitizeStr(body.message, 2000),
         source: "marketing",
-        utm_source: body.utmSource,
-        utm_medium: body.utmMedium,
-        utm_campaign: body.utmCampaign,
-        utm_term: body.utmTerm,
-        utm_content: body.utmContent,
-        landing_page: body.landingPage,
+        utm_source: sanitizeStr(body.utmSource, 100),
+        utm_medium: sanitizeStr(body.utmMedium, 100),
+        utm_campaign: sanitizeStr(body.utmCampaign, 100),
+        utm_term: sanitizeStr(body.utmTerm, 100),
+        utm_content: sanitizeStr(body.utmContent, 100),
+        landing_page: sanitizeStr(body.landingPage, 500),
         status: "new",
       })
       .select()
@@ -191,9 +238,9 @@ Deno.serve(async (req) => {
     try {
       await resend.emails.send({
         from: "RehabLookup <noreply@rehablookup.com>",
-        to: [body.email.toLowerCase().trim()],
+        to: [sanitizedEmail],
         subject: "We found treatment options for you",
-        html: getLeadConfirmationEmail(body.firstName, matchedFacilities.length),
+        html: getLeadConfirmationEmail(firstName, matchedFacilities.length),
       });
       log(requestId, "INFO", "Confirmation email sent to lead");
     } catch (emailError) {
