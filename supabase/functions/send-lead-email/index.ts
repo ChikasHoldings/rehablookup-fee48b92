@@ -577,6 +577,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Failed to log email:", logError);
     }
 
+    // Auto-update lead status to "contacted" if currently "new"
+    const { error: statusError } = await supabase
+      .from("leads")
+      .update({ status: "contacted" })
+      .eq("id", lead.id)
+      .eq("status", "new");
+
+    if (statusError) {
+      console.error("Failed to auto-update lead status:", statusError);
+    } else {
+      console.log("Lead status auto-updated to contacted for lead:", lead.id);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
