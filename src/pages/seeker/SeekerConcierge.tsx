@@ -100,7 +100,7 @@ export default function SeekerConcierge() {
   const userPhone = currentUser?.user_metadata?.phone || "";
 
   // Fetch user's concierge cases
-  const { data: cases, isLoading: casesLoading, refetch } = useQuery({
+  const { data: cases, isLoading: casesLoading, isError: casesError, refetch } = useQuery({
     queryKey: ["seeker-concierge-cases"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();

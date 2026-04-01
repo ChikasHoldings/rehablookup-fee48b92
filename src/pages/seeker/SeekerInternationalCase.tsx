@@ -51,7 +51,7 @@ export default function SeekerInternationalCase() {
     },
   });
 
-  const { data: placementCase, isLoading } = useQuery({
+  const { data: placementCase, isLoading, isError, refetch } = useQuery({
     queryKey: ["seeker-international-case", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
