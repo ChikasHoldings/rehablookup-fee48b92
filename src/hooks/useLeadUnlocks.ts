@@ -77,7 +77,9 @@ export function useLeadUnlocks(facilityId?: string) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["lead-unlocks"] });
       queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-leads-all"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["lead-analytics"] });
       
       // Show savings toast for Pro members
       if (data.discountSaved && data.discountSaved > 0) {
