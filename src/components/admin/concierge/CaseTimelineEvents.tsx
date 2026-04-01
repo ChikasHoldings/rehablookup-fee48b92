@@ -147,6 +147,9 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
               </div>
               {event.data && Object.keys(event.data).length > 0 && (
                 <div className="text-xs text-muted-foreground mt-0.5">
+                  {event.data.from && event.data.to && (
+                    <span>{event.data.from} → {event.data.to}</span>
+                  )}
                   {event.data.count && <span>{event.data.count} items</span>}
                   {event.data.facility_name && <span>{event.data.facility_name}</span>}
                   {event.data.notes && <span className="italic">"{event.data.notes}"</span>}
