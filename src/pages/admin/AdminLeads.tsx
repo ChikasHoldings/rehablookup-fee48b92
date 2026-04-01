@@ -936,9 +936,9 @@ export default function AdminLeads() {
                         </TableCell>
                         <TableCell>
                           <RedistributionBadge 
-                            status={(lead as any).redistribution_status} 
-                            exclusiveUntil={(lead as any).exclusive_until}
-                            extendedUntil={(lead as any).extended_until}
+                            status={lead.redistribution_status} 
+                            exclusiveUntil={lead.exclusive_until}
+                            extendedUntil={lead.extended_until}
                           />
                         </TableCell>
                         <TableCell>
