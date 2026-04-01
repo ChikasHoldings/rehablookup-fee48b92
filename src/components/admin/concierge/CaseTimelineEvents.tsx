@@ -45,6 +45,8 @@ const EVENT_CONFIG: Record<string, { icon: React.ComponentType<any>; label: stri
   invoice_paid: { icon: DollarSign, label: "Invoice Paid", color: "text-green-500" },
   case_closed: { icon: XCircle, label: "Case Closed", color: "text-gray-500" },
   message_sent: { icon: MessageSquare, label: "Message Sent", color: "text-blue-400" },
+  pii_disclosed: { icon: Eye, label: "PII Disclosed", color: "text-amber-500" },
+  advisor_assigned: { icon: User, label: "Advisor Assigned", color: "text-purple-500" },
 };
 
 export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
