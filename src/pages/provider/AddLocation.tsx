@@ -98,7 +98,7 @@ export default function AddLocationPage() {
   // Zipcode auto-detection
   const { data: zipcodeData, isLoading: isLookingUp, error: lookupError, lookup } = useZipcodeLookup();
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
-  const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [lookupTimeout, setLookupTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const handleInputChange = (field: keyof FacilityFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

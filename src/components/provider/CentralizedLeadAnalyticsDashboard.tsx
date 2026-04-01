@@ -76,7 +76,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
 
   const hasMultipleFacilities = analytics.facilityBreakdown.length > 1;
 
-  // Calculate unlocked vs locked inquiries (placeholder - would need real data)
+  // Calculate unlocked vs locked inquiries from conversion funnel data
   const unlockedInquiries = analytics.conversionFunnel.contacted + analytics.conversionFunnel.qualified + analytics.conversionFunnel.converted;
   const lockedInquiries = analytics.conversionFunnel.new;
 
