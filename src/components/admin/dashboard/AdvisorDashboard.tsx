@@ -1,15 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   UserPlus,
-  Users,
   MessageCircle,
   Phone,
   CheckCircle2,
@@ -17,15 +18,27 @@ import {
   ChevronRight,
   HeartHandshake,
   Calendar,
-  Building2,
   AlertCircle,
+  Headphones,
+  MapPin,
+  Activity,
 } from "lucide-react";
+
+type CaseView = "mine" | "all";
 
 export function AdvisorDashboard() {
   const queryClient = useQueryClient();
+  const { user } = useAdminAuth();
+  const [caseView, setCaseView] = useState<CaseView>("mine");
+
+  const advisorId = user?.id;
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["advisor-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["advisor-inquiry-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["advisor-recent-inquiries"] });
+    queryClient.invalidateQueries({ queryKey: ["advisor-message-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["advisor-tour-stats"] });
   }, [queryClient]);
 
   useEffect(() => {
@@ -40,16 +53,26 @@ export function AdvisorDashboard() {
     };
   }, [invalidateDashboard]);
 
-  // Fetch concierge inquiry stats
+  // Fetch concierge inquiry stats - filtered by advisor when "mine"
   const { data: inquiryStats, isLoading: loadingInquiries } = useQuery({
-    queryKey: ["advisor-inquiry-stats"],
+    queryKey: ["advisor-inquiry-stats", caseView, advisorId],
     queryFn: async () => {
-      const [total, newCases, inProgress, matched, placed] = await Promise.all([
-        supabase.from("concierge_inquiries").select("*", { count: "exact", head: true }),
-        supabase.from("concierge_inquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
-        supabase.from("concierge_inquiries").select("*", { count: "exact", head: true }).eq("status", "in_progress"),
-        supabase.from("concierge_inquiries").select("*", { count: "exact", head: true }).eq("status", "matched"),
-        supabase.from("concierge_inquiries").select("*", { count: "exact", head: true }).eq("status", "placed"),
+      const buildQuery = (status?: string) => {
+        let q = supabase.from("concierge_inquiries").select("*", { count: "exact", head: true });
+        if (caseView === "mine" && advisorId) {
+          q = q.eq("assigned_advisor_id", advisorId);
+        }
+        if (status) q = q.eq("status", status);
+        return q;
+      };
+
+      const [total, newCases, inProgress, matched, placed, closed] = await Promise.all([
+        buildQuery(),
+        buildQuery("new"),
+        buildQuery("reviewing"),
+        buildQuery("matched"),
+        buildQuery("placed"),
+        buildQuery("closed"),
       ]);
       return {
         total: total.count || 0,
@@ -57,22 +80,31 @@ export function AdvisorDashboard() {
         inProgress: inProgress.count || 0,
         matched: matched.count || 0,
         placed: placed.count || 0,
+        closed: closed.count || 0,
       };
     },
+    enabled: !!advisorId,
   });
 
   // Fetch recent inquiries
   const { data: recentInquiries, isLoading: loadingRecent } = useQuery({
-    queryKey: ["advisor-recent-inquiries"],
+    queryKey: ["advisor-recent-inquiries", caseView, advisorId],
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_phone, status, created_at, timeline_urgency, level_of_care")
-        .in("status", ["new", "in_progress", "matched"])
+        .select("id, user_name, user_phone, status, created_at, timeline_urgency, level_of_care, desired_location_state, preferred_state, payment_status")
+        .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"])
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(8);
+
+      if (caseView === "mine" && advisorId) {
+        query = query.eq("assigned_advisor_id", advisorId);
+      }
+
+      const { data } = await query;
       return data || [];
     },
+    enabled: !!advisorId,
   });
 
   // Fetch message stats
@@ -116,6 +148,19 @@ export function AdvisorDashboard() {
     },
   });
 
+  // Count unassigned cases (cases with no advisor)
+  const { data: unassignedCount } = useQuery({
+    queryKey: ["advisor-unassigned-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("concierge_inquiries")
+        .select("*", { count: "exact", head: true })
+        .is("assigned_advisor_id", null)
+        .not("status", "in", '("placed","closed")');
+      return count || 0;
+    },
+  });
+
   const actionItemsCount = (inquiryStats?.newCases || 0) + (messageStats?.unread || 0) + (tourStats?.pending || 0);
 
   function formatTimeAgo(dateString: string): string {
@@ -131,12 +176,16 @@ export function AdvisorDashboard() {
   }
 
   const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-    new: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30" },
-    in_progress: { label: "In Progress", color: "text-warning", bgColor: "bg-warning/10 border-warning/30" },
-    matched: { label: "Matched", color: "text-success", bgColor: "bg-success/10 border-success/30" },
-    placed: { label: "Placed", color: "text-primary", bgColor: "bg-primary/10 border-primary/30" },
+    new: { label: "New", color: "text-blue-600", bgColor: "bg-blue-50 border-blue-200" },
+    reviewing: { label: "Reviewing", color: "text-amber-600", bgColor: "bg-amber-50 border-amber-200" },
+    matching: { label: "Placing", color: "text-orange-600", bgColor: "bg-orange-50 border-orange-200" },
+    matched: { label: "Facilities Found", color: "text-emerald-600", bgColor: "bg-emerald-50 border-emerald-200" },
+    introductions_sent: { label: "Intros Sent", color: "text-violet-600", bgColor: "bg-violet-50 border-violet-200" },
+    in_contact: { label: "In Contact", color: "text-cyan-600", bgColor: "bg-cyan-50 border-cyan-200" },
+    placed: { label: "Placed", color: "text-green-700", bgColor: "bg-green-50 border-green-200" },
   };
 
+  const activeCases = (inquiryStats?.newCases || 0) + (inquiryStats?.inProgress || 0) + (inquiryStats?.matched || 0);
   const placementRate = inquiryStats?.total 
     ? Math.round(((inquiryStats.placed || 0) / inquiryStats.total) * 100) 
     : 0;
@@ -144,22 +193,34 @@ export function AdvisorDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center shadow-lg">
-          <HeartHandshake className="h-5 w-5 text-white" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center shadow-lg">
+            <HeartHandshake className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Placement Advisor</h1>
+            <p className="text-sm text-muted-foreground">Your cases, messaging & placement tracking</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Placement Advisor Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Concierge cases, messaging & placement tracking</p>
-        </div>
+
+        {/* View Toggle */}
+        <Tabs value={caseView} onValueChange={(v) => setCaseView(v as CaseView)}>
+          <TabsList className="h-9">
+            <TabsTrigger value="mine" className="text-xs px-3">My Cases</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs px-3">All Cases</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Active Cases */}
-        <Card className={`border shadow-sm ${actionItemsCount > 0 ? "border-purple-500/50 bg-purple-50/50" : ""}`}>
+        <Card className={`border shadow-sm ${actionItemsCount > 0 ? "border-purple-300 bg-purple-50/50 dark:border-purple-700 dark:bg-purple-950/20" : ""}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Cases</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {caseView === "mine" ? "My Active Cases" : "All Active Cases"}
+            </CardTitle>
             <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -167,11 +228,16 @@ export function AdvisorDashboard() {
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{(inquiryStats?.newCases || 0) + (inquiryStats?.inProgress || 0) + (inquiryStats?.matched || 0)}</div>
-                <div className="flex gap-1.5 mt-1">
+                <div className="text-2xl font-bold">{activeCases}</div>
+                <div className="flex gap-1.5 mt-1 flex-wrap">
                   {inquiryStats?.newCases ? (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-info/20 text-info-foreground">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                       {inquiryStats.newCases} new
+                    </Badge>
+                  ) : null}
+                  {unassignedCount && unassignedCount > 0 ? (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                      {unassignedCount} unassigned
                     </Badge>
                   ) : null}
                 </div>
@@ -181,7 +247,7 @@ export function AdvisorDashboard() {
         </Card>
 
         {/* Unread Messages */}
-        <Card className={`border shadow-sm ${(messageStats?.unread || 0) > 0 ? "border-warning/50 bg-warning/5" : ""}`}>
+        <Card className={`border shadow-sm ${(messageStats?.unread || 0) > 0 ? "border-amber-300 bg-amber-50/50 dark:border-amber-700 dark:bg-amber-950/20" : ""}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Unread Messages</CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -199,7 +265,7 @@ export function AdvisorDashboard() {
         </Card>
 
         {/* Tour Requests */}
-        <Card className="border shadow-sm">
+        <Card className={`border shadow-sm ${(tourStats?.pending || 0) > 0 ? "border-cyan-300 bg-cyan-50/50 dark:border-cyan-700 dark:bg-cyan-950/20" : ""}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Tour Requests</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -219,7 +285,9 @@ export function AdvisorDashboard() {
         {/* Placement Rate */}
         <Card className="border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Placement Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {caseView === "mine" ? "My Placement Rate" : "Overall Rate"}
+            </CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -242,8 +310,12 @@ export function AdvisorDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-medium">Active Cases</CardTitle>
-                <CardDescription>Recent concierge inquiries</CardDescription>
+                <CardTitle className="text-base font-medium">
+                  {caseView === "mine" ? "My Active Cases" : "All Active Cases"}
+                </CardTitle>
+                <CardDescription>
+                  {caseView === "mine" ? "Cases assigned to you" : "All concierge inquiries"}
+                </CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/admin/concierge" className="text-xs">
@@ -259,23 +331,40 @@ export function AdvisorDashboard() {
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : recentInquiries && recentInquiries.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {recentInquiries.map((inquiry: any) => {
                   const status = statusConfig[inquiry.status] || statusConfig.new;
+                  const isPaid = inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded';
+                  const location = inquiry.desired_location_state || inquiry.preferred_state;
                   return (
-                    <div key={inquiry.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                    <Link
+                      key={inquiry.id}
+                      to="/admin/concierge"
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium truncate">{inquiry.user_name}</span>
                           <Badge variant="outline" className={`text-[10px] ${status.bgColor} ${status.color}`}>
                             {status.label}
                           </Badge>
+                          {!isPaid && (
+                            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200">
+                              Unpaid
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Phone className="h-3 w-3" />
                             {inquiry.user_phone?.slice(-4) || "N/A"}
                           </span>
+                          {location && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {location}
+                            </span>
+                          )}
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {formatTimeAgo(inquiry.created_at)}
@@ -287,14 +376,16 @@ export function AdvisorDashboard() {
                           </Badge>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-success" />
-                <p className="text-sm">No active cases</p>
+                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
+                <p className="text-sm">
+                  {caseView === "mine" ? "No cases assigned to you" : "No active cases"}
+                </p>
               </div>
             )}
           </CardContent>
@@ -304,7 +395,9 @@ export function AdvisorDashboard() {
         <Card className="border shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-medium">Case Pipeline</CardTitle>
-            <CardDescription>Status breakdown of all cases</CardDescription>
+            <CardDescription>
+              {caseView === "mine" ? "Your case status breakdown" : "All cases by status"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loadingInquiries ? (
@@ -314,34 +407,25 @@ export function AdvisorDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-info">New Cases</span>
-                    <span className="text-sm text-muted-foreground">{inquiryStats?.newCases}</span>
-                  </div>
-                  <Progress value={inquiryStats?.total ? ((inquiryStats.newCases || 0) / inquiryStats.total) * 100 : 0} className="h-2 bg-info/20" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-warning">In Progress</span>
-                    <span className="text-sm text-muted-foreground">{inquiryStats?.inProgress}</span>
-                  </div>
-                  <Progress value={inquiryStats?.total ? ((inquiryStats.inProgress || 0) / inquiryStats.total) * 100 : 0} className="h-2 bg-warning/20" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-success">Matched</span>
-                    <span className="text-sm text-muted-foreground">{inquiryStats?.matched}</span>
-                  </div>
-                  <Progress value={inquiryStats?.total ? ((inquiryStats.matched || 0) / inquiryStats.total) * 100 : 0} className="h-2 bg-success/20" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-primary">Placed</span>
-                    <span className="text-sm text-muted-foreground">{inquiryStats?.placed}</span>
-                  </div>
-                  <Progress value={inquiryStats?.total ? ((inquiryStats.placed || 0) / inquiryStats.total) * 100 : 0} className="h-2" />
-                </div>
+                {[
+                  { key: "newCases", label: "New Cases", color: "text-blue-600" },
+                  { key: "inProgress", label: "In Progress", color: "text-amber-600" },
+                  { key: "matched", label: "Facilities Found", color: "text-emerald-600" },
+                  { key: "placed", label: "Placed", color: "text-green-700" },
+                  { key: "closed", label: "Closed", color: "text-slate-500" },
+                ].map(({ key, label, color }) => {
+                  const count = (inquiryStats as any)?.[key] || 0;
+                  const pct = inquiryStats?.total ? (count / inquiryStats.total) * 100 : 0;
+                  return (
+                    <div key={key}>
+                      <div className="flex justify-between mb-1">
+                        <span className={`text-sm font-medium ${color}`}>{label}</span>
+                        <span className="text-sm text-muted-foreground">{count}</span>
+                      </div>
+                      <Progress value={pct} className="h-2" />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -355,20 +439,20 @@ export function AdvisorDashboard() {
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {inquiryStats?.newCases && inquiryStats.newCases > 0 && (
-            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-info/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-blue-50 dark:hover:bg-blue-950/20" asChild>
               <Link to="/admin/concierge?status=new">
-                <AlertCircle className="h-5 w-5 text-info mr-3" />
+                <AlertCircle className="h-5 w-5 text-blue-500 mr-3" />
                 <div className="flex flex-col items-start">
                   <span className="text-sm font-medium">New Cases</span>
-                  <span className="text-xs text-muted-foreground">{inquiryStats.newCases} awaiting</span>
+                  <span className="text-xs text-muted-foreground">{inquiryStats.newCases} awaiting review</span>
                 </div>
               </Link>
             </Button>
           )}
           {messageStats?.unread && messageStats.unread > 0 && (
-            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-warning/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-amber-50 dark:hover:bg-amber-950/20" asChild>
               <Link to="/admin/concierge">
-                <MessageCircle className="h-5 w-5 text-warning mr-3" />
+                <MessageCircle className="h-5 w-5 text-amber-500 mr-3" />
                 <div className="flex flex-col items-start">
                   <span className="text-sm font-medium">Unread Messages</span>
                   <span className="text-xs text-muted-foreground">{messageStats.unread} to reply</span>
@@ -376,21 +460,21 @@ export function AdvisorDashboard() {
               </Link>
             </Button>
           )}
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-purple-500/10" asChild>
+          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-purple-50 dark:hover:bg-purple-950/20" asChild>
             <Link to="/admin/concierge">
-              <UserPlus className="h-5 w-5 text-purple-500 mr-3" />
+              <Activity className="h-5 w-5 text-purple-500 mr-3" />
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">All Cases</span>
-                <span className="text-xs text-muted-foreground">View concierge queue</span>
+                <span className="text-sm font-medium">Placement Center</span>
+                <span className="text-xs text-muted-foreground">Full case management</span>
               </div>
             </Link>
           </Button>
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-muted" asChild>
-            <Link to="/admin/seekers">
-              <Users className="h-5 w-5 text-muted-foreground mr-3" />
+          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-cyan-50 dark:hover:bg-cyan-950/20" asChild>
+            <Link to="/admin/support">
+              <Headphones className="h-5 w-5 text-cyan-500 mr-3" />
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Seekers</span>
-                <span className="text-xs text-muted-foreground">User profiles</span>
+                <span className="text-sm font-medium">Support Inbox</span>
+                <span className="text-xs text-muted-foreground">Seeker communications</span>
               </div>
             </Link>
           </Button>
