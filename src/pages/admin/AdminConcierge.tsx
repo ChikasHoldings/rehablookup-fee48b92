@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Users, Globe, Flag, Filter } from "lucide-react";
+import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Users, Globe, Flag, Filter, DollarSign, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
 import { ConciergeStatsCharts } from "@/components/admin/ConciergeStatsCharts";
@@ -170,10 +171,28 @@ export default function AdminConcierge() {
             <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Manage domestic & international placements, network providers, and billing</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="self-start sm:self-auto">
-          <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-          <span className="text-xs sm:text-sm">Refresh</span>
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {!isAdvisor && (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin/placement-revenue">
+                  <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
+                  <span className="text-xs sm:text-sm">Revenue</span>
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin/international/agreement">
+                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
+                  <span className="text-xs sm:text-sm hidden sm:inline">Agreement</span>
+                </Link>
+              </Button>
+            </>
+          )}
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+            <span className="text-xs sm:text-sm">Refresh</span>
+          </Button>
+        </div>
       </div>
 
       {/* Main Tabs - horizontally scrollable on mobile */}
