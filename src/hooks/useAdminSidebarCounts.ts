@@ -51,7 +51,7 @@ export function useAdminSidebarCounts() {
         supabase
           .from("concierge_inquiries")
           .select("*", { count: "exact", head: true })
-          .in("status", ["pending", "matched", "in_progress"]),
+          .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]),
         
         // Marketing leads (new/uncontacted)
         supabase
