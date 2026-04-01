@@ -152,6 +152,40 @@ export function LeadProfileModal({
     enabled: !!lead?.id && open,
   });
 
+  // Fetch unlock history for admin view
+  const { data: unlockHistory = [] } = useQuery({
+    queryKey: ["lead-unlocks", lead?.id],
+    queryFn: async () => {
+      if (!lead?.id) return [];
+      const { data, error } = await supabase
+        .from("lead_unlocks")
+        .select("id, facility_id, unlocked_at, unlock_price_cents")
+        .eq("lead_id", lead.id)
+        .order("unlocked_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!lead?.id && open && isAdmin,
+  });
+
+  // Fetch facility names for unlock history
+  const unlockFacilityIds = unlockHistory.map(u => u.facility_id).filter(Boolean);
+  const { data: unlockFacilities = [] } = useQuery({
+    queryKey: ["unlock-facilities", unlockFacilityIds.join(",")],
+    queryFn: async () => {
+      if (!unlockFacilityIds.length) return [];
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name, city, state")
+        .in("id", unlockFacilityIds);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: unlockFacilityIds.length > 0 && isAdmin,
+  });
+
+  const unlockFacilitiesMap = new Map(unlockFacilities.map(f => [f.id, f]));
+
   // Fetch assigned facility details for admin view
   const { data: assignedFacility } = useQuery({
     queryKey: ["lead-facility", lead?.facility_id],
