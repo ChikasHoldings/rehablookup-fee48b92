@@ -175,6 +175,25 @@ Deno.serve(async (req) => {
 
     logStep("Review request record created", { requestId: reviewRequest.id });
 
+    // Check suppressed emails before sending
+    const { data: suppressed } = await supabase
+      .from("suppressed_emails")
+      .select("email")
+      .eq("email", recipientEmail.toLowerCase())
+      .maybeSingle();
+
+    if (suppressed) {
+      logStep("Skipping - recipient email is suppressed", { email: recipientEmail });
+      await supabase.from("review_requests").update({ status: "suppressed" }).eq("id", reviewRequest.id);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Review request recorded but email was not sent (recipient unsubscribed)" 
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     try {
       const unsubToken = crypto.randomUUID();
       const emailResponse = await resend.emails.send({

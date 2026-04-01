@@ -367,6 +367,30 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Check notification preferences - respect email_product_updates opt-out
+      const { data: notifPrefs } = await supabaseClient
+        .from("notification_preferences")
+        .select("email_product_updates")
+        .eq("user_id", (await supabaseClient.from("facilities").select("user_id").eq("id", provider.facilityId).single()).data?.user_id || "")
+        .maybeSingle();
+
+      if (notifPrefs?.email_product_updates === false) {
+        logStep("Skipping provider - opted out of product updates", { email: provider.email });
+        continue;
+      }
+
+      // Check suppressed emails
+      const { data: suppressed } = await supabaseClient
+        .from("suppressed_emails")
+        .select("email")
+        .eq("email", provider.email)
+        .maybeSingle();
+
+      if (suppressed) {
+        logStep("Skipping provider - email suppressed", { email: provider.email });
+        continue;
+      }
+
       // Generate personalized email
       const { subject, html } = generateRetentionEmail(provider);
 
