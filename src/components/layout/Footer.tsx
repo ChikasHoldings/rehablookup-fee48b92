@@ -111,9 +111,9 @@ interface MobileAccordionProps {
   links: { name: string; path: string; highlight?: boolean }[];
 }
 
-function MobileAccordion({ title, links }: MobileAccordionProps) {
+const MobileAccordion = forwardRef<HTMLDetailsElement, MobileAccordionProps>(function MobileAccordion({ title, links }, ref) {
   return (
-    <details className="group border-b border-primary-foreground/10 last:border-b-0">
+    <details ref={ref} className="group border-b border-primary-foreground/10 last:border-b-0">
       <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
         <h4 className="text-sm font-semibold text-primary-foreground">{title}</h4>
         <ChevronDown className="h-4 w-4 text-primary-foreground/60 transition-transform duration-200 group-open:rotate-180" />
@@ -139,7 +139,7 @@ function MobileAccordion({ title, links }: MobileAccordionProps) {
       </div>
     </details>
   );
-}
+});
 
 // Social link component
 const socialLinks = [
