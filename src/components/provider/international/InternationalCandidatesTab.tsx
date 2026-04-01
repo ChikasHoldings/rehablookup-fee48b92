@@ -101,9 +101,9 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["international-matches"] });
-      toast.success(responseAction === "accepted" ? "Interest submitted!" : "Response recorded");
+      toast.success(variables.response === "accepted" ? "Interest submitted!" : "Response recorded");
       setSelectedMatch(null);
       setResponseNotes("");
       setResponseAction(null);
@@ -113,11 +113,12 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
     },
   });
 
-  const handleRespond = () => {
-    if (!selectedMatch || !responseAction) return;
+  const handleRespond = (action: "accepted" | "declined") => {
+    if (!selectedMatch) return;
+    setResponseAction(action);
     respondMutation.mutate({
       matchId: selectedMatch.id,
-      response: responseAction,
+      response: action,
       notes: responseNotes,
     });
   };
@@ -348,10 +349,11 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
                   <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
                   <div>
                     <p className="font-medium text-amber-800 dark:text-amber-400">
-                      $3,000 Placement Fee
+                      {hasPro ? "$2,400" : "$3,000"} Placement Fee
                     </p>
                     <p className="text-amber-700 dark:text-amber-500">
                       A placement fee is charged only if the client is admitted to your facility.
+                      {hasPro && " Pro discount applied."}
                     </p>
                   </div>
                 </div>
@@ -373,20 +375,14 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
           <DialogFooter className="flex gap-2 sm:gap-0">
             <Button
               variant="outline"
-              onClick={() => {
-                setResponseAction("declined");
-                handleRespond();
-              }}
+              onClick={() => handleRespond("declined")}
               disabled={respondMutation.isPending}
             >
               <XCircle className="h-4 w-4 mr-1.5" />
               Not a Fit
             </Button>
             <Button
-              onClick={() => {
-                setResponseAction("accepted");
-                handleRespond();
-              }}
+              onClick={() => handleRespond("accepted")}
               disabled={respondMutation.isPending}
             >
               {respondMutation.isPending ? (
