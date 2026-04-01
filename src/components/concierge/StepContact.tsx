@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Phone, Mail, User, AlertCircle } from "lucide-react";
 import type { ConciergeIntakeData } from "@/pages/concierge/ConciergeIntake";
+import { formatEmailInput } from "@/lib/emailUtils";
 
 const BEST_TIMES = [
   { value: "morning", label: "Morning (8am - 12pm)" },
