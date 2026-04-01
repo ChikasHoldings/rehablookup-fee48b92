@@ -439,7 +439,7 @@ export default function SeekerConcierge() {
 
   // ========== STATE B & C: Case exists ==========
   const showMatchedFacilities = selectedCase && 
-    ["placing", "facilities_found", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
+    ["matching", "matched", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
   const showConfirmation = selectedCase?.status === "in_contact" && !selectedCase.seeker_confirmed;
   const showAwaitingProvider = selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed;
   const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback && !feedbackSubmitted;
