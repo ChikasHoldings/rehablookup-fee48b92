@@ -638,7 +638,7 @@ export function LeadProfileModal({
                   <div className="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
-                      Facility
+                      Assigned Facility
                     </h3>
                     <div className="flex items-center justify-between">
                       <div>
@@ -647,6 +647,102 @@ export function LeadProfileModal({
                           {assignedFacility.city}, {assignedFacility.state}
                         </p>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin: Reassign Facility */}
+                {isAdmin && facilities.length > 0 && onAssign && (
+                  <div className="space-y-3 p-4 rounded-xl bg-muted/30 border">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      {lead.facility_id ? "Reassign" : "Assign"} to Facility
+                    </h3>
+                    <div className="flex gap-2">
+                      <Select value={selectedFacilityId} onValueChange={setSelectedFacilityId}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select facility..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {facilities.map((f) => (
+                            <SelectItem key={f.id} value={f.id}>
+                              {f.name} — {f.city}, {f.state}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        onClick={handleAssignLead}
+                        disabled={!selectedFacilityId || isAssigning}
+                      >
+                        {isAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Assign"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin: Unlock History */}
+                {isAdmin && unlockHistory.length > 0 && (
+                  <div className="space-y-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                      Unlock History ({unlockHistory.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {unlockHistory.map((unlock) => {
+                        const facility = unlockFacilitiesMap.get(unlock.facility_id);
+                        return (
+                          <div key={unlock.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-white/60">
+                            <div>
+                              <p className="font-medium">{facility?.name || "Unknown Facility"}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(unlock.unlocked_at), "MMM d, yyyy 'at' h:mm a")}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200">
+                              ${((unlock.unlock_price_cents || 0) / 100).toFixed(0)} paid
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {isAdmin && unlockHistory.length === 0 && (
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                    <div className="flex items-center gap-2 text-sm text-amber-700">
+                      <ShieldX className="h-4 w-4" />
+                      <span className="font-medium">Not yet unlocked by any provider</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin: Redistribution Status */}
+                {isAdmin && lead.redistribution_status && (
+                  <div className="p-4 rounded-xl bg-muted/30 border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Distribution Status</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="capitalize">
+                        {lead.redistribution_status === "exclusive" ? "Exclusive Window" :
+                         lead.redistribution_status === "extended" ? "Redistributed" :
+                         lead.redistribution_status === "expired" ? "Expired" :
+                         lead.redistribution_status}
+                      </Badge>
+                      {lead.exclusive_until && (
+                        <span className="text-xs text-muted-foreground">
+                          Exclusive until {format(new Date(lead.exclusive_until), "MMM d, h:mm a")}
+                        </span>
+                      )}
+                      {lead.extended_until && (
+                        <span className="text-xs text-muted-foreground">
+                          Extended until {format(new Date(lead.extended_until), "MMM d, h:mm a")}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
