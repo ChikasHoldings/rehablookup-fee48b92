@@ -284,6 +284,28 @@ function infoBox(content: string, bgColor = '#f0f9ff', borderColor = '#0ea5e9', 
 }
 
 // ============================================================================
+// ADMIN NOTIFICATION HELPER
+// ============================================================================
+
+async function createAdminNotification(
+  supabase: any,
+  notification: { type: string; title: string; message: string; metadata?: Record<string, unknown> }
+) {
+  try {
+    // Create a global admin notification visible to all admins
+    await supabase.from('admin_notifications').insert({
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      metadata: notification.metadata || {},
+    });
+    logStep("Admin notification created", { type: notification.type });
+  } catch (error) {
+    logStep("Warning: Failed to create admin notification", { error: String(error) });
+  }
+}
+
+// ============================================================================
 // NOTIFICATION HANDLERS
 // ============================================================================
 
@@ -331,7 +353,7 @@ async function sendIntakeReceivedEmail(
     results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
   }
 
-  // Create in-app notification
+  // Create in-app notification for seeker
   if (inquiry.user_id) {
     const { data: notif } = await supabase.from('seeker_notifications').insert({
       user_id: inquiry.user_id,
@@ -344,6 +366,14 @@ async function sendIntakeReceivedEmail(
     
     if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
   }
+
+  // Admin/advisor notification for new intake
+  await createAdminNotification(supabase, {
+    type: 'concierge_new_intake',
+    title: 'New Placement Intake',
+    message: `New placement request from ${inquiry.user_name} (Case #${caseId}). Level of care: ${inquiry.level_of_care || 'Not specified'}.`,
+    metadata: { inquiry_id: inquiry.id },
+  });
 }
 
 async function sendMatchesFoundEmail(
@@ -725,6 +755,15 @@ async function sendPlacementCompleteEmails(
   // SMS notification to provider
   await sendProviderSmsNotification(supabase, facility.user_id, "general", {
     customMessage: `RehabLookup: Placement complete! ${inquiry.user_name.split(' ')[0]} admitted to ${facility.name}. Invoice will be generated.`,
+  });
+
+  // Admin notification for placement completion
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  await createAdminNotification(supabase, {
+    type: 'concierge_placement_complete',
+    title: 'Placement Completed',
+    message: `${inquiry.user_name} placed at ${facility.name} (Case #${caseId}). Fee invoice will be generated.`,
+    metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
   });
 }
 
