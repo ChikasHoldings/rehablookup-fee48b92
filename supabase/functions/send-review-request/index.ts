@@ -176,10 +176,15 @@ Deno.serve(async (req) => {
     logStep("Review request record created", { requestId: reviewRequest.id });
 
     try {
+      const unsubToken = crypto.randomUUID();
       const emailResponse = await resend.emails.send({
         from: "RehabLookup <no-reply@rehablookup.com>",
         to: [recipientEmail],
         subject: `${facility.name} would love to hear about your experience`,
+        headers: {
+          "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
         html: `
 <!DOCTYPE html>
 <html>

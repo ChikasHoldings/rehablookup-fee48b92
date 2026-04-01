@@ -237,7 +237,7 @@ Deno.serve(async (req) => {
     // Send confirmation email to the lead
     try {
       await resend.emails.send({
-        from: "RehabLookup <noreply@rehablookup.com>",
+        from: "RehabLookup <no-reply@rehablookup.com>",
         to: [sanitizedEmail],
         subject: "We found treatment options for you",
         html: getLeadConfirmationEmail(firstName, matchedFacilities.length),

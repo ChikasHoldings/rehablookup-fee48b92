@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: emailResult, error: emailError } = await resend.emails.send({
-      from: "RehabLookup <support@rehablookup.com>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [seekerEmail],
       subject,
       html,

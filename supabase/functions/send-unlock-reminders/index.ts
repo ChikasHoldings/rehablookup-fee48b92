@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
         if (email) {
           try {
             await resend.emails.send({
-              from: "RehabLookup <notifications@rehablookup.com>",
+              from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
               subject: `New inquiry waiting for you - ${facility.name}`,
               html: get6HourReminderEmail(facility.name, maskLeadName(lead.name), dashboardUrl),
@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
         if (email) {
           try {
             await resend.emails.send({
-              from: "RehabLookup <notifications@rehablookup.com>",
+              from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
               subject: `Don't miss this lead opportunity - ${facility.name}`,
               html: get12HourReminderEmail(facility.name, maskLeadName(lead.name), dashboardUrl),
@@ -389,7 +389,7 @@ Deno.serve(async (req) => {
         if (email) {
           try {
             await resend.emails.send({
-              from: "RehabLookup <notifications@rehablookup.com>",
+              from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
               subject: `⚠️ Last chance to respond - ${facility.name}`,
               html: get24HourReminderEmail(facility.name, maskLeadName(lead.name), dashboardUrl),
