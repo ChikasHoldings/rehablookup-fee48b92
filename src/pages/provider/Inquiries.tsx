@@ -45,6 +45,7 @@ interface Lead {
   inquiry_type: InquiryType | null;
   provider_response_status: string | null;
   provider_responded_at: string | null;
+  is_unlocked: boolean | null;
 }
 
 interface LeadWithFacility extends Lead {
@@ -105,60 +106,25 @@ export default function ProviderInquiriesPage() {
   }, [facilities]);
 
 
-  // Fetch all inquiries (including redistributed leads from lead_distributions)
+  // Fetch all inquiries using leads_provider_view (PII-safe: masks locked lead contact info)
   const { data: inquiries = [], isLoading, error: inquiriesError } = useQuery({
     queryKey: ["provider-inquiries", facilityIds],
     queryFn: async (): Promise<LeadWithFacility[]> => {
       if (facilityIds.length === 0) return [];
       
-      // First, get leads directly assigned to provider's facilities
-      const { data: directLeads, error: directError } = await supabase
-        .from("leads")
+      // Get leads via the PII-masking view (direct + redistributed via RLS)
+      const { data: allLeads, error } = await supabase
+        .from("leads_provider_view")
         .select("*")
-        .in("facility_id", facilityIds);
+        .order("created_at", { ascending: false });
       
-      if (directError) throw directError;
+      if (error) throw error;
       
-      // Then, get redistributed leads from lead_distributions
-      const { data: distributions, error: distError } = await supabase
-        .from("lead_distributions")
-        .select("lead_id")
-        .in("facility_id", facilityIds)
-        .eq("is_original", false);
-      
-      if (distError) throw distError;
-      
-      // Get the actual lead data for redistributed leads
-      let redistributedLeads: any[] = [];
-      if (distributions && distributions.length > 0) {
-        const redistributedLeadIds = distributions.map(d => d.lead_id);
-        const { data: redistLeads, error: redistError } = await supabase
-          .from("leads")
-          .select("*")
-          .in("id", redistributedLeadIds);
-        
-        if (redistError) throw redistError;
-        redistributedLeads = redistLeads || [];
-      }
-      
-      // Combine and deduplicate leads
-      const allLeadsMap = new Map<string, any>();
-      (directLeads || []).forEach(lead => allLeadsMap.set(lead.id, lead));
-      redistributedLeads.forEach(lead => {
-        if (!allLeadsMap.has(lead.id)) {
-          allLeadsMap.set(lead.id, lead);
-        }
-      });
-      
-      // Convert to array and sort by created_at desc
-      const allLeads = Array.from(allLeadsMap.values())
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      return allLeads.map(lead => ({
+      return (allLeads || []).map(lead => ({
         ...lead,
-        facility_name: facilityMap.get(lead.facility_id)?.name,
-        facility_city: facilityMap.get(lead.facility_id)?.city,
-        facility_state: facilityMap.get(lead.facility_id)?.state,
+        facility_name: facilityMap.get(lead.facility_id ?? "")?.name,
+        facility_city: facilityMap.get(lead.facility_id ?? "")?.city,
+        facility_state: facilityMap.get(lead.facility_id ?? "")?.state,
       })) as LeadWithFacility[];
     },
     enabled: facilityIds.length > 0,
