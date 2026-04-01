@@ -244,6 +244,29 @@ export default function SeekerConcierge() {
     }
   }, [searchParams, isVerifyingPayment, verifyPaymentAndSubmit, setSearchParams]);
 
+  // Realtime: auto-refresh when case status or matches change
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    const channel = supabase
+      .channel(`seeker-cases-${currentUser.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "concierge_inquiries",
+          filter: `user_id=eq.${currentUser.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser?.id, queryClient]);
+
   const selectedCase = cases?.find(c => c.id === selectedCaseId) || cases?.[0];
 
   // Fetch matched facilities
