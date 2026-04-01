@@ -238,6 +238,7 @@ export default function AdminConcierge() {
                         <th className="pb-3 font-medium">Care Type</th>
                         <th className="pb-3 font-medium">Location</th>
                         <th className="pb-3 font-medium">Status</th>
+                        <th className="pb-3 font-medium">Payment</th>
                         <th className="pb-3 font-medium">Advisor</th>
                         <th className="pb-3 font-medium">Matches</th>
                         <th className="pb-3 font-medium">Date</th>
