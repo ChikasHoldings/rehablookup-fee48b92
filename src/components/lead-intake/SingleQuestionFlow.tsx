@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, User, Users, Clock, Heart, Shield, Calendar, UserCircle, Stethoscope, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -209,6 +209,7 @@ export function SingleQuestionFlow({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isSubmittingRef = useRef(false);
   
   // Filter questions based on skip conditions
   const activeQuestions = QUESTIONS.filter(q => !q.skipIf || !q.skipIf(formData));
@@ -277,6 +278,8 @@ export function SingleQuestionFlow({
   
   // Handle contact submission - checks if email already verified, if so submits directly
   const handleContactSubmit = async () => {
+    if (isSubmittingRef.current) return;
+    
     const newErrors: Record<string, string> = {};
     
     if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
@@ -294,7 +297,12 @@ export function SingleQuestionFlow({
     
     if (alreadyVerified) {
       // Email already verified - submit directly with skip flag to avoid React state race condition
-      await onSubmit({ skipVerificationCheck: true });
+      isSubmittingRef.current = true;
+      try {
+        await onSubmit({ skipVerificationCheck: true });
+      } finally {
+        isSubmittingRef.current = false;
+      }
       return;
     }
     
@@ -307,11 +315,16 @@ export function SingleQuestionFlow({
   
   // Handle verification
   const handleVerifyCode = async () => {
+    if (isSubmittingRef.current) return;
     if (verificationCode.length === 6) {
       const success = await verifyCode(verificationCode);
       if (success) {
-        // Submit the form with flag to skip verification check since we JUST verified
-        await onSubmit({ skipVerificationCheck: true });
+        isSubmittingRef.current = true;
+        try {
+          await onSubmit({ skipVerificationCheck: true });
+        } finally {
+          isSubmittingRef.current = false;
+        }
       } else {
         setErrors({ code: "Invalid or expired code" });
       }
@@ -523,7 +536,7 @@ export function SingleQuestionFlow({
             
             <Button 
               onClick={handleContactSubmit}
-              disabled={isSendingCode}
+              disabled={isSendingCode || isSubmitting}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
