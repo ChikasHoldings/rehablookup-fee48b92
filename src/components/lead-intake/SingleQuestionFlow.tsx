@@ -278,6 +278,8 @@ export function SingleQuestionFlow({
   
   // Handle contact submission - checks if email already verified, if so submits directly
   const handleContactSubmit = async () => {
+    if (isSubmittingRef.current) return;
+    
     const newErrors: Record<string, string> = {};
     
     if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
@@ -295,7 +297,12 @@ export function SingleQuestionFlow({
     
     if (alreadyVerified) {
       // Email already verified - submit directly with skip flag to avoid React state race condition
-      await onSubmit({ skipVerificationCheck: true });
+      isSubmittingRef.current = true;
+      try {
+        await onSubmit({ skipVerificationCheck: true });
+      } finally {
+        isSubmittingRef.current = false;
+      }
       return;
     }
     
