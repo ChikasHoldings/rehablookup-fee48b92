@@ -187,8 +187,9 @@ export function StepContact({ data, errors, onChange }: Props) {
         </div>
         <Textarea
           value={data.notes}
-          onChange={(e) => onChange({ notes: e.target.value })}
+          onChange={(e) => onChange({ notes: e.target.value.slice(0, 1000) })}
           rows={3}
+          maxLength={1000}
           placeholder="Share any details that will help us process your placement..."
           className={`resize-none ${errors.notes ? "border-destructive ring-1 ring-destructive" : ""}`}
         />
