@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -91,7 +92,29 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
     retry: 2,
   });
 
-  // Respond to introduction mutation with per-item tracking
+  // Realtime: auto-refresh when introductions or case status change
+  useEffect(() => {
+    if (!selectedFacility?.id) return;
+
+    const channel = supabase
+      .channel(`provider-intros-${selectedFacility.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "concierge_introductions",
+          filter: `facility_id=eq.${selectedFacility.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["placement-introductions", selectedFacility.id] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedFacility?.id, queryClient]);
+
   const respondMutation = useMutation({
     mutationFn: async ({ id, response, notes }: { id: string; response: string; notes?: string }) => {
       // Validate inputs

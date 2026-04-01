@@ -396,6 +396,22 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Inquiry created successfully", { inquiryId: inquiry.id, userId: effectiveUserId });
 
+    // Log case creation event for timeline
+    try {
+      await supabase.from('concierge_case_events').insert({
+        inquiry_id: inquiry.id,
+        event_type: 'case_created',
+        event_data: { 
+          source: effectiveUserId ? 'account_concierge' : 'public_concierge',
+          payment_status: 'paid',
+        },
+        actor_type: effectiveUserId ? 'seeker' : 'system',
+        actor_id: effectiveUserId || null,
+      });
+    } catch (eventErr) {
+      logStep(requestId, "Warning: Failed to log case creation event", { error: String(eventErr) });
+    }
+
     // Send intake_received notification
     try {
       await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {

@@ -110,7 +110,7 @@ export default function SeekerConcierge() {
         .from("concierge_inquiries")
         .select(`
           id, status, created_at, intake_submitted_at, matched_at,
-          matched_facility_ids, level_of_care, payment_type, insurance_carrier,
+          matched_facility_ids, admin_matched_facility_ids, level_of_care, payment_type, insurance_carrier,
           timeline_urgency, preferred_state, preferred_city,
           seeker_confirmed, seeker_confirmed_at, placement_confirmed,
           placement_confirmed_at, placed_facility_id, seeker_rating,
@@ -121,7 +121,21 @@ export default function SeekerConcierge() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []) as ConciergeInquiry[];
+      // Merge matched_facility_ids and admin_matched_facility_ids for consistent visibility
+      return (data || []).map(row => ({
+        ...row,
+        matched_facility_ids: [
+          ...new Set([
+            ...(row.matched_facility_ids || []),
+            ...(row.admin_matched_facility_ids || []),
+          ])
+        ].length > 0 ? [
+          ...new Set([
+            ...(row.matched_facility_ids || []),
+            ...(row.admin_matched_facility_ids || []),
+          ])
+        ] : null,
+      })) as ConciergeInquiry[];
     },
   });
 
@@ -229,6 +243,29 @@ export default function SeekerConcierge() {
       setSearchParams(newParams, { replace: true });
     }
   }, [searchParams, isVerifyingPayment, verifyPaymentAndSubmit, setSearchParams]);
+
+  // Realtime: auto-refresh when case status or matches change
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    const channel = supabase
+      .channel(`seeker-cases-${currentUser.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "concierge_inquiries",
+          filter: `user_id=eq.${currentUser.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser?.id, queryClient]);
 
   const selectedCase = cases?.find(c => c.id === selectedCaseId) || cases?.[0];
 

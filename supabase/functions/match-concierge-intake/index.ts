@@ -394,6 +394,15 @@ Deno.serve(async (req) => {
       factors: m.matchFactors,
     }));
 
+    // Fetch current status before updating
+    const { data: currentInquiry } = await supabase
+      .from('concierge_inquiries')
+      .select('status')
+      .eq('id', inquiryId)
+      .single();
+
+    const previousStatus = currentInquiry?.status || 'unknown';
+
     const { error: updateError } = await supabase
       .from('concierge_inquiries')
       .update({
@@ -407,6 +416,19 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       logStep(requestId, "Warning: Failed to update inquiry", { error: updateError.message });
+    } else {
+      // Log status change event for timeline consistency
+      await supabase.from('concierge_case_events').insert({
+        inquiry_id: inquiryId,
+        event_type: 'status_changed',
+        event_data: { 
+          from_status: previousStatus, 
+          to_status: 'matched',
+          trigger: 'matches_completed',
+          match_count: topMatches.length,
+        },
+        actor_type: 'system',
+      });
     }
 
     // Send matches_found notification
