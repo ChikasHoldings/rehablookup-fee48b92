@@ -13,6 +13,8 @@ import {
   UserCheck,
   Star,
   FileText,
+  Eye,
+  User,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/integrations/supabase/types";
@@ -43,6 +45,8 @@ const EVENT_CONFIG: Record<string, { icon: React.ComponentType<any>; label: stri
   invoice_paid: { icon: DollarSign, label: "Invoice Paid", color: "text-green-500" },
   case_closed: { icon: XCircle, label: "Case Closed", color: "text-gray-500" },
   message_sent: { icon: MessageSquare, label: "Message Sent", color: "text-blue-400" },
+  pii_disclosed: { icon: Eye, label: "PII Disclosed", color: "text-amber-500" },
+  advisor_assigned: { icon: User, label: "Advisor Assigned", color: "text-purple-500" },
 };
 
 export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
@@ -143,6 +147,9 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
               </div>
               {event.data && Object.keys(event.data).length > 0 && (
                 <div className="text-xs text-muted-foreground mt-0.5">
+                  {event.data.from && event.data.to && (
+                    <span>{event.data.from} → {event.data.to}</span>
+                  )}
                   {event.data.count && <span>{event.data.count} items</span>}
                   {event.data.facility_name && <span>{event.data.facility_name}</span>}
                   {event.data.notes && <span className="italic">"{event.data.notes}"</span>}
