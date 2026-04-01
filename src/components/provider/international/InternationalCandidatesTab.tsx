@@ -64,7 +64,7 @@ const BUDGET_LABELS: Record<string, string> = {
   "100k+": "$100K+/month",
 };
 
-export function InternationalCandidatesTab() {
+export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolean }) {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const [selectedMatch, setSelectedMatch] = useState<InternationalMatch | null>(null);
