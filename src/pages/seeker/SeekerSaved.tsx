@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Heart, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
