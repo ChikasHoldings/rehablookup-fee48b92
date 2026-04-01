@@ -3,7 +3,7 @@ import { MapPin, Lock, Unlock, Phone, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
-import { maskLeadName, maskEmail, maskPhone } from "@/lib/leadMasking";
+
 
 interface InquiryListItemProps {
   inquiry: {
@@ -98,11 +98,11 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
         {/* Contact preview */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
           <span className="font-medium truncate">
-            {isUnlocked ? inquiry.name : maskLeadName(inquiry.name)}
+            {inquiry.name}
           </span>
           <span className="flex items-center gap-1">
             <Phone className="h-3 w-3" />
-            {isUnlocked ? inquiry.phone : maskPhone(inquiry.phone)}
+            {inquiry.phone}
           </span>
         </div>
 
