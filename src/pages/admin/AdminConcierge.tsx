@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Users, Globe, Flag } from "lucide-react";
+import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Users, Globe, Flag, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
 import { ConciergeStatsCharts } from "@/components/admin/ConciergeStatsCharts";
@@ -30,13 +31,18 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 export default function AdminConcierge() {
+  const { user, adminRole } = useAdminAuth();
+  const isAdvisor = adminRole === "advisor";
+  
   const [activeTab, setActiveTab] = useState("domestic");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  // Advisors default to seeing only their cases
+  const [advisorFilter, setAdvisorFilter] = useState<"mine" | "all">(isAdvisor ? "mine" : "all");
 
   const { data: cases, isLoading, refetch } = useQuery({
-    queryKey: ["admin-concierge-cases", statusFilter],
+    queryKey: ["admin-concierge-cases", statusFilter, advisorFilter, user?.id],
     queryFn: async () => {
       let query = supabase
         .from("concierge_inquiries")
@@ -47,6 +53,11 @@ export default function AdminConcierge() {
         query = query.in("status", IN_PROGRESS_STATUSES);
       } else if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
+      }
+
+      // Filter to advisor's own cases
+      if (advisorFilter === "mine" && user?.id) {
+        query = query.eq("assigned_advisor_id", user.id);
       }
 
       const { data, error } = await query;
@@ -168,7 +179,7 @@ export default function AdminConcierge() {
       {/* Main Tabs - horizontally scrollable on mobile */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-          <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-4 sm:max-w-lg">
+          <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-2 sm:max-w-xs" : "sm:grid-cols-4 sm:max-w-lg"}`}>
             <TabsTrigger value="domestic" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
               <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="text-xs sm:text-sm">Domestic</span>
@@ -182,19 +193,23 @@ export default function AdminConcierge() {
                 </Badge>
               ) : null}
             </TabsTrigger>
-            <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-              <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Network</span>
-              {networkCount ? (
-                <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
-                  {networkCount}
-                </Badge>
-              ) : null}
-            </TabsTrigger>
-            <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-              <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Invoices</span>
-            </TabsTrigger>
+            {!isAdvisor && (
+              <>
+                <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+                  <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Network</span>
+                  {networkCount ? (
+                    <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
+                      {networkCount}
+                    </Badge>
+                  ) : null}
+                </TabsTrigger>
+                <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
+                  <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Invoices</span>
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
         </div>
 
@@ -210,14 +225,28 @@ export default function AdminConcierge() {
           {/* Search & Table */}
           <Card>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b gap-2">
-              <div className="relative w-full sm:w-auto">
-                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, email, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
-                />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
+                  <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, email, or phone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
+                  />
+                </div>
+                {/* Advisor filter toggle */}
+                {isAdvisor && (
+                  <Button
+                    variant={advisorFilter === "mine" ? "default" : "outline"}
+                    size="sm"
+                    className="h-9 text-xs whitespace-nowrap"
+                    onClick={() => setAdvisorFilter(advisorFilter === "mine" ? "all" : "mine")}
+                  >
+                    <Filter className="h-3.5 w-3.5 mr-1.5" />
+                    {advisorFilter === "mine" ? "My Cases" : "All Cases"}
+                  </Button>
+                )}
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
                 {filteredCases?.length || 0} domestic cases
