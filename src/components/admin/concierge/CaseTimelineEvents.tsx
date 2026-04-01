@@ -13,6 +13,8 @@ import {
   UserCheck,
   Star,
   FileText,
+  Eye,
+  User,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/integrations/supabase/types";
