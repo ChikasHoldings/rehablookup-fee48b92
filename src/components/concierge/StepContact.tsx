@@ -105,9 +105,11 @@ export function StepContact({ data, errors, onChange }: Props) {
             <Input
               type="email"
               value={data.email}
-              onChange={(e) => onChange({ email: e.target.value })}
+              onChange={(e) => onChange({ email: formatEmailInput(e.target.value) })}
               placeholder="you@example.com"
+              maxLength={254}
               className={`h-11 ${errors.email ? "border-destructive ring-1 ring-destructive" : ""}`}
+            />
             />
             {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
           </div>
