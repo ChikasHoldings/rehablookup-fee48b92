@@ -221,14 +221,28 @@ export default function AdminConcierge() {
           {/* Search & Table */}
           <Card>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b gap-2">
-              <div className="relative w-full sm:w-auto">
-                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, email, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
-                />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
+                  <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, email, or phone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
+                  />
+                </div>
+                {/* Advisor filter toggle */}
+                {isAdvisor && (
+                  <Button
+                    variant={advisorFilter === "mine" ? "default" : "outline"}
+                    size="sm"
+                    className="h-9 text-xs whitespace-nowrap"
+                    onClick={() => setAdvisorFilter(advisorFilter === "mine" ? "all" : "mine")}
+                  >
+                    <Filter className="h-3.5 w-3.5 mr-1.5" />
+                    {advisorFilter === "mine" ? "My Cases" : "All Cases"}
+                  </Button>
+                )}
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
                 {filteredCases?.length || 0} domestic cases
