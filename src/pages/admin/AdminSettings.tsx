@@ -83,7 +83,6 @@ interface SettingRowProps {
   title: string;
   description: string;
   children: React.ReactNode;
-  comingSoon?: boolean;
 }
 
 interface PlatformSetting {
