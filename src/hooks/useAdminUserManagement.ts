@@ -93,6 +93,7 @@ export const ROLE_DEFAULTS: Record<AdminRoleType, Record<string, boolean>> = {
     reviews: true,
     seekers: true,
     placements: true,
+    support: true,
     security_logs: true,
     users: true,
     audit_log: true,
