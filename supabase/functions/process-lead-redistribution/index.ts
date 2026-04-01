@@ -245,10 +245,20 @@ Deno.serve(async (req) => {
         if (email) {
           try {
             await resend.emails.send({
-              from: "RehabLookup <notifications@rehablookup.com>",
+              from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
               subject: `New lead available in your area - ${facility.name}`,
               html: getNewLeadNotificationEmail(facility.name, maskLeadName(lead.name), dashboardUrl),
+            });
+
+            // Create in-app provider notification for redistributed lead
+            await supabase.from("provider_notifications").insert({
+              user_id: facility.user_id,
+              facility_id: facility.id,
+              type: "new_lead",
+              title: "New Lead Available",
+              message: `A new lead (${maskLeadName(lead.name)}) is available for ${facility.name}.`,
+              link: "/provider/leads",
             });
 
             // Mark notification as sent
