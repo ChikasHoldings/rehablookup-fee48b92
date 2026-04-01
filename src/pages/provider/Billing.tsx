@@ -87,11 +87,11 @@ export default function ProviderBillingPage() {
     const proCanceled = searchParams.get("pro_canceled");
     const creditsSuccess = searchParams.get("credits_success");
     const creditsCanceled = searchParams.get("credits_canceled");
+    const purchaseCredits = searchParams.get("purchase_credits");
 
     if (proSuccess === "true") {
-      toast.success("Pro subscription activated! You now have 20% off all lead unlocks.", { duration: 6000 });
+      toast.success("Welcome to Pro! Your benefits are now active.", { duration: 5000 });
       refetchProStatus();
-      // Clear the URL params
       searchParams.delete("pro_success");
       setSearchParams(searchParams, { replace: true });
     }
@@ -115,6 +115,14 @@ export default function ProviderBillingPage() {
     if (creditsCanceled === "true") {
       toast.info("Credit purchase was cancelled.");
       searchParams.delete("credits_canceled");
+      setSearchParams(searchParams, { replace: true });
+    }
+
+    // Auto-open purchase modal when redirected from unlock with insufficient credits
+    if (purchaseCredits === "true") {
+      setShowPurchaseModal(true);
+      searchParams.delete("purchase_credits");
+      searchParams.delete("amount");
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams, refetchCredits, refetchProStatus]);
