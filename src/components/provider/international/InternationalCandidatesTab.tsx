@@ -374,20 +374,14 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
           <DialogFooter className="flex gap-2 sm:gap-0">
             <Button
               variant="outline"
-              onClick={() => {
-                setResponseAction("declined");
-                handleRespond();
-              }}
+              onClick={() => handleRespond("declined")}
               disabled={respondMutation.isPending}
             >
               <XCircle className="h-4 w-4 mr-1.5" />
               Not a Fit
             </Button>
             <Button
-              onClick={() => {
-                setResponseAction("accepted");
-                handleRespond();
-              }}
+              onClick={() => handleRespond("accepted")}
               disabled={respondMutation.isPending}
             >
               {respondMutation.isPending ? (
