@@ -251,11 +251,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
       try {
         const subjectPrefix = planInfo.plan === "pro" ? "⭐ " : "";
         
+        const unsubToken = crypto.randomUUID();
         await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
           subject: `${subjectPrefix}${digestType} Digest: ${leads.length} New Lead${leads.length === 1 ? "" : "s"} - Unlock to View`,
           html: emailHtml,
+          headers: {
+            "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
 
         await supabase

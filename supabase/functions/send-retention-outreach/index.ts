@@ -371,11 +371,16 @@ Deno.serve(async (req) => {
       const { subject, html } = generateRetentionEmail(provider);
 
       try {
+        const unsubToken = crypto.randomUUID();
         const emailResult = await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [provider.email],
           subject,
           html,
+          headers: {
+            "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
 
         if (emailResult.error) {
