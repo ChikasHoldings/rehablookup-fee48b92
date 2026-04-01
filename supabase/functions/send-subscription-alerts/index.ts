@@ -169,6 +169,16 @@ Deno.serve(async (req) => {
                   alert_type: "subscription_expiring",
                   alert_key: alertKey,
                 });
+
+                // Create in-app provider notification
+                await supabaseClient.from("provider_notifications").insert({
+                  user_id: profile.user_id,
+                  type: "subscription_renewal",
+                  title: `Subscription Renews in ${days} Day${days > 1 ? "s" : ""}`,
+                  message: `Your ${plan === "pro" ? "Pro" : ""} subscription renews on ${renewalDate}.`,
+                  link: "/provider/billing",
+                });
+
                 alertsSent.push({ type: `expiry_${days}days`, email: profile.email });
                 logStep("Sent expiry alert", { email: profile.email, days });
               } else {
