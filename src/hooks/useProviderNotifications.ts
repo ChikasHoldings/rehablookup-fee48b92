@@ -81,67 +81,81 @@ export function useProviderNotifications() {
     staleTime: 30 * 1000,
   });
 
-  // Real-time subscription for instant updates
+  // Real-time subscription for instant updates - filtered by user_id
   useEffect(() => {
-    const channel = supabase
-      .channel("provider-notifications-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "provider_notifications",
-        },
-        (payload) => {
-          const newNotification = payload.new as ProviderNotification;
-          
-          // Play sound and show browser notification
-          playNotificationSound();
-          showBrowserNotification(newNotification.title, newNotification.message);
-          
-          // Update cache immediately for instant UI update
-          queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
-            if (!old) return [newNotification];
-            // Avoid duplicates
-            if (old.some(n => n.id === newNotification.id)) return old;
-            return [newNotification, ...old];
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "provider_notifications",
-        },
-        (payload) => {
-          const updatedNotification = payload.new as ProviderNotification;
-          queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
-            if (!old) return old;
-            return old.map(n => n.id === updatedNotification.id ? updatedNotification : n);
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "provider_notifications",
-        },
-        (payload) => {
-          const deletedId = (payload.old as { id: string }).id;
-          queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
-            if (!old) return old;
-            return old.filter(n => n.id !== deletedId);
-          });
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel("provider-notifications-realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "provider_notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            const newNotification = payload.new as ProviderNotification;
+            
+            // Play sound and show browser notification
+            playNotificationSound();
+            showBrowserNotification(newNotification.title, newNotification.message);
+            
+            // Update cache immediately for instant UI update
+            queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+              if (!old) return [newNotification];
+              // Avoid duplicates
+              if (old.some(n => n.id === newNotification.id)) return old;
+              return [newNotification, ...old];
+            });
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "provider_notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            const updatedNotification = payload.new as ProviderNotification;
+            queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+              if (!old) return old;
+              return old.map(n => n.id === updatedNotification.id ? updatedNotification : n);
+            });
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "DELETE",
+            schema: "public",
+            table: "provider_notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            const deletedId = (payload.old as { id: string }).id;
+            queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+              if (!old) return old;
+              return old.filter(n => n.id !== deletedId);
+            });
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [queryClient, playNotificationSound, showBrowserNotification]);
 
