@@ -239,9 +239,9 @@ Deno.serve(async (req) => {
     try {
       await resend.emails.send({
         from: "RehabLookup <noreply@rehablookup.com>",
-        to: [body.email.toLowerCase().trim()],
+        to: [sanitizedEmail],
         subject: "We found treatment options for you",
-        html: getLeadConfirmationEmail(body.firstName, matchedFacilities.length),
+        html: getLeadConfirmationEmail(firstName, matchedFacilities.length),
       });
       log(requestId, "INFO", "Confirmation email sent to lead");
     } catch (emailError) {
