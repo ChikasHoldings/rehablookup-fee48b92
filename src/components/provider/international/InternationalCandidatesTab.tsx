@@ -349,10 +349,11 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
                   <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
                   <div>
                     <p className="font-medium text-amber-800 dark:text-amber-400">
-                      $3,000 Placement Fee
+                      {hasPro ? "$2,400" : "$3,000"} Placement Fee
                     </p>
                     <p className="text-amber-700 dark:text-amber-500">
                       A placement fee is charged only if the client is admitted to your facility.
+                      {hasPro && " Pro discount applied."}
                     </p>
                   </div>
                 </div>

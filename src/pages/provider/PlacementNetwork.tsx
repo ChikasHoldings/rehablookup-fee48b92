@@ -314,10 +314,12 @@ export default function ProviderPlacementNetworkPage() {
   // Delete payment method mutation
   const deletePaymentMethodMutation = useMutation({
     mutationFn: async (paymentMethodId: string) => {
+      if (!selectedFacility?.id) throw new Error("No facility selected");
       const { error } = await (supabase as any)
         .from("provider_payment_methods")
         .delete()
-        .eq("id", paymentMethodId);
+        .eq("id", paymentMethodId)
+        .eq("facility_id", selectedFacility.id); // Security: ensure facility ownership
 
       if (error) throw error;
     },
