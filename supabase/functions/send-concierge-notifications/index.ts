@@ -284,6 +284,28 @@ function infoBox(content: string, bgColor = '#f0f9ff', borderColor = '#0ea5e9', 
 }
 
 // ============================================================================
+// ADMIN NOTIFICATION HELPER
+// ============================================================================
+
+async function createAdminNotification(
+  supabase: any,
+  notification: { type: string; title: string; message: string; metadata?: Record<string, unknown> }
+) {
+  try {
+    // Create a global admin notification visible to all admins
+    await supabase.from('admin_notifications').insert({
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      metadata: notification.metadata || {},
+    });
+    logStep("Admin notification created", { type: notification.type });
+  } catch (error) {
+    logStep("Warning: Failed to create admin notification", { error: String(error) });
+  }
+}
+
+// ============================================================================
 // NOTIFICATION HANDLERS
 // ============================================================================
 
