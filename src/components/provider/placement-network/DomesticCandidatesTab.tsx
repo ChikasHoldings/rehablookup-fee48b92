@@ -193,8 +193,13 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-2xl font-bold text-blue-600">$1,000</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {hasPro ? "$800" : "$1,000"}
+              </p>
               <p className="text-xs text-muted-foreground">per confirmed admission</p>
+              {hasPro && (
+                <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Pro: Save $200</p>
+              )}
             </div>
           </div>
         </CardContent>
