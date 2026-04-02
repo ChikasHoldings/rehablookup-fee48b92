@@ -152,13 +152,10 @@ export function useSeekerNotifications() {
           },
           (payload) => {
             const updatedNotification = payload.new as SeekerNotification;
-            setNotifications(prev =>
-              prev.map(n => (n.id === updatedNotification.id ? updatedNotification : n))
-            );
-            // Recalculate unread count
-            setNotifications(current => {
-              setUnreadCount(current.filter(n => !n.read).length);
-              return current;
+            setNotifications(prev => {
+              const updated = prev.map(n => (n.id === updatedNotification.id ? updatedNotification : n));
+              setUnreadCount(updated.filter(n => !n.read).length);
+              return updated;
             });
           }
         )
