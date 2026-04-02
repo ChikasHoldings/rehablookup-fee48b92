@@ -4,3 +4,4 @@ export { PlacementMatchCard } from "./PlacementMatchCard";
 export { PlacementTabs } from "./PlacementTabs";
 export { PlacementConfirmationCard } from "./PlacementConfirmationCard";
 export { PlacementSupportCard } from "./PlacementSupportCard";
+export { SeekerPlacementModal } from "./SeekerPlacementModal";
