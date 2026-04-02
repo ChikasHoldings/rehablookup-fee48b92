@@ -89,7 +89,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
       if (error) throw error;
       return data;
     },
-    enabled: !!caseData.matched_facility_ids?.length,
+    enabled: allMatchedFacilityIds.length > 0,
   });
 
   // Send introduction mutation
