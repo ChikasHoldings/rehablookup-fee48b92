@@ -361,7 +361,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
               type: "tour_cancelled",
               title: "Tour Cancelled",
               message: `${emailData.seekerName} cancelled their tour request.`,
-              link: "/provider/concierge",
+              link: "/provider/placement-network",
             });
           }
         } else if (cancelledBy === "facility" && resend) {
