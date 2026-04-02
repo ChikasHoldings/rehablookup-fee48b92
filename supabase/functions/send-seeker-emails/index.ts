@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
         case "placement_intro":
           notificationTitle = "Get Placed in a Treatment Center 🏥";
           notificationMessage = "Our Treatment Placement service can help you find and get admitted to the right facility. An advisor will personally coordinate your placement.";
-          notificationLink = "/get-placed";
+          notificationLink = "/concierge";
           break;
       }
 
