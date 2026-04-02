@@ -470,6 +470,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
         year_established: facility.year_established,
+        accepts_international_patients: facility.accepts_international_patients,
       })
       .eq("id", facility.id);
 
