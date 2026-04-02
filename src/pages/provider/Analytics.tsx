@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { BarChart3, CalendarIcon, X, ChevronDown, Phone, Globe, TrendingUp, Users } from "lucide-react";
+import { useState, useMemo } from "react";
+import { BarChart3, CalendarIcon, X, ChevronDown, Building2 } from "lucide-react";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
+import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,10 +21,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { format, startOfMonth } from "date-fns";
+import { format } from "date-fns";
 
-type TabKey = "engagement" | "leads";
+type TabKey = "overview" | "engagement" | "leads" | "performance";
 
 export default function ProviderAnalyticsPage() {
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
@@ -31,7 +40,14 @@ export default function ProviderAnalyticsPage() {
   }));
   const [selectedPreset, setSelectedPreset] = useState<string>("all");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("engagement");
+  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [selectedFacilityId, setSelectedFacilityId] = useState<string>("all");
+
+  const { facilities } = useProviderFacilities();
+  const approvedFacilities = useMemo(
+    () => facilities.filter(f => f.status === "approved"),
+    [facilities]
+  );
 
   const handlePresetSelect = (preset: typeof DATE_RANGE_PRESETS[number]) => {
     const range = preset.getRange();
@@ -63,34 +79,55 @@ export default function ProviderAnalyticsPage() {
 
   const hasActiveFilter = selectedPreset !== "all";
 
-  const tabs: { key: TabKey; label: string; icon: React.ElementType; desc: string }[] = [
-    { key: "engagement", label: "Engagement", icon: TrendingUp, desc: "Views, clicks & interactions" },
-    { key: "leads", label: "Lead Analytics", icon: Users, desc: "Inquiries, funnel & conversion" },
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "overview", label: "Overview" },
+    { key: "engagement", label: "Engagement" },
+    { key: "leads", label: "Leads" },
+    { key: "performance", label: "Performance" },
   ];
 
   return (
     <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-5">
 
         {/* ── Page Header ── */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 md:h-11 md:w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <BarChart3 className="h-5 w-5 md:h-5.5 md:w-5.5 text-primary" />
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div className="min-w-0">
               <h1 className="text-xl md:text-2xl font-bold text-foreground">Analytics</h1>
               <p className="text-sm text-muted-foreground">
-                Track listing views, inquiries, and engagement
+                Track performance across your listings
               </p>
             </div>
           </div>
 
-          {/* Date Range Filter */}
-          <div className="flex items-center gap-2">
+          {/* Filters Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Facility Selector */}
+            {approvedFacilities.length > 1 && (
+              <Select value={selectedFacilityId} onValueChange={setSelectedFacilityId}>
+                <SelectTrigger className="h-9 w-auto min-w-[160px] max-w-[220px] text-sm gap-1.5">
+                  <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <SelectValue placeholder="All Facilities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Facilities</SelectItem>
+                  {approvedFacilities.map(f => (
+                    <SelectItem key={f.id} value={f.id}>
+                      <span className="truncate">{f.name}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Date Range Filter */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 h-9 text-sm">
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm">
                   <CalendarIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{getSelectedLabel()}</span>
                   <span className="sm:hidden text-xs">
@@ -157,55 +194,89 @@ export default function ProviderAnalyticsPage() {
           </div>
         </div>
 
-        {/* ── Active Filter Pill ── */}
-        {hasActiveFilter && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="gap-1.5 text-xs py-1 px-2.5">
-              <CalendarIcon className="h-3 w-3" />
-              {getSelectedLabel()}
-              <button onClick={clearDateFilter} className="ml-1 hover:text-destructive transition-colors">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
+        {/* ── Active Filters ── */}
+        {(hasActiveFilter || selectedFacilityId !== "all") && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {hasActiveFilter && (
+              <Badge variant="secondary" className="gap-1.5 text-xs py-1 px-2.5">
+                <CalendarIcon className="h-3 w-3" />
+                {getSelectedLabel()}
+                <button onClick={clearDateFilter} className="ml-1 hover:text-destructive transition-colors">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+            {selectedFacilityId !== "all" && (
+              <Badge variant="secondary" className="gap-1.5 text-xs py-1 px-2.5">
+                <Building2 className="h-3 w-3" />
+                {approvedFacilities.find(f => f.id === selectedFacilityId)?.name || "Facility"}
+                <button onClick={() => setSelectedFacilityId("all")} className="ml-1 hover:text-destructive transition-colors">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
           </div>
         )}
 
-        {/* ── Main Container Card ── */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            {/* Tab Bar */}
-            <div className="flex border-b">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={cn(
-                      "flex-1 sm:flex-none flex items-center gap-2.5 px-5 sm:px-6 py-4 text-sm font-semibold border-b-2 -mb-px transition-colors",
-                      isActive
-                        ? "border-primary text-primary bg-primary/5"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                    )}
-                  >
-                    <tab.icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+        {/* ── Tab Navigation ── */}
+        <div className="flex gap-1 border-b">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-            {/* Tab Content */}
-            <div className="p-5 sm:p-6">
-              {activeTab === "engagement" && (
-                <CentralizedEngagementAnalytics dateRange={dateRange} />
-              )}
-              {activeTab === "leads" && (
-                <CentralizedLeadAnalyticsDashboard dateRange={dateRange} />
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* ── Tab Content ── */}
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="p-5">
+                <h2 className="text-sm font-semibold text-foreground mb-4">Engagement Overview</h2>
+                <CentralizedEngagementAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5">
+                <h2 className="text-sm font-semibold text-foreground mb-4">Lead Overview</h2>
+                <CentralizedLeadAnalyticsDashboard dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {activeTab === "engagement" && (
+          <Card>
+            <CardContent className="p-5">
+              <CentralizedEngagementAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+            </CardContent>
+          </Card>
+        )}
+        {activeTab === "leads" && (
+          <Card>
+            <CardContent className="p-5">
+              <CentralizedLeadAnalyticsDashboard dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+            </CardContent>
+          </Card>
+        )}
+        {activeTab === "performance" && (
+          <Card>
+            <CardContent className="p-5">
+              <ProviderPerformanceAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

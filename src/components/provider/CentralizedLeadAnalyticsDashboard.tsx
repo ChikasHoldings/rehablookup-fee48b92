@@ -1,27 +1,11 @@
 import React from "react";
 import { 
-  AreaChart,
-  Area,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
 } from "recharts";
 import { 
-  TrendingUp, 
-  Users, 
-  Target,
-  ArrowUpRight,
-  ArrowDownRight,
-  BarChart3,
-  PieChart as PieChartIcon,
-  Building2,
-  MessageSquare,
-  Unlock,
+  TrendingUp, Users, Target, ArrowUpRight, ArrowDownRight, BarChart3,
+  PieChart as PieChartIcon, Building2, MessageSquare, Unlock,
 } from "lucide-react";
 import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
 import { useProStatus } from "@/hooks/useProStatus";
@@ -35,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 interface CentralizedLeadAnalyticsDashboardProps {
   dateRange?: DateRange;
+  facilityId?: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -60,8 +45,8 @@ const FUNNEL_STAGES = [
   { key: "converted" as const, label: "Converted", color: "bg-emerald-500", textColor: "text-emerald-600", desc: "Admitted" },
 ];
 
-export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLeadAnalyticsDashboardProps) {
-  const { data: analytics, isLoading } = useCentralizedLeadAnalytics(dateRange);
+export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: CentralizedLeadAnalyticsDashboardProps) {
+  const { data: analytics, isLoading } = useCentralizedLeadAnalytics(dateRange, facilityId);
   const { data: proStatus } = useProStatus();
   const { facilities } = useProviderFacilities();
 
@@ -92,14 +77,13 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
   }
 
   const conversionRate = analytics.totalLeads > 0 
-    ? Math.round((analytics.conversionFunnel.converted / analytics.totalLeads) * 100)
-    : 0;
-  const hasMultipleFacilities = analytics.facilityBreakdown.length > 1;
+    ? Math.round((analytics.conversionFunnel.converted / analytics.totalLeads) * 100) : 0;
+  const hasMultipleFacilities = !facilityId && analytics.facilityBreakdown.length > 1;
   const unlockedInquiries = analytics.conversionFunnel.contacted + analytics.conversionFunnel.qualified + analytics.conversionFunnel.converted;
 
   return (
     <div className="space-y-5">
-      {/* ── KPI Row ── */}
+      {/* KPI Row */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <KPICard title="Total Inquiries" value={analytics.totalLeads} icon={MessageSquare} trend={analytics.growthRate} color="blue" />
         <KPICard title="This Period" value={analytics.thisMonthLeads} icon={TrendingUp} trend={analytics.growthRate} subtitle={`vs ${analytics.lastMonthLeads} prior`} color="primary" />
@@ -107,7 +91,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
         <KPICard title="Conversion" value={`${conversionRate}%`} icon={Target} subtitle={`${analytics.conversionFunnel.converted} admitted`} color="emerald" />
       </div>
 
-      {/* ── Conversion Funnel ── */}
+      {/* Conversion Funnel */}
       <div className="rounded-lg border overflow-hidden">
         <div className="px-4 py-2.5 border-b bg-muted/30 flex items-center gap-2">
           <Target className="h-3.5 w-3.5 text-muted-foreground" />
@@ -132,7 +116,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
         </div>
       </div>
 
-      {/* ── Charts Row ── */}
+      {/* Charts Row */}
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Monthly Trend */}
         <div className="lg:col-span-3 space-y-2">
@@ -164,14 +148,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={30} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)",
-                      padding: "8px 12px",
-                      fontSize: "12px",
-                    }}
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)", padding: "8px 12px", fontSize: "12px" }}
                     labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600, marginBottom: 2, fontSize: "11px" }}
                     formatter={(value: number) => [`${value}`, "Inquiries"]}
                   />
@@ -224,7 +201,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
         </div>
       </div>
 
-      {/* ── Per-Facility Breakdown ── */}
+      {/* Per-Facility Breakdown */}
       {hasMultipleFacilities && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
@@ -253,7 +230,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
         </div>
       )}
 
-      {/* ── CTA ── */}
+      {/* CTA */}
       <div className="rounded-lg border bg-primary/5 border-primary/15 p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -269,7 +246,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
   );
 }
 
-/* ══════════════════════════════════ Sub-Components ══════════════════════════════════ */
+/* ══════════════════════════ Sub-Components ══════════════════════════ */
 
 const COLOR_MAP: Record<string, { bg: string; text: string }> = {
   blue: { bg: "bg-blue-500/10", text: "text-blue-600" },
