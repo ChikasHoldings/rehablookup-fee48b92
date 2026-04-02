@@ -575,16 +575,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Listing Preview Modal */}
-      {facilitySlug && facilityName && (
-        <ListingPreviewModal
-          open={previewOpen}
-          onOpenChange={setPreviewOpen}
-          facilityName={facilityName}
-          facilitySlug={facilitySlug}
-        />
-      )}
     </header>
 
       {/* Listing Preview Modal */}
