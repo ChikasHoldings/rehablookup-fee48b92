@@ -433,6 +433,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                 onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
                 isResponding={respondMutation.isPending}
                 hasPro={hasPro}
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
               />
             ))}
           </div>
