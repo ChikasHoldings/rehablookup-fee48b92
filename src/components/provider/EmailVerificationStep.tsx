@@ -76,7 +76,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
         return;
       }
       
-      console.log("[EmailVerification] Code sent successfully");
       setCodeSent(true);
       setResendCooldown(60);
       toast({
