@@ -17,9 +17,16 @@ import {
   XCircle,
   AlertCircle,
   ChevronRight,
-  ChevronRight,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
+import { PlacementDetailModal } from "./PlacementDetailModal";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { PlacementDetailModal } from "./PlacementDetailModal";
 import { cn } from "@/lib/utils";
 

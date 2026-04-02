@@ -16,6 +16,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import {
+  Globe,
+  DollarSign,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  User,
+  Loader2,
+  Sparkles,
+  MapPin,
+  ChevronRight,
+  ChevronDown,
+  Bell,
+} from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 interface InternationalMatch {
