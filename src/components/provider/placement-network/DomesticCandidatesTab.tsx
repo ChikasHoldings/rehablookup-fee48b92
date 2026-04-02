@@ -313,7 +313,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                 caseId={intro.concierge_inquiries?.id || intro.id}
                 onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
                 badge={
-                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-[11px]">
+                  <Badge className="bg-emerald-600 text-white border-emerald-600 text-[11px]">
                     <CheckCircle className="h-3 w-3 mr-1" /> Placed
                   </Badge>
                 }
@@ -344,7 +344,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                 caseId={intro.concierge_inquiries?.id || intro.id}
                 onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
                 badge={
-                  <Badge variant="outline" className="border-amber-300 text-amber-600 dark:text-amber-400 text-[11px]">
+                  <Badge className="bg-amber-500 text-white border-amber-500 text-[11px]">
                     <Clock className="h-3 w-3 mr-1" /> In Progress
                   </Badge>
                 }
