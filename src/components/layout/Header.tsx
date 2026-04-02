@@ -97,7 +97,7 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background border-border">
+      <header className="sticky top-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
         <div className="container flex h-16 items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo - Left aligned */}
           <Link to="/" className="flex-shrink-0">

@@ -1,4 +1,4 @@
-import { forwardRef, SVGProps } from "react";
+import { forwardRef, memo, SVGProps } from "react";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link } from "react-router-dom";
 import { Mail, MapPin, ChevronDown, ExternalLink } from "lucide-react";
@@ -78,9 +78,9 @@ interface FooterColumnProps {
   links: { name: string; path: string; highlight?: boolean }[];
 }
 
-function FooterColumn({ title, links }: FooterColumnProps) {
+const FooterColumn = memo(forwardRef<HTMLDivElement, FooterColumnProps>(function FooterColumn({ title, links }, ref) {
   return (
-    <div>
+    <div ref={ref}>
       <p className="text-sm font-semibold text-primary-foreground uppercase tracking-wider mb-4" role="heading" aria-level={6}>
         {title}
       </p>
@@ -103,7 +103,8 @@ function FooterColumn({ title, links }: FooterColumnProps) {
       </ul>
     </div>
   );
-}
+}));
+FooterColumn.displayName = "FooterColumn";
 
 // Mobile accordion section
 interface MobileAccordionProps {
