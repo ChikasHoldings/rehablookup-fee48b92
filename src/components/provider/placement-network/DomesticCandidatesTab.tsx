@@ -159,6 +159,38 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         console.error("[DomesticCandidatesTab] Respond error:", error.message);
         throw new Error(`Failed to submit response: ${error.message}`);
       }
+
+      // Get the inquiry_id for this introduction
+      const intro = introductions?.find((i) => i.id === id);
+      const inquiryId = intro?.inquiry_id;
+
+      if (inquiryId && response === "interested") {
+        // Trigger auto-status-transition: introductions_sent → in_contact
+        try {
+          await supabase.functions.invoke("auto-status-transition", {
+            body: {
+              inquiryId,
+              trigger: "provider_interested",
+              actorType: "provider",
+            },
+          });
+        } catch (transitionError) {
+          console.error("[DomesticCandidatesTab] Status transition error:", transitionError);
+        }
+
+        // Notify admin that a provider has accepted
+        try {
+          await supabase.functions.invoke("send-concierge-notifications", {
+            body: {
+              type: "provider_interested",
+              inquiryId,
+              facilityId: selectedFacility?.id,
+            },
+          });
+        } catch (notifError) {
+          console.error("[DomesticCandidatesTab] Notification error:", notifError);
+        }
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-introductions"] });
