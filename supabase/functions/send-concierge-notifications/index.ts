@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate notification type
-    const validTypes = ['intake_received', 'matches_found', 'provider_interested', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid'];
+    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt'];
     if (!validTypes.includes(type)) {
       throw new Error("Invalid notification type");
     }
@@ -141,15 +141,29 @@ Deno.serve(async (req) => {
     switch (type) {
       case 'intake_received':
         await sendIntakeReceivedEmail(resend, inquiry, supabase, results);
+        // If seeker has no account, also send signup prompt
+        if (!inquiry.user_id) {
+          await sendSignupPromptEmail(resend, inquiry, results);
+        }
         break;
 
       case 'matches_found':
         await sendMatchesFoundEmail(resend, inquiry, supabase, results);
         break;
 
+      case 'introductions_sent':
+        await sendIntroductionsSentEmail(resend, inquiry, supabase, results);
+        break;
+
       case 'provider_interested':
         if (facility) {
-          await sendProviderInterestedEmail(resend, inquiry, facility, supabase, results);
+          await sendProviderInterestedNotification(resend, inquiry, facility, supabase, results);
+        }
+        break;
+
+      case 'provider_declined':
+        if (facility) {
+          await sendProviderDeclinedNotification(inquiry, facility, supabase, results);
         }
         break;
 
@@ -180,6 +194,12 @@ Deno.serve(async (req) => {
       case 'invoice_paid':
         if (facility && invoiceId) {
           await sendInvoicePaidEmail(resend, inquiry, facility, invoiceId, supabase, metadata, results);
+        }
+        break;
+
+      case 'signup_prompt':
+        if (!inquiry.user_id) {
+          await sendSignupPromptEmail(resend, inquiry, results);
         }
         break;
     }
