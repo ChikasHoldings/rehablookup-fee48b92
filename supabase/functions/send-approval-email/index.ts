@@ -197,7 +197,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
-      .select("slug, city, state")
+      .select("slug, city, state, concierge_network_opted_in")
       .eq("id", facilityId)
       .maybeSingle();
 
@@ -210,12 +210,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       : `https://rehablookup.com/rehab-centers`;
 
     const providerName = profile.first_name || "there";
+    const isConciergeOptedIn = facility?.concierge_network_opted_in === true;
     
     // Get provider plan for styling
     const planInfo = await getProviderPlan(profile.email, stripe);
     console.log("Provider plan:", planInfo.plan);
 
-    const emailHtml = generateApprovalEmail(providerName, facilityName, profileUrl, planInfo.plan);
+    const emailHtml = generateApprovalEmail(providerName, facilityName, profileUrl, planInfo.plan, isConciergeOptedIn);
 
     const resend = new Resend(resendApiKey);
     const subjectPrefix = planInfo.plan === "pro" ? "⭐ " : "";
