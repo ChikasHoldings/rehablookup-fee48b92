@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useMemo, memo } from "react";
 import { Navigate } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
@@ -12,6 +12,10 @@ interface LayoutProps {
   children: ReactNode;
 }
 
+// Memoize static shell elements so they never re-render during navigation
+const MemoizedHeader = memo(Header);
+const MemoizedFooter = memo(Footer);
+
 export function Layout({ children }: LayoutProps) {
   const { role, isLoading, isAuthenticated } = useUserRole();
 
@@ -23,26 +27,25 @@ export function Layout({ children }: LayoutProps) {
   // Skip redirect logic in iframe (preview functionality)
   const isInIframe = typeof window !== "undefined" && window.self !== window.top;
 
-  // With localStorage caching, isLoading is usually false on mount
-  // Show content immediately - no skeleton needed for public layout
+  // Compute redirect once per role change, not per render
+  const redirect = useMemo(() => {
+    if (isInIframe) return null;
+    if (isAuthenticated && role === "admin") return "/admin";
+    if (isAuthenticated && role === "provider") return "/provider/dashboard";
+    return null;
+  }, [isInIframe, isAuthenticated, role]);
 
-  // If admin is authenticated, redirect to admin panel - do NOT render public layout
-  if (!isInIframe && isAuthenticated && role === "admin") {
-    return <Navigate to="/admin" replace />;
-  }
-
-  // If provider is authenticated, redirect to provider panel - do NOT render public layout
-  if (!isInIframe && isAuthenticated && role === "provider") {
-    return <Navigate to="/provider/dashboard" replace />;
+  if (redirect) {
+    return <Navigate to={redirect} replace />;
   }
 
   // Seekers and unauthenticated users see the public layout
   return (
     <div className="flex min-h-screen flex-col">
       <InternationalBanner />
-      <Header />
+      <MemoizedHeader />
       <main className="flex-1">{children}</main>
-      <Footer />
+      <MemoizedFooter />
       <BackToTop />
       <FloatingHelpButton />
     </div>
