@@ -1036,46 +1036,59 @@ Deno.serve(async (req) => {
       
       if (invoiceId) {
         logStep("Placement fee payment failed", { paymentIntentId: paymentIntent.id, invoiceId });
-        
-        const { data: invoice } = await supabaseAdmin
-          .from('placement_invoices')
-          .update({ status: 'failed' })
-          .eq('id', invoiceId)
-          .select('*, facilities(id, name, email, user_id)')
-          .single();
 
-        if (invoice) {
-          await supabaseAdmin.from('placement_fee_events').insert({
-            invoice_id: invoiceId,
-            inquiry_id: invoice.inquiry_id,
-            facility_id: invoice.facility_id,
-            event_type: 'failed',
-            actor_type: 'system',
-            amount_cents: invoice.amount_cents,
-            details: {
-              payment_intent_id: paymentIntent.id,
-              failure_code: paymentIntent.last_payment_error?.code,
-              failure_message: paymentIntent.last_payment_error?.message,
-            },
-          });
+        // Idempotency: check if this failure event was already recorded
+        const { data: existingFailEvent } = await supabaseAdmin
+          .from('placement_fee_events')
+          .select('id')
+          .eq('invoice_id', invoiceId)
+          .eq('event_type', 'failed')
+          .eq('details->>payment_intent_id', paymentIntent.id)
+          .maybeSingle();
 
-          if (invoice.facilities?.user_id) {
-            await supabaseAdmin.from('provider_notifications').insert({
-              user_id: invoice.facilities.user_id,
+        if (existingFailEvent) {
+          logStep("Payment failure already recorded (duplicate webhook), skipping", { invoiceId, eventId: event.id });
+        } else {
+          const { data: invoice } = await supabaseAdmin
+            .from('placement_invoices')
+            .update({ status: 'failed' })
+            .eq('id', invoiceId)
+            .select('*, facilities(id, name, email, user_id)')
+            .single();
+
+          if (invoice) {
+            await supabaseAdmin.from('placement_fee_events').insert({
+              invoice_id: invoiceId,
+              inquiry_id: invoice.inquiry_id,
               facility_id: invoice.facility_id,
-              type: 'payment_failed',
+              event_type: 'failed',
+              actor_type: 'system',
+              amount_cents: invoice.amount_cents,
+              details: {
+                payment_intent_id: paymentIntent.id,
+                failure_code: paymentIntent.last_payment_error?.code,
+                failure_message: paymentIntent.last_payment_error?.message,
+              },
+            });
+
+            if (invoice.facilities?.user_id) {
+              await supabaseAdmin.from('provider_notifications').insert({
+                user_id: invoice.facilities.user_id,
+                facility_id: invoice.facility_id,
+                type: 'payment_failed',
+                title: 'Placement Fee Payment Failed',
+                message: `Your payment of $${(invoice.amount_cents / 100).toFixed(2)} failed. Please update your payment method.`,
+                metadata: { invoice_id: invoiceId, amount_cents: invoice.amount_cents },
+              });
+            }
+
+            await supabaseAdmin.from('admin_notifications').insert({
+              type: 'placement_payment_failed',
               title: 'Placement Fee Payment Failed',
-              message: `Your payment of $${(invoice.amount_cents / 100).toFixed(2)} failed. Please update your payment method.`,
-              metadata: { invoice_id: invoiceId, amount_cents: invoice.amount_cents },
+              message: `Payment failed for ${invoice.facilities?.name || 'Unknown'} - $${(invoice.amount_cents / 100).toFixed(2)}`,
+              metadata: { invoice_id: invoiceId, facility_id: invoice.facility_id, amount_cents: invoice.amount_cents },
             });
           }
-
-          await supabaseAdmin.from('admin_notifications').insert({
-            type: 'placement_payment_failed',
-            title: 'Placement Fee Payment Failed',
-            message: `Payment failed for ${invoice.facilities?.name || 'Unknown'} - $${(invoice.amount_cents / 100).toFixed(2)}`,
-            metadata: { invoice_id: invoiceId, facility_id: invoice.facility_id, amount_cents: invoice.amount_cents },
-          });
         }
       }
     }
