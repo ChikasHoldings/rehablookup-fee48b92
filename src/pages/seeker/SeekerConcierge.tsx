@@ -33,7 +33,8 @@ import {
   PlacementTabs,
   PlacementConfirmationCard,
   PlacementMatchCard,
-  PlacementSupportCard 
+  PlacementSupportCard,
+  SeekerPlacementModal,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 // TourRequestModal removed - all coordination goes through advisor (brokerage model)
@@ -83,6 +84,7 @@ export default function SeekerConcierge() {
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -584,7 +586,12 @@ export default function SeekerConcierge() {
 
         {/* Status Card */}
         {selectedCase && (
-          <PlacementStatusCard caseData={selectedCase} />
+          <div 
+            className="cursor-pointer hover:shadow-lg transition-shadow rounded-xl"
+            onClick={() => setDetailModalOpen(true)}
+          >
+            <PlacementStatusCard caseData={selectedCase} />
+          </div>
         )}
 
         {/* Placed Facility */}
@@ -646,6 +653,12 @@ export default function SeekerConcierge() {
         {/* Support Card */}
         <PlacementSupportCard />
 
+        {/* Case Detail Modal */}
+        <SeekerPlacementModal
+          caseData={selectedCase || null}
+          open={detailModalOpen}
+          onOpenChange={setDetailModalOpen}
+        />
       </div>
     </>
   );
