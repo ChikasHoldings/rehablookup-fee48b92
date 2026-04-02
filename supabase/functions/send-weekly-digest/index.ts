@@ -139,7 +139,7 @@ ${emailBodyStart()}
               </table>
               
               ${tipsContent}
-              ${ctaButton('View All Leads', `${dashboardUrl}/provider/leads`, plan)}
+              ${ctaButton('View All Leads', `${dashboardUrl}/provider/inquiries`, plan)}
 ${emailBodyEnd()}
 ${emailFooter()}
 ${emailEnd()}

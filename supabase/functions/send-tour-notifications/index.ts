@@ -177,7 +177,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             type: "tour_request",
             title: "New Tour Request",
             message: `${emailData.seekerName} has requested a ${tour.tour_type} tour.`,
-            link: "/provider/concierge",
+            link: "/provider/placement-network",
           });
           results.providerNotification = true;
         }
@@ -292,7 +292,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             type: "tour_confirmed",
             title: "Tour Confirmed",
             message: `${emailData.seekerName} confirmed the tour for ${confirmedTime}.`,
-            link: "/provider/concierge",
+            link: "/provider/placement-network",
           });
         }
 
@@ -361,7 +361,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
               type: "tour_cancelled",
               title: "Tour Cancelled",
               message: `${emailData.seekerName} cancelled their tour request.`,
-              link: "/provider/concierge",
+              link: "/provider/placement-network",
             });
           }
         } else if (cancelledBy === "facility" && resend) {

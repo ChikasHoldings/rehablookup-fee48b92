@@ -98,7 +98,7 @@ ${emailBodyStart()}
               </p>
               ` : ""}
               
-              ${ctaButton('View & Unlock Leads', 'https://rehablookup.com/provider/leads', plan)}
+              ${ctaButton('View & Unlock Leads', 'https://rehablookup.com/provider/inquiries', plan)}
               ${tipsSection}
 ${emailBodyEnd()}
 ${emailFooter()}
