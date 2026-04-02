@@ -907,6 +907,16 @@ Deno.serve(async (req) => {
       const customerId = subscription.customer as string;
       logStep("Subscription deleted", { subscriptionId: subscription.id });
 
+      // Idempotency: check if this event was already processed
+      const { data: existingDeleteEvent } = await supabaseAdmin
+        .from("subscription_events")
+        .select("id")
+        .eq("stripe_event_id", event.id)
+        .maybeSingle();
+
+      if (existingDeleteEvent) {
+        logStep("Subscription deleted event already processed, skipping", { eventId: event.id });
+      } else {
       const customer = await stripe.customers.retrieve(customerId);
       
       if (!customer.deleted) {
