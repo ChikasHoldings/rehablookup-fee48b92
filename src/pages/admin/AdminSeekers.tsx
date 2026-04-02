@@ -345,7 +345,7 @@ export default function AdminSeekers() {
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Total</span>
               </button>
               <button
-                onClick={() => setVerificationFilter("all")}
+                onClick={() => handleFilterChange("all")}
                 className="flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px] hover:bg-muted/50"
               >
                 <Calendar className="h-3.5 w-3.5 text-warning mb-1" />
@@ -353,25 +353,25 @@ export default function AdminSeekers() {
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">This Month</span>
               </button>
               <button
-                onClick={() => setVerificationFilter("verified")}
+                onClick={() => handleFilterChange("verified")}
                 className={cn(
                   "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
                   verificationFilter === "verified" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
                 )}
               >
                 <CheckCircle className="h-3.5 w-3.5 text-success mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => u.phone_verified).length}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{globalStats?.verified ?? "—"}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Verified</span>
               </button>
               <button
-                onClick={() => setVerificationFilter("unverified")}
+                onClick={() => handleFilterChange("unverified")}
                 className={cn(
                   "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
                   verificationFilter === "unverified" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
                 )}
               >
                 <XCircle className="h-3.5 w-3.5 text-muted-foreground mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => !u.phone_verified).length}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{globalStats?.unverified ?? "—"}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Unverified</span>
               </button>
             </div>
@@ -382,7 +382,7 @@ export default function AdminSeekers() {
             <div className="flex items-center gap-0.5 p-3">
               <div className="flex flex-col items-center justify-center px-3 py-2.5 min-w-[72px]">
                 <Shield className="h-3.5 w-3.5 text-primary mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => u.has_concierge).length}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{globalStats?.concierge ?? "—"}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Concierge</span>
               </div>
             </div>
@@ -392,21 +392,21 @@ export default function AdminSeekers() {
               <div className="flex flex-col items-center gap-0.5">
                 <div className="flex items-center gap-1.5">
                   <Heart className="h-3.5 w-3.5 text-destructive" />
-                  <span className="text-sm font-medium tabular-nums">{activityStats?.favorites || 0}</span>
+                  <span className="text-sm font-medium tabular-nums">{globalStats?.favorites || 0}</span>
                 </div>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Saves</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
                 <div className="flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5 text-info" />
-                  <span className="text-sm font-medium tabular-nums">{activityStats?.inquiries || 0}</span>
+                  <span className="text-sm font-medium tabular-nums">{globalStats?.inquiries || 0}</span>
                 </div>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Inquiries</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
                 <div className="flex items-center gap-1.5">
                   <Star className="h-3.5 w-3.5 text-warning" />
-                  <span className="text-sm font-medium tabular-nums">{activityStats?.reviews || 0}</span>
+                  <span className="text-sm font-medium tabular-nums">{globalStats?.reviews || 0}</span>
                 </div>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Reviews</span>
               </div>
