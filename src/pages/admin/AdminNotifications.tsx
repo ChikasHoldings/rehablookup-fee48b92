@@ -183,6 +183,9 @@ export default function AdminNotifications() {
   const isLoading = globalLoading || userLoading;
 
   // Filter notifications
+  const PAYMENT_TYPES = ["payment_failed", "payment_delinquent", "placement_payment_failed"];
+  const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"];
+
   const getFilteredNotifications = () => {
     let notifications = activeTab === "global" 
       ? globalNotifications.map(n => ({ ...n, source: "global" as const }))
@@ -194,7 +197,11 @@ export default function AdminNotifications() {
       notifications = notifications.filter(n => !n.read);
     }
 
-    if (typeFilter !== "all") {
+    if (typeFilter === "payment_types") {
+      notifications = notifications.filter(n => PAYMENT_TYPES.includes(n.type));
+    } else if (typeFilter === "security_types") {
+      notifications = notifications.filter(n => SECURITY_TYPES.includes(n.type));
+    } else if (typeFilter !== "all") {
       notifications = notifications.filter(n => n.type === typeFilter);
     }
 
