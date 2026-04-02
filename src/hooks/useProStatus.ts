@@ -68,6 +68,7 @@ export function useProStatus(facilityId?: string) {
           currentPeriodEnd: data.current_period_end,
           facilityId: data.facility_id,
           stripeSubscriptionId: data.stripe_subscription_id,
+          cancelAtPeriodEnd: (data as Record<string, unknown>).cancel_at_period_end === true,
         };
       } catch (err) {
         console.error("[useProStatus] Unexpected error:", err);
