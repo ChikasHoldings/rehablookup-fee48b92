@@ -120,9 +120,10 @@ export default function ProviderPlacementNetworkPage() {
       return data;
     },
     enabled: !!selectedFacility?.id,
+    retry: 2,
   });
 
-  const { data: introductions } = useQuery({
+  const { data: introductions, error: introductionsError } = useQuery({
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
