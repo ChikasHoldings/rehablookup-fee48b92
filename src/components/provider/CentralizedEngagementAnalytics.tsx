@@ -423,7 +423,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
                 </div>
               </div>
               <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
-                <Link to="/provider/subscription">
+                <Link to="/provider/billing?tab=pro">
                   <Star className="h-4 w-4 mr-2" />
                   Upgrade to Pro
                 </Link>
