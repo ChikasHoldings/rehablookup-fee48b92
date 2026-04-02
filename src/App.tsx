@@ -160,7 +160,7 @@ const ProviderListingPage = lazy(() => import("./pages/provider/MyListings"));
 const ProviderInquiriesPage = lazy(() => import("./pages/provider/Inquiries"));
 const ProviderReviewsPage = lazy(() => import("./pages/provider/Reviews"));
 const ProviderAnalyticsPage = lazy(() => import("./pages/provider/Analytics"));
-const ProviderCreditsPage = lazy(() => import("./pages/provider/Credits"));
+
 const ProviderSettingsPage = lazy(() => import("./pages/provider/Settings"));
 const ProviderEmbedBadgePage = lazy(() => import("./pages/provider/EmbedBadge"));
 const ProviderNotificationsPage = lazy(() => import("./pages/provider/Notifications"));
