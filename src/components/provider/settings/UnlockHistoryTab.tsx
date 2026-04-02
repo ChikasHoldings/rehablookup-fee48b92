@@ -103,7 +103,7 @@ export function UnlockHistoryTab() {
 
       const { data, error } = await supabase
         .from("credit_transactions")
-        .select("*")
+        .select("id, amount_cents, transaction_type, description, inquiry_type, base_price_cents, discount_applied, discount_amount_cents, created_at, reference_id")
         .eq("provider_id", session.user.id)
         .eq("transaction_type", "unlock")
         .order("created_at", { ascending: false })
