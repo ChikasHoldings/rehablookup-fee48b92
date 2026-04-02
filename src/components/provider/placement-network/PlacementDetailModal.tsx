@@ -136,12 +136,12 @@ const formatUrgency = (urgency: string | null | undefined) => {
 function StatusBadge({ status }: { status: string | undefined }) {
   const config: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
     new: { label: "New", variant: "secondary" },
-    reviewing: { label: "Under Review", variant: "outline", className: "border-blue-400 text-blue-700" },
-    matching: { label: "Finding Facilities", variant: "outline", className: "border-purple-400 text-purple-700" },
-    matched: { label: "Facilities Found", variant: "outline", className: "border-indigo-400 text-indigo-700" },
-    introductions_sent: { label: "Introductions Sent", variant: "outline", className: "border-amber-400 text-amber-700" },
-    in_contact: { label: "In Contact", variant: "outline", className: "border-emerald-400 text-emerald-700" },
-    placed: { label: "Placed", variant: "default", className: "bg-emerald-500" },
+    reviewing: { label: "Under Review", variant: "outline", className: "border-primary/40 text-primary" },
+    matching: { label: "Finding Facilities", variant: "outline", className: "border-accent-foreground/30 text-accent-foreground" },
+    matched: { label: "Facilities Found", variant: "outline", className: "border-primary/40 text-primary" },
+    introductions_sent: { label: "Introductions Sent", variant: "outline", className: "border-primary/30 text-primary" },
+    in_contact: { label: "In Contact", variant: "outline", className: "border-primary/40 text-primary" },
+    placed: { label: "Placed", variant: "default" },
     closed: { label: "Closed", variant: "secondary" },
   };
   const c = config[status || ""] || { label: formatLabel(status), variant: "secondary" as const };
@@ -153,10 +153,27 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
   return (
     <div className="flex items-start gap-3 py-2">
       <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-        <p className="text-sm font-medium capitalize">{value}</p>
+        <p className="text-sm font-medium break-words">{value}</p>
       </div>
+    </div>
+  );
+}
+
+function TimelineItem({ label, date, icon, subtitle }: { label: string; date?: string | null; icon: React.ReactNode; subtitle?: string }) {
+  return (
+    <div className="flex items-start gap-3 py-2">
+      <div className="mt-0.5 shrink-0">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{label}</p>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+      {date && (
+        <span className="text-xs text-muted-foreground shrink-0">
+          {format(new Date(date), "MMM d, h:mm a")}
+        </span>
+      )}
     </div>
   );
 }
@@ -179,7 +196,7 @@ export function PlacementDetailModal({
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
-  // Fetch full inquiry data with additional fields
+  // Fetch full inquiry data
   const { data: fullInquiry } = useQuery({
     queryKey: ["placement-detail", introduction?.inquiry_id],
     queryFn: async () => {
@@ -205,12 +222,11 @@ export function PlacementDetailModal({
     staleTime: 60000,
   });
 
-  // Fetch advisor messages for this case (thread tied to facility)
+  // Fetch advisor messages
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ["placement-messages", introduction?.inquiry_id, facilityId],
     queryFn: async () => {
       if (!introduction?.inquiry_id) return [];
-      // Find the thread for this facility + inquiry
       const { data: thread } = await supabase
         .from("concierge_threads")
         .select("id")
@@ -233,7 +249,7 @@ export function PlacementDetailModal({
     staleTime: 30000,
   });
 
-  // Fetch case events timeline
+  // Fetch case events
   const { data: caseEvents } = useQuery({
     queryKey: ["placement-events", introduction?.inquiry_id],
     queryFn: async () => {
@@ -255,8 +271,6 @@ export function PlacementDetailModal({
   const locationText = [inq?.preferred_city, inq?.preferred_state].filter(Boolean).join(", ") || "Flexible";
   const coOccurringText = formatCoOccurring(inq?.co_occurring_concerns);
   const amenitiesText = formatAmenities(inq?.amenity_preferences);
-
-  // Extract intake_data fields if present
   const intakeData = inq?.intake_data && typeof inq.intake_data === "object" ? (inq.intake_data as Record<string, unknown>) : null;
 
   const handleAccept = () => {
@@ -267,7 +281,6 @@ export function PlacementDetailModal({
     onRespond?.("not_available", providerNote.trim() || undefined);
   };
 
-  // Determine current step for the provider
   const getProviderStep = () => {
     if (isPlaced) return { step: 4, label: "Admission Confirmed", description: "This placement has been confirmed. Thank you!" };
     if (isDeclined) return { step: 0, label: "Declined", description: "You declined this candidate." };
@@ -281,35 +294,37 @@ export function PlacementDetailModal({
     { label: "Case Created", done: true },
     { label: "Matched & Sent", done: true },
     { label: "Your Review", done: !isPending },
-    { label: "Advisor Coordination", done: isAccepted || isPlaced },
-    { label: "Admission Confirmed", done: isPlaced },
+    { label: "Coordination", done: isAccepted || isPlaced },
+    { label: "Confirmed", done: isPlaced },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <DialogHeader className="p-5 pb-3 border-b bg-muted/30">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <DialogTitle className="text-lg font-bold flex items-center gap-2">
+        <DialogHeader className="p-4 sm:p-5 pb-3 border-b bg-muted/30 flex-shrink-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
                 Case #{caseId}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5" />
-                {firstName} · Received {introduction?.created_at && format(new Date(introduction.created_at), "MMM d, yyyy 'at' h:mm a")}
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-1.5 truncate">
+                <User className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {firstName} · {introduction?.created_at && format(new Date(introduction.created_at), "MMM d, yyyy")}
+                </span>
               </p>
             </div>
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <div className="flex flex-col items-end gap-1 shrink-0">
               <StatusBadge status={inq?.status} />
               {isPending && <Badge variant="destructive" className="text-[10px]">Action Required</Badge>}
               {isAccepted && !isPlaced && (
-                <Badge variant="outline" className="border-amber-400 text-amber-700 text-[10px]">
-                  <Hourglass className="h-3 w-3 mr-1" /> Awaiting Confirmation
+                <Badge variant="outline" className="text-[10px]">
+                  <Hourglass className="h-3 w-3 mr-1" /> Awaiting
                 </Badge>
               )}
               {isPlaced && (
-                <Badge className="bg-emerald-500 text-[10px]">
+                <Badge variant="default" className="text-[10px]">
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Placed
                 </Badge>
               )}
@@ -317,35 +332,39 @@ export function PlacementDetailModal({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[calc(90vh-80px)]">
-          <Tabs defaultValue="details" className="w-full">
-            <div className="px-5 pt-3 border-b">
-              <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="details" className="text-xs">
-                  <FileText className="h-3.5 w-3.5 mr-1.5" /> Details
-                </TabsTrigger>
-                <TabsTrigger value="messages" className="text-xs">
-                  <MessageSquare className="h-3.5 w-3.5 mr-1.5" /> Messages
-                  {messages && messages.length > 0 && (
-                    <Badge variant="secondary" className="ml-1.5 text-[10px] h-4 px-1">{messages.length}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="timeline" className="text-xs">
-                  <Clock className="h-3.5 w-3.5 mr-1.5" /> Timeline
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        {/* Tabs + Content */}
+        <Tabs defaultValue="details" className="flex-1 flex flex-col overflow-hidden">
+          <div className="px-4 sm:px-5 pt-3 border-b flex-shrink-0">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="details" className="text-xs gap-1">
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Details</span>
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="text-xs gap-1">
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Messages</span>
+                {messages && messages.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1">{messages.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="text-xs gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Timeline</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
+          <ScrollArea className="flex-1">
             {/* === DETAILS TAB === */}
-            <TabsContent value="details" className="p-5 space-y-5 mt-0">
+            <TabsContent value="details" className="p-4 sm:p-5 space-y-4 mt-0">
               {/* Progress Steps */}
-              <div className="bg-muted/30 rounded-lg p-4 border">
+              <div className="bg-muted/30 rounded-lg p-3 sm:p-4 border">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Placement Progress</p>
                 <div className="flex items-center gap-1">
                   {steps.map((s, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                      <div className={`h-2 w-full rounded-full ${s.done ? "bg-primary" : "bg-muted"}`} />
-                      <span className={`text-[10px] text-center leading-tight ${s.done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                      <div className={`h-2 w-full rounded-full transition-colors ${s.done ? "bg-primary" : "bg-muted"}`} />
+                      <span className={`text-[9px] sm:text-[10px] text-center leading-tight ${s.done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                         {s.label}
                       </span>
                     </div>
@@ -364,14 +383,14 @@ export function PlacementDetailModal({
                     <User className="h-4 w-4" /> Client Profile
                   </h3>
                 </div>
-                <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                   <DetailRow icon={User} label="Name" value={firstName} />
                   <DetailRow icon={Calendar} label="Age Range" value={formatLabel(inq?.age_range)} />
                   <DetailRow icon={User} label="Gender" value={formatLabel(inq?.gender)} />
                   <DetailRow icon={MapPin} label="Location Preference" value={locationText} />
                   <DetailRow icon={MessageSquare} label="Preferred Language" value={formatLabel(inq?.preferred_language)} />
-                  <DetailRow icon={MapPin} label="Environment Preference" value={formatLabel(inq?.preferred_environment)} />
-                  <DetailRow icon={Activity} label="Current Living Situation" value={formatLabel(inq?.current_living_situation)} />
+                  <DetailRow icon={MapPin} label="Environment" value={formatLabel(inq?.preferred_environment)} />
+                  <DetailRow icon={Activity} label="Living Situation" value={formatLabel(inq?.current_living_situation)} />
                   <DetailRow icon={Shield} label="Mobility Needs" value={formatLabel(inq?.mobility_needs)} />
                 </div>
               </div>
@@ -383,11 +402,11 @@ export function PlacementDetailModal({
                     <Activity className="h-4 w-4" /> Clinical Summary
                   </h3>
                 </div>
-                <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                   <DetailRow icon={Activity} label="Level of Care" value={formatLabel(inq?.level_of_care)} />
                   <DetailRow icon={Heart} label="Primary Concern" value={formatLabel(inq?.primary_concern)} />
                   <DetailRow icon={Pill} label="Detox Needed" value={formatLabel(inq?.detox_needed)} />
-                  <DetailRow icon={Clock} label="Substance Use Duration" value={formatLabel(inq?.substance_use_duration)} />
+                  <DetailRow icon={Clock} label="Use Duration" value={formatLabel(inq?.substance_use_duration)} />
                   <DetailRow icon={Clock} label="Use Frequency" value={formatLabel(inq?.substance_use_frequency)} />
                   <DetailRow icon={Activity} label="Assessment Preference" value={formatLabel(inq?.assessment_preference)} />
                   {inq?.prior_treatment_history && (
@@ -410,12 +429,12 @@ export function PlacementDetailModal({
                     <DollarSign className="h-4 w-4" /> Payment & Preferences
                   </h3>
                 </div>
-                <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                   <DetailRow icon={DollarSign} label="Payment Type" value={formatLabel(inq?.payment_type)} />
                   <DetailRow icon={Shield} label="Insurance Carrier" value={inq?.insurance_carrier} />
                   <DetailRow icon={DollarSign} label="Budget Range" value={formatLabel(inq?.budget_range)} />
                   <DetailRow icon={Clock} label="Timeline" value={formatUrgency(inq?.timeline_urgency)} />
-                  <DetailRow icon={Heart} label="Faith-Based Preference" value={formatLabel(inq?.faith_based_preference)} />
+                  <DetailRow icon={Heart} label="Faith-Based" value={formatLabel(inq?.faith_based_preference)} />
                   {inq?.holistic_interest && (
                     <DetailRow icon={Heart} label="Holistic Interest" value="Yes" />
                   )}
@@ -427,15 +446,15 @@ export function PlacementDetailModal({
                 </div>
               </div>
 
-              {/* Additional intake data fields */}
+              {/* Additional intake data */}
               {intakeData && Object.keys(intakeData).length > 0 && (
                 <div className="border rounded-lg overflow-hidden">
                   <div className="bg-muted/50 px-4 py-2.5 border-b">
                     <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <FileText className="h-4 w-4" /> Additional Intake Details
+                      <FileText className="h-4 w-4" /> Additional Details
                     </h3>
                   </div>
-                  <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                  <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                     {Object.entries(intakeData)
                       .filter(([key]) => !["email", "phone", "user_email", "user_phone"].includes(key))
                       .filter(([, val]) => val !== null && val !== undefined && val !== "")
@@ -458,8 +477,8 @@ export function PlacementDetailModal({
                   <div className="bg-muted/50 px-4 py-2.5 border-b">
                     <h3 className="font-semibold text-sm">Client Notes</h3>
                   </div>
-                  <div className="p-4">
-                    <p className="text-sm text-muted-foreground">{inq.notes}</p>
+                  <div className="p-3 sm:p-4">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{inq.notes}</p>
                   </div>
                 </div>
               )}
@@ -468,8 +487,8 @@ export function PlacementDetailModal({
               <div className="bg-muted/50 rounded-lg p-3 text-sm flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <p className="text-muted-foreground">
-                  <strong className="text-foreground">Placement fee:</strong> {hasPro ? "$800" : "$1,000"} — only charged upon confirmed admission by RehabLookup.
-                  {hasPro && <span className="text-emerald-600 ml-1">Pro discount applied</span>}
+                  <strong className="text-foreground">Placement fee:</strong> {hasPro ? "$800" : "$1,000"} — only charged upon confirmed admission.
+                  {hasPro && <span className="text-primary ml-1">Pro discount applied</span>}
                 </p>
               </div>
 
@@ -480,13 +499,13 @@ export function PlacementDetailModal({
                     placeholder="Optional note to advisor (e.g., bed availability, special accommodations)..."
                     value={providerNote}
                     onChange={(e) => setProviderNote(e.target.value)}
-                    className="text-sm"
+                    className="text-sm resize-none"
                     rows={2}
                   />
                   <div className="flex gap-3">
                     <Button className="flex-1 gap-2" onClick={handleAccept} disabled={isResponding}>
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                      Accept Candidate
+                      Accept
                     </Button>
                     <Button variant="outline" className="flex-1 gap-2" onClick={handleDecline} disabled={isResponding}>
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
@@ -496,11 +515,11 @@ export function PlacementDetailModal({
                 </div>
               )}
 
-              {/* Response summary for already responded */}
+              {/* Response summary */}
               {!isPending && (
-                <div className={`rounded-lg p-4 border ${isPlaced ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" : isAccepted ? "bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800" : "bg-muted/30"}`}>
+                <div className={`rounded-lg p-4 border ${isPlaced ? "bg-primary/5 border-primary/20" : isAccepted ? "bg-muted/50 border-border" : "bg-muted/30"}`}>
                   <div className="flex items-center gap-2 mb-1">
-                    {isPlaced ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : isAccepted ? <Hourglass className="h-4 w-4 text-amber-500" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                    {isPlaced ? <CheckCircle2 className="h-4 w-4 text-primary" /> : isAccepted ? <Hourglass className="h-4 w-4 text-muted-foreground" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
                     <span className="font-medium text-sm">
                       {isPlaced ? "Admission Confirmed" : isAccepted ? "Accepted — Awaiting Confirmation" : "Declined"}
                     </span>
@@ -518,7 +537,7 @@ export function PlacementDetailModal({
             </TabsContent>
 
             {/* === MESSAGES TAB === */}
-            <TabsContent value="messages" className="p-5 mt-0">
+            <TabsContent value="messages" className="p-4 sm:p-5 mt-0">
               {messagesLoading ? (
                 <div className="space-y-3">
                   <Skeleton className="h-12 w-3/4" />
@@ -527,21 +546,21 @@ export function PlacementDetailModal({
                 </div>
               ) : messages && messages.length > 0 ? (
                 <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground mb-3">Messages between you and the placement advisor for this case.</p>
+                  <p className="text-xs text-muted-foreground mb-3">Messages between you and the placement advisor.</p>
                   {messages.map((msg) => (
                     <div
                       key={msg.id}
                       className={`flex ${msg.sender_type === "provider" || msg.sender_type === "facility" ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                        className={`max-w-[85%] sm:max-w-[75%] rounded-lg px-3 py-2 text-sm ${
                           msg.sender_type === "provider" || msg.sender_type === "facility"
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
                         }`}
                       >
                         <p className="text-[10px] opacity-70 mb-0.5 capitalize">{msg.sender_type === "admin" ? "Advisor" : "You"}</p>
-                        <p>{msg.content}</p>
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                         <p className="text-[10px] opacity-60 mt-1">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
                       </div>
                     </div>
@@ -552,37 +571,35 @@ export function PlacementDetailModal({
                   <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
                   <p className="text-sm text-muted-foreground">No messages yet</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Messages from the placement advisor will appear here once coordination begins.
+                    Messages from the advisor will appear here once coordination begins.
                   </p>
                 </div>
               )}
             </TabsContent>
 
             {/* === TIMELINE TAB === */}
-            <TabsContent value="timeline" className="p-5 mt-0">
+            <TabsContent value="timeline" className="p-4 sm:p-5 mt-0">
               <div className="space-y-0">
-                {/* Built-in timeline from introduction data */}
                 <TimelineItem
                   label="Case Sent to You"
                   date={introduction?.created_at}
-                  icon={<Send className="h-3.5 w-3.5" />}
+                  icon={<Send className="h-3.5 w-3.5 text-muted-foreground" />}
                 />
                 {introduction?.provider_responded_at && (
                   <TimelineItem
                     label={isAccepted ? "You Accepted" : "You Declined"}
                     date={introduction.provider_responded_at}
-                    icon={isAccepted ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+                    icon={isAccepted ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
                   />
                 )}
                 {inquiry?.placement_confirmed_at && isPlaced && (
                   <TimelineItem
                     label="Admission Confirmed"
                     date={inquiry.placement_confirmed_at}
-                    icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+                    icon={<CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
                   />
                 )}
 
-                {/* Case events from DB */}
                 {caseEvents && caseEvents.length > 0 && (
                   <>
                     <Separator className="my-4" />
@@ -607,26 +624,9 @@ export function PlacementDetailModal({
                 )}
               </div>
             </TabsContent>
-          </Tabs>
-        </ScrollArea>
+          </ScrollArea>
+        </Tabs>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function TimelineItem({ label, date, icon, subtitle }: { label: string; date?: string | null; icon: React.ReactNode; subtitle?: string }) {
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <div className="mt-0.5 shrink-0">{icon}</div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{label}</p>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-      </div>
-      {date && (
-        <span className="text-xs text-muted-foreground shrink-0">
-          {format(new Date(date), "MMM d, h:mm a")}
-        </span>
-      )}
-    </div>
   );
 }
