@@ -17,9 +17,12 @@ import {
   XCircle,
   AlertCircle,
   Hourglass,
-  ArrowRight,
+  ChevronRight,
   ChevronDown,
   Info,
+  DollarSign,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
 import { PlacementDetailModal } from "./PlacementDetailModal";
@@ -30,7 +33,6 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
-// Proper type definitions for type safety
 interface ConciergeInquiry {
   id: string;
   user_name?: string;
@@ -70,6 +72,13 @@ interface DomesticCandidatesTabProps {
   hasPro?: boolean;
 }
 
+const URGENCY_CONFIG: Record<string, { label: string; className: string }> = {
+  immediate: { label: "Immediate", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  within_week: { label: "Within Week", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20" },
+  within_month: { label: "Within Month", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
+  flexible: { label: "Flexible", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
+};
+
 export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabProps) {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
@@ -83,8 +92,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("concierge_introductions")
-        .select(
-          `
+        .select(`
           id, facility_id, inquiry_id, created_at,
           provider_response, provider_responded_at, provider_notes,
           concierge_inquiries (
@@ -93,15 +101,10 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
             detox_needed, co_occurring_concerns, substance_use_duration, budget_range,
             seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id
           )
-        `
-        )
+        `)
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("[DomesticCandidatesTab] Query error:", error.message);
-        throw new Error(`Failed to load introductions: ${error.message}`);
-      }
+      if (error) throw new Error(`Failed to load introductions: ${error.message}`);
       return (data || []) as Introduction[];
     },
     enabled: !!selectedFacility?.id,
@@ -109,23 +112,16 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
     retry: 2,
   });
 
-  // Realtime subscription
   useEffect(() => {
     if (!selectedFacility?.id) return;
     const channel = supabase
       .channel(`provider-intros-${selectedFacility.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "concierge_introductions",
-          filter: `facility_id=eq.${selectedFacility.id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["placement-introductions", selectedFacility.id] });
-        }
-      )
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "concierge_introductions",
+        filter: `facility_id=eq.${selectedFacility.id}`,
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ["placement-introductions", selectedFacility.id] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [selectedFacility?.id, queryClient]);
@@ -159,7 +155,6 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         })
         .eq("id", id)
         .eq("facility_id", selectedFacility?.id);
-
       if (error) throw new Error(`Failed to submit response: ${error.message}`);
 
       const intro = introductions?.find((i) => i.id === id);
@@ -195,7 +190,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
     },
   });
 
-  // Categorize introductions
+  // Categorize
   const pendingIntroductions = introductions?.filter((i) => !i.provider_response || i.provider_response === "pending") || [];
   const confirmedPlacements = introductions?.filter(
     (i) => i.concierge_inquiries?.placement_confirmed === true && i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
@@ -215,6 +210,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
 
   const acceptedCount = introductions?.filter((i) => i.provider_response === "interested").length || 0;
   const declinedCount = introductions?.filter((i) => i.provider_response === "not_available").length || 0;
+  const candidateCount = pendingIntroductions.length + activePlacements.length;
 
   if (error) {
     return (
@@ -236,52 +232,52 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   if (isLoading) {
     return (
       <div className="space-y-4">
+        <Skeleton className="h-28 w-full rounded-xl" />
         <div className="grid grid-cols-3 gap-3">
-          <Skeleton className="h-20" />
-          <Skeleton className="h-20" />
-          <Skeleton className="h-20" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
         </div>
-        <Skeleton className="h-40" />
-        <Skeleton className="h-40" />
+        <Skeleton className="h-36 w-full rounded-xl" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* ─── KPI Stats ─── */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard
-          icon={<Bell className="h-4 w-4" />}
-          value={pendingIntroductions.length}
-          label="Pending"
-          accent="amber"
-          highlight={pendingIntroductions.length > 0}
-        />
-        <StatCard
-          icon={<CheckCircle className="h-4 w-4" />}
-          value={acceptedCount}
-          label="Accepted"
-          accent="emerald"
-        />
-        <StatCard
-          icon={<XCircle className="h-4 w-4" />}
-          value={declinedCount}
-          label="Declined"
-          accent="muted"
-        />
-      </div>
+      {/* ── Header Card ── */}
+      <Card className="border-primary/15 bg-gradient-to-br from-primary/5 via-background to-primary/5 overflow-hidden">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <MapPin className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-foreground">Domestic Placements</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Pre-screened U.S. clients matched to your facility
+              </p>
+            </div>
+            <div className="sm:text-right shrink-0">
+              <p className="text-2xl font-bold text-primary">{hasPro ? "$800" : "$1,000"}</p>
+              <p className="text-xs text-muted-foreground">per confirmed admission</p>
+              {hasPro && (
+                <Badge variant="secondary" className="mt-1 text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                  Pro: Save $200
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* ─── Collapsible Fee Info ─── */}
+      {/* ── Collapsible Fee Details ── */}
       <Collapsible open={feeInfoOpen} onOpenChange={setFeeInfoOpen}>
         <CollapsibleTrigger className="w-full">
           <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Info className="h-3.5 w-3.5" />
-              <span>
-                Placement fee: <strong className="text-foreground">{hasPro ? "$800" : "$1,000"}</strong> per confirmed admission
-                {hasPro && <span className="text-primary ml-1">(Pro discount)</span>}
-              </span>
+              <span>Fee details &amp; how billing works</span>
             </div>
             <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", feeInfoOpen && "rotate-180")} />
           </div>
@@ -298,22 +294,33 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         </CollapsibleContent>
       </Collapsible>
 
-      {/* ─── Confirmed Admissions ─── */}
+      {/* ── Stats Row ── */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard icon={Bell} iconColor="text-amber-500" bgColor="bg-amber-500/10" value={pendingIntroductions.length} label="Pending" />
+        <StatCard icon={CheckCircle} iconColor="text-emerald-500" bgColor="bg-emerald-500/10" value={acceptedCount} label="Accepted" />
+        <StatCard icon={XCircle} iconColor="text-muted-foreground" bgColor="bg-muted" value={declinedCount} label="Declined" />
+      </div>
+
+      {/* ── Confirmed Admissions ── */}
       {confirmedPlacements.length > 0 && (
-        <Section
-          icon={<UserCheck className="h-4 w-4 text-emerald-500" />}
-          title="Confirmed Admissions"
-          count={confirmedPlacements.length}
-          accentClass="text-emerald-500"
-        >
-          <div className="space-y-2">
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-emerald-500" />
+              Confirmed Admissions
+              <span className="inline-flex items-center justify-center text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 bg-emerald-500/15 text-emerald-600">
+                {confirmedPlacements.length}
+              </span>
+            </h3>
+          </div>
+          <div className="space-y-3">
             {confirmedPlacements.slice(0, 5).map((intro) => (
-              <CaseRow
+              <CandidateRow
                 key={`confirmed-${intro.id}`}
-                caseId={intro.concierge_inquiries?.id || intro.id}
+                intro={intro}
                 onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
                 badge={
-                  <Badge className="bg-emerald-600 text-white border-emerald-600 text-[11px]">
+                  <Badge className="bg-emerald-600 text-white border-emerald-600 text-xs">
                     <CheckCircle className="h-3 w-3 mr-1" /> Placed
                   </Badge>
                 }
@@ -325,26 +332,45 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
               />
             ))}
           </div>
-        </Section>
+        </section>
       )}
 
-      {/* ─── Active — Awaiting Confirmation ─── */}
-      {activePlacements.length > 0 && (
-        <Section
-          icon={<Hourglass className="h-4 w-4 text-amber-500" />}
-          title="Awaiting Confirmation"
-          count={activePlacements.length}
-          accentClass="text-amber-500"
-          subtitle="You accepted — our team is coordinating next steps"
-        >
-          <div className="space-y-2">
+      {/* ── Candidates (Pending + In Progress combined) ── */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            Candidates
+            {candidateCount > 0 && (
+              <span className="inline-flex items-center justify-center text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 bg-destructive text-destructive-foreground">
+                {candidateCount}
+              </span>
+            )}
+          </h3>
+        </div>
+
+        {candidateCount === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="py-10 text-center">
+              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                <MapPin className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <p className="font-medium text-foreground">No pending candidates</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                When domestic clients are matched to your facility, they'll appear here for your review.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {/* In Progress first — they need attention */}
             {activePlacements.map((intro) => (
-              <CaseRow
+              <CandidateRow
                 key={`active-${intro.id}`}
-                caseId={intro.concierge_inquiries?.id || intro.id}
+                intro={intro}
                 onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
                 badge={
-                  <Badge className="bg-amber-500 text-white border-amber-500 text-[11px]">
+                  <Badge className="bg-amber-500 text-white border-amber-500 text-xs">
                     <Clock className="h-3 w-3 mr-1" /> In Progress
                   </Badge>
                 }
@@ -355,88 +381,61 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                 }
               />
             ))}
-          </div>
-        </Section>
-      )}
-
-      {/* ─── Pending Candidates ─── */}
-      <Section
-        icon={<Users className="h-4 w-4 text-primary" />}
-        title="Pending Candidates"
-        count={pendingIntroductions.length > 0 ? pendingIntroductions.length : undefined}
-        accentClass="text-primary"
-        badge={pendingIntroductions.length > 0 ? (
-          <Badge variant="destructive" className="text-[10px] h-5">{pendingIntroductions.length} new</Badge>
-        ) : undefined}
-      >
-        {pendingIntroductions.length === 0 ? (
-          <div className="rounded-xl border border-dashed py-10 text-center">
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <Bell className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium text-foreground">No pending candidates</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              New domestic candidates matched to your facility will appear here
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
+            {/* Pending — new referrals */}
             {pendingIntroductions.map((intro) => (
-              <IntroductionCard
-                key={intro.id}
-                introduction={intro}
-                facilityId={selectedFacility?.id || ""}
+              <CandidateRow
+                key={`pending-${intro.id}`}
+                intro={intro}
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+                badge={
+                  <Badge variant="destructive" className="text-xs">
+                    <Bell className="h-3 w-3 mr-1" /> New
+                  </Badge>
+                }
+                meta={format(new Date(intro.created_at), "MMM d")}
+                showActions
                 onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
                 isResponding={respondMutation.isPending}
-                hasPro={hasPro}
-                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
               />
             ))}
           </div>
         )}
-      </Section>
+      </section>
 
-      {/* ─── Past Responses ─── */}
+      {/* ── Past Responses ── */}
       {respondedIntroductions.length > 0 && (
-        <Collapsible>
-          <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between py-2">
-              <h3 className="text-sm font-medium text-muted-foreground">
-                Past Responses ({respondedIntroductions.length})
-              </h3>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="space-y-2 mt-2">
-              {respondedIntroductions.slice(0, 10).map((intro) => (
-                <CaseRow
-                  key={intro.id}
-                  caseId={intro.concierge_inquiries?.id || intro.id}
-                  onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
-                  className="bg-muted/20"
-                  badge={
-                    <Badge
-                      variant={intro.provider_response === "interested" ? "default" : "secondary"}
-                      className="text-[11px]"
-                    >
-                      {intro.provider_response === "interested" ? (
-                        <><CheckCircle className="h-3 w-3 mr-1" /> Accepted</>
-                      ) : (
-                        <><XCircle className="h-3 w-3 mr-1" /> Declined</>
-                      )}
-                    </Badge>
-                  }
-                  meta={
-                    intro.provider_responded_at
-                      ? format(new Date(intro.provider_responded_at), "MMM d, yyyy")
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        <section>
+          <h3 className="text-base font-semibold text-muted-foreground mb-3">Past Responses</h3>
+          <div className="space-y-2">
+            {respondedIntroductions.slice(0, 10).map((intro) => (
+              <Card key={intro.id} className="bg-muted/20 border-muted">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Badge
+                        variant={intro.provider_response === "interested" ? "default" : "secondary"}
+                        className="shrink-0 gap-1"
+                      >
+                        {intro.provider_response === "interested" ? (
+                          <><CheckCircle className="h-3 w-3" /> Accepted</>
+                        ) : (
+                          <><XCircle className="h-3 w-3" /> Declined</>
+                        )}
+                      </Badge>
+                      <span className="text-sm truncate">
+                        {intro.concierge_inquiries?.preferred_state || "U.S."} ·{" "}
+                        {intro.concierge_inquiries?.primary_concern || "Treatment"}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {intro.provider_responded_at && format(new Date(intro.provider_responded_at), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Placement Detail Modal */}
@@ -463,111 +462,130 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   );
 }
 
-/* ─── Reusable Sub-components ─── */
+/* ═══════════════════════════════════════════════
+   SUB-COMPONENTS
+   ═══════════════════════════════════════════════ */
 
 function StatCard({
-  icon,
+  icon: Icon,
+  iconColor,
+  bgColor,
   value,
   label,
-  accent,
-  highlight,
 }: {
-  icon: React.ReactNode;
+  icon: React.ElementType;
+  iconColor: string;
+  bgColor: string;
   value: number;
   label: string;
-  accent: "amber" | "emerald" | "muted";
-  highlight?: boolean;
 }) {
-  const colors = {
-    amber: "text-amber-500",
-    emerald: "text-emerald-500",
-    muted: "text-muted-foreground",
-  };
-
   return (
-    <Card className={cn(
-      "transition-colors",
-      highlight && "border-amber-300 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10"
-    )}>
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex items-center gap-2 mb-1">
-          <div className={colors[accent]}>{icon}</div>
-          <span className="text-xl sm:text-2xl font-bold">{value}</span>
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", bgColor)}>
+            <Icon className={cn("h-4.5 w-4.5", iconColor)} />
+          </div>
+          <div>
+            <p className="text-xl font-bold">{value}</p>
+            <p className="text-xs text-muted-foreground">{label}</p>
+          </div>
         </div>
-        <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-medium">{label}</p>
       </CardContent>
     </Card>
   );
 }
 
-function Section({
-  icon,
-  title,
-  count,
-  accentClass,
-  subtitle,
-  badge,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  count?: number;
-  accentClass?: string;
-  subtitle?: string;
-  badge?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-3">
-      <div>
-        <div className="flex items-center gap-2">
-          {icon}
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-          {count !== undefined && (
-            <span className={cn("text-xs font-semibold", accentClass)}>{count}</span>
-          )}
-          {badge}
-        </div>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-0.5 ml-6">{subtitle}</p>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function CaseRow({
-  caseId,
+function CandidateRow({
+  intro,
   badge,
   meta,
   onClick,
-  className,
+  showActions,
+  onRespond,
+  isResponding,
 }: {
-  caseId: string;
+  intro: Introduction;
   badge: React.ReactNode;
   meta?: string;
   onClick: () => void;
-  className?: string;
+  showActions?: boolean;
+  onRespond?: (response: string, notes?: string) => void;
+  isResponding?: boolean;
 }) {
+  const inquiry = intro.concierge_inquiries;
+  const urgency = inquiry?.timeline_urgency as string;
+  const urgencyConf = URGENCY_CONFIG[urgency] || URGENCY_CONFIG.flexible;
+
   return (
-    <div
+    <Card
+      className="hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group"
       onClick={onClick}
-      className={cn(
-        "flex items-center justify-between px-4 py-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors gap-3",
-        className
-      )}
     >
-      <div className="flex items-center gap-3 min-w-0">
-        {badge}
-        <span className="text-sm font-medium truncate">
-          Case #{caseId.slice(0, 8).toUpperCase()}
-        </span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {meta && <span className="text-xs text-muted-foreground">{meta}</span>}
-        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-      </div>
-    </div>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
+          {/* Icon */}
+          <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <MapPin className="h-5 w-5 text-primary" />
+          </div>
+
+          {/* Main info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="font-semibold text-foreground">
+                {inquiry?.preferred_state || "U.S."}{inquiry?.preferred_city ? `, ${inquiry.preferred_city}` : ""}
+              </span>
+              {badge}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{inquiry?.primary_concern || "Treatment"}</span>
+              <span className="text-muted-foreground/40">·</span>
+              <span>{inquiry?.level_of_care?.replace(/_/g, " ") || "Level TBD"}</span>
+              {inquiry?.insurance_carrier && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span>{inquiry.insurance_carrier}</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Urgency + date */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right hidden sm:block">
+              <Badge variant="outline" className={cn("text-xs", urgencyConf.className)}>
+                {urgencyConf.label}
+              </Badge>
+              {meta && <p className="text-[11px] text-muted-foreground mt-1">{meta}</p>}
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </div>
+
+        {/* Inline quick actions for pending */}
+        {showActions && onRespond && (
+          <div
+            className="flex items-center gap-2 mt-3 pt-3 border-t"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => onRespond("not_available")}
+              disabled={isResponding}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border hover:bg-muted/50 transition-colors text-muted-foreground"
+            >
+              <XCircle className="h-3.5 w-3.5" /> Not a Fit
+            </button>
+            <button
+              onClick={() => onRespond("interested")}
+              disabled={isResponding}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              {isResponding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
+              I'm Interested
+            </button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
