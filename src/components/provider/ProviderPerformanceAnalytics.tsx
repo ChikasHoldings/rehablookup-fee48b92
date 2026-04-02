@@ -187,12 +187,14 @@ function PerfCard({ title, value, icon: Icon, color }: {
 }) {
   const c = PERF_COLOR_MAP[color] || PERF_COLOR_MAP.primary;
   return (
-    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow">
-      <div className={cn("h-7 w-7 rounded-md flex items-center justify-center mb-2", c.bg)}>
-        <Icon className={cn("h-3.5 w-3.5", c.text)} />
+    <div className="rounded-md border px-2.5 py-2 bg-card hover:shadow-sm transition-shadow">
+      <div className="flex items-center gap-1.5 mb-1">
+        <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", c.bg)}>
+          <Icon className={cn("h-3 w-3", c.text)} />
+        </div>
+        <p className="text-[10px] text-muted-foreground font-medium truncate">{title}</p>
       </div>
-      <p className="text-xl font-bold text-foreground leading-none">{typeof value === "number" ? value.toLocaleString() : value}</p>
-      <p className="text-[11px] text-muted-foreground mt-1 font-medium">{title}</p>
+      <p className="text-base font-bold text-foreground leading-none">{typeof value === "number" ? value.toLocaleString() : value}</p>
     </div>
   );
 }
