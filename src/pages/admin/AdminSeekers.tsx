@@ -63,6 +63,8 @@ interface UserProfile {
   has_concierge?: boolean;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminSeekers() {
   const { logError } = useAdminErrorHandler("AdminUsers");
   const queryClient = useQueryClient();
@@ -70,16 +72,49 @@ export default function AdminSeekers() {
   const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "unverified">("all");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch users with aggregated data from multiple sources
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-users"],
+  // Fetch total count for pagination
+  const { data: totalCount } = useQuery({
+    queryKey: ["admin-users-count", verificationFilter, searchQuery],
     queryFn: async () => {
-      // Fetch base seeker profiles
-      const { data: profiles, error } = await supabase
+      let query = supabase
+        .from("seeker_profiles")
+        .select("id", { count: "exact", head: true });
+
+      if (verificationFilter === "verified") {
+        query = query.eq("phone_verified", true);
+      } else if (verificationFilter === "unverified") {
+        query = query.or("phone_verified.is.null,phone_verified.eq.false");
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch users with aggregated data from multiple sources - PAGINATED
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["admin-users", currentPage, verificationFilter, searchQuery],
+    queryFn: async () => {
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      // Fetch base seeker profiles with pagination
+      let profileQuery = supabase
         .from("seeker_profiles")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (verificationFilter === "verified") {
+        profileQuery = profileQuery.eq("phone_verified", true);
+      } else if (verificationFilter === "unverified") {
+        profileQuery = profileQuery.or("phone_verified.is.null,phone_verified.eq.false");
+      }
+
+      const { data: profiles, error } = await profileQuery;
 
       if (error) {
         logError(error.message, "Failed to fetch users");
