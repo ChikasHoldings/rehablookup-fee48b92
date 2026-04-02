@@ -241,7 +241,8 @@ export const LazyImage = memo(function LazyImage({
       alt={alt}
       loading={priority ? "eager" : "lazy"}
       decoding={priority ? "sync" : "async"}
-      fetchPriority={priority ? "high" : "auto"}
+      // @ts-ignore - fetchpriority is valid HTML but React warns about casing
+      fetchpriority={priority ? "high" : "auto"}
       className={className}
       {...props}
     />

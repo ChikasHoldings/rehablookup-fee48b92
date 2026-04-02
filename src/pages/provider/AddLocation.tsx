@@ -212,8 +212,6 @@ export default function AddLocationPage() {
         throw error;
       }
 
-      console.log("[AddLocation] Facility created successfully:", newFacility.id.substring(0, 8) + "...");
-
       // Invalidate queries to refresh facility list
       queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });

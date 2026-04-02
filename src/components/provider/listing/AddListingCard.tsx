@@ -66,12 +66,6 @@ export function AddListingCard({
         throw error;
       }
       
-      console.log("[AddListingCard] Checkout response:", { 
-        hasUrl: !!data?.url, 
-        sessionId: data?.sessionId,
-        requestId: data?.requestId 
-      });
-      
       if (data?.url) {
         // Open in same window for better UX
         window.location.href = data.url;

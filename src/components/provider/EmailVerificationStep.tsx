@@ -164,7 +164,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       }
       
       if (data?.verified) {
-        console.log("[EmailVerification] Email verified successfully");
         // Set verifying to false BEFORE calling onVerified to prevent state race
         setIsVerifying(false);
         toast({

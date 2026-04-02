@@ -2,6 +2,8 @@ import { X, ExternalLink, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ListingPreviewContent } from "./ListingPreviewContent";
