@@ -242,16 +242,17 @@ export default function AdminSeekers() {
   });
 
   const safeUsers = users || [];
+  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
-  // Stats
-  const totalCount = safeUsers.length;
+  // Stats from current page data
+  const pageCount = safeUsers.length;
   const thisMonthCount = safeUsers.filter(u => {
     const created = new Date(u.created_at);
     const now = new Date();
     return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
   }).length;
 
-  // Filtered users
+  // Client-side search filter on the current page of data
   const filteredUsers = safeUsers.filter(user => {
     const matchesSearch = !searchQuery ||
       user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -261,12 +262,14 @@ export default function AdminSeekers() {
       user.aggregated_city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.aggregated_state?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesVerification = verificationFilter === "all" ||
-      (verificationFilter === "verified" && user.phone_verified) ||
-      (verificationFilter === "unverified" && !user.phone_verified);
-
-    return matchesSearch && matchesVerification;
+    return matchesSearch;
   });
+
+  // Reset page on filter change
+  const handleFilterChange = (value: "all" | "verified" | "unverified") => {
+    setVerificationFilter(value);
+    setCurrentPage(1);
+  };
 
   const getDisplayName = (user: UserProfile) => {
     if (user.display_name) return user.display_name;
