@@ -182,12 +182,30 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
     ) || [];
 
-  const respondedIntroductions = introductions?.filter(
-    (i) => i.provider_response && i.provider_response !== "pending"
+  const confirmedIds = new Set(confirmedPlacements.map((i) => i.id));
+
+  // Active placements: provider accepted, not yet confirmed by admin, case still active
+  const activePlacements = introductions?.filter(
+    (i) =>
+      i.provider_response === "interested" &&
+      !confirmedIds.has(i.id) &&
+      i.concierge_inquiries?.status !== "closed" &&
+      i.concierge_inquiries?.status !== "placed"
   ) || [];
 
-  const acceptedCount = respondedIntroductions.filter((i) => i.provider_response === "interested").length;
-  const declinedCount = respondedIntroductions.filter((i) => i.provider_response === "not_available").length;
+  const activeIds = new Set(activePlacements.map((i) => i.id));
+
+  // Declined or completed past responses (not active, not confirmed)
+  const respondedIntroductions = introductions?.filter(
+    (i) =>
+      i.provider_response &&
+      i.provider_response !== "pending" &&
+      !confirmedIds.has(i.id) &&
+      !activeIds.has(i.id)
+  ) || [];
+
+  const acceptedCount = (introductions?.filter((i) => i.provider_response === "interested") || []).length;
+  const declinedCount = (introductions?.filter((i) => i.provider_response === "not_available") || []).length;
 
   // Error state
   if (error) {
