@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CreditCard, Landmark, AlertCircle, CheckCircle2, Shield, Building2, Clock, Info } from "lucide-react";
-import { loadStripe, Stripe as StripeType, StripeElements } from "@stripe/stripe-js";
+import type { Stripe as StripeType, StripeElements } from "@stripe/stripe-js";
 import {
   Elements,
   CardElement,
@@ -573,6 +573,7 @@ export function AddPaymentMethodModal({
           throw new Error("Stripe is not configured. Please contact support.");
         }
 
+        const { loadStripe } = await import("@stripe/stripe-js");
         const stripe = loadStripe(data.publishableKey);
         setStripePromise(stripe);
       } catch (err: any) {
