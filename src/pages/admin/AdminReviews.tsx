@@ -431,55 +431,55 @@ export default function AdminReviews() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <Clock className="h-5 w-5 text-yellow-600" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="border-border/40">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-warning/10 shrink-0">
+                <Clock className="h-4 w-4 text-warning" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingCount}</p>
-                <p className="text-sm text-muted-foreground">Pending</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{approvedCount}</p>
-                <p className="text-sm text-muted-foreground">Approved</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight">{pendingCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <XCircle className="h-5 w-5 text-red-600" />
+        <Card className="border-border/40">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-success/10 shrink-0">
+                <CheckCircle2 className="h-4 w-4 text-success" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{rejectedCount}</p>
-                <p className="text-sm text-muted-foreground">Rejected</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Approved</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight">{approvedCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Flag className="h-5 w-5 text-orange-600" />
+        <Card className="border-border/40">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-destructive/10 shrink-0">
+                <XCircle className="h-4 w-4 text-destructive" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingDisputesCount}</p>
-                <p className="text-sm text-muted-foreground">Disputes</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Rejected</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight">{rejectedCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/40">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-orange-500/10 shrink-0">
+                <Flag className="h-4 w-4 text-orange-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Disputes</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight">{pendingDisputesCount}</p>
               </div>
             </div>
           </CardContent>
