@@ -250,11 +250,16 @@ Deno.serve(async (req) => {
         const emailHtml = generateDigestEmail(digest);
         const subjectPrefix = planInfo.plan === 'pro' ? '⭐ ' : '';
         
+        const unsubToken = crypto.randomUUID();
         const { error: emailError } = await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
           subject: `${subjectPrefix}Weekly Digest: ${weeklyLeads || 0} new leads for ${facility.name}`,
           html: emailHtml,
+          headers: {
+            "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
         
         if (emailError) { errorCount++; } else { sentCount++; }

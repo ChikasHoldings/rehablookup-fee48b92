@@ -175,6 +175,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
         continue;
       }
 
+      // Check suppressed emails before sending
+      const { data: suppressed } = await supabase
+        .from("suppressed_emails")
+        .select("email")
+        .eq("email", profile.email.toLowerCase())
+        .maybeSingle();
+
+      if (suppressed) {
+        logStep(`Skipping suppressed email for user ${provider.user_id}`, { email: profile.email });
+        await supabase
+          .from("notification_preferences")
+          .update({ last_digest_sent_at: now.toISOString() })
+          .eq("user_id", provider.user_id);
+        continue;
+      }
+
       // Get plan info using shared template
       const planInfo = await getProviderPlan(profile.email, stripe);
       logStep(`Provider ${profile.email} is on ${planInfo.planName} plan`);
