@@ -281,14 +281,22 @@ export default function ProviderBillingPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-base md:text-lg font-semibold">Pro Subscription</span>
-                      <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-0">
-                        Active
-                      </Badge>
+                      {proStatus.cancelAtPeriodEnd ? (
+                        <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-0">
+                          Canceling
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-0">
+                          Active
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm md:text-base text-muted-foreground">
-                      {proStatus.currentPeriodEnd 
-                        ? `Renews ${format(new Date(proStatus.currentPeriodEnd), "MMMM d, yyyy")}`
-                        : "Your subscription is active"
+                      {proStatus.cancelAtPeriodEnd && proStatus.currentPeriodEnd
+                        ? `Cancels ${format(new Date(proStatus.currentPeriodEnd), "MMMM d, yyyy")} — resubscribe anytime`
+                        : proStatus.currentPeriodEnd 
+                          ? `Renews ${format(new Date(proStatus.currentPeriodEnd), "MMMM d, yyyy")}`
+                          : "Your subscription is active"
                       }
                     </p>
                   </div>
