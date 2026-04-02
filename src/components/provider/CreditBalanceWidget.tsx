@@ -75,10 +75,12 @@ export function CreditBalanceWidget({
                   className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
                 >
                   <div className="flex items-center gap-2">
-                    {tx.amount_cents > 0 ? (
-                      <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    {tx.transaction_type === 'unlock' ? (
+                      <TrendingDown className="h-4 w-4 text-orange-500" />
+                    ) : tx.transaction_type === 'refund' ? (
+                      <TrendingUp className="h-4 w-4 text-blue-500" />
                     ) : (
-                      <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                      <TrendingUp className="h-4 w-4 text-emerald-500" />
                     )}
                     <div>
                       <p className="text-sm text-foreground">
@@ -94,9 +96,9 @@ export function CreditBalanceWidget({
                   </div>
                   <span className={cn(
                     "font-medium",
-                    tx.amount_cents > 0 ? "text-emerald-600" : "text-foreground"
+                    tx.transaction_type === 'unlock' ? "text-orange-600" : "text-emerald-600"
                   )}>
-                    {tx.amount_cents > 0 ? "+" : ""}${(tx.amount_cents / 100).toFixed(2)}
+                    {tx.transaction_type === 'unlock' ? "−" : "+"}${(Math.abs(tx.amount_cents) / 100).toFixed(2)}
                   </span>
                 </div>
               ))}

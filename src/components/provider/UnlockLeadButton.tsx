@@ -161,7 +161,7 @@ export function UnlockLeadButton({
         {!hidePrice && (
           <>
             <span className="font-bold">{priceDisplay}</span>
-            {proDiscountPercent > 0 && (
+            {effectiveDiscountPercent > 0 && originalPriceDisplay && (
               <span className="text-xs line-through opacity-60">{originalPriceDisplay}</span>
             )}
           </>
