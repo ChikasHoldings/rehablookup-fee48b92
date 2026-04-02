@@ -69,9 +69,9 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
           const Icon = item.icon;
           
           return (
-            <Link
+            <a
               key={item.href}
-              to={item.href}
+              href={item.href}
               onMouseEnter={() => handlePrefetch(item.href)}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
@@ -92,7 +92,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               )}>
                 {item.label}
               </span>
-            </Link>
+            </a>
           );
         })}
         
@@ -132,9 +132,9 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 return (
-                  <Link
+                  <a
                     key={item.href}
-                    to={item.href}
+                    href={item.href}
                     onClick={() => setDrawerOpen(false)}
                     onMouseEnter={() => handlePrefetch(item.href)}
                     className={cn(
@@ -151,7 +151,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                       <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
                     </div>
                     <span className="font-medium">{item.label}</span>
-                  </Link>
+                  </a>
                 );
               })}
             </div>
