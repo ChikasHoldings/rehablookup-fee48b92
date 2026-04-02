@@ -300,11 +300,11 @@ export function PlacementDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col [&>button]:top-3 [&>button]:right-3 [&>button]:z-[60]">
         {/* Header */}
         <DialogHeader className="p-4 sm:p-5 pb-3 border-b bg-muted/30 flex-shrink-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
+          <div className="flex items-start gap-2 pr-8">
+            <div className="min-w-0 flex-1">
               <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
                 Case #{caseId}
               </DialogTitle>
@@ -333,23 +333,23 @@ export function PlacementDetailModal({
         </DialogHeader>
 
         {/* Tabs + Content */}
-        <Tabs defaultValue="details" className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-4 sm:px-5 pt-3 border-b flex-shrink-0">
-            <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="details" className="text-xs gap-1">
+        <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
+          <div className="px-4 sm:px-5 pt-2 pb-0 border-b flex-shrink-0">
+            <TabsList className="h-10 w-full bg-transparent p-0 gap-0 grid grid-cols-3">
+              <TabsTrigger value="details" className="text-xs gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
                 <FileText className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">Details</span>
+                Details
               </TabsTrigger>
-              <TabsTrigger value="messages" className="text-xs gap-1">
+              <TabsTrigger value="messages" className="text-xs gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
                 <MessageSquare className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">Messages</span>
+                Messages
                 {messages && messages.length > 0 && (
                   <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1">{messages.length}</Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="timeline" className="text-xs gap-1">
+              <TabsTrigger value="timeline" className="text-xs gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
                 <Clock className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">Timeline</span>
+                Timeline
               </TabsTrigger>
             </TabsList>
           </div>
