@@ -17,17 +17,10 @@ import {
   XCircle,
   AlertCircle,
   ChevronRight,
-  ChevronDown,
-  DollarSign,
-  Loader2,
+  ChevronRight,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
 import { PlacementDetailModal } from "./PlacementDetailModal";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 interface ConciergeInquiry {
