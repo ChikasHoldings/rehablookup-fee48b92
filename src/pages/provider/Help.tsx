@@ -130,8 +130,8 @@ export default function ProviderHelpPage() {
       const { error } = await supabase.functions.invoke("send-support-request", {
         body: {
           category: contactCategory,
-          subject: contactSubject,
-          message: contactMessage,
+          subject: trimmedSubject,
+          message: trimmedMessage,
         },
       });
 
