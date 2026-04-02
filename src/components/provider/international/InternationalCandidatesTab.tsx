@@ -16,6 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -30,6 +35,8 @@ import {
   Sparkles,
   MapPin,
   ChevronRight,
+  ChevronDown,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +77,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
   const { selectedFacility } = useSelectedFacility();
   const [selectedMatch, setSelectedMatch] = useState<InternationalMatch | null>(null);
   const [responseNotes, setResponseNotes] = useState("");
+  const [feeInfoOpen, setFeeInfoOpen] = useState(false);
 
   const { data: matches, isLoading } = useQuery({
     queryKey: ["international-matches", selectedFacility?.id],
@@ -157,6 +165,30 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
         </CardContent>
       </Card>
 
+      {/* ── Collapsible Fee Details ── */}
+      <Collapsible open={feeInfoOpen} onOpenChange={setFeeInfoOpen}>
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Info className="h-3.5 w-3.5" />
+              <span>Fee details &amp; how billing works</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", feeInfoOpen && "rotate-180")} />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="mt-2 px-4 py-3 rounded-lg border border-dashed bg-muted/20 text-sm text-muted-foreground space-y-1.5">
+            <p>• Fee is charged <strong className="text-foreground">only</strong> after admission is confirmed by our team</p>
+            <p>• Both you and the client must confirm before any charge applies</p>
+            <p>• Invoices are issued with a 14-day payment window</p>
+            <p>• International placements include visa coordination support</p>
+            {!hasPro && (
+              <p className="text-primary/80">• Pro members save $600 per placement — upgrade in Billing</p>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* ── Stats Row ── */}
       <div className="grid grid-cols-3 gap-3">
         <StatCard icon={Globe} iconColor="text-amber-500" bgColor="bg-amber-500/10" value={pendingMatches.length} label="Pending" />
@@ -164,11 +196,12 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
         <StatCard icon={XCircle} iconColor="text-muted-foreground" bgColor="bg-muted" value={declinedCount} label="Declined" />
       </div>
 
-      {/* ── Pending Candidates ── */}
+      {/* ── Candidates (Pending) ── */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold flex items-center gap-2">
-            Pending Candidates
+            <Globe className="h-5 w-5 text-primary" />
+            Candidates
             {pendingMatches.length > 0 && (
               <span className="inline-flex items-center justify-center text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 bg-destructive text-destructive-foreground">
                 {pendingMatches.length}
@@ -251,7 +284,6 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
 
           {selectedMatch && (
             <div className="p-5 space-y-5 max-h-[60vh] overflow-y-auto">
-              {/* Profile Details */}
               <div className="space-y-4">
                 <DetailRow icon={MapPin} label="Country" value={selectedMatch.international_placement_cases?.client_country || "—"} />
                 <DetailRow
@@ -284,7 +316,6 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
                 )}
               </div>
 
-              {/* Fee Notice */}
               <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
@@ -299,7 +330,6 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
                 </div>
               </div>
 
-              {/* Notes */}
               <div>
                 <Label className="text-sm font-medium">Notes (optional)</Label>
                 <Textarea
@@ -387,12 +417,10 @@ function CandidateRow({ match, onRespond }: { match: InternationalMatch; onRespo
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          {/* Country icon */}
           <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <Globe className="h-5 w-5 text-primary" />
           </div>
 
-          {/* Main info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="font-semibold text-foreground">
@@ -411,7 +439,6 @@ function CandidateRow({ match, onRespond }: { match: InternationalMatch; onRespo
             </div>
           </div>
 
-          {/* Urgency + date */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right hidden sm:block">
               <Badge variant="outline" className={cn("text-xs", urgencyConf.className)}>
