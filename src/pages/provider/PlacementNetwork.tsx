@@ -715,7 +715,7 @@ export default function ProviderPlacementNetworkPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {paymentMethods && paymentMethods.length > 0 ? (
-                      paymentMethods.map((pm: any) => (
+                      paymentMethods.map((pm) => (
                         <div key={pm.id} className="flex items-center justify-between p-3 border rounded-lg gap-2">
                           <div className="flex items-center gap-2.5 min-w-0">
                             {pm.type === "ach" ? (
@@ -765,7 +765,7 @@ export default function ProviderPlacementNetworkPage() {
                 <CardContent>
                   {invoices && invoices.length > 0 ? (
                     <div className="space-y-2">
-                      {invoices.map((inv: any) => (
+                      {invoices.map((inv) => (
                         <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg gap-2">
                           <div className="min-w-0">
                             <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
