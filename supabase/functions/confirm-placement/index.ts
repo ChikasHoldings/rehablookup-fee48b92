@@ -216,6 +216,7 @@ Deno.serve(async (req) => {
           inquiryId,
           facilityId,
           feeType: 'flat_fee',
+          isInternational: isInternational || false,
         }),
       });
 
