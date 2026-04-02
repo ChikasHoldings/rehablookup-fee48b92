@@ -140,6 +140,7 @@ export default function ProviderDashboardPage() {
       const { data, error } = await supabase
         .from("leads_provider_view")
         .select("*")
+        .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);
       if (error) throw error;
