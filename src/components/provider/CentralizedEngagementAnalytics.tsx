@@ -225,24 +225,24 @@ function KPICard({ title, value, total, icon: Icon, trend, color }: {
 }) {
   const c = COLOR_MAP[color] || COLOR_MAP.primary;
   return (
-    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow">
-      <div className="flex items-center justify-between mb-2">
-        <div className={cn("h-7 w-7 rounded-md flex items-center justify-center", c.bg)}>
-          <Icon className={cn("h-3.5 w-3.5", c.text)} />
+    <div className="rounded-md border px-2.5 py-2 bg-card hover:shadow-sm transition-shadow">
+      <div className="flex items-center gap-1.5 mb-1">
+        <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", c.bg)}>
+          <Icon className={cn("h-3 w-3", c.text)} />
         </div>
+        <p className="text-[10px] text-muted-foreground font-medium truncate">{title}</p>
         {trend !== undefined && trend !== 0 && (
-          <Badge variant="outline" className={cn(
-            "text-[10px] px-1.5 py-0 h-auto",
-            trend > 0 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : "bg-red-500/10 text-red-600 border-red-200"
+          <span className={cn(
+            "ml-auto text-[9px] font-semibold flex items-center shrink-0",
+            trend > 0 ? "text-emerald-600" : "text-red-500"
           )}>
-            {trend > 0 ? <ArrowUpRight className="h-2.5 w-2.5 mr-0.5" /> : <ArrowDownRight className="h-2.5 w-2.5 mr-0.5" />}
+            {trend > 0 ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
             {Math.abs(trend)}%
-          </Badge>
+          </span>
         )}
       </div>
-      <p className="text-xl font-bold text-foreground leading-none">{typeof value === "number" ? value.toLocaleString() : value}</p>
-      <p className="text-[11px] text-muted-foreground mt-1 font-medium">{title}</p>
-      {total !== undefined && <p className="text-[10px] text-muted-foreground/70">{total.toLocaleString()} all time</p>}
+      <p className="text-base font-bold text-foreground leading-none">{typeof value === "number" ? value.toLocaleString() : value}</p>
+      {total !== undefined && <p className="text-[9px] text-muted-foreground/70 mt-0.5">{total.toLocaleString()} all time</p>}
     </div>
   );
 }
@@ -270,7 +270,7 @@ function EngagementSkeleton() {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-lg" />)}
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}
       </div>
       <Skeleton className="h-56 rounded-lg" />
     </div>
