@@ -390,31 +390,38 @@ export default function ProviderPlacementNetworkPage() {
             {/* ══════════════════════════════════════════════════
                 TAB BAR — 3 clean tabs
             ══════════════════════════════════════════════════ */}
-            <div className="border-b mb-6">
-              <nav className="flex gap-0 -mb-px">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
-                      activeTab === tab.key
-                        ? "border-primary text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/20"
-                    )}
-                  >
-                    <tab.icon className="h-4 w-4" />
-                    {tab.label}
-                    {tab.badge !== undefined && tab.badge > 0 && (
-                      <Badge
-                        variant={tab.key === "pipeline" ? "destructive" : "secondary"}
-                        className="text-[10px] h-4.5 px-1.5 ml-1"
-                      >
-                        {tab.badge}
-                      </Badge>
-                    )}
-                  </button>
-                ))}
+            <div className="border-b mb-8">
+              <nav className="flex gap-6 -mb-px">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={cn(
+                        "flex items-center gap-2 pb-3 text-base font-semibold border-b-2 transition-colors whitespace-nowrap",
+                        isActive
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                      )}
+                    >
+                      <tab.icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                      {tab.label}
+                      {tab.badge !== undefined && tab.badge > 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center justify-center text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5",
+                            tab.key === "pipeline"
+                              ? "bg-destructive text-destructive-foreground"
+                              : "bg-primary/15 text-primary"
+                          )}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </nav>
             </div>
 
@@ -424,28 +431,28 @@ export default function ProviderPlacementNetworkPage() {
             {activeTab === "pipeline" && (
               <div className="space-y-5">
                 {/* Domestic / International toggle */}
-                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg w-fit">
+                <div className="flex items-center gap-1.5 p-1 bg-muted rounded-xl w-fit">
                   <button
                     onClick={() => setPipelineView("domestic")}
                     className={cn(
-                      "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                      "px-4 py-2 text-sm font-semibold rounded-lg transition-all",
                       pipelineView === "domestic"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
                     )}
                   >
-                    Domestic
+                    🇺🇸 Domestic
                   </button>
                   <button
                     onClick={() => setPipelineView("international")}
                     className={cn(
-                      "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                      "px-4 py-2 text-sm font-semibold rounded-lg transition-all",
                       pipelineView === "international"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
                     )}
                   >
-                    International
+                    🌍 International
                   </button>
                 </div>
 
