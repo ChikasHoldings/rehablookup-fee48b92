@@ -509,7 +509,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     };
   }, [hasChanges, facility, performAutoSave]);
 
-  // Keyboard shortcut moved after handleSave definition below
+  
 
   const handleSave = async () => {
     if (!facility) return;
