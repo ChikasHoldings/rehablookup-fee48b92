@@ -159,7 +159,7 @@ export default function ProviderPlacementNetworkPage() {
     queryKey: ["provider-payment-methods", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("provider_payment_methods")
         .select("*")
         .eq("facility_id", selectedFacility.id)
@@ -174,7 +174,7 @@ export default function ProviderPlacementNetworkPage() {
     queryKey: ["placement-invoices", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("placement_invoices")
         .select("*")
         .eq("facility_id", selectedFacility.id)
@@ -281,7 +281,7 @@ export default function ProviderPlacementNetworkPage() {
   const deletePaymentMethodMutation = useMutation({
     mutationFn: async (paymentMethodId: string) => {
       if (!selectedFacility?.id) throw new Error("No facility selected");
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("provider_payment_methods")
         .delete()
         .eq("id", paymentMethodId)
@@ -715,7 +715,7 @@ export default function ProviderPlacementNetworkPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {paymentMethods && paymentMethods.length > 0 ? (
-                      paymentMethods.map((pm: any) => (
+                      paymentMethods.map((pm) => (
                         <div key={pm.id} className="flex items-center justify-between p-3 border rounded-lg gap-2">
                           <div className="flex items-center gap-2.5 min-w-0">
                             {pm.type === "ach" ? (
@@ -765,7 +765,7 @@ export default function ProviderPlacementNetworkPage() {
                 <CardContent>
                   {invoices && invoices.length > 0 ? (
                     <div className="space-y-2">
-                      {invoices.map((inv: any) => (
+                      {invoices.map((inv) => (
                         <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg gap-2">
                           <div className="min-w-0">
                             <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
