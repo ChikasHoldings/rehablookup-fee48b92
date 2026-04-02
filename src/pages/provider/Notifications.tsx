@@ -51,30 +51,57 @@ import { cn } from "@/lib/utils";
 const notificationTypeIcons: Record<string, React.ReactNode> = {
   lead_received: <UserPlus className="h-5 w-5 text-primary" />,
   lead_status_changed: <MessageSquare className="h-5 w-5 text-blue-500" />,
+  lead_redistributed: <UserPlus className="h-5 w-5 text-primary" />,
+  lead_unlocked: <UserPlus className="h-5 w-5 text-green-500" />,
   listing_approved: <Shield className="h-5 w-5 text-green-500" />,
   subscription_updated: <CreditCard className="h-5 w-5 text-purple-500" />,
+  subscription_renewal: <CreditCard className="h-5 w-5 text-purple-500" />,
   low_credits_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-  lead_limit_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />, // Legacy support
+  lead_limit_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+  review_received: <MessageSquare className="h-5 w-5 text-yellow-500" />,
+  image_flagged: <AlertTriangle className="h-5 w-5 text-red-500" />,
+  placement_introduction: <UserPlus className="h-5 w-5 text-indigo-500" />,
+  concierge_seeker_confirmed: <Check className="h-4 w-4 text-green-500" />,
+  concierge_placement_complete: <Check className="h-4 w-4 text-green-500" />,
+  concierge_invoice_issued: <CreditCard className="h-5 w-5 text-purple-500" />,
+  concierge_invoice_paid: <CreditCard className="h-5 w-5 text-green-500" />,
+  tour_request: <MessageSquare className="h-5 w-5 text-blue-500" />,
+  tour_confirmed: <Check className="h-4 w-4 text-green-500" />,
+  tour_cancelled: <AlertTriangle className="h-5 w-5 text-red-500" />,
   system: <Settings className="h-5 w-5 text-muted-foreground" />,
 };
 
 const notificationTypeLabels: Record<string, string> = {
   lead_received: "New Inquiry",
   lead_status_changed: "Inquiry Update",
+  lead_redistributed: "New Inquiry",
+  lead_unlocked: "Lead Unlocked",
   listing_approved: "Listing",
   subscription_updated: "Credits",
+  subscription_renewal: "Subscription",
   low_credits_warning: "Low Credits",
-  lead_limit_warning: "Low Credits", // Legacy support
+  lead_limit_warning: "Low Credits",
+  review_received: "Review",
+  image_flagged: "Image Flagged",
+  placement_introduction: "Placement",
+  concierge_seeker_confirmed: "Placement",
+  concierge_placement_complete: "Placement",
+  concierge_invoice_issued: "Billing",
+  concierge_invoice_paid: "Billing",
+  tour_request: "Tour",
+  tour_confirmed: "Tour",
+  tour_cancelled: "Tour",
   system: "System",
 };
 
-type NotificationTypeFilter = "all" | "leads" | "billing" | "system";
+type NotificationTypeFilter = "all" | "leads" | "billing" | "placements" | "system";
 
 const typeFilterCategories: Record<NotificationTypeFilter, string[]> = {
   all: [],
-  leads: ["lead_received", "lead_status_changed"],
-  billing: ["subscription_updated", "low_credits_warning", "lead_limit_warning"],
-  system: ["listing_approved", "system"],
+  leads: ["lead_received", "lead_status_changed", "lead_redistributed", "lead_unlocked"],
+  billing: ["subscription_updated", "subscription_renewal", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"],
+  placements: ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete", "tour_request", "tour_confirmed", "tour_cancelled"],
+  system: ["listing_approved", "review_received", "image_flagged", "system"],
 };
 
 function NotificationItem({
@@ -103,12 +130,23 @@ function NotificationItem({
     }
     
     // Type-based routing
-    if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
+    const leadTypes = ["lead_received", "lead_status_changed", "lead_redistributed", "lead_unlocked"];
+    const billingTypes = ["subscription_updated", "subscription_renewal", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"];
+    const placementTypes = ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete"];
+    const tourTypes = ["tour_request", "tour_confirmed", "tour_cancelled"];
+
+    if (leadTypes.includes(notification.type)) {
       navigate("/provider/inquiries");
-    } else if (notification.type === "subscription_updated" || notification.type === "low_credits_warning" || notification.type === "lead_limit_warning") {
+    } else if (billingTypes.includes(notification.type)) {
       navigate("/provider/billing");
     } else if (notification.type === "listing_approved") {
-      navigate("/provider/listing");
+      navigate("/provider/listings");
+    } else if (placementTypes.includes(notification.type)) {
+      navigate("/provider/placement-network");
+    } else if (tourTypes.includes(notification.type)) {
+      navigate("/provider/placement-network");
+    } else if (notification.type === "review_received") {
+      navigate("/provider/reviews");
     }
   };
 
@@ -313,6 +351,7 @@ export default function ProviderNotificationsPage() {
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="leads">Leads</SelectItem>
               <SelectItem value="billing">Billing</SelectItem>
+              <SelectItem value="placements">Placements</SelectItem>
               <SelectItem value="system">System</SelectItem>
             </SelectContent>
           </Select>

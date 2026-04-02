@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
                   type: "subscription_renewal",
                   title: `Subscription Renews in ${days} Day${days > 1 ? "s" : ""}`,
                   message: `Your ${plan === "pro" ? "Pro" : ""} subscription renews on ${renewalDate}.`,
-                  link: "/provider/billing",
+                  metadata: { link: "/provider/billing" },
                 });
 
                 alertsSent.push({ type: `expiry_${days}days`, email: profile.email });
