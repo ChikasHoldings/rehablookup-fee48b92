@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       throw new Error("Authentication failed");
     }
 
-    const { inquiryId, facilityId, confirmationType, admittedAt } = await req.json();
+    const { inquiryId, facilityId, confirmationType, admittedAt, isInternational } = await req.json();
     
     // Validate required fields
     if (!inquiryId || !facilityId || !confirmationType) {
@@ -216,6 +216,7 @@ Deno.serve(async (req) => {
           inquiryId,
           facilityId,
           feeType: 'flat_fee',
+          isInternational: isInternational || false,
         }),
       });
 

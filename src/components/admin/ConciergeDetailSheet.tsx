@@ -1,9 +1,10 @@
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClipboardList, Users, Send, Settings, DollarSign, MessageSquare, CalendarCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { ConciergeIntakeTab } from "./concierge/ConciergeIntakeTab";
 import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
@@ -36,6 +37,23 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
   function ConciergeDetailSheet({ caseData, open, onClose, onRefresh }, ref) {
   const [activeTab, setActiveTab] = useState("intake");
+
+  // Auto-transition: new → reviewing when admin opens case
+  useEffect(() => {
+    if (open && caseData?.status === "new") {
+      supabase.functions.invoke("auto-status-transition", {
+        body: {
+          inquiryId: caseData.id,
+          trigger: "admin_viewed",
+          actorType: "admin",
+        },
+      }).then(() => {
+        onRefresh();
+      }).catch((err) => {
+        console.error("[ConciergeDetailSheet] Auto-transition failed:", err);
+      });
+    }
+  }, [open, caseData?.id, caseData?.status]);
 
   if (!caseData) return null;
 

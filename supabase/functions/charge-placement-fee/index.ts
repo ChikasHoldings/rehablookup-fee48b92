@@ -17,9 +17,13 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
 
 // Placement fee structure - flat fee only
 const PLACEMENT_FEES = {
-  flat_fee: {
+  domestic: {
     standard: 100000, // $1,000 in cents
     pro: 80000, // $800 in cents (20% off)
+  },
+  international: {
+    standard: 300000, // $3,000 in cents
+    pro: 240000, // $2,400 in cents (20% off)
   },
 };
 
@@ -74,7 +78,7 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Admin authenticated", { adminId: userData.user.id });
 
-    const { inquiryId, facilityId, feeType, firstMonthCost, adminInitiated } = await req.json();
+    const { inquiryId, facilityId, feeType, firstMonthCost, adminInitiated, isInternational } = await req.json();
     
     // Validate required fields
     if (!inquiryId || !facilityId) {
@@ -89,7 +93,7 @@ Deno.serve(async (req) => {
       throw new Error("Invalid facility ID format");
     }
 
-    logStep(requestId, "Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated });
+    logStep(requestId, "Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated, isInternational });
 
     // Verify the inquiry and placement
     const { data: inquiry, error: inquiryError } = await supabase
@@ -153,9 +157,13 @@ Deno.serve(async (req) => {
     const hasPro = !!proSub;
     const discountPercent = hasPro ? 20 : 0;
 
+    // Determine if international based on explicit flag or inquiry payment_amount
+    const isIntl = isInternational === true || (inquiry.payment_amount_cents && inquiry.payment_amount_cents >= 29900);
+    const feeTier = isIntl ? PLACEMENT_FEES.international : PLACEMENT_FEES.domestic;
+
     // Calculate fee - flat fee only
-    const feeCents = hasPro ? PLACEMENT_FEES.flat_fee.pro : PLACEMENT_FEES.flat_fee.standard;
-    const actualFeeType = 'flat_fee';
+    const feeCents = hasPro ? feeTier.pro : feeTier.standard;
+    const actualFeeType = isIntl ? 'international_flat_fee' : 'flat_fee';
 
     logStep(requestId, "Fee calculated", { feeCents, feeType: actualFeeType, hasPro, discountPercent });
 
