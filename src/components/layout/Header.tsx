@@ -275,7 +275,7 @@ export function Header({
                 <>
                   <PrefetchLink to="/provider-signup" className="hidden lg:block">
                     <Button size="sm" variant="outline" className="h-8 text-sm">
-                      List Facility
+                      Get Listed
                     </Button>
                   </PrefetchLink>
                   <PrefetchLink to="/login">
