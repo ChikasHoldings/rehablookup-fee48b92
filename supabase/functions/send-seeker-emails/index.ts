@@ -972,6 +972,114 @@ function generateAccountReminderEmail(name: string): string {
 </html>`;
 }
 
+function generatePlacementIntroEmail(name: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #1B365D; background: #1B365D; padding: 40px 32px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 12px;">🏥</div>
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
+                Let Us Help You Get Placed
+              </h1>
+              <p style="margin: 12px 0 0 0; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; font-size: 15px;">
+                Personalized treatment placement, handled for you
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 32px;">
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
+                Hi ${name},
+              </p>
+              
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
+                Finding the right treatment center can be overwhelming — comparing programs, verifying insurance, and coordinating admission takes time you may not have. That's why we created our <strong>Treatment Placement</strong> service.
+              </p>
+              
+              <div style="background: #f0fdf4; border-left: 4px solid #166534; padding: 20px; border-radius: 8px; margin: 24px 0;">
+                <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #166534; font-weight: 600;">
+                  How it works:
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      <strong style="color: #166534;">1.</strong> Tell us about your needs and preferences
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      <strong style="color: #166534;">2.</strong> A dedicated advisor finds and vets the best-fit facilities
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      <strong style="color: #166534;">3.</strong> We coordinate insurance verification and admission
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      <strong style="color: #166534;">4.</strong> You get placed at the right center, stress-free
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              
+              <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 24px 0;">
+                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">
+                  Why families choose Treatment Placement:
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Save hours of research and phone calls</td></tr>
+                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Advisor-matched to your specific needs</td></tr>
+                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Insurance verification handled for you</td></tr>
+                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Smooth admission coordination</td></tr>
+                </table>
+              </div>
+              
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
+                <tr>
+                  <td style="background-color: #166534; background: #166534; border-radius: 8px;">
+                    <a href="https://rehablookup.com/get-placed" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                      Get Placed Now →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 24px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6; text-align: center;">
+                You can also continue browsing treatment centers on your own — our directory is always free to use.
+              </p>
+              
+              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
+                With hope,<br>
+                <strong>The RehabLookup Team</strong>
+              </p>
+            </td>
+          </tr>
+          
+          ${generateEmailFooter()}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 function generateEmailFooter(): string {
   return `
           <!-- Footer -->
