@@ -66,6 +66,8 @@ interface DomesticCandidatesTabProps {
 export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabProps) {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
+  const [selectedIntro, setSelectedIntro] = useState<Introduction | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Fetch pending introductions from concierge system with proper error handling
   const { data: introductions, isLoading, error, refetch } = useQuery({
