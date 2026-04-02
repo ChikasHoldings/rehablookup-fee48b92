@@ -61,6 +61,9 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
     },
   });
 
+  // Detect international case by payment amount ($299 = international)
+  const isInternational = caseData.payment_amount_cents >= 29900;
+
   const confirmPlacementMutation = useMutation({
     mutationFn: async () => {
       if (!selectedFacilityId) throw new Error("No facility selected");
@@ -72,6 +75,7 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
           facilityId: selectedFacilityId,
           confirmationType: "admin",
           admittedAt: admittedDate.toISOString(),
+          isInternational,
         },
       });
 
