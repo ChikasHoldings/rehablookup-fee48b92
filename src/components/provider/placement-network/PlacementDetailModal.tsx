@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -33,9 +32,10 @@ import {
   FileText,
   AlertCircle,
 } from "lucide-react";
-import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+
+// ── Types ──────────────────────────────────────────────
 
 interface ConciergeInquiry {
   id: string;
@@ -97,86 +97,101 @@ interface PlacementDetailModalProps {
   hasPro?: boolean;
 }
 
-const formatLabel = (value: string | null | undefined, fallback = "Not specified") => {
+// ── Helpers ────────────────────────────────────────────
+
+const fmt = (value: string | null | undefined, fallback = "Not specified") => {
   if (!value) return fallback;
   return value.replace(/[_-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
-const formatCoOccurring = (concerns: unknown) => {
+const fmtCoOccurring = (concerns: unknown) => {
   if (!concerns) return null;
-  if (Array.isArray(concerns)) return concerns.map((c) => formatLabel(String(c))).join(", ");
+  if (Array.isArray(concerns)) return concerns.map((c) => fmt(String(c))).join(", ");
   if (typeof concerns === "object") {
-    const entries = Object.entries(concerns as Record<string, boolean>).filter(([, v]) => v);
-    return entries.map(([k]) => formatLabel(k)).join(", ");
+    return Object.entries(concerns as Record<string, boolean>)
+      .filter(([, v]) => v)
+      .map(([k]) => fmt(k))
+      .join(", ");
   }
   return String(concerns);
 };
 
-const formatAmenities = (amenities: unknown) => {
+const fmtAmenities = (amenities: unknown) => {
   if (!amenities) return null;
-  if (Array.isArray(amenities)) return amenities.map((a) => formatLabel(String(a))).join(", ");
+  if (Array.isArray(amenities)) return amenities.map((a) => fmt(String(a))).join(", ");
   if (typeof amenities === "object") {
-    const entries = Object.entries(amenities as Record<string, boolean>).filter(([, v]) => v);
-    return entries.map(([k]) => formatLabel(k)).join(", ");
+    return Object.entries(amenities as Record<string, boolean>)
+      .filter(([, v]) => v)
+      .map(([k]) => fmt(k))
+      .join(", ");
   }
   return String(amenities);
 };
 
-const formatUrgency = (urgency: string | null | undefined) => {
-  if (!urgency) return "Flexible";
-  const labels: Record<string, string> = {
+const fmtUrgency = (u: string | null | undefined) => {
+  const map: Record<string, string> = {
     immediate: "Immediate",
     within_week: "Within 1 Week",
     within_month: "Within 1 Month",
     flexible: "Flexible",
   };
-  return labels[urgency] || formatLabel(urgency);
+  return map[u || ""] || "Flexible";
 };
 
-function StatusBadge({ status }: { status: string | undefined }) {
+// ── Sub-components ─────────────────────────────────────
+
+function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
+  if (!value || value === "Not specified") return null;
+  return (
+    <div className="flex items-start gap-2.5 py-1.5">
+      <Icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wider leading-none mb-0.5">{label}</p>
+        <p className="text-sm font-medium break-words leading-snug">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border overflow-hidden">
+      <div className="bg-muted/40 px-4 py-2 border-b flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
+      </div>
+      <div className="p-4">{children}</div>
+    </div>
+  );
+}
+
+function StatusChip({ status }: { status: string | undefined }) {
   const config: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
     new: { label: "New", variant: "secondary" },
     reviewing: { label: "Under Review", variant: "outline", className: "border-primary/40 text-primary" },
-    matching: { label: "Finding Facilities", variant: "outline", className: "border-accent-foreground/30 text-accent-foreground" },
-    matched: { label: "Facilities Found", variant: "outline", className: "border-primary/40 text-primary" },
+    matching: { label: "Finding Matches", variant: "outline", className: "border-accent-foreground/30 text-accent-foreground" },
+    matched: { label: "Matched", variant: "outline", className: "border-primary/40 text-primary" },
     introductions_sent: { label: "Introductions Sent", variant: "outline", className: "border-primary/30 text-primary" },
     in_contact: { label: "In Contact", variant: "outline", className: "border-primary/40 text-primary" },
     placed: { label: "Placed", variant: "default" },
     closed: { label: "Closed", variant: "secondary" },
   };
-  const c = config[status || ""] || { label: formatLabel(status), variant: "secondary" as const };
-  return <Badge variant={c.variant} className={c.className}>{c.label}</Badge>;
+  const c = config[status || ""] || { label: fmt(status), variant: "secondary" as const };
+  return <Badge variant={c.variant} className={cn("text-[10px]", c.className)}>{c.label}</Badge>;
 }
 
-function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
-  if (!value || value === "Not specified") return null;
+// ── Tab panel with its own scroll ──────────────────────
+
+function TabPanel({ active, children }: { active: boolean; children: React.ReactNode }) {
+  if (!active) return null;
   return (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-        <p className="text-sm font-medium break-words">{value}</p>
-      </div>
+    <div className="absolute inset-0 overflow-y-auto overscroll-contain">
+      <div className="p-4 sm:p-5">{children}</div>
     </div>
   );
 }
 
-function TimelineItem({ label, date, icon, subtitle }: { label: string; date?: string | null; icon: React.ReactNode; subtitle?: string }) {
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <div className="mt-0.5 shrink-0">{icon}</div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{label}</p>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-      </div>
-      {date && (
-        <span className="text-xs text-muted-foreground shrink-0">
-          {format(new Date(date), "MMM d, h:mm a")}
-        </span>
-      )}
-    </div>
-  );
-}
+// ── Main Component ─────────────────────────────────────
 
 export function PlacementDetailModal({
   introduction,
@@ -187,6 +202,7 @@ export function PlacementDetailModal({
   isResponding = false,
   hasPro = false,
 }: PlacementDetailModalProps) {
+  const [activeTab, setActiveTab] = useState<"details" | "messages" | "timeline">("details");
   const [providerNote, setProviderNote] = useState("");
   const inquiry = introduction?.concierge_inquiries;
   const caseId = inquiry?.id?.slice(0, 8).toUpperCase() || introduction?.id.slice(0, 8).toUpperCase() || "";
@@ -196,7 +212,7 @@ export function PlacementDetailModal({
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
-  // Fetch full inquiry data
+  // Fetch full inquiry
   const { data: fullInquiry } = useQuery({
     queryKey: ["placement-detail", introduction?.inquiry_id],
     queryFn: async () => {
@@ -222,7 +238,7 @@ export function PlacementDetailModal({
     staleTime: 60000,
   });
 
-  // Fetch advisor messages
+  // Fetch messages
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ["placement-messages", introduction?.inquiry_id, facilityId],
     queryFn: async () => {
@@ -233,15 +249,12 @@ export function PlacementDetailModal({
         .eq("inquiry_id", introduction.inquiry_id)
         .eq("facility_id", facilityId)
         .maybeSingle();
-
       if (!thread?.id) return [];
-
       const { data: msgs, error } = await supabase
         .from("concierge_messages")
         .select("id, sender_type, content, created_at")
         .eq("thread_id", thread.id)
         .order("created_at", { ascending: true });
-
       if (error) throw error;
       return msgs || [];
     },
@@ -269,246 +282,216 @@ export function PlacementDetailModal({
 
   const inq = fullInquiry || inquiry;
   const locationText = [inq?.preferred_city, inq?.preferred_state].filter(Boolean).join(", ") || "Flexible";
-  const coOccurringText = formatCoOccurring(inq?.co_occurring_concerns);
-  const amenitiesText = formatAmenities(inq?.amenity_preferences);
+  const coOccurringText = fmtCoOccurring(inq?.co_occurring_concerns);
+  const amenitiesText = fmtAmenities(inq?.amenity_preferences);
   const intakeData = inq?.intake_data && typeof inq.intake_data === "object" ? (inq.intake_data as Record<string, unknown>) : null;
 
-  const handleAccept = () => {
-    onRespond?.("interested", providerNote.trim() || undefined);
-  };
-
-  const handleDecline = () => {
-    onRespond?.("not_available", providerNote.trim() || undefined);
-  };
-
-  const getProviderStep = () => {
-    if (isPlaced) return { step: 4, label: "Admission Confirmed", description: "This placement has been confirmed. Thank you!" };
-    if (isDeclined) return { step: 0, label: "Declined", description: "You declined this candidate." };
-    if (isAccepted) return { step: 3, label: "Awaiting Confirmation", description: "Our advisor is coordinating with the client. You'll be notified once admission is confirmed." };
-    if (isPending) return { step: 2, label: "Your Review", description: "Review this candidate and decide whether to accept or decline." };
-    return { step: 1, label: "Sent to You", description: "This case has been sent to your facility." };
-  };
-  const currentStep = getProviderStep();
-
   const steps = [
-    { label: "Case Created", done: true },
-    { label: "Matched & Sent", done: true },
-    { label: "Your Review", done: !isPending },
-    { label: "Coordination", done: isAccepted || isPlaced },
+    { label: "Created", done: true },
+    { label: "Sent", done: true },
+    { label: "Review", done: !isPending },
+    { label: "Coordinating", done: isAccepted || isPlaced },
     { label: "Confirmed", done: isPlaced },
+  ];
+
+  const nextStepText = isPlaced
+    ? "Admission confirmed — thank you!"
+    : isDeclined
+    ? "You declined this candidate."
+    : isAccepted
+    ? "Advisor is coordinating with the client."
+    : "Review and respond to this candidate.";
+
+  const tabs = [
+    { key: "details" as const, label: "Details", icon: FileText },
+    { key: "messages" as const, label: "Messages", icon: MessageSquare, count: messages?.length },
+    { key: "timeline" as const, label: "Timeline", icon: Clock },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col [&>button]:top-3 [&>button]:right-3 [&>button]:z-[60]">
-        {/* Header */}
-        <DialogHeader className="p-4 sm:p-5 pb-3 border-b bg-muted/30 flex-shrink-0">
-          <div className="flex items-start gap-2 pr-8">
-            <div className="min-w-0 flex-1">
-              <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+      <DialogContent className="max-w-2xl w-[95vw] p-0 gap-0 overflow-hidden flex flex-col h-[85vh] sm:h-[80vh] [&>button]:top-3.5 [&>button]:right-3.5 [&>button]:z-[60]">
+
+        {/* ─── Compact Header ─── */}
+        <DialogHeader className="px-5 pt-4 pb-3 border-b flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 pr-6">
+            <div className="min-w-0">
+              <DialogTitle className="text-base font-bold tracking-tight">
                 Case #{caseId}
               </DialogTitle>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-1.5 truncate">
-                <User className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">
-                  {firstName} · {introduction?.created_at && format(new Date(introduction.created_at), "MMM d, yyyy")}
-                </span>
+              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                <User className="h-3 w-3 shrink-0" />
+                {firstName} · {introduction?.created_at && format(new Date(introduction.created_at), "MMM d, yyyy")}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              <StatusBadge status={inq?.status} />
-              {isPending && <Badge variant="destructive" className="text-[10px]">Action Required</Badge>}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <StatusChip status={inq?.status} />
+              {isPending && <Badge variant="destructive" className="text-[10px] h-5">Action Needed</Badge>}
               {isAccepted && !isPlaced && (
-                <Badge variant="outline" className="text-[10px]">
-                  <Hourglass className="h-3 w-3 mr-1" /> Awaiting
+                <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                  <Hourglass className="h-3 w-3" /> Awaiting
                 </Badge>
               )}
               {isPlaced && (
-                <Badge variant="default" className="text-[10px]">
-                  <CheckCircle2 className="h-3 w-3 mr-1" /> Placed
+                <Badge variant="default" className="text-[10px] h-5 gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> Placed
                 </Badge>
               )}
             </div>
           </div>
         </DialogHeader>
 
-        {/* Tabs + Content */}
-        <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
-          <div className="px-4 sm:px-5 pt-2 pb-0 border-b flex-shrink-0">
-            <TabsList className="h-10 w-full bg-transparent p-0 gap-0 grid grid-cols-3">
-              <TabsTrigger value="details" className="text-xs gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-                <FileText className="h-3.5 w-3.5" />
-                Details
-              </TabsTrigger>
-              <TabsTrigger value="messages" className="text-xs gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-                <MessageSquare className="h-3.5 w-3.5" />
-                Messages
-                {messages && messages.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1">{messages.length}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="timeline" className="text-xs gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-                <Clock className="h-3.5 w-3.5" />
-                Timeline
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        {/* ─── Tab Bar (custom, not Radix) ─── */}
+        <div className="flex border-b flex-shrink-0 px-5">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors -mb-px",
+                activeTab === tab.key
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+              )}
+            >
+              <tab.icon className="h-3.5 w-3.5" />
+              {tab.label}
+              {tab.count !== undefined && tab.count > 0 && (
+                <span className="ml-1 bg-muted text-muted-foreground rounded-full text-[10px] h-4 min-w-[16px] px-1 flex items-center justify-center">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
 
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <ScrollArea className="h-full">
-            {/* === DETAILS TAB === */}
-            <TabsContent value="details" className="p-4 sm:p-5 space-y-4 m-0 focus-visible:ring-0 focus-visible:outline-none">
-              {/* Progress Steps */}
-              <div className="bg-muted/30 rounded-lg p-3 sm:p-4 border">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Placement Progress</p>
-                <div className="flex items-center gap-1">
+        {/* ─── Tab Content (each independently scrollable) ─── */}
+        <div className="flex-1 min-h-0 relative">
+
+          {/* === DETAILS === */}
+          <TabPanel active={activeTab === "details"}>
+            <div className="space-y-4">
+              {/* Progress bar */}
+              <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="flex gap-1 mb-2">
                   {steps.map((s, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                      <div className={`h-2 w-full rounded-full transition-colors ${s.done ? "bg-primary" : "bg-muted"}`} />
-                      <span className={`text-[9px] sm:text-[10px] text-center leading-tight ${s.done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                    <div key={i} className="flex-1">
+                      <div className={cn("h-1.5 rounded-full transition-colors", s.done ? "bg-primary" : "bg-muted")} />
+                      <p className={cn("text-[9px] text-center mt-1 leading-tight", s.done ? "text-foreground font-medium" : "text-muted-foreground")}>
                         {s.label}
-                      </span>
+                      </p>
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-md px-3 py-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded px-2.5 py-1.5 border">
                   <ArrowRight className="h-3 w-3 shrink-0 text-primary" />
-                  <span><strong className="text-foreground">Next:</strong> {currentStep.description}</span>
+                  <span>{nextStepText}</span>
                 </div>
               </div>
 
               {/* Client Profile */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2.5 border-b">
-                  <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <User className="h-4 w-4" /> Client Profile
-                  </h3>
+              <Section title="Client Profile" icon={User}>
+                <div className="grid grid-cols-2 gap-x-6">
+                  <InfoItem icon={User} label="Name" value={firstName} />
+                  <InfoItem icon={Calendar} label="Age Range" value={fmt(inq?.age_range)} />
+                  <InfoItem icon={User} label="Gender" value={fmt(inq?.gender)} />
+                  <InfoItem icon={MapPin} label="Location" value={locationText} />
+                  <InfoItem icon={MessageSquare} label="Language" value={fmt(inq?.preferred_language)} />
+                  <InfoItem icon={MapPin} label="Environment" value={fmt(inq?.preferred_environment)} />
+                  <InfoItem icon={Activity} label="Living Situation" value={fmt(inq?.current_living_situation)} />
+                  <InfoItem icon={Shield} label="Mobility Needs" value={fmt(inq?.mobility_needs)} />
                 </div>
-                <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
-                  <DetailRow icon={User} label="Name" value={firstName} />
-                  <DetailRow icon={Calendar} label="Age Range" value={formatLabel(inq?.age_range)} />
-                  <DetailRow icon={User} label="Gender" value={formatLabel(inq?.gender)} />
-                  <DetailRow icon={MapPin} label="Location Preference" value={locationText} />
-                  <DetailRow icon={MessageSquare} label="Preferred Language" value={formatLabel(inq?.preferred_language)} />
-                  <DetailRow icon={MapPin} label="Environment" value={formatLabel(inq?.preferred_environment)} />
-                  <DetailRow icon={Activity} label="Living Situation" value={formatLabel(inq?.current_living_situation)} />
-                  <DetailRow icon={Shield} label="Mobility Needs" value={formatLabel(inq?.mobility_needs)} />
-                </div>
-              </div>
+              </Section>
 
               {/* Clinical Summary */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2.5 border-b">
-                  <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <Activity className="h-4 w-4" /> Clinical Summary
-                  </h3>
+              <Section title="Clinical Summary" icon={Activity}>
+                <div className="grid grid-cols-2 gap-x-6">
+                  <InfoItem icon={Activity} label="Level of Care" value={fmt(inq?.level_of_care)} />
+                  <InfoItem icon={Heart} label="Primary Concern" value={fmt(inq?.primary_concern)} />
+                  <InfoItem icon={Pill} label="Detox Needed" value={fmt(inq?.detox_needed)} />
+                  <InfoItem icon={Clock} label="Use Duration" value={fmt(inq?.substance_use_duration)} />
+                  <InfoItem icon={Clock} label="Frequency" value={fmt(inq?.substance_use_frequency)} />
+                  <InfoItem icon={Activity} label="Assessment" value={fmt(inq?.assessment_preference)} />
+                  {inq?.prior_treatment_history && <InfoItem icon={FileText} label="Prior Treatment" value="Yes" />}
+                  <InfoItem icon={FileText} label="Treatment Notes" value={inq?.prior_treatment_notes} />
+                  <InfoItem icon={Pill} label="Medications" value={inq?.current_medications} />
                 </div>
-                <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
-                  <DetailRow icon={Activity} label="Level of Care" value={formatLabel(inq?.level_of_care)} />
-                  <DetailRow icon={Heart} label="Primary Concern" value={formatLabel(inq?.primary_concern)} />
-                  <DetailRow icon={Pill} label="Detox Needed" value={formatLabel(inq?.detox_needed)} />
-                  <DetailRow icon={Clock} label="Use Duration" value={formatLabel(inq?.substance_use_duration)} />
-                  <DetailRow icon={Clock} label="Use Frequency" value={formatLabel(inq?.substance_use_frequency)} />
-                  <DetailRow icon={Activity} label="Assessment Preference" value={formatLabel(inq?.assessment_preference)} />
-                  {inq?.prior_treatment_history && (
-                    <DetailRow icon={FileText} label="Prior Treatment" value="Yes" />
-                  )}
-                  <DetailRow icon={FileText} label="Prior Treatment Notes" value={inq?.prior_treatment_notes} />
-                  <DetailRow icon={Pill} label="Current Medications" value={inq?.current_medications} />
-                  {coOccurringText && (
-                    <div className="sm:col-span-2">
-                      <DetailRow icon={Heart} label="Co-Occurring Concerns" value={coOccurringText} />
-                    </div>
-                  )}
-                </div>
-              </div>
+                {coOccurringText && (
+                  <div className="mt-1">
+                    <InfoItem icon={Heart} label="Co-Occurring" value={coOccurringText} />
+                  </div>
+                )}
+              </Section>
 
               {/* Payment & Preferences */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2.5 border-b">
-                  <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" /> Payment & Preferences
-                  </h3>
+              <Section title="Payment & Preferences" icon={DollarSign}>
+                <div className="grid grid-cols-2 gap-x-6">
+                  <InfoItem icon={DollarSign} label="Payment" value={fmt(inq?.payment_type)} />
+                  <InfoItem icon={Shield} label="Insurance" value={inq?.insurance_carrier} />
+                  <InfoItem icon={DollarSign} label="Budget" value={fmt(inq?.budget_range)} />
+                  <InfoItem icon={Clock} label="Timeline" value={fmtUrgency(inq?.timeline_urgency)} />
+                  <InfoItem icon={Heart} label="Faith-Based" value={fmt(inq?.faith_based_preference)} />
+                  {inq?.holistic_interest && <InfoItem icon={Heart} label="Holistic" value="Yes" />}
                 </div>
-                <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
-                  <DetailRow icon={DollarSign} label="Payment Type" value={formatLabel(inq?.payment_type)} />
-                  <DetailRow icon={Shield} label="Insurance Carrier" value={inq?.insurance_carrier} />
-                  <DetailRow icon={DollarSign} label="Budget Range" value={formatLabel(inq?.budget_range)} />
-                  <DetailRow icon={Clock} label="Timeline" value={formatUrgency(inq?.timeline_urgency)} />
-                  <DetailRow icon={Heart} label="Faith-Based" value={formatLabel(inq?.faith_based_preference)} />
-                  {inq?.holistic_interest && (
-                    <DetailRow icon={Heart} label="Holistic Interest" value="Yes" />
-                  )}
-                  {amenitiesText && (
-                    <div className="sm:col-span-2">
-                      <DetailRow icon={FileText} label="Amenity Preferences" value={amenitiesText} />
-                    </div>
-                  )}
-                </div>
-              </div>
+                {amenitiesText && (
+                  <div className="mt-1">
+                    <InfoItem icon={FileText} label="Amenities" value={amenitiesText} />
+                  </div>
+                )}
+              </Section>
 
               {/* Additional intake data */}
               {intakeData && Object.keys(intakeData).length > 0 && (
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-muted/50 px-4 py-2.5 border-b">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <FileText className="h-4 w-4" /> Additional Details
-                    </h3>
-                  </div>
-                  <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
+                <Section title="Additional Details" icon={FileText}>
+                  <div className="grid grid-cols-2 gap-x-6">
                     {Object.entries(intakeData)
                       .filter(([key]) => !["email", "phone", "user_email", "user_phone"].includes(key))
                       .filter(([, val]) => val !== null && val !== undefined && val !== "")
                       .slice(0, 20)
                       .map(([key, val]) => (
-                        <DetailRow
+                        <InfoItem
                           key={key}
                           icon={FileText}
-                          label={formatLabel(key)}
+                          label={fmt(key)}
                           value={typeof val === "object" ? JSON.stringify(val) : String(val)}
                         />
                       ))}
                   </div>
-                </div>
+                </Section>
               )}
 
               {/* Client Notes */}
               {inq?.notes && (
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-muted/50 px-4 py-2.5 border-b">
-                    <h3 className="font-semibold text-sm">Client Notes</h3>
-                  </div>
-                  <div className="p-3 sm:p-4">
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{inq.notes}</p>
-                  </div>
-                </div>
+                <Section title="Client Notes" icon={FileText}>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{inq.notes}</p>
+                </Section>
               )}
 
-              {/* Fee Notice */}
-              <div className="bg-muted/50 rounded-lg p-3 text-sm flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                <p className="text-muted-foreground">
-                  <strong className="text-foreground">Placement fee:</strong> {hasPro ? "$800" : "$1,000"} — only charged upon confirmed admission.
-                  {hasPro && <span className="text-primary ml-1">Pro discount applied</span>}
-                </p>
+              {/* Fee notice */}
+              <div className="rounded-lg bg-muted/30 border px-3 py-2.5 flex items-start gap-2 text-xs text-muted-foreground">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>
+                  <strong className="text-foreground">Fee:</strong> {hasPro ? "$800" : "$1,000"} — charged only on confirmed admission.
+                  {hasPro && <span className="text-primary ml-1">Pro discount</span>}
+                </span>
               </div>
 
-              {/* Action Buttons (for pending) */}
+              {/* Actions (pending) */}
               {isPending && onRespond && (
-                <div className="space-y-3 pt-2">
+                <div className="space-y-3 pt-1">
                   <Textarea
-                    placeholder="Optional note to advisor (e.g., bed availability, special accommodations)..."
+                    placeholder="Optional note to advisor..."
                     value={providerNote}
                     onChange={(e) => setProviderNote(e.target.value)}
                     className="text-sm resize-none"
                     rows={2}
                   />
                   <div className="flex gap-3">
-                    <Button className="flex-1 gap-2" onClick={handleAccept} disabled={isResponding}>
+                    <Button className="flex-1 gap-2" onClick={() => onRespond("interested", providerNote.trim() || undefined)} disabled={isResponding}>
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                       Accept
                     </Button>
-                    <Button variant="outline" className="flex-1 gap-2" onClick={handleDecline} disabled={isResponding}>
+                    <Button variant="outline" className="flex-1 gap-2" onClick={() => onRespond("not_available", providerNote.trim() || undefined)} disabled={isResponding}>
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
                       Decline
                     </Button>
@@ -518,115 +501,138 @@ export function PlacementDetailModal({
 
               {/* Response summary */}
               {!isPending && (
-                <div className={`rounded-lg p-4 border ${isPlaced ? "bg-primary/5 border-primary/20" : isAccepted ? "bg-muted/50 border-border" : "bg-muted/30"}`}>
-                  <div className="flex items-center gap-2 mb-1">
+                <div className={cn("rounded-lg p-3.5 border", isPlaced ? "bg-primary/5 border-primary/20" : "bg-muted/30")}>
+                  <div className="flex items-center gap-2 mb-0.5">
                     {isPlaced ? <CheckCircle2 className="h-4 w-4 text-primary" /> : isAccepted ? <Hourglass className="h-4 w-4 text-muted-foreground" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
                     <span className="font-medium text-sm">
                       {isPlaced ? "Admission Confirmed" : isAccepted ? "Accepted — Awaiting Confirmation" : "Declined"}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground pl-6">
                     {isPlaced
-                      ? `Confirmed on ${inquiry?.placement_confirmed_at ? format(new Date(inquiry.placement_confirmed_at), "MMM d, yyyy") : "—"}`
-                      : `Responded on ${introduction?.provider_responded_at ? format(new Date(introduction.provider_responded_at), "MMM d, yyyy 'at' h:mm a") : "—"}`}
+                      ? `Confirmed ${inquiry?.placement_confirmed_at ? format(new Date(inquiry.placement_confirmed_at), "MMM d, yyyy") : ""}`
+                      : `Responded ${introduction?.provider_responded_at ? format(new Date(introduction.provider_responded_at), "MMM d, yyyy 'at' h:mm a") : ""}`}
                   </p>
                   {introduction?.provider_notes && (
-                    <p className="text-xs text-muted-foreground mt-2 italic">Note: {introduction.provider_notes}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5 pl-6 italic">"{introduction.provider_notes}"</p>
                   )}
                 </div>
               )}
-            </TabsContent>
+            </div>
+          </TabPanel>
 
-            <TabsContent value="messages" className="p-4 sm:p-5 m-0 focus-visible:ring-0 focus-visible:outline-none">
-              {messagesLoading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-12 w-3/4" />
-                  <Skeleton className="h-12 w-2/3 ml-auto" />
-                  <Skeleton className="h-12 w-3/4" />
-                </div>
-              ) : messages && messages.length > 0 ? (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground mb-3">Messages between you and the placement advisor.</p>
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender_type === "provider" || msg.sender_type === "facility" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[85%] sm:max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                          msg.sender_type === "provider" || msg.sender_type === "facility"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        }`}
-                      >
-                        <p className="text-[10px] opacity-70 mb-0.5 capitalize">{msg.sender_type === "admin" ? "Advisor" : "You"}</p>
-                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                        <p className="text-[10px] opacity-60 mt-1">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
+          {/* === MESSAGES === */}
+          <TabPanel active={activeTab === "messages"}>
+            {messagesLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-3/4" />
+                <Skeleton className="h-12 w-2/3 ml-auto" />
+                <Skeleton className="h-12 w-3/4" />
+              </div>
+            ) : messages && messages.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground mb-3">Messages between you and the placement advisor.</p>
+                {messages.map((msg) => {
+                  const isYou = msg.sender_type === "provider" || msg.sender_type === "facility";
+                  return (
+                    <div key={msg.id} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
+                      <div className={cn(
+                        "max-w-[80%] rounded-lg px-3.5 py-2.5 text-sm",
+                        isYou ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted rounded-bl-sm"
+                      )}>
+                        <p className="text-[10px] opacity-70 mb-0.5">{isYou ? "You" : "Advisor"}</p>
+                        <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
+                        <p className="text-[10px] opacity-50 mt-1.5 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
                 </div>
-              ) : (
-                <div className="text-center py-10">
-                  <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-                  <p className="text-sm text-muted-foreground">No messages yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Messages from the advisor will appear here once coordination begins.
-                  </p>
+                <p className="text-sm font-medium text-muted-foreground">No messages yet</p>
+                <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
+                  Messages from the placement advisor will appear here once coordination begins.
+                </p>
+              </div>
+            )}
+          </TabPanel>
+
+          {/* === TIMELINE === */}
+          <TabPanel active={activeTab === "timeline"}>
+            <div className="space-y-0">
+              {/* Core milestones */}
+              <TimelineEntry
+                label="Case Sent to You"
+                date={introduction?.created_at}
+                icon={<Send className="h-3.5 w-3.5 text-primary" />}
+              />
+              {introduction?.provider_responded_at && (
+                <TimelineEntry
+                  label={isAccepted ? "You Accepted" : "You Declined"}
+                  date={introduction.provider_responded_at}
+                  icon={isAccepted ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+                />
+              )}
+              {inquiry?.placement_confirmed_at && isPlaced && (
+                <TimelineEntry
+                  label="Admission Confirmed"
+                  date={inquiry.placement_confirmed_at}
+                  icon={<CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                />
+              )}
+
+              {/* Case event log */}
+              {caseEvents && caseEvents.length > 0 && (
+                <>
+                  <Separator className="my-4" />
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Activity Log</p>
+                  {caseEvents.map((ev) => (
+                    <TimelineEntry
+                      key={ev.id}
+                      label={fmt(ev.event_type)}
+                      date={ev.created_at}
+                      icon={<Activity className="h-3.5 w-3.5 text-muted-foreground" />}
+                      subtitle={ev.actor_type ? `by ${fmt(ev.actor_type)}` : undefined}
+                    />
+                  ))}
+                </>
+              )}
+
+              {(!caseEvents || caseEvents.length === 0) && !introduction?.provider_responded_at && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Timeline updates as the case progresses.</p>
                 </div>
               )}
-            </TabsContent>
-
-            <TabsContent value="timeline" className="p-4 sm:p-5 m-0 focus-visible:ring-0 focus-visible:outline-none">
-              <div className="space-y-0">
-                <TimelineItem
-                  label="Case Sent to You"
-                  date={introduction?.created_at}
-                  icon={<Send className="h-3.5 w-3.5 text-muted-foreground" />}
-                />
-                {introduction?.provider_responded_at && (
-                  <TimelineItem
-                    label={isAccepted ? "You Accepted" : "You Declined"}
-                    date={introduction.provider_responded_at}
-                    icon={isAccepted ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
-                  />
-                )}
-                {inquiry?.placement_confirmed_at && isPlaced && (
-                  <TimelineItem
-                    label="Admission Confirmed"
-                    date={inquiry.placement_confirmed_at}
-                    icon={<CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
-                  />
-                )}
-
-                {caseEvents && caseEvents.length > 0 && (
-                  <>
-                    <Separator className="my-4" />
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Case Activity Log</p>
-                    {caseEvents.map((ev) => (
-                      <TimelineItem
-                        key={ev.id}
-                        label={formatLabel(ev.event_type)}
-                        date={ev.created_at}
-                        icon={<Activity className="h-3.5 w-3.5 text-muted-foreground" />}
-                        subtitle={ev.actor_type ? `by ${formatLabel(ev.actor_type)}` : undefined}
-                      />
-                    ))}
-                  </>
-                )}
-
-                {(!caseEvents || caseEvents.length === 0) && !introduction?.provider_responded_at && (
-                  <div className="text-center py-8">
-                    <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-40" />
-                    <p className="text-sm text-muted-foreground">Timeline will update as the case progresses.</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            </ScrollArea>
-          </div>
-        </Tabs>
+            </div>
+          </TabPanel>
+        </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ── Timeline entry ─────────────────────────────────────
+
+function TimelineEntry({ label, date, icon, subtitle }: { label: string; date?: string | null; icon: React.ReactNode; subtitle?: string }) {
+  return (
+    <div className="flex items-start gap-3 py-2.5 border-l-2 border-muted pl-4 ml-1.5 relative">
+      <div className="absolute -left-[7px] top-3 shrink-0">{icon}</div>
+      <div className="min-w-0 flex-1 ml-2">
+        <p className="text-sm font-medium leading-snug">{label}</p>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+      {date && (
+        <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
+          {format(new Date(date), "MMM d, h:mm a")}
+        </span>
+      )}
+    </div>
   );
 }
