@@ -56,11 +56,13 @@ export interface CentralizedLeadAnalytics {
   facilityIds: string[];
 }
 
-export function useCentralizedLeadAnalytics(dateRange?: DateRange) {
+export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilityId?: string) {
   const queryClient = useQueryClient();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
 
-  const facilityIds = facilities.map((f) => f.id);
+  const facilityIds = filterFacilityId
+    ? facilities.filter(f => f.id === filterFacilityId).map(f => f.id)
+    : facilities.map((f) => f.id);
 
   useEffect(() => {
     if (facilityIds.length === 0) return;
@@ -94,6 +96,7 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange) {
       facilityIds.join(","),
       dateRange?.from?.toISOString(),
       dateRange?.to?.toISOString(),
+      filterFacilityId || "all",
     ],
     queryFn: async (): Promise<CentralizedLeadAnalytics> => {
       if (facilityIds.length === 0) {
