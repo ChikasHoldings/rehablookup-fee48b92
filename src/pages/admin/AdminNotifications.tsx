@@ -183,6 +183,9 @@ export default function AdminNotifications() {
   const isLoading = globalLoading || userLoading;
 
   // Filter notifications
+  const PAYMENT_TYPES = ["payment_failed", "payment_delinquent", "placement_payment_failed"];
+  const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"];
+
   const getFilteredNotifications = () => {
     let notifications = activeTab === "global" 
       ? globalNotifications.map(n => ({ ...n, source: "global" as const }))
@@ -194,7 +197,11 @@ export default function AdminNotifications() {
       notifications = notifications.filter(n => !n.read);
     }
 
-    if (typeFilter !== "all") {
+    if (typeFilter === "payment_types") {
+      notifications = notifications.filter(n => PAYMENT_TYPES.includes(n.type));
+    } else if (typeFilter === "security_types") {
+      notifications = notifications.filter(n => SECURITY_TYPES.includes(n.type));
+    } else if (typeFilter !== "all") {
       notifications = notifications.filter(n => n.type === typeFilter);
     }
 
@@ -402,10 +409,10 @@ export default function AdminNotifications() {
         </Button>
         <div className="h-4 w-px bg-border mx-1 shrink-0" />
         <Button
-          variant={typeFilter === "payment_failed" ? "secondary" : "ghost"}
+          variant={typeFilter === "payment_types" ? "secondary" : "ghost"}
           size="sm"
           className="h-7 px-3 text-xs font-medium shrink-0"
-          onClick={() => setTypeFilter(typeFilter === "payment_failed" ? "all" : "payment_failed")}
+          onClick={() => setTypeFilter(typeFilter === "payment_types" ? "all" : "payment_types")}
         >
           <CreditCard className="h-3.5 w-3.5 mr-1.5 text-destructive" />
           Payments
@@ -414,10 +421,10 @@ export default function AdminNotifications() {
           )}
         </Button>
         <Button
-          variant={typeFilter === "security_event" ? "secondary" : "ghost"}
+          variant={typeFilter === "security_types" ? "secondary" : "ghost"}
           size="sm"
           className="h-7 px-3 text-xs font-medium shrink-0"
-          onClick={() => setTypeFilter(typeFilter === "security_event" ? "all" : "security_event")}
+          onClick={() => setTypeFilter(typeFilter === "security_types" ? "all" : "security_types")}
         >
           <ShieldAlert className="h-3.5 w-3.5 mr-1.5 text-red-600" />
           Security
