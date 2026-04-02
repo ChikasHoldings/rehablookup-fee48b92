@@ -103,12 +103,24 @@ export default function ProviderHelpPage() {
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!contactCategory || !contactSubject || !contactMessage) {
+    const trimmedSubject = contactSubject.trim();
+    const trimmedMessage = contactMessage.trim();
+
+    if (!contactCategory || !trimmedSubject || !trimmedMessage) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (trimmedSubject.length > 200) {
+      toast({ title: "Subject too long", description: "Subject must be under 200 characters.", variant: "destructive" });
+      return;
+    }
+    if (trimmedMessage.length > 5000) {
+      toast({ title: "Message too long", description: "Message must be under 5,000 characters.", variant: "destructive" });
       return;
     }
 
@@ -118,8 +130,8 @@ export default function ProviderHelpPage() {
       const { error } = await supabase.functions.invoke("send-support-request", {
         body: {
           category: contactCategory,
-          subject: contactSubject,
-          message: contactMessage,
+          subject: trimmedSubject,
+          message: trimmedMessage,
         },
       });
 
