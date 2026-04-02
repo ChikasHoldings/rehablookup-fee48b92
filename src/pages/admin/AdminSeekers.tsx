@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { UserProfileModal } from "@/components/admin/users/UserProfileModal";
+import { Button } from "@/components/ui/button";
 import {
   Search,
   Users as UsersIcon,
@@ -63,6 +64,8 @@ interface UserProfile {
   has_concierge?: boolean;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminSeekers() {
   const { logError } = useAdminErrorHandler("AdminUsers");
   const queryClient = useQueryClient();
@@ -70,16 +73,49 @@ export default function AdminSeekers() {
   const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "unverified">("all");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch users with aggregated data from multiple sources
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-users"],
+  // Fetch total count for pagination
+  const { data: totalCount } = useQuery({
+    queryKey: ["admin-users-count", verificationFilter, searchQuery],
     queryFn: async () => {
-      // Fetch base seeker profiles
-      const { data: profiles, error } = await supabase
+      let query = supabase
+        .from("seeker_profiles")
+        .select("id", { count: "exact", head: true });
+
+      if (verificationFilter === "verified") {
+        query = query.eq("phone_verified", true);
+      } else if (verificationFilter === "unverified") {
+        query = query.or("phone_verified.is.null,phone_verified.eq.false");
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch users with aggregated data from multiple sources - PAGINATED
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["admin-users", currentPage, verificationFilter, searchQuery],
+    queryFn: async () => {
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      // Fetch base seeker profiles with pagination
+      let profileQuery = supabase
         .from("seeker_profiles")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (verificationFilter === "verified") {
+        profileQuery = profileQuery.eq("phone_verified", true);
+      } else if (verificationFilter === "unverified") {
+        profileQuery = profileQuery.or("phone_verified.is.null,phone_verified.eq.false");
+      }
+
+      const { data: profiles, error } = await profileQuery;
 
       if (error) {
         logError(error.message, "Failed to fetch users");
@@ -157,17 +193,27 @@ export default function AdminSeekers() {
     },
   });
 
-  // Fetch user activity counts
-  const { data: activityStats } = useQuery({
-    queryKey: ["admin-user-activity-stats"],
+  // Fetch global stats for KPI bar (independent of pagination)
+  const { data: globalStats } = useQuery({
+    queryKey: ["admin-users-global-stats"],
     queryFn: async () => {
-      const [favorites, inquiries, reviews] = await Promise.all([
+      const [allResult, verifiedResult, conciergeResult, favorites, inquiries, reviews] = await Promise.all([
+        supabase.from("seeker_profiles").select("id", { count: "exact", head: true }),
+        supabase.from("seeker_profiles").select("id", { count: "exact", head: true }).eq("phone_verified", true),
+        supabase.from("concierge_inquiries").select("user_id", { count: "exact", head: true }).not("user_id", "is", null),
         supabase.from("user_favorites").select("user_id", { count: "exact", head: true }),
         supabase.from("concierge_inquiries").select("user_id", { count: "exact", head: true }).not("user_id", "is", null),
         supabase.from("facility_reviews").select("user_id", { count: "exact", head: true }),
       ]);
 
+      const total = allResult.count || 0;
+      const verified = verifiedResult.count || 0;
+
       return {
+        total,
+        verified,
+        unverified: total - verified,
+        concierge: conciergeResult.count || 0,
         favorites: favorites.count || 0,
         inquiries: inquiries.count || 0,
         reviews: reviews.count || 0,
@@ -207,16 +253,17 @@ export default function AdminSeekers() {
   });
 
   const safeUsers = users || [];
+  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
-  // Stats
-  const totalCount = safeUsers.length;
+  // Stats from current page data
+  const pageCount = safeUsers.length;
   const thisMonthCount = safeUsers.filter(u => {
     const created = new Date(u.created_at);
     const now = new Date();
     return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
   }).length;
 
-  // Filtered users
+  // Client-side search filter on the current page of data
   const filteredUsers = safeUsers.filter(user => {
     const matchesSearch = !searchQuery ||
       user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -226,12 +273,14 @@ export default function AdminSeekers() {
       user.aggregated_city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.aggregated_state?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesVerification = verificationFilter === "all" ||
-      (verificationFilter === "verified" && user.phone_verified) ||
-      (verificationFilter === "unverified" && !user.phone_verified);
-
-    return matchesSearch && matchesVerification;
+    return matchesSearch;
   });
+
+  // Reset page on filter change
+  const handleFilterChange = (value: "all" | "verified" | "unverified") => {
+    setVerificationFilter(value);
+    setCurrentPage(1);
+  };
 
   const getDisplayName = (user: UserProfile) => {
     if (user.display_name) return user.display_name;
@@ -285,18 +334,18 @@ export default function AdminSeekers() {
             {/* Primary Stats */}
             <div className="flex items-center gap-0.5 p-3">
               <button
-                onClick={() => setVerificationFilter("all")}
+                onClick={() => handleFilterChange("all")}
                 className={cn(
                   "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
                   verificationFilter === "all" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
                 )}
               >
                 <UsersIcon className="h-3.5 w-3.5 text-muted-foreground mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : totalCount}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : (totalCount || 0)}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Total</span>
               </button>
               <button
-                onClick={() => setVerificationFilter("all")}
+                onClick={() => handleFilterChange("all")}
                 className="flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px] hover:bg-muted/50"
               >
                 <Calendar className="h-3.5 w-3.5 text-warning mb-1" />
@@ -304,25 +353,25 @@ export default function AdminSeekers() {
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">This Month</span>
               </button>
               <button
-                onClick={() => setVerificationFilter("verified")}
+                onClick={() => handleFilterChange("verified")}
                 className={cn(
                   "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
                   verificationFilter === "verified" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
                 )}
               >
                 <CheckCircle className="h-3.5 w-3.5 text-success mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => u.phone_verified).length}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{globalStats?.verified ?? "—"}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Verified</span>
               </button>
               <button
-                onClick={() => setVerificationFilter("unverified")}
+                onClick={() => handleFilterChange("unverified")}
                 className={cn(
                   "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
                   verificationFilter === "unverified" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
                 )}
               >
                 <XCircle className="h-3.5 w-3.5 text-muted-foreground mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => !u.phone_verified).length}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{globalStats?.unverified ?? "—"}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Unverified</span>
               </button>
             </div>
@@ -333,7 +382,7 @@ export default function AdminSeekers() {
             <div className="flex items-center gap-0.5 p-3">
               <div className="flex flex-col items-center justify-center px-3 py-2.5 min-w-[72px]">
                 <Shield className="h-3.5 w-3.5 text-primary mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : safeUsers.filter(u => u.has_concierge).length}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{globalStats?.concierge ?? "—"}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Concierge</span>
               </div>
             </div>
@@ -343,21 +392,21 @@ export default function AdminSeekers() {
               <div className="flex flex-col items-center gap-0.5">
                 <div className="flex items-center gap-1.5">
                   <Heart className="h-3.5 w-3.5 text-destructive" />
-                  <span className="text-sm font-medium tabular-nums">{activityStats?.favorites || 0}</span>
+                  <span className="text-sm font-medium tabular-nums">{globalStats?.favorites || 0}</span>
                 </div>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Saves</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
                 <div className="flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5 text-info" />
-                  <span className="text-sm font-medium tabular-nums">{activityStats?.inquiries || 0}</span>
+                  <span className="text-sm font-medium tabular-nums">{globalStats?.inquiries || 0}</span>
                 </div>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Inquiries</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
                 <div className="flex items-center gap-1.5">
                   <Star className="h-3.5 w-3.5 text-warning" />
-                  <span className="text-sm font-medium tabular-nums">{activityStats?.reviews || 0}</span>
+                  <span className="text-sm font-medium tabular-nums">{globalStats?.reviews || 0}</span>
                 </div>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Reviews</span>
               </div>
@@ -379,7 +428,7 @@ export default function AdminSeekers() {
                 className="pl-9"
               />
             </div>
-            <Select value={verificationFilter} onValueChange={(v) => setVerificationFilter(v as typeof verificationFilter)}>
+            <Select value={verificationFilter} onValueChange={(v) => handleFilterChange(v as typeof verificationFilter)}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Verification" />
               </SelectTrigger>
@@ -538,6 +587,33 @@ export default function AdminSeekers() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages} ({totalCount || 0} users)
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* User Profile Modal */}
       <UserProfileModal
