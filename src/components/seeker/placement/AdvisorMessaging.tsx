@@ -244,7 +244,7 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
   }
 
   return (
-    <Card className="flex flex-col h-[400px] sm:h-[500px]">
+    <Card className="flex flex-col h-[350px] sm:h-[420px]">
       <CardHeader className="border-b py-3">
         <CardTitle className="text-base flex items-center gap-2">
           <HeadphonesIcon className="h-5 w-5 text-primary" />

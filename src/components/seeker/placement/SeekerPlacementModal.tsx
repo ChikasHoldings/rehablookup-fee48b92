@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
@@ -73,10 +72,10 @@ const formatUrgency = (urgency: string | null | undefined) => {
 
 const TIMELINE_STEPS = [
   { key: "new", label: "Submitted", icon: Send },
-  { key: "reviewing", label: "Under Review", icon: Search },
-  { key: "matching", label: "Finding Options", icon: Users },
-  { key: "introductions_sent", label: "Introductions", icon: Send },
-  { key: "in_contact", label: "In Contact", icon: MessageSquare },
+  { key: "reviewing", label: "Review", icon: Search },
+  { key: "matching", label: "Matching", icon: Users },
+  { key: "introductions_sent", label: "Intros", icon: Send },
+  { key: "in_contact", label: "Contact", icon: MessageSquare },
   { key: "placed", label: "Placed", icon: CheckCircle2 },
 ];
 
@@ -85,9 +84,9 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
   return (
     <div className="flex items-start gap-3 py-2">
       <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-        <p className="text-sm font-medium capitalize">{value}</p>
+        <p className="text-sm font-medium break-words">{value}</p>
       </div>
     </div>
   );
@@ -168,7 +167,6 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
   const isPlaced = inq.status === "placed";
   const isClosed = inq.status === "closed";
 
-  // Compute step progress
   const currentStepIndex = TIMELINE_STEPS.findIndex(s => s.key === inq.status);
   const effectiveIndex = ["matched", "introductions_sent"].includes(inq.status)
     ? TIMELINE_STEPS.findIndex(s => s.key === "introductions_sent")
@@ -191,11 +189,11 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
   const getNextStepMessage = () => {
     switch (inq.status) {
       case "new": return "Your case has been submitted. An advisor will review it shortly.";
-      case "reviewing": return "An advisor is reviewing your case and identifying the best treatment options.";
+      case "reviewing": return "An advisor is reviewing your case and identifying the best options.";
       case "matching": return "We're matching you with treatment centers that fit your needs.";
       case "matched": return "Facilities have been identified. We're sending introductions on your behalf.";
-      case "introductions_sent": return "Introductions have been sent to treatment centers. We're waiting for their responses.";
-      case "in_contact": return "Your advisor is coordinating with interested facilities. You'll be notified once admission is confirmed.";
+      case "introductions_sent": return "Introductions have been sent. We're waiting for responses.";
+      case "in_contact": return "Your advisor is coordinating with interested facilities.";
       case "placed": return "Congratulations! Your placement has been confirmed.";
       case "closed": return "This case has been closed.";
       default: return "Your case is being processed.";
@@ -204,21 +202,21 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <DialogHeader className="p-5 pb-3 border-b bg-muted/30">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <DialogTitle className="text-lg font-bold">
+        <DialogHeader className="p-4 sm:p-5 pb-3 border-b bg-muted/30 flex-shrink-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <DialogTitle className="text-base sm:text-lg font-bold">
                 Case #{inq.id.slice(0, 8).toUpperCase()}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Submitted {format(new Date(inq.created_at), "MMM d, yyyy")}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <div className="flex flex-col items-end gap-1 shrink-0">
               {isPlaced ? (
-                <Badge className="bg-emerald-500">
+                <Badge variant="default">
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Placed
                 </Badge>
               ) : isClosed ? (
@@ -234,34 +232,38 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[calc(90vh-80px)]">
-          <Tabs defaultValue="overview" className="w-full">
-            <div className="px-5 pt-3 border-b">
-              <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="overview" className="text-xs">
-                  <Activity className="h-3.5 w-3.5 mr-1.5" /> Overview
-                </TabsTrigger>
-                <TabsTrigger value="details" className="text-xs">
-                  <FileText className="h-3.5 w-3.5 mr-1.5" /> My Details
-                </TabsTrigger>
-                <TabsTrigger value="advisor" className="text-xs">
-                  <MessageSquare className="h-3.5 w-3.5 mr-1.5" /> Advisor
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        {/* Tabs + Content */}
+        <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
+          <div className="px-4 sm:px-5 pt-3 border-b flex-shrink-0">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="overview" className="text-xs gap-1">
+                <Activity className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="details" className="text-xs gap-1">
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Details</span>
+              </TabsTrigger>
+              <TabsTrigger value="advisor" className="text-xs gap-1">
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Advisor</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
+          <ScrollArea className="flex-1">
             {/* === OVERVIEW TAB === */}
-            <TabsContent value="overview" className="p-5 space-y-5 mt-0">
+            <TabsContent value="overview" className="p-4 sm:p-5 space-y-4 mt-0">
               {/* Progress Steps */}
-              <div className="bg-muted/30 rounded-lg p-4 border">
+              <div className="bg-muted/30 rounded-lg p-3 sm:p-4 border">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Placement Progress</p>
                 <div className="flex items-center gap-1">
                   {TIMELINE_STEPS.map((s, i) => {
                     const done = i <= effectiveIndex && !isClosed;
                     return (
                       <div key={s.key} className="flex-1 flex flex-col items-center gap-1">
-                        <div className={`h-2 w-full rounded-full ${done ? "bg-primary" : "bg-muted"}`} />
-                        <span className={`text-[10px] text-center leading-tight ${done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                        <div className={`h-2 w-full rounded-full transition-colors ${done ? "bg-primary" : "bg-muted"}`} />
+                        <span className={`text-[9px] sm:text-[10px] text-center leading-tight ${done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                           {s.label}
                         </span>
                       </div>
@@ -276,9 +278,9 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
 
               {/* Placed Facility */}
               {isPlaced && placedFacility && (
-                <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="h-4 w-4 text-emerald-600" />
+                    <Sparkles className="h-4 w-4 text-primary" />
                     <span className="font-semibold text-sm">Your Treatment Center</span>
                   </div>
                   <p className="text-sm font-medium">{placedFacility.name}</p>
@@ -296,7 +298,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                 <div className="bg-muted/50 px-4 py-2.5 border-b">
                   <h3 className="font-semibold text-sm">Case Summary</h3>
                 </div>
-                <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                   <DetailRow icon={Activity} label="Level of Care" value={formatLabel(inq.level_of_care)} />
                   <DetailRow icon={DollarSign} label="Payment" value={formatLabel(inq.payment_type)} />
                   <DetailRow icon={Shield} label="Insurance" value={inq.insurance_carrier} />
@@ -313,7 +315,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                       <Clock className="h-4 w-4" /> Activity Timeline
                     </h3>
                   </div>
-                  <div className="p-4 space-y-0">
+                  <div className="p-3 sm:p-4 space-y-0">
                     {caseEvents.map((ev) => (
                       <div key={ev.id} className="flex items-start gap-3 py-2">
                         <Activity className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
@@ -333,7 +335,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
             </TabsContent>
 
             {/* === DETAILS TAB === */}
-            <TabsContent value="details" className="p-5 space-y-5 mt-0">
+            <TabsContent value="details" className="p-4 sm:p-5 space-y-4 mt-0">
               {fullCase ? (
                 <>
                   {/* Clinical */}
@@ -343,18 +345,18 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                         <Activity className="h-4 w-4" /> Clinical Details
                       </h3>
                     </div>
-                    <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                    <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                       <DetailRow icon={Activity} label="Level of Care" value={formatLabel(fullCase.level_of_care)} />
                       <DetailRow icon={Heart} label="Primary Concern" value={formatLabel(fullCase.primary_concern)} />
                       <DetailRow icon={Pill} label="Detox Needed" value={formatLabel(fullCase.detox_needed)} />
-                      <DetailRow icon={Clock} label="Substance Use Duration" value={formatLabel(fullCase.substance_use_duration)} />
+                      <DetailRow icon={Clock} label="Use Duration" value={formatLabel(fullCase.substance_use_duration)} />
                       <DetailRow icon={Clock} label="Use Frequency" value={formatLabel(fullCase.substance_use_frequency)} />
-                      <DetailRow icon={Activity} label="Assessment Preference" value={formatLabel(fullCase.assessment_preference)} />
+                      <DetailRow icon={Activity} label="Assessment" value={formatLabel(fullCase.assessment_preference)} />
                       {fullCase.prior_treatment_history && (
                         <DetailRow icon={FileText} label="Prior Treatment" value="Yes" />
                       )}
-                      <DetailRow icon={FileText} label="Prior Treatment Notes" value={fullCase.prior_treatment_notes} />
-                      <DetailRow icon={Pill} label="Current Medications" value={fullCase.current_medications} />
+                      <DetailRow icon={FileText} label="Treatment Notes" value={fullCase.prior_treatment_notes} />
+                      <DetailRow icon={Pill} label="Medications" value={fullCase.current_medications} />
                       {coOccurringText && (
                         <div className="sm:col-span-2">
                           <DetailRow icon={Heart} label="Co-Occurring Concerns" value={coOccurringText} />
@@ -370,11 +372,11 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                         <User className="h-4 w-4" /> Profile
                       </h3>
                     </div>
-                    <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                    <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                       <DetailRow icon={Calendar} label="Age Range" value={formatLabel(fullCase.age_range)} />
                       <DetailRow icon={User} label="Gender" value={formatLabel(fullCase.gender)} />
-                      <DetailRow icon={MessageSquare} label="Preferred Language" value={formatLabel(fullCase.preferred_language)} />
-                      <DetailRow icon={MapPin} label="Location Preference" value={locationText} />
+                      <DetailRow icon={MessageSquare} label="Language" value={formatLabel(fullCase.preferred_language)} />
+                      <DetailRow icon={MapPin} label="Location" value={locationText} />
                       <DetailRow icon={MapPin} label="Environment" value={formatLabel(fullCase.preferred_environment)} />
                       <DetailRow icon={Shield} label="Mobility Needs" value={formatLabel(fullCase.mobility_needs)} />
                       <DetailRow icon={Activity} label="Living Situation" value={formatLabel(fullCase.current_living_situation)} />
@@ -388,12 +390,12 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                         <DollarSign className="h-4 w-4" /> Payment & Preferences
                       </h3>
                     </div>
-                    <div className="p-4 grid sm:grid-cols-2 gap-x-6">
+                    <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-x-6">
                       <DetailRow icon={DollarSign} label="Payment Type" value={formatLabel(fullCase.payment_type)} />
-                      <DetailRow icon={Shield} label="Insurance Carrier" value={fullCase.insurance_carrier} />
+                      <DetailRow icon={Shield} label="Insurance" value={fullCase.insurance_carrier} />
                       <DetailRow icon={DollarSign} label="Budget Range" value={formatLabel(fullCase.budget_range)} />
                       <DetailRow icon={Clock} label="Timeline" value={formatUrgency(fullCase.timeline_urgency)} />
-                      <DetailRow icon={Heart} label="Faith-Based Preference" value={formatLabel(fullCase.faith_based_preference)} />
+                      <DetailRow icon={Heart} label="Faith-Based" value={formatLabel(fullCase.faith_based_preference)} />
                       {fullCase.holistic_interest && (
                         <DetailRow icon={Heart} label="Holistic Interest" value="Yes" />
                       )}
@@ -406,8 +408,8 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                       <div className="bg-muted/50 px-4 py-2.5 border-b">
                         <h3 className="font-semibold text-sm">Your Notes</h3>
                       </div>
-                      <div className="p-4">
-                        <p className="text-sm text-muted-foreground">{fullCase.notes}</p>
+                      <div className="p-3 sm:p-4">
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{fullCase.notes}</p>
                       </div>
                     </div>
                   )}
@@ -421,7 +423,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
             </TabsContent>
 
             {/* === ADVISOR TAB === */}
-            <TabsContent value="advisor" className="p-5 mt-0">
+            <TabsContent value="advisor" className="p-4 sm:p-5 mt-0">
               {caseData?.id ? (
                 <AdvisorMessaging inquiryId={caseData.id} />
               ) : (
@@ -431,8 +433,8 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                 </div>
               )}
             </TabsContent>
-          </Tabs>
-        </ScrollArea>
+          </ScrollArea>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
