@@ -169,6 +169,11 @@ Deno.serve(async (req) => {
         html = generateAccountReminderEmail(displayName);
         break;
 
+      case "placement_intro":
+        subject = "Need Help Finding the Right Treatment Center? We Can Place You";
+        html = generatePlacementIntroEmail(displayName);
+        break;
+
       default:
         logStep("Unknown email type", { type });
         return new Response(
@@ -194,7 +199,7 @@ Deno.serve(async (req) => {
 
     // Create in-app notification for certain email types (respect browser_notifications preference)
     const shouldCreateInAppNotification = prefs.browser_notifications !== false;
-    if (seekerId && shouldCreateInAppNotification && ["facility_contacted_you", "request_confirmation", "welcome"].includes(type)) {
+    if (seekerId && shouldCreateInAppNotification && ["facility_contacted_you", "request_confirmation", "welcome", "placement_intro"].includes(type)) {
       let notificationTitle = subject;
       let notificationMessage = "";
       let notificationLink: string | null = null;
