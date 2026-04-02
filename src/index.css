@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent navbar shift from scrollbar appearing/disappearing */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Layout stability for shells */
 [data-shell] {
   contain: layout style;
