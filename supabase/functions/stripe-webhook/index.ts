@@ -695,7 +695,16 @@ Deno.serve(async (req) => {
       const invoice = event.data.object as Stripe.Invoice;
       logStep("Invoice payment succeeded", { invoiceId: invoice.id, amountPaid: invoice.amount_paid });
 
-      if (invoice.subscription) {
+      // Idempotency: check if this event was already processed
+      const { data: existingPaymentEvent } = await supabaseAdmin
+        .from("subscription_events")
+        .select("id")
+        .eq("stripe_event_id", event.id)
+        .maybeSingle();
+
+      if (existingPaymentEvent) {
+        logStep("Payment event already processed (duplicate webhook), skipping", { eventId: event.id });
+      } else if (invoice.subscription) {
         const customerId = invoice.customer as string;
         const customer = await stripe.customers.retrieve(customerId);
         
