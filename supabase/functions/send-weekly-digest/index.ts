@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
       );
     }
     
-    const userIds = preferences.map(p => p.user_id);
+    const userIds = eligiblePreferences.map(p => p.user_id);
     
     const { data: profiles } = await supabase.from("profiles").select("user_id, email, first_name").in("user_id", userIds);
     const { data: facilities } = await supabase.from("facilities").select("id, user_id, name, status").in("user_id", userIds).eq("status", "approved");
