@@ -197,6 +197,9 @@ const CenterProfile = () => {
     if (slug && slug !== slug.toLowerCase()) {
       window.location.replace(`/center/${slug.toLowerCase()}`);
     }
+    // Reset gallery index on slug change
+    setActiveGalleryIndex(0);
+    setLogoError(false);
   }, [slug]);
   
   useEffect(() => {
