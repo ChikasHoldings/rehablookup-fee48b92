@@ -30,26 +30,30 @@ interface LeadStats {
 }
 
 export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps) {
-  const { data: leads = [], isLoading } = useQuery({
+  const { data: leads = [], isLoading, isError } = useQuery({
     queryKey: ["lead-conversion-stats", facilityIds],
     queryFn: async () => {
       if (facilityIds.length === 0) return [];
       
-      const startOfCurrentMonth = startOfMonth(new Date());
       const startOfLastMonth = startOfMonth(subMonths(new Date(), 1));
       
       const { data, error } = await supabase
         .from("leads")
-        .select("id, status, created_at, assigned_at, source, qualified")
+        .select("id, status, created_at, assigned_at, qualified")
         .in("facility_id", facilityIds)
         .gte("created_at", startOfLastMonth.toISOString())
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
         
-      if (error) throw error;
+      if (error) {
+        console.error("[LeadConversionWidget] Query error:", error);
+        throw error;
+      }
       return data || [];
     },
     enabled: facilityIds.length > 0,
     staleTime: 1000 * 60 * 5,
+    retry: 2,
   });
 
   const stats = useMemo(() => {
@@ -145,6 +149,22 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
         <CardContent className="space-y-4">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-16 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            Lead Performance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground text-center py-4">Unable to load performance data</p>
         </CardContent>
       </Card>
     );

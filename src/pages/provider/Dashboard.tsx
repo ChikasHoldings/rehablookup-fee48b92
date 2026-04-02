@@ -140,6 +140,7 @@ export default function ProviderDashboardPage() {
       const { data, error } = await supabase
         .from("leads_provider_view")
         .select("*")
+        .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);
       if (error) throw error;
@@ -402,11 +403,12 @@ export default function ProviderDashboardPage() {
               />
               <MetricCard
                 title="Inquiries"
-                value={recentLeads.length}
-                subtitle="Recent inquiries"
+                value={totalLeadsCount}
+                subtitle={totalLeadsCount > 0 ? `${recentLeads.filter(l => l.status === 'new').length} new` : "No inquiries yet"}
                 icon={TrendingUp}
                 iconBg="bg-emerald-500/10"
                 iconColor="text-emerald-600"
+                action={totalLeadsCount > 0 ? { label: "View", href: "/provider/inquiries" } : undefined}
                 isLoading={leadsLoading}
               />
             </div>
