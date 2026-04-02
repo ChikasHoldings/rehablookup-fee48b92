@@ -499,8 +499,11 @@ export default function SeekerConcierge() {
   // ========== STATE B & C: Case exists ==========
   const showMatchedFacilities = selectedCase && 
     ["matching", "matched", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
-  const showConfirmation = selectedCase?.status === "in_contact" && !selectedCase.seeker_confirmed;
-  const showAwaitingProvider = selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed;
+  // Brokerage model: admin confirms placement on behalf of both parties
+  // Show "in contact" info card when case is in_contact (advisor coordinating)
+  const showInContactInfo = selectedCase?.status === "in_contact";
+  // Show "awaiting confirmation" when admin has started but not finalized
+  const showAwaitingConfirmation = selectedCase?.status === "in_contact" && selectedCase.placement_confirmed === false;
   const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
@@ -608,13 +611,8 @@ export default function SeekerConcierge() {
           />
         )}
 
-        {/* Awaiting Provider */}
-        {showAwaitingProvider && (
-          <PlacementConfirmationCard type="awaiting_provider" />
-        )}
-
-        {/* In Contact Status */}
-        {showConfirmation && hasMatches && (
+        {/* In Contact - Advisor is coordinating with facilities */}
+        {showInContactInfo && (
           <PlacementConfirmationCard type="ready" />
         )}
 
