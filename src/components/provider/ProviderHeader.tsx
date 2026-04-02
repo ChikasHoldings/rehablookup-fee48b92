@@ -166,6 +166,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
       <div className="h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left - Logo */}
