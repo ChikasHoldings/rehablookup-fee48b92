@@ -251,7 +251,7 @@ export default function ProviderBillingPage() {
       case "bonus":
         return "text-emerald-600";
       case "unlock":
-        return "text-muted-foreground";
+        return "text-orange-600";
       default:
         return "text-foreground";
     }
