@@ -130,12 +130,23 @@ function NotificationItem({
     }
     
     // Type-based routing
-    if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
+    const leadTypes = ["lead_received", "lead_status_changed", "lead_redistributed", "lead_unlocked"];
+    const billingTypes = ["subscription_updated", "subscription_renewal", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"];
+    const placementTypes = ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete"];
+    const tourTypes = ["tour_request", "tour_confirmed", "tour_cancelled"];
+
+    if (leadTypes.includes(notification.type)) {
       navigate("/provider/inquiries");
-    } else if (notification.type === "subscription_updated" || notification.type === "low_credits_warning" || notification.type === "lead_limit_warning") {
+    } else if (billingTypes.includes(notification.type)) {
       navigate("/provider/billing");
     } else if (notification.type === "listing_approved") {
-      navigate("/provider/listing");
+      navigate("/provider/listings");
+    } else if (placementTypes.includes(notification.type)) {
+      navigate("/provider/placement-network");
+    } else if (tourTypes.includes(notification.type)) {
+      navigate("/provider/placement-network");
+    } else if (notification.type === "review_received") {
+      navigate("/provider/reviews");
     }
   };
 
