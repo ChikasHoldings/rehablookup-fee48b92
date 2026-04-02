@@ -55,7 +55,6 @@ export function AddListingCard({
 
   const handlePurchaseSlot = async () => {
     setIsPurchasing(true);
-    console.log("[AddListingCard] Starting slot purchase checkout");
     
     try {
       const { data, error } = await supabase.functions.invoke("purchase-listing-slot", {
