@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
+import { PlacementDetailModal } from "./PlacementDetailModal";
 
 // Proper type definitions for type safety
 interface ConciergeInquiry {
