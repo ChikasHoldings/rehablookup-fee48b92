@@ -611,13 +611,8 @@ export default function SeekerConcierge() {
           />
         )}
 
-        {/* Awaiting Provider */}
-        {showAwaitingProvider && (
-          <PlacementConfirmationCard type="awaiting_provider" />
-        )}
-
-        {/* In Contact Status */}
-        {showConfirmation && hasMatches && (
+        {/* In Contact - Advisor is coordinating with facilities */}
+        {showInContactInfo && (
           <PlacementConfirmationCard type="ready" />
         )}
 
