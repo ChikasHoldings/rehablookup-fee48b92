@@ -171,23 +171,36 @@ Deno.serve(async (req) => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     
+    // Dedup guard: 6-day cooldown prevents duplicate sends from repeated cron execution
+    const sixDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString();
+
     const { data: preferences, error: prefError } = await supabase
       .from("notification_preferences")
-      .select("user_id")
+      .select("user_id, last_digest_sent_at")
       .eq("email_weekly_digest", true);
     
     if (prefError) throw new Error(`Failed to fetch preferences: ${prefError.message}`);
     
-    logStep("Found providers with digest enabled", { count: preferences?.length || 0 });
+    // Filter out providers who already received a digest within the last 6 days
+    const eligiblePreferences = (preferences || []).filter(p => {
+      if (!p.last_digest_sent_at) return true;
+      return p.last_digest_sent_at < sixDaysAgo;
+    });
+
+    logStep("Found providers with digest enabled", { 
+      total: preferences?.length || 0, 
+      eligible: eligiblePreferences.length,
+      skippedDueToCooldown: (preferences?.length || 0) - eligiblePreferences.length 
+    });
     
-    if (!preferences || preferences.length === 0) {
+    if (eligiblePreferences.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: "No providers have weekly digest enabled", sent: 0 }),
+        JSON.stringify({ success: true, message: "No providers eligible for weekly digest", sent: 0 }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
     
-    const userIds = preferences.map(p => p.user_id);
+    const userIds = eligiblePreferences.map(p => p.user_id);
     
     const { data: profiles } = await supabase.from("profiles").select("user_id, email, first_name").in("user_id", userIds);
     const { data: facilities } = await supabase.from("facilities").select("id, user_id, name, status").in("user_id", userIds).eq("status", "approved");
@@ -262,7 +275,16 @@ Deno.serve(async (req) => {
           },
         });
         
-        if (emailError) { errorCount++; } else { sentCount++; }
+        if (emailError) { 
+          errorCount++; 
+        } else { 
+          sentCount++;
+          // Record send timestamp for dedup protection
+          await supabase
+            .from("notification_preferences")
+            .update({ last_digest_sent_at: now.toISOString() })
+            .eq("user_id", profile.user_id);
+        }
       } catch { errorCount++; }
     }
     
