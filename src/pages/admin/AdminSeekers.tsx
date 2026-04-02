@@ -323,14 +323,14 @@ export default function AdminSeekers() {
             {/* Primary Stats */}
             <div className="flex items-center gap-0.5 p-3">
               <button
-                onClick={() => setVerificationFilter("all")}
+                onClick={() => handleFilterChange("all")}
                 className={cn(
                   "flex flex-col items-center justify-center px-3 py-2.5 rounded-lg transition-all min-w-[72px]",
                   verificationFilter === "all" ? "bg-accent/10 ring-1 ring-accent" : "hover:bg-muted/50"
                 )}
               >
                 <UsersIcon className="h-3.5 w-3.5 text-muted-foreground mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : totalCount}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : (totalCount || 0)}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Total</span>
               </button>
               <button
@@ -417,7 +417,7 @@ export default function AdminSeekers() {
                 className="pl-9"
               />
             </div>
-            <Select value={verificationFilter} onValueChange={(v) => setVerificationFilter(v as typeof verificationFilter)}>
+            <Select value={verificationFilter} onValueChange={(v) => handleFilterChange(v as typeof verificationFilter)}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Verification" />
               </SelectTrigger>
@@ -576,6 +576,33 @@ export default function AdminSeekers() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages} ({totalCount || 0} users)
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* User Profile Modal */}
       <UserProfileModal
