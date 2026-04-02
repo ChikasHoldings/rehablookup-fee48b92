@@ -406,15 +406,6 @@ Deno.serve(async (req) => {
 
       // ROLLBACK: refund the deducted credits if payment was via credits
       if (paymentMethod === 'credits') {
-        const { error: rollbackError } = await supabaseAdmin
-          .from("provider_credits")
-          .update({
-            balance_cents: supabaseAdmin.rpc ? undefined : 0, // placeholder for type
-            updated_at: new Date().toISOString(),
-          })
-          .eq("provider_id", user.id);
-
-        // Use direct increment approach: read current balance then add back
         const { data: currentCredits } = await supabaseAdmin
           .from("provider_credits")
           .select("balance_cents")
