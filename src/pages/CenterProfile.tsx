@@ -191,6 +191,13 @@ const CenterProfile = () => {
   const fromSearch = location.state?.fromSearch;
   const openModalFromNav = location.state?.openRequestModal;
   const prefillDataFromNav = location.state?.prefillData;
+
+  // Redirect mixed-case slugs to lowercase canonical URL
+  useEffect(() => {
+    if (slug && slug !== slug.toLowerCase()) {
+      window.location.replace(`/center/${slug.toLowerCase()}`);
+    }
+  }, [slug]);
   
   useEffect(() => {
     if (openModalFromNav) {
