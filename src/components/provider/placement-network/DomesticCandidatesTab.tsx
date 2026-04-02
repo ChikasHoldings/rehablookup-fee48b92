@@ -500,7 +500,11 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           <h3 className="text-lg font-semibold mb-3 text-muted-foreground">Past Responses</h3>
           <div className="grid gap-3">
             {respondedIntroductions.slice(0, 5).map((intro) => (
-              <Card key={intro.id} className="bg-muted/30">
+              <Card
+                key={intro.id}
+                className="bg-muted/30 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+              >
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -523,10 +527,13 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                           intro.id.slice(0, 8).toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {intro.provider_responded_at &&
-                        format(new Date(intro.provider_responded_at), "MMM d, yyyy")}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {intro.provider_responded_at &&
+                          format(new Date(intro.provider_responded_at), "MMM d, yyyy")}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -534,6 +541,27 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           </div>
         </div>
       )}
+
+      {/* Placement Detail Modal */}
+      <PlacementDetailModal
+        introduction={selectedIntro}
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setSelectedIntro(null);
+        }}
+        facilityId={selectedFacility?.id || ""}
+        onRespond={selectedIntro && (!selectedIntro.provider_response || selectedIntro.provider_response === "pending")
+          ? (response, notes) => {
+              respondMutation.mutate({ id: selectedIntro.id, response, notes });
+              setModalOpen(false);
+              setSelectedIntro(null);
+            }
+          : undefined
+        }
+        isResponding={respondMutation.isPending}
+        hasPro={hasPro}
+      />
     </div>
   );
 }
