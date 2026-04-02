@@ -36,6 +36,8 @@ const navItems = [
 
 export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMobileNavProps) {
   const location = useLocation();
+  const navNavigate = useNavigate();
+  const [, startTransition] = useTransition();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handlePrefetch = useCallback((path: string) => {
