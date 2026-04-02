@@ -77,7 +77,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
   const { selectedFacility } = useSelectedFacility();
   const [selectedMatch, setSelectedMatch] = useState<InternationalMatch | null>(null);
   const [responseNotes, setResponseNotes] = useState("");
-  const [feeOpen, setFeeOpen] = useState(false);
+  
 
   const { data: matches, isLoading } = useQuery({
     queryKey: ["international-matches", selectedFacility?.id],

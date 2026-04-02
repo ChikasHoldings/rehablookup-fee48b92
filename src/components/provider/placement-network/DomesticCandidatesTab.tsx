@@ -81,7 +81,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   const { selectedFacility } = useSelectedFacility();
   const [selectedIntro, setSelectedIntro] = useState<Introduction | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [feeOpen, setFeeOpen] = useState(false);
+  
 
   const { data: introductions, isLoading, error, refetch } = useQuery({
     queryKey: ["placement-introductions", selectedFacility?.id],
