@@ -61,9 +61,14 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           const badgeCount = isLeadsItem ? pendingInquiriesCount : totalPlacementCount;
           
           return (
-            <Link
+            <a
               key={item.href}
-              to={item.href}
+              href={item.href}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                e.preventDefault();
+                startTransition(() => { navNavigate(item.href); });
+              }}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-xl min-w-[56px] transition-all duration-200 active:scale-95",
                 isActive 
@@ -90,7 +95,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               )}>
                 {item.label}
               </span>
-            </Link>
+            </a>
           );
         })}
         
