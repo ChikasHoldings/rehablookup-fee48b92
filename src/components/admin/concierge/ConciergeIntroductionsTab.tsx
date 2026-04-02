@@ -139,6 +139,18 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
       } catch (emailError) {
         console.error("Failed to send email:", emailError);
       }
+
+      // Notify the seeker that introductions are being sent
+      try {
+        await supabase.functions.invoke("send-concierge-notifications", {
+          body: {
+            type: "introductions_sent",
+            inquiryId: caseData.id,
+          },
+        });
+      } catch (notifError) {
+        console.error("Failed to send seeker notification:", notifError);
+      }
     },
     onSuccess: () => {
       toast.success("Introduction sent and facility notified");
