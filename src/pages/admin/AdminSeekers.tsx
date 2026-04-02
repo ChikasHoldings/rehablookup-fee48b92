@@ -193,17 +193,27 @@ export default function AdminSeekers() {
     },
   });
 
-  // Fetch user activity counts
-  const { data: activityStats } = useQuery({
-    queryKey: ["admin-user-activity-stats"],
+  // Fetch global stats for KPI bar (independent of pagination)
+  const { data: globalStats } = useQuery({
+    queryKey: ["admin-users-global-stats"],
     queryFn: async () => {
-      const [favorites, inquiries, reviews] = await Promise.all([
+      const [allResult, verifiedResult, conciergeResult, favorites, inquiries, reviews] = await Promise.all([
+        supabase.from("seeker_profiles").select("id", { count: "exact", head: true }),
+        supabase.from("seeker_profiles").select("id", { count: "exact", head: true }).eq("phone_verified", true),
+        supabase.from("concierge_inquiries").select("user_id", { count: "exact", head: true }).not("user_id", "is", null),
         supabase.from("user_favorites").select("user_id", { count: "exact", head: true }),
         supabase.from("concierge_inquiries").select("user_id", { count: "exact", head: true }).not("user_id", "is", null),
         supabase.from("facility_reviews").select("user_id", { count: "exact", head: true }),
       ]);
 
+      const total = allResult.count || 0;
+      const verified = verifiedResult.count || 0;
+
       return {
+        total,
+        verified,
+        unverified: total - verified,
+        concierge: conciergeResult.count || 0,
         favorites: favorites.count || 0,
         inquiries: inquiries.count || 0,
         reviews: reviews.count || 0,
