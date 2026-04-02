@@ -108,7 +108,8 @@ export const OptimizedImage = memo(function OptimizedImage({
           sizes={sizes}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
-          fetchPriority={priority ? "high" : "auto"}
+          // @ts-ignore - fetchpriority is valid HTML but React warns about casing
+          fetchpriority={priority ? "high" : "auto"}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
