@@ -18,7 +18,8 @@ type EmailType =
   | "facility_contacted_you"
   | "tips_finding_treatment"
   | "weekly_digest"
-  | "account_reminder";
+  | "account_reminder"
+  | "placement_intro";
 
 interface SeekerEmailRequest {
   type: EmailType;
