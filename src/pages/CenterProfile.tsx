@@ -421,11 +421,6 @@ const CenterProfile = () => {
   if (isLoading) {
     return (
       <Layout>
-        <SEO
-          title="Loading Treatment Center..."
-          description="Loading facility information. Please wait."
-          noindex={true}
-        />
         <CenterProfileSkeleton />
       </Layout>
     );
