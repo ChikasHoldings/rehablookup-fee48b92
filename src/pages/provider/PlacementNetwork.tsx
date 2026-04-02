@@ -352,23 +352,23 @@ export default function ProviderPlacementNetworkPage() {
         {/* ══════════════════════════════════════════════════
             PAGE HEADER
         ══════════════════════════════════════════════════ */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Network className="h-5 w-5 text-primary" />
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3.5">
+            <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Network className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold text-foreground">Placement Network</h1>
-                <Badge variant="secondary" className="text-[10px]"><Sparkles className="h-3 w-3 mr-0.5" /> Beta</Badge>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Placement Network</h1>
+                <Badge variant="secondary" className="text-xs"><Sparkles className="h-3.5 w-3.5 mr-1" /> Beta</Badge>
               </div>
-              <p className="text-xs text-muted-foreground">Receive pre-qualified referrals from our placement specialists</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Receive pre-qualified referrals from our placement specialists</p>
             </div>
           </div>
           {optedIn && (
-            <div className="flex items-center gap-2.5 shrink-0">
-              <Badge variant="outline" className="border-primary/30 text-primary text-xs gap-1 hidden sm:flex">
-                <CheckCircle2 className="h-3 w-3" /> Active
+            <div className="flex items-center gap-3 shrink-0">
+              <Badge variant="outline" className="border-primary/30 text-primary text-sm gap-1.5 py-1 hidden sm:flex">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Active
               </Badge>
               <Switch checked={optedIn} onCheckedChange={handleToggle} disabled={optInMutation.isPending} />
             </div>
@@ -472,8 +472,8 @@ export default function ProviderPlacementNetworkPage() {
                 {/* Summary */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-base font-semibold">Confirmed Admissions</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">Patients placed at your facility through the network</p>
+                    <h2 className="text-lg font-semibold">Confirmed Admissions</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">Patients placed at your facility through the network</p>
                   </div>
                   <Badge variant="secondary" className="text-sm px-3 py-1">
                     {placements?.length || 0} total
