@@ -305,6 +305,25 @@ function generateWelcomeEmail(name: string): string {
                 </ul>
               </div>
               
+              <!-- Placement Service Introduction -->
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 12px; margin: 24px 0;">
+                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #166534; font-weight: 600;">
+                  🏥 Need Help Getting Placed?
+                </p>
+                <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #475569; line-height: 1.6;">
+                  If searching on your own feels overwhelming, our Treatment Placement service can help. A dedicated advisor will personally match you with the right facility based on your needs, insurance, and preferences — and coordinate your admission.
+                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background-color: #166534; border-radius: 6px;">
+                      <a href="https://rehablookup.com/get-placed" style="display: inline-block; padding: 10px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                        Learn About Treatment Placement →
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              
               <p style="margin: 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
                 <strong>Remember:</strong> Taking the first step is the hardest part, and you've already done that. We're proud of you.
               </p>
