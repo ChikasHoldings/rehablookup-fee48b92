@@ -402,8 +402,51 @@ Deno.serve(async (req) => {
       .single();
 
     if (unlockError) {
-      console.error("Error creating unlock:", unlockError);
-      return new Response(JSON.stringify({ error: "Failed to unlock lead" }), {
+      logStep(requestId, "ERROR - Unlock record creation failed, rolling back credits", { error: unlockError.message });
+
+      // ROLLBACK: refund the deducted credits if payment was via credits
+      if (paymentMethod === 'credits') {
+        const { error: rollbackError } = await supabaseAdmin
+          .from("provider_credits")
+          .update({
+            balance_cents: supabaseAdmin.rpc ? undefined : 0, // placeholder for type
+            updated_at: new Date().toISOString(),
+          })
+          .eq("provider_id", user.id);
+
+        // Use direct increment approach: read current balance then add back
+        const { data: currentCredits } = await supabaseAdmin
+          .from("provider_credits")
+          .select("balance_cents")
+          .eq("provider_id", user.id)
+          .maybeSingle();
+
+        if (currentCredits) {
+          await supabaseAdmin
+            .from("provider_credits")
+            .update({
+              balance_cents: currentCredits.balance_cents + unlockPrice,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("provider_id", user.id);
+
+          // Log the rollback transaction
+          await supabaseAdmin.from("credit_transactions").insert({
+            provider_id: user.id,
+            facility_id: facilityId,
+            amount_cents: unlockPrice,
+            transaction_type: "refund",
+            reference_id: leadId,
+            description: "Automatic refund - unlock record creation failed",
+          });
+
+          logStep(requestId, "Credits rolled back successfully", { refunded: unlockPrice });
+        } else {
+          logStep(requestId, "CRITICAL - Could not rollback credits, no record found");
+        }
+      }
+
+      return new Response(JSON.stringify({ error: "Failed to unlock lead", requestId }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
