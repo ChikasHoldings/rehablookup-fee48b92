@@ -120,9 +120,10 @@ export default function ProviderPlacementNetworkPage() {
       return data;
     },
     enabled: !!selectedFacility?.id,
+    retry: 2,
   });
 
-  const { data: introductions } = useQuery({
+  const { data: introductions, error: introductionsError } = useQuery({
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
@@ -198,6 +199,13 @@ export default function ProviderPlacementNetworkPage() {
     },
     enabled: !!selectedFacility?.id,
   });
+
+  // ── Error handling ──
+  useEffect(() => {
+    if (introductionsError) {
+      console.error("[PlacementNetwork] Introductions query error:", introductionsError);
+    }
+  }, [introductionsError]);
 
   // ── Sync profile form ──
   useEffect(() => {
@@ -490,7 +498,7 @@ export default function ProviderPlacementNetworkPage() {
                               <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                                 <CheckCircle2 className="h-4 w-4 text-primary" />
                               </div>
-                              <div className="min-w-0">
+                             <div className="min-w-0">
                                 <p className="text-sm font-semibold truncate">Case #{p.id.slice(0, 8).toUpperCase()}</p>
                                 <p className="text-xs text-muted-foreground">
                                   {p.user_name?.split(" ")[0] || "Client"} · {p.level_of_care ? p.level_of_care.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()) : "—"}
@@ -498,10 +506,6 @@ export default function ProviderPlacementNetworkPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-4 shrink-0">
-                              <div className="text-right hidden sm:block">
-                                <p className="text-sm font-semibold">{p.provider_fee_cents ? `$${(p.provider_fee_cents / 100).toFixed(0)}` : "—"}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase">Fee</p>
-                              </div>
                               <div className="text-right">
                                 <p className="text-xs font-medium">
                                   {p.placement_confirmed_at && format(new Date(p.placement_confirmed_at), "MMM d, yyyy")}
