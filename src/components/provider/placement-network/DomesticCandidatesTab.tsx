@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { motion } from "framer-motion";
 import {
   MapPin,
   Clock,
@@ -19,9 +18,17 @@ import {
   AlertCircle,
   Hourglass,
   ArrowRight,
+  ChevronDown,
+  Info,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
 import { PlacementDetailModal } from "./PlacementDetailModal";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 // Proper type definitions for type safety
 interface ConciergeInquiry {
@@ -68,24 +75,18 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   const { selectedFacility } = useSelectedFacility();
   const [selectedIntro, setSelectedIntro] = useState<Introduction | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [feeInfoOpen, setFeeInfoOpen] = useState(false);
 
-  // Fetch pending introductions from concierge system with proper error handling
   const { data: introductions, isLoading, error, refetch } = useQuery({
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      
       const { data, error } = await supabase
         .from("concierge_introductions")
         .select(
           `
-          id,
-          facility_id,
-          inquiry_id,
-          created_at,
-          provider_response,
-          provider_responded_at,
-          provider_notes,
+          id, facility_id, inquiry_id, created_at,
+          provider_response, provider_responded_at, provider_notes,
           concierge_inquiries (
             id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state,
             preferred_city, status, age_range, gender, primary_concern, insurance_carrier,
@@ -101,18 +102,16 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         console.error("[DomesticCandidatesTab] Query error:", error.message);
         throw new Error(`Failed to load introductions: ${error.message}`);
       }
-      
       return (data || []) as Introduction[];
     },
     enabled: !!selectedFacility?.id,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
     retry: 2,
   });
 
-  // Realtime: auto-refresh when introductions or case status change
+  // Realtime subscription
   useEffect(() => {
     if (!selectedFacility?.id) return;
-
     const channel = supabase
       .channel(`provider-intros-${selectedFacility.id}`)
       .on(
@@ -128,21 +127,14 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         }
       )
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [selectedFacility?.id, queryClient]);
 
   const respondMutation = useMutation({
     mutationFn: async ({ id, response, notes }: { id: string; response: string; notes?: string }) => {
-      // Validate inputs
-      if (!id || typeof id !== "string") {
-        throw new Error("Invalid introduction ID");
-      }
-      if (!["interested", "not_available"].includes(response)) {
-        throw new Error("Invalid response value");
-      }
+      if (!id || typeof id !== "string") throw new Error("Invalid introduction ID");
+      if (!["interested", "not_available"].includes(response)) throw new Error("Invalid response value");
 
-      // First verify the introduction hasn't already been responded to (race condition guard)
       const { data: current } = await supabase
         .from("concierge_introductions")
         .select("provider_response, concierge_inquiries(status)")
@@ -153,7 +145,6 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
       if (current?.provider_response && current.provider_response !== "pending") {
         throw new Error("You've already responded to this candidate");
       }
-
       const caseStatus = (current?.concierge_inquiries as any)?.status;
       if (caseStatus === "closed" || caseStatus === "placed") {
         throw new Error("This case is no longer active");
@@ -167,85 +158,49 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           provider_notes: notes?.trim() || null,
         })
         .eq("id", id)
-        .eq("facility_id", selectedFacility?.id); // Security: ensure facility ownership
+        .eq("facility_id", selectedFacility?.id);
 
-      if (error) {
-        console.error("[DomesticCandidatesTab] Respond error:", error.message);
-        throw new Error(`Failed to submit response: ${error.message}`);
-      }
+      if (error) throw new Error(`Failed to submit response: ${error.message}`);
 
-      // Get the inquiry_id for this introduction
       const intro = introductions?.find((i) => i.id === id);
       const inquiryId = intro?.inquiry_id;
 
       if (inquiryId && response === "interested") {
-        // Trigger auto-status-transition: introductions_sent → in_contact
         try {
           await supabase.functions.invoke("auto-status-transition", {
-            body: {
-              inquiryId,
-              trigger: "provider_interested",
-              actorType: "provider",
-            },
+            body: { inquiryId, trigger: "provider_interested", actorType: "provider" },
           });
-        } catch (transitionError) {
-          console.error("[DomesticCandidatesTab] Status transition error:", transitionError);
-        }
-
-        // Notify admin that a provider has accepted
+        } catch (e) { console.error("[DomesticCandidatesTab] Status transition error:", e); }
         try {
           await supabase.functions.invoke("send-concierge-notifications", {
-            body: {
-              type: "provider_interested",
-              inquiryId,
-              facilityId: selectedFacility?.id,
-            },
+            body: { type: "provider_interested", inquiryId, facilityId: selectedFacility?.id },
           });
-        } catch (notifError) {
-          console.error("[DomesticCandidatesTab] Notification error:", notifError);
-        }
+        } catch (e) { console.error("[DomesticCandidatesTab] Notification error:", e); }
       }
 
-      // Notify admin that a provider has declined
       if (inquiryId && response === "not_available") {
         try {
           await supabase.functions.invoke("send-concierge-notifications", {
-            body: {
-              type: "provider_declined",
-              inquiryId,
-              facilityId: selectedFacility?.id,
-            },
+            body: { type: "provider_declined", inquiryId, facilityId: selectedFacility?.id },
           });
-        } catch (notifError) {
-          console.error("[DomesticCandidatesTab] Decline notification error:", notifError);
-        }
+        } catch (e) { console.error("[DomesticCandidatesTab] Decline notification error:", e); }
       }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-introductions"] });
-      const action = variables.response === "interested" ? "accepted" : "declined";
-      toast.success(`Candidate ${action} successfully`);
+      toast.success(`Candidate ${variables.response === "interested" ? "accepted" : "declined"} successfully`);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to submit response");
     },
   });
 
-  // Safely filter introductions with null checks
-  const pendingIntroductions =
-    introductions?.filter((i) => !i.provider_response || i.provider_response === "pending") || [];
-
-  // Placements confirmed by admin (status = placed with this facility)
-  const confirmedPlacements =
-    introductions?.filter(
-      (i) =>
-        i.concierge_inquiries?.placement_confirmed === true &&
-        i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
-    ) || [];
-
+  // Categorize introductions
+  const pendingIntroductions = introductions?.filter((i) => !i.provider_response || i.provider_response === "pending") || [];
+  const confirmedPlacements = introductions?.filter(
+    (i) => i.concierge_inquiries?.placement_confirmed === true && i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
+  ) || [];
   const confirmedIds = new Set(confirmedPlacements.map((i) => i.id));
-
-  // Active placements: provider accepted, not yet confirmed by admin, case still active
   const activePlacements = introductions?.filter(
     (i) =>
       i.provider_response === "interested" &&
@@ -253,35 +208,24 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
       i.concierge_inquiries?.status !== "closed" &&
       i.concierge_inquiries?.status !== "placed"
   ) || [];
-
   const activeIds = new Set(activePlacements.map((i) => i.id));
-
-  // Declined or completed past responses (not active, not confirmed)
   const respondedIntroductions = introductions?.filter(
-    (i) =>
-      i.provider_response &&
-      i.provider_response !== "pending" &&
-      !confirmedIds.has(i.id) &&
-      !activeIds.has(i.id)
+    (i) => i.provider_response && i.provider_response !== "pending" && !confirmedIds.has(i.id) && !activeIds.has(i.id)
   ) || [];
 
-  const acceptedCount = (introductions?.filter((i) => i.provider_response === "interested") || []).length;
-  const declinedCount = (introductions?.filter((i) => i.provider_response === "not_available") || []).length;
+  const acceptedCount = introductions?.filter((i) => i.provider_response === "interested").length || 0;
+  const declinedCount = introductions?.filter((i) => i.provider_response === "not_available").length || 0;
 
-  // Error state
   if (error) {
     return (
-      <Card className="border-destructive/50 bg-destructive/5">
-        <CardContent className="py-8 text-center">
-          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
-          <p className="text-destructive font-medium">Failed to load candidates</p>
+      <Card className="border-destructive/30">
+        <CardContent className="py-10 text-center">
+          <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
+          <p className="font-medium text-destructive">Failed to load candidates</p>
           <p className="text-sm text-muted-foreground mt-1 mb-4">
             {error instanceof Error ? error.message : "An unexpected error occurred"}
           </p>
-          <button
-            onClick={() => refetch()}
-            className="text-sm text-primary hover:underline"
-          >
+          <button onClick={() => refetch()} className="text-sm text-primary hover:underline font-medium">
             Try again
           </button>
         </CardContent>
@@ -292,139 +236,151 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
+        <div className="grid grid-cols-3 gap-3">
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+        </div>
+        <Skeleton className="h-40" />
+        <Skeleton className="h-40" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Domestic Placements Header */}
-      <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10 border-blue-500/20">
-        <CardContent className="py-5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-              <MapPin className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold">U.S. Client Placements</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Pre-qualified domestic clients seeking treatment. All candidates have been screened by our
-                placement advisors to ensure a good fit.
-              </p>
-            </div>
-            <div className="sm:text-right">
-              <p className="text-2xl font-bold text-blue-600">
-                {hasPro ? "$800" : "$1,000"}
-              </p>
-              <p className="text-xs text-muted-foreground">per confirmed admission</p>
-              {hasPro && (
-                <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Pro: Save $200</p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Row */}
+      {/* ─── KPI Stats ─── */}
       <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Bell className="h-4 w-4 text-amber-500" />
-              <span className="text-2xl font-bold">{pendingIntroductions.length}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Pending Review</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <CheckCircle className="h-4 w-4 text-emerald-500" />
-              <span className="text-2xl font-bold">{acceptedCount}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Accepted</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-              <span className="text-2xl font-bold">{declinedCount}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Declined</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={<Bell className="h-4 w-4" />}
+          value={pendingIntroductions.length}
+          label="Pending"
+          accent="amber"
+          highlight={pendingIntroductions.length > 0}
+        />
+        <StatCard
+          icon={<CheckCircle className="h-4 w-4" />}
+          value={acceptedCount}
+          label="Accepted"
+          accent="emerald"
+        />
+        <StatCard
+          icon={<XCircle className="h-4 w-4" />}
+          value={declinedCount}
+          label="Declined"
+          accent="muted"
+        />
       </div>
 
-      {/* Confirmed Placements - Show success state */}
+      {/* ─── Collapsible Fee Info ─── */}
+      <Collapsible open={feeInfoOpen} onOpenChange={setFeeInfoOpen}>
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Info className="h-3.5 w-3.5" />
+              <span>
+                Placement fee: <strong className="text-foreground">{hasPro ? "$800" : "$1,000"}</strong> per confirmed admission
+                {hasPro && <span className="text-primary ml-1">(Pro discount)</span>}
+              </span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", feeInfoOpen && "rotate-180")} />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="mt-2 px-4 py-3 rounded-lg border border-dashed bg-muted/20 text-sm text-muted-foreground space-y-1.5">
+            <p>• Fee is charged <strong className="text-foreground">only</strong> after admission is confirmed by our team</p>
+            <p>• Both you and the client must confirm before any charge applies</p>
+            <p>• Invoices are issued with a 14-day payment window</p>
+            {!hasPro && (
+              <p className="text-primary/80">• Pro members save $200 per placement — upgrade in Billing</p>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* ─── Confirmed Admissions ─── */}
       {confirmedPlacements.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-emerald-500" />
-            Confirmed Admissions
-            <Badge variant="default" className="bg-emerald-500">
-              {confirmedPlacements.length}
-            </Badge>
-          </h3>
-          <p className="text-sm text-muted-foreground -mt-1">
-            These placements have been confirmed by RehabLookup. Thank you for working with us!
-          </p>
-          <div className="grid gap-3">
-            {confirmedPlacements.slice(0, 3).map((intro) => (
-              <Card
+        <Section
+          icon={<UserCheck className="h-4 w-4 text-emerald-500" />}
+          title="Confirmed Admissions"
+          count={confirmedPlacements.length}
+          accentClass="text-emerald-500"
+        >
+          <div className="space-y-2">
+            {confirmedPlacements.slice(0, 5).map((intro) => (
+              <CaseRow
                 key={`confirmed-${intro.id}`}
-                className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10 cursor-pointer hover:shadow-md transition-shadow"
+                caseId={intro.concierge_inquiries?.id || intro.id}
                 onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
-              >
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="default" className="bg-emerald-500">
-                        <CheckCircle className="h-3 w-3 mr-1" /> Placed
-                      </Badge>
-                      <span className="text-sm font-medium">
-                        Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {intro.concierge_inquiries?.placement_confirmed_at &&
-                          format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy")}
-                      </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                badge={
+                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-[11px]">
+                    <CheckCircle className="h-3 w-3 mr-1" /> Placed
+                  </Badge>
+                }
+                meta={
+                  intro.concierge_inquiries?.placement_confirmed_at
+                    ? format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy")
+                    : undefined
+                }
+              />
             ))}
           </div>
-        </div>
+        </Section>
       )}
 
-      {/* Pending Introductions */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Users className="h-5 w-5 text-blue-500" />
-          Pending Candidates
-          {pendingIntroductions.length > 0 && (
-            <Badge variant="destructive">{pendingIntroductions.length} new</Badge>
-          )}
-        </h3>
+      {/* ─── Active — Awaiting Confirmation ─── */}
+      {activePlacements.length > 0 && (
+        <Section
+          icon={<Hourglass className="h-4 w-4 text-amber-500" />}
+          title="Awaiting Confirmation"
+          count={activePlacements.length}
+          accentClass="text-amber-500"
+          subtitle="You accepted — our team is coordinating next steps"
+        >
+          <div className="space-y-2">
+            {activePlacements.map((intro) => (
+              <CaseRow
+                key={`active-${intro.id}`}
+                caseId={intro.concierge_inquiries?.id || intro.id}
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+                badge={
+                  <Badge variant="outline" className="border-amber-300 text-amber-600 dark:text-amber-400 text-[11px]">
+                    <Clock className="h-3 w-3 mr-1" /> In Progress
+                  </Badge>
+                }
+                meta={
+                  intro.provider_responded_at
+                    ? `Accepted ${format(new Date(intro.provider_responded_at), "MMM d")}`
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        </Section>
+      )}
 
+      {/* ─── Pending Candidates ─── */}
+      <Section
+        icon={<Users className="h-4 w-4 text-primary" />}
+        title="Pending Candidates"
+        count={pendingIntroductions.length > 0 ? pendingIntroductions.length : undefined}
+        accentClass="text-primary"
+        badge={pendingIntroductions.length > 0 ? (
+          <Badge variant="destructive" className="text-[10px] h-5">{pendingIntroductions.length} new</Badge>
+        ) : undefined}
+      >
         {pendingIntroductions.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-8 text-center">
-              <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground">No pending domestic candidates</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                When U.S. clients are matched to your facility, they'll appear here.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="rounded-xl border border-dashed py-10 text-center">
+            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+              <Bell className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-medium text-foreground">No pending candidates</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              New domestic candidates matched to your facility will appear here
+            </p>
+          </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="space-y-4">
             {pendingIntroductions.map((intro) => (
               <IntroductionCard
                 key={intro.id}
@@ -438,109 +394,49 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
             ))}
           </div>
         )}
-      </div>
+      </Section>
 
-      {/* Active Placements - Accepted, awaiting admin confirmation */}
-      {activePlacements.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Hourglass className="h-5 w-5 text-amber-500" />
-            Active — Awaiting Confirmation
-            <Badge variant="outline" className="border-amber-300 text-amber-700 dark:text-amber-400">
-              {activePlacements.length}
-            </Badge>
-          </h3>
-          <p className="text-sm text-muted-foreground -mt-1">
-            You accepted these candidates. Our placement team is coordinating next steps and will confirm the admission.
-          </p>
-          <div className="grid gap-3">
-            {activePlacements.map((intro) => (
-              <motion.div
-                key={`active-${intro.id}`}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Card
-                  className="border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
-                >
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="border-amber-400 text-amber-700 dark:text-amber-400">
-                          <Clock className="h-3 w-3 mr-1" /> In Progress
-                        </Badge>
-                        <span className="text-sm font-medium">
-                          Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase() ||
-                            intro.id.slice(0, 8).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>
-                          Accepted {intro.provider_responded_at &&
-                            format(new Date(intro.provider_responded_at), "MMM d")}
-                        </span>
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-amber-700/80 dark:text-amber-400/80 bg-amber-100/50 dark:bg-amber-900/20 rounded-md px-3 py-2">
-                      <ArrowRight className="h-3 w-3 shrink-0" />
-                      <span>Our advisor is coordinating with the client. You'll be notified once admission is confirmed.</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Past Responses */}
+      {/* ─── Past Responses ─── */}
       {respondedIntroductions.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-3 text-muted-foreground">Past Responses</h3>
-          <div className="grid gap-3">
-            {respondedIntroductions.slice(0, 5).map((intro) => (
-              <Card
-                key={intro.id}
-                className="bg-muted/30 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
-              >
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        variant={intro.provider_response === "interested" ? "default" : "secondary"}
-                        className="capitalize"
-                      >
-                        {intro.provider_response === "interested" ? (
-                          <>
-                            <CheckCircle className="h-3 w-3 mr-1" /> Accepted
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="h-3 w-3 mr-1" /> Declined
-                          </>
-                        )}
-                      </Badge>
-                      <span className="text-sm">
-                        Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase() ||
-                          intro.id.slice(0, 8).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {intro.provider_responded_at &&
-                          format(new Date(intro.provider_responded_at), "MMM d, yyyy")}
-                      </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <Collapsible>
+          <CollapsibleTrigger className="w-full">
+            <div className="flex items-center justify-between py-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Past Responses ({respondedIntroductions.length})
+              </h3>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="space-y-2 mt-2">
+              {respondedIntroductions.slice(0, 10).map((intro) => (
+                <CaseRow
+                  key={intro.id}
+                  caseId={intro.concierge_inquiries?.id || intro.id}
+                  onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+                  className="bg-muted/20"
+                  badge={
+                    <Badge
+                      variant={intro.provider_response === "interested" ? "default" : "secondary"}
+                      className="text-[11px]"
+                    >
+                      {intro.provider_response === "interested" ? (
+                        <><CheckCircle className="h-3 w-3 mr-1" /> Accepted</>
+                      ) : (
+                        <><XCircle className="h-3 w-3 mr-1" /> Declined</>
+                      )}
+                    </Badge>
+                  }
+                  meta={
+                    intro.provider_responded_at
+                      ? format(new Date(intro.provider_responded_at), "MMM d, yyyy")
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {/* Placement Detail Modal */}
@@ -563,6 +459,115 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         isResponding={respondMutation.isPending}
         hasPro={hasPro}
       />
+    </div>
+  );
+}
+
+/* ─── Reusable Sub-components ─── */
+
+function StatCard({
+  icon,
+  value,
+  label,
+  accent,
+  highlight,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+  accent: "amber" | "emerald" | "muted";
+  highlight?: boolean;
+}) {
+  const colors = {
+    amber: "text-amber-500",
+    emerald: "text-emerald-500",
+    muted: "text-muted-foreground",
+  };
+
+  return (
+    <Card className={cn(
+      "transition-colors",
+      highlight && "border-amber-300 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10"
+    )}>
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <div className={colors[accent]}>{icon}</div>
+          <span className="text-xl sm:text-2xl font-bold">{value}</span>
+        </div>
+        <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-medium">{label}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Section({
+  icon,
+  title,
+  count,
+  accentClass,
+  subtitle,
+  badge,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+  accentClass?: string;
+  subtitle?: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <div className="flex items-center gap-2">
+          {icon}
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          {count !== undefined && (
+            <span className={cn("text-xs font-semibold", accentClass)}>{count}</span>
+          )}
+          {badge}
+        </div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-0.5 ml-6">{subtitle}</p>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function CaseRow({
+  caseId,
+  badge,
+  meta,
+  onClick,
+  className,
+}: {
+  caseId: string;
+  badge: React.ReactNode;
+  meta?: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "flex items-center justify-between px-4 py-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors gap-3",
+        className
+      )}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        {badge}
+        <span className="text-sm font-medium truncate">
+          Case #{caseId.slice(0, 8).toUpperCase()}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {meta && <span className="text-xs text-muted-foreground">{meta}</span>}
+        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
     </div>
   );
 }

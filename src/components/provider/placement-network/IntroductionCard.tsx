@@ -1,11 +1,26 @@
 import { useState, useEffect } from "react";
-import { Clock, CheckCircle2, XCircle, Loader2, MapPin, AlertCircle, User, Calendar, Shield, Heart, Pill, DollarSign, Activity } from "lucide-react";
+import {
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  MapPin,
+  User,
+  Calendar,
+  Shield,
+  Heart,
+  Pill,
+  DollarSign,
+  Activity,
+  ChevronDown,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
-// Proper type definitions
 interface ConciergeInquiry {
   id: string;
   user_name?: string;
@@ -60,50 +75,51 @@ export function IntroductionCard({
 }: IntroductionCardProps) {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const inquiry = introduction.concierge_inquiries;
 
-  // Generate anonymized Case ID
   const caseId = `Case #${inquiry?.id?.slice(0, 8).toUpperCase() || introduction.id.slice(0, 8).toUpperCase()}`;
-
-  // Extract first name only for anonymized display
   const firstName = inquiry?.user_name?.split(" ")[0] || "Client";
 
-  const formatLabel = (value: string | null | undefined, fallback = "Not specified") => {
+  const fmt = (value: string | null | undefined, fallback = "—") => {
     if (!value) return fallback;
     return value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const formatUrgency = (urgency: string | null | undefined) => {
-    if (!urgency) return "Flexible";
-    const labels: Record<string, string> = {
+  const urgencyLabel = (u: string | null | undefined) => {
+    const map: Record<string, string> = {
       immediate: "Immediate",
       within_week: "Within 1 Week",
       within_month: "Within 1 Month",
       flexible: "Flexible",
     };
-    return labels[urgency] || urgency.replace(/_/g, " ");
+    return map[u || ""] || "Flexible";
   };
 
   const formatCoOccurring = (concerns: unknown) => {
     if (!concerns) return null;
     if (Array.isArray(concerns)) return concerns.join(", ");
     if (typeof concerns === "object") {
-      const entries = Object.entries(concerns as Record<string, boolean>).filter(([, v]) => v);
-      return entries.map(([k]) => formatLabel(k)).join(", ");
+      return Object.entries(concerns as Record<string, boolean>)
+        .filter(([, v]) => v)
+        .map(([k]) => fmt(k))
+        .join(", ");
     }
     return String(concerns);
   };
 
-  const locationText = [inquiry?.preferred_city, inquiry?.preferred_state].filter(Boolean).join(", ") || "Flexible";
-  const coOccurringText = formatCoOccurring(inquiry?.co_occurring_concerns);
+  const location = [inquiry?.preferred_city, inquiry?.preferred_state].filter(Boolean).join(", ") || "Flexible";
+  const coOccurring = formatCoOccurring(inquiry?.co_occurring_concerns);
 
-  const handleAccept = () => {
+  const handleAccept = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsAccepting(true);
     setIsDeclining(false);
     onRespond("interested");
   };
 
-  const handleDecline = () => {
+  const handleDecline = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsDeclining(true);
     setIsAccepting(false);
     onRespond("not_available");
@@ -116,166 +132,117 @@ export function IntroductionCard({
     }
   }, [isResponding]);
 
+  // Collect detail items for the grid
+  const detailItems: { icon: React.ReactNode; label: string; value: string }[] = [];
+  if (inquiry?.age_range) detailItems.push({ icon: <Calendar className="h-3 w-3" />, label: "Age", value: fmt(inquiry.age_range) });
+  if (inquiry?.gender) detailItems.push({ icon: <User className="h-3 w-3" />, label: "Gender", value: fmt(inquiry.gender) });
+  detailItems.push({ icon: <MapPin className="h-3 w-3" />, label: "Location", value: location });
+  detailItems.push({ icon: <Activity className="h-3 w-3" />, label: "Care Level", value: fmt(inquiry?.level_of_care) });
+  if (inquiry?.primary_concern) detailItems.push({ icon: <Heart className="h-3 w-3" />, label: "Concern", value: fmt(inquiry.primary_concern) });
+  if (inquiry?.insurance_carrier) detailItems.push({ icon: <Shield className="h-3 w-3" />, label: "Insurance", value: inquiry.insurance_carrier });
+
+  const extendedItems: { label: string; value: string }[] = [];
+  if (inquiry?.detox_needed) extendedItems.push({ label: "Detox Needed", value: fmt(inquiry.detox_needed) });
+  if (inquiry?.substance_use_duration) extendedItems.push({ label: "Duration of Use", value: fmt(inquiry.substance_use_duration) });
+  if (inquiry?.payment_type) extendedItems.push({ label: "Payment", value: fmt(inquiry.payment_type) });
+  if (inquiry?.budget_range) extendedItems.push({ label: "Budget", value: fmt(inquiry.budget_range) });
+  if (coOccurring) extendedItems.push({ label: "Co-Occurring", value: coOccurring });
+
   return (
-    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <CardContent className="p-5 space-y-4">
-        {/* Header with Case ID and Name */}
-        <div className="flex items-start justify-between">
-          <div>
-            <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-100 dark:bg-amber-950/50 mb-2">
-              <Clock className="h-3 w-3 mr-1" />
-              Awaiting Response
-            </Badge>
-            <h3 className="font-semibold text-foreground text-lg">
-              {caseId}
-            </h3>
-            <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
-              <User className="h-3.5 w-3.5" />
-              {firstName} · Received {format(new Date(introduction.created_at), "MMM d 'at' h:mm a")}
+    <Card
+      className="border hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}
+    >
+      <CardContent className="p-0">
+        {/* ─── Header ─── */}
+        <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold text-foreground">{caseId}</h3>
+              <Badge
+                variant={inquiry?.timeline_urgency === "immediate" ? "destructive" : "secondary"}
+                className="text-[10px] h-5"
+              >
+                <Clock className="h-3 w-3 mr-0.5" />
+                {urgencyLabel(inquiry?.timeline_urgency)}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {firstName} · {format(new Date(introduction.created_at), "MMM d 'at' h:mm a")}
             </p>
           </div>
-        </div>
-
-        {/* Primary Details Grid */}
-        <div className="bg-background/50 rounded-lg p-4 space-y-3 border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Client Profile</p>
-          <div className="grid sm:grid-cols-3 gap-3 text-sm">
-            {inquiry?.age_range && (
-              <div className="space-y-0.5">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                  <Calendar className="h-3 w-3" /> Age Range
-                </span>
-                <p className="font-medium">{formatLabel(inquiry.age_range)}</p>
-              </div>
-            )}
-            {inquiry?.gender && (
-              <div className="space-y-0.5">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                  <User className="h-3 w-3" /> Gender
-                </span>
-                <p className="font-medium">{formatLabel(inquiry.gender)}</p>
-              </div>
-            )}
-            <div className="space-y-0.5">
-              <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                <MapPin className="h-3 w-3" /> Location Preference
-              </span>
-              <p className="font-medium">{locationText}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Clinical Details Grid */}
-        <div className="bg-background/50 rounded-lg p-4 space-y-3 border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Clinical Summary</p>
-          <div className="grid sm:grid-cols-2 gap-3 text-sm">
-            <div className="space-y-0.5">
-              <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                <Activity className="h-3 w-3" /> Level of Care
-              </span>
-              <p className="font-medium">{formatLabel(inquiry?.level_of_care)}</p>
-            </div>
-            {inquiry?.primary_concern && (
-              <div className="space-y-0.5">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                  <Heart className="h-3 w-3" /> Primary Concern
-                </span>
-                <p className="font-medium">{formatLabel(inquiry.primary_concern)}</p>
-              </div>
-            )}
-            {inquiry?.detox_needed && (
-              <div className="space-y-0.5">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                  <Pill className="h-3 w-3" /> Detox Needed
-                </span>
-                <p className="font-medium">{formatLabel(inquiry.detox_needed)}</p>
-              </div>
-            )}
-            {inquiry?.substance_use_duration && (
-              <div className="space-y-0.5">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide">Duration of Use</span>
-                <p className="font-medium">{formatLabel(inquiry.substance_use_duration)}</p>
-              </div>
-            )}
-            {coOccurringText && (
-              <div className="space-y-0.5 sm:col-span-2">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide">Co-Occurring Concerns</span>
-                <p className="font-medium">{coOccurringText}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Payment & Insurance */}
-        <div className="bg-background/50 rounded-lg p-4 border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Payment & Coverage</p>
-          <div className="grid sm:grid-cols-3 gap-3 text-sm">
-            <div className="space-y-0.5">
-              <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                <DollarSign className="h-3 w-3" /> Payment Type
-              </span>
-              <p className="font-medium">{formatLabel(inquiry?.payment_type)}</p>
-            </div>
-            {inquiry?.insurance_carrier && (
-              <div className="space-y-0.5">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide flex items-center gap-1">
-                  <Shield className="h-3 w-3" /> Insurance
-                </span>
-                <p className="font-medium">{inquiry.insurance_carrier}</p>
-              </div>
-            )}
-            {inquiry?.budget_range && (
-              <div className="space-y-0.5">
-                <span className="text-muted-foreground text-xs uppercase tracking-wide">Budget Range</span>
-                <p className="font-medium">{formatLabel(inquiry.budget_range)}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Urgency Badge */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Timeline:</span>
-          <Badge variant={inquiry?.timeline_urgency === "immediate" ? "destructive" : "secondary"} className="text-xs">
-            {formatUrgency(inquiry?.timeline_urgency)}
+          <Badge variant="outline" className="border-amber-300 text-amber-600 dark:text-amber-400 text-[10px] shrink-0">
+            Awaiting Response
           </Badge>
         </div>
 
-        {/* Fee Notice */}
-        <div className="bg-muted/50 rounded-lg p-3 text-sm flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-          <div>
-            <p className="text-muted-foreground">
-              <strong className="text-foreground">Placement fee applies</strong> only when admission is confirmed by RehabLookup. 
-              {hasPro ? " Pro discount: $800" : " Standard: $1,000"}
-            </p>
+        <Separator />
+
+        {/* ─── Key Details Grid ─── */}
+        <div className="px-4 sm:px-5 py-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
+            {detailItems.map((item, i) => (
+              <div key={i} className="min-w-0">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1">
+                  {item.icon} {item.label}
+                </span>
+                <p className="text-sm font-medium text-foreground truncate mt-0.5">{item.value}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-2" onClick={(e) => e.stopPropagation()}>
+        {/* ─── Expandable Extended Details ─── */}
+        {extendedItems.length > 0 && (
+          <>
+            <div
+              className="px-4 sm:px-5 py-2 flex items-center gap-1.5 cursor-pointer hover:bg-muted/30 transition-colors border-t"
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+            >
+              <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", expanded && "rotate-180")} />
+              <span className="text-xs text-muted-foreground font-medium">
+                {expanded ? "Less details" : "More details"}
+              </span>
+            </div>
+            {expanded && (
+              <div className="px-4 sm:px-5 pb-3 pt-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
+                  {extendedItems.map((item, i) => (
+                    <div key={i} className={cn("min-w-0", item.label === "Co-Occurring" && "col-span-2 sm:col-span-3")}>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{item.label}</span>
+                      <p className="text-sm font-medium text-foreground mt-0.5">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ─── Action Bar ─── */}
+        <div className="px-4 sm:px-5 py-3 bg-muted/20 border-t flex gap-3" onClick={(e) => e.stopPropagation()}>
           <Button
-            className="flex-1 gap-2"
+            className="flex-1 h-9 gap-1.5 text-sm"
             onClick={handleAccept}
             disabled={isResponding}
           >
             {isAccepting && isResponding ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
             )}
-            Accept Candidate
+            Accept
           </Button>
           <Button
             variant="outline"
-            className="flex-1 gap-2"
+            className="flex-1 h-9 gap-1.5 text-sm"
             onClick={handleDecline}
             disabled={isResponding}
           >
             {isDeclining && isResponding ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <XCircle className="h-4 w-4" />
+              <XCircle className="h-3.5 w-3.5" />
             )}
             Decline
           </Button>
