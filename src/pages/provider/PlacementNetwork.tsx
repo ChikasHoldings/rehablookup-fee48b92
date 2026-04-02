@@ -352,23 +352,23 @@ export default function ProviderPlacementNetworkPage() {
         {/* ══════════════════════════════════════════════════
             PAGE HEADER
         ══════════════════════════════════════════════════ */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Network className="h-5 w-5 text-primary" />
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3.5">
+            <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Network className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold text-foreground">Placement Network</h1>
-                <Badge variant="secondary" className="text-[10px]"><Sparkles className="h-3 w-3 mr-0.5" /> Beta</Badge>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Placement Network</h1>
+                <Badge variant="secondary" className="text-xs"><Sparkles className="h-3.5 w-3.5 mr-1" /> Beta</Badge>
               </div>
-              <p className="text-xs text-muted-foreground">Receive pre-qualified referrals from our placement specialists</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Receive pre-qualified referrals from our placement specialists</p>
             </div>
           </div>
           {optedIn && (
-            <div className="flex items-center gap-2.5 shrink-0">
-              <Badge variant="outline" className="border-primary/30 text-primary text-xs gap-1 hidden sm:flex">
-                <CheckCircle2 className="h-3 w-3" /> Active
+            <div className="flex items-center gap-3 shrink-0">
+              <Badge variant="outline" className="border-primary/30 text-primary text-sm gap-1.5 py-1 hidden sm:flex">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Active
               </Badge>
               <Switch checked={optedIn} onCheckedChange={handleToggle} disabled={optInMutation.isPending} />
             </div>
@@ -390,31 +390,38 @@ export default function ProviderPlacementNetworkPage() {
             {/* ══════════════════════════════════════════════════
                 TAB BAR — 3 clean tabs
             ══════════════════════════════════════════════════ */}
-            <div className="border-b mb-6">
-              <nav className="flex gap-0 -mb-px">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
-                      activeTab === tab.key
-                        ? "border-primary text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/20"
-                    )}
-                  >
-                    <tab.icon className="h-4 w-4" />
-                    {tab.label}
-                    {tab.badge !== undefined && tab.badge > 0 && (
-                      <Badge
-                        variant={tab.key === "pipeline" ? "destructive" : "secondary"}
-                        className="text-[10px] h-4.5 px-1.5 ml-1"
-                      >
-                        {tab.badge}
-                      </Badge>
-                    )}
-                  </button>
-                ))}
+            <div className="border-b mb-8">
+              <nav className="flex gap-6 -mb-px">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={cn(
+                        "flex items-center gap-2 pb-3 text-base font-semibold border-b-2 transition-colors whitespace-nowrap",
+                        isActive
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                      )}
+                    >
+                      <tab.icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                      {tab.label}
+                      {tab.badge !== undefined && tab.badge > 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center justify-center text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5",
+                            tab.key === "pipeline"
+                              ? "bg-destructive text-destructive-foreground"
+                              : "bg-primary/15 text-primary"
+                          )}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </nav>
             </div>
 
@@ -424,28 +431,28 @@ export default function ProviderPlacementNetworkPage() {
             {activeTab === "pipeline" && (
               <div className="space-y-5">
                 {/* Domestic / International toggle */}
-                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg w-fit">
+                <div className="flex items-center gap-1.5 p-1 bg-muted rounded-xl w-fit">
                   <button
                     onClick={() => setPipelineView("domestic")}
                     className={cn(
-                      "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                      "px-4 py-2 text-sm font-semibold rounded-lg transition-all",
                       pipelineView === "domestic"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
                     )}
                   >
-                    Domestic
+                    🇺🇸 Domestic
                   </button>
                   <button
                     onClick={() => setPipelineView("international")}
                     className={cn(
-                      "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                      "px-4 py-2 text-sm font-semibold rounded-lg transition-all",
                       pipelineView === "international"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
                     )}
                   >
-                    International
+                    🌍 International
                   </button>
                 </div>
 
@@ -465,8 +472,8 @@ export default function ProviderPlacementNetworkPage() {
                 {/* Summary */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-base font-semibold">Confirmed Admissions</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">Patients placed at your facility through the network</p>
+                    <h2 className="text-lg font-semibold">Confirmed Admissions</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">Patients placed at your facility through the network</p>
                   </div>
                   <Badge variant="secondary" className="text-sm px-3 py-1">
                     {placements?.length || 0} total
