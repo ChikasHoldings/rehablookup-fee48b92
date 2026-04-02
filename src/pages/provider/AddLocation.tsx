@@ -177,7 +177,6 @@ export default function AddLocationPage() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.log("[AddLocation] No session found, redirecting to login");
         toast({
           variant: "destructive",
           title: "Authentication Error",
