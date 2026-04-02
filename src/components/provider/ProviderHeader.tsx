@@ -194,17 +194,15 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             {mobileSearchOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Search className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
 
-          {/* View Listing */}
+          {/* Preview Listing */}
           {facilityId && facilitySlug && (
-            <a
-              href={`/center/${facilitySlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => setPreviewOpen(true)}
               className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-all duration-200 border border-white/20 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <ExternalLink className="h-4 w-4" />
-              <span>View Listing</span>
-            </a>
+              <Eye className="h-4 w-4" />
+              <span>Preview</span>
+            </button>
           )}
 
           {/* Notifications */}
