@@ -103,10 +103,10 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
             const maxValue = Math.max(...Object.values(analytics.conversionFunnel), 1);
             const pct = Math.round((value / maxValue) * 100);
             return (
-              <div key={stage.key} className="p-3 text-center">
-                <p className={cn("text-lg font-bold", stage.textColor)}>{value}</p>
-                <p className="text-[11px] font-medium text-foreground">{stage.label}</p>
-                <p className="text-[10px] text-muted-foreground mb-2">{stage.desc}</p>
+              <div key={stage.key} className="px-2 py-2 text-center">
+                <p className={cn("text-base font-bold", stage.textColor)}>{value}</p>
+                <p className="text-[10px] font-medium text-foreground">{stage.label}</p>
+                <p className="text-[9px] text-muted-foreground mb-1.5">{stage.desc}</p>
                 <div className="h-1 bg-muted rounded-full overflow-hidden mx-auto max-w-[80%]">
                   <div className={cn("h-full rounded-full transition-all duration-700", stage.color)} style={{ width: `${pct}%` }} />
                 </div>
