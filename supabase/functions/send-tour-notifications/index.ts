@@ -292,7 +292,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             type: "tour_confirmed",
             title: "Tour Confirmed",
             message: `${emailData.seekerName} confirmed the tour for ${confirmedTime}.`,
-            link: "/provider/concierge",
+            link: "/provider/placement-network",
           });
         }
 
