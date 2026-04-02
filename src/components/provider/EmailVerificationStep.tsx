@@ -44,8 +44,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
     setError("");
 
     try {
-      console.log("[EmailVerification] Sending verification code to:", email.substring(0, 3) + "***");
-      
       const { data, error: fnError } = await supabase.functions.invoke("send-verification-code", {
         body: { email },
       });
