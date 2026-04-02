@@ -586,7 +586,12 @@ export default function SeekerConcierge() {
 
         {/* Status Card */}
         {selectedCase && (
-          <PlacementStatusCard caseData={selectedCase} />
+          <div 
+            className="cursor-pointer hover:shadow-lg transition-shadow rounded-xl"
+            onClick={() => setDetailModalOpen(true)}
+          >
+            <PlacementStatusCard caseData={selectedCase} />
+          </div>
         )}
 
         {/* Placed Facility */}
