@@ -351,6 +351,7 @@ export default function ProviderNotificationsPage() {
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="leads">Leads</SelectItem>
               <SelectItem value="billing">Billing</SelectItem>
+              <SelectItem value="placements">Placements</SelectItem>
               <SelectItem value="system">System</SelectItem>
             </SelectContent>
           </Select>
