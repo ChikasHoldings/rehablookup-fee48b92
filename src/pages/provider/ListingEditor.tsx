@@ -254,7 +254,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       const { data } = await supabase
         .from("facilities")
-        .select("*")
+        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients")
         .eq("id", currentFacilityId)
         .eq("user_id", session.user.id)
         .maybeSingle();
@@ -484,18 +484,8 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       setHasChanges(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
-      
-      toast({
-        title: "Changes saved",
-        description: "Your public profile has been updated.",
-        action: facility.slug ? (
-          <ToastAction altText="View Public Profile" asChild>
-            <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
-              View Profile
-            </a>
-          </ToastAction>
-        ) : undefined,
-      });
+    } else {
+      console.error("[ListingEditor] Auto-save failed:", error.message);
     }
   }, [facility, isSaving, currentFacilityId, queryClient, toast]);
 
