@@ -409,7 +409,7 @@ export default function AdminNotifications() {
         </Button>
         <div className="h-4 w-px bg-border mx-1 shrink-0" />
         <Button
-          variant={typeFilter === "payment_failed" ? "secondary" : "ghost"}
+          variant={typeFilter === "payment_types" ? "secondary" : "ghost"}
           size="sm"
           className="h-7 px-3 text-xs font-medium shrink-0"
           onClick={() => setTypeFilter(typeFilter === "payment_types" ? "all" : "payment_types")}
