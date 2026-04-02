@@ -184,7 +184,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                       const itemCount = getItemCount(item);
 
                       return (
-                        <NavLink
+                        <TransitionNavLink
                           key={item.to}
                           to={item.to}
                           onMouseEnter={() => handleMouseEnter(item.to)}
@@ -207,7 +207,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                               {itemCount > 99 ? "99+" : itemCount}
                             </span>
                           )}
-                        </NavLink>
+                        </TransitionNavLink>
                       );
                     })}
                   </div>
@@ -223,7 +223,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
           const itemCount = getItemCount(entry);
 
           return (
-            <NavLink
+            <TransitionNavLink
               key={entry.to}
               to={entry.to}
               end={entry.end}
@@ -257,7 +257,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                   {itemCount > 99 ? "99+" : itemCount}
                 </span>
               )}
-            </NavLink>
+            </TransitionNavLink>
           );
         })}
       </nav>
