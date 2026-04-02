@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { UserProfileModal } from "@/components/admin/users/UserProfileModal";
+import { Button } from "@/components/ui/button";
 import {
   Search,
   Users as UsersIcon,
