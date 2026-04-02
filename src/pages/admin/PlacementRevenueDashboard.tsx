@@ -224,92 +224,76 @@ export default function PlacementRevenueDashboard() {
         </div>
 
         {/* Top Stats */}
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Total Collected</p>
-                  <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 mt-1">
-                    {formatCurrency(stats.totalCollected)}
-                  </p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                    {stats.paidCount} invoices
-                  </p>
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-8">
+          <Card className="border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/10">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-emerald-500/15 shrink-0">
+                  <DollarSign className="h-4 w-4 text-emerald-600" />
                 </div>
-                <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-emerald-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Collected</p>
+                  <p className="text-lg sm:text-xl font-bold text-emerald-900 dark:text-emerald-100 leading-tight">{formatCurrency(stats.totalCollected)}</p>
+                  <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">{stats.paidCount} invoices</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(stats.thisMonthCollected)}
-                  </p>
-                  <div className="flex items-center gap-1 mt-1">
+          <Card className="border-border/40">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-primary/10 shrink-0">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">This Month</p>
+                  <p className="text-lg sm:text-xl font-bold leading-tight">{formatCurrency(stats.thisMonthCollected)}</p>
+                  <div className="flex items-center gap-0.5">
                     {monthlyGrowth >= 0 ? (
-                      <TrendingUp className="h-3 w-3 text-emerald-500" />
+                      <TrendingUp className="h-2.5 w-2.5 text-emerald-500" />
                     ) : (
-                      <TrendingDown className="h-3 w-3 text-red-500" />
+                      <TrendingDown className="h-2.5 w-2.5 text-destructive" />
                     )}
-                    <span className={`text-xs ${monthlyGrowth >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {monthlyGrowth >= 0 ? "+" : ""}{monthlyGrowth.toFixed(1)}% vs last month
+                    <span className={`text-[10px] ${monthlyGrowth >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                      {monthlyGrowth >= 0 ? "+" : ""}{monthlyGrowth.toFixed(1)}%
                     </span>
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-primary" />
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending + Overdue</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(stats.pendingAmount + stats.overdueAmount)}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary" className="text-xs">
-                      {stats.pendingCount} pending
-                    </Badge>
+          <Card className="border-border/40">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-warning/10 shrink-0">
+                  <Clock className="h-4 w-4 text-warning" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
+                  <p className="text-lg sm:text-xl font-bold leading-tight">{formatCurrency(stats.pendingAmount + stats.overdueAmount)}</p>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-muted-foreground">{stats.pendingCount} pending</span>
                     {stats.overdueCount > 0 && (
-                      <Badge variant="destructive" className="text-xs">
-                        {stats.overdueCount} overdue
-                      </Badge>
+                      <span className="text-[10px] text-destructive font-medium">{stats.overdueCount} overdue</span>
                     )}
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-600" />
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-950/20 dark:to-violet-900/10 border-violet-200 dark:border-violet-800">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-violet-700 dark:text-violet-300">Pro Discount Impact</p>
-                  <p className="text-2xl font-bold text-violet-900 dark:text-violet-100 mt-1">
-                    {formatCurrency(stats.totalDiscountSavings)}
-                  </p>
-                  <p className="text-xs text-violet-600 dark:text-violet-400 mt-1">
-                    {stats.proDiscountCount} discounted invoices
-                  </p>
+          <Card className="border-violet-200/60 dark:border-violet-800/40 bg-violet-50/50 dark:bg-violet-950/10">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-violet-500/15 shrink-0">
+                  <Percent className="h-4 w-4 text-violet-600" />
                 </div>
-                <div className="h-12 w-12 rounded-full bg-violet-500/20 flex items-center justify-center">
-                  <Percent className="h-6 w-6 text-violet-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs font-medium text-violet-700 dark:text-violet-300 uppercase tracking-wider">Pro Discount</p>
+                  <p className="text-lg sm:text-xl font-bold text-violet-900 dark:text-violet-100 leading-tight">{formatCurrency(stats.totalDiscountSavings)}</p>
+                  <p className="text-[10px] text-violet-600/70 dark:text-violet-400/70">{stats.proDiscountCount} discounted</p>
                 </div>
               </div>
             </CardContent>
