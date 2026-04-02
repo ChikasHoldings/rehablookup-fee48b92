@@ -942,7 +942,7 @@ async function sendPlacementCompleteEmails(
   });
 
   // Admin notification for placement completion
-  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const completeCaseId = inquiry.id.slice(0, 8).toUpperCase();
   await createAdminNotification(supabase, {
     type: 'concierge_placement_complete',
     title: 'Placement Completed',
