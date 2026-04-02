@@ -591,6 +591,21 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   };
 
+  // Keyboard shortcut: Ctrl+S / Cmd+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (hasChanges && !isSaving && !isAutoSaving) {
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasChanges, isSaving, isAutoSaving]);
+
   const handleLogoChange = (images: string[]) => {
     if (facility) {
       setFacility({ ...facility, logo_url: images[0] || null });
