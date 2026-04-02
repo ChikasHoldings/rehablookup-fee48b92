@@ -56,10 +56,18 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
   });
 
   // Fetch matched facilities that haven't been introduced yet
+  // Merge both matched lists for complete facility coverage
+  const allMatchedFacilityIds = [
+    ...new Set([
+      ...(caseData.matched_facility_ids || []),
+      ...(caseData.admin_matched_facility_ids || []),
+    ])
+  ];
+
   const { data: availableFacilities } = useQuery({
-    queryKey: ["available-introductions", caseData.id, caseData.matched_facility_ids],
+    queryKey: ["available-introductions", caseData.id, allMatchedFacilityIds],
     queryFn: async () => {
-      if (!caseData.matched_facility_ids?.length) return [];
+      if (!allMatchedFacilityIds.length) return [];
 
       const { data: existingIntros } = await supabase
         .from("concierge_introductions")
@@ -67,7 +75,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
         .eq("inquiry_id", caseData.id);
 
       const existingIds = existingIntros?.map((i) => i.facility_id) || [];
-      const availableIds = caseData.matched_facility_ids.filter(
+      const availableIds = allMatchedFacilityIds.filter(
         (id) => !existingIds.includes(id)
       );
 
