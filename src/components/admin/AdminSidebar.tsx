@@ -1,5 +1,6 @@
 import { memo, useCallback, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { TransitionNavLink } from "@/components/ui/transition-nav-link";
 import {
   LayoutDashboard,
   Building2,
