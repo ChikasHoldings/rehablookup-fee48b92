@@ -373,7 +373,11 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           </p>
           <div className="grid gap-3">
             {confirmedPlacements.slice(0, 3).map((intro) => (
-              <Card key={`confirmed-${intro.id}`} className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10">
+              <Card
+                key={`confirmed-${intro.id}`}
+                className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+              >
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -384,10 +388,13 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                         Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {intro.concierge_inquiries?.placement_confirmed_at &&
-                        format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy")}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {intro.concierge_inquiries?.placement_confirmed_at &&
+                          format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy")}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
