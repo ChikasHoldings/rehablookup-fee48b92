@@ -136,7 +136,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); setDrawerOpen(false); startTransition(() => { navNavigate(item.href); }); }}
                     onMouseEnter={() => handlePrefetch(item.href)}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 active:scale-[0.98]",
