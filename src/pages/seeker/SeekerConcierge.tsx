@@ -33,7 +33,8 @@ import {
   PlacementTabs,
   PlacementConfirmationCard,
   PlacementMatchCard,
-  PlacementSupportCard 
+  PlacementSupportCard,
+  SeekerPlacementModal,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 // TourRequestModal removed - all coordination goes through advisor (brokerage model)
