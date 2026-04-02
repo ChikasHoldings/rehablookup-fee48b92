@@ -946,7 +946,7 @@ async function sendPlacementCompleteEmails(
   await createAdminNotification(supabase, {
     type: 'concierge_placement_complete',
     title: 'Placement Completed',
-    message: `${inquiry.user_name} placed at ${facility.name} (Case #${caseId}). Fee invoice will be generated.`,
+    message: `${inquiry.user_name} placed at ${facility.name} (Case #${completeCaseId}). Fee invoice will be generated.`,
     metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
   });
 }
