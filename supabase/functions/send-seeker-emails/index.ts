@@ -316,7 +316,7 @@ function generateWelcomeEmail(name: string): string {
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="background-color: #166534; border-radius: 6px;">
-                      <a href="https://rehablookup.com/get-placed" style="display: inline-block; padding: 10px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                      <a href="https://rehablookup.com/concierge" style="display: inline-block; padding: 10px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
                         Learn About Treatment Placement →
                       </a>
                     </td>
@@ -1053,7 +1053,7 @@ function generatePlacementIntroEmail(name: string): string {
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
                   <td style="background-color: #166534; background: #166534; border-radius: 8px;">
-                    <a href="https://rehablookup.com/get-placed" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                    <a href="https://rehablookup.com/concierge" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
                       Get Placed Now →
                     </a>
                   </td>
