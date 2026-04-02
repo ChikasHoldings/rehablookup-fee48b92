@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { 
   Wallet, 
@@ -81,6 +81,33 @@ export default function ProviderBillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleteCardConfirm, setDeleteCardConfirm] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
 
+  // Post-checkout polling: retry fetches for up to 30s to catch webhook processing
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCountRef = useRef(0);
+
+  const startPostCheckoutPolling = (refetchFn: () => void, maxPolls = 6) => {
+    // Clear any existing polling
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollCountRef.current = 0;
+    
+    // Poll every 5 seconds for up to 30 seconds
+    pollingRef.current = setInterval(() => {
+      pollCountRef.current += 1;
+      refetchFn();
+      if (pollCountRef.current >= maxPolls && pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    }, 5000);
+  };
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
   // Handle success/cancel URL params from Stripe checkout
   useEffect(() => {
     const proSuccess = searchParams.get("pro_success");
@@ -92,6 +119,8 @@ export default function ProviderBillingPage() {
     if (proSuccess === "true") {
       toast.success("Welcome to Pro! Your benefits are now active.", { duration: 5000 });
       refetchProStatus();
+      // Poll to catch delayed webhook processing
+      startPostCheckoutPolling(() => refetchProStatus());
       searchParams.delete("pro_success");
       setSearchParams(searchParams, { replace: true });
     }
@@ -107,6 +136,8 @@ export default function ProviderBillingPage() {
       const formattedAmount = amount ? `$${(parseInt(amount, 10) / 100).toFixed(0)}` : "";
       toast.success(`${formattedAmount} credits added to your account!`, { duration: 5000 });
       refetchCredits();
+      // Poll to catch delayed webhook processing
+      startPostCheckoutPolling(() => refetchCredits());
       searchParams.delete("credits_success");
       searchParams.delete("amount");
       setSearchParams(searchParams, { replace: true });
