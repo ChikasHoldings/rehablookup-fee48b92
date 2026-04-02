@@ -200,6 +200,13 @@ export default function ProviderPlacementNetworkPage() {
     enabled: !!selectedFacility?.id,
   });
 
+  // ── Error handling ──
+  useEffect(() => {
+    if (introductionsError) {
+      console.error("[PlacementNetwork] Introductions query error:", introductionsError);
+    }
+  }, [introductionsError]);
+
   // ── Sync profile form ──
   useEffect(() => {
     if (facilityData) {
