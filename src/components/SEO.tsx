@@ -250,9 +250,7 @@ export function SEO({
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
 
-      {/* Preconnect for performance */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      {/* DNS prefetch for analytics (preconnects already in index.html) */}
       <link rel="dns-prefetch" href="https://www.google-analytics.com" />
 
       {/* Structured Data */}
