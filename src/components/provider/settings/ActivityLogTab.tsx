@@ -101,7 +101,7 @@ export const ActivityLogTab = forwardRef<HTMLDivElement>((_, ref) => {
       
       const { data, error } = await supabase
         .from("account_activity_log")
-        .select("*")
+        .select("id, user_id, event_type, event_description, ip_address, user_agent, metadata, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(50);
