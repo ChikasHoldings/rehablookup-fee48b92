@@ -51,7 +51,6 @@ const providerPageMap: Record<string, () => Promise<unknown>> = {
   "/provider/inquiries": () => import("@/pages/provider/Inquiries"),
   "/provider/reviews": () => import("@/pages/provider/Reviews"),
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
-  "/provider/credits": () => import("@/pages/provider/Credits"),
   "/provider/settings": () => import("@/pages/provider/Settings"),
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
   "/provider/help": () => import("@/pages/provider/Help"),
@@ -140,7 +139,7 @@ export function prefetchAdjacentRoutes(currentPath: string): void {
     "/provider/listings": ["/provider/dashboard", "/provider/inquiries"],
     "/provider/analytics": ["/provider/dashboard"],
     "/provider/settings": ["/provider/dashboard", "/provider/notifications"],
-    "/provider/credits": ["/provider/billing", "/provider/dashboard"],
+    "/provider/billing": ["/provider/dashboard", "/provider/settings"],
     
     // Admin (handled by existing adminPrefetch.ts)
   };
@@ -174,7 +173,7 @@ export function preloadProviderPages(): void {
     () => import("@/pages/provider/Inquiries"),
     () => import("@/pages/provider/Reviews"),
     () => import("@/pages/provider/Analytics"),
-    () => import("@/pages/provider/Credits"),
+    () => import("@/pages/provider/Billing"),
     () => import("@/pages/provider/Settings"),
     () => import("@/pages/provider/Notifications"),
     () => import("@/pages/provider/Help"),

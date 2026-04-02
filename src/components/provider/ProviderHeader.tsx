@@ -193,9 +193,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           </Button>
 
           {/* View Listing */}
-          {facilityId && (
+          {facilityId && facilitySlug && (
             <a
-              href={facilitySlug ? `/center/${facilitySlug}` : `/rehab-centers/${facilityId}`}
+              href={`/center/${facilitySlug}`}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-all duration-200 border border-white/20 hover:scale-[1.02] active:scale-[0.98]"
