@@ -204,7 +204,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
       }
 
       // Notify admin that a provider has declined
-      if (inquiryId && response === "not_interested") {
+      if (inquiryId && response === "not_available") {
         try {
           await supabase.functions.invoke("send-concierge-notifications", {
             body: {

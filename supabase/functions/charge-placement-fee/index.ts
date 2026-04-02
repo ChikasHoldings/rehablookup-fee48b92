@@ -53,30 +53,37 @@ Deno.serve(async (req) => {
       throw new Error("Supabase configuration missing");
     }
 
-    // Authenticate caller - must be admin
+    // Authenticate caller - must be admin or service-role (server-to-server)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
 
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await anonClient.auth.getUser(token);
-    if (userError || !userData.user) throw new Error("Authentication failed");
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify admin role
-    const { data: adminRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
+    // Check if this is a service-role call (from confirm-placement edge function)
+    const isServiceRoleCall = token === supabaseServiceKey;
 
-    if (!adminRole) {
-      throw new Error("Only administrators can charge placement fees");
+    if (isServiceRoleCall) {
+      logStep(requestId, "Service-role authentication (server-to-server call)");
+    } else {
+      // User JWT auth - verify admin role
+      const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: userData, error: userError } = await anonClient.auth.getUser(token);
+      if (userError || !userData.user) throw new Error("Authentication failed");
+
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!adminRole) {
+        throw new Error("Only administrators can charge placement fees");
+      }
+
+      logStep(requestId, "Admin authenticated", { adminId: userData.user.id });
     }
-
-    logStep(requestId, "Admin authenticated", { adminId: userData.user.id });
 
     const { inquiryId, facilityId, feeType, firstMonthCost, adminInitiated, isInternational } = await req.json();
     
