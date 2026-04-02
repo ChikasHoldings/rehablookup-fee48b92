@@ -16,11 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -38,6 +33,11 @@ import {
   ChevronDown,
   Bell,
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 interface InternationalMatch {
@@ -77,7 +77,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
   const { selectedFacility } = useSelectedFacility();
   const [selectedMatch, setSelectedMatch] = useState<InternationalMatch | null>(null);
   const [responseNotes, setResponseNotes] = useState("");
-  const [feeOpen, setFeeOpen] = useState(false);
+  
 
   const { data: matches, isLoading } = useQuery({
     queryKey: ["international-matches", selectedFacility?.id],
@@ -145,35 +145,8 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
                 <h2 className="text-lg font-bold text-foreground">International Placements</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">Pre-screened global clients seeking treatment in the United States</p>
               </div>
-              <div className="sm:text-right shrink-0">
-                <p className="text-2xl font-bold text-primary">{hasPro ? "$2,400" : "$3,000"}</p>
-                <p className="text-xs text-muted-foreground">per confirmed admission</p>
-                {hasPro && (
-                  <Badge variant="secondary" className="mt-1 text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Pro: Save $600</Badge>
-                )}
-              </div>
             </div>
           </div>
-          <Collapsible open={feeOpen} onOpenChange={setFeeOpen}>
-            <CollapsibleTrigger className="w-full">
-              <div className="flex items-center justify-between px-5 sm:px-6 py-3 border-t bg-muted/20 hover:bg-muted/30 transition-colors cursor-pointer">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="font-medium">How billing works</span>
-                </div>
-                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", feeOpen && "rotate-180")} />
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="px-5 sm:px-6 pb-4 pt-1 text-sm text-muted-foreground space-y-2 border-t border-dashed">
-                <p>• Fee is charged <strong className="text-foreground">only</strong> after admission is confirmed by our team</p>
-                <p>• Both you and the client must confirm before any charge applies</p>
-                <p>• Invoices are issued with a 14-day payment window</p>
-                <p>• International placements include visa coordination support</p>
-                {!hasPro && <p className="text-primary/80">• Pro members save $600 per placement — upgrade in Billing</p>}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
         </CardContent>
       </Card>
 
