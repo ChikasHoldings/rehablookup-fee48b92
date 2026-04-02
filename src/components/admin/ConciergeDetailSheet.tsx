@@ -38,6 +38,23 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
   function ConciergeDetailSheet({ caseData, open, onClose, onRefresh }, ref) {
   const [activeTab, setActiveTab] = useState("intake");
 
+  // Auto-transition: new → reviewing when admin opens case
+  useEffect(() => {
+    if (open && caseData?.status === "new") {
+      supabase.functions.invoke("auto-status-transition", {
+        body: {
+          inquiryId: caseData.id,
+          trigger: "admin_viewed",
+          actorType: "admin",
+        },
+      }).then(() => {
+        onRefresh();
+      }).catch((err) => {
+        console.error("[ConciergeDetailSheet] Auto-transition failed:", err);
+      });
+    }
+  }, [open, caseData?.id, caseData?.status]);
+
   if (!caseData) return null;
 
   return (
