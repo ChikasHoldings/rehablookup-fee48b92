@@ -16,12 +16,15 @@ const logStep = (step: string, details?: unknown) => {
 type NotificationType =
   | 'intake_received'      // Seeker: Your request was received
   | 'matches_found'        // Seeker: We found facilities for you
-  | 'provider_interested'  // Seeker: A provider wants to connect
+  | 'introductions_sent'   // Seeker: Your advisor has contacted facilities
+  | 'provider_interested'  // Admin: A provider accepted the candidate
+  | 'provider_declined'    // Admin: A provider declined the candidate
   | 'seeker_confirmed'     // Provider: Seeker confirmed admission
   | 'provider_confirmed'   // Seeker: Provider confirmed your admission
   | 'placement_complete'   // Both: Congratulations on the placement!
   | 'invoice_issued'       // Provider: Your placement fee invoice
-  | 'invoice_paid';        // Provider: Payment received
+  | 'invoice_paid'         // Provider: Payment received
+  | 'signup_prompt';       // Seeker (no account): Create account to track
 
 interface NotificationRequest {
   type: NotificationType;
