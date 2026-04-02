@@ -43,7 +43,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
+import { lazy, Suspense } from "react";
+const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 
 const CREDIT_PACKAGES = [
   { amountCents: 10000, label: "$100", bonus: null },

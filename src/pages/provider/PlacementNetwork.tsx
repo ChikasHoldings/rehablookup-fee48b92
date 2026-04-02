@@ -51,7 +51,8 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { PlacementTermsModal } from "@/components/provider/PlacementTermsModal";
-import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
+import { lazy, Suspense } from "react";
+const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 import { CareTypesModal } from "@/components/provider/CareTypesModal";
 import { PlacementReadinessChecklist } from "@/components/provider/PlacementReadinessChecklist";
 import {
