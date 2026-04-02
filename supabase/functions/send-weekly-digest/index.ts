@@ -279,6 +279,7 @@ Deno.serve(async (req) => {
           weeklyViews,
           newLeads: newLeads || 0,
           contactedLeads: contactedLeads || 0,
+          isConciergeOptedIn: userFacilities.some(f => f.concierge_network_opted_in === true),
         };
         
         const emailHtml = generateDigestEmail(digest);
