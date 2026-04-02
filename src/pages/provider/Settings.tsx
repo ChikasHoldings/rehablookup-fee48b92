@@ -224,8 +224,8 @@ export default function ProviderSettingsPage() {
       email: providerData.profile.email,
       phone: providerData.profile.phone || "",
       job_title: providerData.profile.job_title || "",
-      primary_contact_name: (providerData.profile as any).primary_contact_name || "",
-      timezone: (providerData.profile as any).timezone || "America/New_York",
+      primary_contact_name: providerData.profile.primary_contact_name || "",
+      timezone: providerData.profile.timezone || "America/New_York",
     };
   }, [providerData?.profile]);
 
@@ -899,7 +899,7 @@ export default function ProviderSettingsPage() {
                   onPhoneChange={(value) => updateField("phone", value)}
                   userId={userId || undefined}
                   userType="provider"
-                  isVerified={!!(providerData?.profile as any)?.phone_verified}
+                  isVerified={!!providerData?.profile?.phone_verified}
                   onVerified={() => {
                     queryClient.invalidateQueries({ queryKey: ["provider-data"] });
                   }}
