@@ -59,11 +59,13 @@ interface FacilityView {
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
-export function useCentralizedEngagementAnalytics(dateRange?: DateRange) {
+export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterFacilityId?: string) {
   const queryClient = useQueryClient();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
 
-  const facilityIds = facilities.map((f) => f.id);
+  const facilityIds = filterFacilityId 
+    ? facilities.filter(f => f.id === filterFacilityId).map(f => f.id)
+    : facilities.map((f) => f.id);
 
   useEffect(() => {
     if (facilityIds.length === 0) return;
@@ -116,6 +118,7 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange) {
       facilityIds.join(","),
       dateRange?.from?.toISOString(),
       dateRange?.to?.toISOString(),
+      filterFacilityId || "all",
     ],
     queryFn: async (): Promise<CentralizedEngagementAnalytics> => {
       if (facilityIds.length === 0) {

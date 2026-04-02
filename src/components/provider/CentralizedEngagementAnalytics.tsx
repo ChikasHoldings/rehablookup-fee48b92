@@ -1,24 +1,10 @@
 import React from "react";
 import { 
-  AreaChart,
-  Area,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
 } from "recharts";
 import { 
-  Phone, 
-  Globe,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  Eye,
-  Building2,
-  MousePointerClick,
-  MessageSquare,
-  Star,
+  Phone, Globe, TrendingUp, ArrowUpRight, ArrowDownRight, Eye, Building2,
+  MousePointerClick, MessageSquare, Star,
 } from "lucide-react";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
@@ -33,11 +19,12 @@ import { cn } from "@/lib/utils";
 
 interface CentralizedEngagementAnalyticsProps {
   dateRange?: DateRange;
+  facilityId?: string;
 }
 
-export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagementAnalyticsProps) {
-  const { data: analytics, isLoading } = useCentralizedEngagementAnalytics(dateRange);
-  const { data: leadAnalytics, isLoading: leadsLoading } = useCentralizedLeadAnalytics(dateRange);
+export function CentralizedEngagementAnalytics({ dateRange, facilityId }: CentralizedEngagementAnalyticsProps) {
+  const { data: analytics, isLoading } = useCentralizedEngagementAnalytics(dateRange, facilityId);
+  const { data: leadAnalytics, isLoading: leadsLoading } = useCentralizedLeadAnalytics(dateRange, facilityId);
   const { data: proStatus } = useProStatus();
   const { facilities } = useProviderFacilities();
 
@@ -49,7 +36,6 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
   const periodListingViews = analytics?.periodListingViews || 0;
   const totalListingViews = analytics?.totalListingViews || 0;
   const listingViewsGrowth = analytics?.listingViewGrowth || 0;
-
   const totalInquiries = leadAnalytics?.allTimeLeads || 0;
   const periodInquiries = leadAnalytics?.thisMonthLeads || 0;
   const inquiryGrowth = leadAnalytics?.growthRate || 0;
@@ -60,66 +46,34 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
 
   if (!hasData) return <EmptyEngagement hasApprovedListing={hasApprovedListing} />;
 
-  const hasMultipleFacilities = analytics?.facilityBreakdown && analytics.facilityBreakdown.length > 1;
+  const hasMultipleFacilities = !facilityId && analytics?.facilityBreakdown && analytics.facilityBreakdown.length > 1;
   const viewToCallRate = analytics?.viewToCallRate || 0;
   const viewToWebsiteRate = analytics?.viewToWebsiteRate || 0;
   const viewToInquiryRate = periodListingViews > 0 ? Math.round((periodInquiries / periodListingViews) * 100) : 0;
   const proEngagementRate = periodListingViews > 0 && analytics
-    ? Math.round(((analytics.periodClickToCalls + analytics.periodWebsiteClicks) / periodListingViews) * 100)
-    : 0;
+    ? Math.round(((analytics.periodClickToCalls + analytics.periodWebsiteClicks) / periodListingViews) * 100) : 0;
 
   return (
     <div className="space-y-5">
-      {/* ── KPI Stats ── */}
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-        <KPICard
-          title="Listing Views"
-          value={periodListingViews}
-          total={totalListingViews}
-          icon={Eye}
-          trend={listingViewsGrowth}
-          color="primary"
-        />
+      {/* KPI Stats */}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+        <KPICard title="Listing Views" value={periodListingViews} total={totalListingViews} icon={Eye} trend={listingViewsGrowth} color="primary" />
         {isPro ? (
           <>
-            <KPICard
-              title="Call Clicks"
-              value={analytics?.periodClickToCalls || 0}
-              total={analytics?.totalClickToCalls || 0}
-              icon={Phone}
-              trend={analytics?.clickToCallGrowth}
-              color="emerald"
-            />
-            <KPICard
-              title="Website Clicks"
-              value={analytics?.periodWebsiteClicks || 0}
-              total={analytics?.totalWebsiteClicks || 0}
-              icon={Globe}
-              trend={analytics?.websiteClickGrowth}
-              color="blue"
-            />
+            <KPICard title="Call Clicks" value={analytics?.periodClickToCalls || 0} total={analytics?.totalClickToCalls || 0} icon={Phone} trend={analytics?.clickToCallGrowth} color="emerald" />
+            <KPICard title="Website Clicks" value={analytics?.periodWebsiteClicks || 0} total={analytics?.totalWebsiteClicks || 0} icon={Globe} trend={analytics?.websiteClickGrowth} color="blue" />
+            <KPICard title="Engagement Rate" value={`${proEngagementRate}%`} icon={MousePointerClick} color="purple" />
           </>
         ) : (
           <>
-            <KPICard
-              title="Inquiry Requests"
-              value={periodInquiries}
-              total={totalInquiries}
-              icon={MessageSquare}
-              trend={inquiryGrowth}
-              color="emerald"
-            />
-            <KPICard
-              title="View → Inquiry"
-              value={`${viewToInquiryRate}%`}
-              icon={MousePointerClick}
-              color="purple"
-            />
+            <KPICard title="Inquiries" value={periodInquiries} total={totalInquiries} icon={MessageSquare} trend={inquiryGrowth} color="emerald" />
+            <KPICard title="View → Inquiry" value={`${viewToInquiryRate}%`} icon={MousePointerClick} color="purple" />
+            <KPICard title="Total Views" value={totalListingViews} icon={Eye} color="blue" />
           </>
         )}
       </div>
 
-      {/* ── Pro Conversion Rates ── */}
+      {/* Pro Conversion Rates */}
       {isPro && periodListingViews > 0 && (
         <div className="rounded-lg border overflow-hidden">
           <div className="px-4 py-2.5 border-b bg-muted/30 flex items-center gap-2">
@@ -134,7 +88,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
         </div>
       )}
 
-      {/* ── Per-Facility Breakdown ── */}
+      {/* Per-Facility Breakdown */}
       {hasMultipleFacilities && analytics && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
@@ -176,7 +130,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
         </div>
       )}
 
-      {/* ── Trends Chart ── */}
+      {/* Trends Chart */}
       {analytics && analytics.dailyTrends.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -216,14 +170,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
                   <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval="preserveStartEnd" />
                   <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={30} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)",
-                      padding: "8px 12px",
-                      fontSize: "12px",
-                    }}
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)", padding: "8px 12px", fontSize: "12px" }}
                     labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600, marginBottom: 2, fontSize: "11px" }}
                   />
                   <Area type="monotone" dataKey="listingViews" name="Listing Views" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#engViewGrad)" dot={false} />
@@ -240,7 +187,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
         </div>
       )}
 
-      {/* ── Upgrade CTA ── */}
+      {/* Upgrade CTA */}
       {!isPro && (
         <div className="rounded-lg border border-dashed border-amber-300/50 bg-amber-50/30 dark:bg-amber-950/10 p-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -250,15 +197,11 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
               </div>
               <div>
                 <p className="font-semibold text-foreground text-xs">Upgrade to Pro for Direct Contact</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Enable families to call you directly and visit your website
-                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Enable families to call you directly and visit your website</p>
               </div>
             </div>
             <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 h-8 text-xs">
-              <Link to="/provider/billing?tab=pro">
-                <Star className="h-3 w-3 mr-1" /> Upgrade to Pro
-              </Link>
+              <Link to="/provider/billing?tab=pro"><Star className="h-3 w-3 mr-1" /> Upgrade to Pro</Link>
             </Button>
           </div>
         </div>
@@ -267,7 +210,7 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
   );
 }
 
-/* ══════════════════════════════════ Sub-Components ══════════════════════════════════ */
+/* ══════════════════════════ Sub-Components ══════════════════════════ */
 
 const COLOR_MAP: Record<string, { bg: string; text: string }> = {
   primary: { bg: "bg-primary/10", text: "text-primary" },
@@ -304,9 +247,7 @@ function KPICard({ title, value, total, icon: Icon, trend, color }: {
   );
 }
 
-function ConversionCell({ label, value, desc }: {
-  label: string; value: string; desc: string;
-}) {
+function ConversionCell({ label, value, desc }: { label: string; value: string; desc: string }) {
   return (
     <div className="p-3 text-center">
       <p className="text-lg font-bold text-foreground">{value}</p>
@@ -328,8 +269,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 function EngagementSkeleton() {
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-lg" />)}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-lg" />)}
       </div>
       <Skeleton className="h-56 rounded-lg" />
     </div>
