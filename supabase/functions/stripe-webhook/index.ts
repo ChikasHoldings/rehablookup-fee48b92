@@ -680,6 +680,7 @@ Deno.serve(async (req) => {
           logStep("Email send failed", { error: String(emailError) });
         }
       }
+      }
     }
 
     // ==========================================
