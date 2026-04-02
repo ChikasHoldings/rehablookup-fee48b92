@@ -140,7 +140,7 @@ export function prefetchAdjacentRoutes(currentPath: string): void {
     "/provider/listings": ["/provider/dashboard", "/provider/inquiries"],
     "/provider/analytics": ["/provider/dashboard"],
     "/provider/settings": ["/provider/dashboard", "/provider/notifications"],
-    "/provider/credits": ["/provider/billing", "/provider/dashboard"],
+    "/provider/billing": ["/provider/dashboard", "/provider/settings"],
     
     // Admin (handled by existing adminPrefetch.ts)
   };
