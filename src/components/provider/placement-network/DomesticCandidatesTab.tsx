@@ -30,7 +30,16 @@ interface ConciergeInquiry {
   payment_type?: string | null;
   timeline_urgency?: string | null;
   preferred_state?: string | null;
+  preferred_city?: string | null;
   status?: string;
+  age_range?: string | null;
+  gender?: string | null;
+  primary_concern?: string | null;
+  insurance_carrier?: string | null;
+  detox_needed?: string | null;
+  co_occurring_concerns?: unknown | null;
+  substance_use_duration?: string | null;
+  budget_range?: string | null;
   seeker_confirmed?: boolean;
   seeker_confirmed_at?: string | null;
   placement_confirmed?: boolean;
@@ -75,7 +84,9 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           provider_responded_at,
           provider_notes,
           concierge_inquiries (
-            id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state, status,
+            id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state,
+            preferred_city, status, age_range, gender, primary_concern, insurance_carrier,
+            detox_needed, co_occurring_concerns, substance_use_duration, budget_range,
             seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id
           )
         `
