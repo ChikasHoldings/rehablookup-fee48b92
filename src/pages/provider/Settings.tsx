@@ -202,7 +202,7 @@ export default function ProviderSettingsPage() {
 
       const { data, error } = await supabase
         .from("notification_preferences")
-        .select("*")
+        .select("email_lead_alerts, email_weekly_digest, email_product_updates, sms_lead_alerts, browser_notifications, lead_notification_frequency, notify_new_leads, notify_lead_status_changes, notify_lead_limit_warnings, notify_facility_views, digest_time, followup_reminders_enabled, default_snooze_duration")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
