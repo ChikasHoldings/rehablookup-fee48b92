@@ -33,23 +33,31 @@ interface ConciergePlacementTabProps {
 export function ConciergePlacementTab({ caseData, onRefresh }: ConciergePlacementTabProps) {
   const [isRunning, setIsRunning] = useState(false);
 
+  // Merge both matched lists for complete facility coverage
+  const allMatchedFacilityIds = [
+    ...new Set([
+      ...(caseData.matched_facility_ids || []),
+      ...(caseData.admin_matched_facility_ids || []),
+    ])
+  ];
+
   // Fetch placement facilities details
   const { data: placementFacilities, isLoading: loadingFacilities } = useQuery({
-    queryKey: ["placement-facilities", caseData.matched_facility_ids],
+    queryKey: ["placement-facilities", allMatchedFacilityIds],
     queryFn: async () => {
-      if (!caseData.matched_facility_ids || caseData.matched_facility_ids.length === 0) {
+      if (allMatchedFacilityIds.length === 0) {
         return [];
       }
       
       const { data, error } = await supabase
         .from("facilities")
         .select("id, name, city, state, facility_type, concierge_availability_status")
-        .in("id", caseData.matched_facility_ids);
+        .in("id", allMatchedFacilityIds);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!caseData.matched_facility_ids?.length,
+    enabled: allMatchedFacilityIds.length > 0,
   });
 
   const runPlacementMutation = useMutation({
