@@ -51,7 +51,6 @@ const providerPageMap: Record<string, () => Promise<unknown>> = {
   "/provider/inquiries": () => import("@/pages/provider/Inquiries"),
   "/provider/reviews": () => import("@/pages/provider/Reviews"),
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
-  "/provider/billing": () => import("@/pages/provider/Billing"),
   "/provider/settings": () => import("@/pages/provider/Settings"),
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
   "/provider/help": () => import("@/pages/provider/Help"),
