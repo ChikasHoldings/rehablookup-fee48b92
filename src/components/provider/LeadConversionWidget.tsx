@@ -154,6 +154,22 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
     );
   }
 
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            Lead Performance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground text-center py-4">Unable to load performance data</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
