@@ -72,6 +72,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
             <a
               key={item.href}
               href={item.href}
+              onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); startTransition(() => { navNavigate(item.href); }); }}
               onMouseEnter={() => handlePrefetch(item.href)}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
