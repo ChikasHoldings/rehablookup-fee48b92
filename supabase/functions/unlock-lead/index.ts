@@ -458,6 +458,21 @@ Deno.serve(async (req) => {
       .eq("id", leadId)
       .single();
 
+    // Create provider in-app notification for credit-based unlock
+    try {
+      await supabaseAdmin.from("provider_notifications").insert({
+        user_id: user.id,
+        facility_id: facilityId,
+        type: "lead_unlocked",
+        title: "Lead Unlocked",
+        message: `A lead has been unlocked via credits ($${(unlockPrice / 100).toFixed(2)}).`,
+        metadata: { lead_id: leadId, amount_cents: unlockPrice, payment_method: paymentMethod },
+      });
+      logStep(requestId, "Provider notification created for unlock");
+    } catch (notifError) {
+      logStep(requestId, "WARN - Failed to create provider notification", { error: String(notifError) });
+    }
+
     logStep(requestId, "Lead unlock completed successfully", { 
       unlockId: unlock.id, 
       pricePaid: unlockPrice,
