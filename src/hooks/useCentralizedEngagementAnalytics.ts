@@ -134,7 +134,7 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
 
       const { data: eventsData, error: eventsError } = await supabase
         .from("provider_events")
-        .select("*")
+        .select("id, facility_id, event_type, session_id, page_context, created_at")
         .in("facility_id", facilityIds)
         .in("event_type", ["click_to_call", "website_click"])
         .order("created_at", { ascending: true });
