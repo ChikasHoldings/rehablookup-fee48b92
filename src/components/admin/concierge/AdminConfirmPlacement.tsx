@@ -183,19 +183,21 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
             </div>
 
             {/* Fee Notice */}
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
-              <div className="flex items-start gap-2">
-                <DollarSign className="h-4 w-4 text-amber-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-400">
-                    Placement Fee: Domestic $1,000 / International $3,000
-                  </p>
-                  <p className="text-amber-700 dark:text-amber-500 text-xs mt-1">
-                    Invoice auto-generated. Pro facilities receive discounted domestic rates.
-                  </p>
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <DollarSign className="h-4 w-4 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-amber-800 dark:text-amber-400">
+                      Placement Fee: {isInternational ? "$3,000" : "$1,000"}
+                      {isInternational ? " (International)" : " (Domestic)"}
+                    </p>
+                    <p className="text-amber-700 dark:text-amber-500 text-xs mt-1">
+                      Invoice auto-generated. Pro facilities receive 20% discount
+                      {isInternational ? " ($2,400)" : " ($800)"}.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
             {/* Confirm Button */}
             <AlertDialog>
