@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logoDarkBg from "@/assets/logo-dark-bg.png";
+import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { 

@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback, useRef, useMemo } from "react";
-import logoDarkBg from "@/assets/logo-dark-bg.png";
+import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert, Mail, Phone, MapPin, Loader2, BarChart3, UserSearch, UserPlus, MessageSquare, ClipboardList } from "lucide-react";
 import {

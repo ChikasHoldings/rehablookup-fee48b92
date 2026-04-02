@@ -1,5 +1,5 @@
 import { useState } from "react";
-import headerLogo from "@/assets/logo-header.png";
+import headerLogo from "@/assets/logo-header.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";

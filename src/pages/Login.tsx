@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import headerLogo from "@/assets/logo-header.png";
+import headerLogo from "@/assets/logo-header.webp";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
