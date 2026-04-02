@@ -327,7 +327,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
               {/* Plan Badge - Compact */}
               <Link 
-                to={isPro ? "/provider/pro-upgrade" : "/provider/pro-upgrade"}
+                to="/provider/billing?tab=pro"
                 className={cn(
                   "flex items-center justify-between mx-3 my-2.5 px-3 py-2 rounded-lg transition-all",
                   planConfig.bgColor,
@@ -481,7 +481,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   </Link>
                 ) : (
                   <Link 
-                    to="/provider/pro-upgrade" 
+                    to="/provider/billing?tab=pro" 
                     className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
                   >
                     <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">

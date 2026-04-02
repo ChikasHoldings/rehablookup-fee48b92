@@ -508,7 +508,8 @@ const AppInner = () => {
               <Route path="inquiries" element={<ProviderInquiriesPage />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
-              <Route path="credits" element={<ProviderCreditsPage />} />
+              <Route path="credits" element={<Navigate to="/provider/billing?purchase_credits=true" replace />} />
+              <Route path="pro-upgrade" element={<Navigate to="/provider/billing?tab=pro" replace />} />
               <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />

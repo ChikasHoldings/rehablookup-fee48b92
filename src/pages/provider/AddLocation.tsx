@@ -274,7 +274,7 @@ export default function AddLocationPage() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Go Back
                 </Button>
-                <Button onClick={() => navigate("/provider/pro-upgrade")}>
+                <Button onClick={() => navigate("/provider/billing?tab=pro")}>
                   Upgrade to Pro
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
