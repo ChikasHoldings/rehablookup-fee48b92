@@ -6,7 +6,13 @@
 
 /* Prevent navbar shift from scrollbar appearing/disappearing */
 html {
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
+body, #root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 /* Layout stability for shells */
