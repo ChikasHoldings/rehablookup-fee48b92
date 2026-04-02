@@ -74,7 +74,7 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
       <p>Take a moment to review your leads and reach out to those still waiting.</p>
     `;
     ctaText = "View Your Leads";
-    ctaUrl = "https://rehablookup.com/provider/leads";
+    ctaUrl = "https://rehablookup.com/provider/inquiries";
   } else if (primaryRiskFactor.includes("Low lead")) {
     headline = "Make the most of your account";
     mainMessage = `

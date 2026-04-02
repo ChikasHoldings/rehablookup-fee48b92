@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
               type: "new_lead",
               title: "New Lead Available",
               message: `A new lead (${maskLeadName(lead.name)}) is available for ${facility.name}.`,
-              link: "/provider/leads",
+              link: "/provider/inquiries",
             });
 
             // Mark notification as sent

@@ -369,8 +369,8 @@ Deno.serve(async (req) => {
           },
           quantity: 1,
         }],
-        success_url: `${req.headers.get("origin")}/provider/leads?unlock_success=true&lead=${leadId}`,
-        cancel_url: `${req.headers.get("origin")}/provider/leads?unlock_canceled=true`,
+        success_url: `${req.headers.get("origin")}/provider/inquiries?unlock_success=true&lead=${leadId}`,
+        cancel_url: `${req.headers.get("origin")}/provider/inquiries?unlock_canceled=true`,
         metadata: {
           type: "lead_unlock",
           lead_id: leadId,
