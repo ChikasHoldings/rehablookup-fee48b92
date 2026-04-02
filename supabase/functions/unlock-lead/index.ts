@@ -376,6 +376,7 @@ Deno.serve(async (req) => {
           lead_id: leadId,
           facility_id: facilityId,
           user_id: user.id,
+          inquiry_type: inquiryType,
         },
       });
 

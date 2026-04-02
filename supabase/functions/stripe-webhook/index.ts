@@ -384,6 +384,10 @@ Deno.serve(async (req) => {
                 reference_id: leadId,
                 description: "Lead unlocked via card payment",
                 stripe_payment_intent_id: paymentIntentId,
+                base_price_cents: amountTotal,
+                discount_applied: false,
+                discount_amount_cents: 0,
+                inquiry_type: session.metadata?.inquiry_type || null,
               });
 
               // Create provider notification
