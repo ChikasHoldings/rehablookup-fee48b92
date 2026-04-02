@@ -27,7 +27,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { PlacementDetailModal } from "./PlacementDetailModal";
 import { cn } from "@/lib/utils";
 
 interface ConciergeInquiry {
