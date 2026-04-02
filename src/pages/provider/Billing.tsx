@@ -43,7 +43,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
+import { lazy, Suspense } from "react";
+const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 
 const CREDIT_PACKAGES = [
   { amountCents: 10000, label: "$100", bonus: null },
@@ -559,12 +560,16 @@ export default function ProviderBillingPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Add Payment Method Modal */}
-        <AddPaymentMethodModal 
-          open={showPaymentMethodModal} 
-          onOpenChange={setShowPaymentMethodModal}
-          facilityId={facilityId || ""}
-        />
+        {/* Add Payment Method Modal - lazy loaded to defer Stripe.js */}
+        {showPaymentMethodModal && (
+          <Suspense fallback={null}>
+            <AddPaymentMethodModal 
+              open={showPaymentMethodModal} 
+              onOpenChange={setShowPaymentMethodModal}
+              facilityId={facilityId || ""}
+            />
+          </Suspense>
+        )}
 
         {/* Delete Card Confirmation Dialog */}
         <AlertDialog open={deleteCardConfirm.isOpen} onOpenChange={(open) => setDeleteCardConfirm(prev => ({ ...prev, isOpen: open }))}>

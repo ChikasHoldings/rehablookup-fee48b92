@@ -51,7 +51,8 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { PlacementTermsModal } from "@/components/provider/PlacementTermsModal";
-import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
+import { lazy, Suspense } from "react";
+const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 import { CareTypesModal } from "@/components/provider/CareTypesModal";
 import { PlacementReadinessChecklist } from "@/components/provider/PlacementReadinessChecklist";
 import {
@@ -451,11 +452,15 @@ export default function ProviderPlacementNetworkPage() {
           facilityId={selectedFacility?.id || ""}
           facilityName={selectedFacility?.name || "Your Facility"}
         />
-        <AddPaymentMethodModal
-          open={paymentModalOpen}
-          onOpenChange={setPaymentModalOpen}
-          facilityId={selectedFacility?.id || ""}
-        />
+        {paymentModalOpen && (
+          <Suspense fallback={null}>
+            <AddPaymentMethodModal
+              open={paymentModalOpen}
+              onOpenChange={setPaymentModalOpen}
+              facilityId={selectedFacility?.id || ""}
+            />
+          </Suspense>
+        )}
         <CareTypesModal
           open={careTypesModalOpen}
           onOpenChange={setCareTypesModalOpen}

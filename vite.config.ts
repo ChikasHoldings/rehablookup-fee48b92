@@ -44,6 +44,8 @@ export default defineConfig(({ mode }) => ({
           'vendor-motion': ['framer-motion'],
           // Form handling (loaded on form pages)
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // Stripe (only loaded when payment modal opens)
+          'vendor-stripe': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
         },
       },
     },
