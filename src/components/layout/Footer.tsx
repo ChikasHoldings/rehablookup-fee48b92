@@ -81,9 +81,9 @@ interface FooterColumnProps {
 function FooterColumn({ title, links }: FooterColumnProps) {
   return (
     <div>
-      <h4 className="text-sm font-semibold text-primary-foreground uppercase tracking-wider mb-4">
+      <p className="text-sm font-semibold text-primary-foreground uppercase tracking-wider mb-4" role="heading" aria-level={6}>
         {title}
-      </h4>
+      </p>
       <ul className="space-y-3">
         {links.map((item) => (
           <li key={item.path}>
