@@ -149,10 +149,7 @@ export default function AddLocationPage() {
     e.preventDefault();
     
     // Prevent double submissions
-    if (isSubmitting) {
-      console.log("[AddLocation] Prevented double submission");
-      return;
-    }
+    if (isSubmitting) return;
     
     if (!canAddMore) {
       toast({
