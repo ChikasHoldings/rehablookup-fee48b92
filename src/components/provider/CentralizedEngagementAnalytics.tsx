@@ -50,13 +50,13 @@ export function CentralizedEngagementAnalytics({ dateRange }: CentralizedEngagem
   const totalListingViews = analytics?.totalListingViews || 0;
   const listingViewsGrowth = analytics?.listingViewGrowth || 0;
 
-  const totalInquiries = leadAnalytics?.totalLeads || 0;
+  const totalInquiries = leadAnalytics?.allTimeLeads || 0;
   const periodInquiries = leadAnalytics?.thisMonthLeads || 0;
   const inquiryGrowth = leadAnalytics?.growthRate || 0;
 
-  const hasData = isPro 
-    ? analytics && (totalListingViews > 0 || analytics.totalClickToCalls > 0 || analytics.totalWebsiteClicks > 0)
-    : analytics && (totalListingViews > 0 || totalInquiries > 0);
+  const hasData = isPro
+    ? !!analytics && (periodListingViews > 0 || analytics.periodClickToCalls > 0 || analytics.periodWebsiteClicks > 0)
+    : !!analytics && (periodListingViews > 0 || periodInquiries > 0);
 
   if (!hasData) return <EmptyEngagement hasApprovedListing={hasApprovedListing} />;
 
