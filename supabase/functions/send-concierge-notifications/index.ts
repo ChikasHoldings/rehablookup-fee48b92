@@ -1,7 +1,7 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "1.0.1";
+const VERSION = "1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,12 +16,15 @@ const logStep = (step: string, details?: unknown) => {
 type NotificationType =
   | 'intake_received'      // Seeker: Your request was received
   | 'matches_found'        // Seeker: We found facilities for you
-  | 'provider_interested'  // Seeker: A provider wants to connect
+  | 'introductions_sent'   // Seeker: Your advisor has contacted facilities
+  | 'provider_interested'  // Admin: A provider accepted the candidate
+  | 'provider_declined'    // Admin: A provider declined the candidate
   | 'seeker_confirmed'     // Provider: Seeker confirmed admission
   | 'provider_confirmed'   // Seeker: Provider confirmed your admission
   | 'placement_complete'   // Both: Congratulations on the placement!
   | 'invoice_issued'       // Provider: Your placement fee invoice
-  | 'invoice_paid';        // Provider: Payment received
+  | 'invoice_paid'         // Provider: Payment received
+  | 'signup_prompt';       // Seeker (no account): Create account to track
 
 interface NotificationRequest {
   type: NotificationType;
@@ -102,7 +105,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate notification type
-    const validTypes = ['intake_received', 'matches_found', 'provider_interested', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid'];
+    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt'];
     if (!validTypes.includes(type)) {
       throw new Error("Invalid notification type");
     }
@@ -138,15 +141,29 @@ Deno.serve(async (req) => {
     switch (type) {
       case 'intake_received':
         await sendIntakeReceivedEmail(resend, inquiry, supabase, results);
+        // If seeker has no account, also send signup prompt
+        if (!inquiry.user_id) {
+          await sendSignupPromptEmail(resend, inquiry, results);
+        }
         break;
 
       case 'matches_found':
         await sendMatchesFoundEmail(resend, inquiry, supabase, results);
         break;
 
+      case 'introductions_sent':
+        await sendIntroductionsSentEmail(resend, inquiry, supabase, results);
+        break;
+
       case 'provider_interested':
         if (facility) {
-          await sendProviderInterestedEmail(resend, inquiry, facility, supabase, results);
+          await sendProviderInterestedNotification(resend, inquiry, facility, supabase, results);
+        }
+        break;
+
+      case 'provider_declined':
+        if (facility) {
+          await sendProviderDeclinedNotification(inquiry, facility, supabase, results);
         }
         break;
 
@@ -177,6 +194,12 @@ Deno.serve(async (req) => {
       case 'invoice_paid':
         if (facility && invoiceId) {
           await sendInvoicePaidEmail(resend, inquiry, facility, invoiceId, supabase, metadata, results);
+        }
+        break;
+
+      case 'signup_prompt':
+        if (!inquiry.user_id) {
+          await sendSignupPromptEmail(resend, inquiry, results);
         }
         break;
     }
@@ -439,10 +462,10 @@ async function sendMatchesFoundEmail(
   }
 }
 
-async function sendProviderInterestedEmail(
+// NEW: Introductions sent notification — tells seeker their advisor is reaching out to facilities
+async function sendIntroductionsSentEmail(
   resend: Resend,
   inquiry: InquiryData,
-  facility: FacilityData,
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
@@ -450,22 +473,23 @@ async function sendProviderInterestedEmail(
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   
   const html = emailWrapper(`
-    ${emailHeader('A Facility Wants to Connect!', facility.name, '🤝')}
+    ${emailHeader('Your Advisor is Contacting Facilities', `Case #${caseId}`, '📨')}
     <tr>
       <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
           Hi ${firstName},
         </p>
         <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
-          Great news! <strong>${facility.name}</strong> in ${facility.city}, ${facility.state} has reviewed your case and is interested in helping you.
+          Your RehabLookup advisor has sent introductions to treatment facilities on your behalf. We're working behind the scenes to coordinate the best options for you.
         </p>
         
-        ${infoBox(`They should be reaching out to you soon at:<br>
-          📧 ${inquiry.user_email}<br>
-          📱 ${inquiry.user_phone}`)}
+        ${infoBox(`<strong>What happens next?</strong><br><br>
+          1. Facilities will review your case (anonymized)<br>
+          2. Interested facilities will notify our team<br>
+          3. Your advisor will coordinate next steps with you`)}
         
         <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
-          If you don't hear from them within 24 hours, please let us know and we'll follow up.
+          You don't need to do anything right now. Your advisor will reach out as soon as we have updates.
         </p>
         
         ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
@@ -477,7 +501,7 @@ async function sendProviderInterestedEmail(
   const { data: emailData, error: emailError } = await resend.emails.send({
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
-    subject: `${facility.name} Wants to Connect - Case #${caseId}`,
+    subject: `Your Advisor is Contacting Facilities - Case #${caseId}`,
     html,
   });
 
@@ -488,14 +512,174 @@ async function sendProviderInterestedEmail(
   if (inquiry.user_id) {
     const { data: notif } = await supabase.from('seeker_notifications').insert({
       user_id: inquiry.user_id,
-      type: 'concierge_provider_interested',
-      title: 'Facility Interested',
-      message: `${facility.name} has expressed interest and will be reaching out to you.`,
+      type: 'concierge_introductions_sent',
+      title: 'Advisor Contacting Facilities',
+      message: 'Your advisor has reached out to treatment facilities on your behalf. We\'ll update you as facilities respond.',
       link: '/account/concierge',
-      metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
+      metadata: { inquiry_id: inquiry.id },
     }).select('id').single();
     
     if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
+  }
+}
+
+// Provider interested — admin notification only (brokerage model: advisor coordinates, not direct contact)
+async function sendProviderInterestedNotification(
+  resend: Resend,
+  inquiry: InquiryData,
+  facility: FacilityData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
+) {
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  
+  // Admin notification — advisor needs to coordinate next steps
+  await createAdminNotification(supabase, {
+    type: 'concierge_provider_interested',
+    title: 'Provider Accepted Candidate',
+    message: `${facility.name} accepted candidate for Case #${caseId}. Advisor action required: coordinate PII disclosure and next steps.`,
+    metadata: { inquiry_id: inquiry.id, facility_id: facility.id, facility_name: facility.name },
+  });
+
+  // Notify all admin users individually
+  const { data: adminUsers } = await supabase
+    .from('admin_user_profiles')
+    .select('user_id')
+    .in('admin_role', ['super_admin', 'advisor']);
+
+  if (adminUsers) {
+    for (const admin of adminUsers) {
+      await supabase.from('admin_user_notifications').insert({
+        user_id: admin.user_id,
+        type: 'concierge_provider_interested',
+        title: 'Provider Accepted Candidate',
+        message: `${facility.name} is interested in Case #${caseId}. Coordinate next steps.`,
+        link: '/admin/concierge',
+        metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
+      });
+    }
+  }
+
+  // Seeker in-app notification (brokerage-safe language — no direct facility contact)
+  if (inquiry.user_id) {
+    await supabase.from('seeker_notifications').insert({
+      user_id: inquiry.user_id,
+      type: 'concierge_progress_update',
+      title: 'Case Progress Update',
+      message: 'A facility has reviewed your case and is interested. Your advisor is coordinating the next steps.',
+      link: '/account/concierge',
+      metadata: { inquiry_id: inquiry.id },
+    });
+  }
+
+  // Email to seeker — brokerage-safe (no PII, no facility direct contact)
+  const firstName = inquiry.user_name.split(' ')[0];
+  const seekerHtml = emailWrapper(`
+    ${emailHeader('Good News About Your Case!', `Case #${caseId}`, '🤝')}
+    <tr>
+      <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
+          Hi ${firstName},
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          We have positive news — a treatment facility has reviewed your case and expressed interest in helping you.
+        </p>
+        
+        ${infoBox(`<strong>Your advisor is now:</strong><br><br>
+          • Verifying the facility is the right fit<br>
+          • Coordinating the introduction on your behalf<br>
+          • Preparing next steps for you`)}
+        
+        <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          Your advisor will reach out to you directly with details. No action needed from you right now.
+        </p>
+        
+        ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+      </td>
+    </tr>
+    ${emailFooter()}
+  `);
+
+  const { data: emailData, error: emailError } = await resend.emails.send({
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
+    to: [inquiry.user_email],
+    subject: `Progress Update on Your Case - Case #${caseId}`,
+    html: seekerHtml,
+  });
+
+  if (!emailError) {
+    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+  }
+}
+
+// Provider declined — admin-only notification
+async function sendProviderDeclinedNotification(
+  inquiry: InquiryData,
+  facility: FacilityData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
+) {
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  
+  await createAdminNotification(supabase, {
+    type: 'concierge_provider_declined',
+    title: 'Provider Declined Candidate',
+    message: `${facility.name} declined candidate for Case #${caseId}. Consider sending additional introductions.`,
+    metadata: { inquiry_id: inquiry.id, facility_id: facility.id, facility_name: facility.name },
+  });
+
+  results.push({ recipient: 'admin', notificationId: 'admin_declined_alert' });
+}
+
+// Signup prompt for seekers without an account
+async function sendSignupPromptEmail(
+  resend: Resend,
+  inquiry: InquiryData,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
+) {
+  const firstName = inquiry.user_name.split(' ')[0];
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  
+  const html = emailWrapper(`
+    ${emailHeader('Create Your Account to Track Your Case', `Case #${caseId}`, '🔐')}
+    <tr>
+      <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
+          Hi ${firstName},
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          Your placement request is being processed! To get real-time updates, message your advisor, and track your case progress, create a free RehabLookup account.
+        </p>
+        
+        ${infoBox(`<strong>With an account you can:</strong><br><br>
+          ✅ Track your case status in real-time<br>
+          ✅ Message your advisor directly<br>
+          ✅ View matched facilities<br>
+          ✅ Receive instant notifications`)}
+        
+        <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          Sign up using the same email address (<strong>${inquiry.user_email}</strong>) to automatically link your case.
+        </p>
+        
+        ${ctaButton('Create Your Free Account', 'https://rehablookup.com/seeker-auth?tab=signup&email=' + encodeURIComponent(inquiry.user_email))}
+        
+        <p style="margin: 24px 0 0 0; font-size: 13px; color: #9ca3af; text-align: center;">
+          Don't worry — your case is being handled regardless of whether you create an account. This just gives you more visibility.
+        </p>
+      </td>
+    </tr>
+    ${emailFooter()}
+  `);
+
+  const { data: emailData, error: emailError } = await resend.emails.send({
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
+    to: [inquiry.user_email],
+    subject: `Create Your Account to Track Case #${caseId}`,
+    html,
+  });
+
+  if (!emailError) {
+    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
   }
 }
 
@@ -758,11 +942,11 @@ async function sendPlacementCompleteEmails(
   });
 
   // Admin notification for placement completion
-  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const completeCaseId = inquiry.id.slice(0, 8).toUpperCase();
   await createAdminNotification(supabase, {
     type: 'concierge_placement_complete',
     title: 'Placement Completed',
-    message: `${inquiry.user_name} placed at ${facility.name} (Case #${caseId}). Fee invoice will be generated.`,
+    message: `${inquiry.user_name} placed at ${facility.name} (Case #${completeCaseId}). Fee invoice will be generated.`,
     metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
   });
 }
