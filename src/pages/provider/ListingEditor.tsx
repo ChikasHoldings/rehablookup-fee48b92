@@ -470,6 +470,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
         year_established: facility.year_established,
+        accepts_international_patients: facility.accepts_international_patients,
       })
       .eq("id", facility.id);
 
@@ -508,20 +509,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     };
   }, [hasChanges, facility, performAutoSave]);
 
-  // Keyboard shortcut: Ctrl+S / Cmd+S
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        if (hasChanges && !isSaving && !isAutoSaving) {
-          handleSave();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasChanges, isSaving, isAutoSaving]);
+  
 
   const handleSave = async () => {
     if (!facility) return;
@@ -565,6 +553,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
         year_established: facility.year_established,
+        accepts_international_patients: facility.accepts_international_patients,
       })
       .eq("id", facility.id);
 
@@ -601,6 +590,21 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       });
     }
   };
+
+  // Keyboard shortcut: Ctrl+S / Cmd+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (hasChanges && !isSaving && !isAutoSaving) {
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasChanges, isSaving, isAutoSaving]);
 
   const handleLogoChange = (images: string[]) => {
     if (facility) {
