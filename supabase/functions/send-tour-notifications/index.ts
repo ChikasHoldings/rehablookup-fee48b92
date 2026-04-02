@@ -177,7 +177,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             type: "tour_request",
             title: "New Tour Request",
             message: `${emailData.seekerName} has requested a ${tour.tour_type} tour.`,
-            link: "/provider/concierge",
+            link: "/provider/placement-network",
           });
           results.providerNotification = true;
         }
