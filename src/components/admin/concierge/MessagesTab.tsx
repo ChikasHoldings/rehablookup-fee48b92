@@ -54,7 +54,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
   });
 
   // Fetch matched/introduced facilities for creating facility threads
-  const matchedIds = caseData.matched_facility_ids || caseData.admin_matched_facility_ids || [];
+  const matchedIds = [...new Set([...(caseData.matched_facility_ids || []), ...(caseData.admin_matched_facility_ids || [])])];
   const { data: matchedFacilities } = useQuery({
     queryKey: ["case-matched-facilities", caseData.id, matchedIds],
     queryFn: async () => {
