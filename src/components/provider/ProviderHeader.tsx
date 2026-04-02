@@ -78,6 +78,7 @@ const notificationIcons: Record<string, React.ReactNode> = {
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   
   const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useProviderNotifications();
