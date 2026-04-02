@@ -354,9 +354,10 @@ export function PlacementDetailModal({
             </TabsList>
           </div>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <ScrollArea className="h-full">
             {/* === DETAILS TAB === */}
-            <TabsContent value="details" className="p-4 sm:p-5 space-y-4 mt-0">
+            <TabsContent value="details" className="p-4 sm:p-5 space-y-4 m-0 focus-visible:ring-0 focus-visible:outline-none">
               {/* Progress Steps */}
               <div className="bg-muted/30 rounded-lg p-3 sm:p-4 border">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Placement Progress</p>
