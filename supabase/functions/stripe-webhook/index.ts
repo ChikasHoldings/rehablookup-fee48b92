@@ -1157,56 +1157,67 @@ Deno.serve(async (req) => {
       if (invoiceType === "international_placement_fee" && invoiceId) {
         logStep("International facility invoice paid", { invoiceId, stripeInvoiceId: invoice.id });
 
-        const { error: updateError } = await supabaseAdmin
+        // Idempotency: check if already marked paid
+        const { data: existingInvoice } = await supabaseAdmin
           .from("international_facility_invoices")
-          .update({
-            status: "paid",
-            paid_at: new Date().toISOString(),
-            stripe_payment_intent_id: invoice.payment_intent as string,
-          })
-          .eq("id", invoiceId);
+          .select("id, status")
+          .eq("id", invoiceId)
+          .maybeSingle();
 
-        if (updateError) {
-          logStep("Error updating invoice to paid", { error: updateError.message });
+        if (existingInvoice?.status === "paid") {
+          logStep("International invoice already paid (duplicate webhook), skipping", { invoiceId });
         } else {
-          // Update case status
-          const { data: dbInvoice } = await supabaseAdmin
+          const { error: updateError } = await supabaseAdmin
             .from("international_facility_invoices")
-            .select("case_id")
-            .eq("id", invoiceId)
-            .single();
+            .update({
+              status: "paid",
+              paid_at: new Date().toISOString(),
+              stripe_payment_intent_id: invoice.payment_intent as string,
+            })
+            .eq("id", invoiceId);
 
-          if (dbInvoice?.case_id) {
-            await supabaseAdmin
-              .from("international_placement_cases")
-              .update({ facility_fee_status: "paid" })
-              .eq("id", dbInvoice.case_id);
+          if (updateError) {
+            logStep("Error updating invoice to paid", { error: updateError.message });
+          } else {
+            // Update case status
+            const { data: dbInvoice } = await supabaseAdmin
+              .from("international_facility_invoices")
+              .select("case_id")
+              .eq("id", invoiceId)
+              .single();
 
-            await supabaseAdmin.from("international_case_events").insert({
-              case_id: dbInvoice.case_id,
-              event_type: "facility_fee_paid",
-              actor_type: "system",
-              event_data: { 
+            if (dbInvoice?.case_id) {
+              await supabaseAdmin
+                .from("international_placement_cases")
+                .update({ facility_fee_status: "paid" })
+                .eq("id", dbInvoice.case_id);
+
+              await supabaseAdmin.from("international_case_events").insert({
+                case_id: dbInvoice.case_id,
+                event_type: "facility_fee_paid",
+                actor_type: "system",
+                event_data: { 
+                  invoice_id: invoiceId,
+                  stripe_invoice_id: invoice.id,
+                  amount_paid: invoice.amount_paid,
+                },
+              });
+            }
+
+            // Create admin notification
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "international_invoice_paid",
+              title: "International Invoice Paid",
+              message: `Facility paid $${(invoice.amount_paid / 100).toLocaleString()} for international placement`,
+              metadata: {
                 invoice_id: invoiceId,
                 stripe_invoice_id: invoice.id,
-                amount_paid: invoice.amount_paid,
+                case_id: invoice.metadata?.case_id,
               },
             });
+
+            logStep("International facility invoice marked as paid");
           }
-
-          // Create admin notification
-          await supabaseAdmin.from("admin_notifications").insert({
-            type: "international_invoice_paid",
-            title: "International Invoice Paid",
-            message: `Facility paid $${(invoice.amount_paid / 100).toLocaleString()} for international placement`,
-            metadata: {
-              invoice_id: invoiceId,
-              stripe_invoice_id: invoice.id,
-              case_id: invoice.metadata?.case_id,
-            },
-          });
-
-          logStep("International facility invoice marked as paid");
         }
       }
     }
