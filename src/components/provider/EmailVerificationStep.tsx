@@ -44,8 +44,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
     setError("");
 
     try {
-      console.log("[EmailVerification] Sending verification code to:", email.substring(0, 3) + "***");
-      
       const { data, error: fnError } = await supabase.functions.invoke("send-verification-code", {
         body: { email },
       });
@@ -68,7 +66,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
           description = "Too many attempts. Please wait a few minutes before trying again.";
         }
         
-        console.log("[EmailVerification] Send failed:", errorCode, description);
         setError(description);
         toast({
           title: "Unable to send code",
@@ -79,7 +76,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
         return;
       }
       
-      console.log("[EmailVerification] Code sent successfully");
       setCodeSent(true);
       setResendCooldown(60);
       toast({
@@ -160,7 +156,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       }
 
       if (data?.error) {
-        console.log("[EmailVerification] Verification failed:", data.error);
         setError(data.error);
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
@@ -169,7 +164,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       }
       
       if (data?.verified) {
-        console.log("[EmailVerification] Email verified successfully");
         // Set verifying to false BEFORE calling onVerified to prevent state race
         setIsVerifying(false);
         toast({

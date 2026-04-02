@@ -2,6 +2,8 @@ import { X, ExternalLink, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ListingPreviewContent } from "./ListingPreviewContent";
@@ -28,6 +30,8 @@ export function ListingPreviewModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[90vh] h-[85vh] p-0 gap-0 overflow-hidden flex flex-col [&>button]:hidden">
+        <DialogTitle className="sr-only">{facilityName} - Listing Preview</DialogTitle>
+        <DialogDescription className="sr-only">Preview of how your listing appears to the public</DialogDescription>
         {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b bg-muted/30 shrink-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">

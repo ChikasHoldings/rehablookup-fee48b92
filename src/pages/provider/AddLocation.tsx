@@ -149,10 +149,7 @@ export default function AddLocationPage() {
     e.preventDefault();
     
     // Prevent double submissions
-    if (isSubmitting) {
-      console.log("[AddLocation] Prevented double submission");
-      return;
-    }
+    if (isSubmitting) return;
     
     if (!canAddMore) {
       toast({
@@ -175,13 +172,11 @@ export default function AddLocationPage() {
     }
 
     setIsSubmitting(true);
-    console.log("[AddLocation] Starting facility creation:", formData.name);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.log("[AddLocation] No session found, redirecting to login");
         toast({
           variant: "destructive",
           title: "Authentication Error",
@@ -193,7 +188,6 @@ export default function AddLocationPage() {
       }
 
       // Create new facility
-      console.log("[AddLocation] Inserting facility for user:", session.user.id.substring(0, 8) + "...");
       const { data: newFacility, error } = await supabase
         .from("facilities")
         .insert({
@@ -217,8 +211,6 @@ export default function AddLocationPage() {
         console.error("[AddLocation] Facility creation error:", error);
         throw error;
       }
-
-      console.log("[AddLocation] Facility created successfully:", newFacility.id.substring(0, 8) + "...");
 
       // Invalidate queries to refresh facility list
       queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });

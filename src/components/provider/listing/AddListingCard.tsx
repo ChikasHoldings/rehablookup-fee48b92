@@ -55,7 +55,6 @@ export function AddListingCard({
 
   const handlePurchaseSlot = async () => {
     setIsPurchasing(true);
-    console.log("[AddListingCard] Starting slot purchase checkout");
     
     try {
       const { data, error } = await supabase.functions.invoke("purchase-listing-slot", {
@@ -66,12 +65,6 @@ export function AddListingCard({
         console.error("[AddListingCard] Invoke error:", error);
         throw error;
       }
-      
-      console.log("[AddListingCard] Checkout response:", { 
-        hasUrl: !!data?.url, 
-        sessionId: data?.sessionId,
-        requestId: data?.requestId 
-      });
       
       if (data?.url) {
         // Open in same window for better UX

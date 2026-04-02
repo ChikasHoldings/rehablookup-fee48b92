@@ -47,7 +47,6 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
 
   // Callback when a slot is purchased - refetch all data
   const handleSlotPurchased = useCallback(() => {
-    console.log("[ListingsLandingPage] Slot purchased, refetching data");
     refetchLimits();
     refetchFacilities();
   }, [refetchLimits, refetchFacilities]);
