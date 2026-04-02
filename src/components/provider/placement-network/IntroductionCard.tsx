@@ -47,6 +47,7 @@ interface IntroductionCardProps {
   onRespond: (response: string, notes?: string) => void;
   isResponding: boolean;
   hasPro?: boolean;
+  onClick?: () => void;
 }
 
 export function IntroductionCard({
@@ -55,6 +56,7 @@ export function IntroductionCard({
   onRespond,
   isResponding,
   hasPro = false,
+  onClick,
 }: IntroductionCardProps) {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
@@ -115,7 +117,7 @@ export function IntroductionCard({
   }, [isResponding]);
 
   return (
-    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <CardContent className="p-5 space-y-4">
         {/* Header with Case ID and Name */}
         <div className="flex items-start justify-between">
@@ -251,7 +253,7 @@ export function IntroductionCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-2" onClick={(e) => e.stopPropagation()}>
           <Button
             className="flex-1 gap-2"
             onClick={handleAccept}

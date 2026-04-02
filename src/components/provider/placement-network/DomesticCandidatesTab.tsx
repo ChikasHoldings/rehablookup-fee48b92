@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
+import { PlacementDetailModal } from "./PlacementDetailModal";
 
 // Proper type definitions for type safety
 interface ConciergeInquiry {
@@ -65,6 +66,8 @@ interface DomesticCandidatesTabProps {
 export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabProps) {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
+  const [selectedIntro, setSelectedIntro] = useState<Introduction | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Fetch pending introductions from concierge system with proper error handling
   const { data: introductions, isLoading, error, refetch } = useQuery({
@@ -370,7 +373,11 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           </p>
           <div className="grid gap-3">
             {confirmedPlacements.slice(0, 3).map((intro) => (
-              <Card key={`confirmed-${intro.id}`} className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10">
+              <Card
+                key={`confirmed-${intro.id}`}
+                className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/10 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+              >
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -381,10 +388,13 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                         Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {intro.concierge_inquiries?.placement_confirmed_at &&
-                        format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy")}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {intro.concierge_inquiries?.placement_confirmed_at &&
+                          format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy")}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -423,6 +433,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                 onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
                 isResponding={respondMutation.isPending}
                 hasPro={hasPro}
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
               />
             ))}
           </div>
@@ -449,7 +460,10 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10">
+                <Card
+                  className="border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+                >
                   <CardContent className="py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -466,6 +480,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                           Accepted {intro.provider_responded_at &&
                             format(new Date(intro.provider_responded_at), "MMM d")}
                         </span>
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </div>
                     </div>
                     <div className="mt-3 flex items-center gap-2 text-xs text-amber-700/80 dark:text-amber-400/80 bg-amber-100/50 dark:bg-amber-900/20 rounded-md px-3 py-2">
@@ -486,7 +501,11 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           <h3 className="text-lg font-semibold mb-3 text-muted-foreground">Past Responses</h3>
           <div className="grid gap-3">
             {respondedIntroductions.slice(0, 5).map((intro) => (
-              <Card key={intro.id} className="bg-muted/30">
+              <Card
+                key={intro.id}
+                className="bg-muted/30 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
+              >
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -509,10 +528,13 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                           intro.id.slice(0, 8).toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {intro.provider_responded_at &&
-                        format(new Date(intro.provider_responded_at), "MMM d, yyyy")}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {intro.provider_responded_at &&
+                          format(new Date(intro.provider_responded_at), "MMM d, yyyy")}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -520,6 +542,27 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           </div>
         </div>
       )}
+
+      {/* Placement Detail Modal */}
+      <PlacementDetailModal
+        introduction={selectedIntro}
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setSelectedIntro(null);
+        }}
+        facilityId={selectedFacility?.id || ""}
+        onRespond={selectedIntro && (!selectedIntro.provider_response || selectedIntro.provider_response === "pending")
+          ? (response, notes) => {
+              respondMutation.mutate({ id: selectedIntro.id, response, notes });
+              setModalOpen(false);
+              setSelectedIntro(null);
+            }
+          : undefined
+        }
+        isResponding={respondMutation.isPending}
+        hasPro={hasPro}
+      />
     </div>
   );
 }
