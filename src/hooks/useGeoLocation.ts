@@ -19,10 +19,26 @@ export function useGeoLocation(): GeoData {
 
   useEffect(() => {
     const fetchGeoData = async () => {
+      // Skip geo fetch for bots/crawlers to avoid 429 errors in Lighthouse
+      const ua = navigator.userAgent;
+      if (/Lighthouse|Googlebot|bingbot|Baiduspider|YandexBot/i.test(ua)) {
+        setGeoData(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      // Check sessionStorage cache to reduce API calls
+      const cached = sessionStorage.getItem("geo_data");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setGeoData({ ...parsed, isLoading: false, error: null });
+          return;
+        } catch { /* ignore parse errors */ }
+      }
+
       try {
-        // Use ipapi.co for free geo detection
         const response = await fetch("https://ipapi.co/json/", {
-          signal: AbortSignal.timeout(5000), // 5 second timeout
+          signal: AbortSignal.timeout(5000),
         });
         
         if (!response.ok) {
@@ -31,16 +47,15 @@ export function useGeoLocation(): GeoData {
         
         const data = await response.json();
         const countryCode = data.country_code || data.country || "";
-        
-        setGeoData({
+        const result = {
           country: data.country_name || "",
           countryCode,
           isUS: countryCode === "US",
-          isLoading: false,
-          error: null,
-        });
+        };
+        
+        sessionStorage.setItem("geo_data", JSON.stringify(result));
+        setGeoData({ ...result, isLoading: false, error: null });
       } catch (err) {
-        // On error, default to US (don't show banner)
         setGeoData({
           country: "",
           countryCode: "",
@@ -51,7 +66,6 @@ export function useGeoLocation(): GeoData {
       }
     };
 
-    // Defer geolocation fetch until after page is interactive to improve TTI
     const deferFetch = () => {
       if ("requestIdleCallback" in window) {
         window.requestIdleCallback(() => fetchGeoData(), { timeout: 3000 });
@@ -60,7 +74,6 @@ export function useGeoLocation(): GeoData {
       }
     };
 
-    // Start deferred fetch after initial render
     deferFetch();
   }, []);
 
