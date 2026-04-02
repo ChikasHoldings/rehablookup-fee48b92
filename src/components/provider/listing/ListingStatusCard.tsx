@@ -132,7 +132,7 @@ export function ListingStatusCard({
           className="w-full gap-2 text-xs text-muted-foreground hover:text-foreground"
           asChild
         >
-          <Link to="/provider-support">
+          <Link to="/provider/help">
             <HelpCircle className="h-3.5 w-3.5" />
             Need Help? Contact Support
           </Link>

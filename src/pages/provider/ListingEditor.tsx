@@ -522,7 +522,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasChanges, isSaving, isAutoSaving]);
+  }, [hasChanges, isSaving, isAutoSaving, handleSave]);
 
   const handleSave = async () => {
     if (!facility) return;
