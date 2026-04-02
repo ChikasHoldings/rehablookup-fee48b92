@@ -288,7 +288,7 @@ function AnalyticsSkeleton() {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-lg" />)}
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}
       </div>
       <Skeleton className="h-32 rounded-lg" />
       <Skeleton className="h-56 rounded-lg" />
