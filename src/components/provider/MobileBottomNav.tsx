@@ -26,6 +26,8 @@ const navItems = [
 
 export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   const location = useLocation();
+  const navNavigate = useNavigate();
+  const [, startTransition] = useTransition();
   const { selectedFacility } = useSelectedFacility();
 
   // Use the same hooks as the sidebar for consistency
