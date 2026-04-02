@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LazyVideoEmbed } from "@/components/ui/lazy-video-embed";
 import { supabase } from "@/integrations/supabase/client";
-import logoImage from "@/assets/logo-header.png";
+import logoImage from "@/assets/logo-header.webp";
 import { LeadIntakeForm } from "@/components/lead-intake";
 import { scrollToTopInstant } from "@/hooks/useScrollToTop";
 

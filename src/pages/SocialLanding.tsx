@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
-import logoImage from "@/assets/logo-header.png";
+import logoImage from "@/assets/logo-header.webp";
 import { LeadIntakeForm } from "@/components/lead-intake";
 
 // Configure your vertical video here (9:16 aspect ratio recommended)

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import headerLogo from "@/assets/logo-header.png";
+import headerLogo from "@/assets/logo-header.webp";
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
