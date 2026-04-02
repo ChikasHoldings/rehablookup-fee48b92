@@ -537,8 +537,7 @@ export function PlacementDetailModal({
               )}
             </TabsContent>
 
-            {/* === MESSAGES TAB === */}
-            <TabsContent value="messages" className="p-4 sm:p-5 mt-0">
+            <TabsContent value="messages" className="p-4 sm:p-5 m-0 focus-visible:ring-0 focus-visible:outline-none">
               {messagesLoading ? (
                 <div className="space-y-3">
                   <Skeleton className="h-12 w-3/4" />
