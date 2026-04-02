@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
       "tips_finding_treatment": "email_product_updates",
       "weekly_digest": "email_weekly_digest",
       "account_reminder": "email_product_updates",
+      "placement_intro": "email_product_updates",
     };
 
     const defaultPrefs = {
