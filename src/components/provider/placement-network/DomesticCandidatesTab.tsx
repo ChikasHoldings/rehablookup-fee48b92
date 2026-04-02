@@ -75,7 +75,9 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           provider_responded_at,
           provider_notes,
           concierge_inquiries (
-            id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state, status,
+            id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state,
+            preferred_city, status, age_range, gender, primary_concern, insurance_carrier,
+            detox_needed, co_occurring_concerns, substance_use_duration, budget_range,
             seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id
           )
         `
