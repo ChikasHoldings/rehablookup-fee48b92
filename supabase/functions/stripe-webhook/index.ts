@@ -544,7 +544,11 @@ Deno.serve(async (req) => {
     // ==========================================
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
-      logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
+      logStep("Subscription updated", { 
+        subscriptionId: subscription.id, 
+        status: subscription.status,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      });
 
       const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
       const mappedStatus = subscription.status === "active" ? "active" 
@@ -557,6 +561,7 @@ Deno.serve(async (req) => {
         .update({
           status: mappedStatus,
           current_period_end: currentPeriodEnd,
+          cancel_at_period_end: subscription.cancel_at_period_end ?? false,
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);
@@ -564,7 +569,7 @@ Deno.serve(async (req) => {
       if (updateError) {
         logStep("Error updating subscription", { error: updateError.message });
       } else {
-        logStep("Subscription updated successfully", { status: mappedStatus, currentPeriodEnd });
+        logStep("Subscription updated successfully", { status: mappedStatus, currentPeriodEnd, cancelAtPeriodEnd: subscription.cancel_at_period_end });
       }
     }
 

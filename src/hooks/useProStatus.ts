@@ -19,6 +19,7 @@ const DEFAULT_PRO_STATUS: ProStatusData = {
   currentPeriodEnd: null,
   facilityId: null,
   stripeSubscriptionId: null,
+  cancelAtPeriodEnd: false,
 };
 
 export function useProStatus(facilityId?: string) {
