@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ListingPreviewModal } from "./listing/ListingPreviewModal";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -9,6 +10,7 @@ import {
   CreditCard, 
   Building2, 
   ExternalLink,
+  Eye,
   Bell,
   Search,
   X,
@@ -76,6 +78,7 @@ const notificationIcons: Record<string, React.ReactNode> = {
 // Facility limits now handled by useFacilityLimits hook
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   
@@ -163,6 +166,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
       <div className="h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left - Logo */}
@@ -192,17 +196,15 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             {mobileSearchOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Search className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
 
-          {/* View Listing */}
+          {/* Preview Listing */}
           {facilityId && facilitySlug && (
-            <a
-              href={`/center/${facilitySlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => setPreviewOpen(true)}
               className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-all duration-200 border border-white/20 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <ExternalLink className="h-4 w-4" />
-              <span>View Listing</span>
-            </a>
+              <Eye className="h-4 w-4" />
+              <span>Preview</span>
+            </button>
           )}
 
           {/* Notifications */}
@@ -574,5 +576,16 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         </AlertDialogContent>
       </AlertDialog>
     </header>
+
+      {/* Listing Preview Modal */}
+      {facilitySlug && facilityName && (
+        <ListingPreviewModal
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          facilityName={facilityName}
+          facilitySlug={facilitySlug}
+        />
+      )}
+    </>
   );
 }
