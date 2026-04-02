@@ -56,6 +56,7 @@ export function IntroductionCard({
   onRespond,
   isResponding,
   hasPro = false,
+  onClick,
 }: IntroductionCardProps) {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
@@ -116,7 +117,7 @@ export function IntroductionCard({
   }, [isResponding]);
 
   return (
-    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <CardContent className="p-5 space-y-4">
         {/* Header with Case ID and Name */}
         <div className="flex items-start justify-between">
