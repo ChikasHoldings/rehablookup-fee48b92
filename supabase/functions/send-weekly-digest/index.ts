@@ -275,7 +275,16 @@ Deno.serve(async (req) => {
           },
         });
         
-        if (emailError) { errorCount++; } else { sentCount++; }
+        if (emailError) { 
+          errorCount++; 
+        } else { 
+          sentCount++;
+          // Record send timestamp for dedup protection
+          await supabase
+            .from("notification_preferences")
+            .update({ last_digest_sent_at: now.toISOString() })
+            .eq("user_id", profile.user_id);
+        }
       } catch { errorCount++; }
     }
     
