@@ -253,7 +253,7 @@ export function IntroductionCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-2" onClick={(e) => e.stopPropagation()}>
           <Button
             className="flex-1 gap-2"
             onClick={handleAccept}
