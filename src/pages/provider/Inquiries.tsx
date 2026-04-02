@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Users, Search, X, ChevronLeft } from "lucide-react";
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
 import { InquiryDetailPanel } from "@/components/provider/inquiries/InquiryDetailPanel";
+import { InquiriesStatsHeader } from "@/components/provider/inquiries/InquiriesStatsHeader";
 import type { InquiryType } from "@/components/provider/InquiryTypeBadge";
 
 interface DateRange {
@@ -57,10 +58,11 @@ interface LeadWithFacility extends Lead {
 export default function ProviderInquiriesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightLeadId = searchParams.get("highlight");
+  const statusParam = searchParams.get("status");
   
   const [selectedInquiry, setSelectedInquiry] = useState<LeadWithFacility | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(statusParam || "all");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
@@ -69,14 +71,19 @@ export default function ProviderInquiriesPage() {
   const { facilities } = useProviderFacilities();
   const isMobile = useIsMobile();
 
+  // Sync status filter from URL param on mount
+  useEffect(() => {
+    if (statusParam && statusParam !== statusFilter) {
+      setStatusFilter(statusParam);
+      // Clear the URL param after applying
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("status");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, []);
+
   // Get all facility IDs
   const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
-
-  // Helper to check if a lead is unlocked using the view's is_unlocked field
-  const isLeadUnlocked = (leadId: string): boolean => {
-    const inquiry = inquiries.find(i => i.id === leadId);
-    return inquiry?.is_unlocked === true;
-  };
 
   // Create facility lookup map
   const facilityMap = useMemo(() => {
@@ -87,14 +94,12 @@ export default function ProviderInquiriesPage() {
     return map;
   }, [facilities]);
 
-
   // Fetch all inquiries using leads_provider_view (PII-safe: masks locked lead contact info)
   const { data: inquiries = [], isLoading, error: inquiriesError } = useQuery({
     queryKey: ["provider-inquiries", facilityIds],
     queryFn: async (): Promise<LeadWithFacility[]> => {
       if (facilityIds.length === 0) return [];
       
-      // Get leads via the PII-masking view (direct + redistributed via RLS)
       const { data: allLeads, error } = await supabase
         .from("leads_provider_view")
         .select("*")
@@ -123,7 +128,7 @@ export default function ProviderInquiriesPage() {
     }
   }, [inquiriesError]);
 
-  // Realtime subscription
+  // Realtime subscription — listen for INSERT and UPDATE
   useEffect(() => {
     if (facilityIds.length === 0) return;
     
@@ -138,9 +143,38 @@ export default function ProviderInquiriesPage() {
           }
         }
       )
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leads" },
+        (payload) => {
+          const updatedLead = payload.new as Lead;
+          if (facilityIds.includes(updatedLead.facility_id)) {
+            queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+          }
+        }
+      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "lead_unlocks" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+          queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
+        }
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [facilityIds, queryClient]);
+
+  // Helper to check if a lead is unlocked
+  const isLeadUnlocked = useCallback((leadId: string): boolean => {
+    const inquiry = inquiries.find(i => i.id === leadId);
+    return inquiry?.is_unlocked === true;
+  }, [inquiries]);
+
+  // Compute stats from all inquiries (unfiltered)
+  const stats = useMemo(() => {
+    const locked = inquiries.filter(i => !i.is_unlocked).length;
+    const unlocked = inquiries.filter(i => i.is_unlocked && !i.provider_response_status).length;
+    const contacted = inquiries.filter(i => i.provider_response_status === "contacted").length;
+    const responded = inquiries.filter(i => i.provider_response_status === "responded").length;
+    return { total: inquiries.length, locked, unlocked, contacted, responded };
+  }, [inquiries]);
 
   // Filter inquiries
   const filteredInquiries = useMemo(() => {
@@ -149,11 +183,14 @@ export default function ProviderInquiriesPage() {
         const q = searchQuery.toLowerCase();
         const locationMatch = inquiry.location_city_state?.toLowerCase().includes(q);
         const careMatch = inquiry.level_of_care?.toLowerCase().includes(q);
-        if (!locationMatch && !careMatch) return false;
+        const nameMatch = inquiry.name?.toLowerCase().includes(q);
+        const facilityMatch = inquiry.facility_name?.toLowerCase().includes(q);
+        if (!locationMatch && !careMatch && !nameMatch && !facilityMatch) return false;
       }
       
       if (statusFilter !== "all") {
-        const unlocked = isLeadUnlocked(inquiry.id);
+        const unlocked = inquiry.is_unlocked === true;
+        if (statusFilter === "new" && inquiry.status !== "new") return false;
         if (statusFilter === "locked" && unlocked) return false;
         if (statusFilter === "unlocked" && (!unlocked || inquiry.provider_response_status)) return false;
         if (statusFilter === "contacted" && inquiry.provider_response_status !== "contacted") return false;
@@ -170,7 +207,7 @@ export default function ProviderInquiriesPage() {
       }
       return true;
     });
-  }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange, isLeadUnlocked]);
+  }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange]);
 
 
   const clearFilters = () => {
@@ -205,6 +242,12 @@ export default function ProviderInquiriesPage() {
         ? filteredInquiries.find(i => i.id === highlightLeadId) || filteredInquiries[0]
         : filteredInquiries[0];
       setSelectedInquiry(toSelect);
+      // Clear highlight param after use
+      if (highlightLeadId) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("highlight");
+        setSearchParams(newParams, { replace: true });
+      }
     }
   }, [filteredInquiries, isMobile, selectedInquiry, highlightLeadId]);
 
@@ -212,7 +255,9 @@ export default function ProviderInquiriesPage() {
   useEffect(() => {
     if (selectedInquiry) {
       const updated = inquiries.find(i => i.id === selectedInquiry.id);
-      if (updated) setSelectedInquiry(updated);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedInquiry)) {
+        setSelectedInquiry(updated);
+      }
     }
   }, [inquiries, selectedInquiry]);
 
@@ -237,6 +282,11 @@ export default function ProviderInquiriesPage() {
             </div>
           </div>
         </div>
+
+        {/* Stats - show on list view */}
+        {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
+          <InquiriesStatsHeader {...stats} />
+        )}
       </div>
 
       {/* Filters */}
@@ -246,7 +296,7 @@ export default function ProviderInquiriesPage() {
             <div className="relative flex-1 min-w-[160px] sm:min-w-[200px] max-w-xs md:max-w-sm">
               <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder="Search by name, location, care type..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 sm:pl-9 h-8 sm:h-9 md:h-10 bg-background text-xs sm:text-sm"
@@ -259,6 +309,7 @@ export default function ProviderInquiriesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="new">New</SelectItem>
                 <SelectItem value="locked">Locked</SelectItem>
                 <SelectItem value="unlocked">Unlocked</SelectItem>
                 <SelectItem value="contacted">Contacted</SelectItem>
@@ -286,6 +337,16 @@ export default function ProviderInquiriesPage() {
                 <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
                 <span className="hidden sm:inline">Clear</span>
               </Button>
+            )}
+
+            {/* Results count */}
+            {!isLoading && (
+              <span className="text-[10px] sm:text-xs text-muted-foreground ml-auto whitespace-nowrap">
+                {filteredInquiries.length === inquiries.length
+                  ? `${inquiries.length} total`
+                  : `${filteredInquiries.length} of ${inquiries.length}`
+                }
+              </span>
             )}
           </div>
         </div>
@@ -316,13 +377,18 @@ export default function ProviderInquiriesPage() {
                       : "When families submit inquiries to your facility, they'll appear here."
                     }
                   </p>
+                  {hasFilters && (
+                    <Button variant="outline" size="sm" className="mt-4" onClick={clearFilters}>
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
               ) : (
                 filteredInquiries.map((inquiry) => (
                   <InquiryListItem
                     key={inquiry.id}
                     inquiry={inquiry}
-                    isUnlocked={isLeadUnlocked(inquiry.id)}
+                    isUnlocked={inquiry.is_unlocked === true}
                     isSelected={selectedInquiry?.id === inquiry.id}
                     onClick={() => handleSelectInquiry(inquiry)}
                   />
@@ -338,7 +404,7 @@ export default function ProviderInquiriesPage() {
             {selectedInquiry ? (
               <InquiryDetailPanel
                 inquiry={selectedInquiry}
-                isUnlocked={isLeadUnlocked(selectedInquiry.id)}
+                isUnlocked={selectedInquiry.is_unlocked === true}
                 onUnlockSuccess={handleUnlockSuccess}
               />
             ) : (
