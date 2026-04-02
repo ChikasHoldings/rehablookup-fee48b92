@@ -9,6 +9,7 @@ export interface ProStatusData {
   currentPeriodEnd: string | null;
   facilityId: string | null;
   stripeSubscriptionId: string | null;
+  cancelAtPeriodEnd: boolean;
 }
 
 const DEFAULT_PRO_STATUS: ProStatusData = {
