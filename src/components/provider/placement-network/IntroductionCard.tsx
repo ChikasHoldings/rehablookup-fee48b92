@@ -47,6 +47,7 @@ interface IntroductionCardProps {
   onRespond: (response: string, notes?: string) => void;
   isResponding: boolean;
   hasPro?: boolean;
+  onClick?: () => void;
 }
 
 export function IntroductionCard({
