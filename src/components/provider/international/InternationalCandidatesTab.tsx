@@ -132,49 +132,46 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
   }
 
   return (
-    <div className="space-y-6">
-      {/* ── Overview Header with Collapsible Fee ── */}
-      <Card className="overflow-hidden border-primary/15">
-        <CardContent className="p-0">
-          <div className="p-5 sm:p-6 bg-gradient-to-br from-primary/5 via-background to-primary/5">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Globe className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-foreground">International Placements</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Pre-screened global clients seeking treatment in the United States</p>
-              </div>
+    <>
+    <Card className="overflow-hidden">
+      <CardContent className="p-0">
+        {/* ── Header ── */}
+        <div className="px-5 sm:px-6 py-5 border-b bg-gradient-to-br from-primary/5 via-background to-background">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Globe className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-bold text-foreground">International Placements</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">Pre-screened global clients seeking treatment in the United States</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* ── Stats ── */}
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard icon={Globe} iconColor="text-amber-500" bgColor="bg-amber-500/10" value={pendingMatches.length} label="Pending" highlight={pendingMatches.length > 0} />
-        <StatCard icon={CheckCircle} iconColor="text-emerald-500" bgColor="bg-emerald-500/10" value={acceptedCount} label="Accepted" />
-        <StatCard icon={XCircle} iconColor="text-muted-foreground" bgColor="bg-muted" value={declinedCount} label="Declined" />
-      </div>
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-3 border-b">
+          <StatCard icon={Globe} iconColor="text-amber-500" bgColor="bg-amber-500/10" value={pendingMatches.length} label="Pending" highlight={pendingMatches.length > 0} />
+          <StatCard icon={CheckCircle} iconColor="text-emerald-500" bgColor="bg-emerald-500/10" value={acceptedCount} label="Accepted" border />
+          <StatCard icon={XCircle} iconColor="text-muted-foreground" bgColor="bg-muted" value={declinedCount} label="Declined" border />
+        </div>
 
-      {/* ── Candidates ── */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b bg-primary/5">
-            <Globe className="h-4.5 w-4.5 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">Candidates</h3>
+        {/* ── Candidates ── */}
+        <div className="border-b">
+          <div className="flex items-center gap-2.5 px-5 py-3 border-b bg-primary/5">
+            <Globe className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Candidates</h3>
             {pendingMatches.length > 0 && (
               <Badge variant="destructive" className="text-[11px] h-5 ml-auto">{pendingMatches.length} new</Badge>
             )}
           </div>
 
           {pendingMatches.length === 0 ? (
-            <div className="py-14 text-center px-6">
-              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <Globe className="h-7 w-7 text-muted-foreground" />
+            <div className="py-12 text-center px-6">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                <Globe className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="font-semibold text-foreground">No pending candidates</p>
-              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">When international clients are matched to your facility, they'll appear here for your review.</p>
+              <p className="font-semibold text-foreground text-sm">No pending candidates</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">When international clients are matched to your facility, they'll appear here.</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -183,21 +180,19 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* ── Past Responses ── */}
-      {respondedMatches.length > 0 && (
-        <Collapsible>
-          <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between px-1 py-2 hover:opacity-80 transition-opacity">
-              <h3 className="text-sm font-semibold text-muted-foreground">Past Responses ({respondedMatches.length})</h3>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <Card className="mt-2">
-              <CardContent className="p-0 divide-y">
+        {/* ── Past Responses ── */}
+        {respondedMatches.length > 0 && (
+          <Collapsible>
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
+                <h3 className="text-sm font-semibold text-muted-foreground">Past Responses ({respondedMatches.length})</h3>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="divide-y border-t">
                 {respondedMatches.map((match) => (
                   <div key={match.id} className="flex items-center justify-between px-5 py-3.5 gap-3 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
@@ -211,11 +206,12 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
                     <span className="text-xs text-muted-foreground shrink-0">{match.responded_at && format(new Date(match.responded_at), "MMM d, yyyy")}</span>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+      </CardContent>
+    </Card>
 
       {/* ── Response Dialog ── */}
       <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
