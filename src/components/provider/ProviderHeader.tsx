@@ -586,5 +586,16 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         />
       )}
     </header>
+
+      {/* Listing Preview Modal */}
+      {facilitySlug && facilityName && (
+        <ListingPreviewModal
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          facilityName={facilityName}
+          facilitySlug={facilitySlug}
+        />
+      )}
+    </>
   );
 }
