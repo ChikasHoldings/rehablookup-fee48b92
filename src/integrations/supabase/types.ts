@@ -5415,6 +5415,7 @@ export type Database = {
         }
         Returns: Json
       }
+      current_auth_uid: { Args: never; Returns: string }
       current_user_email: { Args: never; Returns: string }
       get_admin_profile: {
         Args: { p_user_id: string }
