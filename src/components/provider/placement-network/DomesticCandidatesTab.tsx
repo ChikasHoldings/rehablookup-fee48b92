@@ -17,6 +17,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Hourglass,
+  ArrowRight,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
 
