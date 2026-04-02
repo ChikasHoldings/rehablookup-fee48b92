@@ -127,7 +127,7 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
 
       const { data: viewsData, error: viewsError } = await supabase
         .from("facility_views")
-        .select("*")
+        .select("facility_id, view_date, view_count")
         .in("facility_id", facilityIds);
 
       if (viewsError) throw viewsError;
