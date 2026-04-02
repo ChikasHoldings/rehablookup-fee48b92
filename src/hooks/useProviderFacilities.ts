@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useRef, useState } from "react";
+import { useAuthSync } from "./useAuthSync";
 
 export interface ProviderFacility {
   id: string;
@@ -21,7 +21,7 @@ export interface ProviderFacility {
 
 export function useProviderFacilities() {
   const queryClient = useQueryClient();
-  // Initialize with cached userId for immediate placeholder data access
+  const { user, isLoading: isAuthLoading, isAuthenticated } = useAuthSync();
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
     try {
       return localStorage.getItem("rl_cached_uid");
@@ -29,24 +29,19 @@ export function useProviderFacilities() {
       return null;
     }
   });
-  const initializedRef = useRef(false);
 
-  // Get cached facilities for instant initial render (user-specific)
   const getCachedFacilities = (userId?: string | null): ProviderFacility[] | undefined => {
     try {
-      // Try user-specific cache first
       if (userId) {
         const userCache = localStorage.getItem(`provider-facilities-cache-${userId}`);
         if (userCache) {
           const { data, timestamp } = JSON.parse(userCache);
           if (Date.now() - timestamp < 1000 * 60 * 5) {
-            console.log("[useProviderFacilities] Using user-specific cache for:", userId.substring(0, 8) + "...");
             return data;
           }
         }
       }
-      
-      // If no userId provided, try to get from cached role
+
       if (!userId) {
         const cachedUid = localStorage.getItem("rl_cached_uid");
         if (cachedUid) {
@@ -54,103 +49,101 @@ export function useProviderFacilities() {
           if (userCache) {
             const { data, timestamp } = JSON.parse(userCache);
             if (Date.now() - timestamp < 1000 * 60 * 5) {
-              console.log("[useProviderFacilities] Using cache from rl_cached_uid:", cachedUid.substring(0, 8) + "...");
               return data;
             }
           }
         }
       }
     } catch {
-      // Ignore parse errors
+      // Ignore parse/storage errors
     }
+
     return undefined;
   };
 
-  const query = useQuery({
-    queryKey: ["provider-facilities"],
-    queryFn: async (): Promise<ProviderFacility[]> => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        return [];
-      }
+  useEffect(() => {
+    const nextUserId = user?.id ?? null;
+    if (nextUserId !== currentUserId) {
+      setCurrentUserId(nextUserId);
+    }
+  }, [user?.id, currentUserId]);
 
-      // Track current user for cache management
-      if (currentUserId !== session.user.id) {
-        setCurrentUserId(session.user.id);
+  const cachedFacilities = useMemo(
+    () => getCachedFacilities(user?.id ?? currentUserId),
+    [user?.id, currentUserId]
+  );
+
+  const query = useQuery({
+    queryKey: ["provider-facilities", user?.id ?? "anonymous"],
+    queryFn: async (): Promise<ProviderFacility[]> => {
+      if (!user?.id || !isAuthenticated) {
+        return [];
       }
 
       const { data, error } = await supabase
         .from("facilities")
         .select("id, name, slug, status, address, city, state, zip_code, facility_type, logo_url, gallery_urls, featured, created_at")
-        .eq("user_id", session.user.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
+
       const facilities = (data || []) as ProviderFacility[];
-      
-      // Cache the result with user-specific key
+
       try {
-        localStorage.setItem(`provider-facilities-cache-${session.user.id}`, JSON.stringify({
-          data: facilities,
-          timestamp: Date.now(),
-        }));
-        // Also clear any stale legacy cache
+        localStorage.setItem(
+          `provider-facilities-cache-${user.id}`,
+          JSON.stringify({
+            data: facilities,
+            timestamp: Date.now(),
+          })
+        );
         localStorage.removeItem("provider-facilities-cache");
       } catch {
         // Ignore storage errors
       }
-      
+
       return facilities;
     },
-    // Use cached data for instant initial render (user-specific when available)
-    placeholderData: () => getCachedFacilities(currentUserId),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour cache
+    enabled: !isAuthLoading,
+    placeholderData: () => cachedFacilities,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 60,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     retry: 2,
   });
 
-  // Real-time subscription for facilities
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    if (isAuthLoading || !isAuthenticated || !user?.id) return;
 
-    const setupSubscription = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      channel = supabase
-        .channel("provider-facilities-realtime")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "facilities",
-            filter: `user_id=eq.${session.user.id}`,
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
-            queryClient.invalidateQueries({ queryKey: ["provider-data"] });
-          }
-        )
-        .subscribe();
-    };
-
-    setupSubscription();
+    const channel = supabase
+      .channel("provider-facilities-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facilities",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["provider-facilities", user.id] });
+          queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+          queryClient.invalidateQueries({ queryKey: ["centralized-engagement-analytics"] });
+          queryClient.invalidateQueries({ queryKey: ["centralized-lead-analytics"] });
+        }
+      )
+      .subscribe();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, user?.id, isAuthLoading, isAuthenticated]);
 
   return {
-    facilities: query.data || [],
-    isLoading: query.isLoading,
+    facilities: query.data || cachedFacilities || [],
+    isLoading: isAuthLoading || query.isLoading,
     error: query.error,
     refetch: query.refetch,
   };

@@ -26,10 +26,10 @@ type TabKey = "engagement" | "leads";
 
 export default function ProviderAnalyticsPage() {
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
-    from: startOfMonth(new Date()),
-    to: new Date()
+    from: undefined,
+    to: undefined,
   }));
-  const [selectedPreset, setSelectedPreset] = useState<string>("billing_cycle");
+  const [selectedPreset, setSelectedPreset] = useState<string>("all");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("engagement");
 
@@ -47,20 +47,21 @@ export default function ProviderAnalyticsPage() {
   };
 
   const clearDateFilter = () => {
-    setDateRange({ from: startOfMonth(new Date()), to: new Date() });
-    setSelectedPreset("billing_cycle");
+    setDateRange({ from: undefined, to: undefined });
+    setSelectedPreset("all");
   };
 
   const getSelectedLabel = () => {
+    if (selectedPreset === "all") return "All Time";
     if (selectedPreset === "billing_cycle") return "Current Billing Cycle";
     if (selectedPreset === "custom" && dateRange.from) {
       if (dateRange.to) return `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d, yyyy")}`;
       return `From ${format(dateRange.from, "MMM d, yyyy")}`;
     }
-    return DATE_RANGE_PRESETS.find(p => p.value === selectedPreset)?.label || "Current Billing Cycle";
+    return DATE_RANGE_PRESETS.find(p => p.value === selectedPreset)?.label || "All Time";
   };
 
-  const hasActiveFilter = selectedPreset !== "billing_cycle";
+  const hasActiveFilter = selectedPreset !== "all";
 
   const tabs: { key: TabKey; label: string; icon: React.ElementType; desc: string }[] = [
     { key: "engagement", label: "Engagement", icon: TrendingUp, desc: "Views, clicks & interactions" },
