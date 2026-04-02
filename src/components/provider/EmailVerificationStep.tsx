@@ -66,7 +66,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
           description = "Too many attempts. Please wait a few minutes before trying again.";
         }
         
-        console.log("[EmailVerification] Send failed:", errorCode, description);
         setError(description);
         toast({
           title: "Unable to send code",
