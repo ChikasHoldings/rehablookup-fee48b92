@@ -653,6 +653,12 @@ export default function SeekerConcierge() {
         {/* Support Card */}
         <PlacementSupportCard />
 
+        {/* Case Detail Modal */}
+        <SeekerPlacementModal
+          caseData={selectedCase || null}
+          open={detailModalOpen}
+          onOpenChange={setDetailModalOpen}
+        />
       </div>
     </>
   );
