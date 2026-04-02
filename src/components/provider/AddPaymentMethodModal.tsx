@@ -573,6 +573,7 @@ export function AddPaymentMethodModal({
           throw new Error("Stripe is not configured. Please contact support.");
         }
 
+        const { loadStripe } = await import("@stripe/stripe-js");
         const stripe = loadStripe(data.publishableKey);
         setStripePromise(stripe);
       } catch (err: any) {
