@@ -1,4 +1,4 @@
-import { forwardRef, SVGProps } from "react";
+import { forwardRef, memo, SVGProps } from "react";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link } from "react-router-dom";
 import { Mail, MapPin, ChevronDown, ExternalLink } from "lucide-react";
