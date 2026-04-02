@@ -77,7 +77,7 @@ const notificationIcons: Record<string, React.ReactNode> = {
 // Facility limits now handled by useFacilityLimits hook
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const navigate = useNavigate();
   
   const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useProviderNotifications();
