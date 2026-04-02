@@ -188,7 +188,6 @@ export default function AddLocationPage() {
       }
 
       // Create new facility
-      console.log("[AddLocation] Inserting facility for user:", session.user.id.substring(0, 8) + "...");
       const { data: newFacility, error } = await supabase
         .from("facilities")
         .insert({
