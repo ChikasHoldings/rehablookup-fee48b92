@@ -577,8 +577,7 @@ export function PlacementDetailModal({
               )}
             </TabsContent>
 
-            {/* === TIMELINE TAB === */}
-            <TabsContent value="timeline" className="p-4 sm:p-5 mt-0">
+            <TabsContent value="timeline" className="p-4 sm:p-5 m-0 focus-visible:ring-0 focus-visible:outline-none">
               <div className="space-y-0">
                 <TimelineItem
                   label="Case Sent to You"
@@ -624,7 +623,8 @@ export function PlacementDetailModal({
                 )}
               </div>
             </TabsContent>
-          </ScrollArea>
+            </ScrollArea>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>
