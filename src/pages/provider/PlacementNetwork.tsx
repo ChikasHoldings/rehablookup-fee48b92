@@ -159,7 +159,7 @@ export default function ProviderPlacementNetworkPage() {
     queryKey: ["provider-payment-methods", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("provider_payment_methods")
         .select("*")
         .eq("facility_id", selectedFacility.id)
@@ -174,7 +174,7 @@ export default function ProviderPlacementNetworkPage() {
     queryKey: ["placement-invoices", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("placement_invoices")
         .select("*")
         .eq("facility_id", selectedFacility.id)
@@ -281,7 +281,7 @@ export default function ProviderPlacementNetworkPage() {
   const deletePaymentMethodMutation = useMutation({
     mutationFn: async (paymentMethodId: string) => {
       if (!selectedFacility?.id) throw new Error("No facility selected");
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("provider_payment_methods")
         .delete()
         .eq("id", paymentMethodId)
