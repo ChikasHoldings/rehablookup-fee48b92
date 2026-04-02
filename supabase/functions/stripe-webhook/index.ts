@@ -56,29 +56,32 @@ Deno.serve(async (req) => {
     // Verify webhook signature if secret is configured (production)
     const signature = req.headers.get("stripe-signature");
     
-    if (webhookSecret && signature) {
-      try {
-        event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-        logStep("Event verified with signature", { type: event.type, id: event.id });
-      } catch (signatureError) {
-        logStep("Webhook signature verification failed", { error: String(signatureError) });
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    } else {
-      // Fallback for development/testing without signature verification
-      try {
-        event = JSON.parse(body) as Stripe.Event;
-        logStep("Event parsed (no signature verification)", { type: event.type, id: event.id });
-      } catch (parseError) {
-        logStep("Failed to parse event body", { error: String(parseError) });
-        return new Response(JSON.stringify({ error: "Invalid payload" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // SECURITY: Always require webhook signature verification
+    if (!webhookSecret) {
+      logStep("CRITICAL - STRIPE_WEBHOOK_SECRET not configured, rejecting request");
+      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!signature) {
+      logStep("Rejected - Missing stripe-signature header");
+      return new Response(JSON.stringify({ error: "Missing signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+      logStep("Event verified with signature", { type: event.type, id: event.id });
+    } catch (signatureError) {
+      logStep("Webhook signature verification failed", { error: String(signatureError) });
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ==========================================
