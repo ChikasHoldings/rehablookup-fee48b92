@@ -174,7 +174,7 @@ export function preloadProviderPages(): void {
     () => import("@/pages/provider/Inquiries"),
     () => import("@/pages/provider/Reviews"),
     () => import("@/pages/provider/Analytics"),
-    () => import("@/pages/provider/Credits"),
+    () => import("@/pages/provider/Billing"),
     () => import("@/pages/provider/Settings"),
     () => import("@/pages/provider/Notifications"),
     () => import("@/pages/provider/Help"),
