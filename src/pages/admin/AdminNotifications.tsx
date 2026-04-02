@@ -412,7 +412,7 @@ export default function AdminNotifications() {
           variant={typeFilter === "payment_failed" ? "secondary" : "ghost"}
           size="sm"
           className="h-7 px-3 text-xs font-medium shrink-0"
-          onClick={() => setTypeFilter(typeFilter === "payment_failed" ? "all" : "payment_failed")}
+          onClick={() => setTypeFilter(typeFilter === "payment_types" ? "all" : "payment_types")}
         >
           <CreditCard className="h-3.5 w-3.5 mr-1.5 text-destructive" />
           Payments
