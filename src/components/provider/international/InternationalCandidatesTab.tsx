@@ -279,7 +279,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
