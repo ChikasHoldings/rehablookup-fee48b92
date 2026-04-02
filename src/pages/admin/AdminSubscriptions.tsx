@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import {
   CreditCard,
+  DollarSign,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
@@ -536,68 +537,67 @@ export default function AdminSubscriptions() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           {/* Revenue Stats */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Monthly Revenue</p>
-                    <p className="text-2xl font-bold">
-                      ${stripeStats?.mrr?.toLocaleString() || "0"}
-                    </p>
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <Card className="border-border/40">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-emerald-500/10 shrink-0">
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
                   </div>
-                  <div className={`flex items-center gap-1 text-sm ${(stripeStats?.mrr_growth || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {(stripeStats?.mrr_growth || 0) >= 0 ? (
-                      <TrendingUp className="h-4 w-4" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4" />
-                    )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">MRR</p>
+                    <p className="text-lg sm:text-xl font-bold leading-tight">${stripeStats?.mrr?.toLocaleString() || "0"}</p>
+                  </div>
+                  <div className={`flex items-center gap-0.5 text-xs font-medium shrink-0 ${(stripeStats?.mrr_growth || 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                    {(stripeStats?.mrr_growth || 0) >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                     {stripeStats?.mrr_growth || 0}%
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active Subscriptions</p>
-                    <p className="text-2xl font-bold">{stripeStats?.active_subscriptions || 0}</p>
+            <Card className="border-border/40">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-blue-500/10 shrink-0">
+                    <CreditCard className="h-4 w-4 text-blue-600" />
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-green-600">
-                    <ArrowUpRight className="h-4 w-4" />
-                    +{stripeStats?.new_last_30_days || 0}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Active</p>
+                    <p className="text-lg sm:text-xl font-bold leading-tight">{stripeStats?.active_subscriptions || 0}</p>
                   </div>
+                  <span className="text-xs font-medium text-emerald-600 shrink-0">+{stripeStats?.new_last_30_days || 0}</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Churn Rate (30d)</p>
-                    <p className="text-2xl font-bold">{stripeStats?.churn_rate || 0}%</p>
+            <Card className="border-border/40">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-destructive/10 shrink-0">
+                    <TrendingDown className="h-4 w-4 text-destructive" />
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-red-600">
-                    <ArrowDownRight className="h-4 w-4" />
-                    {stripeStats?.canceled_last_30_days || 0}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Churn</p>
+                    <p className="text-lg sm:text-xl font-bold leading-tight">{stripeStats?.churn_rate || 0}%</p>
                   </div>
+                  <span className="text-xs font-medium text-destructive shrink-0">{stripeStats?.canceled_last_30_days || 0}</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">At-Risk</p>
-                    <p className="text-2xl font-bold">
+            <Card className="border-border/40">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-warning/10 shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-warning" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">At-Risk</p>
+                    <p className="text-lg sm:text-xl font-bold leading-tight">
                       {enrichedSubscriptions.filter((s) => s.cancel_at_period_end).length}
                     </p>
                   </div>
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
                 </div>
               </CardContent>
             </Card>
