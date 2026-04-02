@@ -470,7 +470,7 @@ export function Header({
                   </PrefetchLink>
                   <PrefetchLink to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
                     <Button variant="outline" className="w-full h-11 text-sm rounded-xl">
-                      List Facility
+                      Get Listed
                     </Button>
                   </PrefetchLink>
                 </div>
