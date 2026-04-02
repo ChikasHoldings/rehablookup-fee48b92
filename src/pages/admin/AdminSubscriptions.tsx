@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import {
   CreditCard,
+  DollarSign,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
