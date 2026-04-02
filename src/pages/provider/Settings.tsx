@@ -899,7 +899,7 @@ export default function ProviderSettingsPage() {
                   onPhoneChange={(value) => updateField("phone", value)}
                   userId={userId || undefined}
                   userType="provider"
-                  isVerified={!!(providerData?.profile as any)?.phone_verified}
+                  isVerified={!!providerData?.profile?.phone_verified}
                   onVerified={() => {
                     queryClient.invalidateQueries({ queryKey: ["provider-data"] });
                   }}
