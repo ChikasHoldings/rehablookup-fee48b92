@@ -133,8 +133,8 @@ export function UnlockLeadButton({
           inquiryType={type}
           cityState={cityState}
           finalPrice={finalPrice}
-          originalPrice={isPro ? basePrice : null}
-          discountPercent={proDiscountPercent}
+          originalPrice={(!isRedistributed && isPro) ? basePrice : null}
+          discountPercent={effectiveDiscountPercent}
           hasEnoughCredits={hasEnoughCredits}
           currentBalance={balance}
           onConfirm={handleUnlock}
