@@ -20,7 +20,7 @@ const Switch = React.forwardRef<
   >
     <SwitchPrimitives.Thumb
       className={cn(
-        "pointer-events-none block h-[12px] w-[12px] rounded-full bg-background shadow-md ring-0 transition-all duration-200 ease-in-out",
+        "pointer-events-none block h-[12px] w-[12px] rounded-[3px] bg-background shadow-md ring-0 transition-all duration-200 ease-in-out",
         "data-[state=checked]:translate-x-[19px] data-[state=unchecked]:translate-x-[1px]",
       )}
     />
