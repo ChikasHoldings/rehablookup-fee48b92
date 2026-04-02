@@ -84,6 +84,7 @@ export default function SeekerConcierge() {
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
