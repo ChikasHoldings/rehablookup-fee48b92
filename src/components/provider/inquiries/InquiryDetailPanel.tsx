@@ -55,12 +55,13 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
         .eq("id", inquiry.id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, status) => {
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-      toast.success("Status updated");
+      toast.success(`Status updated to ${status}`);
     },
-    onError: () => {
-      toast.error("Failed to update status");
+    onError: (err) => {
+      console.error("[InquiryDetail] Status update failed:", err);
+      toast.error("Failed to update status. Please try again.");
     },
   });
 
