@@ -262,24 +262,24 @@ function KPICard({ title, value, icon: Icon, trend, subtitle, color }: {
 }) {
   const c = COLOR_MAP[color] || COLOR_MAP.blue;
   return (
-    <div className="rounded-lg border px-3 py-2.5 bg-card hover:shadow-sm transition-shadow">
-      <div className="flex items-center justify-between mb-1.5">
-        <div className={cn("h-6 w-6 rounded-md flex items-center justify-center", c.bg)}>
-          <Icon className={cn("h-3 w-3", c.text)} />
+    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow">
+      <div className="flex items-center justify-between mb-2">
+        <div className={cn("h-7 w-7 rounded-md flex items-center justify-center", c.bg)}>
+          <Icon className={cn("h-3.5 w-3.5", c.text)} />
         </div>
         {trend !== undefined && trend !== 0 && (
           <Badge variant="outline" className={cn(
-            "text-[9px] px-1 py-0 h-auto leading-tight",
+            "text-[10px] px-1.5 py-0 h-auto",
             trend > 0 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : "bg-red-500/10 text-red-600 border-red-200"
           )}>
-            {trend > 0 ? <ArrowUpRight className="h-2 w-2 mr-0.5" /> : <ArrowDownRight className="h-2 w-2 mr-0.5" />}
+            {trend > 0 ? <ArrowUpRight className="h-2.5 w-2.5 mr-0.5" /> : <ArrowDownRight className="h-2.5 w-2.5 mr-0.5" />}
             {Math.abs(trend)}%
           </Badge>
         )}
       </div>
-      <p className="text-lg font-bold text-foreground leading-none">{typeof value === "number" ? value.toLocaleString() : value}</p>
-      <p className="text-[10px] text-muted-foreground mt-0.5 font-medium uppercase tracking-wider">{title}</p>
-      {subtitle && <p className="text-[9px] text-muted-foreground/70">{subtitle}</p>}
+      <p className="text-xl font-bold text-foreground leading-none">{typeof value === "number" ? value.toLocaleString() : value}</p>
+      <p className="text-[11px] text-muted-foreground mt-1 font-medium">{title}</p>
+      {subtitle && <p className="text-[10px] text-muted-foreground/70">{subtitle}</p>}
     </div>
   );
 }
