@@ -9,6 +9,7 @@ export interface ProStatusData {
   currentPeriodEnd: string | null;
   facilityId: string | null;
   stripeSubscriptionId: string | null;
+  cancelAtPeriodEnd: boolean;
 }
 
 const DEFAULT_PRO_STATUS: ProStatusData = {
@@ -18,6 +19,7 @@ const DEFAULT_PRO_STATUS: ProStatusData = {
   currentPeriodEnd: null,
   facilityId: null,
   stripeSubscriptionId: null,
+  cancelAtPeriodEnd: false,
 };
 
 export function useProStatus(facilityId?: string) {
@@ -31,7 +33,7 @@ export function useProStatus(facilityId?: string) {
         // Query pro_subscriptions table with existing columns only
         let queryBuilder = supabase
           .from("pro_subscriptions")
-          .select("id, provider_id, facility_id, status, stripe_subscription_id, current_period_end, unlock_discount_percent, created_at, updated_at")
+          .select("id, provider_id, facility_id, status, stripe_subscription_id, current_period_end, unlock_discount_percent, cancel_at_period_end, created_at, updated_at")
           .eq("provider_id", session.user.id);
 
         if (facilityId) {
@@ -66,6 +68,7 @@ export function useProStatus(facilityId?: string) {
           currentPeriodEnd: data.current_period_end,
           facilityId: data.facility_id,
           stripeSubscriptionId: data.stripe_subscription_id,
+          cancelAtPeriodEnd: (data as Record<string, unknown>).cancel_at_period_end === true,
         };
       } catch (err) {
         console.error("[useProStatus] Unexpected error:", err);
