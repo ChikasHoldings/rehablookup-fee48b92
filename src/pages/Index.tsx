@@ -14,7 +14,7 @@ import { InternationalCTA } from "@/components/home/InternationalCTA";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
-import whyChooseUsImage from "@/assets/why-choose-us.jpg";
+import whyChooseUsImage from "@/assets/why-choose-us.webp";
 import {
   Carousel,
   CarouselContent,
