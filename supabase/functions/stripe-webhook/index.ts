@@ -573,6 +573,12 @@ Deno.serve(async (req) => {
     // ==========================================
     if (event.type === "invoice.payment_failed") {
       const invoice = event.data.object as Stripe.Invoice;
+      const invoiceType = invoice.metadata?.type;
+      
+      // Skip if this is an international placement fee — handled separately below
+      if (invoiceType === "international_placement_fee") {
+        logStep("Skipping general payment_failed handler for international invoice");
+      } else {
       logStep("Payment failed", { invoiceId: invoice.id, amountDue: invoice.amount_due });
 
       const customerId = invoice.customer as string;
