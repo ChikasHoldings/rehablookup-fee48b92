@@ -172,7 +172,6 @@ export default function AddLocationPage() {
     }
 
     setIsSubmitting(true);
-    console.log("[AddLocation] Starting facility creation:", formData.name);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
