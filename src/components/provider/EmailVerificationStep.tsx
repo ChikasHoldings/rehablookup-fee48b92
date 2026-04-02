@@ -156,7 +156,6 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       }
 
       if (data?.error) {
-        console.log("[EmailVerification] Verification failed:", data.error);
         setError(data.error);
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
