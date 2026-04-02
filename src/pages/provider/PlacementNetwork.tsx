@@ -535,239 +535,217 @@ export default function ProviderPlacementNetworkPage() {
                 SETTINGS TAB — Profile + Billing + Agreement
             ══════════════════════════════════════════════════ */}
             {activeTab === "settings" && (
-              <div className="space-y-8">
+              <div className="space-y-6">
 
-                {/* ── Agreement Status ── */}
+                {/* ── Agreement Status Banner ── */}
                 {facilityData?.concierge_terms_accepted_at && (
-                  <div className="flex items-center justify-between gap-3 p-4 rounded-lg border border-primary/20 bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <FileSignature className="h-5 w-5 text-primary shrink-0" />
-                      <div>
-                        <p className="text-sm font-semibold">Placement Agreement</p>
-                        <p className="text-xs text-muted-foreground">
-                          v{facilityData.concierge_terms_version || "1.0"} · Signed {format(new Date(facilityData.concierge_terms_accepted_at), "MMM d, yyyy")}
-                        </p>
+                  <Card className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="flex items-center justify-between gap-3 px-5 py-4 bg-primary/5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                            <FileSignature className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Placement Agreement</p>
+                            <p className="text-xs text-muted-foreground">
+                              v{facilityData.concierge_terms_version || "1.0"} · Signed {format(new Date(facilityData.concierge_terms_accepted_at), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs shrink-0" onClick={() => setTermsModalOpen(true)}>
+                          <FileText className="h-3.5 w-3.5" /> View
+                        </Button>
                       </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="gap-1.5 text-xs shrink-0" onClick={() => setTermsModalOpen(true)}>
-                      <FileText className="h-3.5 w-3.5" /> View
-                    </Button>
-                  </div>
+                    </CardContent>
+                  </Card>
                 )}
 
-                {/* ── Section: Network Profile ── */}
-                <div>
-                  <div className="mb-4">
-                    <h2 className="text-base font-semibold">Network Profile</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">Configure what patients and insurance you accept</p>
-                  </div>
+                {/* ── Network Profile Card ── */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="px-5 sm:px-6 py-4 border-b bg-muted/30">
+                      <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">Network Profile</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Configure what patients and insurance you accept</p>
+                    </div>
 
-                  <div className="space-y-6">
-                    {/* Care Types */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Accepted Care Types</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {CARE_TYPES.map((type) => (
-                          <Label
-                            key={type.value}
-                            className="flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
+                    <div className="p-5 sm:p-6 space-y-6">
+                      {/* Care Types */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Accepted Care Types</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {CARE_TYPES.map((type) => (
+                            <Label
+                              key={type.value}
+                              className="flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
+                            >
+                              <Checkbox
+                                checked={profileForm.acceptedCareTypes.includes(type.value)}
+                                onCheckedChange={() => toggleArrayValue("acceptedCareTypes", type.value)}
+                              />
+                              <span className="text-sm">{type.label}</span>
+                            </Label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Insurance */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Accepted Insurance</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {INSURANCE_OPTIONS.map((ins) => (
+                            <Label
+                              key={ins}
+                              className="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
+                            >
+                              <Checkbox
+                                checked={profileForm.acceptedInsurance.includes(ins.toLowerCase().replace(/\s/g, "_"))}
+                                onCheckedChange={() => toggleArrayValue("acceptedInsurance", ins.toLowerCase().replace(/\s/g, "_"))}
+                              />
+                              <span className="text-xs leading-tight">{ins}</span>
+                            </Label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Availability + Fee Structure */}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Availability</Label>
+                          <Select
+                            value={profileForm.availabilityStatus}
+                            onValueChange={(v) => setProfileForm((p) => ({ ...p, availabilityStatus: v }))}
                           >
-                            <Checkbox
-                              checked={profileForm.acceptedCareTypes.includes(type.value)}
-                              onCheckedChange={() => toggleArrayValue("acceptedCareTypes", type.value)}
-                            />
-                            <span className="text-sm">{type.label}</span>
-                          </Label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Insurance */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Accepted Insurance</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {INSURANCE_OPTIONS.map((ins) => (
-                          <Label
-                            key={ins}
-                            className="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="open">Open for Admissions</SelectItem>
+                              <SelectItem value="limited">Limited Availability</SelectItem>
+                              <SelectItem value="full">Not Taking New Admissions</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Fee Structure</Label>
+                          <Select
+                            value={profileForm.agreementPreference}
+                            onValueChange={(v) => setProfileForm((p) => ({ ...p, agreementPreference: v }))}
                           >
-                            <Checkbox
-                              checked={profileForm.acceptedInsurance.includes(ins.toLowerCase().replace(/\s/g, "_"))}
-                              onCheckedChange={() => toggleArrayValue("acceptedInsurance", ins.toLowerCase().replace(/\s/g, "_"))}
-                            />
-                            <span className="text-xs leading-tight">{ins}</span>
-                          </Label>
-                        ))}
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="flat_fee">Flat Fee Per Placement</SelectItem>
+                              <SelectItem value="either">Flexible</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Admissions Contact */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Admissions Contact</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Contact Name</Label>
+                            <Input placeholder="Admissions Director" value={profileForm.admissionsContact} onChange={(e) => setProfileForm((p) => ({ ...p, admissionsContact: e.target.value }))} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Email</Label>
+                            <Input type="email" placeholder="admissions@facility.com" value={profileForm.admissionsEmail} onChange={(e) => setProfileForm((p) => ({ ...p, admissionsEmail: e.target.value }))} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Phone</Label>
+                            <Input type="tel" placeholder="(555) 123-4567" value={profileForm.admissionsPhone} onChange={(e) => setProfileForm((p) => ({ ...p, admissionsPhone: e.target.value }))} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <Button onClick={() => saveProfileMutation.mutate()} disabled={saveProfileMutation.isPending} className="w-full sm:w-auto">
+                          {saveProfileMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                          Save Profile
+                        </Button>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
 
-                    {/* Availability + Payment Preference */}
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Availability</Label>
-                        <Select
-                          value={profileForm.availabilityStatus}
-                          onValueChange={(v) => setProfileForm((p) => ({ ...p, availabilityStatus: v }))}
-                        >
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="open">Open for Admissions</SelectItem>
-                            <SelectItem value="limited">Limited Availability</SelectItem>
-                            <SelectItem value="full">Not Taking New Admissions</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Fee Structure</Label>
-                        <Select
-                          value={profileForm.agreementPreference}
-                          onValueChange={(v) => setProfileForm((p) => ({ ...p, agreementPreference: v }))}
-                        >
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="flat_fee">Flat Fee Per Placement</SelectItem>
-                            <SelectItem value="either">Flexible</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                {/* ── Billing & Payments Card ── */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="px-5 sm:px-6 py-4 border-b bg-muted/30">
+                      <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">Billing & Payments</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Payment methods and invoices</p>
                     </div>
 
-                    {/* Admissions Contact */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Admissions Contact</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs text-muted-foreground">Contact Name</Label>
-                          <Input placeholder="Admissions Director" value={profileForm.admissionsContact} onChange={(e) => setProfileForm((p) => ({ ...p, admissionsContact: e.target.value }))} />
+                    <div className="p-5 sm:p-6 space-y-6">
+                      {/* Payment Methods */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CreditCard className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Payment Methods</Label>
                         </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs text-muted-foreground">Email</Label>
-                          <Input type="email" placeholder="admissions@facility.com" value={profileForm.admissionsEmail} onChange={(e) => setProfileForm((p) => ({ ...p, admissionsEmail: e.target.value }))} />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs text-muted-foreground">Phone</Label>
-                          <Input type="tel" placeholder="(555) 123-4567" value={profileForm.admissionsPhone} onChange={(e) => setProfileForm((p) => ({ ...p, admissionsPhone: e.target.value }))} />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button onClick={() => saveProfileMutation.mutate()} disabled={saveProfileMutation.isPending} className="w-full sm:w-auto">
-                      {saveProfileMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-                      Save Profile
-                    </Button>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* ── Section: Billing ── */}
-                <div>
-                  <div className="mb-4">
-                    <h2 className="text-base font-semibold">Billing & Payments</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">Fee structure, payment methods, and invoices</p>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-5">
-                    {/* Fee Structure */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" /> Fee Structure
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="p-4 rounded-lg border bg-muted/30">
-                          <p className="text-xs text-muted-foreground mb-1">Flat Fee Per Placement</p>
-                          <p className="text-2xl font-bold">
-                            ${proSubscription ? PLACEMENT_FEES.flat_fee.pro.toLocaleString() : PLACEMENT_FEES.flat_fee.standard.toLocaleString()}
-                          </p>
-                          {proSubscription ? (
-                            <Badge variant="outline" className="mt-2 border-primary/30 text-primary text-[10px]">Pro: Save $200</Badge>
-                          ) : (
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Pro members: ${PLACEMENT_FEES.flat_fee.pro.toLocaleString()} <span className="text-primary">(save $200)</span>
-                            </p>
-                          )}
-                        </div>
-                        <ul className="text-[11px] text-muted-foreground space-y-1 px-1">
-                          <li>• Charged only after confirmed admission</li>
-                          <li>• Invoices due within 14 days</li>
-                        </ul>
-                      </CardContent>
-                    </Card>
-
-                    {/* Payment Methods */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <CreditCard className="h-4 w-4 text-muted-foreground" /> Payment Methods
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
                         {paymentMethods && paymentMethods.length > 0 ? (
-                          paymentMethods.map((pm) => (
-                            <div key={pm.id} className="flex items-center justify-between p-3 border rounded-lg gap-2">
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                {pm.type === "ach" ? <Landmark className="h-4 w-4 text-muted-foreground shrink-0" /> : <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />}
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium truncate">{pm.type === "ach" ? pm.bank_name || "Bank" : "Card"} •••• {pm.last_four}</p>
-                                  <p className="text-[10px] text-muted-foreground">Added {format(new Date(pm.created_at), "MMM d, yyyy")}</p>
+                          <div className="space-y-2">
+                            {paymentMethods.map((pm) => (
+                              <div key={pm.id} className="flex items-center justify-between p-3 border rounded-lg gap-2 bg-muted/20">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  {pm.type === "ach" ? <Landmark className="h-4 w-4 text-muted-foreground shrink-0" /> : <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />}
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium truncate">{pm.type === "ach" ? pm.bank_name || "Bank" : "Card"} •••• {pm.last_four}</p>
+                                    <p className="text-[10px] text-muted-foreground">Added {format(new Date(pm.created_at), "MMM d, yyyy")}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {pm.is_default && <Badge variant="secondary" className="text-[10px] px-1.5">Default</Badge>}
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeletePaymentConfirm({ id: pm.id, isOpen: true })} disabled={deletePaymentMethodMutation.isPending}>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {pm.is_default && <Badge variant="secondary" className="text-[10px] px-1.5">Default</Badge>}
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeletePaymentConfirm({ id: pm.id, isOpen: true })} disabled={deletePaymentMethodMutation.isPending}>
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))
+                            ))}
+                          </div>
                         ) : (
                           <Alert className="py-3">
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription className="text-xs">Add a payment method to receive referrals.</AlertDescription>
                           </Alert>
                         )}
-                        <Button variant="outline" className="w-full gap-2" onClick={() => setPaymentModalOpen(true)}>
+                        <Button variant="outline" className="w-full sm:w-auto gap-2" onClick={() => setPaymentModalOpen(true)}>
                           <Plus className="h-4 w-4" /> Add Payment Method
                         </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
+                      </div>
 
-                  {/* Invoices */}
-                  {invoices && invoices.length > 0 && (
-                    <Card className="mt-5">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" /> Invoices
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {invoices.map((inv) => (
-                            <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg gap-2">
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
-                                <p className="text-[10px] text-muted-foreground">{format(new Date(inv.created_at), "MMM d, yyyy")}</p>
+                      {/* Invoices */}
+                      {invoices && invoices.length > 0 && (
+                        <div className="space-y-3 pt-2 border-t">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <Label className="text-sm font-medium">Invoices</Label>
+                          </div>
+                          <div className="space-y-2">
+                            {invoices.map((inv) => (
+                              <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg gap-2 bg-muted/20">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
+                                  <p className="text-[10px] text-muted-foreground">{format(new Date(inv.created_at), "MMM d, yyyy")}</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize text-xs">{inv.status}</Badge>
+                                  {inv.status === "paid" && inv.receipt_url && (
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                                      <a href={inv.receipt_url} target="_blank" rel="noopener noreferrer" title="View Receipt">
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                      </a>
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize text-xs">{inv.status}</Badge>
-                                {inv.status === "paid" && inv.receipt_url && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                                    <a href={inv.receipt_url} target="_blank" rel="noopener noreferrer" title="View Receipt">
-                                      <ExternalLink className="h-3.5 w-3.5" />
-                                    </a>
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </>
