@@ -33,6 +33,7 @@ interface ProviderDigest {
   weeklyViews: number;
   newLeads: number;
   contactedLeads: number;
+  isConciergeOptedIn: boolean;
 }
 
 const logStep = (step: string, details?: any) => {
@@ -139,6 +140,26 @@ ${emailBodyStart()}
               </table>
               
               ${tipsContent}
+
+              ${!digest.isConciergeOptedIn ? `
+              <!-- Placement Network CTA -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #166534; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      🏥 Have Empty Beds? Get Matched Referrals
+                    </p>
+                    <p style="margin: 0 0 12px 0; font-size: 14px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      Our Treatment Placement service sends you pre-screened families ready to admit. An advisor handles all coordination — you only pay on successful placement.
+                    </p>
+                    <a href="https://rehablookup.com/provider/placement" style="display: inline-block; background: #166534; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      Join Placement Network →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
               ${ctaButton('View All Leads', `${dashboardUrl}/provider/inquiries`, plan)}
 ${emailBodyEnd()}
 ${emailFooter()}
@@ -203,7 +224,7 @@ Deno.serve(async (req) => {
     const userIds = eligiblePreferences.map(p => p.user_id);
     
     const { data: profiles } = await supabase.from("profiles").select("user_id, email, first_name").in("user_id", userIds);
-    const { data: facilities } = await supabase.from("facilities").select("id, user_id, name, status").in("user_id", userIds).eq("status", "approved");
+    const { data: facilities } = await supabase.from("facilities").select("id, user_id, name, status, concierge_network_opted_in").in("user_id", userIds).eq("status", "approved");
     
     let sentCount = 0;
     let errorCount = 0;
