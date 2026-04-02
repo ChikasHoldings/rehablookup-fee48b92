@@ -560,12 +560,16 @@ export default function ProviderBillingPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Add Payment Method Modal */}
-        <AddPaymentMethodModal 
-          open={showPaymentMethodModal} 
-          onOpenChange={setShowPaymentMethodModal}
-          facilityId={facilityId || ""}
-        />
+        {/* Add Payment Method Modal - lazy loaded to defer Stripe.js */}
+        {showPaymentMethodModal && (
+          <Suspense fallback={null}>
+            <AddPaymentMethodModal 
+              open={showPaymentMethodModal} 
+              onOpenChange={setShowPaymentMethodModal}
+              facilityId={facilityId || ""}
+            />
+          </Suspense>
+        )}
 
         {/* Delete Card Confirmation Dialog */}
         <AlertDialog open={deleteCardConfirm.isOpen} onOpenChange={(open) => setDeleteCardConfirm(prev => ({ ...prev, isOpen: open }))}>

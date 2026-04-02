@@ -452,11 +452,15 @@ export default function ProviderPlacementNetworkPage() {
           facilityId={selectedFacility?.id || ""}
           facilityName={selectedFacility?.name || "Your Facility"}
         />
-        <AddPaymentMethodModal
-          open={paymentModalOpen}
-          onOpenChange={setPaymentModalOpen}
-          facilityId={selectedFacility?.id || ""}
-        />
+        {paymentModalOpen && (
+          <Suspense fallback={null}>
+            <AddPaymentMethodModal
+              open={paymentModalOpen}
+              onOpenChange={setPaymentModalOpen}
+              facilityId={selectedFacility?.id || ""}
+            />
+          </Suspense>
+        )}
         <CareTypesModal
           open={careTypesModalOpen}
           onOpenChange={setCareTypesModalOpen}
