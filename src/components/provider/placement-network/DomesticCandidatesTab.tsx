@@ -333,23 +333,21 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
 
 /* ═══════════════════════════════════════════════ */
 
-function StatCard({ icon: Icon, iconColor, bgColor, value, label, highlight }: {
-  icon: React.ElementType; iconColor: string; bgColor: string; value: number; label: string; highlight?: boolean;
+function StatCard({ icon: Icon, iconColor, bgColor, value, label, highlight, border }: {
+  icon: React.ElementType; iconColor: string; bgColor: string; value: number; label: string; highlight?: boolean; border?: boolean;
 }) {
   return (
-    <Card className={cn("transition-colors", highlight && "border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/10")}>
-      <CardContent className="p-4 sm:p-5">
-        <div className="flex items-center gap-3">
-          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", bgColor)}>
-            <Icon className={cn("h-5 w-5", iconColor)} />
-          </div>
-          <div>
-            <p className="text-2xl font-bold leading-none">{value}</p>
-            <p className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wider">{label}</p>
-          </div>
+    <div className={cn("p-4 sm:p-5 transition-colors", highlight && "bg-amber-50/30 dark:bg-amber-950/10", border && "border-l")}>
+      <div className="flex items-center gap-3">
+        <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", bgColor)}>
+          <Icon className={cn("h-5 w-5", iconColor)} />
         </div>
-      </CardContent>
-    </Card>
+        <div>
+          <p className="text-2xl font-bold leading-none">{value}</p>
+          <p className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wider">{label}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
