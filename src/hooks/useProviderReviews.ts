@@ -89,17 +89,18 @@ export function useProviderReviews() {
       const [reviewsResult, responsesResult, disputesResult] = await Promise.all([
         supabase
           .from('facility_reviews')
-          .select('*')
+          .select('id, user_id, facility_id, rating, review_text, status, helpful_count, disputed, created_at, updated_at')
           .in('facility_id', facilityIds)
           .eq('status', 'approved')
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .limit(2000),
         supabase
           .from('review_responses')
-          .select('*')
+          .select('id, review_id, facility_id, responder_user_id, response_text, status, created_at, updated_at')
           .in('facility_id', facilityIds),
         supabase
           .from('review_disputes')
-          .select('*')
+          .select('id, review_id, facility_id, disputed_by, reason, details, status, admin_notes, resolved_by, resolved_at, created_at')
           .in('facility_id', facilityIds)
       ]);
 
