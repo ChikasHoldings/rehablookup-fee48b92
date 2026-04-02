@@ -1,5 +1,6 @@
-import { Link, LinkProps } from "react-router-dom";
-import { forwardRef, useCallback } from "react";
+import { forwardRef, useCallback, useTransition } from "react";
+import { LinkProps, useNavigate } from "react-router-dom";
+import { prefetchRoute } from "@/lib/routePrefetch";
 
 // Route to lazy import mapping for prefetching (only for lazy-loaded routes)
 const routePrefetchMap: Record<string, () => Promise<unknown>> = {
@@ -38,7 +39,6 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/provider/help": () => import("@/pages/provider/Help"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
   "/provider/reviews": () => import("@/pages/provider/Reviews"),
-  // "/provider/embed-badge": () => import("@/pages/provider/EmbedBadge"), // Hidden for now
   // Admin panel routes (lazy loaded)
   "/admin": () => import("@/pages/admin/AdminDashboard"),
   "/admin/dashboard": () => import("@/pages/admin/AdminDashboard"),
@@ -57,7 +57,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
 // Track which routes have been prefetched to avoid duplicate fetches
 const prefetchedRoutes = new Set<string>();
 
-export function prefetchRoute(path: string) {
+export function prefetchRouteChunk(path: string) {
   const normalizedPath = path.split("?")[0].split("#")[0];
   
   if (prefetchedRoutes.has(normalizedPath)) return;
@@ -73,13 +73,39 @@ interface PrefetchLinkProps extends LinkProps {
   prefetch?: boolean;
 }
 
+/**
+ * Link component that:
+ * 1. Prefetches route chunk on hover/focus
+ * 2. Uses useTransition on click to keep old page visible while new one loads
+ * This eliminates blank flashes during lazy-loaded route transitions.
+ */
 export const PrefetchLink = forwardRef<HTMLAnchorElement, PrefetchLinkProps>(
-  ({ to, prefetch = true, onMouseEnter, onFocus, ...props }, ref) => {
+  ({ to, prefetch = true, onMouseEnter, onFocus, onClick, children, className, ...props }, ref) => {
     const path = typeof to === "string" ? to : to.pathname || "";
+    const navigate = useNavigate();
+    const [, startTransition] = useTransition();
+
+    const handleClick = useCallback(
+      (e: React.MouseEvent<HTMLAnchorElement>) => {
+        // Allow cmd/ctrl+click for new tab
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+
+        e.preventDefault();
+        onClick?.(e as any);
+
+        // Navigate inside a transition — React keeps the old UI visible
+        // until the new lazy component's chunk is ready
+        startTransition(() => {
+          navigate(path);
+        });
+      },
+      [path, navigate, onClick, startTransition]
+    );
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (prefetch) {
+          prefetchRouteChunk(path);
           prefetchRoute(path);
         }
         onMouseEnter?.(e);
@@ -90,6 +116,7 @@ export const PrefetchLink = forwardRef<HTMLAnchorElement, PrefetchLinkProps>(
     const handleFocus = useCallback(
       (e: React.FocusEvent<HTMLAnchorElement>) => {
         if (prefetch) {
+          prefetchRouteChunk(path);
           prefetchRoute(path);
         }
         onFocus?.(e);
@@ -98,13 +125,17 @@ export const PrefetchLink = forwardRef<HTMLAnchorElement, PrefetchLinkProps>(
     );
 
     return (
-      <Link
+      <a
         ref={ref}
-        to={to}
+        href={path}
+        onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onFocus={handleFocus}
+        className={className}
         {...props}
-      />
+      >
+        {children}
+      </a>
     );
   }
 );

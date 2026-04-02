@@ -1,5 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
-import { useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useTransition } from "react";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -32,13 +32,14 @@ const navItems = [
   { href: "/provider/listings", label: "My Listing", icon: Building2 },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
-  // { href: "/provider/embed-badge", label: "Embed Badge", icon: Code2 }, // Hidden for now - incomplete feature
   { href: "/provider/billing", label: "Billing", icon: Wallet },
   { href: "/provider/settings", label: "Settings", icon: Settings },
 ];
 
 export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [, startTransition] = useTransition();
   const { selectedFacility } = useSelectedFacility();
   const { balanceFormatted } = useProviderCredits(selectedFacility?.id);
   const { data: proStatus } = useProStatus();
@@ -53,6 +54,15 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const handleMouseEnter = useCallback((path: string) => {
     prefetchRoute(path);
   }, []);
+
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    onNavigate?.();
+    startTransition(() => {
+      navigate(href);
+    });
+  }, [navigate, onNavigate, startTransition]);
 
   return (
     <div className="flex flex-col h-full">
@@ -71,9 +81,9 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             
             return (
               <li key={item.href}>
-                <Link
-                  to={item.href}
-                  onClick={onNavigate}
+                <a
+                  href={item.href}
+                  onClick={(e) => handleNavClick(e, item.href)}
                   onMouseEnter={() => handleMouseEnter(item.href)}
                   className={cn(
                     "group flex items-center gap-2.5 lg:gap-3 px-2.5 lg:px-3 py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
@@ -109,7 +119,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                       {badgeCount > 99 ? "99+" : badgeCount} {badgeLabel}
                     </Badge>
                   )}
-                </Link>
+                </a>
               </li>
             );
           })}
@@ -140,14 +150,14 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
               </span>
             </div>
           ) : (
-            <Link 
-              to="/provider/billing?tab=pro"
-              onClick={onNavigate}
+            <a 
+              href="/provider/billing?tab=pro"
+              onClick={(e) => handleNavClick(e, "/provider/billing?tab=pro")}
               className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
             >
               <Sparkles className="h-3 w-3" />
               <span>Upgrade to Pro for 20% off</span>
-            </Link>
+            </a>
           )}
         </div>
       </div>

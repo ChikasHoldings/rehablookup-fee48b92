@@ -1,5 +1,6 @@
 import { memo, useCallback, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { TransitionNavLink } from "@/components/ui/transition-nav-link";
 import {
   LayoutDashboard,
   Building2,
@@ -183,7 +184,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                       const itemCount = getItemCount(item);
 
                       return (
-                        <NavLink
+                        <TransitionNavLink
                           key={item.to}
                           to={item.to}
                           onMouseEnter={() => handleMouseEnter(item.to)}
@@ -206,7 +207,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                               {itemCount > 99 ? "99+" : itemCount}
                             </span>
                           )}
-                        </NavLink>
+                        </TransitionNavLink>
                       );
                     })}
                   </div>
@@ -222,7 +223,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
           const itemCount = getItemCount(entry);
 
           return (
-            <NavLink
+            <TransitionNavLink
               key={entry.to}
               to={entry.to}
               end={entry.end}
@@ -256,7 +257,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
                   {itemCount > 99 ? "99+" : itemCount}
                 </span>
               )}
-            </NavLink>
+            </TransitionNavLink>
           );
         })}
       </nav>
