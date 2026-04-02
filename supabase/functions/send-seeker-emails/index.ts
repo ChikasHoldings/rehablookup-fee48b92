@@ -220,6 +220,11 @@ Deno.serve(async (req) => {
           notificationMessage = `Your request to ${metadata?.facilityName || "the facility"} has been sent. They typically respond within 24-48 hours.`;
           notificationLink = "/account/requests";
           break;
+        case "placement_intro":
+          notificationTitle = "Get Placed in a Treatment Center 🏥";
+          notificationMessage = "Our Treatment Placement service can help you find and get admitted to the right facility. An advisor will personally coordinate your placement.";
+          notificationLink = "/get-placed";
+          break;
       }
 
       await supabase.from("seeker_notifications").insert({
