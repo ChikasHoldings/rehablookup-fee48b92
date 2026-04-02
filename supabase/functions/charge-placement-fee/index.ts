@@ -17,9 +17,13 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
 
 // Placement fee structure - flat fee only
 const PLACEMENT_FEES = {
-  flat_fee: {
+  domestic: {
     standard: 100000, // $1,000 in cents
     pro: 80000, // $800 in cents (20% off)
+  },
+  international: {
+    standard: 300000, // $3,000 in cents
+    pro: 240000, // $2,400 in cents (20% off)
   },
 };
 
