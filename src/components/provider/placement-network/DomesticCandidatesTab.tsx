@@ -191,6 +191,21 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           console.error("[DomesticCandidatesTab] Notification error:", notifError);
         }
       }
+
+      // Notify admin that a provider has declined
+      if (inquiryId && response === "not_interested") {
+        try {
+          await supabase.functions.invoke("send-concierge-notifications", {
+            body: {
+              type: "provider_declined",
+              inquiryId,
+              facilityId: selectedFacility?.id,
+            },
+          });
+        } catch (notifError) {
+          console.error("[DomesticCandidatesTab] Decline notification error:", notifError);
+        }
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-introductions"] });
