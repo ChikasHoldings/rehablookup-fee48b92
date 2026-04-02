@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
 import {
   MapPin,
   Clock,
@@ -16,6 +17,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Hourglass,
+  ArrowRight,
 } from "lucide-react";
 import { IntroductionCard } from "./IntroductionCard";
 
@@ -179,12 +182,30 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
     ) || [];
 
-  const respondedIntroductions = introductions?.filter(
-    (i) => i.provider_response && i.provider_response !== "pending"
+  const confirmedIds = new Set(confirmedPlacements.map((i) => i.id));
+
+  // Active placements: provider accepted, not yet confirmed by admin, case still active
+  const activePlacements = introductions?.filter(
+    (i) =>
+      i.provider_response === "interested" &&
+      !confirmedIds.has(i.id) &&
+      i.concierge_inquiries?.status !== "closed" &&
+      i.concierge_inquiries?.status !== "placed"
   ) || [];
 
-  const acceptedCount = respondedIntroductions.filter((i) => i.provider_response === "interested").length;
-  const declinedCount = respondedIntroductions.filter((i) => i.provider_response === "not_available").length;
+  const activeIds = new Set(activePlacements.map((i) => i.id));
+
+  // Declined or completed past responses (not active, not confirmed)
+  const respondedIntroductions = introductions?.filter(
+    (i) =>
+      i.provider_response &&
+      i.provider_response !== "pending" &&
+      !confirmedIds.has(i.id) &&
+      !activeIds.has(i.id)
+  ) || [];
+
+  const acceptedCount = (introductions?.filter((i) => i.provider_response === "interested") || []).length;
+  const declinedCount = (introductions?.filter((i) => i.provider_response === "not_available") || []).length;
 
   // Error state
   if (error) {
@@ -349,6 +370,57 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
           </div>
         )}
       </div>
+
+      {/* Active Placements - Accepted, awaiting admin confirmation */}
+      {activePlacements.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Hourglass className="h-5 w-5 text-amber-500" />
+            Active — Awaiting Confirmation
+            <Badge variant="outline" className="border-amber-300 text-amber-700 dark:text-amber-400">
+              {activePlacements.length}
+            </Badge>
+          </h3>
+          <p className="text-sm text-muted-foreground -mt-1">
+            You accepted these candidates. Our placement team is coordinating next steps and will confirm the admission.
+          </p>
+          <div className="grid gap-3">
+            {activePlacements.map((intro) => (
+              <motion.div
+                key={`active-${intro.id}`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/10">
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="border-amber-400 text-amber-700 dark:text-amber-400">
+                          <Clock className="h-3 w-3 mr-1" /> In Progress
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase() ||
+                            intro.id.slice(0, 8).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>
+                          Accepted {intro.provider_responded_at &&
+                            format(new Date(intro.provider_responded_at), "MMM d")}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-amber-700/80 dark:text-amber-400/80 bg-amber-100/50 dark:bg-amber-900/20 rounded-md px-3 py-2">
+                      <ArrowRight className="h-3 w-3 shrink-0" />
+                      <span>Our advisor is coordinating with the client. You'll be notified once admission is confirmed.</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Past Responses */}
       {respondedIntroductions.length > 0 && (
