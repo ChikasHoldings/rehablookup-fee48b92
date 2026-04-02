@@ -195,8 +195,27 @@ Deno.serve(async (req) => {
     let sentCount = 0;
     let errorCount = 0;
     
+    // Check suppressed emails to avoid sending to bounced/complained/unsubscribed addresses
+    const allEmails = (profiles || []).map(p => p.email).filter(Boolean);
+    let suppressedSet = new Set<string>();
+    if (allEmails.length > 0) {
+      const { data: suppressed } = await supabase
+        .from("suppressed_emails")
+        .select("email")
+        .in("email", allEmails);
+      if (suppressed) {
+        suppressedSet = new Set(suppressed.map((s: { email: string }) => s.email.toLowerCase()));
+      }
+    }
+
     for (const profile of profiles || []) {
       try {
+        // Skip suppressed emails
+        if (suppressedSet.has(profile.email.toLowerCase())) {
+          logStep("Skipping suppressed email", { email: profile.email });
+          continue;
+        }
+
         const userFacilities = facilities?.filter(f => f.user_id === profile.user_id) || [];
         if (userFacilities.length === 0) continue;
         
@@ -231,11 +250,16 @@ Deno.serve(async (req) => {
         const emailHtml = generateDigestEmail(digest);
         const subjectPrefix = planInfo.plan === 'pro' ? '⭐ ' : '';
         
+        const unsubToken = crypto.randomUUID();
         const { error: emailError } = await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
           subject: `${subjectPrefix}Weekly Digest: ${weeklyLeads || 0} new leads for ${facility.name}`,
           html: emailHtml,
+          headers: {
+            "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
         
         if (emailError) { errorCount++; } else { sentCount++; }
