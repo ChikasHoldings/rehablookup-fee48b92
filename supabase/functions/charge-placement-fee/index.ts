@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Admin authenticated", { adminId: userData.user.id });
 
-    const { inquiryId, facilityId, feeType, firstMonthCost, adminInitiated } = await req.json();
+    const { inquiryId, facilityId, feeType, firstMonthCost, adminInitiated, isInternational } = await req.json();
     
     // Validate required fields
     if (!inquiryId || !facilityId) {
