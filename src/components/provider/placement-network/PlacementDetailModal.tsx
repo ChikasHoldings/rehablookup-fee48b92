@@ -128,68 +128,23 @@ const fmtAmenities = (amenities: unknown) => {
   return String(amenities);
 };
 
-const fmtUrgency = (u: string | null | undefined) => {
-  const map: Record<string, string> = {
-    immediate: "Immediate",
-    within_week: "Within 1 Week",
-    within_month: "Within 1 Month",
-    flexible: "Flexible",
-  };
-  return map[u || ""] || "Flexible";
+const URGENCY_MAP: Record<string, { label: string; className: string }> = {
+  immediate: { label: "Immediate", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  within_week: { label: "Within 1 Week", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20" },
+  within_month: { label: "Within 1 Month", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
+  flexible: { label: "Flexible", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
 };
 
-// ── Sub-components ─────────────────────────────────────
-
-function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
-  if (!value || value === "Not specified") return null;
-  return (
-    <div className="flex items-start gap-2.5 py-1.5">
-      <Icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] text-muted-foreground uppercase tracking-wider leading-none mb-0.5">{label}</p>
-        <p className="text-sm font-medium break-words leading-snug">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function Section({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border overflow-hidden">
-      <div className="bg-muted/40 px-4 py-2 border-b flex items-center gap-2">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  );
-}
-
-function StatusChip({ status }: { status: string | undefined }) {
-  const config: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
-    new: { label: "New", variant: "secondary" },
-    reviewing: { label: "Under Review", variant: "outline", className: "border-primary/40 text-primary" },
-    matching: { label: "Finding Matches", variant: "outline", className: "border-accent-foreground/30 text-accent-foreground" },
-    matched: { label: "Matched", variant: "outline", className: "border-primary/40 text-primary" },
-    introductions_sent: { label: "Introductions Sent", variant: "outline", className: "border-primary/30 text-primary" },
-    in_contact: { label: "In Contact", variant: "outline", className: "border-primary/40 text-primary" },
-    placed: { label: "Placed", variant: "default" },
-    closed: { label: "Closed", variant: "secondary" },
-  };
-  const c = config[status || ""] || { label: fmt(status), variant: "secondary" as const };
-  return <Badge variant={c.variant} className={cn("text-[10px]", c.className)}>{c.label}</Badge>;
-}
-
-// ── Tab panel with its own scroll ──────────────────────
-
-function TabPanel({ active, children }: { active: boolean; children: React.ReactNode }) {
-  if (!active) return null;
-  return (
-    <div className="absolute inset-0 overflow-y-auto overscroll-contain">
-      <div className="p-4 sm:p-5">{children}</div>
-    </div>
-  );
-}
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  new: { label: "New", className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20" },
+  reviewing: { label: "Under Review", className: "bg-primary/10 text-primary border-primary/20" },
+  matching: { label: "Finding Matches", className: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/20" },
+  matched: { label: "Matched", className: "bg-primary/10 text-primary border-primary/20" },
+  introductions_sent: { label: "Introductions Sent", className: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20" },
+  in_contact: { label: "In Contact", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
+  placed: { label: "Placed", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
+  closed: { label: "Closed", className: "bg-muted text-muted-foreground border-muted" },
+};
 
 // ── Main Component ─────────────────────────────────────
 
@@ -212,7 +167,6 @@ export function PlacementDetailModal({
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
-  // Fetch full inquiry
   const { data: fullInquiry } = useQuery({
     queryKey: ["placement-detail", introduction?.inquiry_id],
     queryFn: async () => {
@@ -238,7 +192,6 @@ export function PlacementDetailModal({
     staleTime: 60000,
   });
 
-  // Fetch messages
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ["placement-messages", introduction?.inquiry_id, facilityId],
     queryFn: async () => {
@@ -262,7 +215,6 @@ export function PlacementDetailModal({
     staleTime: 30000,
   });
 
-  // Fetch case events
   const { data: caseEvents } = useQuery({
     queryKey: ["placement-events", introduction?.inquiry_id],
     queryFn: async () => {
@@ -285,6 +237,9 @@ export function PlacementDetailModal({
   const coOccurringText = fmtCoOccurring(inq?.co_occurring_concerns);
   const amenitiesText = fmtAmenities(inq?.amenity_preferences);
   const intakeData = inq?.intake_data && typeof inq.intake_data === "object" ? (inq.intake_data as Record<string, unknown>) : null;
+
+  const statusConf = STATUS_CONFIG[inq?.status || ""] || { label: fmt(inq?.status), className: "bg-muted text-muted-foreground" };
+  const urgencyConf = URGENCY_MAP[inq?.timeline_urgency || ""] || URGENCY_MAP.flexible;
 
   const steps = [
     { label: "Created", done: true },
@@ -310,30 +265,51 @@ export function PlacementDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] p-0 gap-0 overflow-hidden flex flex-col h-[85vh] sm:h-[80vh] [&>button]:top-3.5 [&>button]:right-3.5 [&>button]:z-[60]">
+      <DialogContent className="max-w-2xl w-[95vw] p-0 gap-0 overflow-hidden flex flex-col h-[85vh] sm:h-[80vh] [&>button]:top-4 [&>button]:right-4 [&>button]:z-[60]">
 
-        {/* ─── Compact Header ─── */}
-        <DialogHeader className="px-5 pt-4 pb-3 border-b flex-shrink-0">
-          <div className="flex items-center justify-between gap-3 pr-6">
+        {/* ─── Header ─── */}
+        <DialogHeader className="px-6 pt-5 pb-4 border-b bg-muted/20 flex-shrink-0">
+          <div className="flex items-start justify-between gap-4 pr-8">
             <div className="min-w-0">
-              <DialogTitle className="text-base font-bold tracking-tight">
+              <DialogTitle className="text-lg font-bold tracking-tight flex items-center gap-2.5">
                 Case #{caseId}
+                <Badge variant="outline" className={cn("text-[11px] font-semibold", statusConf.className)}>
+                  {statusConf.label}
+                </Badge>
               </DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                <User className="h-3 w-3 shrink-0" />
-                {firstName} · {introduction?.created_at && format(new Date(introduction.created_at), "MMM d, yyyy")}
-              </p>
+              <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" />
+                  {firstName}
+                </span>
+                <span className="text-muted-foreground/30">·</span>
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {introduction?.created_at && format(new Date(introduction.created_at), "MMM d, yyyy")}
+                </span>
+                {inq?.timeline_urgency && (
+                  <>
+                    <span className="text-muted-foreground/30">·</span>
+                    <Badge variant="outline" className={cn("text-[10px]", urgencyConf.className)}>
+                      {urgencyConf.label}
+                    </Badge>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <StatusChip status={inq?.status} />
-              {isPending && <Badge variant="destructive" className="text-[10px] h-5">Action Needed</Badge>}
+            <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+              {isPending && (
+                <Badge variant="destructive" className="text-[11px] h-6 gap-1">
+                  <AlertCircle className="h-3 w-3" /> Action Needed
+                </Badge>
+              )}
               {isAccepted && !isPlaced && (
-                <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                <Badge className="bg-amber-500 text-white border-amber-500 text-[11px] h-6 gap-1">
                   <Hourglass className="h-3 w-3" /> Awaiting
                 </Badge>
               )}
               {isPlaced && (
-                <Badge variant="default" className="text-[10px] h-5 gap-1">
+                <Badge className="bg-emerald-600 text-white border-emerald-600 text-[11px] h-6 gap-1">
                   <CheckCircle2 className="h-3 w-3" /> Placed
                 </Badge>
               )}
@@ -341,23 +317,23 @@ export function PlacementDetailModal({
           </div>
         </DialogHeader>
 
-        {/* ─── Tab Bar (custom, not Radix) ─── */}
-        <div className="flex border-b flex-shrink-0 px-5">
+        {/* ─── Tab Bar ─── */}
+        <div className="flex border-b flex-shrink-0 px-6 bg-background">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                "flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors -mb-px",
+                "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px",
                 activeTab === tab.key
-                  ? "border-primary text-foreground"
+                  ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
               )}
             >
-              <tab.icon className="h-3.5 w-3.5" />
+              <tab.icon className="h-4 w-4" />
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && (
-                <span className="ml-1 bg-muted text-muted-foreground rounded-full text-[10px] h-4 min-w-[16px] px-1 flex items-center justify-center">
+                <span className="bg-primary/10 text-primary rounded-full text-[11px] font-bold h-5 min-w-[20px] px-1.5 flex items-center justify-center">
                   {tab.count}
                 </span>
               )}
@@ -365,47 +341,47 @@ export function PlacementDetailModal({
           ))}
         </div>
 
-        {/* ─── Tab Content (each independently scrollable) ─── */}
+        {/* ─── Tab Content ─── */}
         <div className="flex-1 min-h-0 relative">
 
           {/* === DETAILS === */}
           <TabPanel active={activeTab === "details"}>
-            <div className="space-y-4">
-              {/* Progress bar */}
-              <div className="rounded-lg border bg-muted/20 p-3">
-                <div className="flex gap-1 mb-2">
+            <div className="space-y-5">
+              {/* Progress stepper */}
+              <div className="rounded-xl border bg-muted/20 p-4">
+                <div className="flex gap-1.5 mb-3">
                   {steps.map((s, i) => (
                     <div key={i} className="flex-1">
-                      <div className={cn("h-1.5 rounded-full transition-colors", s.done ? "bg-primary" : "bg-muted")} />
-                      <p className={cn("text-[9px] text-center mt-1 leading-tight", s.done ? "text-foreground font-medium" : "text-muted-foreground")}>
+                      <div className={cn("h-2 rounded-full transition-colors", s.done ? "bg-primary" : "bg-muted")} />
+                      <p className={cn("text-[10px] text-center mt-1.5", s.done ? "text-foreground font-semibold" : "text-muted-foreground")}>
                         {s.label}
                       </p>
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded px-2.5 py-1.5 border">
-                  <ArrowRight className="h-3 w-3 shrink-0 text-primary" />
+                <div className="flex items-center gap-2.5 text-sm text-muted-foreground bg-background rounded-lg px-3 py-2 border">
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-primary" />
                   <span>{nextStepText}</span>
                 </div>
               </div>
 
               {/* Client Profile */}
-              <Section title="Client Profile" icon={User}>
-                <div className="grid grid-cols-2 gap-x-6">
+              <SectionCard title="Client Profile" icon={User}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
                   <InfoItem icon={User} label="Name" value={firstName} />
                   <InfoItem icon={Calendar} label="Age Range" value={fmt(inq?.age_range)} />
                   <InfoItem icon={User} label="Gender" value={fmt(inq?.gender)} />
-                  <InfoItem icon={MapPin} label="Location" value={locationText} />
+                  <InfoItem icon={MapPin} label="Preferred Location" value={locationText} />
                   <InfoItem icon={MessageSquare} label="Language" value={fmt(inq?.preferred_language)} />
                   <InfoItem icon={MapPin} label="Environment" value={fmt(inq?.preferred_environment)} />
                   <InfoItem icon={Activity} label="Living Situation" value={fmt(inq?.current_living_situation)} />
                   <InfoItem icon={Shield} label="Mobility Needs" value={fmt(inq?.mobility_needs)} />
                 </div>
-              </Section>
+              </SectionCard>
 
               {/* Clinical Summary */}
-              <Section title="Clinical Summary" icon={Activity}>
-                <div className="grid grid-cols-2 gap-x-6">
+              <SectionCard title="Clinical Summary" icon={Activity}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
                   <InfoItem icon={Activity} label="Level of Care" value={fmt(inq?.level_of_care)} />
                   <InfoItem icon={Heart} label="Primary Concern" value={fmt(inq?.primary_concern)} />
                   <InfoItem icon={Pill} label="Detox Needed" value={fmt(inq?.detox_needed)} />
@@ -417,33 +393,33 @@ export function PlacementDetailModal({
                   <InfoItem icon={Pill} label="Medications" value={inq?.current_medications} />
                 </div>
                 {coOccurringText && (
-                  <div className="mt-1">
+                  <div className="mt-2 pt-2 border-t">
                     <InfoItem icon={Heart} label="Co-Occurring" value={coOccurringText} />
                   </div>
                 )}
-              </Section>
+              </SectionCard>
 
               {/* Payment & Preferences */}
-              <Section title="Payment & Preferences" icon={DollarSign}>
-                <div className="grid grid-cols-2 gap-x-6">
-                  <InfoItem icon={DollarSign} label="Payment" value={fmt(inq?.payment_type)} />
+              <SectionCard title="Payment & Preferences" icon={DollarSign}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                  <InfoItem icon={DollarSign} label="Payment Type" value={fmt(inq?.payment_type)} />
                   <InfoItem icon={Shield} label="Insurance" value={inq?.insurance_carrier} />
                   <InfoItem icon={DollarSign} label="Budget" value={fmt(inq?.budget_range)} />
-                  <InfoItem icon={Clock} label="Timeline" value={fmtUrgency(inq?.timeline_urgency)} />
+                  <InfoItem icon={Clock} label="Timeline" value={urgencyConf.label} />
                   <InfoItem icon={Heart} label="Faith-Based" value={fmt(inq?.faith_based_preference)} />
                   {inq?.holistic_interest && <InfoItem icon={Heart} label="Holistic" value="Yes" />}
                 </div>
                 {amenitiesText && (
-                  <div className="mt-1">
-                    <InfoItem icon={FileText} label="Amenities" value={amenitiesText} />
+                  <div className="mt-2 pt-2 border-t">
+                    <InfoItem icon={FileText} label="Amenity Preferences" value={amenitiesText} />
                   </div>
                 )}
-              </Section>
+              </SectionCard>
 
               {/* Additional intake data */}
               {intakeData && Object.keys(intakeData).length > 0 && (
-                <Section title="Additional Details" icon={FileText}>
-                  <div className="grid grid-cols-2 gap-x-6">
+                <SectionCard title="Additional Details" icon={FileText}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
                     {Object.entries(intakeData)
                       .filter(([key]) => !["email", "phone", "user_email", "user_phone"].includes(key))
                       .filter(([, val]) => val !== null && val !== undefined && val !== "")
@@ -457,23 +433,27 @@ export function PlacementDetailModal({
                         />
                       ))}
                   </div>
-                </Section>
+                </SectionCard>
               )}
 
               {/* Client Notes */}
               {inq?.notes && (
-                <Section title="Client Notes" icon={FileText}>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{inq.notes}</p>
-                </Section>
+                <SectionCard title="Client Notes" icon={FileText}>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{inq.notes}</p>
+                </SectionCard>
               )}
 
               {/* Fee notice */}
-              <div className="rounded-lg bg-muted/30 border px-3 py-2.5 flex items-start gap-2 text-xs text-muted-foreground">
-                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <span>
-                  <strong className="text-foreground">Fee:</strong> {hasPro ? "$800" : "$1,000"} — charged only on confirmed admission.
-                  {hasPro && <span className="text-primary ml-1">Pro discount</span>}
-                </span>
+              <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 flex items-start gap-3">
+                <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">
+                    {hasPro ? "$800" : "$1,000"} Placement Fee
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-500 mt-0.5">
+                    Charged only on confirmed admission.{hasPro && " Pro discount applied."}
+                  </p>
+                </div>
               </div>
 
               {/* Actions (pending) */}
@@ -483,17 +463,26 @@ export function PlacementDetailModal({
                     placeholder="Optional note to advisor..."
                     value={providerNote}
                     onChange={(e) => setProviderNote(e.target.value)}
-                    className="text-sm resize-none"
+                    className="text-sm resize-none rounded-xl"
                     rows={2}
                   />
                   <div className="flex gap-3">
-                    <Button className="flex-1 gap-2" onClick={() => onRespond("interested", providerNote.trim() || undefined)} disabled={isResponding}>
+                    <Button
+                      className="flex-1 gap-2 h-11"
+                      onClick={() => onRespond("interested", providerNote.trim() || undefined)}
+                      disabled={isResponding}
+                    >
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                      Accept
+                      I'm Interested
                     </Button>
-                    <Button variant="outline" className="flex-1 gap-2" onClick={() => onRespond("not_available", providerNote.trim() || undefined)} disabled={isResponding}>
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2 h-11"
+                      onClick={() => onRespond("not_available", providerNote.trim() || undefined)}
+                      disabled={isResponding}
+                    >
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                      Decline
+                      Not a Fit
                     </Button>
                   </div>
                 </div>
@@ -501,20 +490,35 @@ export function PlacementDetailModal({
 
               {/* Response summary */}
               {!isPending && (
-                <div className={cn("rounded-lg p-3.5 border", isPlaced ? "bg-primary/5 border-primary/20" : "bg-muted/30")}>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    {isPlaced ? <CheckCircle2 className="h-4 w-4 text-primary" /> : isAccepted ? <Hourglass className="h-4 w-4 text-muted-foreground" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                    <span className="font-medium text-sm">
+                <div className={cn(
+                  "rounded-xl p-4 border",
+                  isPlaced
+                    ? "bg-emerald-500/5 border-emerald-500/20"
+                    : isAccepted
+                    ? "bg-amber-500/5 border-amber-500/20"
+                    : "bg-muted/30 border-muted"
+                )}>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    {isPlaced ? (
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    ) : isAccepted ? (
+                      <Hourglass className="h-5 w-5 text-amber-600" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <span className="font-semibold text-sm">
                       {isPlaced ? "Admission Confirmed" : isAccepted ? "Accepted — Awaiting Confirmation" : "Declined"}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground pl-6">
+                  <p className="text-sm text-muted-foreground pl-[30px]">
                     {isPlaced
                       ? `Confirmed ${inquiry?.placement_confirmed_at ? format(new Date(inquiry.placement_confirmed_at), "MMM d, yyyy") : ""}`
                       : `Responded ${introduction?.provider_responded_at ? format(new Date(introduction.provider_responded_at), "MMM d, yyyy 'at' h:mm a") : ""}`}
                   </p>
                   {introduction?.provider_notes && (
-                    <p className="text-xs text-muted-foreground mt-1.5 pl-6 italic">"{introduction.provider_notes}"</p>
+                    <p className="text-sm text-muted-foreground mt-2 pl-[30px] italic border-l-2 border-muted ml-[14px] py-1">
+                      "{introduction.provider_notes}"
+                    </p>
                   )}
                 </div>
               )}
@@ -524,37 +528,39 @@ export function PlacementDetailModal({
           {/* === MESSAGES === */}
           <TabPanel active={activeTab === "messages"}>
             {messagesLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-12 w-3/4" />
-                <Skeleton className="h-12 w-2/3 ml-auto" />
-                <Skeleton className="h-12 w-3/4" />
+              <div className="space-y-4">
+                <Skeleton className="h-14 w-3/4 rounded-xl" />
+                <Skeleton className="h-14 w-2/3 ml-auto rounded-xl" />
+                <Skeleton className="h-14 w-3/4 rounded-xl" />
               </div>
             ) : messages && messages.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs text-muted-foreground mb-3">Messages between you and the placement advisor.</p>
+                <p className="text-sm text-muted-foreground mb-4">Messages between you and the placement advisor.</p>
                 {messages.map((msg) => {
                   const isYou = msg.sender_type === "provider" || msg.sender_type === "facility";
                   return (
                     <div key={msg.id} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
                       <div className={cn(
-                        "max-w-[80%] rounded-lg px-3.5 py-2.5 text-sm",
-                        isYou ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted rounded-bl-sm"
+                        "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
+                        isYou
+                          ? "bg-primary text-primary-foreground rounded-br-md"
+                          : "bg-muted rounded-bl-md"
                       )}>
-                        <p className="text-[10px] opacity-70 mb-0.5">{isYou ? "You" : "Advisor"}</p>
+                        <p className="text-[11px] font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
                         <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
-                        <p className="text-[10px] opacity-50 mt-1.5 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
+                        <p className="text-[10px] opacity-50 mt-2 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <p className="text-sm font-medium text-muted-foreground">No messages yet</p>
-                <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
+                <p className="text-sm font-semibold text-foreground">No messages yet</p>
+                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
                   Messages from the placement advisor will appear here once coordination begins.
                 </p>
               </div>
@@ -564,38 +570,36 @@ export function PlacementDetailModal({
           {/* === TIMELINE === */}
           <TabPanel active={activeTab === "timeline"}>
             <div className="space-y-0">
-              {/* Core milestones */}
               <TimelineEntry
                 label="Case Sent to You"
                 date={introduction?.created_at}
-                icon={<Send className="h-3.5 w-3.5 text-primary" />}
+                icon={<Send className="h-4 w-4 text-primary" />}
               />
               {introduction?.provider_responded_at && (
                 <TimelineEntry
                   label={isAccepted ? "You Accepted" : "You Declined"}
                   date={introduction.provider_responded_at}
-                  icon={isAccepted ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+                  icon={isAccepted ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
                 />
               )}
               {inquiry?.placement_confirmed_at && isPlaced && (
                 <TimelineEntry
                   label="Admission Confirmed"
                   date={inquiry.placement_confirmed_at}
-                  icon={<CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                  icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
                 />
               )}
 
-              {/* Case event log */}
               {caseEvents && caseEvents.length > 0 && (
                 <>
-                  <Separator className="my-4" />
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Activity Log</p>
+                  <Separator className="my-5" />
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Activity Log</p>
                   {caseEvents.map((ev) => (
                     <TimelineEntry
                       key={ev.id}
                       label={fmt(ev.event_type)}
                       date={ev.created_at}
-                      icon={<Activity className="h-3.5 w-3.5 text-muted-foreground" />}
+                      icon={<Activity className="h-4 w-4 text-muted-foreground" />}
                       subtitle={ev.actor_type ? `by ${fmt(ev.actor_type)}` : undefined}
                     />
                   ))}
@@ -603,11 +607,12 @@ export function PlacementDetailModal({
               )}
 
               {(!caseEvents || caseEvents.length === 0) && !introduction?.provider_responded_at && (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <Clock className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-muted-foreground">Timeline updates as the case progresses.</p>
+                  <p className="text-sm font-semibold text-foreground">No activity yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Timeline updates as the case progresses.</p>
                 </div>
               )}
             </div>
@@ -618,18 +623,54 @@ export function PlacementDetailModal({
   );
 }
 
-// ── Timeline entry ─────────────────────────────────────
+/* ═══════════════════════════════════════════════
+   SUB-COMPONENTS
+   ═══════════════════════════════════════════════ */
+
+function TabPanel({ active, children }: { active: boolean; children: React.ReactNode }) {
+  if (!active) return null;
+  return (
+    <div className="absolute inset-0 overflow-y-auto overscroll-contain">
+      <div className="p-5 sm:p-6">{children}</div>
+    </div>
+  );
+}
+
+function SectionCard({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border overflow-hidden">
+      <div className="bg-muted/30 px-4 py-2.5 border-b flex items-center gap-2.5">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</h3>
+      </div>
+      <div className="p-4 sm:p-5">{children}</div>
+    </div>
+  );
+}
+
+function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
+  if (!value || value === "Not specified") return null;
+  return (
+    <div className="flex items-start gap-2.5 py-2">
+      <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wider leading-none mb-1">{label}</p>
+        <p className="text-sm font-medium break-words leading-snug">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 function TimelineEntry({ label, date, icon, subtitle }: { label: string; date?: string | null; icon: React.ReactNode; subtitle?: string }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 border-l-2 border-muted pl-4 ml-1.5 relative">
-      <div className="absolute -left-[7px] top-3 shrink-0">{icon}</div>
-      <div className="min-w-0 flex-1 ml-2">
-        <p className="text-sm font-medium leading-snug">{label}</p>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+    <div className="flex items-start gap-4 py-3 border-l-2 border-muted pl-5 ml-2 relative">
+      <div className="absolute -left-[9px] top-3.5 shrink-0">{icon}</div>
+      <div className="min-w-0 flex-1 ml-1">
+        <p className="text-sm font-semibold leading-snug">{label}</p>
+        {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
       </div>
       {date && (
-        <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
+        <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
           {format(new Date(date), "MMM d, h:mm a")}
         </span>
       )}
