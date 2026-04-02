@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +29,9 @@ import {
   Loader2,
   Sparkles,
   MapPin,
+  ChevronRight,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface InternationalMatch {
   id: string;
@@ -50,18 +51,18 @@ interface InternationalMatch {
   };
 }
 
-const URGENCY_COLORS: Record<string, string> = {
-  immediate: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  within_week: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-  within_month: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  flexible: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+const URGENCY_CONFIG: Record<string, { label: string; className: string }> = {
+  immediate: { label: "Immediate", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  within_week: { label: "Within Week", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20" },
+  within_month: { label: "Within Month", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
+  flexible: { label: "Flexible", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
 };
 
 const BUDGET_LABELS: Record<string, string> = {
-  "10k-25k": "$10K - $25K/month",
-  "25k-50k": "$25K - $50K/month",
-  "50k-100k": "$50K - $100K/month",
-  "100k+": "$100K+/month",
+  "10k-25k": "$10K – $25K/mo",
+  "25k-50k": "$25K – $50K/mo",
+  "50k-100k": "$50K – $100K/mo",
+  "100k+": "$100K+/mo",
 };
 
 export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolean }) {
@@ -69,24 +70,16 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
   const { selectedFacility } = useSelectedFacility();
   const [selectedMatch, setSelectedMatch] = useState<InternationalMatch | null>(null);
   const [responseNotes, setResponseNotes] = useState("");
-  const [responseAction, setResponseAction] = useState<"accepted" | "declined" | null>(null);
 
-  // Fetch international case matches for this facility
   const { data: matches, isLoading } = useQuery({
     queryKey: ["international-matches", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("international_case_facility_matches")
-        .select(`
-          *,
-          international_placement_cases (
-            id, client_country, intake_data, priority, created_at
-          )
-        `)
+        .select(`*, international_placement_cases (id, client_country, intake_data, priority, created_at)`)
         .eq("facility_id", selectedFacility.id)
         .order("invited_at", { ascending: false });
-
       if (error) throw error;
       return (data as unknown as InternationalMatch[]) || [];
     },
@@ -106,7 +99,6 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
       toast.success(variables.response === "accepted" ? "Interest submitted!" : "Response recorded");
       setSelectedMatch(null);
       setResponseNotes("");
-      setResponseAction(null);
     },
     onError: (error) => {
       toast.error(error.message || "Failed to respond");
@@ -115,147 +107,123 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
 
   const handleRespond = (action: "accepted" | "declined") => {
     if (!selectedMatch) return;
-    setResponseAction(action);
-    respondMutation.mutate({
-      matchId: selectedMatch.id,
-      response: action,
-      notes: responseNotes,
-    });
+    respondMutation.mutate({ matchId: selectedMatch.id, response: action, notes: responseNotes });
   };
 
   const pendingMatches = matches?.filter((m) => m.status === "invited") || [];
   const respondedMatches = matches?.filter((m) => m.status !== "invited") || [];
+  const acceptedCount = respondedMatches.filter((m) => m.status === "accepted").length;
+  const declinedCount = respondedMatches.filter((m) => m.status === "declined").length;
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-28 w-full rounded-xl" />
+        <div className="grid grid-cols-3 gap-3">
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+        </div>
+        <Skeleton className="h-36 w-full rounded-xl" />
       </div>
     );
   }
 
-  const acceptedCount = respondedMatches.filter((m) => m.status === "accepted").length;
-  const declinedCount = respondedMatches.filter((m) => m.status === "declined").length;
-
   return (
     <div className="space-y-6">
-      {/* International Placements Header */}
-      <Card className="bg-gradient-to-r from-violet-500/5 to-violet-600/10 border-violet-500/20">
-        <CardContent className="py-5">
+      {/* ── Header Card ── */}
+      <Card className="border-primary/15 bg-gradient-to-br from-primary/5 via-background to-primary/5 overflow-hidden">
+        <CardContent className="p-5 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0">
-              <Globe className="h-6 w-6 text-violet-600" />
+            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Globe className="h-6 w-6 text-primary" />
             </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold">International Client Placements</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Pre-screened international clients seeking treatment in the United States.
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-foreground">International Placements</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Pre-screened global clients seeking treatment in the United States
               </p>
             </div>
-            <div className="sm:text-right">
-              <p className="text-2xl font-bold text-violet-600">
-                {hasPro ? "$2,400" : "$3,000"}
-              </p>
+            <div className="sm:text-right shrink-0">
+              <p className="text-2xl font-bold text-primary">{hasPro ? "$2,400" : "$3,000"}</p>
               <p className="text-xs text-muted-foreground">per confirmed admission</p>
               {hasPro && (
-                <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Pro: Save $600</p>
+                <Badge variant="secondary" className="mt-1 text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                  Pro: Save $600
+                </Badge>
               )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Stats Row */}
+      {/* ── Stats Row ── */}
       <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Globe className="h-4 w-4 text-amber-500" />
-              <span className="text-2xl font-bold">{pendingMatches.length}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Pending Review</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <CheckCircle className="h-4 w-4 text-emerald-500" />
-              <span className="text-2xl font-bold">{acceptedCount}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Accepted</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-              <span className="text-2xl font-bold">{declinedCount}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Declined</p>
-          </CardContent>
-        </Card>
+        <StatCard icon={Globe} iconColor="text-amber-500" bgColor="bg-amber-500/10" value={pendingMatches.length} label="Pending" />
+        <StatCard icon={CheckCircle} iconColor="text-emerald-500" bgColor="bg-emerald-500/10" value={acceptedCount} label="Accepted" />
+        <StatCard icon={XCircle} iconColor="text-muted-foreground" bgColor="bg-muted" value={declinedCount} label="Declined" />
       </div>
 
-      {/* Pending Invitations */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Globe className="h-5 w-5 text-violet-500" />
-          Pending Candidates
-          {pendingMatches.length > 0 && (
-            <Badge variant="destructive">{pendingMatches.length} new</Badge>
-          )}
-        </h3>
+      {/* ── Pending Candidates ── */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold flex items-center gap-2">
+            Pending Candidates
+            {pendingMatches.length > 0 && (
+              <span className="inline-flex items-center justify-center text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 bg-destructive text-destructive-foreground">
+                {pendingMatches.length}
+              </span>
+            )}
+          </h3>
+        </div>
 
         {pendingMatches.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="py-8 text-center">
-              <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground">No pending international candidates</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                When international clients are matched to your facility, they'll appear here.
+            <CardContent className="py-10 text-center">
+              <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                <Globe className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <p className="font-medium text-foreground">No pending candidates</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                When international clients are matched to your facility, they'll appear here for your review.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="space-y-3">
             {pendingMatches.map((match) => (
-              <CandidateCard
-                key={match.id}
-                match={match}
-                onRespond={() => setSelectedMatch(match)}
-              />
+              <CandidateRow key={match.id} match={match} onRespond={() => setSelectedMatch(match)} />
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Past Responses */}
+      {/* ── Past Responses ── */}
       {respondedMatches.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-3 text-muted-foreground">Past Responses</h3>
-          <div className="grid gap-3">
+        <section>
+          <h3 className="text-base font-semibold text-muted-foreground mb-3">Past Responses</h3>
+          <div className="space-y-2">
             {respondedMatches.map((match) => (
-              <Card key={match.id} className="bg-muted/30">
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+              <Card key={match.id} className="bg-muted/20 border-muted">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <Badge
                         variant={match.status === "accepted" ? "default" : "secondary"}
-                        className="capitalize"
+                        className="shrink-0 gap-1"
                       >
                         {match.status === "accepted" ? (
-                          <><CheckCircle className="h-3 w-3 mr-1" /> Accepted</>
+                          <><CheckCircle className="h-3 w-3" /> Accepted</>
                         ) : (
-                          <><XCircle className="h-3 w-3 mr-1" /> Declined</>
+                          <><XCircle className="h-3 w-3" /> Declined</>
                         )}
                       </Badge>
-                      <span className="text-sm">
-                        {match.international_placement_cases?.client_country} •{" "}
+                      <span className="text-sm truncate">
+                        {match.international_placement_cases?.client_country} ·{" "}
                         {(match.international_placement_cases?.intake_data?.primary_concern as string) || "Treatment"}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground shrink-0">
                       {match.responded_at && format(new Date(match.responded_at), "MMM d, yyyy")}
                     </span>
                   </div>
@@ -263,97 +231,69 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
               </Card>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Response Dialog */}
+      {/* ── Response Dialog ── */}
       <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              International Candidate
-            </DialogTitle>
-            <DialogDescription>
-              Review this anonymized candidate profile and indicate your interest.
-            </DialogDescription>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden [&>button]:top-3 [&>button]:right-3 [&>button]:z-[60]">
+          <DialogHeader className="p-5 pb-4 border-b bg-muted/30">
+            <div className="pr-8">
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Globe className="h-5 w-5 text-primary" />
+                International Candidate
+              </DialogTitle>
+              <DialogDescription className="mt-1">
+                Review this anonymized profile and indicate your interest.
+              </DialogDescription>
+            </div>
           </DialogHeader>
 
           {selectedMatch && (
-            <div className="space-y-4">
-              {/* Anonymized Summary */}
-              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Country:</span>
-                  <span>{selectedMatch.international_placement_cases?.client_country}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Budget:</span>
-                  <span>
-                    {BUDGET_LABELS[
-                      selectedMatch.international_placement_cases?.intake_data?.budget_range as string
-                    ] || "Not specified"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Urgency:</span>
-                  <Badge
-                    className={
-                      URGENCY_COLORS[
-                        selectedMatch.international_placement_cases?.intake_data?.urgency as string
-                      ] || "bg-gray-100"
-                    }
-                    variant="outline"
-                  >
-                    {(selectedMatch.international_placement_cases?.intake_data?.urgency as string)?.replace(
-                      "_",
-                      " "
-                    ) || "Flexible"}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Primary Concern:</span>
-                  <span>
-                    {(selectedMatch.international_placement_cases?.intake_data?.primary_concern as string) ||
-                      "Substance Use"}
-                  </span>
-                </div>
+            <div className="p-5 space-y-5 max-h-[60vh] overflow-y-auto">
+              {/* Profile Details */}
+              <div className="space-y-4">
+                <DetailRow icon={MapPin} label="Country" value={selectedMatch.international_placement_cases?.client_country || "—"} />
+                <DetailRow
+                  icon={DollarSign}
+                  label="Budget"
+                  value={BUDGET_LABELS[selectedMatch.international_placement_cases?.intake_data?.budget_range as string] || "Not specified"}
+                />
+                <DetailRow icon={Clock} label="Urgency">
+                  <UrgencyBadge urgency={selectedMatch.international_placement_cases?.intake_data?.urgency as string} />
+                </DetailRow>
+                <DetailRow
+                  icon={User}
+                  label="Primary Concern"
+                  value={(selectedMatch.international_placement_cases?.intake_data?.primary_concern as string) || "Substance Use"}
+                />
                 {selectedMatch.international_placement_cases?.intake_data?.rehab_style && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Sparkles className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Preference:</span>
-                    <span className="capitalize">
-                      {(selectedMatch.international_placement_cases?.intake_data?.rehab_style as string)?.replace(
-                        "_",
-                        " "
-                      )}
-                    </span>
-                  </div>
+                  <DetailRow
+                    icon={Sparkles}
+                    label="Preference"
+                    value={(selectedMatch.international_placement_cases?.intake_data?.rehab_style as string)?.replace("_", " ")}
+                    capitalize
+                  />
                 )}
                 {selectedMatch.international_placement_cases?.intake_data?.notes && (
-                  <div className="pt-2 border-t">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="pt-3 border-t">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {selectedMatch.international_placement_cases?.intake_data?.notes as string}
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Facility Fee Notice */}
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
+              {/* Fee Notice */}
+              <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-amber-800 dark:text-amber-400">
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">
                       {hasPro ? "$2,400" : "$3,000"} Placement Fee
                     </p>
-                    <p className="text-amber-700 dark:text-amber-500">
-                      A placement fee is charged only if the client is admitted to your facility.
-                      {hasPro && " Pro discount applied."}
+                    <p className="text-sm text-amber-700 dark:text-amber-500 mt-0.5">
+                      Charged only on confirmed admission.{hasPro && " Pro discount applied."}
                     </p>
                   </div>
                 </div>
@@ -361,22 +301,23 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
 
               {/* Notes */}
               <div>
-                <Label>Notes (optional)</Label>
+                <Label className="text-sm font-medium">Notes (optional)</Label>
                 <Textarea
                   value={responseNotes}
                   onChange={(e) => setResponseNotes(e.target.value)}
                   placeholder="Add any notes about availability, questions, or concerns..."
-                  className="mt-1.5"
+                  className="mt-2 min-h-[80px]"
                 />
               </div>
             </div>
           )}
 
-          <DialogFooter className="flex gap-2 sm:gap-0">
+          <DialogFooter className="p-5 pt-4 border-t bg-muted/20 gap-2 sm:gap-2">
             <Button
               variant="outline"
               onClick={() => handleRespond("declined")}
               disabled={respondMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               <XCircle className="h-4 w-4 mr-1.5" />
               Not a Fit
@@ -384,6 +325,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
             <Button
               onClick={() => handleRespond("accepted")}
               disabled={respondMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               {respondMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
@@ -399,62 +341,121 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
   );
 }
 
-function CandidateCard({
-  match,
-  onRespond,
-}: {
-  match: InternationalMatch;
-  onRespond: () => void;
-}) {
-  const intakeData = match.international_placement_cases?.intake_data || {};
+/* ═══════════════════════════════════════════════
+   SUB-COMPONENTS
+   ═══════════════════════════════════════════════ */
 
+function StatCard({
+  icon: Icon,
+  iconColor,
+  bgColor,
+  value,
+  label,
+}: {
+  icon: React.ElementType;
+  iconColor: string;
+  bgColor: string;
+  value: number;
+  label: string;
+}) {
   return (
-    <Card className="hover:border-primary/50 transition-colors">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", bgColor)}>
+            <Icon className={cn("h-4.5 w-4.5", iconColor)} />
+          </div>
           <div>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              {match.international_placement_cases?.client_country}
-              {match.international_placement_cases?.priority === "vip" && (
-                <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-                  <Sparkles className="h-3 w-3 mr-1" /> VIP
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Invited {format(new Date(match.invited_at), "MMM d, yyyy")}
-            </CardDescription>
-          </div>
-          <Badge
-            className={URGENCY_COLORS[(intakeData.urgency as string)] || "bg-gray-100"}
-            variant="outline"
-          >
-            {(intakeData.urgency as string)?.replace("_", " ") || "Flexible"}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span>{BUDGET_LABELS[(intakeData.budget_range as string)] || "Not specified"}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span>{(intakeData.primary_concern as string) || "Substance Use"}</span>
+            <p className="text-xl font-bold">{value}</p>
+            <p className="text-xs text-muted-foreground">{label}</p>
           </div>
         </div>
-        {intakeData.rehab_style && (
-          <div className="text-sm text-muted-foreground">
-            <span className="capitalize">{(intakeData.rehab_style as string)?.replace("_", " ")}</span>{" "}
-            environment preferred
-          </div>
-        )}
-        <Button onClick={onRespond} className="w-full mt-2">
-          Review & Respond
-        </Button>
       </CardContent>
     </Card>
+  );
+}
+
+function CandidateRow({ match, onRespond }: { match: InternationalMatch; onRespond: () => void }) {
+  const intakeData = match.international_placement_cases?.intake_data || {};
+  const urgency = intakeData.urgency as string;
+  const urgencyConf = URGENCY_CONFIG[urgency] || URGENCY_CONFIG.flexible;
+
+  return (
+    <Card
+      className="hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group"
+      onClick={onRespond}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
+          {/* Country icon */}
+          <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Globe className="h-5 w-5 text-primary" />
+          </div>
+
+          {/* Main info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="font-semibold text-foreground">
+                {match.international_placement_cases?.client_country}
+              </span>
+              {match.international_placement_cases?.priority === "vip" && (
+                <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 text-[10px] px-1.5 py-0">
+                  <Sparkles className="h-2.5 w-2.5 mr-0.5" /> VIP
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{(intakeData.primary_concern as string) || "Substance Use"}</span>
+              <span className="text-muted-foreground/40">·</span>
+              <span>{BUDGET_LABELS[intakeData.budget_range as string] || "Budget TBD"}</span>
+            </div>
+          </div>
+
+          {/* Urgency + date */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right hidden sm:block">
+              <Badge variant="outline" className={cn("text-xs", urgencyConf.className)}>
+                {urgencyConf.label}
+              </Badge>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {format(new Date(match.invited_at), "MMM d")}
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+  capitalize: cap,
+  children,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value?: string;
+  capitalize?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+      <span className="text-sm font-medium text-muted-foreground w-28 shrink-0">{label}</span>
+      {children || <span className={cn("text-sm text-foreground", cap && "capitalize")}>{value}</span>}
+    </div>
+  );
+}
+
+function UrgencyBadge({ urgency }: { urgency?: string }) {
+  const conf = URGENCY_CONFIG[urgency || ""] || URGENCY_CONFIG.flexible;
+  return (
+    <Badge variant="outline" className={cn("text-xs", conf.className)}>
+      {conf.label}
+    </Badge>
   );
 }
