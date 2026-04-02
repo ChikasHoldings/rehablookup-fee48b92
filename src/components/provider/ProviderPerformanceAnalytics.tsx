@@ -129,15 +129,15 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
             <span className="text-xs font-semibold text-foreground">Listing Rankings</span>
           </div>
           <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30">
-                  <th className="text-left px-3 py-2 font-semibold text-muted-foreground">#</th>
-                  <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Facility</th>
-                  <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Views</th>
-                  <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Leads</th>
-                  <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Converted</th>
-                  <th className="text-right px-3 py-2 font-semibold text-muted-foreground">Score</th>
+                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
+                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Facility</th>
+                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Views</th>
+                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Leads</th>
+                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Converted</th>
+                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Score</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,22 +145,22 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
                   const score = listing.views + (listing.leads * 5) + (listing.converted * 20);
                   return (
                     <tr key={idx} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-3 py-2.5">
+                      <td className="px-4 py-3.5">
                         {idx === 0 ? (
-                          <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-bold">1</span>
+                          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-500/10 text-amber-600 text-xs font-bold">1</span>
                         ) : (
                           <span className="text-muted-foreground font-medium">{idx + 1}</span>
                         )}
                       </td>
-                      <td className="px-3 py-2.5 font-medium text-foreground">{listing.name}</td>
-                      <td className="text-right px-3 py-2.5 text-muted-foreground">{listing.views}</td>
-                      <td className="text-right px-3 py-2.5 text-muted-foreground">{listing.leads}</td>
-                      <td className="text-right px-3 py-2.5">
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                      <td className="px-4 py-3.5 font-medium text-foreground">{listing.name}</td>
+                      <td className="text-right px-4 py-3.5 text-muted-foreground">{listing.views}</td>
+                      <td className="text-right px-4 py-3.5 text-muted-foreground">{listing.leads}</td>
+                      <td className="text-right px-4 py-3.5">
+                        <Badge variant="outline" className="text-[11px] px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-200">
                           {listing.converted}
                         </Badge>
                       </td>
-                      <td className="text-right px-3 py-2.5 font-bold text-foreground">{score}</td>
+                      <td className="text-right px-4 py-3.5 font-bold text-foreground">{score}</td>
                     </tr>
                   );
                 })}
