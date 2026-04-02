@@ -421,10 +421,10 @@ export default function AdminNotifications() {
           )}
         </Button>
         <Button
-          variant={typeFilter === "security_event" ? "secondary" : "ghost"}
+          variant={typeFilter === "security_types" ? "secondary" : "ghost"}
           size="sm"
           className="h-7 px-3 text-xs font-medium shrink-0"
-          onClick={() => setTypeFilter(typeFilter === "security_event" ? "all" : "security_event")}
+          onClick={() => setTypeFilter(typeFilter === "security_types" ? "all" : "security_types")}
         >
           <ShieldAlert className="h-3.5 w-3.5 mr-1.5 text-red-600" />
           Security
