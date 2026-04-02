@@ -160,7 +160,7 @@ const ProviderListingPage = lazy(() => import("./pages/provider/MyListings"));
 const ProviderInquiriesPage = lazy(() => import("./pages/provider/Inquiries"));
 const ProviderReviewsPage = lazy(() => import("./pages/provider/Reviews"));
 const ProviderAnalyticsPage = lazy(() => import("./pages/provider/Analytics"));
-const ProviderCreditsPage = lazy(() => import("./pages/provider/Credits"));
+
 const ProviderSettingsPage = lazy(() => import("./pages/provider/Settings"));
 const ProviderEmbedBadgePage = lazy(() => import("./pages/provider/EmbedBadge"));
 const ProviderNotificationsPage = lazy(() => import("./pages/provider/Notifications"));
@@ -508,7 +508,8 @@ const AppInner = () => {
               <Route path="inquiries" element={<ProviderInquiriesPage />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
-              <Route path="credits" element={<ProviderCreditsPage />} />
+              <Route path="credits" element={<Navigate to="/provider/billing?purchase_credits=true" replace />} />
+              <Route path="pro-upgrade" element={<Navigate to="/provider/billing?tab=pro" replace />} />
               <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />

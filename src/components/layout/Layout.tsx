@@ -14,7 +14,7 @@ interface LayoutProps {
 
 // Memoize static shell elements so they never re-render during navigation
 const MemoizedHeader = memo(Header);
-const MemoizedFooter = memo(Footer);
+const MemoizedFooter = Footer;
 
 export function Layout({ children }: LayoutProps) {
   const { role, isLoading, isAuthenticated } = useUserRole();

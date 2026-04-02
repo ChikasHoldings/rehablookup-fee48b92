@@ -150,7 +150,7 @@ const socialLinks = [
   { Icon: LinkedInIcon, href: "https://linkedin.com/company/rehablookup", label: "LinkedIn" },
 ];
 
-export function Footer() {
+export const Footer = memo(function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -323,4 +323,4 @@ export function Footer() {
       </div>
     </footer>
   );
-}
+});

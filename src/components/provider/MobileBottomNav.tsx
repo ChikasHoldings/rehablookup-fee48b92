@@ -47,6 +47,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
     "/provider/knowledge-base",
     "/provider/notifications",
     "/provider/credits",
+    "/provider/pro-upgrade",
   ].some(path => location.pathname.startsWith(path));
 
   return (
