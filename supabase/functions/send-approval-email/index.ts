@@ -30,7 +30,8 @@ function generateApprovalEmail(
   providerName: string,
   facilityName: string,
   profileUrl: string,
-  plan: PlanType
+  plan: PlanType,
+  isConciergeOptedIn: boolean = false
 ): string {
   const isPro = plan === "pro";
 
@@ -100,6 +101,44 @@ function generateApprovalEmail(
     `;
   }
 
+  // Placement Network Introduction — non-intrusive, value-first
+  if (!isConciergeOptedIn) {
+    email += `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: #166534;">
+                      🏥 Fill Your Beds Faster with Treatment Placement
+                    </p>
+                    <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #475569; line-height: 1.6;">
+                      Our Treatment Placement service connects your facility with families who are actively seeking care and ready to admit. Our advisors personally coordinate each placement — you only pay when a patient is successfully placed.
+                    </p>
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 4px 0 0 0;">
+                      <tr>
+                        <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #166534; padding: 4px 0;">✅ No upfront costs — pay only on successful placement</td>
+                      </tr>
+                      <tr>
+                        <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #166534; padding: 4px 0;">✅ Pre-screened, qualified referrals matched to your specialties</td>
+                      </tr>
+                      <tr>
+                        <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #166534; padding: 4px 0;">✅ Dedicated advisor handles all coordination</td>
+                      </tr>
+                    </table>
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 16px 0 0 0;">
+                      <tr>
+                        <td style="background-color: #166534; border-radius: 6px;">
+                          <a href="https://rehablookup.com/provider/placement" style="display: inline-block; padding: 10px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                            Learn About Placement →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+    `;
+  }
+
   email += ctaButton("See Your Listing", profileUrl, plan);
   
   email += `
@@ -158,7 +197,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
-      .select("slug, city, state")
+      .select("slug, city, state, concierge_network_opted_in")
       .eq("id", facilityId)
       .maybeSingle();
 
@@ -171,12 +210,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       : `https://rehablookup.com/rehab-centers`;
 
     const providerName = profile.first_name || "there";
+    const isConciergeOptedIn = facility?.concierge_network_opted_in === true;
     
     // Get provider plan for styling
     const planInfo = await getProviderPlan(profile.email, stripe);
     console.log("Provider plan:", planInfo.plan);
 
-    const emailHtml = generateApprovalEmail(providerName, facilityName, profileUrl, planInfo.plan);
+    const emailHtml = generateApprovalEmail(providerName, facilityName, profileUrl, planInfo.plan, isConciergeOptedIn);
 
     const resend = new Resend(resendApiKey);
     const subjectPrefix = planInfo.plan === "pro" ? "⭐ " : "";
