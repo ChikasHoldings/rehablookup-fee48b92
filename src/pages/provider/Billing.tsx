@@ -64,7 +64,7 @@ export default function ProviderBillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
-  const { balanceFormatted, transactions, isLoading, refetch: refetchCredits } = useProviderCredits(facilityId);
+  const { balanceFormatted, transactions, isLoading, refetchCredits } = useProviderCredits(facilityId);
   const { data: proStatus, refetch: refetchProStatus } = useProStatus();
   const { 
     paymentMethods: allPaymentMethods, 

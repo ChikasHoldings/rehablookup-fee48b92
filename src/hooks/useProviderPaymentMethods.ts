@@ -29,7 +29,7 @@ export function useProviderPaymentMethods(facilityId?: string) {
       
       const { data, error } = await supabase
         .from("provider_payment_methods")
-        .select("*")
+        .select("id, facility_id, type, stripe_payment_method_id, stripe_customer_id, last_four, bank_name, card_brand, exp_month, exp_year, is_default, is_verified, created_at, updated_at")
         .eq("facility_id", facilityId)
         .order("is_default", { ascending: false })
         .order("created_at", { ascending: false });
