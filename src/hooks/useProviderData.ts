@@ -8,6 +8,8 @@ interface Profile {
   email: string;
   phone: string | null;
   job_title: string | null;
+  primary_contact_name: string | null;
+  timezone: string | null;
   phone_verified: boolean | null;
   phone_verified_at: string | null;
 }
