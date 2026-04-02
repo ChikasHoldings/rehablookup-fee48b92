@@ -395,6 +395,20 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       analytics.formSubmit("lead_intake", true);
       setIsSubmitted(true);
       
+      // Send placement intro email to seeker (non-blocking)
+      const seekerEmail = formData.email.toLowerCase().trim();
+      supabase.functions.invoke('send-seeker-emails', {
+        body: {
+          type: 'placement_intro',
+          seekerId: '',
+          email: seekerEmail,
+          metadata: {
+            facilityName: facilityId,
+            source: 'lead_inquiry',
+          },
+        },
+      }).catch(() => { /* non-blocking */ });
+      
     } catch (error: any) {
       trackAnalytics("form_submit_error", { error: error.message });
       toast({
