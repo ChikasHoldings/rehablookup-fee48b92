@@ -647,7 +647,7 @@ export default function SeekerHome() {
                     <Send className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">My Requests</p>
+                     <p className="font-semibold text-foreground">Inbox</p>
                     <p className="text-xs text-muted-foreground">Track Submissions</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />

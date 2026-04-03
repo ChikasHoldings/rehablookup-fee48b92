@@ -41,7 +41,7 @@ interface SearchResult {
 const navItems = [
   { to: "/account", icon: Home, label: "Home" },
   { to: "/account/concierge", icon: HeartHandshake, label: "Concierge" },
-  { to: "/account/requests", icon: Send, label: "My Requests" },
+  { to: "/account/requests", icon: Send, label: "Inbox" },
   { to: "/account/reviews", icon: Star, label: "My Reviews" },
 ];
 
