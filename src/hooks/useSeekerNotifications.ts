@@ -81,7 +81,7 @@ export function useSeekerNotifications() {
 
       const { data, error } = await supabase
         .from("seeker_notifications")
-        .select("*")
+        .select("id, user_id, type, title, message, link, metadata, read, created_at")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
         .limit(50);
