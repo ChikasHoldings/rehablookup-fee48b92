@@ -136,7 +136,8 @@ export default function SeekerSignup() {
           data: {
             display_name: displayName,
             first_name: firstName.trim(),
-            last_name: lastName.trim()
+            last_name: lastName.trim(),
+            account_type: 'seeker'
           }
         }
       });
