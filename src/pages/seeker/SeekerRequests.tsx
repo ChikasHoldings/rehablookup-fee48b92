@@ -152,8 +152,7 @@ function RequestCard({
 }
 
 export default function SeekerRequests() {
-  const context = useOutletContext<SeekerOutletContext>();
-  const isAuthenticated = context?.isAuthenticated ?? false;
+  const { email, isAuthenticated, isReady } = useSeekerSession();
   const [searchParams] = useSearchParams();
   
   const [requests, setRequests] = useState<SubmittedRequest[]>([]);
