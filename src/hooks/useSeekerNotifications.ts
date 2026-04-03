@@ -185,7 +185,7 @@ export function useSeekerNotifications() {
             event: "DELETE",
             schema: "public",
             table: "seeker_notifications",
-            filter: `user_id=eq.${session.user.id}`,
+            filter: `user_id=eq.${uid}`,
           },
           (payload) => {
             const deletedId = (payload.old as { id: string }).id;
