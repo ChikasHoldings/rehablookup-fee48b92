@@ -99,9 +99,22 @@ export function SeekerShell() {
         
         if (!isMounted) return;
         
-        setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
+
+        // Check email verification from our custom verification system
+        if (session?.user?.email) {
+          const { data: verifiedRecord } = await supabase
+            .from('email_verification_codes')
+            .select('verified')
+            .eq('email', session.user.email.toLowerCase())
+            .eq('verified', true)
+            .maybeSingle();
+          
+          setIsEmailVerified(!!verifiedRecord);
+        } else {
+          setIsEmailVerified(false);
+        }
 
         // Redirect to login if not authenticated AND no auth hash being processed
         if (!session && !hasAuthHash) {
