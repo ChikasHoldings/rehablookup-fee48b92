@@ -95,8 +95,7 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
 
       toast.success('Email verified!');
       setIsDismissed(true);
-      // Reload to update verification state
-      window.location.reload();
+      onVerified?.();
     } catch {
       toast.error('Verification failed');
     } finally {
