@@ -29,7 +29,8 @@ export default function SeekerSaved() {
           .from('facilities')
           .select('id, name, city, state, phone, facility_type, slug, description, logo_url, gallery_urls, verified, year_established')
           .in('id', favorites)
-          .eq('status', 'approved');
+          .eq('status', 'approved')
+          .limit(200);
 
         if (queryError) {
           setError('Failed to load saved facilities');
