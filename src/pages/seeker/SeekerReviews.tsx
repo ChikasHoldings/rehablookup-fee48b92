@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search, Reply } from "lucide-react";
@@ -112,15 +113,12 @@ function ReviewCard({
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                <div className="text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
-                    <span className="font-display text-xl font-bold text-primary">
-                      {initials}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <img 
+                src={facilityPlaceholder}
+                alt={`${review.facility_name} facility`}
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                loading="lazy"
+              />
             )}
           </div>
         </div>

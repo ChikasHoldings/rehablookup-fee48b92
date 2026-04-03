@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
@@ -108,9 +109,12 @@ function RequestCard({
               onError={() => setLogoError(true)}
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <span className="font-display text-sm font-bold text-primary">{initials}</span>
-            </div>
+            <img 
+              src={facilityPlaceholder}
+              alt={request.facility_name}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
           )}
         </div>
         <div className="flex-1 min-w-0">
