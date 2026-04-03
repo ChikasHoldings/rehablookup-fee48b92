@@ -31,9 +31,9 @@ const eventColors: Record<string, string> = {
 };
 
 export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
+  const { userId, isAuthenticated, isReady } = useSeekerSession();
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     let isMounted = true;
