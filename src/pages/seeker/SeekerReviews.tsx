@@ -274,7 +274,8 @@ export default function SeekerReviews() {
         .from('facility_reviews')
         .select('id, facility_id, rating, review_text, status, created_at')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (reviewsError) {
         console.error('Error fetching reviews:', reviewsError);
@@ -367,64 +368,64 @@ export default function SeekerReviews() {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingReview) return;
+    if (!editingReview || isSaving) return;
 
     setIsSaving(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    const { error } = await supabase
-      .from('facility_reviews')
-      .update({
-        rating: editRating,
-        review_text: editText || null,
-      })
-      .eq('id', editingReview.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Session expired", description: "Please sign in again.", variant: "destructive" });
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Error saving",
-        description: "Could not update your review. Please try again.",
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Review updated",
-        description: "Your review has been updated successfully."
-      });
-      if (session) {
+      const { error } = await supabase
+        .from('facility_reviews')
+        .update({
+          rating: editRating,
+          review_text: editText || null,
+        })
+        .eq('id', editingReview.id)
+        .eq('user_id', session.user.id);
+
+      if (error) {
+        toast({ title: "Error saving", description: "Could not update your review. Please try again.", variant: "destructive" });
+      } else {
+        toast({ title: "Review updated", description: "Your review has been updated successfully." });
         fetchReviews(session.user.id);
       }
+    } finally {
+      setIsSaving(false);
+      setEditingReview(null);
     }
-
-    setIsSaving(false);
-    setEditingReview(null);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteReviewId) return;
+    if (!deleteReviewId || isDeleting) return;
 
     setIsDeleting(true);
-    const { error } = await supabase
-      .from('facility_reviews')
-      .delete()
-      .eq('id', deleteReviewId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Session expired", description: "Please sign in again.", variant: "destructive" });
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Error deleting",
-        description: "Could not delete your review. Please try again.",
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Review deleted",
-        description: "Your review has been removed successfully."
-      });
-      setReviews(prev => prev.filter(r => r.id !== deleteReviewId));
+      const { error } = await supabase
+        .from('facility_reviews')
+        .delete()
+        .eq('id', deleteReviewId)
+        .eq('user_id', session.user.id);
+
+      if (error) {
+        toast({ title: "Error deleting", description: "Could not delete your review. Please try again.", variant: "destructive" });
+      } else {
+        toast({ title: "Review deleted", description: "Your review has been removed successfully." });
+        setReviews(prev => prev.filter(r => r.id !== deleteReviewId));
+      }
+    } finally {
+      setIsDeleting(false);
+      setDeleteReviewId(null);
     }
-
-    setIsDeleting(false);
-    setDeleteReviewId(null);
   };
 
   const formatDate = (dateString: string) => {
