@@ -277,6 +277,7 @@ export default function SeekerSearch() {
     setLocationInput("");
     setSearchQuery("");
     setHasSearched(false);
+    setCurrentPage(1);
   };
   
   const activeFilterCount = selectedTreatmentTypes.length + selectedFacilityTypes.length;
