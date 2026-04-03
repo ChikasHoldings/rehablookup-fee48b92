@@ -380,7 +380,7 @@ export default function SeekerRequests() {
   return (
     <>
     <Helmet>
-      <title>My Requests | RehabLookup</title>
+      <title>Inbox | RehabLookup</title>
       <meta name="description" content="Track and manage your treatment center inquiries. View request status, facility responses, and send new requests." />
       <meta name="robots" content="noindex, nofollow" />
     </Helmet>
@@ -391,7 +391,7 @@ export default function SeekerRequests() {
             <Send className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-lg sm:text-2xl font-display font-bold">My Requests</h1>
+             <h1 className="text-lg sm:text-2xl font-display font-bold">Inbox</h1>
             <p className="text-xs sm:text-sm text-muted-foreground">Track inquiries</p>
           </div>
         </div>
