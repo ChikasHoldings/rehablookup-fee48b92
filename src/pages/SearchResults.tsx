@@ -438,7 +438,7 @@ const SearchResults = () => {
 
   const handleSortChange = (value: SortOption) => {
     const newParams = new URLSearchParams(searchParams);
-    if (value === "featured") {
+    if (value === "proximity") {
       newParams.delete("sort");
     } else {
       newParams.set("sort", value);
