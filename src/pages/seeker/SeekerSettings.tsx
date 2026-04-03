@@ -449,6 +449,7 @@ export default function SeekerSettings() {
   };
 
   const handleChangeEmail = async () => {
+    if (isChangingEmail) return;
     if (!newEmail || !newEmail.includes('@')) {
       toast({
         title: "Invalid email",
