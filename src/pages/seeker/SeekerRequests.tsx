@@ -4,13 +4,10 @@ import { Helmet } from "react-helmet-async";
 import { 
   Send, 
   Clock, 
-  CheckCircle, 
-  Phone, 
   Building2, 
   MapPin, 
   Plus,
   FileText,
-  Loader2,
   ExternalLink
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -209,7 +206,8 @@ export default function SeekerRequests() {
         .from('leads')
         .select('id, facility_id, created_at, status, urgency, preferred_contact')
         .eq('email', session.user.email)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (leadsError) {
         throw leadsError;
