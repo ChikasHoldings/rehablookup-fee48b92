@@ -274,7 +274,8 @@ export default function SeekerReviews() {
         .from('facility_reviews')
         .select('id, facility_id, rating, review_text, status, created_at')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (reviewsError) {
         console.error('Error fetching reviews:', reviewsError);
