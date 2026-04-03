@@ -98,6 +98,8 @@ function ReviewsSection({ facilityId, facilityName }: { facilityId: string; faci
     reviewCount,
     isAuthenticated,
     isEmailVerified,
+    isAuthLoading,
+    isReviewAuthReady,
     submitReview,
     updateReview,
     deleteReview,
