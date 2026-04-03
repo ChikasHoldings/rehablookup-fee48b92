@@ -6,9 +6,10 @@ import { toast } from 'sonner';
 
 interface EmailVerificationBannerProps {
   email?: string;
+  onVerified?: () => void;
 }
 
-export function EmailVerificationBanner({ email }: EmailVerificationBannerProps) {
+export function EmailVerificationBanner({ email, onVerified }: EmailVerificationBannerProps) {
   const [isResending, setIsResending] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
@@ -94,8 +95,7 @@ export function EmailVerificationBanner({ email }: EmailVerificationBannerProps)
 
       toast.success('Email verified!');
       setIsDismissed(true);
-      // Reload to update verification state
-      window.location.reload();
+      onVerified?.();
     } catch {
       toast.error('Verification failed');
     } finally {
