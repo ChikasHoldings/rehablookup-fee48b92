@@ -19,6 +19,8 @@ export default function SeekerSignup() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
   
   // Form fields
   const [firstName, setFirstName] = useState('');
