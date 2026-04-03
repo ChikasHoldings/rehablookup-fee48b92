@@ -148,7 +148,7 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
         .insert({
           inquiry_id: inquiryId,
           thread_type: "advisor", // ONLY advisor threads
-          user_id: user.id,
+          user_id: currentUserId,
         })
         .select()
         .single();
