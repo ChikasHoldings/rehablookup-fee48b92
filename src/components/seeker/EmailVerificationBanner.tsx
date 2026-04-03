@@ -9,7 +9,7 @@ interface EmailVerificationBannerProps {
   onVerified?: () => void;
 }
 
-export function EmailVerificationBanner({ email }: EmailVerificationBannerProps) {
+export function EmailVerificationBanner({ email, onVerified }: EmailVerificationBannerProps) {
   const [isResending, setIsResending] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
