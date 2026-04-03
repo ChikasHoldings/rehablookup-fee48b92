@@ -327,6 +327,23 @@ export function useUserRole(): UserRoleResult {
       }
     );
 
+    const storedSession = getStoredSupabaseSession();
+    if (storedSession?.user?.id) {
+      const hasStoredSession = updateAuthState(storedSession);
+      if (hasStoredSession) {
+        setTimeout(() => {
+          if (mountedRef.current) {
+            determineRole(storedSession.user.id).then((userRole) => {
+              if (mountedRef.current) {
+                setRole(userRole);
+                cacheAuthState(userRole, storedSession.user.id, true);
+              }
+            });
+          }
+        }, 0);
+      }
+    }
+
     initializeAuth();
 
     // Set up proactive token refresh (every 2 minutes)
