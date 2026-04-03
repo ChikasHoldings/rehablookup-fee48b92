@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import {
   Dialog,
   DialogContent,
@@ -93,13 +94,13 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
 }
 
 export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPlacementModalProps) {
+  const { userId: currentUserId } = useSeekerSession();
+  
   // Fetch full case data
   const { data: fullCase } = useQuery({
     queryKey: ["seeker-case-detail", caseData?.id],
     queryFn: async () => {
-      if (!caseData?.id) return null;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!caseData?.id || !currentUserId) return null;
 
       const { data, error } = await supabase
         .from("concierge_inquiries")
@@ -117,13 +118,13 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
           intake_submitted_at, matched_at, introductions_sent_at
         `)
         .eq("id", caseData.id)
-        .eq("user_id", user.id)
+        .eq("user_id", currentUserId)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: open && !!caseData?.id,
+    enabled: open && !!caseData?.id && !!currentUserId,
     staleTime: 60000,
   });
 

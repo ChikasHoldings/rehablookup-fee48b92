@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { 
   Globe, 
   Clock, 
@@ -43,13 +44,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export default function SeekerInternationalCase() {
-  const { data: user } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
-  });
+  const { userId: currentUserId, isReady } = useSeekerSession();
+
+  const user = isReady && currentUserId ? { id: currentUserId } : null;
 
   const { data: placementCase, isLoading, isError, refetch } = useQuery({
     queryKey: ["seeker-international-case", user?.id],

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ interface ConciergeMessagingProps {
  * Direct seeker-to-facility messaging is prohibited.
  */
 export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
+  const { userId: currentUserId } = useSeekerSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageContent, setMessageContent] = useState("");
@@ -139,15 +141,14 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
   // Create advisor thread
   const createThreadMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!currentUserId) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("concierge_threads")
         .insert({
           inquiry_id: inquiryId,
           thread_type: "advisor", // ONLY advisor threads
-          user_id: user.id,
+          user_id: currentUserId,
         })
         .select()
         .single();
@@ -172,8 +173,7 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
 
       if (!threadId || (!messageContent.trim() && !attachment)) return;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!currentUserId) throw new Error("Not authenticated");
 
       const trimmedContent = messageContent.trim();
       
@@ -187,7 +187,7 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
 
       const { error } = await supabase.from("concierge_messages").insert({
         thread_id: threadId,
-        sender_id: user.id,
+        sender_id: currentUserId,
         sender_type: "seeker",
         content: trimmedContent || (attachmentData ? `Sent an attachment: ${attachmentData.name}` : ""),
         attachment_url: attachmentData?.url || null,

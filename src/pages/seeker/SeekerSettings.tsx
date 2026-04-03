@@ -327,8 +327,7 @@ export default function SeekerSettings() {
 
   const handleSaveProfile = async () => {
     if (isSaving) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!sessionUserId) return;
 
     setIsSaving(true);
 
@@ -340,7 +339,7 @@ export default function SeekerSettings() {
     const { error } = await supabase
       .from('seeker_profiles')
       .upsert({ 
-        user_id: session.user.id,
+        user_id: sessionUserId,
         display_name: fullDisplayName,
         first_name: firstName.trim() || null,
         last_name: lastName.trim() || null,
@@ -360,7 +359,7 @@ export default function SeekerSettings() {
     } else {
       setDisplayName(fullDisplayName);
       // Invalidate the seeker profile query to update header name
-      queryClient.invalidateQueries({ queryKey: ['seeker-profile', session.user.id] });
+      queryClient.invalidateQueries({ queryKey: ['seeker-profile', sessionUserId] });
       await logActivity({
         eventType: "profile_update",
         description: "Updated profile information"
@@ -516,16 +515,11 @@ export default function SeekerSettings() {
     setIsDeletingAccount(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!sessionUserId) {
         throw new Error("Not authenticated");
       }
 
-      const response = await supabase.functions.invoke("delete-seeker-account", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
+      const response = await supabase.functions.invoke("delete-seeker-account");
 
       if (response.error) {
         throw new Error(response.error.message || "Failed to delete account");

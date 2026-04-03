@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -37,6 +38,7 @@ export function PlacementTabs({
   matchedFacilityIds,
   matchedFacilities,
 }: PlacementTabsProps) {
+  const { userId: currentUserId } = useSeekerSession();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("facilities");
@@ -45,33 +47,31 @@ export function PlacementTabs({
   const { data: rejectedFacilities, isLoading: rejectedLoading } = useQuery({
     queryKey: ["rejected-facilities", inquiryId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!currentUserId) return [];
 
       const { data, error } = await supabase
         .from("concierge_rejected_facilities")
         .select("facility_id")
         .eq("inquiry_id", inquiryId)
-        .eq("user_id", user.id);
+        .eq("user_id", currentUserId);
       
       if (error) throw error;
       return data?.map(r => r.facility_id) || [];
     },
-    enabled: !!inquiryId,
+    enabled: !!inquiryId && !!currentUserId,
   });
 
   // Dismiss mutation
   const dismissMutation = useMutation({
     mutationFn: async (facilityId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!currentUserId) throw new Error("Not authenticated");
 
       const { error } = await supabase
         .from("concierge_rejected_facilities")
         .insert({
           inquiry_id: inquiryId,
           facility_id: facilityId,
-          user_id: user.id,
+          user_id: currentUserId,
         });
       
       if (error) throw error;

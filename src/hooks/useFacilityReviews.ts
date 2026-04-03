@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSeekerAuth } from './useSeekerAuth';
+import { useSeekerSession } from './useSeekerSession';
 
 export interface FacilityReview {
   id: string;
@@ -27,7 +27,26 @@ export function useFacilityReviews(facilityId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState(0);
-  const { user, isAuthenticated, isEmailVerified, resendVerificationEmail, isLoading: isAuthLoading } = useSeekerAuth();
+  const { user, isAuthenticated, isReady } = useSeekerSession();
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+
+  // Check email verification status non-blockingly
+  useEffect(() => {
+    if (!user?.email) { setIsEmailVerified(false); return; }
+    supabase.rpc('is_email_verified', { p_email: user.email })
+      .then(({ data }) => setIsEmailVerified(!!data));
+  }, [user?.email]);
+
+  const resendVerificationEmail = useCallback(async () => {
+    if (!user?.email) return { error: new Error('No email') };
+    try {
+      const { data, error } = await supabase.functions.invoke('send-verification-code', {
+        body: { email: user.email }
+      });
+      if (error || data?.error) return { error: new Error(data?.error || 'Failed') };
+      return { error: null };
+    } catch (e: any) { return { error: e }; }
+  }, [user?.email]);
 
   const fetchReviews = useCallback(async () => {
     setIsLoading(true);
@@ -118,7 +137,7 @@ export function useFacilityReviews(facilityId: string) {
     fetchUserReview();
   }, [fetchUserReview]);
 
-  const isReviewAuthReady = !isAuthLoading;
+  const isReviewAuthReady = isReady;
 
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
@@ -235,7 +254,7 @@ export function useFacilityReviews(facilityId: string) {
     reviewCount,
     isAuthenticated,
     isEmailVerified,
-    isAuthLoading,
+    isAuthLoading: !isReady,
     isReviewAuthReady,
     submitReview,
     updateReview,
