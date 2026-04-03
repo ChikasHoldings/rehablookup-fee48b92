@@ -359,7 +359,7 @@ export default function SeekerSettings() {
     } else {
       setDisplayName(fullDisplayName);
       // Invalidate the seeker profile query to update header name
-      queryClient.invalidateQueries({ queryKey: ['seeker-profile', session.user.id] });
+      queryClient.invalidateQueries({ queryKey: ['seeker-profile', sessionUserId] });
       await logActivity({
         eventType: "profile_update",
         description: "Updated profile information"
