@@ -10,7 +10,9 @@ import {
   TrendingUp,
   Clock,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,10 +36,14 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { 
   parseLocationInput, 
-  sortByProximity
+  sortByProximity,
+  getStateAbbr,
 } from "@/lib/proximitySearch";
+import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { cn } from "@/lib/utils";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
+
+const SEARCH_PAGE_SIZE = 12;
 
 // Popular search terms
 const popularSearches = [
@@ -96,6 +102,7 @@ export default function SeekerSearch() {
   const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Location suggestions
   const locationSuggestions = useMemo(() => {
@@ -132,45 +139,57 @@ export default function SeekerSearch() {
   const handleSearch = () => {
     if (searchQuery.trim() || locationInput.trim() || selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0) {
       setHasSearched(true);
+      setCurrentPage(1);
     }
   };
 
   // Check if there's an active search
   const hasActiveSearch = searchQuery.trim() || locationInput.trim() || selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0;
   
-  // Filter and search facilities - only when searched
+  // Filter, sort with proximity, and search facilities
   const filteredFacilities = useMemo(() => {
     if (!facilities || !hasSearched) return [];
     
     let results = [...facilities];
     
-    // Filter by search query (name, description, facility type)
+    // Filter by search query (name, description, facility type, treatment types)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(f => 
         f.name.toLowerCase().includes(query) ||
         f.description?.toLowerCase().includes(query) ||
-        f.facilityType?.toLowerCase().includes(query)
+        f.facilityType?.toLowerCase().includes(query) ||
+        f.treatmentTypes?.some(t => t.toLowerCase().includes(query))
       );
     }
     
-    // Filter by location
-    if (locationInput) {
-      const locationMatch = parseLocationInput(locationInput);
-      const proximityResults = sortByProximity(results, locationMatch);
-      
-      results = proximityResults
-        .filter(r => r.tier !== "nationwide" || !locationInput)
-        .map(r => r.item);
+    // Parse location for filtering + sorting
+    const locationMatch = locationInput ? parseLocationInput(locationInput) : null;
+    
+    // Filter by location — keep exact, city, state, and nearby matches
+    if (locationInput && locationMatch) {
+      const locationLower = locationInput.toLowerCase();
+      results = results.filter(f => {
+        if (locationMatch.zipcode && f.zipCode === locationMatch.zipcode) return true;
+        if (f.city.toLowerCase().includes(locationLower)) return true;
+        if (f.state.toLowerCase().includes(locationLower)) return true;
+        if (locationMatch.stateAbbr) {
+          const fAbbr = getStateAbbr(f.state);
+          if (fAbbr?.toUpperCase() === locationMatch.stateAbbr!.toUpperCase()) return true;
+          if (fAbbr && locationMatch.nearbyStates.includes(fAbbr.toUpperCase())) return true;
+        }
+        if (f.zipCode?.includes(locationInput)) return true;
+        return false;
+      });
     }
     
     // Filter by treatment type
     if (selectedTreatmentTypes.length > 0) {
       results = results.filter(f => {
         const facilityType = f.facilityType?.toLowerCase() || "";
-        const description = f.description?.toLowerCase() || "";
+        const types = f.treatmentTypes?.map(t => t.toLowerCase()) || [];
         return selectedTreatmentTypes.some(type => 
-          facilityType.includes(type) || description.includes(type)
+          facilityType.includes(type) || types.some(t => t.includes(type))
         );
       });
     }
@@ -183,12 +202,41 @@ export default function SeekerSearch() {
       });
     }
     
+    // Sort: proximity first (if location), then Pro, then alphabetical
+    results.sort((a, b) => {
+      if (locationMatch) {
+        const getProx = (f: typeof a) => {
+          if (locationMatch.zipcode && f.zipCode === locationMatch.zipcode) return 0;
+          if (locationMatch.city && f.city.toLowerCase() === locationMatch.city.toLowerCase()) return 1;
+          const abbr = getStateAbbr(f.state);
+          if (locationMatch.stateAbbr && abbr?.toUpperCase() === locationMatch.stateAbbr.toUpperCase()) return 2;
+          if (abbr && locationMatch.nearbyStates.includes(abbr.toUpperCase())) return 3;
+          return 4;
+        };
+        const proxA = getProx(a);
+        const proxB = getProx(b);
+        if (proxA !== proxB) return proxA - proxB;
+      }
+      // Within same proximity tier, Pro first
+      const proA = getPlanPriority(a as any);
+      const proB = getPlanPriority(b as any);
+      if (proA !== proB) return proA - proB;
+      return a.name.localeCompare(b.name);
+    });
+    
     return results;
   }, [facilities, searchQuery, locationInput, selectedTreatmentTypes, selectedFacilityTypes, hasSearched]);
   
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredFacilities.length / SEARCH_PAGE_SIZE));
+  const paginatedFacilities = useMemo(() => {
+    const start = (currentPage - 1) * SEARCH_PAGE_SIZE;
+    return filteredFacilities.slice(start, start + SEARCH_PAGE_SIZE);
+  }, [filteredFacilities, currentPage]);
+  
   // Map to FacilityCardData
   const facilityCards: FacilityCardData[] = useMemo(() => {
-    return filteredFacilities.map(f => ({
+    return paginatedFacilities.map(f => ({
       id: f.id,
       name: f.name,
       city: f.city,
@@ -204,7 +252,7 @@ export default function SeekerSearch() {
       planTier: f.planTier,
       featured: f.featured,
     }));
-  }, [filteredFacilities]);
+  }, [paginatedFacilities]);
   
   // Toggle filter
   const toggleTreatmentType = (value: string) => {
@@ -230,6 +278,7 @@ export default function SeekerSearch() {
     setLocationInput("");
     setSearchQuery("");
     setHasSearched(false);
+    setCurrentPage(1);
   };
   
   const activeFilterCount = selectedTreatmentTypes.length + selectedFacilityTypes.length;
@@ -578,8 +627,9 @@ export default function SeekerSearch() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                      {facilityCards.length} {facilityCards.length === 1 ? "result" : "results"}
-                      {searchQuery && <span className="text-foreground font-medium"> for "{searchQuery}"</span>}
+                      Showing <span className="font-medium text-foreground">{(currentPage - 1) * SEARCH_PAGE_SIZE + 1}-{Math.min(currentPage * SEARCH_PAGE_SIZE, filteredFacilities.length)}</span> of{" "}
+                      <span className="font-medium text-foreground">{filteredFacilities.length}</span>
+                      {searchQuery && <span> for "<span className="text-foreground font-medium">{searchQuery}</span>"</span>}
                       {locationInput && <span> near <span className="text-foreground font-medium">{locationInput}</span></span>}
                     </p>
                     <Button 
@@ -598,6 +648,59 @@ export default function SeekerSearch() {
                       facility={facility}
                     />
                   ))}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="h-8 gap-1"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Previous</span>
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                          let page: number;
+                          if (totalPages <= 5) {
+                            page = i + 1;
+                          } else if (currentPage <= 3) {
+                            page = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            page = totalPages - 4 + i;
+                          } else {
+                            page = currentPage - 2 + i;
+                          }
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "ghost"}
+                              size="sm"
+                              className="h-8 w-8 p-0 text-xs"
+                              onClick={() => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="h-8 gap-1"
+                      >
+                        <span className="hidden sm:inline">Next</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
