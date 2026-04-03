@@ -24,8 +24,7 @@ export function useSeekerAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeker, setIsSeeker] = useState(false);
   
-  // Derive email verification from user's email_confirmed_at
-  const isEmailVerified = !!user?.email_confirmed_at;
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
