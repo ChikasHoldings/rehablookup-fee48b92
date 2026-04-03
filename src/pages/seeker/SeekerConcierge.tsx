@@ -244,17 +244,17 @@ export default function SeekerConcierge() {
 
   // Realtime: auto-refresh when case status or matches change
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!userId) return;
 
     const channel = supabase
-      .channel(`seeker-cases-${currentUser.id}`)
+      .channel(`seeker-cases-${userId}`)
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
           table: "concierge_inquiries",
-          filter: `user_id=eq.${currentUser.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
@@ -263,7 +263,7 @@ export default function SeekerConcierge() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser?.id, queryClient]);
+  }, [userId, queryClient]);
 
   const selectedCase = cases?.find(c => c.id === selectedCaseId) || cases?.[0];
 
