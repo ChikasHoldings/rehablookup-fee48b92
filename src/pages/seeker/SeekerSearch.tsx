@@ -36,10 +36,14 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { 
   parseLocationInput, 
-  sortByProximity
+  sortByProximity,
+  getStateAbbr,
 } from "@/lib/proximitySearch";
+import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { cn } from "@/lib/utils";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
+
+const SEARCH_PAGE_SIZE = 12;
 
 // Popular search terms
 const popularSearches = [
