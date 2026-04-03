@@ -58,7 +58,7 @@ export function PlacementTabs({
       if (error) throw error;
       return data?.map(r => r.facility_id) || [];
     },
-    enabled: !!inquiryId,
+    enabled: !!inquiryId && !!currentUserId,
   });
 
   // Dismiss mutation
