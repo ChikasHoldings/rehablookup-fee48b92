@@ -141,8 +141,7 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
   // Create advisor thread
   const createThreadMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!currentUserId) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("concierge_threads")
