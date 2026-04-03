@@ -101,21 +101,43 @@ export default function ConciergeCreatePassword() {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: verificationCode,
-        type: "email",
+      // Verify the code via our custom edge function
+      const { data, error } = await supabase.functions.invoke('verify-code', {
+        body: { email, code: verificationCode },
       });
 
-      if (error) throw error;
+      if (error || data?.error) {
+        toast.error(data?.error || "Invalid or expired code. Please try again.");
+        return;
+      }
 
-      if (data.session) {
+      if (data?.success) {
+        // Now sign up or sign in the user with a temporary password
+        const tempPassword = crypto.randomUUID();
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: tempPassword,
+          options: { data: { account_type: 'seeker' } },
+        });
+        
+        if (signUpError && !signUpError.message.includes('already registered')) {
+          // If already registered, sign in instead
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password: tempPassword,
+          });
+          if (signInError) {
+            toast.error("Account setup failed. Please try logging in.");
+            return;
+          }
+        }
+
         setStep("set-password");
         toast.success("Email verified!");
       }
     } catch (err) {
       console.error("Verify code error:", err);
-      toast.error("Invalid or expired code. Please try again.");
+      toast.error("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
