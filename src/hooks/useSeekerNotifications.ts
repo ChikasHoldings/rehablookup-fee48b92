@@ -122,8 +122,13 @@ export function useSeekerNotifications() {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const setupSubscription = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      // Update user ID from auth state change or stored value
+      const uid = userIdRef.current || getStoredUserId();
+      if (!uid) {
+        setIsLoading(false);
+        return;
+      }
+      userIdRef.current = uid;
 
       await fetchNotifications();
 
