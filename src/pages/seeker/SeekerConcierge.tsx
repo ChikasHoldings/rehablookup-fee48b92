@@ -345,15 +345,14 @@ export default function SeekerConcierge() {
     mutationFn: async () => {
       if (!selectedCase) throw new Error("No case selected");
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!userId) throw new Error("Not authenticated");
 
       // Only allow cancellation of own cases (RLS enforces this too)
       const { error } = await supabase
         .from("concierge_inquiries")
         .update({ status: "closed", closed_at: new Date().toISOString() })
         .eq("id", selectedCase.id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       
       if (error) throw error;
 
