@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import headerLogo from "@/assets/logo-header.webp";
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { EmailInput } from '@/components/ui/email-input';
@@ -19,8 +19,13 @@ export default function SeekerSignup() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
   const [signupEmail, setSignupEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   // Form fields
   const [firstName, setFirstName] = useState('');
@@ -36,7 +41,7 @@ export default function SeekerSignup() {
   // Zipcode lookup
   const zipcodeLookup = useZipcodeLookup();
   
-  // Check if already authenticated with verified email - redirect seamlessly
+  // Check if already authenticated - redirect seamlessly
   useEffect(() => {
     let mounted = true;
     
@@ -44,31 +49,34 @@ export default function SeekerSignup() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
       
-      if (session?.user?.email_confirmed_at) {
-        // User is verified - redirect to their dashboard
-        navigate('/account', { replace: true });
+      if (session?.user) {
+        // Check if email is verified in our system
+        const { data: verifiedRecord } = await supabase
+          .from('email_verification_codes')
+          .select('verified')
+          .eq('email', session.user.email?.toLowerCase() || '')
+          .eq('verified', true)
+          .maybeSingle();
+        
+        if (verifiedRecord) {
+          navigate('/account', { replace: true });
+        }
       }
     };
     
     checkAuth();
     
-    // Listen for auth state changes (e.g., after email verification)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!mounted) return;
-        
-        // Handle successful email verification
-        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          navigate('/account', { replace: true });
-        }
-      }
-    );
-    
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => { mounted = false; };
   }, [navigate]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
   
   // Auto-fill city/state when zipcode changes
   useEffect(() => {
@@ -88,6 +96,22 @@ export default function SeekerSignup() {
       setState(zipcodeLookup.data.stateAbbr);
     }
   }, [zipcodeLookup.data]);
+
+  const sendVerificationCode = async (emailAddress: string) => {
+    const { data, error } = await supabase.functions.invoke('send-verification-code', {
+      body: { email: emailAddress }
+    });
+    
+    if (error) {
+      throw new Error('Failed to send verification code');
+    }
+    
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+    
+    return data;
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,11 +152,11 @@ export default function SeekerSignup() {
     try {
       const displayName = `${firstName.trim()} ${lastName.trim()}`;
       
+      // With auto-confirm enabled, user gets a session immediately
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/account`,
           data: {
             display_name: displayName,
             first_name: firstName.trim(),
@@ -156,10 +180,9 @@ export default function SeekerSignup() {
       }
       
       if (data.user) {
-        // Profile is created by the database trigger (handle_new_seeker) using account_type metadata.
-        // If we have a session (auto-confirm), also update with phone/location data.
+        // Update profile with phone/location data if we have a session
         if (data.session) {
-          const { error: profileError } = await supabase
+          supabase
             .from('seeker_profiles')
             .update({
               phone: phone,
@@ -167,11 +190,8 @@ export default function SeekerSignup() {
               city: city,
               state: state
             })
-            .eq('user_id', data.user.id);
-          
-          if (profileError) {
-            console.error('Profile update error:', profileError);
-          }
+            .eq('user_id', data.user.id)
+            .then(() => {});
         }
         
         // Send welcome email (fire and forget)
@@ -183,17 +203,17 @@ export default function SeekerSignup() {
           }
         }).catch(() => {});
         
-        // Check if we have a session (auto-confirm enabled) or need email verification
-        if (data.session) {
-          // Auto-confirm is on - user has a session, go directly to account
-          toast.success('Account created successfully!');
-          navigate('/account', { replace: true });
-        } else {
-          // Email confirmation required - show check-your-email screen
-          toast.success('Account created! Please check your email to verify.');
-          setSignupEmail(email.trim());
-          setShowEmailConfirmation(true);
+        // Send 6-digit verification code via Resend
+        try {
+          await sendVerificationCode(email.trim());
+          toast.success('Account created! Enter the 6-digit code sent to your email.');
+        } catch {
+          toast.success('Account created! We\'ll send you a verification code.');
         }
+        
+        setSignupEmail(email.trim());
+        setShowVerification(true);
+        setResendCooldown(60);
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
@@ -202,13 +222,98 @@ export default function SeekerSignup() {
     }
   };
 
-  // Email confirmation screen - shown after successful signup when email verification is required
-  if (showEmailConfirmation) {
+  const handleCodeChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    
+    const newCode = [...verificationCode];
+    newCode[index] = value.slice(-1);
+    setVerificationCode(newCode);
+    
+    // Auto-focus next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleCodePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pastedData.length === 6) {
+      const newCode = pastedData.split('');
+      setVerificationCode(newCode);
+      inputRefs.current[5]?.focus();
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    const code = verificationCode.join('');
+    if (code.length !== 6) {
+      toast.error('Please enter the complete 6-digit code');
+      return;
+    }
+    
+    setIsVerifying(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-code', {
+        body: { email: signupEmail, code }
+      });
+      
+      if (error || data?.error) {
+        toast.error(data?.error || 'Invalid verification code. Please try again.');
+        setVerificationCode(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+        return;
+      }
+      
+      toast.success('Email verified successfully!');
+      navigate('/account', { replace: true });
+    } catch {
+      toast.error('Verification failed. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) return;
+    
+    setIsResending(true);
+    try {
+      await sendVerificationCode(signupEmail);
+      toast.success('New verification code sent!');
+      setResendCooldown(60);
+      setVerificationCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to resend code');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // Auto-submit when all 6 digits are entered
+  useEffect(() => {
+    const code = verificationCode.join('');
+    if (code.length === 6 && showVerification) {
+      handleVerifyCode();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verificationCode]);
+
+  // 6-digit code verification screen
+  if (showVerification) {
     return (
       <>
         <SEO 
-          title="Check Your Email | RehabLookup"
-          description="Verify your email to complete your account setup."
+          title="Verify Your Email | RehabLookup"
+          description="Enter the verification code sent to your email."
         />
         <div className="min-h-screen flex flex-col bg-background">
           <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
@@ -224,40 +329,74 @@ export default function SeekerSignup() {
                 <Mail className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-display font-bold text-foreground">Check your email</h1>
+                <h1 className="text-2xl font-display font-bold text-foreground">Verify your email</h1>
                 <p className="text-muted-foreground mt-2">
-                  We sent a verification link to{' '}
+                  We sent a 6-digit code to{' '}
                   <span className="font-medium text-foreground">{signupEmail}</span>
                 </p>
-                <p className="text-sm text-muted-foreground mt-3">
-                  Click the link in the email to verify your account and get started.
-                </p>
               </div>
-              <div className="pt-4 space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  Didn't receive the email? Check your spam folder or{' '}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const { error } = await supabase.auth.resend({
-                        type: 'signup',
-                        email: signupEmail,
-                        options: { emailRedirectTo: `${window.location.origin}/account` }
-                      });
-                      if (error) {
-                        toast.error('Failed to resend email');
-                      } else {
-                        toast.success('Verification email resent!');
-                      }
-                    }}
-                    className="text-primary font-medium hover:underline"
-                  >
-                    resend it
-                  </button>
+              
+              {/* 6-digit code input */}
+              <div className="flex justify-center gap-2 sm:gap-3" onPaste={handleCodePaste}>
+                {verificationCode.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => { inputRefs.current[index] = el; }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                    className="w-11 h-14 sm:w-12 sm:h-16 text-center text-2xl font-bold border-2 border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                    disabled={isVerifying}
+                    autoFocus={index === 0}
+                  />
+                ))}
+              </div>
+
+              <Button
+                onClick={handleVerifyCode}
+                disabled={isVerifying || verificationCode.join('').length !== 6}
+                className="w-full h-11"
+              >
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify Email'
+                )}
+              </Button>
+              
+              <div className="pt-2 space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Didn't receive the code?{' '}
+                  {resendCooldown > 0 ? (
+                    <span className="text-muted-foreground/70">Resend in {resendCooldown}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={isResending}
+                      className="text-primary font-medium hover:underline"
+                    >
+                      {isResending ? 'Sending...' : 'Resend code'}
+                    </button>
+                  )}
                 </p>
-                <Link to="/login" className="text-sm text-primary font-medium hover:underline inline-block">
-                  Back to sign in
-                </Link>
+                <p className="text-xs text-muted-foreground">
+                  Check your spam folder if you don't see the email.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/account', { replace: true })}
+                  className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  Skip for now
+                </button>
               </div>
             </div>
           </div>
@@ -293,7 +432,6 @@ export default function SeekerSignup() {
         <div className="flex-1 flex">
           {/* Left Panel - Branding (Desktop) */}
           <div className="hidden lg:flex lg:w-1/2 xl:w-[45%] bg-primary p-12 items-center justify-center relative overflow-hidden">
-            {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute inset-0" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
             </div>
@@ -341,15 +479,12 @@ export default function SeekerSignup() {
           {/* Right Panel - Form */}
           <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
             <div className="w-full max-w-md">
-              {/* Mobile/Tablet Container */}
               <div className="lg:bg-transparent lg:border-0 lg:shadow-none lg:p-0 bg-card border border-border rounded-xl shadow-sm p-5 sm:p-6">
-                {/* Mobile Header */}
                 <div className="lg:hidden text-center mb-6">
                   <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Create Account</h1>
                   <p className="text-sm text-muted-foreground mt-1">Save facilities and track your search</p>
                 </div>
 
-                {/* Desktop Header */}
                 <div className="hidden lg:block mb-8">
                   <h2 className="text-2xl font-display font-bold text-foreground">Create your account</h2>
                   <p className="text-muted-foreground mt-1">Fill in the details below to get started</p>
