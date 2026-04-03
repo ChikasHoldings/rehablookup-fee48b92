@@ -94,13 +94,13 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
 }
 
 export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPlacementModalProps) {
+  const { userId: currentUserId } = useSeekerSession();
+  
   // Fetch full case data
   const { data: fullCase } = useQuery({
     queryKey: ["seeker-case-detail", caseData?.id],
     queryFn: async () => {
-      if (!caseData?.id) return null;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!caseData?.id || !currentUserId) return null;
 
       const { data, error } = await supabase
         .from("concierge_inquiries")
