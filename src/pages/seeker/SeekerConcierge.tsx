@@ -81,7 +81,7 @@ export default function SeekerConcierge() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  // Tour modal state removed - brokerage model requires advisor coordination
+  // Brokerage model — advisor coordinates all contact
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
