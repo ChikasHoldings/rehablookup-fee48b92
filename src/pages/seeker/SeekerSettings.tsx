@@ -94,7 +94,17 @@ export default function SeekerSettings() {
       setIsAuthenticated(true);
       setEmail(session.user.email || "");
       setUserId(session.user.id);
-      setIsEmailVerified(!!session.user.email_confirmed_at);
+
+      // Check our custom verification system, not Supabase's email_confirmed_at
+      if (session.user.email) {
+        const { data: verifiedRecord } = await supabase
+          .from('email_verification_codes')
+          .select('verified')
+          .eq('email', session.user.email.toLowerCase())
+          .eq('verified', true)
+          .maybeSingle();
+        setIsEmailVerified(!!verifiedRecord);
+      }
 
       const { data: profile } = await supabase
         .from('seeker_profiles')

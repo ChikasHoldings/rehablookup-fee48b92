@@ -2,6 +2,18 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+// Check our custom email_verification_codes table (not Supabase's email_confirmed_at)
+async function checkCustomEmailVerified(email: string | undefined): Promise<boolean> {
+  if (!email) return false;
+  const { data } = await supabase
+    .from('email_verification_codes')
+    .select('verified')
+    .eq('email', email.toLowerCase())
+    .eq('verified', true)
+    .maybeSingle();
+  return !!data;
+}
+
 interface AuthSyncState {
   session: Session | null;
   user: User | null;
@@ -102,14 +114,15 @@ export function useAuthSync(options: UseAuthSyncOptions = {}): AuthSyncState {
         
         // Another tab signed in/out - refetch session
         if (event.data.event === "SIGNED_IN" || event.data.event === "SIGNED_OUT") {
-          supabase.auth.getSession().then(({ data: { session } }) => {
+          supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (mountedRef.current) {
+              const verified = await checkCustomEmailVerified(session?.user?.email ?? undefined);
               setState(prev => ({
                 ...prev,
                 session,
                 user: session?.user ?? null,
                 isAuthenticated: !!session,
-                isEmailVerified: !!session?.user?.email_confirmed_at,
+                isEmailVerified: verified,
               }));
             }
           });
@@ -129,16 +142,19 @@ export function useAuthSync(options: UseAuthSyncOptions = {}): AuthSyncState {
           return;
         }
 
-        // Update state
-        setState(prev => ({
-          ...prev,
-          session,
-          user: session?.user ?? null,
-          isAuthenticated: !!session,
-          isEmailVerified: !!session?.user?.email_confirmed_at,
-          isLoading: false,
-          error: null,
-        }));
+        // Update state - check custom verification async
+        checkCustomEmailVerified(session?.user?.email ?? undefined).then(verified => {
+          if (!mountedRef.current) return;
+          setState(prev => ({
+            ...prev,
+            session,
+            user: session?.user ?? null,
+            isAuthenticated: !!session,
+            isEmailVerified: verified,
+            isLoading: false,
+            error: null,
+          }));
+        });
 
         // Broadcast to other tabs
         broadcastAuthChange(event, session);
@@ -172,12 +188,14 @@ export function useAuthSync(options: UseAuthSyncOptions = {}): AuthSyncState {
           return;
         }
 
+        const verified = await checkCustomEmailVerified(session?.user?.email ?? undefined);
+
         setState({
           session,
           user: session?.user ?? null,
           isLoading: false,
           isAuthenticated: !!session,
-          isEmailVerified: !!session?.user?.email_confirmed_at,
+          isEmailVerified: verified,
           error: null,
         });
         
