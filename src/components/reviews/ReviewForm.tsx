@@ -22,6 +22,7 @@ interface ReviewFormProps {
   facilityName: string;
   userReview: FacilityReview | null;
   isAuthenticated: boolean;
+  isAuthReady?: boolean;
   isEmailVerified?: boolean;
   onSubmit: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
   onUpdate: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
@@ -33,6 +34,7 @@ export function ReviewForm({
   facilityName, 
   userReview, 
   isAuthenticated,
+  isAuthReady = true,
   isEmailVerified = true,
   onSubmit,
   onUpdate,
@@ -101,6 +103,20 @@ export function ReviewForm({
       setReviewText('');
     }
   };
+
+  if (!isAuthReady) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="py-8 text-center">
+          <Loader2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3 animate-spin" />
+          <h3 className="font-medium text-lg mb-2">Loading Review Access</h3>
+          <p className="text-muted-foreground">
+            Checking your account so we can show the right review options.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
