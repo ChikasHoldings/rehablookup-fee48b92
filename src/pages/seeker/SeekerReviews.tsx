@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search, Reply } from "lucide-react";

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
