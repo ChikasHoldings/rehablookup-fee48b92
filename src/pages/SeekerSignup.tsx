@@ -19,6 +19,8 @@ export default function SeekerSignup() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
   
   // Form fields
   const [firstName, setFirstName] = useState('');
@@ -134,7 +136,12 @@ export default function SeekerSignup() {
           data: {
             display_name: displayName,
             first_name: firstName.trim(),
-            last_name: lastName.trim()
+            last_name: lastName.trim(),
+            account_type: 'seeker',
+            phone: phone,
+            zipcode: zipcode,
+            city: city,
+            state: state
           }
         }
       });
@@ -149,35 +156,44 @@ export default function SeekerSignup() {
       }
       
       if (data.user) {
-        // Update seeker_profiles with additional info
-        const { error: profileError } = await supabase
-          .from('seeker_profiles')
-          .update({
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            display_name: displayName,
-            phone: phone,
-            zipcode: zipcode,
-            city: city,
-            state: state
-          })
-          .eq('user_id', data.user.id);
-        
-        if (profileError) {
-          console.error('Profile update error:', profileError);
+        // Profile is created by the database trigger (handle_new_seeker) using account_type metadata.
+        // If we have a session (auto-confirm), also update with phone/location data.
+        if (data.session) {
+          const { error: profileError } = await supabase
+            .from('seeker_profiles')
+            .update({
+              phone: phone,
+              zipcode: zipcode,
+              city: city,
+              state: state
+            })
+            .eq('user_id', data.user.id);
+          
+          if (profileError) {
+            console.error('Profile update error:', profileError);
+          }
         }
         
-        // Send welcome email and create welcome notification
+        // Send welcome email (fire and forget)
         supabase.functions.invoke('send-seeker-emails', {
           body: {
             type: 'welcome',
             seekerId: data.user.id,
             email: email.trim()
           }
-        }).catch(err => console.error('Failed to send welcome email:', err));
+        }).catch(() => {});
         
-        toast.success('Account created successfully!');
-        navigate('/account');
+        // Check if we have a session (auto-confirm enabled) or need email verification
+        if (data.session) {
+          // Auto-confirm is on - user has a session, go directly to account
+          toast.success('Account created successfully!');
+          navigate('/account', { replace: true });
+        } else {
+          // Email confirmation required - show check-your-email screen
+          toast.success('Account created! Please check your email to verify.');
+          setSignupEmail(email.trim());
+          setShowEmailConfirmation(true);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
@@ -185,6 +201,70 @@ export default function SeekerSignup() {
       setIsSubmitting(false);
     }
   };
+
+  // Email confirmation screen - shown after successful signup when email verification is required
+  if (showEmailConfirmation) {
+    return (
+      <>
+        <SEO 
+          title="Check Your Email | RehabLookup"
+          description="Verify your email to complete your account setup."
+        />
+        <div className="min-h-screen flex flex-col bg-background">
+          <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+            <div className="container h-14 flex items-center">
+              <Link to="/" className="flex items-center">
+                <img src={headerLogo} alt="RehabLookup" className="h-8 md:h-9 w-auto" />
+              </Link>
+            </div>
+          </header>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="max-w-md w-full text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-display font-bold text-foreground">Check your email</h1>
+                <p className="text-muted-foreground mt-2">
+                  We sent a verification link to{' '}
+                  <span className="font-medium text-foreground">{signupEmail}</span>
+                </p>
+                <p className="text-sm text-muted-foreground mt-3">
+                  Click the link in the email to verify your account and get started.
+                </p>
+              </div>
+              <div className="pt-4 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Didn't receive the email? Check your spam folder or{' '}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { error } = await supabase.auth.resend({
+                        type: 'signup',
+                        email: signupEmail,
+                        options: { emailRedirectTo: `${window.location.origin}/account` }
+                      });
+                      if (error) {
+                        toast.error('Failed to resend email');
+                      } else {
+                        toast.success('Verification email resent!');
+                      }
+                    }}
+                    className="text-primary font-medium hover:underline"
+                  >
+                    resend it
+                  </button>
+                </p>
+                <Link to="/login" className="text-sm text-primary font-medium hover:underline inline-block">
+                  Back to sign in
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
