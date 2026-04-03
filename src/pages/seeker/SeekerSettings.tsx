@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video, Shield } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -342,6 +342,7 @@ export default function SeekerSettings() {
   };
 
   const handleSaveProfile = async () => {
+    if (isSaving) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
@@ -399,6 +400,7 @@ export default function SeekerSettings() {
   };
 
   const handleChangePassword = async () => {
+    if (isChangingPassword) return;
     if (newPassword.length < 6) {
       toast({
         title: "Password too short",
@@ -447,6 +449,7 @@ export default function SeekerSettings() {
   };
 
   const handleChangeEmail = async () => {
+    if (isChangingEmail) return;
     if (!newEmail || !newEmail.includes('@')) {
       toast({
         title: "Invalid email",
@@ -516,6 +519,7 @@ export default function SeekerSettings() {
   };
 
   const handleDeleteAccount = async () => {
+    if (isDeletingAccount) return;
     if (deleteConfirmText !== "DELETE") {
       toast({
         title: "Confirmation required",
