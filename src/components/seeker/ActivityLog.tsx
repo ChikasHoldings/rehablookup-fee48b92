@@ -3,6 +3,7 @@ import { History, LogIn, KeyRound, UserCog, Mail, Image, Loader2 } from "lucide-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { formatDistanceToNow } from "date-fns";
 
 interface ActivityEvent {
