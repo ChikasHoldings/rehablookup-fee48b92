@@ -118,7 +118,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
           intake_submitted_at, matched_at, introductions_sent_at
         `)
         .eq("id", caseData.id)
-        .eq("user_id", user.id)
+        .eq("user_id", currentUserId)
         .maybeSingle();
 
       if (error) throw error;
