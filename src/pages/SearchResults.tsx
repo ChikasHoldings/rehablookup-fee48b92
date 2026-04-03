@@ -3,7 +3,6 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
 import { SearchResultCard } from "@/components/cards/SearchResultCard";
-import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
@@ -48,17 +47,24 @@ import { Badge } from "@/components/ui/badge";
 import { 
   parseLocationInput, 
   sortByProximity, 
+  getStateAbbr,
+  getNearbyStates,
   type ProximityTier, 
   type ProximityResult,
   type LocationMatch 
 } from "@/lib/proximitySearch";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { getPlanPriority } from "@/lib/facilityPlanSort";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
-type SortOption = "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
+type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
 
 const sortOptions: { value: SortOption; label: string }[] = [
+  { value: "proximity", label: "Nearest First" },
   { value: "featured", label: "Featured First" },
   { value: "rating-high", label: "Highest Rated" },
   { value: "rating-low", label: "Lowest Rated" },
