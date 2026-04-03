@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
-import { Link, useOutletContext, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
   Send, 
@@ -24,11 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { SeekerRequestForm } from "@/components/seeker/SeekerRequestForm";
-
-interface SeekerOutletContext {
-  isAuthenticated: boolean;
-  userName?: string;
-}
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 
 interface SubmittedRequest {
   id: string;
@@ -156,8 +152,7 @@ function RequestCard({
 }
 
 export default function SeekerRequests() {
-  const context = useOutletContext<SeekerOutletContext>();
-  const isAuthenticated = context?.isAuthenticated ?? false;
+  const { email, userId, isAuthenticated, isReady } = useSeekerSession();
   const [searchParams] = useSearchParams();
   
   const [requests, setRequests] = useState<SubmittedRequest[]>([]);
@@ -189,17 +184,17 @@ export default function SeekerRequests() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchRequests();
+    if (!isReady) return;
+    if (isAuthenticated && email) {
+      fetchRequests(email);
       loadSavedData();
     } else {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isReady, email]);
 
-  const fetchRequests = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.email) {
+  const fetchRequests = async (userEmail: string) => {
+    if (!userEmail) {
       setIsLoading(false);
       return;
     }
@@ -209,7 +204,7 @@ export default function SeekerRequests() {
       const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select('id, facility_id, created_at, status, urgency, preferred_contact')
-        .eq('email', session.user.email)
+        .eq('email', userEmail)
         .order('created_at', { ascending: false })
         .limit(200);
 
@@ -275,12 +270,9 @@ export default function SeekerRequests() {
     }
   };
 
-  const loadSavedData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    // Check localStorage for saved form data
-    const saved = localStorage.getItem(`seeker_request_data_${session.user.id}`);
+  const loadSavedData = () => {
+    if (!userId) return;
+    const saved = localStorage.getItem(`seeker_request_data_${userId}`);
     if (saved) {
       try {
         setSavedData(JSON.parse(saved));
@@ -295,16 +287,14 @@ export default function SeekerRequests() {
     setShowNewRequest(true);
   };
 
-  const handleRequestSuccess = async () => {
-    // Save the form data for future prefill
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && savedData) {
-      localStorage.setItem(`seeker_request_data_${session.user.id}`, JSON.stringify(savedData));
+  const handleRequestSuccess = () => {
+    if (userId && savedData) {
+      localStorage.setItem(`seeker_request_data_${userId}`, JSON.stringify(savedData));
     }
     
     setShowNewRequest(false);
     setSelectedFacility(null);
-    fetchRequests();
+    if (email) fetchRequests(email);
   };
 
   const formatDate = (dateString: string) => {
@@ -347,8 +337,7 @@ export default function SeekerRequests() {
     }
   };
 
-  // Show auth prompt if not authenticated
-  if (!isAuthenticated) {
+  if (isReady && !isAuthenticated) {
     return (
       <AuthPrompt 
         title="Sign in to manage your requests"
