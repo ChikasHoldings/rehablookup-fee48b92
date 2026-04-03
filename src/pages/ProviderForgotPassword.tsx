@@ -38,9 +38,10 @@ export default function ProviderForgotPassword() {
     try {
       const redirectUrl = `${window.location.origin}/provider-reset-password`;
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+      const { data, error: invokeError } = await supabase.functions.invoke('send-password-reset', {
+        body: { email, redirectTo: redirectUrl },
       });
+      const error = invokeError || (data?.error ? { message: data.error } : null);
 
       if (error) {
         toast({
