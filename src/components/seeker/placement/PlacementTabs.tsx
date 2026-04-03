@@ -64,8 +64,7 @@ export function PlacementTabs({
   // Dismiss mutation
   const dismissMutation = useMutation({
     mutationFn: async (facilityId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!currentUserId) throw new Error("Not authenticated");
 
       const { error } = await supabase
         .from("concierge_rejected_facilities")
