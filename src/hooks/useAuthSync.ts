@@ -142,16 +142,19 @@ export function useAuthSync(options: UseAuthSyncOptions = {}): AuthSyncState {
           return;
         }
 
-        // Update state
-        setState(prev => ({
-          ...prev,
-          session,
-          user: session?.user ?? null,
-          isAuthenticated: !!session,
-          isEmailVerified: !!session?.user?.email_confirmed_at,
-          isLoading: false,
-          error: null,
-        }));
+        // Update state - check custom verification async
+        checkCustomEmailVerified(session?.user?.email ?? undefined).then(verified => {
+          if (!mountedRef.current) return;
+          setState(prev => ({
+            ...prev,
+            session,
+            user: session?.user ?? null,
+            isAuthenticated: !!session,
+            isEmailVerified: verified,
+            isLoading: false,
+            error: null,
+          }));
+        });
 
         // Broadcast to other tabs
         broadcastAuthChange(event, session);
