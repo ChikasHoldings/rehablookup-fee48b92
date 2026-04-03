@@ -239,13 +239,13 @@ export function useSeekerNotifications() {
     setUnreadCount(0);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const uid = userIdRef.current;
+      if (!uid) return;
 
       const { error } = await supabase
         .from("seeker_notifications")
         .update({ read: true })
-        .eq("user_id", session.user.id)
+        .eq("user_id", uid)
         .eq("read", false);
 
       if (error) throw error;
