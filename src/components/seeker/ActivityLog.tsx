@@ -36,9 +36,15 @@ export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!userId) {
+      setActivities([]);
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
     
-    const fetchActivities = async (userId: string) => {
+    const fetchActivities = async () => {
       try {
         const { data, error } = await supabase
           .from("account_activity_log")
@@ -61,45 +67,10 @@ export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
       }
     };
 
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!isMounted) return;
-        
-        if (session?.user) {
-          setIsAuthenticated(true);
-          // Defer data fetch to avoid deadlock
-          setTimeout(() => {
-            if (isMounted) {
-              fetchActivities(session.user.id);
-            }
-          }, 0);
-        } else {
-          setIsAuthenticated(false);
-          setActivities([]);
-          setIsLoading(false);
-        }
-      }
-    );
-
-    // Then check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return;
-      
-      if (session?.user) {
-        setIsAuthenticated(true);
-        fetchActivities(session.user.id);
-      } else {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-      }
-    });
+    fetchActivities();
     
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    return () => { isMounted = false; };
+  }, [userId]);
 
   const getIcon = (eventType: string) => {
     const Icon = eventIcons[eventType] || History;
