@@ -207,8 +207,8 @@ export function SeekerShell() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background isolate" data-shell>
       {/* Email Verification Banner */}
-      {isAuthenticated && !isEmailVerified && (
-        <EmailVerificationBanner email={userEmail} />
+      {isAuthenticated && !isLoading && !isEmailVerified && (
+        <EmailVerificationBanner email={userEmail} onVerified={() => setIsEmailVerified(true)} />
       )}
       
       {/* Fixed Header */}

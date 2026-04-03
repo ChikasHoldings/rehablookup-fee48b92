@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 interface EmailVerificationBannerProps {
   email?: string;
+  onVerified?: () => void;
 }
 
 export function EmailVerificationBanner({ email }: EmailVerificationBannerProps) {
