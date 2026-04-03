@@ -131,11 +131,12 @@ export function useUserManagement() {
     mutationFn: async (email: string) => {
       setIsSendingReset(true);
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error: invokeError } = await supabase.functions.invoke('send-password-reset', {
+        body: { email, redirectTo: `${window.location.origin}/reset-password` },
       });
       
-      if (error) throw error;
+      if (invokeError) throw invokeError;
+      if (data?.error) throw new Error(data.error);
       
       // Log admin action
       const { data: { user: adminUser } } = await supabase.auth.getUser();
