@@ -130,25 +130,29 @@ export default function SeekerHome() {
     }));
   }, [staticFacilities]);
 
-  // Proximity scoring function
-  const getProximityScore = useCallback((facility: { city: string; state: string }) => {
-    if (!seekerLocation.stateAbbr) return 3; // No location = all equal
+  // Proximity scoring: ZIP (0) → City+State (1) → State (2) → Nearby (3) → Nationwide (4)
+  const getProximityScore = useCallback((facility: { city: string; state: string; zipCode?: string }) => {
+    if (!seekerLocation.stateAbbr) return 4; // No location = all equal
     const facilityStateAbbr = getStateAbbr(facility.state);
-    
-    // Same city + state = highest
+
+    // Same ZIP code = highest priority
+    if (seekerLocation.zipcode && facility.zipCode && facility.zipCode === seekerLocation.zipcode) {
+      return 0;
+    }
+    // Same city + state
     if (seekerLocation.city && facility.city.toLowerCase() === seekerLocation.city.toLowerCase() &&
         facilityStateAbbr?.toUpperCase() === seekerLocation.stateAbbr.toUpperCase()) {
-      return 0;
+      return 1;
     }
     // Same state
     if (facilityStateAbbr?.toUpperCase() === seekerLocation.stateAbbr.toUpperCase()) {
-      return 1;
+      return 2;
     }
     // Nearby state
     if (facilityStateAbbr && seekerLocation.nearbyStates.includes(facilityStateAbbr.toUpperCase())) {
-      return 2;
+      return 3;
     }
-    return 3; // Nationwide
+    return 4; // Nationwide
   }, [seekerLocation]);
 
   // Filter and sort
