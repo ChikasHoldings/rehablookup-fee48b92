@@ -152,7 +152,7 @@ function RequestCard({
 }
 
 export default function SeekerRequests() {
-  const { email, isAuthenticated, isReady } = useSeekerSession();
+  const { email, userId, isAuthenticated, isReady } = useSeekerSession();
   const [searchParams] = useSearchParams();
   
   const [requests, setRequests] = useState<SubmittedRequest[]>([]);
