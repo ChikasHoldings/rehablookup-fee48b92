@@ -134,6 +134,7 @@ export default function SeekerConcierge() {
         ] : null,
       })) as ConciergeInquiry[];
     },
+    enabled: !!userId && isReady,
   });
 
   // Payment verification
