@@ -114,14 +114,15 @@ export function useAuthSync(options: UseAuthSyncOptions = {}): AuthSyncState {
         
         // Another tab signed in/out - refetch session
         if (event.data.event === "SIGNED_IN" || event.data.event === "SIGNED_OUT") {
-          supabase.auth.getSession().then(({ data: { session } }) => {
+          supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (mountedRef.current) {
+              const verified = await checkCustomEmailVerified(session?.user?.email ?? undefined);
               setState(prev => ({
                 ...prev,
                 session,
                 user: session?.user ?? null,
                 isAuthenticated: !!session,
-                isEmailVerified: !!session?.user?.email_confirmed_at,
+                isEmailVerified: verified,
               }));
             }
           });
