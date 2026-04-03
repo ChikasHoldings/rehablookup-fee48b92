@@ -26,7 +26,7 @@ export function useSeekerAuth() {
   
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string, userEmail?: string) => {
     const { data, error } = await supabase
       .from('seeker_profiles')
       .select('*')
@@ -36,6 +36,17 @@ export function useSeekerAuth() {
     if (!error && data) {
       setProfile(data);
       setIsSeeker(true);
+    }
+
+    // Check email verification from our custom system
+    if (userEmail) {
+      const { data: verifiedRecord } = await supabase
+        .from('email_verification_codes')
+        .select('verified')
+        .eq('email', userEmail.toLowerCase())
+        .eq('verified', true)
+        .maybeSingle();
+      setIsEmailVerified(!!verifiedRecord);
     }
   }, []);
 
