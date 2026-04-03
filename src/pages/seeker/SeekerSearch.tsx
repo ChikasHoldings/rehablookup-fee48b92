@@ -102,6 +102,7 @@ export default function SeekerSearch() {
   const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Location suggestions
   const locationSuggestions = useMemo(() => {
