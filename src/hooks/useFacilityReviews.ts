@@ -137,7 +137,7 @@ export function useFacilityReviews(facilityId: string) {
     fetchUserReview();
   }, [fetchUserReview]);
 
-  const isReviewAuthReady = !isAuthLoading;
+  const isReviewAuthReady = isReady;
 
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
