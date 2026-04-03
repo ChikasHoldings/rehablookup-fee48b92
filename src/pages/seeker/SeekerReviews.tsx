@@ -382,8 +382,7 @@ export default function SeekerReviews() {
 
     setIsDeleting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!userId) {
         toast({ title: "Session expired", description: "Please sign in again.", variant: "destructive" });
         return;
       }
@@ -392,7 +391,7 @@ export default function SeekerReviews() {
         .from('facility_reviews')
         .delete()
         .eq('id', deleteReviewId)
-        .eq('user_id', session.user.id);
+        .eq('user_id', userId);
 
       if (error) {
         toast({ title: "Error deleting", description: "Could not delete your review. Please try again.", variant: "destructive" });

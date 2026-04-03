@@ -254,7 +254,7 @@ export function useFacilityReviews(facilityId: string) {
     reviewCount,
     isAuthenticated,
     isEmailVerified,
-    isAuthLoading,
+    isAuthLoading: !isReady,
     isReviewAuthReady,
     submitReview,
     updateReview,
