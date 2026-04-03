@@ -626,8 +626,9 @@ export default function SeekerSearch() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                      {facilityCards.length} {facilityCards.length === 1 ? "result" : "results"}
-                      {searchQuery && <span className="text-foreground font-medium"> for "{searchQuery}"</span>}
+                      Showing <span className="font-medium text-foreground">{(currentPage - 1) * SEARCH_PAGE_SIZE + 1}-{Math.min(currentPage * SEARCH_PAGE_SIZE, filteredFacilities.length)}</span> of{" "}
+                      <span className="font-medium text-foreground">{filteredFacilities.length}</span>
+                      {searchQuery && <span> for "<span className="text-foreground font-medium">{searchQuery}</span>"</span>}
                       {locationInput && <span> near <span className="text-foreground font-medium">{locationInput}</span></span>}
                     </p>
                     <Button 
@@ -646,6 +647,59 @@ export default function SeekerSearch() {
                       facility={facility}
                     />
                   ))}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="h-8 gap-1"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Previous</span>
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                          let page: number;
+                          if (totalPages <= 5) {
+                            page = i + 1;
+                          } else if (currentPage <= 3) {
+                            page = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            page = totalPages - 4 + i;
+                          } else {
+                            page = currentPage - 2 + i;
+                          }
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "ghost"}
+                              size="sm"
+                              className="h-8 w-8 p-0 text-xs"
+                              onClick={() => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="h-8 gap-1"
+                      >
+                        <span className="hidden sm:inline">Next</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
