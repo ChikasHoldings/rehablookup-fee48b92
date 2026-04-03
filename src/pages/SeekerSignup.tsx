@@ -461,15 +461,19 @@ export default function SeekerSignup() {
           <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
             <div className="w-full max-w-md">
               <div className="lg:bg-transparent lg:border-0 lg:shadow-none lg:p-0 bg-card border border-border rounded-xl shadow-sm p-5 sm:p-6">
-                <div className="lg:hidden text-center mb-6">
-                  <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Create Account</h1>
-                  <p className="text-sm text-muted-foreground mt-1">Save facilities and track your search</p>
-                </div>
+                {showVerification ? (
+                  verificationContent
+                ) : (
+                  <>
+                    <div className="lg:hidden text-center mb-6">
+                      <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Create Account</h1>
+                      <p className="text-sm text-muted-foreground mt-1">Save facilities and track your search</p>
+                    </div>
 
-                <div className="hidden lg:block mb-8">
-                  <h2 className="text-2xl font-display font-bold text-foreground">Create your account</h2>
-                  <p className="text-muted-foreground mt-1">Fill in the details below to get started</p>
-                </div>
+                    <div className="hidden lg:block mb-8">
+                      <h2 className="text-2xl font-display font-bold text-foreground">Create your account</h2>
+                      <p className="text-muted-foreground mt-1">Fill in the details below to get started</p>
+                    </div>
 
                 <form onSubmit={handleSignup} className="space-y-4">
                   {/* Name Fields */}
