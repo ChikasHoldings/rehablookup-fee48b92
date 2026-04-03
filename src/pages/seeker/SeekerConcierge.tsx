@@ -361,7 +361,7 @@ export default function SeekerConcierge() {
         event_type: "seeker_cancelled",
         event_data: { reason: "Cancelled by seeker" },
         actor_type: "seeker",
-        actor_id: user.id,
+        actor_id: userId,
       });
     },
     onSuccess: () => {
