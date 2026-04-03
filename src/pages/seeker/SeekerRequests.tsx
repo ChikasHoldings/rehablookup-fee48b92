@@ -204,7 +204,7 @@ export default function SeekerRequests() {
       const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select('id, facility_id, created_at, status, urgency, preferred_contact')
-        .eq('email', session.user.email)
+        .eq('email', userEmail)
         .order('created_at', { ascending: false })
         .limit(200);
 
