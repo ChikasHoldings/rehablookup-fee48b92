@@ -179,7 +179,7 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
 
       const { error } = await supabase.from("concierge_messages").insert({
         thread_id: threadId,
-        sender_id: user.id,
+        sender_id: currentUserId,
         sender_type: "seeker",
         content: trimmedContent || (attachmentData ? `Sent an attachment: ${attachmentData.name}` : ""),
         attachment_url: attachmentData?.url || null,
