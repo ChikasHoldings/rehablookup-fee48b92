@@ -168,7 +168,7 @@ export function useSeekerNotifications() {
             event: "UPDATE",
             schema: "public",
             table: "seeker_notifications",
-            filter: `user_id=eq.${session.user.id}`,
+            filter: `user_id=eq.${uid}`,
           },
           (payload) => {
             const updatedNotification = payload.new as SeekerNotification;
