@@ -400,6 +400,7 @@ export default function SeekerSettings() {
   };
 
   const handleChangePassword = async () => {
+    if (isChangingPassword) return;
     if (newPassword.length < 6) {
       toast({
         title: "Password too short",
