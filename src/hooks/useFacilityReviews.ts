@@ -27,7 +27,7 @@ export function useFacilityReviews(facilityId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState(0);
-  const { user, isAuthenticated, isEmailVerified, resendVerificationEmail } = useSeekerAuth();
+  const { user, isAuthenticated, isEmailVerified, resendVerificationEmail, isLoading: isAuthLoading } = useSeekerAuth();
 
   const fetchReviews = useCallback(async () => {
     setIsLoading(true);

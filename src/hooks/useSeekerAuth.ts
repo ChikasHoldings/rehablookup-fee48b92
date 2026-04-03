@@ -90,8 +90,7 @@ export function useSeekerAuth() {
 
     // Try to restore session from localStorage immediately (non-blocking)
     try {
-      const storageKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'plckxokpyiubuekvodtc'}-auth-token`;
-      const stored = localStorage.getItem(storageKey);
+      const stored = localStorage.getItem(getSupabaseStorageKey());
       if (stored) {
         const parsed = JSON.parse(stored);
         const storedSession = parsed?.currentSession || parsed;
