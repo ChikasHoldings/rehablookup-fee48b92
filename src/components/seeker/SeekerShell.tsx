@@ -136,10 +136,23 @@ export function SeekerShell() {
       async (event, session) => {
         if (!isMounted) return;
         
-        setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
         setIsLoading(false);
+
+        // Check email verification from our custom system
+        if (session?.user?.email) {
+          const { data: verifiedRecord } = await supabase
+            .from('email_verification_codes')
+            .select('verified')
+            .eq('email', session.user.email.toLowerCase())
+            .eq('verified', true)
+            .maybeSingle();
+          
+          if (isMounted) setIsEmailVerified(!!verifiedRecord);
+        } else {
+          setIsEmailVerified(false);
+        }
 
         // Redirect to login if signed out
         if (event === "SIGNED_OUT") {
