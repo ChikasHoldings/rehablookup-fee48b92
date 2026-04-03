@@ -151,29 +151,41 @@ export default function SeekerFacilityProfile() {
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
 
+  // Get stored user synchronously to avoid getSession deadlocks
+  const getStoredSession = useCallback(() => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+      const storageKey = `sb-${projectRef}-auth-token`;
+      const stored = localStorage.getItem(storageKey);
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      const session = parsed?.currentSession || parsed;
+      return session?.user ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const storedUser = getStoredSession();
+
   const { data: seekerProfile } = useQuery({
-    queryKey: ["seeker-profile-prefill"],
+    queryKey: ["seeker-profile-prefill", storedUser?.id],
     queryFn: async (): Promise<SeekerProfile | null> => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return null;
+      if (!storedUser?.id) return null;
       
       const { data } = await supabase
         .from("seeker_profiles")
         .select("first_name, last_name, display_name, phone")
-        .eq("user_id", session.user.id)
+        .eq("user_id", storedUser.id)
         .maybeSingle();
       
       return data as SeekerProfile | null;
     },
+    enabled: !!storedUser?.id,
   });
 
-  const { data: userEmail } = useQuery({
-    queryKey: ["user-email"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.user?.email || "";
-    },
-  });
+  const userEmail = storedUser?.email || "";
 
   const prefillData = {
     firstName: seekerProfile?.first_name || "",

@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,20 +82,13 @@ export default function SeekerConcierge() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  // Brokerage model — advisor coordinates all contact
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
-  // Fetch current user
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
-  });
+  // Use non-blocking session hook instead of supabase.auth.getUser()
+  const { user: currentUser, userId, isReady } = useSeekerSession();
 
   const userName = currentUser?.user_metadata?.full_name || 
                    currentUser?.user_metadata?.name || 
@@ -105,10 +99,9 @@ export default function SeekerConcierge() {
 
   // Fetch user's concierge cases
   const { data: cases, isLoading: casesLoading, isError: casesError, refetch } = useQuery({
-    queryKey: ["seeker-concierge-cases"],
+    queryKey: ["seeker-concierge-cases", userId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!userId) return [];
 
       const { data, error } = await supabase
         .from("concierge_inquiries")
@@ -120,7 +113,7 @@ export default function SeekerConcierge() {
           placement_confirmed_at, placed_facility_id, seeker_rating,
           seeker_feedback, user_name
         `)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .in("payment_status", ["paid", "succeeded"])
         .order("created_at", { ascending: false });
 
@@ -141,6 +134,7 @@ export default function SeekerConcierge() {
         ] : null,
       })) as ConciergeInquiry[];
     },
+    enabled: !!userId && isReady,
   });
 
   // Payment verification
@@ -250,17 +244,17 @@ export default function SeekerConcierge() {
 
   // Realtime: auto-refresh when case status or matches change
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!userId) return;
 
     const channel = supabase
-      .channel(`seeker-cases-${currentUser.id}`)
+      .channel(`seeker-cases-${userId}`)
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
           table: "concierge_inquiries",
-          filter: `user_id=eq.${currentUser.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
@@ -269,7 +263,7 @@ export default function SeekerConcierge() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser?.id, queryClient]);
+  }, [userId, queryClient]);
 
   const selectedCase = cases?.find(c => c.id === selectedCaseId) || cases?.[0];
 
@@ -315,14 +309,13 @@ export default function SeekerConcierge() {
         throw new Error("Feedback already submitted");
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!userId) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("concierge_inquiries")
         .update({ seeker_rating: rating, seeker_feedback: feedback })
         .eq("id", selectedCase!.id)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .is("seeker_feedback", null)
         .select("id")
         .single();
@@ -352,15 +345,14 @@ export default function SeekerConcierge() {
     mutationFn: async () => {
       if (!selectedCase) throw new Error("No case selected");
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!userId) throw new Error("Not authenticated");
 
       // Only allow cancellation of own cases (RLS enforces this too)
       const { error } = await supabase
         .from("concierge_inquiries")
         .update({ status: "closed", closed_at: new Date().toISOString() })
         .eq("id", selectedCase.id)
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       
       if (error) throw error;
 
@@ -369,7 +361,7 @@ export default function SeekerConcierge() {
         event_type: "seeker_cancelled",
         event_data: { reason: "Cancelled by seeker" },
         actor_type: "seeker",
-        actor_id: user.id,
+        actor_id: userId,
       });
     },
     onSuccess: () => {
