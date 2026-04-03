@@ -85,19 +85,20 @@ export function useSeekerNotifications() {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setNotifications([]);
-        setUnreadCount(0);
-        setIsLoading(false);
-        return;
-      }
+    const uid = userIdRef.current || getStoredUserId();
+    if (!uid) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setIsLoading(false);
+      return;
+    }
+    userIdRef.current = uid;
 
+    try {
       const { data, error } = await supabase
         .from("seeker_notifications")
         .select("id, user_id, type, title, message, link, metadata, read, created_at")
-        .eq("user_id", session.user.id)
+        .eq("user_id", uid)
         .order("created_at", { ascending: false })
         .limit(50);
 
