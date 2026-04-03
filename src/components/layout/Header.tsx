@@ -309,7 +309,7 @@ export function Header({
       {/* Luxury Slide Menu Panel */}
       <div 
         className={cn(
-          "fixed top-0 right-0 z-[101] h-full w-[320px] max-w-[85vw] md:hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "fixed top-0 right-0 z-[101] h-full w-[320px] max-w-[85vw] md:hidden transition-all duration-500",
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         )}
       >

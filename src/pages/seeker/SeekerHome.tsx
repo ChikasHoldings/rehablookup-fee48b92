@@ -11,7 +11,6 @@ import {
   Heart,
   Building2,
   Star,
-  TrendingUp,
   Bookmark,
   Send,
   ChevronRight,
