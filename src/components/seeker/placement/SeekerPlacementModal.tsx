@@ -124,7 +124,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
       if (error) throw error;
       return data;
     },
-    enabled: open && !!caseData?.id,
+    enabled: open && !!caseData?.id && !!currentUserId,
     staleTime: 60000,
   });
 
