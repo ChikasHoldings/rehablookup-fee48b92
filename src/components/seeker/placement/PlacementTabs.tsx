@@ -38,6 +38,7 @@ export function PlacementTabs({
   matchedFacilityIds,
   matchedFacilities,
 }: PlacementTabsProps) {
+  const { userId: currentUserId } = useSeekerSession();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("facilities");
