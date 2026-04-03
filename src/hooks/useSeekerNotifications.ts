@@ -68,11 +68,9 @@ export function useSeekerNotifications() {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
-    console.log('[useSeekerNotifications] Fetching notifications...');
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        console.log('[useSeekerNotifications] No session, clearing notifications');
         setNotifications([]);
         setUnreadCount(0);
         setIsLoading(false);
@@ -92,7 +90,6 @@ export function useSeekerNotifications() {
       }
 
       const notifs = (data || []) as SeekerNotification[];
-      console.log('[useSeekerNotifications] Loaded', notifs.length, 'notifications,', notifs.filter(n => !n.read).length, 'unread');
       setNotifications(notifs);
       setUnreadCount(notifs.filter(n => !n.read).length);
       previousNotificationsRef.current = notifs.map(n => n.id);
