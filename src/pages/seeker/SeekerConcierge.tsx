@@ -99,10 +99,9 @@ export default function SeekerConcierge() {
 
   // Fetch user's concierge cases
   const { data: cases, isLoading: casesLoading, isError: casesError, refetch } = useQuery({
-    queryKey: ["seeker-concierge-cases"],
+    queryKey: ["seeker-concierge-cases", userId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!userId) return [];
 
       const { data, error } = await supabase
         .from("concierge_inquiries")
