@@ -113,7 +113,7 @@ export default function SeekerConcierge() {
           placement_confirmed_at, placed_facility_id, seeker_rating,
           seeker_feedback, user_name
         `)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .in("payment_status", ["paid", "succeeded"])
         .order("created_at", { ascending: false });
 
