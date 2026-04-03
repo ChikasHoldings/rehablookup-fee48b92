@@ -37,7 +37,7 @@ import {
   SeekerPlacementModal,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
-// TourRequestModal removed - all coordination goes through advisor (brokerage model)
+
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 import { ConciergePaymentRecovery } from "@/components/seeker/ConciergePaymentRecovery";
 
