@@ -27,7 +27,7 @@ export function useFacilityReviews(facilityId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState(0);
-  const { user, isAuthenticated, isEmailVerified, resendVerificationEmail } = useSeekerAuth();
+  const { user, isAuthenticated, isEmailVerified, resendVerificationEmail, isLoading: isAuthLoading } = useSeekerAuth();
 
   const fetchReviews = useCallback(async () => {
     setIsLoading(true);
@@ -117,6 +117,8 @@ export function useFacilityReviews(facilityId: string) {
   useEffect(() => {
     fetchUserReview();
   }, [fetchUserReview]);
+
+  const isReviewAuthReady = !isAuthLoading;
 
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
@@ -233,6 +235,8 @@ export function useFacilityReviews(facilityId: string) {
     reviewCount,
     isAuthenticated,
     isEmailVerified,
+    isAuthLoading,
+    isReviewAuthReady,
     submitReview,
     updateReview,
     deleteReview,

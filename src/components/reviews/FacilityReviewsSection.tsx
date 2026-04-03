@@ -16,6 +16,7 @@ export function FacilityReviewsSection({ facilityId, facilityName }: FacilityRev
     reviewCount,
     isAuthenticated,
     isEmailVerified,
+    isReviewAuthReady,
     submitReview,
     updateReview,
     deleteReview,
@@ -29,6 +30,7 @@ export function FacilityReviewsSection({ facilityId, facilityName }: FacilityRev
         facilityName={facilityName}
         userReview={userReview}
         isAuthenticated={isAuthenticated}
+        isAuthReady={isReviewAuthReady}
         isEmailVerified={isEmailVerified}
         onSubmit={submitReview}
         onUpdate={updateReview}

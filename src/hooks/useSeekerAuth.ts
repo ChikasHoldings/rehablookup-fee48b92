@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+const getSupabaseStorageKey = () => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+  return `sb-${projectRef}-auth-token`;
+};
 interface SeekerProfile {
   id: string;
   user_id: string;
@@ -85,8 +90,7 @@ export function useSeekerAuth() {
 
     // Try to restore session from localStorage immediately (non-blocking)
     try {
-      const storageKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'plckxokpyiubuekvodtc'}-auth-token`;
-      const stored = localStorage.getItem(storageKey);
+      const stored = localStorage.getItem(getSupabaseStorageKey());
       if (stored) {
         const parsed = JSON.parse(stored);
         const storedSession = parsed?.currentSession || parsed;

@@ -61,6 +61,24 @@ function clearCachedAuthState() {
   }
 }
 
+
+function getSupabaseStorageKey() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const projectRef = supabaseUrl?.split("//")[1]?.split(".")[0] || "plckxokpyiubuekvodtc";
+  return `sb-${projectRef}-auth-token`;
+}
+
+function getStoredSupabaseSession() {
+  try {
+    const stored = localStorage.getItem(getSupabaseStorageKey());
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    return parsed?.currentSession || parsed;
+  } catch {
+    return null;
+  }
+}
+
 // Define portal boundaries
 const PORTAL_CONFIG = {
   admin: {
@@ -308,6 +326,23 @@ export function useUserRole(): UserRoleResult {
         }
       }
     );
+
+    const storedSession = getStoredSupabaseSession();
+    if (storedSession?.user?.id) {
+      const hasStoredSession = updateAuthState(storedSession);
+      if (hasStoredSession) {
+        setTimeout(() => {
+          if (mountedRef.current) {
+            determineRole(storedSession.user.id).then((userRole) => {
+              if (mountedRef.current) {
+                setRole(userRole);
+                cacheAuthState(userRole, storedSession.user.id, true);
+              }
+            });
+          }
+        }, 0);
+      }
+    }
 
     initializeAuth();
 
