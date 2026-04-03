@@ -31,7 +31,7 @@ const navItems = [
   { href: "/account", label: "Home", icon: Home },
   { href: "/account/search", label: "Search", icon: Search },
   { href: "/account/concierge", label: "Concierge", icon: HeartHandshake },
-  { href: "/account/requests", label: "Requests", icon: FileText },
+  { href: "/account/requests", label: "Inbox", icon: FileText },
 ];
 
 export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMobileNavProps) {

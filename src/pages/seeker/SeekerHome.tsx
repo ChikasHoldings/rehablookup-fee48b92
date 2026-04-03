@@ -608,7 +608,7 @@ export default function SeekerHome() {
                     <Send className="h-3.5 w-3.5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Requests</p>
+                    <p className="text-sm font-semibold text-foreground">Inbox</p>
                     <p className="text-[10px] text-muted-foreground">Track</p>
                   </div>
                 </Link>
