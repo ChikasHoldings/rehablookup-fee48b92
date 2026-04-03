@@ -188,12 +188,14 @@ export function useAuthSync(options: UseAuthSyncOptions = {}): AuthSyncState {
           return;
         }
 
+        const verified = await checkCustomEmailVerified(session?.user?.email ?? undefined);
+
         setState({
           session,
           user: session?.user ?? null,
           isLoading: false,
           isAuthenticated: !!session,
-          isEmailVerified: !!session?.user?.email_confirmed_at,
+          isEmailVerified: verified,
           error: null,
         });
         
