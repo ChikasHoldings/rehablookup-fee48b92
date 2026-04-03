@@ -54,62 +54,73 @@ export function useSeekerAuth() {
     let mounted = true;
     let initialized = false;
 
+    const initializeAuth = () => {
+      if (initialized || !mounted) return;
+      initialized = true;
+      setIsLoading(false);
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event, currentSession) => {
         if (!mounted) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         
-        if (session?.user) {
+        if (currentSession?.user) {
           // Defer Supabase calls with setTimeout to avoid deadlock
           setTimeout(() => {
-            if (mounted) fetchProfile(session.user.id, session.user.email || undefined);
+            if (mounted) fetchProfile(currentSession.user.id, currentSession.user.email || undefined);
           }, 0);
         } else {
           setProfile(null);
           setIsSeeker(false);
+          setIsEmailVerified(false);
         }
         
-        // Only set loading false after initial check
-        if (initialized) return;
-        initialized = true;
-        setIsLoading(false);
+        initializeAuth();
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Try to restore session from localStorage immediately (non-blocking)
+    try {
+      const storageKey = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'plckxokpyiubuekvodtc'}-auth-token`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const storedSession = parsed?.currentSession || parsed;
+        if (storedSession?.access_token && storedSession?.user) {
+          setSession(storedSession as Session);
+          setUser(storedSession.user as User);
+          setTimeout(() => {
+            if (mounted) fetchProfile(storedSession.user.id, storedSession.user.email || undefined);
+          }, 0);
+          initializeAuth();
+        }
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+
+    // Also call getSession as backup
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
       if (!mounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id, session.user.email || undefined);
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        fetchProfile(s.user.id, s.user.email || undefined);
       }
-      
-      if (!initialized) {
-        initialized = true;
-        setIsLoading(false);
-      }
+      initializeAuth();
     }).catch((error) => {
       console.error("[useSeekerAuth] Error getting session:", error);
-      if (mounted && !initialized) {
-        initialized = true;
-        setIsLoading(false);
-      }
+      if (mounted) initializeAuth();
     });
 
     // Safety timeout
     const timeoutId = setTimeout(() => {
-      if (mounted && !initialized) {
-        console.warn("[useSeekerAuth] Auth initialization timed out");
-        initialized = true;
-        setIsLoading(false);
-      }
-    }, 5000);
+      if (mounted) initializeAuth();
+    }, 3000);
 
     return () => {
       mounted = false;
