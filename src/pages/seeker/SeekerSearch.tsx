@@ -139,6 +139,7 @@ export default function SeekerSearch() {
   const handleSearch = () => {
     if (searchQuery.trim() || locationInput.trim() || selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0) {
       setHasSearched(true);
+      setCurrentPage(1);
     }
   };
 
