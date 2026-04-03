@@ -66,7 +66,7 @@ export function PlacementMatchCard({
           {/* Header with Logo */}
           <div className="flex items-start gap-4 p-4">
             <Avatar className="h-14 w-14 rounded-xl border-2 border-muted">
-              <AvatarImage src={facility.logo_url || ""} alt={facility.name} className="object-cover" />
+              <AvatarImage src={facility.logo_url || facilityPlaceholder} alt={facility.name} className="object-cover" />
               <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-lg font-bold">
                 {facility.name.charAt(0)}
               </AvatarFallback>
