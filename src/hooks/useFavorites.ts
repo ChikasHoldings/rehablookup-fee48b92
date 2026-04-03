@@ -110,13 +110,6 @@ export function useFavorites() {
       syncedUserIdRef.current = user.id;
       isSyncingRef.current = false;
       setIsLoading(false);
-
-      // Clear localStorage — DB is now the authority
-      try {
-        localStorage.removeItem(FAVORITES_STORAGE_KEY);
-      } catch {
-        // Storage unavailable
-      }
     };
 
     syncFavorites();
