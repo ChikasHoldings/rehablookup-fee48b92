@@ -197,6 +197,70 @@ export default function SeekerSignup() {
     }
   };
 
+  // Email confirmation screen - shown after successful signup when email verification is required
+  if (showEmailConfirmation) {
+    return (
+      <>
+        <SEO 
+          title="Check Your Email | RehabLookup"
+          description="Verify your email to complete your account setup."
+        />
+        <div className="min-h-screen flex flex-col bg-background">
+          <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+            <div className="container h-14 flex items-center">
+              <Link to="/" className="flex items-center">
+                <img src={headerLogo} alt="RehabLookup" className="h-8 md:h-9 w-auto" />
+              </Link>
+            </div>
+          </header>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="max-w-md w-full text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-display font-bold text-foreground">Check your email</h1>
+                <p className="text-muted-foreground mt-2">
+                  We sent a verification link to{' '}
+                  <span className="font-medium text-foreground">{signupEmail}</span>
+                </p>
+                <p className="text-sm text-muted-foreground mt-3">
+                  Click the link in the email to verify your account and get started.
+                </p>
+              </div>
+              <div className="pt-4 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Didn't receive the email? Check your spam folder or{' '}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { error } = await supabase.auth.resend({
+                        type: 'signup',
+                        email: signupEmail,
+                        options: { emailRedirectTo: `${window.location.origin}/account` }
+                      });
+                      if (error) {
+                        toast.error('Failed to resend email');
+                      } else {
+                        toast.success('Verification email resent!');
+                      }
+                    }}
+                    className="text-primary font-medium hover:underline"
+                  >
+                    resend it
+                  </button>
+                </p>
+                <Link to="/login" className="text-sm text-primary font-medium hover:underline inline-block">
+                  Back to sign in
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <SEO 
