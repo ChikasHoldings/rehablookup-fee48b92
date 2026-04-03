@@ -152,22 +152,22 @@ export default function SeekerSignup() {
       }
       
       if (data.user) {
-        // Create or update seeker profile using upsert (handle_new_seeker is a no-op)
-        const { error: profileError } = await supabase
-          .from('seeker_profiles')
-          .upsert({
-            user_id: data.user.id,
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            display_name: displayName,
-            phone: phone,
-            zipcode: zipcode,
-            city: city,
-            state: state
-          }, { onConflict: 'user_id' });
-        
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
+        // Profile is created by the database trigger (handle_new_seeker) using account_type metadata.
+        // If we have a session (auto-confirm), also update with phone/location data.
+        if (data.session) {
+          const { error: profileError } = await supabase
+            .from('seeker_profiles')
+            .update({
+              phone: phone,
+              zipcode: zipcode,
+              city: city,
+              state: state
+            })
+            .eq('user_id', data.user.id);
+          
+          if (profileError) {
+            console.error('Profile update error:', profileError);
+          }
         }
         
         // Send welcome email (fire and forget)
