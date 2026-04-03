@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+const getSupabaseStorageKey = () => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+  return `sb-${projectRef}-auth-token`;
+};
 interface SeekerProfile {
   id: string;
   user_id: string;
