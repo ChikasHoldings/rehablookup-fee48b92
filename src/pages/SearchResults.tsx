@@ -123,7 +123,7 @@ const SearchResults = () => {
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
-  const sortParam = (searchParams.get("sort") as SortOption) || "featured";
+  const sortParam = (searchParams.get("sort") as SortOption) || "proximity";
   
   // Filter params (comma-separated values)
   const treatmentTypesParam = searchParams.get("treatmentTypes") || "";
@@ -140,10 +140,33 @@ const SearchResults = () => {
   const selectedDistance = distanceParam || "";
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const geo = useGeoLocation();
 
-  const allCenters = useMemo(() => {
-    return [...treatmentCenters, ...approvedFacilities];
-  }, [approvedFacilities]);
+  // Get seeker profile location for proximity when no explicit location is searched
+  const { data: seekerProfile } = useQuery({
+    queryKey: ["seeker-profile-location-search"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("seeker_profiles")
+        .select("state, city")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  // Determine effective location for proximity sorting
+  const effectiveLocation = useMemo(() => {
+    if (location) return location;
+    // Use seeker profile state as fallback for proximity
+    if (seekerProfile?.state) return seekerProfile.state;
+    return "";
+  }, [location, seekerProfile]);
+
+  const allCenters = approvedFacilities;
 
   const typeFilterMap: Record<string, string[]> = {
     drug: ["Detox", "Inpatient", "Outpatient"],
