@@ -236,31 +236,28 @@ const SearchResults = () => {
   const filteredCenters = useMemo(() => {
     let results = [...allCenters];
 
-    // Location filter with proximity-based matching
+    // Build location match from explicit location or effective fallback
     let locationMatch: LocationMatch | null = null;
-    if (location) {
-      locationMatch = parseLocationInput(location);
-      const locationLower = location.toLowerCase();
+    const locationForFilter = location; // Only filter by explicit location
+    const locationForSort = effectiveLocation; // Sort by effective (includes profile fallback)
+    
+    if (locationForFilter) {
+      locationMatch = parseLocationInput(locationForFilter);
+      const locationLower = locationForFilter.toLowerCase();
       
-      // First, filter to include all potentially relevant results
+      // Filter to include relevant results by location
       results = results.filter((c) => {
-        // Exact zipcode match
         if (locationMatch?.zipcode && c.zipCode === locationMatch.zipcode) return true;
-        // City match
         if (c.city.toLowerCase().includes(locationLower)) return true;
-        // State match
         if (c.state.toLowerCase().includes(locationLower)) return true;
-        // State abbreviation match
         if (locationMatch?.stateAbbr && 
             (c.state.toLowerCase() === locationMatch.stateAbbr.toLowerCase() ||
              c.state.toLowerCase() === (locationMatch.state?.toLowerCase() || ''))) return true;
-        // Nearby state match
         if (locationMatch?.nearbyStates.length) {
-          const cStateAbbr = c.state.length === 2 ? c.state.toUpperCase() : null;
-          if (cStateAbbr && locationMatch.nearbyStates.includes(cStateAbbr)) return true;
+          const cStateAbbr = getStateAbbr(c.state);
+          if (cStateAbbr && locationMatch.nearbyStates.includes(cStateAbbr.toUpperCase())) return true;
         }
-        // Zipcode partial match
-        if (c.zipCode.includes(location)) return true;
+        if (c.zipCode.includes(locationForFilter)) return true;
         return false;
       });
     }
@@ -348,72 +345,64 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Helper to get priority score (plan hierarchy: Featured/Pro > Professional > Free)
-    const getPriorityScore = (center: any): number => {
-      let score = 0;
+    // Proximity scoring function
+    const getProximityScore = (center: { city: string; state: string; zipCode?: string }): number => {
+      const sortLoc = locationForSort || locationForFilter;
+      if (!sortLoc) return 4; // No location = all equal
+      const match = locationMatch || parseLocationInput(sortLoc);
       
-      // Base tier score (highest priority)
-      // Pro subscribers get highest priority
-      if (center.isPro || center.planTier === 'pro') {
-        score = 1000; // Pro tier - highest base priority
-      } else if (center.featured) {
-        score = 250; // Legacy featured
+      if (match.zipcode && center.zipCode === match.zipcode) return 0;
+      if (match.city && center.city.toLowerCase() === match.city.toLowerCase()) return 1;
+      const centerAbbr = getStateAbbr(center.state);
+      if (match.stateAbbr && centerAbbr?.toUpperCase() === match.stateAbbr.toUpperCase()) return 2;
+      if (centerAbbr && match.nearbyStates.includes(centerAbbr.toUpperCase())) return 3;
+      return 4;
+    };
+
+    // Sort results
+    results.sort((a, b) => {
+      if (sortParam === "proximity") {
+        // Primary: proximity tier
+        const proxA = getProximityScore(a);
+        const proxB = getProximityScore(b);
+        if (proxA !== proxB) return proxA - proxB;
+        // Secondary: Pro/featured within tier
+        const proA = getPlanPriority(a as any);
+        const proB = getPlanPriority(b as any);
+        if (proA !== proB) return proA - proB;
+        return a.name.localeCompare(b.name);
       }
-      
-      // Add cached ranking score (0-100 points) for finer sorting within tiers
-      score += center.calculatedRankingScore || 0;
-      
-      return score;
-    };
 
-    // Apply sorting with paid/featured priority
-    const sortWithPriority = (a: any, b: any, secondarySort: () => number) => {
-      const aPriority = getPriorityScore(a);
-      const bPriority = getPriorityScore(b);
-      if (bPriority !== aPriority) return bPriority - aPriority;
-      return secondarySort();
-    };
+      if (sortParam === "featured") {
+        // If location context exists, respect proximity tiers
+        if (locationForSort) {
+          const proxA = getProximityScore(a);
+          const proxB = getProximityScore(b);
+          if (proxA !== proxB) return proxA - proxB;
+        }
+        const proA = getPlanPriority(a as any);
+        const proB = getPlanPriority(b as any);
+        if (proA !== proB) return proA - proB;
+        return a.name.localeCompare(b.name);
+      }
 
-    // Apply proximity-based sorting first if location is set
-    if (location && locationMatch) {
-      const proximityResults = sortByProximity(results, locationMatch);
-      results = proximityResults.map(pr => ({
-        ...pr.item,
-        _proximityTier: pr.tier,
-        _proximityReason: pr.matchReason
-      }));
-    }
+      // For other sorts, Pro first then secondary
+      const proA = getPlanPriority(a as any);
+      const proB = getPlanPriority(b as any);
+      if (proA !== proB) return proA - proB;
 
-    // Then apply secondary sorting with paid/featured priority within each proximity tier
-    switch (sortParam) {
-      case "featured":
-        results.sort((a, b) => {
-          if (location && (a as any)._proximityTier !== (b as any)._proximityTier) {
-            const tierOrder = { exact: 0, city: 1, state: 2, nearby: 3, nationwide: 4 };
-            return tierOrder[(a as any)._proximityTier as ProximityTier] - tierOrder[(b as any)._proximityTier as ProximityTier];
-          }
-          return sortWithPriority(a, b, () => b.rating - a.rating);
-        });
-        break;
-      case "rating-high":
-        results.sort((a, b) => sortWithPriority(a, b, () => b.rating - a.rating));
-        break;
-      case "rating-low":
-        results.sort((a, b) => sortWithPriority(a, b, () => a.rating - b.rating));
-        break;
-      case "reviews":
-        results.sort((a, b) => sortWithPriority(a, b, () => b.reviewCount - a.reviewCount));
-        break;
-      case "name-asc":
-        results.sort((a, b) => sortWithPriority(a, b, () => a.name.localeCompare(b.name)));
-        break;
-      case "name-desc":
-        results.sort((a, b) => sortWithPriority(a, b, () => b.name.localeCompare(a.name)));
-        break;
-    }
+      switch (sortParam) {
+        case "rating-high": return (b.rating || 0) - (a.rating || 0);
+        case "rating-low": return (a.rating || 0) - (b.rating || 0);
+        case "reviews": return (b.reviewCount || 0) - (a.reviewCount || 0);
+        case "name-asc": return a.name.localeCompare(b.name);
+        case "name-desc": return b.name.localeCompare(a.name);
+        default: return 0;
+      }
+    });
 
     return results;
-  }, [allCenters, location, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly]);
 
   const hasFilters = location || treatment || insurance || type || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
