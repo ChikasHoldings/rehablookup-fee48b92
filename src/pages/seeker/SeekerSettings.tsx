@@ -477,21 +477,28 @@ export default function SeekerSettings() {
   const handleResendVerification = async () => {
     setIsResendingVerification(true);
 
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('send-verification-code', {
+        body: { email }
+      });
 
-    if (error) {
+      if (error || data?.error) {
+        toast({
+          title: "Error sending verification",
+          description: data?.error || error?.message || "Failed to send verification code",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Verification code sent",
+          description: "Please check your inbox for the 6-digit verification code."
+        });
+      }
+    } catch {
       toast({
         title: "Error sending verification",
-        description: error.message,
+        description: "Something went wrong. Please try again.",
         variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Verification email sent",
-        description: "Please check your inbox for the verification link."
       });
     }
 
