@@ -339,7 +339,7 @@ export default function SeekerSettings() {
     const { error } = await supabase
       .from('seeker_profiles')
       .upsert({ 
-        user_id: session.user.id,
+        user_id: sessionUserId,
         display_name: fullDisplayName,
         first_name: firstName.trim() || null,
         last_name: lastName.trim() || null,
