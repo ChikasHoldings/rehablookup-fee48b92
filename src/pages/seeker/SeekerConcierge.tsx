@@ -82,20 +82,13 @@ export default function SeekerConcierge() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  // Brokerage model — advisor coordinates all contact
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
-  // Fetch current user
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
-  });
+  // Use non-blocking session hook instead of supabase.auth.getUser()
+  const { user: currentUser, userId, isReady } = useSeekerSession();
 
   const userName = currentUser?.user_metadata?.full_name || 
                    currentUser?.user_metadata?.name || 
