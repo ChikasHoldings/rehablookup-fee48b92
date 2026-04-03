@@ -266,15 +266,19 @@ export function useSeekerAuth() {
   const resendVerificationEmail = async () => {
     if (!user?.email) return { error: new Error('No email found') };
     
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/account`,
-      },
-    });
-    
-    return { error };
+    try {
+      const { data, error } = await supabase.functions.invoke('send-verification-code', {
+        body: { email: user.email }
+      });
+      
+      if (error || data?.error) {
+        return { error: new Error(data?.error || 'Failed to send verification code') };
+      }
+      
+      return { error: null };
+    } catch (e: any) {
+      return { error: e };
+    }
   };
 
   return {
