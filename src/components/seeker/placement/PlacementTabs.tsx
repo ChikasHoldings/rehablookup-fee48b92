@@ -47,14 +47,13 @@ export function PlacementTabs({
   const { data: rejectedFacilities, isLoading: rejectedLoading } = useQuery({
     queryKey: ["rejected-facilities", inquiryId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!currentUserId) return [];
 
       const { data, error } = await supabase
         .from("concierge_rejected_facilities")
         .select("facility_id")
         .eq("inquiry_id", inquiryId)
-        .eq("user_id", user.id);
+        .eq("user_id", currentUserId);
       
       if (error) throw error;
       return data?.map(r => r.facility_id) || [];
