@@ -77,15 +77,27 @@ export const useStaticFacilities = () => {
     queryFn: async (): Promise<StaticFacility[]> => {
       console.log("[useStaticFacilities] Fetching from edge function...");
       
-      const { data, error } = await supabase.functions.invoke<StaticFacilitiesResponse>(
-        "get-public-facilities"
-      );
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      // Use direct fetch to avoid supabase-js auth initialization deadlock
+      const res = await fetch(`${supabaseUrl}/functions/v1/get-public-facilities`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${anonKey}`,
+          "apikey": anonKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
 
-      if (error) {
-        console.error("[useStaticFacilities] Error:", error);
-        throw error;
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("[useStaticFacilities] Error:", text);
+        throw new Error(`Edge function error: ${res.status}`);
       }
 
+      const data: StaticFacilitiesResponse = await res.json();
       const facilities = data?.facilities || [];
       console.log("[useStaticFacilities] Loaded", facilities.length, "facilities from edge");
 
@@ -102,8 +114,8 @@ export const useStaticFacilities = () => {
       return facilities;
     },
     placeholderData: getCachedStaticFacilities,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 
   // Transform static facilities to PublicFacility format with Pro data
