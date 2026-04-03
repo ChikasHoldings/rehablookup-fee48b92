@@ -307,103 +307,84 @@ export default function SeekerSignup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verificationCode]);
 
-  // 6-digit code verification screen
-  if (showVerification) {
-    return (
-      <>
-        <SEO 
-          title="Verify Your Email | RehabLookup"
-          description="Enter the verification code sent to your email."
-        />
-        <div className="min-h-screen flex flex-col bg-background">
-          <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
-            <div className="container h-14 flex items-center">
-              <Link to="/" className="flex items-center">
-                <img src={headerLogo} alt="RehabLookup" className="h-8 md:h-9 w-auto" />
-              </Link>
-            </div>
-          </header>
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="max-w-md w-full text-center space-y-6">
-              <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Mail className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-display font-bold text-foreground">Verify your email</h1>
-                <p className="text-muted-foreground mt-2">
-                  We sent a 6-digit code to{' '}
-                  <span className="font-medium text-foreground">{signupEmail}</span>
-                </p>
-              </div>
-              
-              {/* 6-digit code input */}
-              <div className="flex justify-center gap-2 sm:gap-3" onPaste={handleCodePaste}>
-                {verificationCode.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el) => { inputRefs.current[index] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleCodeChange(index, e.target.value)}
-                    onKeyDown={(e) => handleCodeKeyDown(index, e)}
-                    className="w-11 h-14 sm:w-12 sm:h-16 text-center text-2xl font-bold border-2 border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                    disabled={isVerifying}
-                    autoFocus={index === 0}
-                  />
-                ))}
-              </div>
+  // Verification UI rendered inline inside the signup card
+  const verificationContent = (
+    <div className="w-full text-center space-y-6">
+      <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+        <Mail className="h-7 w-7 text-primary" />
+      </div>
+      <div>
+        <h2 className="text-xl font-display font-bold text-foreground">Verify your email</h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          We sent a 6-digit code to{' '}
+          <span className="font-medium text-foreground">{signupEmail}</span>
+        </p>
+      </div>
+      
+      {/* 6-digit code input */}
+      <div className="flex justify-center gap-2 sm:gap-3" onPaste={handleCodePaste}>
+        {verificationCode.map((digit, index) => (
+          <input
+            key={index}
+            ref={(el) => { inputRefs.current[index] = el; }}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={digit}
+            onChange={(e) => handleCodeChange(index, e.target.value)}
+            onKeyDown={(e) => handleCodeKeyDown(index, e)}
+            className="w-10 h-12 sm:w-11 sm:h-14 text-center text-xl font-bold border-2 border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            disabled={isVerifying}
+            autoFocus={index === 0}
+          />
+        ))}
+      </div>
 
-              <Button
-                onClick={handleVerifyCode}
-                disabled={isVerifying || verificationCode.join('').length !== 6}
-                className="w-full h-11"
-              >
-                {isVerifying ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  'Verify Email'
-                )}
-              </Button>
-              
-              <div className="pt-2 space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Didn't receive the code?{' '}
-                  {resendCooldown > 0 ? (
-                    <span className="text-muted-foreground/70">Resend in {resendCooldown}s</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResendCode}
-                      disabled={isResending}
-                      className="text-primary font-medium hover:underline"
-                    >
-                      {isResending ? 'Sending...' : 'Resend code'}
-                    </button>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Check your spam folder if you don't see the email.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/account', { replace: true })}
-                  className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-                >
-                  <ArrowLeft className="h-3 w-3" />
-                  Skip for now
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
+      <Button
+        onClick={handleVerifyCode}
+        disabled={isVerifying || verificationCode.join('').length !== 6}
+        className="w-full h-10"
+      >
+        {isVerifying ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Verifying...
+          </>
+        ) : (
+          'Verify Email'
+        )}
+      </Button>
+      
+      <div className="pt-1 space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Didn't receive the code?{' '}
+          {resendCooldown > 0 ? (
+            <span className="text-muted-foreground/70">Resend in {resendCooldown}s</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={isResending}
+              className="text-primary font-medium hover:underline"
+            >
+              {isResending ? 'Sending...' : 'Resend code'}
+            </button>
+          )}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Check your spam folder if you don't see the email.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/account', { replace: true })}
+          className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          Skip for now
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
