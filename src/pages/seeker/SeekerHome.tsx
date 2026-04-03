@@ -41,22 +41,39 @@ const PAGE_SIZE = 12;
 
 type SortOption = "proximity" | "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
 
+// Restore user ID from localStorage to avoid getSession/getUser deadlocks
+function getStoredUserId(): string | null {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+    const storageKey = `sb-${projectRef}-auth-token`;
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    const session = parsed?.currentSession || parsed;
+    return session?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Get seeker's state from profile if logged in
 function useSeekerLocation() {
   const geo = useGeoLocation();
+  const storedUserId = getStoredUserId();
 
   const { data: seekerProfile } = useQuery({
-    queryKey: ["seeker-profile-location"],
+    queryKey: ["seeker-profile-location", storedUserId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!storedUserId) return null;
       const { data } = await supabase
         .from("seeker_profiles")
         .select("state, zipcode, city")
-        .eq("user_id", user.id)
+        .eq("user_id", storedUserId)
         .maybeSingle();
       return data;
     },
+    enabled: !!storedUserId,
     staleTime: 1000 * 60 * 10,
   });
 

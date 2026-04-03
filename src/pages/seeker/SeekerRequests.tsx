@@ -355,7 +355,7 @@ export default function SeekerRequests() {
           <div className="p-2 rounded-lg bg-blue-100">
             <Send className="h-5 w-5 text-blue-600" />
           </div>
-          <h1 className="text-2xl font-display font-bold">My Requests</h1>
+          <h1 className="text-2xl font-display font-bold">Inbox</h1>
         </div>
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
