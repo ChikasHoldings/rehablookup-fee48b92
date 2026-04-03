@@ -665,6 +665,8 @@ export default function SeekerSignup() {
                     List Your Treatment Facility
                   </Button>
                 </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
