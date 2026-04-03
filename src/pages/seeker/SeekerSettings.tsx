@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { ActivityLog } from "@/components/seeker/ActivityLog";
 import { logActivity } from "@/hooks/useActivityLog";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
@@ -45,6 +46,7 @@ interface SeekerProfile {
 }
 
 export default function SeekerSettings() {
+  const { userId: sessionUserId, email: sessionEmail, isAuthenticated, isReady } = useSeekerSession();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -57,7 +59,6 @@ export default function SeekerSettings() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
@@ -83,24 +84,22 @@ export default function SeekerSettings() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      if (!isReady) return;
       
-      if (!session) {
-        setIsAuthenticated(false);
+      if (!sessionUserId) {
         setIsLoading(false);
         return;
       }
 
-      setIsAuthenticated(true);
-      setEmail(session.user.email || "");
-      setUserId(session.user.id);
+      setEmail(sessionEmail || "");
+      setUserId(sessionUserId);
 
       // Check our custom verification system, not Supabase's email_confirmed_at
-      if (session.user.email) {
+      if (sessionEmail) {
         const { data: verifiedRecord } = await supabase
           .from('email_verification_codes')
           .select('verified')
-          .eq('email', session.user.email.toLowerCase())
+          .eq('email', sessionEmail.toLowerCase())
           .eq('verified', true)
           .maybeSingle();
         setIsEmailVerified(!!verifiedRecord);
@@ -109,7 +108,7 @@ export default function SeekerSettings() {
       const { data: profile } = await supabase
         .from('seeker_profiles')
         .select('display_name, first_name, last_name, avatar_url, phone, zipcode, city, state')
-        .eq('user_id', session.user.id)
+        .eq('user_id', sessionUserId)
         .maybeSingle();
 
       if (profile) {
@@ -127,18 +126,7 @@ export default function SeekerSettings() {
     };
 
     loadProfile();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setIsAuthenticated(!!session);
-        if (!session) {
-          setIsLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [isReady, sessionUserId, sessionEmail]);
 
   // Auto-fill city/state when zipcode changes
   useEffect(() => {
@@ -581,7 +569,7 @@ export default function SeekerSettings() {
   };
 
   // Show auth prompt if not authenticated
-  if (!isAuthenticated && !isLoading) {
+  if (isReady && !isAuthenticated && !isLoading) {
     return (
       <AuthPrompt 
         title="Sign in to access settings"
