@@ -31,6 +31,7 @@ interface AdvisorMessagingProps {
 }
 
 export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
+  const { userId: currentUserId } = useSeekerSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageContent, setMessageContent] = useState("");
