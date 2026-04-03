@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useFeaturedFacilityIds } from "./useApprovedFacilities";
 import type { TreatmentCenter } from "@/data/treatmentCenters";
 
