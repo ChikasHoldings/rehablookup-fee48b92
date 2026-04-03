@@ -24,10 +24,9 @@ export function useSeekerAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeker, setIsSeeker] = useState(false);
   
-  // Derive email verification from user's email_confirmed_at
-  const isEmailVerified = !!user?.email_confirmed_at;
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string, userEmail?: string) => {
     const { data, error } = await supabase
       .from('seeker_profiles')
       .select('*')
@@ -37,6 +36,17 @@ export function useSeekerAuth() {
     if (!error && data) {
       setProfile(data);
       setIsSeeker(true);
+    }
+
+    // Check email verification from our custom system
+    if (userEmail) {
+      const { data: verifiedRecord } = await supabase
+        .from('email_verification_codes')
+        .select('verified')
+        .eq('email', userEmail.toLowerCase())
+        .eq('verified', true)
+        .maybeSingle();
+      setIsEmailVerified(!!verifiedRecord);
     }
   }, []);
 
@@ -55,7 +65,7 @@ export function useSeekerAuth() {
         if (session?.user) {
           // Defer Supabase calls with setTimeout to avoid deadlock
           setTimeout(() => {
-            if (mounted) fetchProfile(session.user.id);
+            if (mounted) fetchProfile(session.user.id, session.user.email || undefined);
           }, 0);
         } else {
           setProfile(null);
@@ -77,7 +87,7 @@ export function useSeekerAuth() {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, session.user.email || undefined);
       }
       
       if (!initialized) {
@@ -256,15 +266,19 @@ export function useSeekerAuth() {
   const resendVerificationEmail = async () => {
     if (!user?.email) return { error: new Error('No email found') };
     
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/account`,
-      },
-    });
-    
-    return { error };
+    try {
+      const { data, error } = await supabase.functions.invoke('send-verification-code', {
+        body: { email: user.email }
+      });
+      
+      if (error || data?.error) {
+        return { error: new Error(data?.error || 'Failed to send verification code') };
+      }
+      
+      return { error: null };
+    } catch (e: any) {
+      return { error: e };
+    }
   };
 
   return {
