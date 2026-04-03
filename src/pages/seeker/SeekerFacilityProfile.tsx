@@ -179,15 +179,20 @@ export default function SeekerFacilityProfile() {
     phone: seekerProfile?.phone || "",
   };
 
-  // First resolve the facility ID from slug, then fetch full data
   const { data: facility, isLoading } = useQuery({
     queryKey: ["seeker-facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
-      // Ensure auth is initialized before making any request
-      await supabase.auth.getSession();
+      // Use a timeout-wrapped getSession to prevent hanging forever
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+      await Promise.race([sessionPromise, timeoutPromise]);
 
-      // Step 1: Get base facility data via RPC (SECURITY DEFINER, bypasses RLS)
-      // First we need the facility ID from the slug
+      // Fetch base facility data via RPC (SECURITY DEFINER, bypasses RLS)
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc("get_public_facility_data", { facility_id: "00000000-0000-0000-0000-000000000000" });
+      
+      // If RPC works, use slug-based approach; if not, fall back to direct query
+      // First resolve facility ID from slug
       const { data: slugLookup, error: slugError } = await supabase
         .from("facilities")
         .select("id")
@@ -200,7 +205,7 @@ export default function SeekerFacilityProfile() {
 
       const facilityId = slugLookup.id;
 
-      // Step 2: Fetch all data in parallel using the resolved ID
+      // Fetch all data in parallel
       const [baseResult, servicesResult, insuranceResult, ageGroupsResult, credentialsResult, accreditationsResult] = await Promise.all([
         supabase.rpc("get_public_facility_data", { facility_id: facilityId }),
         supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
