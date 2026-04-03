@@ -57,7 +57,7 @@ function getStoredUserId(): string | null {
   }
 }
 
-// Get seeker's state from profile if logged in
+// Get seeker's location from profile (preferred) or geo-IP (fallback)
 function useSeekerLocation() {
   const geo = useGeoLocation();
   const storedUserId = getStoredUserId();
@@ -77,13 +77,22 @@ function useSeekerLocation() {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Prefer saved profile state, then geo
-  const state = seekerProfile?.state || "";
+  // Prefer saved profile, then geo-IP fallback
+  const profileState = seekerProfile?.state || "";
+  const profileCity = seekerProfile?.city || "";
+  const profileZip = seekerProfile?.zipcode || "";
+
+  // Use geo-IP as fallback when profile has no location
+  const geoState = geo.isUS ? geo.regionCode : "";
+  const geoCity = geo.isUS ? geo.city : "";
+
+  const state = profileState || geoState;
+  const city = profileCity || geoCity;
+  const zipcode = profileZip;
   const stateAbbr = state ? getStateAbbr(state) : null;
   const nearbyStates = stateAbbr ? getNearbyStates(stateAbbr) : [];
-  const city = seekerProfile?.city || "";
 
-  return { state, stateAbbr, nearbyStates, city, isLoading: geo.isLoading };
+  return { state, stateAbbr, nearbyStates, city, zipcode, isLoading: geo.isLoading };
 }
 
 export default function SeekerHome() {
