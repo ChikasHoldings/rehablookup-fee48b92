@@ -2,6 +2,18 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+// Check our custom email_verification_codes table (not Supabase's email_confirmed_at)
+async function checkCustomEmailVerified(email: string | undefined): Promise<boolean> {
+  if (!email) return false;
+  const { data } = await supabase
+    .from('email_verification_codes')
+    .select('verified')
+    .eq('email', email.toLowerCase())
+    .eq('verified', true)
+    .maybeSingle();
+  return !!data;
+}
+
 interface AuthSyncState {
   session: Session | null;
   user: User | null;
