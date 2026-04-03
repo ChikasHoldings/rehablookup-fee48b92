@@ -5,14 +5,9 @@ import { User } from '@supabase/supabase-js';
 const FAVORITES_STORAGE_KEY = 'treatment-center-favorites';
 
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [favorites, setFavorites] = useState<string[]>([]);
+  // We no longer initialize from localStorage — DB is the source of truth for logged-in users.
+  // Guest favorites are loaded from localStorage only after confirming no user session.
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSynced, setIsSynced] = useState(false);
@@ -50,6 +45,13 @@ export function useFavorites() {
     const syncFavorites = async () => {
       // Skip if no user or already synced for this user
       if (!user) {
+        // Guest mode: load from localStorage
+        try {
+          const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+          setFavorites(stored ? JSON.parse(stored) : []);
+        } catch {
+          setFavorites([]);
+        }
         setIsLoading(false);
         setIsSynced(false);
         syncedUserIdRef.current = null;
