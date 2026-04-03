@@ -342,6 +342,7 @@ export default function SeekerSettings() {
   };
 
   const handleSaveProfile = async () => {
+    if (isSaving) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
