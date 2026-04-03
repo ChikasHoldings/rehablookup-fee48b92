@@ -182,53 +182,69 @@ export default function SeekerFacilityProfile() {
   const { data: facility, isLoading } = useQuery({
     queryKey: ["seeker-facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
-      // Use a timeout-wrapped getSession to prevent hanging forever
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
-      await Promise.race([sessionPromise, timeoutPromise]);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      // Fetch base facility data via RPC (SECURITY DEFINER, bypasses RLS)
-      const { data: rpcData, error: rpcError } = await supabase
-        .rpc("get_public_facility_data", { facility_id: "00000000-0000-0000-0000-000000000000" });
-      
-      // If RPC works, use slug-based approach; if not, fall back to direct query
-      // First resolve facility ID from slug
-      const { data: slugLookup, error: slugError } = await supabase
-        .from("facilities")
-        .select("id")
-        .eq("slug", slug)
-        .eq("status", "approved")
-        .maybeSingle();
+      // Try to get auth token if available (non-blocking)
+      let authToken = anonKey;
+      try {
+        const stored = localStorage.getItem(`sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.access_token) authToken = parsed.access_token;
+        }
+      } catch {
+        // Use anon key as fallback
+      }
 
-      if (slugError) throw slugError;
-      if (!slugLookup) return null;
+      const headers = {
+        "apikey": anonKey,
+        "Authorization": `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      };
 
-      const facilityId = slugLookup.id;
+      // Fetch facility by slug using direct REST call
+      const facilityRes = await fetch(
+        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,phone,email,website,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at`,
+        { headers: { ...headers, "Accept": "application/vnd.pgrst.object+json" } }
+      );
 
-      // Fetch all data in parallel
-      const [baseResult, servicesResult, insuranceResult, ageGroupsResult, credentialsResult, accreditationsResult] = await Promise.all([
-        supabase.rpc("get_public_facility_data", { facility_id: facilityId }),
-        supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
-        supabase.from("facility_insurance").select("insurance_name").eq("facility_id", facilityId),
-        supabase.from("facility_age_groups").select("age_group").eq("facility_id", facilityId),
-        supabase.from("facility_credentials").select("accreditations, licensing_info").eq("facility_id", facilityId),
-        supabase.from("facility_accreditations").select("accreditation_type, verified").eq("facility_id", facilityId),
+      if (!facilityRes.ok) {
+        if (facilityRes.status === 406) return null; // No match
+        throw new Error(`Failed to fetch facility: ${facilityRes.status}`);
+      }
+
+      const base = await facilityRes.json();
+      if (!base?.id) return null;
+
+      const facilityId = base.id;
+
+      // Fetch related data in parallel using direct REST
+      const [servicesRes, insuranceRes, ageGroupsRes, credentialsRes, accreditationsRes] = await Promise.all([
+        fetch(`${supabaseUrl}/rest/v1/facility_services?facility_id=eq.${facilityId}&select=service_name`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_insurance?facility_id=eq.${facilityId}&select=insurance_name`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_age_groups?facility_id=eq.${facilityId}&select=age_group`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_credentials?facility_id=eq.${facilityId}&select=accreditations,licensing_info`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_accreditations?facility_id=eq.${facilityId}&select=accreditation_type,verified`, { headers }),
       ]);
 
-      if (baseResult.error) throw baseResult.error;
-      const base = baseResult.data?.[0] || baseResult.data;
-      if (!base) return null;
+      const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
+        servicesRes.ok ? servicesRes.json() : [],
+        insuranceRes.ok ? insuranceRes.json() : [],
+        ageGroupsRes.ok ? ageGroupsRes.json() : [],
+        credentialsRes.ok ? credentialsRes.json() : [],
+        accreditationsRes.ok ? accreditationsRes.json() : [],
+      ]);
 
       return {
         ...base,
-        year_established: (base as any).year_established ?? null,
-        user_id: (base as any).user_id ?? "",
-        facility_services: servicesResult.data || [],
-        facility_insurance: insuranceResult.data || [],
-        facility_age_groups: ageGroupsResult.data || [],
-        facility_credentials: credentialsResult.data || [],
-        facility_accreditations: accreditationsResult.data || [],
-      } as unknown as FacilityData;
+        facility_services: services,
+        facility_insurance: insurance,
+        facility_age_groups: ageGroups,
+        facility_credentials: credentials,
+        facility_accreditations: accreditations,
+      } as FacilityData;
     },
     enabled: !!slug,
     retry: 2,
