@@ -51,6 +51,7 @@ interface ConciergeMessagingProps {
  * Direct seeker-to-facility messaging is prohibited.
  */
 export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
+  const { userId: currentUserId } = useSeekerSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageContent, setMessageContent] = useState("");
