@@ -151,10 +151,11 @@ export default function SeekerSignup() {
       }
       
       if (data.user) {
-        // Update seeker_profiles with additional info
+        // Create or update seeker profile using upsert (handle_new_seeker is a no-op)
         const { error: profileError } = await supabase
           .from('seeker_profiles')
-          .update({
+          .upsert({
+            user_id: data.user.id,
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             display_name: displayName,
@@ -162,24 +163,32 @@ export default function SeekerSignup() {
             zipcode: zipcode,
             city: city,
             state: state
-          })
-          .eq('user_id', data.user.id);
+          }, { onConflict: 'user_id' });
         
         if (profileError) {
-          console.error('Profile update error:', profileError);
+          console.error('Profile creation error:', profileError);
         }
         
-        // Send welcome email and create welcome notification
+        // Send welcome email (fire and forget)
         supabase.functions.invoke('send-seeker-emails', {
           body: {
             type: 'welcome',
             seekerId: data.user.id,
             email: email.trim()
           }
-        }).catch(err => console.error('Failed to send welcome email:', err));
+        }).catch(() => {});
         
-        toast.success('Account created successfully!');
-        navigate('/account');
+        // Check if we have a session (auto-confirm enabled) or need email verification
+        if (data.session) {
+          // Auto-confirm is on - user has a session, go directly to account
+          toast.success('Account created successfully!');
+          navigate('/account', { replace: true });
+        } else {
+          // Email confirmation required - show check-your-email screen
+          toast.success('Account created! Please check your email to verify.');
+          setSignupEmail(email.trim());
+          setShowEmailConfirmation(true);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
