@@ -400,30 +400,32 @@ export default function SeekerReviews() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteReviewId) return;
+    if (!deleteReviewId || isDeleting) return;
 
     setIsDeleting(true);
-    const { error } = await supabase
-      .from('facility_reviews')
-      .delete()
-      .eq('id', deleteReviewId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Session expired", description: "Please sign in again.", variant: "destructive" });
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Error deleting",
-        description: "Could not delete your review. Please try again.",
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Review deleted",
-        description: "Your review has been removed successfully."
-      });
-      setReviews(prev => prev.filter(r => r.id !== deleteReviewId));
+      const { error } = await supabase
+        .from('facility_reviews')
+        .delete()
+        .eq('id', deleteReviewId)
+        .eq('user_id', session.user.id);
+
+      if (error) {
+        toast({ title: "Error deleting", description: "Could not delete your review. Please try again.", variant: "destructive" });
+      } else {
+        toast({ title: "Review deleted", description: "Your review has been removed successfully." });
+        setReviews(prev => prev.filter(r => r.id !== deleteReviewId));
+      }
+    } finally {
+      setIsDeleting(false);
+      setDeleteReviewId(null);
     }
-
-    setIsDeleting(false);
-    setDeleteReviewId(null);
   };
 
   const formatDate = (dateString: string) => {
