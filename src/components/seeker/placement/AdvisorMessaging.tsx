@@ -164,8 +164,7 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
 
       if (!threadId || (!messageContent.trim() && !attachment)) return;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!currentUserId) throw new Error("Not authenticated");
 
       const trimmedContent = messageContent.trim();
       
