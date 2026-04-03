@@ -65,7 +65,7 @@ export function useSeekerAuth() {
         if (session?.user) {
           // Defer Supabase calls with setTimeout to avoid deadlock
           setTimeout(() => {
-            if (mounted) fetchProfile(session.user.id);
+            if (mounted) fetchProfile(session.user.id, session.user.email || undefined);
           }, 0);
         } else {
           setProfile(null);
