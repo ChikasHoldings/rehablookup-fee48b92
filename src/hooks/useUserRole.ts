@@ -267,7 +267,18 @@ export function useUserRole(): UserRoleResult {
     // Reduced from 5s to 3s for faster recovery
     timeoutId = setTimeout(() => {
       if (mountedRef.current && initializingRef.current) {
-        console.warn("[useUserRole] Auth initialization timed out");
+        console.warn("[useUserRole] Auth initialization timed out - recovering from localStorage");
+        // Recover auth state from stored Supabase session instead of giving up
+        const storedSession = getStoredSupabaseSession();
+        if (storedSession?.user) {
+          setIsAuthenticated(true);
+          setUserId(storedSession.user.id);
+          // Keep cached role if available, don't clear it
+          const cachedState = getCachedAuthState();
+          if (cachedState?.role) {
+            setRole(cachedState.role);
+          }
+        }
         setIsLoading(false);
         initializingRef.current = false;
       }
