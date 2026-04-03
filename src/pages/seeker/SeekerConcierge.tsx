@@ -48,6 +48,7 @@ interface ConciergeInquiry {
   intake_submitted_at: string | null;
   matched_at: string | null;
   matched_facility_ids: string[] | null;
+  admin_matched_facility_ids: string[] | null;
   level_of_care: string | null;
   payment_type: string | null;
   insurance_carrier: string | null;
