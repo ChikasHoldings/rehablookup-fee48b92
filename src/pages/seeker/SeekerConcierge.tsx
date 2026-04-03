@@ -309,14 +309,13 @@ export default function SeekerConcierge() {
         throw new Error("Feedback already submitted");
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!userId) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("concierge_inquiries")
         .update({ seeker_rating: rating, seeker_feedback: feedback })
         .eq("id", selectedCase!.id)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .is("seeker_feedback", null)
         .select("id")
         .single();
