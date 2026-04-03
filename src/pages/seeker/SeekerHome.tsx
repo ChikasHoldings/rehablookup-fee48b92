@@ -57,7 +57,7 @@ function getStoredUserId(): string | null {
   }
 }
 
-// Get seeker's state from profile if logged in
+// Get seeker's location from profile (preferred) or geo-IP (fallback)
 function useSeekerLocation() {
   const geo = useGeoLocation();
   const storedUserId = getStoredUserId();
@@ -77,13 +77,22 @@ function useSeekerLocation() {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Prefer saved profile state, then geo
-  const state = seekerProfile?.state || "";
+  // Prefer saved profile, then geo-IP fallback
+  const profileState = seekerProfile?.state || "";
+  const profileCity = seekerProfile?.city || "";
+  const profileZip = seekerProfile?.zipcode || "";
+
+  // Use geo-IP as fallback when profile has no location
+  const geoState = geo.isUS ? geo.regionCode : "";
+  const geoCity = geo.isUS ? geo.city : "";
+
+  const state = profileState || geoState;
+  const city = profileCity || geoCity;
+  const zipcode = profileZip;
   const stateAbbr = state ? getStateAbbr(state) : null;
   const nearbyStates = stateAbbr ? getNearbyStates(stateAbbr) : [];
-  const city = seekerProfile?.city || "";
 
-  return { state, stateAbbr, nearbyStates, city, isLoading: geo.isLoading };
+  return { state, stateAbbr, nearbyStates, city, zipcode, isLoading: geo.isLoading };
 }
 
 export default function SeekerHome() {
@@ -121,25 +130,29 @@ export default function SeekerHome() {
     }));
   }, [staticFacilities]);
 
-  // Proximity scoring function
-  const getProximityScore = useCallback((facility: { city: string; state: string }) => {
-    if (!seekerLocation.stateAbbr) return 3; // No location = all equal
+  // Proximity scoring: ZIP (0) → City+State (1) → State (2) → Nearby (3) → Nationwide (4)
+  const getProximityScore = useCallback((facility: { city: string; state: string; zipCode?: string }) => {
+    if (!seekerLocation.stateAbbr) return 4; // No location = all equal
     const facilityStateAbbr = getStateAbbr(facility.state);
-    
-    // Same city + state = highest
+
+    // Same ZIP code = highest priority
+    if (seekerLocation.zipcode && facility.zipCode && facility.zipCode === seekerLocation.zipcode) {
+      return 0;
+    }
+    // Same city + state
     if (seekerLocation.city && facility.city.toLowerCase() === seekerLocation.city.toLowerCase() &&
         facilityStateAbbr?.toUpperCase() === seekerLocation.stateAbbr.toUpperCase()) {
-      return 0;
+      return 1;
     }
     // Same state
     if (facilityStateAbbr?.toUpperCase() === seekerLocation.stateAbbr.toUpperCase()) {
-      return 1;
+      return 2;
     }
     // Nearby state
     if (facilityStateAbbr && seekerLocation.nearbyStates.includes(facilityStateAbbr.toUpperCase())) {
-      return 2;
+      return 3;
     }
-    return 3; // Nationwide
+    return 4; // Nationwide
   }, [seekerLocation]);
 
   // Filter and sort

@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 interface GeoData {
   country: string;
   countryCode: string;
+  city: string;
+  region: string; // state/region name
+  regionCode: string; // state abbreviation (e.g. "TX")
+  postal: string; // zip code
   isUS: boolean;
   isLoading: boolean;
   error: string | null;
@@ -12,6 +16,10 @@ export function useGeoLocation(): GeoData {
   const [geoData, setGeoData] = useState<GeoData>({
     country: "",
     countryCode: "",
+    city: "",
+    region: "",
+    regionCode: "",
+    postal: "",
     isUS: true, // Default to US to avoid showing banner unnecessarily
     isLoading: true,
     error: null,
@@ -27,7 +35,7 @@ export function useGeoLocation(): GeoData {
       }
 
       // Check sessionStorage cache to reduce API calls
-      const cached = sessionStorage.getItem("geo_data");
+      const cached = sessionStorage.getItem("geo_data_v2");
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
@@ -50,15 +58,23 @@ export function useGeoLocation(): GeoData {
         const result = {
           country: data.country_name || "",
           countryCode,
+          city: data.city || "",
+          region: data.region || "",
+          regionCode: data.region_code || "",
+          postal: data.postal || "",
           isUS: countryCode === "US",
         };
         
-        sessionStorage.setItem("geo_data", JSON.stringify(result));
+        sessionStorage.setItem("geo_data_v2", JSON.stringify(result));
         setGeoData({ ...result, isLoading: false, error: null });
       } catch (err) {
         setGeoData({
           country: "",
           countryCode: "",
+          city: "",
+          region: "",
+          regionCode: "",
+          postal: "",
           isUS: true,
           isLoading: false,
           error: err instanceof Error ? err.message : "Unknown error",
