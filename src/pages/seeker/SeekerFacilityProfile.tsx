@@ -120,6 +120,7 @@ function ReviewsSection({ facilityId, facilityName }: { facilityId: string; faci
           facilityName={facilityName}
           userReview={userReview}
           isAuthenticated={isAuthenticated}
+          isAuthReady={isReviewAuthReady}
           isEmailVerified={isEmailVerified}
           onSubmit={submitReview}
           onUpdate={updateReview}
