@@ -74,7 +74,7 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
         .insert({
           inquiry_id: inquiryId,
           thread_type: "advisor",
-          user_id: user.id,
+          user_id: currentUserId,
         })
         .select("id")
         .single();

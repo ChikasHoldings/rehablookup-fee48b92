@@ -71,7 +71,7 @@ export function PlacementTabs({
         .insert({
           inquiry_id: inquiryId,
           facility_id: facilityId,
-          user_id: user.id,
+          user_id: currentUserId,
         });
       
       if (error) throw error;
