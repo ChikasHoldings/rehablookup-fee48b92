@@ -515,16 +515,11 @@ export default function SeekerSettings() {
     setIsDeletingAccount(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!sessionUserId) {
         throw new Error("Not authenticated");
       }
 
-      const response = await supabase.functions.invoke("delete-seeker-account", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
+      const response = await supabase.functions.invoke("delete-seeker-account");
 
       if (response.error) {
         throw new Error(response.error.message || "Failed to delete account");

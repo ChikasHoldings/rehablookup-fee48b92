@@ -43,13 +43,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export default function SeekerInternationalCase() {
-  const { data: user } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
-  });
+  const { userId: currentUserId, isReady } = useSeekerSession();
+
+  const user = isReady && currentUserId ? { id: currentUserId } : null;
 
   const { data: placementCase, isLoading, isError, refetch } = useQuery({
     queryKey: ["seeker-international-case", user?.id],
