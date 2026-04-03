@@ -37,7 +37,7 @@ import {
   SeekerPlacementModal,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
-// TourRequestModal removed - all coordination goes through advisor (brokerage model)
+
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 import { ConciergePaymentRecovery } from "@/components/seeker/ConciergePaymentRecovery";
 
@@ -48,6 +48,7 @@ interface ConciergeInquiry {
   intake_submitted_at: string | null;
   matched_at: string | null;
   matched_facility_ids: string[] | null;
+  admin_matched_facility_ids: string[] | null;
   level_of_care: string | null;
   payment_type: string | null;
   insurance_carrier: string | null;
@@ -80,7 +81,7 @@ export default function SeekerConcierge() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  // Tour modal state removed - brokerage model requires advisor coordination
+  // Brokerage model — advisor coordinates all contact
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -504,8 +505,6 @@ export default function SeekerConcierge() {
   // Brokerage model: admin confirms placement on behalf of both parties
   // Show "in contact" info card when case is in_contact (advisor coordinating)
   const showInContactInfo = selectedCase?.status === "in_contact";
-  // Show "awaiting confirmation" when admin has started but not finalized
-  const showAwaitingConfirmation = selectedCase?.status === "in_contact" && selectedCase.placement_confirmed === false;
   const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
