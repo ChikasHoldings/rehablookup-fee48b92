@@ -84,6 +84,15 @@ export function SeekerShell() {
   useEffect(() => {
     let isMounted = true;
     
+    // Check if URL contains Supabase auth hash tokens (email verification redirect)
+    // If so, wait for onAuthStateChange to process them before checking session
+    const hasAuthHash = typeof window !== "undefined" && (
+      window.location.hash.includes('access_token') ||
+      window.location.hash.includes('type=signup') ||
+      window.location.hash.includes('type=recovery') ||
+      window.location.hash.includes('type=magiclink')
+    );
+    
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -94,8 +103,8 @@ export function SeekerShell() {
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
 
-        // Redirect to login if not authenticated
-        if (!session) {
+        // Redirect to login if not authenticated AND no auth hash being processed
+        if (!session && !hasAuthHash) {
           navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
           return;
         }
