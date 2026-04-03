@@ -45,6 +45,13 @@ export function useFavorites() {
     const syncFavorites = async () => {
       // Skip if no user or already synced for this user
       if (!user) {
+        // Guest mode: load from localStorage
+        try {
+          const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+          setFavorites(stored ? JSON.parse(stored) : []);
+        } catch {
+          setFavorites([]);
+        }
         setIsLoading(false);
         setIsSynced(false);
         syncedUserIdRef.current = null;
