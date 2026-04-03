@@ -238,27 +238,31 @@ export function useSeekerNotifications() {
   }, [toast, fetchNotifications]);
 
   const deleteNotification = useCallback(async (notificationId: string) => {
-    const notification = notifications.find(n => n.id === notificationId);
-    
-    // Optimistic update
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    if (notification && !notification.read) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    }
+    // Optimistic update — capture unread status before removing
+    setNotifications(prev => {
+      const target = prev.find(n => n.id === notificationId);
+      if (target && !target.read) {
+        setUnreadCount(c => Math.max(0, c - 1));
+      }
+      return prev.filter(n => n.id !== notificationId);
+    });
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
       const { error } = await supabase
         .from("seeker_notifications")
         .delete()
-        .eq("id", notificationId);
+        .eq("id", notificationId)
+        .eq("user_id", session.user.id);
 
       if (error) throw error;
     } catch (err) {
       console.error("Error deleting notification:", err);
-      // Revert on error
       fetchNotifications();
     }
-  }, [notifications, fetchNotifications]);
+  }, [fetchNotifications]);
 
   return {
     notifications,
