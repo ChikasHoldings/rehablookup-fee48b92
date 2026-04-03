@@ -74,15 +74,14 @@ export default function ConciergeCreatePassword() {
 
     setIsLoading(true);
     try {
-      // Send OTP via Supabase
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-        },
+      const { data, error } = await supabase.functions.invoke('send-verification-code', {
+        body: { email },
       });
 
-      if (error) throw error;
+      if (error || data?.error) {
+        toast.error(data?.error || "Failed to send verification code");
+        return;
+      }
 
       setCodeSent(true);
       toast.success("Verification code sent to your email");
