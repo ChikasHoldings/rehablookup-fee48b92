@@ -5583,6 +5583,7 @@ export type Database = {
       is_email_admin: { Args: { p_email: string }; Returns: boolean }
       is_email_provider: { Args: { p_email: string }; Returns: boolean }
       is_email_seeker: { Args: { p_email: string }; Returns: boolean }
+      is_email_verified: { Args: { p_email: string }; Returns: boolean }
       is_identifier_blocked: {
         Args: { p_identifier: string }
         Returns: boolean
