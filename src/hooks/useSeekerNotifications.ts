@@ -217,14 +217,14 @@ export function useSeekerNotifications() {
     setUnreadCount(prev => Math.max(0, prev - 1));
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const uid = userIdRef.current;
+      if (!uid) return;
 
       const { error } = await supabase
         .from("seeker_notifications")
         .update({ read: true })
         .eq("id", notificationId)
-        .eq("user_id", session.user.id);
+        .eq("user_id", uid);
 
       if (error) throw error;
     } catch (err) {
