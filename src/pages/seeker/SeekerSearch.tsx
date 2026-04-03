@@ -7,10 +7,8 @@ import {
   X,
   Building2,
   Navigation,
-  TrendingUp,
   Clock,
   Sparkles,
-  ArrowRight,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
