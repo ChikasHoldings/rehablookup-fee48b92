@@ -1,5 +1,6 @@
 import { useState, forwardRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { 
   MapPin, 
   Shield, 
