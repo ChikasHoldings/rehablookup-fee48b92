@@ -216,12 +216,14 @@ export default function SeekerFacilityProfile() {
 
       return {
         ...base,
+        year_established: (base as any).year_established ?? null,
+        user_id: (base as any).user_id ?? "",
         facility_services: servicesResult.data || [],
         facility_insurance: insuranceResult.data || [],
         facility_age_groups: ageGroupsResult.data || [],
         facility_credentials: credentialsResult.data || [],
         facility_accreditations: accreditationsResult.data || [],
-      } as FacilityData;
+      } as unknown as FacilityData;
     },
     enabled: !!slug,
     retry: 2,
