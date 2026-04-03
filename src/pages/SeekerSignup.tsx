@@ -137,7 +137,11 @@ export default function SeekerSignup() {
             display_name: displayName,
             first_name: firstName.trim(),
             last_name: lastName.trim(),
-            account_type: 'seeker'
+            account_type: 'seeker',
+            phone: phone,
+            zipcode: zipcode,
+            city: city,
+            state: state
           }
         }
       });
