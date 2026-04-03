@@ -270,12 +270,9 @@ export default function SeekerRequests() {
     }
   };
 
-  const loadSavedData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    // Check localStorage for saved form data
-    const saved = localStorage.getItem(`seeker_request_data_${session.user.id}`);
+  const loadSavedData = () => {
+    if (!userId) return;
+    const saved = localStorage.getItem(`seeker_request_data_${userId}`);
     if (saved) {
       try {
         setSavedData(JSON.parse(saved));
