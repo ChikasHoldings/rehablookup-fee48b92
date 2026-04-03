@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
-import { Link, useOutletContext, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
   Send, 
@@ -24,11 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { SeekerRequestForm } from "@/components/seeker/SeekerRequestForm";
-
-interface SeekerOutletContext {
-  isAuthenticated: boolean;
-  userName?: string;
-}
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 
 interface SubmittedRequest {
   id: string;
