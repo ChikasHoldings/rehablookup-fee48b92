@@ -182,26 +182,73 @@ export default function SeekerFacilityProfile() {
   const { data: facility, isLoading } = useQuery({
     queryKey: ["seeker-facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
-      const { data, error } = await supabase
-        .from("facilities")
-        .select(`
-          id, name, slug, city, state, zip_code, address, phone, email, website,
-          description, facility_type, gender_served, bed_count, featured, verified,
-          year_established, logo_url, gallery_urls, status, user_id, updated_at,
-          facility_services (service_name),
-          facility_insurance (insurance_name),
-          facility_age_groups (age_group),
-          facility_credentials (accreditations, licensing_info),
-          facility_accreditations (accreditation_type, verified)
-        `)
-        .eq("slug", slug)
-        .eq("status", "approved")
-        .maybeSingle();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      if (error) throw error;
-      return data as FacilityData | null;
+      // Try to get auth token if available (non-blocking)
+      let authToken = anonKey;
+      try {
+        const stored = localStorage.getItem(`sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.access_token) authToken = parsed.access_token;
+        }
+      } catch {
+        // Use anon key as fallback
+      }
+
+      const headers = {
+        "apikey": anonKey,
+        "Authorization": `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      };
+
+      // Fetch facility by slug using direct REST call
+      const facilityRes = await fetch(
+        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,phone,email,website,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at`,
+        { headers: { ...headers, "Accept": "application/vnd.pgrst.object+json" } }
+      );
+
+      if (!facilityRes.ok) {
+        if (facilityRes.status === 406) return null; // No match
+        throw new Error(`Failed to fetch facility: ${facilityRes.status}`);
+      }
+
+      const base = await facilityRes.json();
+      if (!base?.id) return null;
+
+      const facilityId = base.id;
+
+      // Fetch related data in parallel using direct REST
+      const [servicesRes, insuranceRes, ageGroupsRes, credentialsRes, accreditationsRes] = await Promise.all([
+        fetch(`${supabaseUrl}/rest/v1/facility_services?facility_id=eq.${facilityId}&select=service_name`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_insurance?facility_id=eq.${facilityId}&select=insurance_name`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_age_groups?facility_id=eq.${facilityId}&select=age_group`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_credentials?facility_id=eq.${facilityId}&select=accreditations,licensing_info`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/facility_accreditations?facility_id=eq.${facilityId}&select=accreditation_type,verified`, { headers }),
+      ]);
+
+      const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
+        servicesRes.ok ? servicesRes.json() : [],
+        insuranceRes.ok ? insuranceRes.json() : [],
+        ageGroupsRes.ok ? ageGroupsRes.json() : [],
+        credentialsRes.ok ? credentialsRes.json() : [],
+        accreditationsRes.ok ? accreditationsRes.json() : [],
+      ]);
+
+      return {
+        ...base,
+        facility_services: services,
+        facility_insurance: insurance,
+        facility_age_groups: ageGroups,
+        facility_credentials: credentials,
+        facility_accreditations: accreditations,
+      } as FacilityData;
     },
     enabled: !!slug,
+    retry: 2,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: facilityPlan = "free" } = useQuery({
