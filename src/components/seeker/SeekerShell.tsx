@@ -102,16 +102,12 @@ export function SeekerShell() {
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
 
-        // Check email verification from our custom verification system
+        // Check email verification using security definer function
         if (session?.user?.email) {
-          const { data: verifiedRecord } = await supabase
-            .from('email_verification_codes')
-            .select('verified')
-            .eq('email', session.user.email.toLowerCase())
-            .eq('verified', true)
-            .maybeSingle();
+          const { data: verified } = await supabase
+            .rpc('is_email_verified', { p_email: session.user.email });
           
-          setIsEmailVerified(!!verifiedRecord);
+          setIsEmailVerified(!!verified);
         } else {
           setIsEmailVerified(false);
         }
@@ -140,16 +136,12 @@ export function SeekerShell() {
         setUserId(session?.user?.id || null);
         setIsLoading(false);
 
-        // Check email verification from our custom system
+        // Check email verification using security definer function
         if (session?.user?.email) {
-          const { data: verifiedRecord } = await supabase
-            .from('email_verification_codes')
-            .select('verified')
-            .eq('email', session.user.email.toLowerCase())
-            .eq('verified', true)
-            .maybeSingle();
+          const { data: verified } = await supabase
+            .rpc('is_email_verified', { p_email: session.user.email });
           
-          if (isMounted) setIsEmailVerified(!!verifiedRecord);
+          if (isMounted) setIsEmailVerified(!!verified);
         } else {
           setIsEmailVerified(false);
         }

@@ -95,47 +95,21 @@ export function useFavorites() {
 
       const dbFavoriteIds = dbFavorites?.map(f => f.facility_id) || [];
       
-      // For authenticated users, DB is the source of truth.
-      // Only merge localStorage favorites on the very first sync (when DB has 0 favorites)
-      // to migrate guest favorites. After that, always trust DB.
-      let localFavoritesToSync: string[] = [];
-      if (dbFavoriteIds.length === 0) {
-        try {
-          const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-          const localFavorites = stored ? JSON.parse(stored) : [];
-          localFavoritesToSync = localFavorites.filter((id: string) => typeof id === 'string' && id.length > 0);
-        } catch {
-          // Ignore parse errors
-        }
-        
-        // Sync local guest favorites to DB
-        if (localFavoritesToSync.length > 0) {
-          const insertPromises = localFavoritesToSync.map(facilityId =>
-            supabase
-              .from('user_favorites')
-              .insert({ user_id: user.id, facility_id: facilityId })
-              .select()
-          );
-          await Promise.allSettled(insertPromises);
-        }
+      // DB is the absolute source of truth for authenticated users.
+      // Clear any stale localStorage immediately — never inherit guest favorites.
+      try {
+        localStorage.removeItem(FAVORITES_STORAGE_KEY);
+      } catch {
+        // Storage unavailable
       }
 
-      // Set combined favorites
-      const allFavorites = [...new Set([...dbFavoriteIds, ...localFavoritesToSync])];
-      setFavorites(allFavorites);
+      setFavorites(dbFavoriteIds);
       setIsSynced(true);
       
       // Mark as synced for this user
       syncedUserIdRef.current = user.id;
       isSyncingRef.current = false;
       setIsLoading(false);
-
-      // Clear localStorage — DB is now the authority
-      try {
-        localStorage.removeItem(FAVORITES_STORAGE_KEY);
-      } catch {
-        // Storage unavailable
-      }
     };
 
     syncFavorites();
