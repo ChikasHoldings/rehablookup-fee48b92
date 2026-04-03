@@ -4,13 +4,10 @@ import { Helmet } from "react-helmet-async";
 import { 
   Send, 
   Clock, 
-  CheckCircle, 
-  Phone, 
   Building2, 
   MapPin, 
   Plus,
   FileText,
-  Loader2,
   ExternalLink
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
