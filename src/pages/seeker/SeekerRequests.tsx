@@ -287,11 +287,9 @@ export default function SeekerRequests() {
     setShowNewRequest(true);
   };
 
-  const handleRequestSuccess = async () => {
-    // Save the form data for future prefill
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && savedData) {
-      localStorage.setItem(`seeker_request_data_${session.user.id}`, JSON.stringify(savedData));
+  const handleRequestSuccess = () => {
+    if (userId && savedData) {
+      localStorage.setItem(`seeker_request_data_${userId}`, JSON.stringify(savedData));
     }
     
     setShowNewRequest(false);
