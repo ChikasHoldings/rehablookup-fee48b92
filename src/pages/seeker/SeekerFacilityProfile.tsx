@@ -179,29 +179,53 @@ export default function SeekerFacilityProfile() {
     phone: seekerProfile?.phone || "",
   };
 
+  // First resolve the facility ID from slug, then fetch full data
   const { data: facility, isLoading } = useQuery({
     queryKey: ["seeker-facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
-      const { data, error } = await supabase
+      // Ensure auth is initialized before making any request
+      await supabase.auth.getSession();
+
+      // Step 1: Get base facility data via RPC (SECURITY DEFINER, bypasses RLS)
+      // First we need the facility ID from the slug
+      const { data: slugLookup, error: slugError } = await supabase
         .from("facilities")
-        .select(`
-          id, name, slug, city, state, zip_code, address, phone, email, website,
-          description, facility_type, gender_served, bed_count, featured, verified,
-          year_established, logo_url, gallery_urls, status, user_id, updated_at,
-          facility_services (service_name),
-          facility_insurance (insurance_name),
-          facility_age_groups (age_group),
-          facility_credentials (accreditations, licensing_info),
-          facility_accreditations (accreditation_type, verified)
-        `)
+        .select("id")
         .eq("slug", slug)
         .eq("status", "approved")
         .maybeSingle();
 
-      if (error) throw error;
-      return data as FacilityData | null;
+      if (slugError) throw slugError;
+      if (!slugLookup) return null;
+
+      const facilityId = slugLookup.id;
+
+      // Step 2: Fetch all data in parallel using the resolved ID
+      const [baseResult, servicesResult, insuranceResult, ageGroupsResult, credentialsResult, accreditationsResult] = await Promise.all([
+        supabase.rpc("get_public_facility_data", { facility_id: facilityId }),
+        supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
+        supabase.from("facility_insurance").select("insurance_name").eq("facility_id", facilityId),
+        supabase.from("facility_age_groups").select("age_group").eq("facility_id", facilityId),
+        supabase.from("facility_credentials").select("accreditations, licensing_info").eq("facility_id", facilityId),
+        supabase.from("facility_accreditations").select("accreditation_type, verified").eq("facility_id", facilityId),
+      ]);
+
+      if (baseResult.error) throw baseResult.error;
+      const base = baseResult.data?.[0] || baseResult.data;
+      if (!base) return null;
+
+      return {
+        ...base,
+        facility_services: servicesResult.data || [],
+        facility_insurance: insuranceResult.data || [],
+        facility_age_groups: ageGroupsResult.data || [],
+        facility_credentials: credentialsResult.data || [],
+        facility_accreditations: accreditationsResult.data || [],
+      } as FacilityData;
     },
     enabled: !!slug,
+    retry: 2,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: facilityPlan = "free" } = useQuery({
