@@ -299,7 +299,7 @@ export default function SeekerRequests() {
     
     setShowNewRequest(false);
     setSelectedFacility(null);
-    fetchRequests();
+    if (email) fetchRequests(email);
   };
 
   const formatDate = (dateString: string) => {
