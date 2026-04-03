@@ -80,19 +80,41 @@ export function SeekerShell() {
     }
   }, [role, isRoleLoading, navigate]);
 
-  // Auth check - redirect unauthenticated users to login for all seeker panel routes
+  // Auth check - use synchronous localStorage session for immediate auth resolution
   useEffect(() => {
     let isMounted = true;
     
     // Check if URL contains Supabase auth hash tokens (email verification redirect)
-    // If so, wait for onAuthStateChange to process them before checking session
     const hasAuthHash = typeof window !== "undefined" && (
       window.location.hash.includes('access_token') ||
       window.location.hash.includes('type=signup') ||
       window.location.hash.includes('type=recovery') ||
       window.location.hash.includes('type=magiclink')
     );
+
+    // Synchronously check localStorage for session to avoid blank flash
+    const getStoredSession = () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+        const projectRef = supabaseUrl?.split("//")[1]?.split(".")[0] || "plckxokpyiubuekvodtc";
+        const key = `sb-${projectRef}-auth-token`;
+        const stored = localStorage.getItem(key);
+        if (!stored) return null;
+        const parsed = JSON.parse(stored);
+        return parsed?.currentSession || parsed;
+      } catch {
+        return null;
+      }
+    };
+
+    const storedSession = getStoredSession();
     
+    // Set initial state from localStorage synchronously
+    if (storedSession?.user) {
+      setUserEmail(storedSession.user.email);
+      setUserId(storedSession.user.id);
+    }
+
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -112,8 +134,8 @@ export function SeekerShell() {
           setIsEmailVerified(false);
         }
 
-        // Redirect to login if not authenticated AND no auth hash being processed
-        if (!session && !hasAuthHash) {
+        // Redirect to login if not authenticated AND no auth hash AND no stored session
+        if (!session && !hasAuthHash && !storedSession?.user) {
           navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
           return;
         }
