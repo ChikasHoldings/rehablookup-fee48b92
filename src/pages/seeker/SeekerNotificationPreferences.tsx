@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -39,30 +40,28 @@ const defaultPreferences: NotificationPreferences = {
 };
 
 export default function SeekerNotificationPreferences() {
+  const { userId: sessionUserId, isAuthenticated, isReady } = useSeekerSession();
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const loadPreferences = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      if (!isReady) return;
       
-      if (!session) {
-        setIsAuthenticated(false);
+      if (!sessionUserId) {
         setIsLoading(false);
         return;
       }
 
-      setIsAuthenticated(true);
-      setUserId(session.user.id);
+      setUserId(sessionUserId);
 
       const { data, error } = await supabase
         .from('notification_preferences')
         .select('user_id, email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, sms_lead_alerts, notify_new_leads, notify_lead_status_changes, notify_facility_views, notify_lead_limit_warnings, followup_reminders_enabled')
-        .eq('user_id', session.user.id)
+        .eq('user_id', sessionUserId)
         .maybeSingle();
 
       if (data) {
@@ -84,7 +83,7 @@ export default function SeekerNotificationPreferences() {
     };
 
     loadPreferences();
-  }, []);
+  }, [isReady, sessionUserId]);
 
   const updatePreference = async (key: keyof NotificationPreferences, value: boolean) => {
     if (!userId) return;
@@ -137,7 +136,7 @@ export default function SeekerNotificationPreferences() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (isReady && !isAuthenticated) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <AuthPrompt 

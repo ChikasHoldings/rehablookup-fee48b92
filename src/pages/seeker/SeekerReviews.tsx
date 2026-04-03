@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
 import {
   Dialog,
   DialogContent,
@@ -222,9 +222,9 @@ function ReviewCard({
 }
 
 export default function SeekerReviews() {
+  const { userId, isAuthenticated, isReady } = useSeekerSession();
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [editingReview, setEditingReview] = useState<UserReview | null>(null);
   const [editRating, setEditRating] = useState(5);
   const [editText, setEditText] = useState("");
@@ -235,33 +235,13 @@ export default function SeekerReviews() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAuthAndFetch = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      
-      if (session) {
-        await fetchReviews(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    };
-    
-    checkAuthAndFetch();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setIsAuthenticated(!!session);
-        if (session) {
-          await fetchReviews(session.user.id);
-        } else {
-          setReviews([]);
-          setIsLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (!isReady) return;
+    if (userId) {
+      fetchReviews(userId);
+    } else {
+      setIsLoading(false);
+    }
+  }, [isReady, userId]);
 
   const fetchReviews = async (userId: string) => {
     setIsLoading(true);
@@ -453,7 +433,7 @@ export default function SeekerReviews() {
   };
 
   // Show auth prompt if not authenticated
-  if (!isAuthenticated) {
+  if (isReady && !isAuthenticated) {
     return (
       <AuthPrompt 
         title="Sign in to view your reviews"

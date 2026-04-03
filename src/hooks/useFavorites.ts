@@ -28,11 +28,22 @@ export function useFavorites() {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        setUser(session?.user ?? null);
+    // Restore user from localStorage synchronously to avoid getSession deadlock
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+      const storageKey = `sb-${projectRef}-auth-token`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored && mounted) {
+        const parsed = JSON.parse(stored);
+        const session = parsed?.currentSession || parsed;
+        if (session?.user) {
+          setUser(session.user);
+        }
       }
-    });
+    } catch {
+      // Ignore storage errors
+    }
 
     return () => {
       mounted = false;
