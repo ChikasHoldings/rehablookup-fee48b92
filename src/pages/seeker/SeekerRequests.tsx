@@ -184,17 +184,17 @@ export default function SeekerRequests() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchRequests();
+    if (!isReady) return;
+    if (isAuthenticated && email) {
+      fetchRequests(email);
       loadSavedData();
     } else {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isReady, email]);
 
-  const fetchRequests = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.email) {
+  const fetchRequests = async (userEmail: string) => {
+    if (!userEmail) {
       setIsLoading(false);
       return;
     }
