@@ -342,8 +342,7 @@ export default function SeekerRequests() {
     }
   };
 
-  // Show auth prompt if not authenticated
-  if (!isAuthenticated) {
+  if (isReady && !isAuthenticated) {
     return (
       <AuthPrompt 
         title="Sign in to manage your requests"
