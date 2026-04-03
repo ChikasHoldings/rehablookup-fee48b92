@@ -519,6 +519,7 @@ export default function SeekerSettings() {
   };
 
   const handleDeleteAccount = async () => {
+    if (isDeletingAccount) return;
     if (deleteConfirmText !== "DELETE") {
       toast({
         title: "Confirmation required",
