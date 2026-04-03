@@ -58,7 +58,7 @@ export default function SeekerInternationalCase() {
 
       const { data, error } = await supabase
         .from("international_placement_cases")
-        .select("*")
+        .select("id, status, client_name, client_country, preferred_language, intake_data, created_at, updated_at, intake_submitted_at, accepted_facility_id, matched_facility_ids")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)

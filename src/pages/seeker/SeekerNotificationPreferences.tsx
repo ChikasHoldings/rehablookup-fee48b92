@@ -61,7 +61,7 @@ export default function SeekerNotificationPreferences() {
 
       const { data, error } = await supabase
         .from('notification_preferences')
-        .select('*')
+        .select('user_id, email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, sms_lead_alerts, notify_new_leads, notify_lead_status_changes, notify_facility_views, notify_lead_limit_warnings, followup_reminders_enabled')
         .eq('user_id', session.user.id)
         .maybeSingle();
 

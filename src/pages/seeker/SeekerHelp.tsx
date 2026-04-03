@@ -87,6 +87,7 @@ export default function SeekerHelp() {
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     
     if (!subject.trim() || !category || !message.trim()) {
       toast.error("Please fill in all fields");
