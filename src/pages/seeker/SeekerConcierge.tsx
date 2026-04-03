@@ -505,8 +505,6 @@ export default function SeekerConcierge() {
   // Brokerage model: admin confirms placement on behalf of both parties
   // Show "in contact" info card when case is in_contact (advisor coordinating)
   const showInContactInfo = selectedCase?.status === "in_contact";
-  // Show "awaiting confirmation" when admin has started but not finalized
-  const showAwaitingConfirmation = selectedCase?.status === "in_contact" && selectedCase.placement_confirmed === false;
   const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
