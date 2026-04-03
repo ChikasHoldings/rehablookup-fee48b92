@@ -104,13 +104,14 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 </>
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
-                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-sm">
-                    <span className="font-display text-lg sm:text-xl font-bold text-primary/70">
-                      {initials}
-                    </span>
-                  </div>
-                </div>
+                <img 
+                  src={facilityPlaceholder}
+                  alt={`${facility.name} facility`}
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  loading="lazy"
+                  width={800}
+                  height={600}
+                />
               )}
               
               {/* Top-right icons: Favorite + Years */}
