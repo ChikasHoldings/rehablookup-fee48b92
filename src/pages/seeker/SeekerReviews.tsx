@@ -351,8 +351,7 @@ export default function SeekerReviews() {
 
     setIsSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!userId) {
         toast({ title: "Session expired", description: "Please sign in again.", variant: "destructive" });
         return;
       }
@@ -364,13 +363,13 @@ export default function SeekerReviews() {
           review_text: editText || null,
         })
         .eq('id', editingReview.id)
-        .eq('user_id', session.user.id);
+        .eq('user_id', userId);
 
       if (error) {
         toast({ title: "Error saving", description: "Could not update your review. Please try again.", variant: "destructive" });
       } else {
         toast({ title: "Review updated", description: "Your review has been updated successfully." });
-        fetchReviews(session.user.id);
+        fetchReviews(userId);
       }
     } finally {
       setIsSaving(false);
