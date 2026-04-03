@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 
@@ -15,11 +15,13 @@ import {
   Bookmark,
   Send,
   ChevronRight,
+  ChevronLeft,
   Filter,
   X,
   SlidersHorizontal,
   ArrowUpDown,
-  ArrowRight
+  ArrowRight,
+  Compass
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,10 +33,42 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { useFeaturedFacilityIds } from "@/hooks/useApprovedFacilities";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { sortByPlanHierarchyWithSecondary, getPlanPriority } from "@/lib/facilityPlanSort";
+import { getPlanPriority } from "@/lib/facilityPlanSort";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { getStateAbbr, getNearbyStates } from "@/lib/proximitySearch";
 import { useQuery } from "@tanstack/react-query";
 
-type SortOption = "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
+const PAGE_SIZE = 12;
+
+type SortOption = "proximity" | "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
+
+// Get seeker's state from profile if logged in
+function useSeekerLocation() {
+  const geo = useGeoLocation();
+
+  const { data: seekerProfile } = useQuery({
+    queryKey: ["seeker-profile-location"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("seeker_profiles")
+        .select("state, zipcode, city")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  // Prefer saved profile state, then geo
+  const state = seekerProfile?.state || "";
+  const stateAbbr = state ? getStateAbbr(state) : null;
+  const nearbyStates = stateAbbr ? getNearbyStates(stateAbbr) : [];
+  const city = seekerProfile?.city || "";
+
+  return { state, stateAbbr, nearbyStates, city, isLoading: geo.isLoading };
+}
 
 export default function SeekerHome() {
   const navigate = useNavigate();
@@ -42,20 +76,22 @@ export default function SeekerHome() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedState, setSelectedState] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("name-asc");
+  const [sortBy, setSortBy] = useState<SortOption>("proximity");
+  const [currentPage, setCurrentPage] = useState(1);
   const { favoritesCount } = useFavorites();
   const { data: featuredData } = useFeaturedFacilityIds();
+  const seekerLocation = useSeekerLocation();
 
-  // Use static facilities hook for CDN-cached data
   const { data: staticFacilities = [], isLoading } = useStaticFacilities();
 
-  // Map static facilities to FacilityCardData format
-  const nearbyFacilities: FacilityCardData[] = useMemo(() => {
-    return staticFacilities.slice(0, 50).map(f => ({
+  // Map to FacilityCardData
+  const allFacilities: (FacilityCardData & { zipCode?: string })[] = useMemo(() => {
+    return staticFacilities.map(f => ({
       id: f.id,
       name: f.name,
       city: f.city,
       state: f.state,
+      zipCode: f.zipCode,
       facility_type: f.facilityType || null,
       slug: f.slug,
       phone: f.phone,
@@ -65,74 +101,105 @@ export default function SeekerHome() {
       verified: f.verified ?? null,
       year_established: f.year_established ?? null,
       planTier: f.planTier,
+      featured: f.isPro,
     }));
   }, [staticFacilities]);
 
-  // Filter and sort facilities with plan hierarchy
+  // Proximity scoring function
+  const getProximityScore = useCallback((facility: { city: string; state: string }) => {
+    if (!seekerLocation.stateAbbr) return 3; // No location = all equal
+    const facilityStateAbbr = getStateAbbr(facility.state);
+    
+    // Same city + state = highest
+    if (seekerLocation.city && facility.city.toLowerCase() === seekerLocation.city.toLowerCase() &&
+        facilityStateAbbr?.toUpperCase() === seekerLocation.stateAbbr.toUpperCase()) {
+      return 0;
+    }
+    // Same state
+    if (facilityStateAbbr?.toUpperCase() === seekerLocation.stateAbbr.toUpperCase()) {
+      return 1;
+    }
+    // Nearby state
+    if (facilityStateAbbr && seekerLocation.nearbyStates.includes(facilityStateAbbr.toUpperCase())) {
+      return 2;
+    }
+    return 3; // Nationwide
+  }, [seekerLocation]);
+
+  // Filter and sort
   const filteredFacilities = useMemo(() => {
-    let result = nearbyFacilities.filter((facility) => {
+    let result = allFacilities.filter((facility) => {
       const matchesType = selectedType === "all" || facility.facility_type === selectedType;
       const matchesState = selectedState === "all" || facility.state?.toLowerCase() === selectedState.toLowerCase();
       return matchesType && matchesState;
     });
 
-    // Sort with plan hierarchy first, then secondary sort
-    result = sortByPlanHierarchyWithSecondary(result, (a, b) => {
+    result = [...result].sort((a, b) => {
+      // Pro facilities always first within each proximity tier
+      const proA = getPlanPriority(a);
+      const proB = getPlanPriority(b);
+
+      if (sortBy === "proximity") {
+        const proxA = getProximityScore(a);
+        const proxB = getProximityScore(b);
+        if (proxA !== proxB) return proxA - proxB;
+        if (proA !== proB) return proA - proB;
+        return a.name.localeCompare(b.name);
+      }
+
+      // For non-proximity sorts, still put Pro first
+      if (proA !== proB) return proA - proB;
+
       switch (sortBy) {
-        case "name-asc":
-          return a.name.localeCompare(b.name);
-        case "name-desc":
-          return b.name.localeCompare(a.name);
-        case "state-asc":
-          return a.state.localeCompare(b.state) || a.city.localeCompare(b.city);
-        case "state-desc":
-          return b.state.localeCompare(a.state) || b.city.localeCompare(a.city);
-        case "years-desc":
-          const yearsA = a.year_established ? new Date().getFullYear() - a.year_established : 0;
-          const yearsB = b.year_established ? new Date().getFullYear() - b.year_established : 0;
-          return yearsB - yearsA;
-        case "years-asc":
-          // Unknown years go to end (treated as newest/0 years)
-          const yearsA2 = a.year_established ? new Date().getFullYear() - a.year_established : 0;
-          const yearsB2 = b.year_established ? new Date().getFullYear() - b.year_established : 0;
-          return yearsA2 - yearsB2;
-        default:
-          return 0;
+        case "name-asc": return a.name.localeCompare(b.name);
+        case "name-desc": return b.name.localeCompare(a.name);
+        case "state-asc": return a.state.localeCompare(b.state) || a.city.localeCompare(b.city);
+        case "state-desc": return b.state.localeCompare(a.state) || b.city.localeCompare(a.city);
+        case "years-desc": {
+          const ya = a.year_established ? new Date().getFullYear() - a.year_established : 0;
+          const yb = b.year_established ? new Date().getFullYear() - b.year_established : 0;
+          return yb - ya;
+        }
+        case "years-asc": {
+          const ya = a.year_established ? new Date().getFullYear() - a.year_established : 0;
+          const yb = b.year_established ? new Date().getFullYear() - b.year_established : 0;
+          return ya - yb;
+        }
+        default: return 0;
       }
     });
 
     return result;
-  }, [nearbyFacilities, selectedType, selectedState, sortBy]);
+  }, [allFacilities, selectedType, selectedState, sortBy, getProximityScore]);
 
-  // Get unique states and types from data
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredFacilities.length / PAGE_SIZE));
+  const paginatedFacilities = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredFacilities.slice(start, start + PAGE_SIZE);
+  }, [filteredFacilities, currentPage]);
+
+  // Reset page on filter change
+  const handleFilterChange = useCallback((setter: (v: string) => void, value: string) => {
+    setter(value);
+    setCurrentPage(1);
+  }, []);
+
   const availableStates = useMemo(() => {
-    const states = [...new Set(nearbyFacilities.map(f => f.state))].sort();
-    return states;
-  }, [nearbyFacilities]);
+    return [...new Set(allFacilities.map(f => f.state))].sort();
+  }, [allFacilities]);
 
   const availableTypes = useMemo(() => {
-    const types = [...new Set(nearbyFacilities.map(f => f.facility_type).filter(Boolean))].sort() as string[];
-    return types;
-  }, [nearbyFacilities]);
+    return [...new Set(allFacilities.map(f => f.facility_type).filter(Boolean))].sort() as string[];
+  }, [allFacilities]);
 
   const activeFiltersCount = (selectedType !== "all" ? 1 : 0) + (selectedState !== "all" ? 1 : 0);
 
   const clearFilters = () => {
     setSelectedType("all");
     setSelectedState("all");
-    setSortBy("name-asc");
-  };
-
-  const getSortLabel = (sort: SortOption): string => {
-    switch (sort) {
-      case "name-asc": return "Name (A-Z)";
-      case "name-desc": return "Name (Z-A)";
-      case "state-asc": return "Location (A-Z)";
-      case "state-desc": return "Location (Z-A)";
-      case "years-desc": return "Most Established";
-      case "years-asc": return "Newest First";
-      default: return "Sort";
-    }
+    setSortBy("proximity");
+    setCurrentPage(1);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -142,8 +209,8 @@ export default function SeekerHome() {
     }
   };
 
-  // Show discovery layout when no nearby facilities
-  if (!isLoading && nearbyFacilities.length === 0) {
+  // Empty state — no facilities at all
+  if (!isLoading && allFacilities.length === 0) {
     return (
       <>
       <Helmet>
@@ -152,7 +219,6 @@ export default function SeekerHome() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="min-h-full">
-        {/* Hero Search Section */}
         <div className="bg-gradient-to-b from-primary/5 via-primary/3 to-background py-12 px-4">
           <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
@@ -187,10 +253,8 @@ export default function SeekerHome() {
           </div>
         </div>
 
-        {/* Quick Links Grid */}
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Popular Pages */}
             <Card className="border-border/50 hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -220,7 +284,6 @@ export default function SeekerHome() {
               </CardContent>
             </Card>
 
-            {/* Find Treatment */}
             <Card className="border-border/50 hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -253,7 +316,6 @@ export default function SeekerHome() {
             </Card>
           </div>
 
-          {/* Call to Action */}
           <Card className="mt-8 bg-gradient-to-r from-amber-50 to-amber-100/50 border-amber-200/50">
             <CardContent className="p-6 sm:p-8 text-center">
               <p className="text-amber-700 font-medium mb-2">Need immediate help?</p>
@@ -274,7 +336,7 @@ export default function SeekerHome() {
     );
   }
 
-  // Main layout with sidebar
+  // Main layout
   return (
     <>
     <Helmet>
@@ -327,7 +389,7 @@ export default function SeekerHome() {
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <h3 className="font-semibold text-xs sm:text-sm text-foreground flex items-center gap-1.5">
                   <Filter className="h-3.5 w-3.5" />
-                  Filter Results
+                  Filter & Sort
                 </h3>
                 {activeFiltersCount > 0 && (
                   <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-[11px] gap-1 px-2">
@@ -337,53 +399,47 @@ export default function SeekerHome() {
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {/* Facility Type Filter */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Facility Type</label>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
+                  <Select value={selectedType} onValueChange={(v) => handleFilterChange(setSelectedType, v)}>
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
                       {availableTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* State Filter */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">State</label>
-                  <Select value={selectedState} onValueChange={setSelectedState}>
+                  <Select value={selectedState} onValueChange={(v) => handleFilterChange(setSelectedState, v)}>
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="All States" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All States</SelectItem>
                       {availableStates.map((state) => (
-                        <SelectItem key={state} value={state}>
-                          {state}
-                        </SelectItem>
+                        <SelectItem key={state} value={state}>{state}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Sort By */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                     <ArrowUpDown className="h-3 w-3" />
                     Sort By
                   </label>
-                  <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <Select value={sortBy} onValueChange={(v) => { setSortBy(v as SortOption); setCurrentPage(1); }}>
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Sort by..." />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="proximity">Nearest First</SelectItem>
                       <SelectItem value="name-asc">Name (A-Z)</SelectItem>
                       <SelectItem value="name-desc">Name (Z-A)</SelectItem>
                       <SelectItem value="state-asc">Location (A-Z)</SelectItem>
@@ -395,17 +451,13 @@ export default function SeekerHome() {
                 </div>
               </div>
 
-              {/* Active Filters */}
               {activeFiltersCount > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-border">
                   {selectedType !== "all" && (
                     <Badge variant="secondary" className="gap-1 pr-1">
                       <Building2 className="h-3 w-3" />
                       {selectedType}
-                      <button
-                        onClick={() => setSelectedType("all")}
-                        className="ml-1 p-0.5 rounded-full hover:bg-muted-foreground/20"
-                      >
+                      <button onClick={() => handleFilterChange(setSelectedType, "all")} className="ml-1 p-0.5 rounded-full hover:bg-muted-foreground/20">
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
@@ -414,10 +466,7 @@ export default function SeekerHome() {
                     <Badge variant="secondary" className="gap-1 pr-1">
                       <MapPin className="h-3 w-3" />
                       {selectedState}
-                      <button
-                        onClick={() => setSelectedState("all")}
-                        className="ml-1 p-0.5 rounded-full hover:bg-muted-foreground/20"
-                      >
+                      <button onClick={() => handleFilterChange(setSelectedState, "all")} className="ml-1 p-0.5 rounded-full hover:bg-muted-foreground/20">
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
@@ -434,59 +483,115 @@ export default function SeekerHome() {
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Main Feed */}
           <div className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <h2 className="text-base sm:text-lg lg:text-xl font-display font-bold text-foreground flex items-center gap-1.5 sm:gap-2 truncate">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-                <span className="truncate">Treatment Centers</span>
+                <Compass className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                <span className="truncate">Discover Centers Near You</span>
               </h2>
-              <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">
-                {filteredFacilities.length} result{filteredFacilities.length !== 1 ? 's' : ''}
-              </Badge>
+              {seekerLocation.stateAbbr && (
+                <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {seekerLocation.stateAbbr}
+                </span>
+              )}
             </div>
             
             {isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3, 4].map((i) => (
                   <FacilityCardSkeleton key={i} />
                 ))}
               </div>
             ) : filteredFacilities.length === 0 ? (
               <Card className="p-8 text-center border-dashed">
                 <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-3">
-                  <Search className="h-6 w-6 text-muted-foreground" />
+                  <MapPin className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">No facilities found</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Try adjusting your filters or search criteria
+                  Try adjusting your filters to see more treatment centers
                 </p>
                 <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
                 </Button>
               </Card>
             ) : (
-              <div className="grid gap-3 sm:gap-4">
-                {filteredFacilities.map((facility) => (
-                  <FacilityCard key={facility.id} facility={facility} />
-                ))}
-              </div>
-            )}
+              <>
+                <div className="grid gap-3 sm:gap-4">
+                  {paginatedFacilities.map((facility) => (
+                    <FacilityCard key={facility.id} facility={facility} />
+                  ))}
+                </div>
 
-            {/* Load More */}
-            {!isLoading && filteredFacilities.length > 0 && (
-              <div className="mt-6 text-center">
-                <Button variant="outline" asChild>
-                  <Link to="/search-results" className="gap-2">
-                    View All Treatment Centers
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === 1}
+                      onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="h-8 gap-1"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Previous</span>
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        let page: number;
+                        if (totalPages <= 5) {
+                          page = i + 1;
+                        } else if (currentPage <= 3) {
+                          page = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          page = totalPages - 4 + i;
+                        } else {
+                          page = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "ghost"}
+                            size="sm"
+                            className="h-8 w-8 p-0 text-xs"
+                            onClick={() => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          >
+                            {page}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === totalPages}
+                      onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="h-8 gap-1"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+
+                {/* Browse all link */}
+                <div className="mt-4 text-center">
+                  <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
+                    <Link to="/search-results" className="gap-1.5">
+                      Browse All Treatment Centers
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Sidebar - horizontal scroll on mobile */}
+          {/* Sidebar */}
           <aside className="w-full lg:w-72 xl:w-80 shrink-0 space-y-3 sm:space-y-4">
-            {/* Quick Stats - horizontal scroll on mobile */}
+            {/* Quick Stats - mobile horizontal scroll */}
             <div className="lg:hidden">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Your Activity</p>
               <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
@@ -586,7 +691,7 @@ export default function SeekerHome() {
               </CardContent>
             </Card>
 
-            {/* CTA Card - hidden on mobile, shown on desktop */}
+            {/* CTA Card */}
             <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hidden lg:block">
               <CardContent className="p-4 text-center">
                 <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-3">
