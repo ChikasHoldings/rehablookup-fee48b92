@@ -50,7 +50,7 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
       // Fetch admin audit log for this facility
       const { data: auditLogs } = await supabase
         .from("admin_audit_log")
-        .select("*")
+        .select("id, action_type, target_type, target_id, details, created_at")
         .or(`target_id.eq.${facilityId},target_id.eq.${userId}`)
         .order("created_at", { ascending: false })
         .limit(50);
