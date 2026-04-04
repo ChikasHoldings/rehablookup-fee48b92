@@ -628,9 +628,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                     variant="outline" 
                                     className={cn(
                                       "text-xs",
-                                      inquiry.status === 'matched' && "bg-green-50 text-green-700 border-green-200",
-                                      inquiry.status === 'pending' && "bg-yellow-50 text-yellow-700 border-yellow-200",
-                                      inquiry.status === 'closed' && "bg-slate-50 text-slate-500 border-slate-200"
+                                     inquiry.status === 'matched' && "bg-success/10 text-success border-success/30",
+                                      inquiry.status === 'pending' && "bg-warning/10 text-warning border-warning/30",
+                                      inquiry.status === 'closed' && "bg-muted text-muted-foreground border-border"
                                     )}
                                   >
                                     {inquiry.status}
