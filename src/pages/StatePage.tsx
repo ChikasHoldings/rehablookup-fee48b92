@@ -134,39 +134,29 @@ const StatePage = () => {
   
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
-  const allCenters = useMemo(() => {
-    return [...treatmentCenters, ...approvedFacilities];
-  }, [approvedFacilities]);
-
   const stateCenters = useMemo(() => {
     if (!stateData) return [];
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrevLower = stateData.abbreviation.toLowerCase();
     
-    return allCenters.filter(center => 
+    return approvedFacilities.filter(center => 
       center.state.toLowerCase() === stateNameLower ||
       center.state.toLowerCase() === stateAbbrevLower
     ).sort((a, b) => {
-      // Pro and Featured subscriptions first (same tier)
-      const aPro = (a as any).isPro ? 2 : 0;
-      const bPro = (b as any).isPro ? 2 : 0;
-      const aFeatured = (a as any).hasFeaturedSubscription ? 2 : 0;
-      const bFeatured = (b as any).hasFeaturedSubscription ? 2 : 0;
-      
-      const aTier = Math.max(aPro, aFeatured);
-      const bTier = Math.max(bPro, bFeatured);
-      
-      if (bTier !== aTier) return bTier - aTier;
+      // Pro subscriptions first
+      const aPro = (a as any).isPro ? 1 : 0;
+      const bPro = (b as any).isPro ? 1 : 0;
+      if (bPro !== aPro) return bPro - aPro;
       
       // Then by calculated ranking score
       const aScore = (a as any).calculatedRankingScore || 0;
       const bScore = (b as any).calculatedRankingScore || 0;
       if (bScore !== aScore) return bScore - aScore;
       
-      // Fallback to rating
-      return b.rating - a.rating;
+      // Fallback to name
+      return a.name.localeCompare(b.name);
     });
-  }, [allCenters, stateData]);
+  }, [approvedFacilities, stateData]);
 
   const nearbyStates = stateData ? getNearbyStates(stateData.slug, 4) : [];
   const capitalImage = stateSlug ? stateCapitalImages[stateSlug] : undefined;
