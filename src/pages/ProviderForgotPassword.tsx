@@ -174,6 +174,7 @@ export default function ProviderForgotPassword() {
         
         <Footer />
       </div>
+      </>
     );
   }
 
