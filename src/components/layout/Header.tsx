@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFavorites } from "@/hooks/useFavorites";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,9 +82,33 @@ export function Header({
   const location = useLocation();
   const navigate = useNavigate();
   // Use unified role system - only show "My Account" for seekers (not admin/provider)
-  const { role, isLoading: roleLoading, isAuthenticated } = useUserRole();
+  const { role, isLoading: roleLoading, isAuthenticated, userId } = useUserRole();
   const isSeekerLoggedIn = isAuthenticated && role === "seeker";
   const { favoritesCount } = useFavorites();
+
+  // Fetch seeker profile for avatar display on public navbar
+  const { data: seekerProfile } = useQuery({
+    queryKey: ['seeker-nav-profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from('seeker_profiles')
+        .select('display_name, first_name, avatar_url')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: isSeekerLoggedIn && !!userId,
+    staleTime: 60000,
+  });
+
+  const seekerDisplayName = seekerProfile?.first_name || seekerProfile?.display_name;
+  const seekerInitials = seekerDisplayName
+    ?.split(" ")
+    .map((n: string) => n.charAt(0))
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -261,9 +287,17 @@ export function Header({
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
               {isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
-                  <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
-                    <User className="h-4 w-4" />
-                    Account
+                  <Button size="sm" variant="ghost" className="h-9 text-sm gap-2 relative">
+                    <Avatar className="h-6 w-6">
+                      {seekerProfile?.avatar_url ? (
+                        <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                        {seekerInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden lg:inline">{seekerDisplayName || "Account"}</span>
+                    <span className="lg:hidden">Account</span>
                     {favoritesCount > 0 && (
                       <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
@@ -451,8 +485,15 @@ export function Header({
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
                   <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
-                    <User className="h-4 w-4" />
-                    My Account
+                    <Avatar className="h-6 w-6">
+                      {seekerProfile?.avatar_url ? (
+                        <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                        {seekerInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    {seekerDisplayName || "My Account"}
                     {favoritesCount > 0 && (
                       <span className="absolute top-2 right-3 h-5 w-5 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
