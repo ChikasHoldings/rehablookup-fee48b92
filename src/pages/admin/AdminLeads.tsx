@@ -344,7 +344,7 @@ export default function AdminLeads() {
 
         let query = supabase
           .from("leads")
-          .select("*")
+          .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact")
           .order("created_at", { ascending: false })
           .range(from, to);
 
