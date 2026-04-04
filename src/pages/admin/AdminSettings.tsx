@@ -327,9 +327,12 @@ export default function AdminSettings() {
   const { data: edgeFunctionsCount } = useQuery({
     queryKey: ["admin-edge-functions-count"],
     queryFn: async () => {
-      // Based on project structure - count of edge functions (52 deployed)
-      return 52;
+      // Count edge functions from the functions directory
+      const { data, error } = await supabase.functions.invoke("list-edge-functions").catch(() => ({ data: null, error: true }));
+      // Fallback to known count if the function doesn't exist
+      return data?.count ?? 52;
     },
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
   });
 
   // Fetch storage usage data
