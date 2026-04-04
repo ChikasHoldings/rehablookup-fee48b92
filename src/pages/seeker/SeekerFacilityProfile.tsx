@@ -431,13 +431,13 @@ export default function SeekerFacilityProfile() {
                         size="sm" 
                       />
                       {facility.featured && (
-                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-amber-50 text-amber-700 border-amber-200">
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-warning/10 text-warning border-warning/20">
                           <Sparkles className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Featured
                         </Badge>
                       )}
                       {facility.verified && (
-                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-success/10 text-success border-success/20">
                           <Shield className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Verified
                         </Badge>
