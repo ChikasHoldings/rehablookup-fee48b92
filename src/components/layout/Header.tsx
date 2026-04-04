@@ -244,7 +244,7 @@ export function Header({
               <button
                 onClick={() => setOpenMegaMenu(openMegaMenu === "find-treatment" ? null : "find-treatment")}
                 className={cn(
-                  "flex items-center h-16 gap-1 px-2.5 lg:px-3 text-sm lg:text-[14px] font-medium transition-colors whitespace-nowrap border-b-2",
+                  "flex items-center h-16 gap-1 px-2.5 lg:px-3 text-sm lg:text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2",
                   openMegaMenu === "find-treatment"
                     ? "text-foreground border-accent"
                     : megaMenuItems[0].isActive(location.pathname)
@@ -271,7 +271,7 @@ export function Header({
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "flex items-center h-16 px-2.5 lg:px-3 text-sm lg:text-[14px] font-medium transition-colors whitespace-nowrap border-b-2 border-transparent",
+                  "flex items-center h-16 px-2.5 lg:px-3 text-sm lg:text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2 border-transparent",
                   location.pathname === link.href ? "text-foreground border-accent" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -296,7 +296,7 @@ export function Header({
                 <button
                   onClick={() => setOpenMegaMenu(openMegaMenu === item.id ? null : item.id)}
                   className={cn(
-                    "flex items-center h-16 gap-1 px-3 text-[14px] font-medium transition-colors whitespace-nowrap border-b-2",
+                    "flex items-center h-16 gap-1 px-3 text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2",
                     openMegaMenu === item.id
                       ? "text-foreground border-accent"
                       : item.isActive(location.pathname)
@@ -321,7 +321,7 @@ export function Header({
             {/* "More" dropdown on tablet */}
             <DropdownMenu open={moreDropdownOpen} onOpenChange={setMoreDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="flex lg:hidden items-center h-16 gap-1 px-2.5 text-sm font-medium text-muted-foreground hover:text-foreground whitespace-nowrap border-b-2 border-transparent">
+                <button className="flex lg:hidden items-center h-16 gap-1 px-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground whitespace-nowrap border-b-2 border-transparent">
                   More
                   <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", moreDropdownOpen && "rotate-180")} />
                 </button>
