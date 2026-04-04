@@ -351,22 +351,30 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
 
               {/* Quick Reference Fields */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-muted/30 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Urgency</div>
-                  <div className="font-medium">{(intakeData.urgency as string) || "—"}</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Budget</div>
-                  <div className="font-medium">{(intakeData.budget_range as string) || "—"}</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Rehab Style</div>
-                  <div className="font-medium">{(intakeData.rehab_style as string) || "—"}</div>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Primary Concern</div>
-                  <div className="font-medium">{(intakeData.primary_concern as string) || "—"}</div>
-                </div>
+                {(intakeData.urgency as string) && (
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Urgency</div>
+                    <div className="font-medium">{intakeData.urgency as string}</div>
+                  </div>
+                )}
+                {(intakeData.budget_range as string) && (
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Budget</div>
+                    <div className="font-medium">{intakeData.budget_range as string}</div>
+                  </div>
+                )}
+                {(intakeData.rehab_style as string) && (
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Rehab Style</div>
+                    <div className="font-medium">{intakeData.rehab_style as string}</div>
+                  </div>
+                )}
+                {(intakeData.primary_concern as string) && (
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Primary Concern</div>
+                    <div className="font-medium">{intakeData.primary_concern as string}</div>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
