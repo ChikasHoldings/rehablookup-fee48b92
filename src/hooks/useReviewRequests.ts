@@ -33,7 +33,7 @@ export function useReviewRequests(facilityId: string | null) {
     try {
       const { data, error } = await supabase
         .from('review_requests')
-        .select('*')
+        .select('id, facility_id, sender_user_id, recipient_name, recipient_email, status, sent_at, opened_at, clicked_at, review_submitted_at, resend_id, created_at, updated_at')
         .eq('facility_id', facilityId)
         .order('created_at', { ascending: false });
 

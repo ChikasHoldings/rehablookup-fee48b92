@@ -251,7 +251,7 @@ function getFacilityNotificationEmail(
     : details.urgency === 'within_week' ? '🟡 Within a week'
     : details.urgency === 'within_month' ? '🟢 Within a month'
     : details.urgency === 'flexible' ? '🔵 Flexible'
-    : '⚪ Not specified';
+    : '⚪ Pending assessment';
   
   // Format level of care
   const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—';

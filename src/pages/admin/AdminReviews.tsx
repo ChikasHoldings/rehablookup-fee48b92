@@ -94,7 +94,7 @@ export default function AdminReviews() {
     
     const { data, error } = await supabase
       .from('facility_reviews')
-      .select('*')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, disputed, admin_notes, reviewed_at, reviewed_by, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -139,7 +139,7 @@ export default function AdminReviews() {
   const fetchDisputes = async () => {
     const { data: disputesData, error } = await supabase
       .from('review_disputes')
-      .select('*')
+      .select('id, facility_id, review_id, disputed_by, reason, details, status, admin_notes, created_at, resolved_at, resolved_by')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -152,7 +152,7 @@ export default function AdminReviews() {
 
     const { data: reviewsData } = await supabase
       .from('facility_reviews')
-      .select('*')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at')
       .in('id', reviewIds);
 
     const { data: facilitiesData } = await supabase
