@@ -167,8 +167,8 @@ function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick:
               <Badge variant="outline" className="text-[10px] py-0">{getUrgencyLabel(request.urgency)}</Badge>
             )}
             {hasProviderResponse && (
-              <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px] gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
+              <Badge className="bg-success/10 text-success border-0 text-[10px] gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-success inline-block" />
                 Response Available
               </Badge>
             )}
