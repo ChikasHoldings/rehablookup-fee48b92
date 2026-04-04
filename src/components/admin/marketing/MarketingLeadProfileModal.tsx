@@ -956,7 +956,7 @@ export function MarketingLeadProfileModal({
                     <Clock className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Previous Treatment</h4>
                   </div>
-                  <p className="text-sm">{lead.previous_treatment || "Not specified"}</p>
+                  <p className="text-sm">{lead.previous_treatment || "No prior treatment"}</p>
                 </div>
 
                 <div className="p-4 rounded-lg border bg-card">
