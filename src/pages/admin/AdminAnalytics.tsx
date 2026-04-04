@@ -1216,10 +1216,10 @@ export default function AdminAnalytics() {
 
         <TabsContent value="traffic" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-600" />
+                  <Users className="h-4 w-4 text-primary" />
                   Visitors Over Time
                 </CardTitle>
                 <CardDescription>Daily visitor count trend</CardDescription>
@@ -1236,7 +1236,7 @@ export default function AdminAnalytics() {
                           <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -1254,10 +1254,10 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <MousePointerClick className="h-4 w-4 text-purple-600" />
+                  <MousePointerClick className="h-4 w-4 text-accent-foreground" />
                   Clicks Over Time
                 </CardTitle>
                 <CardDescription>CTA interaction trend</CardDescription>
@@ -1274,7 +1274,7 @@ export default function AdminAnalytics() {
                           <stop offset="95%" stopColor={CHART_COLORS.purple} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -1296,10 +1296,10 @@ export default function AdminAnalytics() {
 
         <TabsContent value="leads" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-cyan-600" />
+                  <FileText className="h-4 w-4 text-info" />
                   Lead Submissions
                 </CardTitle>
                 <CardDescription>Lead volume over time</CardDescription>
@@ -1316,7 +1316,7 @@ export default function AdminAnalytics() {
                           <stop offset="95%" stopColor={CHART_COLORS.cyan} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -1334,10 +1334,10 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <CheckCircle className="h-4 w-4 text-success" />
                   Lead Quality
                 </CardTitle>
                 <CardDescription>Qualified vs unqualified breakdown</CardDescription>
@@ -1348,7 +1348,7 @@ export default function AdminAnalytics() {
                 ) : timeSeriesData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={timeSeriesData} barGap={0}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -1368,10 +1368,10 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2 border-slate-200">
+            <Card className="lg:col-span-2 ">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-blue-600" />
+                  <MapPin className="h-4 w-4 text-primary" />
                   Top Cities by Leads
                 </CardTitle>
                 <CardDescription>Geographic lead distribution</CardDescription>
@@ -1382,7 +1382,7 @@ export default function AdminAnalytics() {
                 ) : topCitiesByLeads.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={topCitiesByLeads} layout="vertical" margin={{ left: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                       <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <YAxis dataKey="city" type="category" width={100} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <RechartsTooltip content={<CustomTooltip />} />
@@ -1404,10 +1404,10 @@ export default function AdminAnalytics() {
 
         {/* CTA Sources Tab */}
         <TabsContent value="ctasources" className="space-y-4">
-          <Card className="border-slate-200">
+          <Card className="">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <MousePointerClick className="h-4 w-4 text-purple-600" />
+                <MousePointerClick className="h-4 w-4 text-accent-foreground" />
                 Lead Sources by CTA
               </CardTitle>
               <CardDescription>Track which CTAs across the site drive the most leads</CardDescription>
@@ -1443,10 +1443,10 @@ export default function AdminAnalytics() {
 
         <TabsContent value="subscriptions" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-purple-600" />
+                  <CreditCard className="h-4 w-4 text-accent-foreground" />
                   Plan Distribution
                 </CardTitle>
                 <CardDescription>Active subscriptions by plan type</CardDescription>
@@ -1486,10 +1486,10 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <TrendingUp className="h-4 w-4 text-success" />
                   Subscription Movement
                 </CardTitle>
                 <CardDescription>Plan upgrades vs downgrades</CardDescription>
@@ -1498,17 +1498,17 @@ export default function AdminAnalytics() {
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="grid grid-cols-2 gap-12 text-center">
                     <div className="space-y-2">
-                      <div className="h-20 w-20 mx-auto rounded-2xl bg-green-50 flex items-center justify-center">
-                        <TrendingUp className="h-10 w-10 text-green-600" />
+                      <div className="h-20 w-20 mx-auto rounded-2xl bg-success/10 flex items-center justify-center">
+                        <TrendingUp className="h-10 w-10 text-success" />
                       </div>
-                      <div className="text-4xl font-bold text-green-600">{kpis.upgrades}</div>
+                      <div className="text-4xl font-bold text-success">{kpis.upgrades}</div>
                       <div className="text-sm text-muted-foreground font-medium">Upgrades</div>
                     </div>
                     <div className="space-y-2">
-                      <div className="h-20 w-20 mx-auto rounded-2xl bg-red-50 flex items-center justify-center">
-                        <TrendingDown className="h-10 w-10 text-red-500" />
+                      <div className="h-20 w-20 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center">
+                        <TrendingDown className="h-10 w-10 text-destructive" />
                       </div>
-                      <div className="text-4xl font-bold text-red-500">{kpis.downgrades}</div>
+                      <div className="text-4xl font-bold text-destructive">{kpis.downgrades}</div>
                       <div className="text-sm text-muted-foreground font-medium">Downgrades</div>
                     </div>
                   </div>
@@ -1520,10 +1520,10 @@ export default function AdminAnalytics() {
 
         <TabsContent value="churn" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <UserMinus className="h-4 w-4 text-red-500" />
+                  <UserMinus className="h-4 w-4 text-destructive" />
                   Churn Overview
                 </CardTitle>
                 <CardDescription>Subscription cancellations this period</CardDescription>
@@ -1531,8 +1531,8 @@ export default function AdminAnalytics() {
               <CardContent className="pt-0">
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="text-center space-y-4">
-                    <div className="h-28 w-28 mx-auto rounded-full bg-red-50 flex items-center justify-center border-4 border-red-100">
-                      <span className="text-5xl font-bold text-red-600">{kpis.churnCount}</span>
+                    <div className="h-28 w-28 mx-auto rounded-full bg-destructive/10 flex items-center justify-center border-4 border-destructive/20">
+                      <span className="text-5xl font-bold text-destructive">{kpis.churnCount}</span>
                     </div>
                     <div>
                       <div className="text-lg font-medium">Churned Subscriptions</div>
@@ -1548,10 +1548,10 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
+            <Card className="">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Award className="h-4 w-4 text-green-600" />
+                  <Award className="h-4 w-4 text-success" />
                   Retention Rate
                 </CardTitle>
                 <CardDescription>Percentage of subscribers retained</CardDescription>
@@ -1559,8 +1559,8 @@ export default function AdminAnalytics() {
               <CardContent className="pt-0">
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="text-center space-y-4">
-                    <div className="h-28 w-28 mx-auto rounded-full bg-green-50 flex items-center justify-center border-4 border-green-100">
-                      <span className="text-4xl font-bold text-green-600">{(100 - kpis.churnRate).toFixed(1)}%</span>
+                    <div className="h-28 w-28 mx-auto rounded-full bg-success/10 flex items-center justify-center border-4 border-success/20">
+                      <span className="text-4xl font-bold text-success">{(100 - kpis.churnRate).toFixed(1)}%</span>
                     </div>
                     <div>
                       <div className="text-lg font-medium">Retention Rate</div>
@@ -1581,10 +1581,10 @@ export default function AdminAnalytics() {
       </Tabs>
 
       {/* Location Performance Table */}
-      <Card className="border-slate-200">
+      <Card className="">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="h-5 w-5 text-slate-600" />
+            <Building2 className="h-5 w-5 text-muted-foreground" />
             Location Performance
           </CardTitle>
           <CardDescription>Performance metrics by state and city</CardDescription>
@@ -1597,10 +1597,10 @@ export default function AdminAnalytics() {
               ))}
             </div>
           ) : locationPerformance.length > 0 ? (
-            <div className="overflow-x-auto rounded-lg border border-slate-100">
+            <div className="overflow-x-auto rounded-lg border border-border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
                     <TableHead className="font-semibold">State</TableHead>
                     <TableHead className="font-semibold">City</TableHead>
                     <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("visitors")}>
@@ -1626,7 +1626,7 @@ export default function AdminAnalytics() {
                 </TableHeader>
                 <TableBody>
                   {locationPerformance.slice(0, 15).map((loc, i) => (
-                    <TableRow key={i} className="hover:bg-slate-50/50">
+                    <TableRow key={i} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{loc.state}</TableCell>
                       <TableCell className="text-muted-foreground">{loc.city}</TableCell>
                       <TableCell>{loc.visitors.toLocaleString()}</TableCell>
@@ -1637,8 +1637,8 @@ export default function AdminAnalytics() {
                       <TableCell>
                         <span className={cn(
                           "font-medium",
-                          parseFloat(loc.conversionRate) >= 5 ? "text-green-600" : 
-                          parseFloat(loc.conversionRate) >= 2 ? "text-amber-600" : "text-slate-500"
+                          parseFloat(loc.conversionRate) >= 5 ? "text-success" : 
+                          parseFloat(loc.conversionRate) >= 2 ? "text-warning" : "text-muted-foreground"
                         )}>
                           {loc.conversionRate}%
                         </span>
@@ -1659,10 +1659,10 @@ export default function AdminAnalytics() {
       </Card>
 
       {/* Provider Performance Table */}
-      <Card className="border-slate-200">
+      <Card className="">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="h-5 w-5 text-slate-600" />
+            <Users className="h-5 w-5 text-muted-foreground" />
             Provider Performance
           </CardTitle>
           <CardDescription>Individual provider metrics and conversion rates</CardDescription>
@@ -1675,10 +1675,10 @@ export default function AdminAnalytics() {
               ))}
             </div>
           ) : providerPerformance.length > 0 ? (
-            <div className="overflow-x-auto rounded-lg border border-slate-100">
+            <div className="overflow-x-auto rounded-lg border border-border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
                     <TableHead className="font-semibold min-w-[180px]">Provider</TableHead>
                     <TableHead className="font-semibold">Location</TableHead>
                     <TableHead className="text-center">
@@ -1721,7 +1721,7 @@ export default function AdminAnalytics() {
                 </TableHeader>
                 <TableBody>
                   {providerPerformance.slice(0, 20).map((provider) => (
-                    <TableRow key={provider.id} className="hover:bg-slate-50/50">
+                    <TableRow key={provider.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">
                         <div className="truncate max-w-[180px]" title={provider.name}>
                           {provider.name}
@@ -1738,8 +1738,8 @@ export default function AdminAnalytics() {
                       <TableCell className="text-center">
                         <span className={cn(
                           "font-medium text-sm",
-                          parseFloat(provider.conversionRate) >= 5 ? "text-green-600" : 
-                          parseFloat(provider.conversionRate) >= 2 ? "text-amber-600" : "text-slate-500"
+                          parseFloat(provider.conversionRate) >= 5 ? "text-success" : 
+                          parseFloat(provider.conversionRate) >= 2 ? "text-warning" : "text-muted-foreground"
                         )}>
                           {provider.conversionRate}%
                         </span>
@@ -1747,8 +1747,8 @@ export default function AdminAnalytics() {
                       <TableCell className="text-center">
                         <span className={cn(
                           "font-medium text-sm",
-                          parseFloat(provider.clickToLeadRate) >= 10 ? "text-green-600" : 
-                          parseFloat(provider.clickToLeadRate) >= 5 ? "text-amber-600" : "text-slate-500"
+                          parseFloat(provider.clickToLeadRate) >= 10 ? "text-success" : 
+                          parseFloat(provider.clickToLeadRate) >= 5 ? "text-warning" : "text-muted-foreground"
                         )}>
                           {provider.clickToLeadRate}%
                         </span>
@@ -1783,14 +1783,14 @@ interface KPICardProps {
 }
 
 const colorClasses = {
-  blue: { bg: "bg-blue-50", icon: "text-blue-600", border: "border-blue-100" },
-  purple: { bg: "bg-purple-50", icon: "text-purple-600", border: "border-purple-100" },
-  green: { bg: "bg-green-50", icon: "text-green-600", border: "border-green-100" },
-  amber: { bg: "bg-amber-50", icon: "text-amber-600", border: "border-amber-100" },
-  red: { bg: "bg-red-50", icon: "text-red-600", border: "border-red-100" },
-  cyan: { bg: "bg-cyan-50", icon: "text-cyan-600", border: "border-cyan-100" },
-  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", border: "border-emerald-100" },
-  slate: { bg: "bg-slate-50", icon: "text-slate-600", border: "border-slate-100" },
+  blue: { bg: "bg-primary/10", icon: "text-primary", border: "border-blue-100" },
+  purple: { bg: "bg-purple-50", icon: "text-accent-foreground", border: "border-purple-100" },
+  green: { bg: "bg-success/10", icon: "text-success", border: "border-success/20" },
+  amber: { bg: "bg-warning/10", icon: "text-warning", border: "border-amber-100" },
+  red: { bg: "bg-destructive/10", icon: "text-destructive", border: "border-destructive/20" },
+  cyan: { bg: "bg-info/10", icon: "text-info", border: "border-cyan-100" },
+  emerald: { bg: "bg-success/10", icon: "text-success", border: "border-success/20" },
+  slate: { bg: "bg-slate-50", icon: "text-muted-foreground", border: "border-border" },
 };
 
 function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPICardProps) {
@@ -1805,9 +1805,9 @@ function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPIC
     return (
       <div className={cn(
         "flex items-center gap-0.5 text-xs font-medium mt-1",
-        isPositive && "text-green-600",
-        !isPositive && !isNeutral && "text-red-600",
-        isNeutral && "text-slate-500"
+        isPositive && "text-success",
+        !isPositive && !isNeutral && "text-destructive",
+        isNeutral && "text-muted-foreground"
       )}>
         {isPositive ? (
           <TrendingUp className="h-3 w-3" />
@@ -1822,7 +1822,7 @@ function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPIC
   };
   
   return (
-    <Card className={cn("border-slate-200 hover:shadow-md transition-shadow", colors.border)}>
+    <Card className={cn(" hover:shadow-md transition-shadow", colors.border)}>
       <CardContent className="pt-4 pb-4">
         <div className="flex items-start justify-between">
           <div className={cn("p-2.5 rounded-xl", colors.bg)}>
@@ -1842,7 +1842,7 @@ function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPIC
             <Skeleton className="h-7 w-16" />
           ) : (
             <>
-              <div className="text-2xl font-bold text-slate-900">{value}</div>
+              <div className="text-2xl font-bold text-foreground">{value}</div>
               {renderChange()}
             </>
           )}
