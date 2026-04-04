@@ -104,6 +104,8 @@ export default function ProviderForgotPassword() {
 
   if (isEmailSent) {
     return (
+      <>
+      <Helmet><title>Check Your Email | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
       <div className="flex min-h-screen flex-col bg-background">
         <Header 
           navLinks={providerNavLinks} 
