@@ -1468,7 +1468,7 @@ export default function AdminSecurityLogs() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Status</p>
                   {selectedLog.success === true ? (
-                    <Badge className="bg-emerald-100 text-emerald-700">Success</Badge>
+                    <Badge className="bg-success/10 text-success border-transparent">Success</Badge>
                   ) : selectedLog.success === false ? (
                     <Badge variant="destructive">Failed</Badge>
                   ) : (
