@@ -104,7 +104,6 @@
         -moz-osx-font-smoothing: grayscale;
       }
       #root { min-height: 100vh; }
-      /* Skeleton loading state */
       .loading-skeleton {
         background: linear-gradient(90deg, hsl(220 20% 96%) 25%, hsl(220 20% 92%) 50%, hsl(220 20% 96%) 75%);
         background-size: 200% 100%;
@@ -114,11 +113,27 @@
         0% { background-position: 200% 0; }
         100% { background-position: -200% 0; }
       }
-      /* Prevent layout shift for images */
       img { content-visibility: auto; }
-      /* Hide content until React hydrates */
       .js-loading { opacity: 0; }
       .js-loaded { opacity: 1; transition: opacity 0.2s ease-out; }
+      /* Noscript layout styles */
+      .ns-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px; font-family: 'Inter', sans-serif; color: #1a1a2e; }
+      .ns-header { text-align: center; margin-bottom: 40px; }
+      .ns-h1 { font-size: 2.5rem; color: #1B365D; margin-bottom: 16px; line-height: 1.2; }
+      .ns-lead { font-size: 1.25rem; color: #555; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+      .ns-section { margin-bottom: 40px; padding: 24px; background: #f8fafc; border-radius: 12px; }
+      .ns-h2 { font-size: 1.5rem; color: #1B365D; margin-bottom: 16px; }
+      .ns-h3 { font-size: 1.125rem; color: #333; margin-bottom: 12px; }
+      .ns-list { list-style: disc; padding-left: 24px; color: #333; line-height: 1.8; }
+      .ns-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+      .ns-grid-sm { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+      .ns-card { display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none; }
+      .ns-link { color: #2563eb; }
+      .ns-faq-q { font-weight: 600; color: #1B365D; margin-bottom: 8px; font-size: 1.05rem; }
+      .ns-faq-a { color: #444; line-height: 1.7; margin-bottom: 20px; }
+      .ns-cta { display: inline-block; padding: 14px 32px; background: #16a34a; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; }
+      .ns-phone { font-size: 1.25rem; font-weight: 700; color: #1B365D; }
+      .ns-footer { border-top: 1px solid #e5e5e5; padding-top: 24px; margin-top: 40px; text-align: center; color: #666; }
     </style>
 
     <!-- Structured Data - Organization with enhanced details -->
