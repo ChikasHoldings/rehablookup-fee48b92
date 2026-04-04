@@ -773,31 +773,31 @@ const CenterProfile = () => {
                     )
                   }
                 >
-                  {/* Main Image — clean, no overlays */}
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-4">
+                  {/* Main Image */}
+                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-3">
                     <img 
                       src={galleryImages[activeGalleryIndex]} 
                       alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300"
                       loading="lazy"
                     />
                   </div>
                   
-                  {/* Thumbnails */}
+                  {/* Thumbnails — compact, minimal */}
                   {galleryImages.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto pb-2">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                       {galleryImages.map((img, idx) => (
                         <button
                           key={idx}
                           onClick={() => setActiveGalleryIndex(idx)}
                           className={cn(
-                            "shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all",
+                            "shrink-0 w-16 h-11 rounded-md overflow-hidden transition-all",
                             idx === activeGalleryIndex 
-                              ? "border-primary ring-2 ring-primary/30 shadow-md" 
-                              : "border-border/50 hover:border-primary/50 hover:shadow-sm"
+                              ? "ring-2 ring-primary ring-offset-1 ring-offset-background opacity-100" 
+                              : "opacity-50 hover:opacity-80"
                           )}
                         >
-                          <img src={img} alt={`${facility.name} facility photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                          <img src={img} alt={`${facility.name} photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                         </button>
                       ))}
                     </div>
