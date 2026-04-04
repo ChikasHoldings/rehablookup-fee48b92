@@ -1,19 +1,20 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Globe, Users, Star, Phone, ChevronRight, Plane, FileText, Heart } from "lucide-react";
+import { Layout } from "@/components/layout/Layout";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { InternationalPageHero } from "./components";
+import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Globe, Star, Phone, ChevronRight, Plane, FileText, Heart } from "lucide-react";
+import heroImage from "@/assets/hero-europe-rehab.jpg";
 
 export default function RehabUSAFromEurope() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Header />
+    <Layout>
       <SEO
         title="Rehab in USA for Europeans | Addiction Treatment from Europe"
         description="European residents seeking world-class addiction treatment in the United States. English-speaking programs, visa guidance, and personalized care coordination."
         canonical="/us-rehab/european-patients"
-        keywords={["rehab in USA from Europe", "European addiction treatment USA", "drug rehab USA from Germany", "alcohol rehab USA from France", "private rehab America Europeans"]}
+        keywords={["rehab in USA from Europe", "European addiction treatment USA", "drug rehab USA from Germany"]}
         structuredData={{
           "@context": "https://schema.org",
           "@type": "MedicalWebPage",
@@ -28,37 +29,25 @@ export default function RehabUSAFromEurope() {
         ]}
       />
 
+      <div className="container mx-auto px-4 pt-4">
+        <BreadcrumbNav items={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "European Patients" },
+        ]} />
+      </div>
+
+      <InternationalPageHero
+        flag="🇪🇺"
+        badge="For European Residents"
+        title="Premium Addiction Treatment in the USA — For European Patients"
+        subtitle="Innovation. Privacy. World-Class Recovery."
+        description="Access America's leading rehab facilities with full English-language support, ESTA/visa guidance, and personalized care coordination from our international team."
+        trustPoints={["ESTA for Most EU Nations", "Immediate Admission", "Multilingual Support"]}
+        heroImage={heroImage}
+        heroAlt="Elegant European-style luxury rehab facility in America"
+      />
+
       <main className="flex-1">
-        {/* Hero */}
-        <section className="relative bg-primary py-16 md:py-24 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-4xl mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
-              <Globe className="h-4 w-4 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/90">🇪🇺 For European Residents</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6">
-              Premium Addiction Treatment in the USA — For European Patients
-            </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">
-              Access America's leading rehab facilities with full English-language support, ESTA/visa guidance, and personalized care coordination from our international team.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/international/apply">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg">
-                  Apply for Treatment
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/concierge">
-                <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
-                  <Phone className="h-4 w-4" />
-                  Speak to an Advisor
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
 
         {/* Why Europeans Choose US Rehab */}
         <section className="py-12 md:py-20">
@@ -206,7 +195,6 @@ export default function RehabUSAFromEurope() {
           </div>
         </section>
       </main>
-      <Footer />
-    </div>
+    </Layout>
   );
 }

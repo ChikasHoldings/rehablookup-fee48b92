@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Globe, Star, Phone, ChevronRight, Plane, FileText, Heart, Sparkles, Lock, Languages } from "lucide-react";
+import { InternationalPageHero } from "./components";
+import { ArrowRight, CheckCircle, MapPin, Shield, ChevronRight, Plane, FileText, Heart, Sparkles, Lock, Languages, Star, Phone } from "lucide-react";
+import heroImage from "@/assets/hero-uae-rehab.jpg";
 
 export default function RehabUSAFromUAE() {
   return (
@@ -34,44 +36,16 @@ export default function RehabUSAFromUAE() {
         ]} />
       </div>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/[0.03] via-background to-background py-16 md:py-24">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/[0.04] rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-accent/[0.04] rounded-full blur-3xl" />
-        </div>
-        <div className="container relative mx-auto px-4 max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <span className="text-lg">🇦🇪</span>
-            <span>For UAE & Gulf Region Residents</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 leading-tight tracking-tight">
-            Discreet US Rehab for UAE & Middle East
-          </h1>
-          <p className="text-lg md:text-xl text-primary font-semibold mb-3">
-            Ultra-Private Treatment. Complete Confidentiality.
-          </p>
-          <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Access America's most exclusive treatment centres with absolute privacy. Luxury accommodations, cultural sensitivity, and world-class clinical care for patients from Dubai, Abu Dhabi, and across the Middle East.
-          </p>
-          <div className="flex flex-wrap justify-center gap-5 mb-10">
-            {["Maximum Discretion", "Arabic-Speaking Staff", "Halal Accommodations"].map(t => (
-              <div key={t} className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">{t}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base px-8 py-6">
-              <Link to="/international/apply" className="flex items-center gap-2">Apply for Treatment <ArrowRight className="h-5 w-5" /></Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="text-base px-8 py-6 border-border">
-              <Link to="/concierge" className="flex items-center gap-2"><Phone className="h-4 w-4" /> Speak to an Advisor</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <InternationalPageHero
+        flag="🇦🇪"
+        badge="For UAE & Gulf Region Residents"
+        title="Discreet US Rehab for UAE & Middle East"
+        subtitle="Ultra-Private Treatment. Complete Confidentiality."
+        description="Access America's most exclusive treatment centres with absolute privacy. Luxury accommodations, cultural sensitivity, and world-class clinical care for patients from Dubai, Abu Dhabi, and across the Middle East."
+        trustPoints={["Maximum Discretion", "Arabic-Speaking Staff", "Halal Accommodations"]}
+        heroImage={heroImage}
+        heroAlt="Luxury desert wellness retreat for Middle Eastern patients"
+      />
 
       {/* Why UAE Patients Choose US */}
       <section className="py-16 md:py-20 bg-background">
