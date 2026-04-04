@@ -386,15 +386,15 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "provider":
-        return <Building2 className="h-4 w-4 text-blue-500" />;
+        return <Building2 className="h-4 w-4 text-primary" />;
       case "lead":
-        return <Users className="h-4 w-4 text-amber-500" />;
+        return <Users className="h-4 w-4 text-warning" />;
       case "success":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case "warning":
-        return <CreditCard className="h-4 w-4 text-red-500" />;
+        return <CreditCard className="h-4 w-4 text-destructive" />;
       case "security":
-        return <ShieldAlert className="h-4 w-4 text-red-600" />;
+        return <ShieldAlert className="h-4 w-4 text-destructive" />;
       default:
         return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
