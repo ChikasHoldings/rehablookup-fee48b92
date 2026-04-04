@@ -269,7 +269,7 @@ function CriteriaItem({ label, value, matched }: { label: string; value?: string
         <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       )}
       <span className="text-muted-foreground">{label}:</span>
-      <span className="font-medium truncate">{value || "—"}</span>
+      <span className="font-medium truncate">{value || "Not set"}</span>
     </div>
   );
 }
