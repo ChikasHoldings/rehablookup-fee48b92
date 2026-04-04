@@ -690,7 +690,7 @@ export function PlanSettingsTab() {
                             onClick={() => copyToClipboard(promo.code)}
                           >
                             {copiedCode === promo.code ? (
-                              <Check className="h-3 w-3 text-green-600" />
+                              <Check className="h-3 w-3 text-success" />
                             ) : (
                               <Copy className="h-3 w-3" />
                             )}
