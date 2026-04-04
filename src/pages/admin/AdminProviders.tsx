@@ -493,8 +493,8 @@ export default function AdminProviders() {
         <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name, city, or email..."
-          value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="pl-8 sm:pl-9 h-9 text-sm"
         />
       </div>
