@@ -886,7 +886,7 @@ export function MarketingLeadProfileModal({
                     <Stethoscope className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Level of Care</h4>
                   </div>
-                  <p className="text-sm">{lead.level_of_care || "Not specified"}</p>
+                  <p className="text-sm">{lead.level_of_care || "To be determined"}</p>
                 </div>
 
                 <div className="p-4 rounded-lg border bg-card">
