@@ -470,8 +470,8 @@ export default function SeekerReviews() {
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-amber-100">
-              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+            <div className="p-1.5 sm:p-2 rounded-lg bg-warning/10">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
             </div>
             <h1 className="text-lg sm:text-2xl font-display font-bold">My Reviews</h1>
           </div>
