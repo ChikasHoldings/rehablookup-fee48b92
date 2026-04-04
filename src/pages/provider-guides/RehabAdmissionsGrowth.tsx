@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgAdmissionsGrowth from "@/assets/provider-guides/pg-admissions-growth.jpg";
+import admissionsTeam from "@/assets/provider-guides/admissions-team.jpg";
 
 export default function RehabAdmissionsGrowth() {
   return (
@@ -59,6 +61,10 @@ export default function RehabAdmissionsGrowth() {
       ]}
       ctaHeadline="Start Growing Your Admissions Today"
       ctaSubheadline="List your facility on RehabLookup for free and start receiving qualified patient inquiries."
+      images={[
+        { src: pgAdmissionsGrowth, alt: "Admissions growth chart trending upward in a treatment center strategy meeting", caption: "Consistent admissions growth follows a predictable, repeatable process." },
+        { src: admissionsTeam, alt: "Admissions team reviewing patient pipeline", caption: "The best facilities staff admissions 7 days a week." },
+      ]}
     />
   );
 }

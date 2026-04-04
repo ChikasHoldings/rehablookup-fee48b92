@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgBehavioralHealth from "@/assets/provider-guides/pg-behavioral-health.jpg";
+import pgLeadGeneration from "@/assets/provider-guides/pg-lead-generation.jpg";
 
 export default function BehavioralHealthLeadGeneration() {
   return (
@@ -60,6 +62,10 @@ export default function BehavioralHealthLeadGeneration() {
       ]}
       ctaHeadline="Lead Generation That Respects Your Patients"
       ctaSubheadline="Join a platform built for behavioral health — where quality and ethics come first."
+      images={[
+        { src: pgBehavioralHealth, alt: "Serene behavioral health facility garden and walking path", caption: "Ethical lead generation starts with meeting families where they already are." },
+        { src: pgLeadGeneration, alt: "Qualified lead pipeline for behavioral health facilities", caption: "Every inquiry includes verified contact information and self-reported clinical details." },
+      ]}
     />
   );
 }

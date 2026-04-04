@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgIncreaseAdmissions from "@/assets/provider-guides/pg-increase-admissions.jpg";
+import pgAdmissionsGrowth from "@/assets/provider-guides/pg-admissions-growth.jpg";
 
 export default function IncreaseRehabAdmissions() {
   return (
@@ -57,6 +59,10 @@ export default function IncreaseRehabAdmissions() {
           heading: "List on RehabLookup: Your Highest-ROI Admissions Channel",
           content: "RehabLookup delivers what treatment centers need most: visibility with high-intent families actively searching for treatment. Listing is free, setup takes minutes, and our platform handles the SEO and traffic generation. You focus on providing great care — we'll make sure families can find you.",
         },
+      ]}
+      images={[
+        { src: pgIncreaseAdmissions, alt: "Welcoming treatment center reception area optimized for patient intake", caption: "Your intake experience is your most important first impression." },
+        { src: pgAdmissionsGrowth, alt: "Data-driven admissions growth visualization", caption: "A 5% improvement in conversion rate can equal a 30% increase in admissions." },
       ]}
     />
   );

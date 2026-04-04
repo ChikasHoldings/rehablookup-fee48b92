@@ -4,9 +4,12 @@ import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ArrowRight, CheckCircle, TrendingUp, Users, Shield, Zap, Building2, Phone, Star, Clock, ChevronRight } from "lucide-react";
-import admissionsDashboard from "@/assets/provider-guides/admissions-dashboard.jpg";
-import admissionsTeam from "@/assets/provider-guides/admissions-team.jpg";
-import treatmentFacility from "@/assets/provider-guides/treatment-facility.jpg";
+
+interface PageImage {
+  src: string;
+  alt: string;
+  caption?: string;
+}
 
 interface SEOSection {
   heading: string;
@@ -25,6 +28,7 @@ interface ProviderSEOPageProps {
   sections: SEOSection[];
   ctaHeadline?: string;
   ctaSubheadline?: string;
+  images?: [PageImage, PageImage];
 }
 
 const relatedPages = [
@@ -58,6 +62,7 @@ export function ProviderSEOPageLayout({
   sections,
   ctaHeadline = "Ready to Grow Your Admissions?",
   ctaSubheadline = "Join hundreds of treatment centers already receiving high-intent patient inquiries through RehabLookup.",
+  images,
 }: ProviderSEOPageProps) {
   // Insert a mid-article CTA after the 2nd section
   const midCTAIndex = Math.min(2, sections.length);
@@ -170,31 +175,25 @@ export function ProviderSEOPageLayout({
                     )}
                   </article>
 
-                  {/* Image card after first section */}
-                  {idx === 0 && (
-                    <div className="my-10 rounded-2xl overflow-hidden border border-border bg-muted/20">
-                      <div className="grid md:grid-cols-5 gap-0">
-                        <div className="md:col-span-3 p-6 md:p-8 flex flex-col justify-center">
-                          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Data-Driven Growth</p>
-                          <h3 className="text-lg font-display font-bold text-foreground mb-2">
-                            Track What Matters
-                          </h3>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            Top-performing facilities monitor admissions KPIs in real time — conversion rates, speed-to-lead, and cost per admission — to make decisions that drive census growth.
-                          </p>
-                        </div>
-                        <div className="md:col-span-2 hidden md:block">
-                          <img
-                            src={admissionsDashboard}
-                            alt="Treatment center admissions analytics dashboard"
-                            width={640}
-                            height={360}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
+                  {/* Standalone image after first section */}
+                  {idx === 0 && images?.[0] && (
+                    <figure className="my-8">
+                      <div className="rounded-xl overflow-hidden border border-border max-h-[280px]">
+                        <img
+                          src={images[0].src}
+                          alt={images[0].alt}
+                          width={1280}
+                          height={560}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
                       </div>
-                    </div>
+                      {images[0].caption && (
+                        <figcaption className="text-xs text-muted-foreground mt-2 text-center italic">
+                          {images[0].caption}
+                        </figcaption>
+                      )}
+                    </figure>
                   )}
 
                   {/* Mid-article CTA with image - after 2nd section */}
@@ -203,8 +202,8 @@ export function ProviderSEOPageLayout({
                       <div className="grid md:grid-cols-5 gap-0">
                         <div className="md:col-span-2 hidden md:block">
                           <img
-                            src={admissionsTeam}
-                            alt="Admissions team collaborating on patient intake"
+                            src={images?.[1]?.src || ""}
+                            alt={images?.[1]?.alt || "Treatment admissions team"}
                             width={640}
                             height={720}
                             className="w-full h-full object-cover"
@@ -236,31 +235,25 @@ export function ProviderSEOPageLayout({
                     </div>
                   )}
 
-                  {/* Image card before last section */}
-                  {idx === sections.length - 2 && sections.length > 3 && (
-                    <div className="my-10 rounded-2xl overflow-hidden border border-border bg-muted/20">
-                      <div className="grid md:grid-cols-5 gap-0">
-                        <div className="md:col-span-2 hidden md:block">
-                          <img
-                            src={treatmentFacility}
-                            alt="Modern treatment center facility exterior"
-                            width={640}
-                            height={360}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                        <div className="md:col-span-3 p-6 md:p-8 flex flex-col justify-center">
-                          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Stand Out Online</p>
-                          <h3 className="text-lg font-display font-bold text-foreground mb-2">
-                            Your Facility Deserves to Be Found
-                          </h3>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            Families searching for treatment choose the facilities they can find. A strong directory presence ensures your center is visible to the people who need you most.
-                          </p>
-                        </div>
+                  {/* Standalone image before last section */}
+                  {idx === sections.length - 2 && sections.length > 3 && images?.[1] && (
+                    <figure className="my-8">
+                      <div className="rounded-xl overflow-hidden border border-border max-h-[280px]">
+                        <img
+                          src={images[1].src}
+                          alt={images[1].alt}
+                          width={1280}
+                          height={560}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
                       </div>
-                    </div>
+                      {images[1].caption && (
+                        <figcaption className="text-xs text-muted-foreground mt-2 text-center italic">
+                          {images[1].caption}
+                        </figcaption>
+                      )}
+                    </figure>
                   )}
                 </div>
               ))}

@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgGetMorePatients from "@/assets/provider-guides/pg-get-more-patients.jpg";
+import treatmentFacility from "@/assets/provider-guides/treatment-facility.jpg";
 
 export default function GetMoreRehabPatients() {
   return (
@@ -63,6 +65,10 @@ export default function GetMoreRehabPatients() {
             "Upgrade for priority placement and additional lead volume",
           ],
         },
+      ]}
+      images={[
+        { src: pgGetMorePatients, alt: "Admissions coordinator handling patient inquiries at a rehab center", caption: "Speed-to-lead response time is the #1 predictor of admission conversion." },
+        { src: treatmentFacility, alt: "Modern treatment center facility welcoming new patients", caption: "Facilities with strong online presence consistently outperform competitors." },
       ]}
     />
   );

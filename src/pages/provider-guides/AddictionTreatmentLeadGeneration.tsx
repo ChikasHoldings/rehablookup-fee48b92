@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgLeadGeneration from "@/assets/provider-guides/pg-lead-generation.jpg";
+import pgGetMorePatients from "@/assets/provider-guides/pg-get-more-patients.jpg";
 
 export default function AddictionTreatmentLeadGeneration() {
   return (
@@ -60,6 +62,10 @@ export default function AddictionTreatmentLeadGeneration() {
       ]}
       ctaHeadline="Get Leads Worth Your Admissions Team's Time"
       ctaSubheadline="List your facility and start receiving exclusive, verified patient inquiries."
+      images={[
+        { src: pgLeadGeneration, alt: "Lead generation funnel for treatment center patient acquisition", caption: "Quality leads convert at 3-5x the rate of purchased lead lists." },
+        { src: pgGetMorePatients, alt: "Admissions coordinator responding to patient inquiry", caption: "Exclusive, verified leads mean your team spends time on real opportunities." },
+      ]}
     />
   );
 }
