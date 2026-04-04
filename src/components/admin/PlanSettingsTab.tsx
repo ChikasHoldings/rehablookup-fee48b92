@@ -770,7 +770,7 @@ export function PlanSettingsTab() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                              className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/10"
                               onClick={() => deactivateMutation.mutate(promo.id)}
                               disabled={deactivateMutation.isPending}
                               title="Deactivate promo code"
