@@ -141,12 +141,12 @@ export function TwoFactorEnforcementDialog({
 
         {step === "intro" && (
           <div className="space-y-6">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="bg-warning/5 border border-warning/20 rounded-lg p-4">
               <div className="flex gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-medium text-amber-800">Security Requirement</p>
-                  <p className="text-sm text-amber-700">
+                  <p className="font-medium text-foreground">Security Requirement</p>
+                  <p className="text-sm text-muted-foreground">
                     Two-factor authentication protects your admin account from unauthorized access. 
                     You'll need an authenticator app like Google Authenticator or Authy.
                   </p>
