@@ -578,7 +578,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                           {hasConcierge ? (
                             <Badge variant="outline" className="bg-chart-3/10 text-chart-3 border-chart-3/30">Yes</Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
+                            <Badge variant="outline" className="bg-muted text-muted-foreground border-border">No</Badge>
                           )}
                         </div>
                       </div>
