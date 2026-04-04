@@ -1501,14 +1501,14 @@ export default function AdminAnalytics() {
                       <div className="h-20 w-20 mx-auto rounded-2xl bg-success/10 flex items-center justify-center">
                         <TrendingUp className="h-10 w-10 text-success" />
                       </div>
-                      <div className="text-4xl font-bold text-success">{kpis.upgrades}</div>
+                      <div className="text-4xl font-bold text-success tabular-nums">{kpis.upgrades}</div>
                       <div className="text-sm text-muted-foreground font-medium">Upgrades</div>
                     </div>
                     <div className="space-y-2">
                       <div className="h-20 w-20 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center">
                         <TrendingDown className="h-10 w-10 text-destructive" />
                       </div>
-                      <div className="text-4xl font-bold text-destructive">{kpis.downgrades}</div>
+                      <div className="text-4xl font-bold text-destructive tabular-nums">{kpis.downgrades}</div>
                       <div className="text-sm text-muted-foreground font-medium">Downgrades</div>
                     </div>
                   </div>
@@ -1532,7 +1532,7 @@ export default function AdminAnalytics() {
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="text-center space-y-4">
                     <div className="h-28 w-28 mx-auto rounded-full bg-destructive/10 flex items-center justify-center border-4 border-destructive/20">
-                      <span className="text-5xl font-bold text-destructive">{kpis.churnCount}</span>
+                      <span className="text-5xl font-bold text-destructive tabular-nums">{kpis.churnCount}</span>
                     </div>
                     <div>
                       <div className="text-lg font-medium">Churned Subscriptions</div>
@@ -1560,7 +1560,7 @@ export default function AdminAnalytics() {
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="text-center space-y-4">
                     <div className="h-28 w-28 mx-auto rounded-full bg-success/10 flex items-center justify-center border-4 border-success/20">
-                      <span className="text-4xl font-bold text-success">{(100 - kpis.churnRate).toFixed(1)}%</span>
+                      <span className="text-4xl font-bold text-success tabular-nums">{(100 - kpis.churnRate).toFixed(1)}%</span>
                     </div>
                     <div>
                       <div className="text-lg font-medium">Retention Rate</div>
@@ -1629,8 +1629,8 @@ export default function AdminAnalytics() {
                     <TableRow key={i} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{loc.state}</TableCell>
                       <TableCell className="text-muted-foreground">{loc.city}</TableCell>
-                      <TableCell>{loc.visitors.toLocaleString()}</TableCell>
-                      <TableCell>{loc.clicks.toLocaleString()}</TableCell>
+                      <TableCell className="tabular-nums">{loc.visitors.toLocaleString()}</TableCell>
+                      <TableCell className="tabular-nums">{loc.clicks.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="font-medium">{loc.leads}</Badge>
                       </TableCell>
@@ -1730,8 +1730,8 @@ export default function AdminAnalytics() {
                       <TableCell className="text-muted-foreground text-sm">
                         {provider.city}, {provider.state}
                       </TableCell>
-                      <TableCell className="text-center">{provider.views.toLocaleString()}</TableCell>
-                      <TableCell className="text-center">{provider.clicks.toLocaleString()}</TableCell>
+                      <TableCell className="text-center tabular-nums">{provider.views.toLocaleString()}</TableCell>
+                      <TableCell className="text-center tabular-nums">{provider.clicks.toLocaleString()}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant="secondary" className="font-medium">{provider.leads}</Badge>
                       </TableCell>
