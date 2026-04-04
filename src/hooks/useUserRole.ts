@@ -179,9 +179,12 @@ export function useUserRole(): UserRoleResult {
 
   const initialRole = cached?.role ?? inferRoleFromStoredSession(storedSession, storedUserId ? routeHint : null);
   const initialAuth = cached?.isAuth ?? !!storedUserId;
+  
+  // Only show loading if we have NO cached/stored state to display
+  const hasImmediateState = initialAuth || !!cached;
 
   const [role, setRole] = useState<UserRole>(initialRole);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!hasImmediateState);
   const [isAuthenticated, setIsAuthenticated] = useState(initialAuth);
   const [userId, setUserId] = useState<string | null>(cached?.userId ?? storedUserId);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
