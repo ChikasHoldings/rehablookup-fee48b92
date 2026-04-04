@@ -68,8 +68,8 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
                 variant="outline" 
                 className={
                   (caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') 
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" 
-                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                    ? "bg-success/10 text-success border-success/30" 
+                    : "bg-destructive/10 text-destructive border-destructive/30"
                 }
               >
                 {(caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}

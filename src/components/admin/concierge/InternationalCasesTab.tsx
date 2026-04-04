@@ -544,7 +544,7 @@ export function InternationalCasesTab() {
                             </div>
                           )}
                           {inv.status === "paid" && (
-                            <span className="text-green-600 text-sm flex items-center gap-1">
+                            <span className="text-success text-sm flex items-center gap-1">
                               <CheckCircle className="h-3 w-3" /> Paid
                             </span>
                           )}
