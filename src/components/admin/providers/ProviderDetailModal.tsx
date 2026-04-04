@@ -1317,7 +1317,7 @@ export function ProviderDetailModal({
                           <p className="text-xs text-muted-foreground">Introductions</p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-purple-600">{placementStats?.placements || 0}</p>
+                          <p className="text-2xl font-bold text-chart-3">{placementStats?.placements || 0}</p>
                           <p className="text-xs text-muted-foreground">Placements</p>
                         </div>
                       </div>
