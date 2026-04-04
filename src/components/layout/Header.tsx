@@ -305,7 +305,7 @@ export function Header({
                   )}
                 >
                   {item.label}
-                  <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", openMegaMenu === item.id && "rotate-180")} />
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openMegaMenu === item.id && "rotate-180")} />
                 </button>
                 {openMegaMenu === item.id && (
                   <div
