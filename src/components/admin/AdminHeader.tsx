@@ -549,7 +549,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                             </p>
                           </div>
                           {showAsActive && (
-                            <div className="h-2 w-2 rounded-full bg-blue-500 mt-2 shrink-0" />
+                            <div className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" />
                           )}
                         </DropdownMenuItem>
                       );
