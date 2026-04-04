@@ -44,7 +44,7 @@ const relatedPages = [
 
 const platformLinks = [
   { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resource Hub" },
+  { href: "/providers/resources", label: "Resource Hub" },
   { href: "/provider-faq", label: "Provider FAQ" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/concierge", label: "Concierge Placement" },

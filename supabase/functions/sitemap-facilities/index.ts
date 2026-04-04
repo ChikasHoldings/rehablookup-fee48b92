@@ -198,6 +198,17 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/resources/rebuilding-life-after-rehab", priority: 0.8, changefreq: "monthly" },
   { path: "/resources/sober-living-guide", priority: 0.8, changefreq: "monthly" },
   
+  // ==================== PROVIDER GUIDES & RESOURCES ====================
+  { path: "/providers/resources", priority: 0.8, changefreq: "weekly" },
+  { path: "/provider-guides/get-more-rehab-patients", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-admissions-growth", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-marketing-strategies", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/addiction-treatment-lead-generation", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/increase-rehab-admissions", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-marketing-ideas", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/treatment-center-patient-acquisition", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/behavioral-health-lead-generation", priority: 0.8, changefreq: "monthly" },
+
   // ==================== LEGAL PAGES ====================
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
