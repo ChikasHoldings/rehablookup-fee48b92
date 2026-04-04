@@ -55,6 +55,12 @@ const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
 const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
 const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
 
+// SEO Landing Pages - City+Treatment, Comparisons, Treatment Hubs, Cost/Insurance
+const CityTreatmentPage = lazy(() => import("./pages/seo/CityTreatmentPage"));
+const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
+const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
+const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
+
 // Provider SEO Pages
 const GetMoreRehabPatients = lazy(() => import("./pages/provider-guides/GetMoreRehabPatients"));
 const RehabAdmissionsGrowth = lazy(() => import("./pages/provider-guides/RehabAdmissionsGrowth"));
@@ -341,6 +347,33 @@ const AppInner = () => {
             <Route path="/treatment-types/detox-programs" element={<PublicRouteGuard><DetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug" element={<PublicRouteGuard><StateDetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDetoxPrograms /></PublicRouteGuard>} />
+            
+            {/* SEO Treatment Hub Pages */}
+            <Route path="/alcohol-rehab-centers" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/drug-rehab-centers" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/detox-centers" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/inpatient-rehab" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/outpatient-rehab" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/dual-diagnosis-treatment" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            
+            {/* SEO Comparison Pages */}
+            <Route path="/inpatient-vs-outpatient-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/detox-vs-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/private-vs-public-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            
+            {/* SEO Cost & Insurance Pages */}
+            <Route path="/rehab-cost" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            <Route path="/does-insurance-cover-rehab" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            <Route path="/free-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            <Route path="/medicaid-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            
+            {/* SEO City+Treatment Combo Pages (dynamic) */}
+            <Route path="/alcohol-rehab-in-:slug" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/drug-rehab-in-:slug" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/detox-centers-in-:slug" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/inpatient-rehab-in-:slug" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/outpatient-rehab-in-:slug" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/dual-diagnosis-treatment-in-:slug" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
             
             {/* Near Me SEO Routes */}
             <Route path="/drug-rehab-near-me" element={<PublicRouteGuard><DrugRehabNearMe /></PublicRouteGuard>} />
