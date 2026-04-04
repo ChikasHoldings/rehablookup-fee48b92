@@ -319,7 +319,7 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center gap-2">
             <UserCircle className="h-4 w-4 text-primary" />
-            Patient's Gender
+            Patient's Gender <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.gender}
