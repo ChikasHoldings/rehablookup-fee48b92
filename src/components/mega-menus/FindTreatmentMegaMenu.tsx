@@ -54,7 +54,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
       {/* Premium search bar */}
       <div className="px-5 pt-4 pb-3">
         <form onSubmit={handleSearch} className="relative group/search">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
             <Search className="h-4 w-4 text-accent" />
           </div>
           <input
@@ -62,7 +62,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             placeholder="Search by city, state, or treatment type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-12 pl-14 pr-28 rounded-xl border border-border/60 bg-muted/30 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 focus:bg-background transition-all shadow-sm"
+            className="w-full h-12 pl-14 pr-28 rounded-xl border-2 border-accent/30 bg-accent/[0.04] text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 focus:bg-background transition-all shadow-sm"
           />
           <button
             type="submit"
@@ -92,8 +92,8 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                   <item.icon className="h-3.5 w-3.5 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[12px] font-medium text-foreground/90 group-hover:text-foreground leading-tight">{item.label}</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
+                  <p className="text-[13px] font-semibold text-foreground group-hover:text-foreground leading-tight">{item.label}</p>
+                  <p className="text-[11px] text-muted-foreground/90 leading-tight">{item.desc}</p>
                 </div>
               </PrefetchLink>
             ))}
@@ -126,7 +126,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: Locations + Near Me */}
         <div className="w-[235px] px-4 pb-4 pt-1">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-accent" />
             Popular Locations
           </p>
@@ -136,7 +136,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={loc.href}
                 to={loc.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-1.5 rounded-md px-2 py-[6px] text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[6px] text-[13px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <ChevronRight className="h-3 w-3 text-border group-hover:text-accent transition-colors shrink-0" />
                 {loc.label}
@@ -149,7 +149,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
           </PrefetchLink>
 
           <div className="border-t border-border/30 pt-2.5 mt-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-1 mb-1.5">
+            <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">
               Near Me
             </p>
             {nearMePages.map((page) => (
@@ -157,7 +157,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={page.href}
                 to={page.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[12px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <Search className="h-3 w-3 text-accent/50 group-hover:text-accent shrink-0" />
                 {page.label}
