@@ -59,7 +59,7 @@ export function ProviderTrustForm({ facilityId, userId, yearEstablished, onYearC
             <SelectValue placeholder="Select year" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="not_specified">Not specified</SelectItem>
+            <SelectItem value="not_specified">Select year</SelectItem>
             {years.map((year) => (
               <SelectItem key={year} value={year.toString()}>
                 {year}

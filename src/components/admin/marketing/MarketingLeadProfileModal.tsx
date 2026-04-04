@@ -964,7 +964,7 @@ export function MarketingLeadProfileModal({
                     <Briefcase className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Employment</h4>
                   </div>
-                  <p className="text-sm">{lead.employment_status || "Not specified"}</p>
+                  <p className="text-sm">{lead.employment_status || "—"}</p>
                 </div>
               </div>
             </TabsContent>

@@ -1149,7 +1149,7 @@ export function LeadProfileModal({
                         {lead.budget_preference === "low" ? "Budget-conscious" :
                          lead.budget_preference === "medium" ? "Moderate" :
                          lead.budget_preference === "flexible" ? "Flexible / Cost not a concern" :
-                         lead.budget_preference || "Not specified"}
+                         lead.budget_preference || "To be discussed"}
                       </p>
                     </div>
                   </div>
