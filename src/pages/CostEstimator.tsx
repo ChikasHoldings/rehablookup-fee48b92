@@ -167,7 +167,7 @@ const CostEstimator = () => {
               <Calculator className="h-4 w-4" />
               Free Cost Estimation Tool
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Treatment Cost Estimator
             </h1>
             <p className="text-lg text-muted-foreground">

@@ -399,7 +399,7 @@ export default function ConciergeLanding() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
                     Ready to Find Help?
                   </h2>
                   <p className="text-sm sm:text-lg md:text-xl opacity-90 mb-6 sm:mb-8 leading-relaxed px-2">

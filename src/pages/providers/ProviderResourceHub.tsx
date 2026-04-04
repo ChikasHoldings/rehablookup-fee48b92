@@ -99,7 +99,7 @@ export default function ProviderResourceHub() {
               <BookOpen className="h-4 w-4 text-primary-foreground/80" />
               <span className="text-sm font-medium text-primary-foreground/90">Provider Resource Hub</span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-display font-bold text-primary-foreground leading-tight mb-4">
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-4">
               Actionable Guides for Treatment Center Growth
             </h1>
             <p className="text-lg text-primary-foreground/75 max-w-2xl mx-auto mb-8">

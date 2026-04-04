@@ -415,7 +415,7 @@ const ArticleDetail = () => {
               </span>
             </div>
 
-            <h1 className="speakable-headline font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl mb-6 leading-tight">
+            <h1 className="speakable-headline font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl mb-6 leading-tight">
               {article.title}
             </h1>
 
