@@ -1361,9 +1361,9 @@ export default function AdminSecurityLogs() {
                                           onClick={() => toggleBlockMutation.mutate({ id: item.id, isActive: !item.is_active })}
                                         >
                                           {item.is_active ? (
-                                            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                                            <ShieldCheck className="h-4 w-4 text-success" />
                                           ) : (
-                                            <ShieldOff className="h-4 w-4 text-red-600" />
+                                            <ShieldOff className="h-4 w-4 text-destructive" />
                                           )}
                                         </Button>
                                       </TooltipTrigger>
