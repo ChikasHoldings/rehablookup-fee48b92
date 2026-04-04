@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Users, Globe, Flag, Filter, DollarSign, FileText } from "lucide-react";
+import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Globe, Flag, Filter, DollarSign, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
 import { ConciergeStatsCharts } from "@/components/admin/ConciergeStatsCharts";
@@ -31,15 +32,24 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   closed: { label: "Closed", variant: "destructive" },
 };
 
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function AdminConcierge() {
   const { user, adminRole } = useAdminAuth();
   const isAdvisor = adminRole === "advisor";
   
   const [activeTab, setActiveTab] = useState("domestic");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const searchQuery = useDebounce(searchInput, 350);
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  // Advisors default to seeing only their cases
   const [advisorFilter, setAdvisorFilter] = useState<"mine" | "all">(isAdvisor ? "mine" : "all");
 
   const { data: cases, isLoading, refetch } = useQuery({
@@ -47,8 +57,9 @@ export default function AdminConcierge() {
     queryFn: async () => {
       let query = supabase
         .from("concierge_inquiries")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, match_count, assigned_advisor_id, created_at, updated_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       if (statusFilter === "in_progress") {
         query = query.in("status", IN_PROGRESS_STATUSES);
@@ -56,7 +67,6 @@ export default function AdminConcierge() {
         query = query.eq("status", statusFilter);
       }
 
-      // Filter to advisor's own cases
       if (advisorFilter === "mine" && user?.id) {
         query = query.eq("assigned_advisor_id", user.id);
       }
@@ -67,7 +77,6 @@ export default function AdminConcierge() {
     },
   });
 
-  // Fetch admin staff for advisor display
   const { data: adminStaff } = useQuery({
     queryKey: ["admin-staff-list"],
     queryFn: async () => {
@@ -83,34 +92,20 @@ export default function AdminConcierge() {
   const { data: stats } = useQuery({
     queryKey: ["admin-concierge-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("concierge_inquiries")
-        .select("status");
-      
-      if (error) throw error;
-
-      const counts: Record<string, number> = {
-        new: 0,
-        reviewing: 0,
-        matching: 0,
-        matched: 0,
-        introductions_sent: 0,
-        in_contact: 0,
-        placed: 0,
-        closed: 0,
-      };
-
-      data?.forEach((c) => {
-        if (counts[c.status] !== undefined) {
-          counts[c.status]++;
-        }
+      const statusKeys = ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed", "closed"];
+      const results = await Promise.all(
+        statusKeys.map(s =>
+          supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("status", s)
+        )
+      );
+      const counts: Record<string, number> = {};
+      statusKeys.forEach((key, i) => {
+        counts[key] = results[i].count || 0;
       });
-
       return counts;
     },
   });
 
-  // Fetch network provider count for tab badge
   const { data: networkCount } = useQuery({
     queryKey: ["admin-network-provider-count"],
     queryFn: async () => {
@@ -123,7 +118,6 @@ export default function AdminConcierge() {
     },
   });
 
-  // Fetch international cases count
   const { data: internationalCount } = useQuery({
     queryKey: ["admin-international-count"],
     queryFn: async () => {
@@ -136,6 +130,22 @@ export default function AdminConcierge() {
     },
   });
 
+  // Fetch full case data when a case is selected
+  const { data: selectedCase } = useQuery({
+    queryKey: ["admin-concierge-case-detail", selectedCaseId],
+    queryFn: async () => {
+      if (!selectedCaseId) return undefined;
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select("*")
+        .eq("id", selectedCaseId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCaseId,
+  });
+
   const filteredCases = cases?.filter((c) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -145,8 +155,6 @@ export default function AdminConcierge() {
       c.user_phone?.includes(q)
     );
   });
-
-  const selectedCase = cases?.find((c) => c.id === selectedCaseId);
 
   const handleStatusClick = (status: string) => {
     setStatusFilter(status as CaseStatus);
@@ -158,9 +166,11 @@ export default function AdminConcierge() {
     return advisor ? (advisor.display_name || `${advisor.first_name} ${advisor.last_name}`) : "—";
   };
 
+  const isPaid = (status: string) => status === 'paid' || status === 'succeeded';
+
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Page Header - responsive */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -195,7 +205,7 @@ export default function AdminConcierge() {
         </div>
       </div>
 
-      {/* Main Tabs - horizontally scrollable on mobile */}
+      {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
           <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-2 sm:max-w-xs" : "sm:grid-cols-4 sm:max-w-lg"}`}>
@@ -234,14 +244,12 @@ export default function AdminConcierge() {
 
         {/* Domestic Cases Tab */}
         <TabsContent value="domestic" className="space-y-3 sm:space-y-4">
-          {/* Pipeline Stats */}
           <ConciergeStatsCharts 
             stats={stats} 
             onStatusClick={handleStatusClick}
             activeStatus={statusFilter}
           />
 
-          {/* Search & Table */}
           <Card>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b gap-2">
               <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -249,12 +257,11 @@ export default function AdminConcierge() {
                   <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search by name, email, or phone..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                     className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
                   />
                 </div>
-                {/* Advisor filter toggle */}
                 {isAdvisor && (
                   <Button
                     variant={advisorFilter === "mine" ? "default" : "outline"}
@@ -267,29 +274,43 @@ export default function AdminConcierge() {
                   </Button>
                 )}
               </div>
-              <span className="text-xs sm:text-sm text-muted-foreground">
+              <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
                 {filteredCases?.length || 0} domestic cases
               </span>
             </div>
             <div className="p-3 sm:p-4">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-6 w-16" />
+                    </div>
+                  ))}
+                </div>
               ) : filteredCases?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">No cases found</div>
+                <div className="text-center py-12">
+                  <HeartHandshake className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground font-medium">No cases found</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">Try adjusting your filters or search</p>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b text-left text-sm text-muted-foreground">
-                        <th className="pb-3 font-medium">Name</th>
-                        <th className="pb-3 font-medium">Contact</th>
-                        <th className="pb-3 font-medium">Care Type</th>
-                        <th className="pb-3 font-medium">Location</th>
-                        <th className="pb-3 font-medium">Status</th>
-                        <th className="pb-3 font-medium">Payment</th>
-                        <th className="pb-3 font-medium">Advisor</th>
-                        <th className="pb-3 font-medium">Matches</th>
-                        <th className="pb-3 font-medium">Date</th>
+                        <th className="pb-3 font-medium min-w-[120px]">Name</th>
+                        <th className="pb-3 font-medium min-w-[180px]">Contact</th>
+                        <th className="pb-3 font-medium min-w-[100px]">Care Type</th>
+                        <th className="pb-3 font-medium min-w-[80px]">Location</th>
+                        <th className="pb-3 font-medium min-w-[100px]">Status</th>
+                        <th className="pb-3 font-medium min-w-[80px]">Payment</th>
+                        <th className="pb-3 font-medium min-w-[100px]">Advisor</th>
+                        <th className="pb-3 font-medium min-w-[60px]">Matches</th>
+                        <th className="pb-3 font-medium min-w-[90px]">Date</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -317,22 +338,22 @@ export default function AdminConcierge() {
                             <Badge 
                               variant="outline" 
                               className={
-                                (c.payment_status === 'paid' || c.payment_status === 'succeeded') 
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" 
-                                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                isPaid(c.payment_status)
+                                  ? "bg-success/10 text-success border-success/30" 
+                                  : "bg-destructive/10 text-destructive border-destructive/30"
                               }
                             >
-                              {(c.payment_status === 'paid' || c.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}
+                              {isPaid(c.payment_status) ? '✓ Paid' : '⚠ Unpaid'}
                             </Badge>
                           </td>
                           <td className="py-3 text-sm text-muted-foreground">
                             {getAdvisorName(c.assigned_advisor_id)}
                           </td>
                           <td className="py-3">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 tabular-nums">
                               {c.match_count || 0}
                               {c.match_count && c.match_count > 0 && (
-                                <UserCheck className="h-4 w-4 text-green-500" />
+                                <UserCheck className="h-4 w-4 text-success" />
                               )}
                             </div>
                           </td>
@@ -349,23 +370,19 @@ export default function AdminConcierge() {
           </Card>
         </TabsContent>
 
-        {/* International Cases Tab */}
         <TabsContent value="international">
           <InternationalCasesTab />
         </TabsContent>
 
-        {/* Network Providers Tab */}
         <TabsContent value="providers">
           <NetworkProvidersTab />
         </TabsContent>
 
-        {/* Invoices Tab */}
         <TabsContent value="invoices">
           <AllInvoicesTab />
         </TabsContent>
       </Tabs>
 
-      {/* Detail Sheet for Domestic Cases */}
       <ConciergeDetailSheet
         caseData={selectedCase}
         open={!!selectedCaseId}
