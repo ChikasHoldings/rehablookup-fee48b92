@@ -946,8 +946,8 @@ export function MarketingLeadProfileModal({
                     <h4 className="font-semibold text-sm">Demographics</h4>
                   </div>
                   <div className="text-sm space-y-1">
-                    <p>Age: {lead.age_range || "Not specified"}</p>
-                    <p>Gender: {lead.gender || "Not specified"}</p>
+                    <p>Age: {lead.age_range || "Adult"}</p>
+                    <p>Gender: {lead.gender || "—"}</p>
                   </div>
                 </div>
 
