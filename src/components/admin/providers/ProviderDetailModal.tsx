@@ -256,7 +256,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("flagged_images")
-        .select("*")
+        .select("id, facility_id, image_type, image_url, reason, flagged_at, resolved, resolved_at")
         .eq("facility_id", provider.id)
         .eq("resolved", false);
       return (data || []) as FlaggedImage[];
