@@ -48,32 +48,32 @@ const navItems = [
 const notificationTypeIcons: Record<string, React.ReactNode> = {
   // System & Welcome
   system: <Bell className="h-4 w-4 text-primary" />,
-  welcome: <Bell className="h-4 w-4 text-green-500" />,
+  welcome: <Bell className="h-4 w-4 text-success" />,
   // Facility Related
-  facility_update: <Building2 className="h-4 w-4 text-blue-500" />,
-  saved_facility: <Heart className="h-4 w-4 text-pink-500" />,
-  facility_contacted_you: <Send className="h-4 w-4 text-purple-500" />,
+  facility_update: <Building2 className="h-4 w-4 text-primary" />,
+  saved_facility: <Heart className="h-4 w-4 text-primary" />,
+  facility_contacted_you: <Send className="h-4 w-4 text-primary" />,
   // Request Related
-  request_update: <Send className="h-4 w-4 text-green-500" />,
-  request_confirmation: <Send className="h-4 w-4 text-green-500" />,
+  request_update: <Send className="h-4 w-4 text-success" />,
+  request_confirmation: <Send className="h-4 w-4 text-success" />,
   // Review Related
-  review_response: <Star className="h-4 w-4 text-amber-500" />,
-  review_approved: <Star className="h-4 w-4 text-green-500" />,
+  review_response: <Star className="h-4 w-4 text-warning" />,
+  review_approved: <Star className="h-4 w-4 text-success" />,
   review_rejected: <Star className="h-4 w-4 text-destructive" />,
   // Tour Related
-  tour_proposed: <Calendar className="h-4 w-4 text-purple-500" />,
-  tour_confirmed: <Calendar className="h-4 w-4 text-green-500" />,
+  tour_proposed: <Calendar className="h-4 w-4 text-primary" />,
+  tour_confirmed: <Calendar className="h-4 w-4 text-success" />,
   tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
-  // Concierge-specific notification types with distinct icons
+  // Concierge-specific
   concierge_intake_received: <HeartHandshake className="h-4 w-4 text-primary" />,
-  concierge_matches_found: <MapPin className="h-4 w-4 text-emerald-500" />,
-  concierge_provider_interested: <UserCheck className="h-4 w-4 text-blue-500" />,
-  concierge_provider_confirmed: <Building2 className="h-4 w-4 text-green-500" />,
-  concierge_placement_complete: <CheckCircle className="h-4 w-4 text-green-600" />,
-  concierge_tour_proposed: <Calendar className="h-4 w-4 text-purple-500" />,
-  concierge_tour_confirmed: <Calendar className="h-4 w-4 text-green-500" />,
+  concierge_matches_found: <MapPin className="h-4 w-4 text-success" />,
+  concierge_provider_interested: <UserCheck className="h-4 w-4 text-primary" />,
+  concierge_provider_confirmed: <Building2 className="h-4 w-4 text-success" />,
+  concierge_placement_complete: <CheckCircle className="h-4 w-4 text-success" />,
+  concierge_tour_proposed: <Calendar className="h-4 w-4 text-primary" />,
+  concierge_tour_confirmed: <Calendar className="h-4 w-4 text-success" />,
   concierge_tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
-  concierge_message_received: <Send className="h-4 w-4 text-blue-500" />,
+  concierge_message_received: <Send className="h-4 w-4 text-primary" />,
 };
 
 export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = false }: SeekerHeaderProps) {
