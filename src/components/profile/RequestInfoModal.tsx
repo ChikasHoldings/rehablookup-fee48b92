@@ -288,6 +288,7 @@ export function RequestInfoModal({
   const navigate = useNavigate();
   const [nearbyFacilities, setNearbyFacilities] = useState<NearbyFacility[]>([]);
   const [loadingNearby, setLoadingNearby] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
   const [leadUsage, setLeadUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
   const [submittedFirstName, setSubmittedFirstName] = useState("");
 
