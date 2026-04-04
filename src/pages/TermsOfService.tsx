@@ -10,7 +10,6 @@ const TermsOfService = () => {
         title="Terms of Service"
         description="Read RehabLookup's terms of service. Understand the terms and conditions for using our addiction treatment directory and services."
         canonical="/terms-of-service"
-        canonical="/terms-of-service"
       />
       {/* Header */}
       <section className="border-b border-border bg-secondary/30 py-12">
