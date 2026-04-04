@@ -133,17 +133,17 @@ Deno.serve(async (req) => {
     const responseUrl = `https://rehablookup.com/provider/placement-network`;
 
     // Format case details for email
-    const levelOfCare = inquiry.level_of_care || "Not specified";
+    const levelOfCare = inquiry.level_of_care || "General";
     const insuranceInfo = inquiry.insurance_carrier 
       ? `${inquiry.insurance_carrier}${inquiry.insurance_member_id ? ` (ID: ${inquiry.insurance_member_id})` : ""}`
-      : inquiry.payment_type === "self_pay" ? "Self-Pay" : "Not specified";
+      : inquiry.payment_type === "self_pay" ? "Self-Pay" : "Pending verification";
     const location = inquiry.preferred_state 
       ? `${inquiry.preferred_city || "Any city"}, ${inquiry.preferred_state}`
       : "Flexible";
-    const gender = inquiry.gender || "Not specified";
-    const ageRange = inquiry.age_range || "Not specified";
+    const gender = inquiry.gender || "—";
+    const ageRange = inquiry.age_range || "—";
     const urgency = inquiry.timeline_urgency || "Standard";
-    const primaryConcern = inquiry.primary_concern || "Not specified";
+    const primaryConcern = inquiry.primary_concern || "General";
 
     const emailHtml = `
 <!DOCTYPE html>
