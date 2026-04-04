@@ -68,10 +68,10 @@ interface ProviderHeaderProps {
 
 const notificationIcons: Record<string, React.ReactNode> = {
   lead_received: <UserPlus className="h-4 w-4 text-primary" />,
-  lead_status_changed: <MessageSquare className="h-4 w-4 text-blue-500" />,
-  listing_approved: <Shield className="h-4 w-4 text-green-500" />,
-  subscription_updated: <CreditCard className="h-4 w-4 text-purple-500" />,
-  lead_limit_warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  lead_status_changed: <MessageSquare className="h-4 w-4 text-primary" />,
+  listing_approved: <Shield className="h-4 w-4 text-success" />,
+  subscription_updated: <CreditCard className="h-4 w-4 text-accent-foreground" />,
+  lead_limit_warning: <AlertTriangle className="h-4 w-4 text-warning" />,
   system: <Settings className="h-4 w-4 text-muted-foreground" />,
 };
 
