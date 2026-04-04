@@ -101,7 +101,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
       if (!caseData?.id) return [];
       const { data, error } = await supabase
         .from("international_case_notes")
-        .select("*")
+        .select("id, case_id, admin_id, content, created_at")
         .eq("case_id", caseData.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
