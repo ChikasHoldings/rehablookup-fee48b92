@@ -426,9 +426,10 @@ export default function ConciergeIntake() {
 
       if (error) throw error;
 
-      if (data?.url) {
-        // Redirect to Stripe (will return to thank you page after payment)
+      if (data?.url && (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com"))) {
         window.location.href = data.url;
+      } else if (data?.url) {
+        throw new Error("Invalid checkout URL");
       } else {
         throw new Error("No checkout URL returned");
       }

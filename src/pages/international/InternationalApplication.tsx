@@ -230,7 +230,7 @@ export default function InternationalApplication() {
       });
 
       if (error) throw error;
-      if (response?.url) {
+      if (response?.url && (response.url.startsWith("https://checkout.stripe.com") || response.url.startsWith("https://billing.stripe.com"))) {
         window.location.href = response.url;
       }
     } catch (err) {
