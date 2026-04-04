@@ -312,7 +312,7 @@ export function InternationalCasesTab() {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3">
-            <div className="text-2xl font-bold text-amber-600">
+            <div className="text-2xl font-bold text-warning">
               ${((stats?.pending_invoices || 0) / 100).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Pending Invoices</p>
