@@ -127,6 +127,7 @@ const QUESTIONS: Question[] = [
     subtitle: "Some programs are gender-specific",
     icon: <UserCircle className="h-6 w-6" />,
     field: "gender",
+    required: true,
     options: GENDER_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
