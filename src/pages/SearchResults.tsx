@@ -741,6 +741,16 @@ const SearchResults = () => {
           {hasFilters && (
             <div className="flex items-center gap-2 flex-wrap pb-3 animate-fade-in">
               <span className="text-xs font-medium text-muted-foreground mr-1">Active:</span>
+              {queryParam && (
+                <button
+                  onClick={() => clearFilter("q")}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <Search className="h-3 w-3" />
+                  "{queryParam}"
+                  <X className="h-3 w-3 ml-0.5" />
+                </button>
+              )}
               {location && (
                 <button
                   onClick={() => clearFilter("location")}
