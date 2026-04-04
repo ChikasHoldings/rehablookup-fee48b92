@@ -162,16 +162,12 @@ export default function DetoxNearMe() {
           ) : (
             <>
               {/* Horizontal scroll on mobile, grid on larger screens */}
-              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {facilities.slice(0, 12).map((f) => (
-                  <div key={f.id} className="flex-shrink-0 w-[300px] md:w-auto snap-center">
+                  
                     <TreatmentCenterCard center={f as any} />
                   </div>
                 ))}
-              </div>
-              {/* Scroll indicator for mobile */}
-              <div className="flex justify-center gap-1.5 mt-3 md:hidden">
-                <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
               </div>
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
