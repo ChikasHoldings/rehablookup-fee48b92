@@ -167,6 +167,15 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/us-rehab/alcohol-rehab-usa", priority: 0.8, changefreq: "weekly" },
   { path: "/us-rehab/drug-rehab-usa", priority: 0.8, changefreq: "weekly" },
   { path: "/us-rehab/dual-diagnosis-usa", priority: 0.75, changefreq: "weekly" },
+  // High-intent international SEO pages
+  { path: "/travel-to-usa-for-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/cost-of-rehab-in-usa-for-international-patients", priority: 0.85, changefreq: "weekly" },
+  { path: "/can-foreigners-go-to-rehab-in-usa", priority: 0.85, changefreq: "weekly" },
+  { path: "/paying-for-rehab-in-usa-without-insurance", priority: 0.85, changefreq: "weekly" },
+  { path: "/affordable-rehab-in-usa", priority: 0.85, changefreq: "weekly" },
+  { path: "/fast-admission-rehab-usa", priority: 0.85, changefreq: "weekly" },
+  { path: "/same-day-detox-usa", priority: 0.85, changefreq: "weekly" },
+  { path: "/top-detox-centers-usa", priority: 0.85, changefreq: "weekly" },
   
   // ==================== RESOURCE ARTICLES ====================
   { path: "/resources/signs-of-addiction", priority: 0.8, changefreq: "monthly" },
