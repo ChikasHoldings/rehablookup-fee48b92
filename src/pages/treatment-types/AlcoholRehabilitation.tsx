@@ -4,7 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
 import {
   Activity,
   ArrowRight,

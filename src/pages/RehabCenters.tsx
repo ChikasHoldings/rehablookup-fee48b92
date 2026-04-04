@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { usStates } from "@/data/usStates";
@@ -159,15 +159,7 @@ const RehabCenters = () => {
             </Link>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {topRatedCenters.map((center) => (
-              <TreatmentCenterCard
-                key={center.id}
-                center={center}
-                featured={center.featured}
-              />
-            ))}
-          </div>
+          <FacilityShowcaseGrid facilities={topRatedCenters as any[]} />
 
           <div className="mt-6 text-center sm:hidden">
             <Link to="/search-results?sort=rating-high">
