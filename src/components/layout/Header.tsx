@@ -208,7 +208,7 @@ export function Header({
                 <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", openMegaMenu === "find-treatment" && "rotate-180")} />
               </button>
               {openMegaMenu === "find-treatment" && (
-                <div className="absolute top-full left-0 mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150 max-w-[calc(100vw-2rem)]">
                   <FindTreatmentMegaMenu onNavigate={() => setOpenMegaMenu(null)} />
                 </div>
               )}
