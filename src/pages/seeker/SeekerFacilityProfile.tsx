@@ -761,6 +761,7 @@ export default function SeekerFacilityProfile() {
           logo_url: facility.logo_url,
           featured: facility.featured,
         }}
+        facilityPlan={facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured" ? "pro" : "free"}
         prefillData={prefillData}
       />
 

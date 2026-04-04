@@ -808,9 +808,15 @@ const CenterProfile = () => {
                 title="About This Facility"
                 iconColor="bg-primary/10 text-primary"
               >
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {facility.description || "A trusted treatment center providing quality care and support for individuals seeking recovery. Our dedicated team is committed to helping patients achieve lasting wellness."}
-                </p>
+                {facility.description ? (
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {facility.description}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground leading-relaxed italic">
+                    No description provided yet. Contact this facility for more information about their programs and services.
+                  </p>
+                )}
               </ProfileSection>
 
               {/* Contact & Location Details */}
