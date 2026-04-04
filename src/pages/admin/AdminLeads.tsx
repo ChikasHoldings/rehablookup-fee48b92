@@ -17,7 +17,7 @@ import {
   Share2,
   Timer,
   Download,
-  AlertCircle,
+  X,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,21 +62,20 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { LeadProfileModal, Lead } from "@/components/leads/LeadProfileModal";
 import { cn } from "@/lib/utils";
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis } from "recharts";
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
-import { Separator } from "@/components/ui/separator";
-import { SOURCE_LABELS, formatSourceLabel } from "@/lib/sourceLabels";
+import { formatSourceLabel } from "@/lib/sourceLabels";
 
 const SOURCE_COLORS = [
-  "hsl(221, 83%, 53%)", // blue
-  "hsl(142, 71%, 45%)", // green
-  "hsl(262, 83%, 58%)", // purple
-  "hsl(24, 95%, 53%)",  // orange
-  "hsl(340, 82%, 52%)", // pink
-  "hsl(47, 96%, 53%)",  // yellow
-  "hsl(174, 72%, 46%)", // teal
-  "hsl(0, 72%, 51%)",   // red
+  "hsl(var(--primary))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(221, 83%, 53%)",
+  "hsl(174, 72%, 46%)",
+  "hsl(0, 72%, 51%)",
 ];
 
 type DateRange = {
@@ -102,23 +101,23 @@ type Facility = {
   state: string;
 };
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 25;
 
-// Status Badge Component
+// Status Badge Component using semantic tokens
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    new: { label: "New", className: "bg-blue-50 text-blue-700 border-blue-200" },
-    contacted: { label: "Contacted", className: "bg-purple-50 text-purple-700 border-purple-200" },
-    in_progress: { label: "In Progress", className: "bg-amber-50 text-amber-700 border-amber-200" },
-    scheduled: { label: "Scheduled", className: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-    admitted: { label: "Admitted", className: "bg-green-50 text-green-700 border-green-200" },
-    converted: { label: "Converted", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-    closed: { label: "Closed", className: "bg-slate-50 text-slate-500 border-slate-200" },
-    expired: { label: "Expired", className: "bg-gray-50 text-gray-500 border-gray-200" },
-    lost: { label: "Lost", className: "bg-slate-50 text-slate-600 border-slate-200" },
+    new: { label: "New", className: "bg-info/10 text-info border-info/30" },
+    contacted: { label: "Contacted", className: "bg-chart-3/10 text-chart-3 border-chart-3/30" },
+    in_progress: { label: "In Progress", className: "bg-warning/10 text-warning border-warning/30" },
+    scheduled: { label: "Scheduled", className: "bg-chart-5/10 text-chart-5 border-chart-5/30" },
+    admitted: { label: "Admitted", className: "bg-success/10 text-success border-success/30" },
+    converted: { label: "Converted", className: "bg-success/10 text-success border-success/30" },
+    closed: { label: "Closed", className: "bg-muted text-muted-foreground border-border" },
+    expired: { label: "Expired", className: "bg-muted text-muted-foreground border-border" },
+    lost: { label: "Lost", className: "bg-destructive/10 text-destructive border-destructive/30" },
   };
 
-  const { label, className } = config[status] || { label: status, className: "bg-muted text-muted-foreground" };
+  const { label, className } = config[status] || { label: status, className: "bg-muted text-muted-foreground border-border" };
 
   return (
     <Badge variant="outline" className={className}>
@@ -138,22 +137,22 @@ function RedistributionBadge({ status, exclusiveUntil, extendedUntil }: {
   const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
     exclusive: { 
       label: "Exclusive", 
-      className: "bg-amber-50 text-amber-700 border-amber-200",
+      className: "bg-warning/10 text-warning border-warning/30",
       icon: <Timer className="h-3 w-3" />
     },
     extended: { 
       label: "Redistributed", 
-      className: "bg-blue-50 text-blue-700 border-blue-200",
+      className: "bg-info/10 text-info border-info/30",
       icon: <Share2 className="h-3 w-3" />
     },
     expired: { 
       label: "Expired", 
-      className: "bg-slate-50 text-slate-500 border-slate-200",
+      className: "bg-muted text-muted-foreground border-border",
       icon: <Clock className="h-3 w-3" />
     },
   };
 
-  const { label, className, icon } = config[status] || { label: status, className: "bg-muted text-muted-foreground", icon: null };
+  const { label, className, icon } = config[status] || { label: status, className: "bg-muted text-muted-foreground border-border", icon: null };
   
   const timeLeft = status === "exclusive" && exclusiveUntil 
     ? formatDistanceToNow(new Date(exclusiveUntil), { addSuffix: true })
@@ -189,10 +188,10 @@ function UrgencyIndicator({ urgency }: { urgency: string | null }) {
   if (!urgency) return null;
 
   const config: Record<string, { icon: React.ReactNode; className: string; label: string }> = {
-    immediate: { icon: <Zap className="h-3 w-3" />, className: "text-red-500", label: "Immediate" },
-    "within-week": { icon: <Clock className="h-3 w-3" />, className: "text-amber-500", label: "This Week" },
-    "within-month": { icon: <Calendar className="h-3 w-3" />, className: "text-blue-500", label: "This Month" },
-    researching: { icon: <Search className="h-3 w-3" />, className: "text-slate-500", label: "Researching" },
+    immediate: { icon: <Zap className="h-3 w-3" />, className: "text-destructive", label: "Immediate" },
+    "within-week": { icon: <Clock className="h-3 w-3" />, className: "text-warning", label: "This Week" },
+    "within-month": { icon: <Calendar className="h-3 w-3" />, className: "text-info", label: "This Month" },
+    researching: { icon: <Search className="h-3 w-3" />, className: "text-muted-foreground", label: "Researching" },
   };
 
   const { icon, className, label } = config[urgency] || { icon: null, className: "", label: urgency };
@@ -213,10 +212,20 @@ function UrgencyIndicator({ urgency }: { urgency: string | null }) {
   );
 }
 
+// Debounce hook
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function AdminLeads() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminLeads");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [redistributionFilter, setRedistributionFilter] = useState("all");
@@ -227,18 +236,28 @@ export default function AdminLeads() {
   const [currentPage, setCurrentPage] = useState(1);
   const highlightProcessedRef = useRef(false);
 
-  // Handle URL params for deep linking from search
+  const searchQuery = useDebounce(searchInput, 350);
+
+  // Check if any filters are active
+  const hasActiveFilters = statusFilter !== "all" || urgencyFilter !== "all" || redistributionFilter !== "all" || searchInput !== "" || dateRange.from !== undefined || dateRange.to !== undefined;
+
+  const clearAllFilters = () => {
+    setStatusFilter("all");
+    setUrgencyFilter("all");
+    setRedistributionFilter("all");
+    setSearchInput("");
+    setDatePreset("all");
+    setDateRange({ from: undefined, to: undefined });
+    setCurrentPage(1);
+  };
+
+  // Handle URL params for deep linking
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const highlightId = params.get("highlight");
-    
-    // Store highlight ID for processing after data loads
     if (highlightId && !highlightProcessedRef.current) {
       highlightProcessedRef.current = true;
-      // Will be processed when leads data loads
     }
-    
-    // Clean URL params after reading
     if (highlightId) {
       window.history.replaceState({}, "", window.location.pathname);
     }
@@ -260,6 +279,9 @@ export default function AdminLeads() {
   const invalidateLeadsQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
     queryClient.invalidateQueries({ queryKey: ["admin-leads-count"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-leads-kpi"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-leads-source-breakdown"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-leads-redistribution-stats"] });
   }, [queryClient]);
 
   // Real-time subscriptions for leads
@@ -291,7 +313,27 @@ export default function AdminLeads() {
     };
   }, [invalidateLeadsQueries]);
 
-  // Fetch total count for pagination
+  // Fetch KPI stats independently (not from page data)
+  const { data: kpiStats } = useQuery({
+    queryKey: ["admin-leads-kpi"],
+    queryFn: async () => {
+      const [totalRes, newRes, contactedRes, convertedRes] = await Promise.all([
+        supabase.from("leads").select("id", { count: "exact", head: true }),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "contacted"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "converted"),
+      ]);
+      return {
+        total: totalRes.count || 0,
+        newCount: newRes.count || 0,
+        contacted: contactedRes.count || 0,
+        converted: convertedRes.count || 0,
+      };
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+
+  // Fetch total count for pagination (filtered)
   const { data: totalCount } = useQuery({
     queryKey: ["admin-leads-count", statusFilter, urgencyFilter, redistributionFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
@@ -300,29 +342,12 @@ export default function AdminLeads() {
           .from("leads")
           .select("id", { count: "exact", head: true });
 
-        if (statusFilter !== "all") {
-          query = query.eq("status", statusFilter);
-        }
-
-        if (urgencyFilter !== "all") {
-          query = query.eq("urgency", urgencyFilter);
-        }
-
-        if (redistributionFilter !== "all") {
-          query = query.eq("redistribution_status", redistributionFilter);
-        }
-
-        if (searchQuery) {
-          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
-        }
-
-        // Date range filter
-        if (dateRange.from) {
-          query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
-        }
-        if (dateRange.to) {
-          query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
-        }
+        if (statusFilter !== "all") query = query.eq("status", statusFilter);
+        if (urgencyFilter !== "all") query = query.eq("urgency", urgencyFilter);
+        if (redistributionFilter !== "all") query = query.eq("redistribution_status", redistributionFilter);
+        if (searchQuery) query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+        if (dateRange.from) query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+        if (dateRange.to) query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
 
         const { count, error } = await query;
         if (error) throw error;
@@ -348,29 +373,12 @@ export default function AdminLeads() {
           .order("created_at", { ascending: false })
           .range(from, to);
 
-        if (statusFilter !== "all") {
-          query = query.eq("status", statusFilter);
-        }
-
-        if (urgencyFilter !== "all") {
-          query = query.eq("urgency", urgencyFilter);
-        }
-
-        if (redistributionFilter !== "all") {
-          query = query.eq("redistribution_status", redistributionFilter);
-        }
-
-        if (searchQuery) {
-          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
-        }
-
-        // Date range filter
-        if (dateRange.from) {
-          query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
-        }
-        if (dateRange.to) {
-          query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
-        }
+        if (statusFilter !== "all") query = query.eq("status", statusFilter);
+        if (urgencyFilter !== "all") query = query.eq("urgency", urgencyFilter);
+        if (redistributionFilter !== "all") query = query.eq("redistribution_status", redistributionFilter);
+        if (searchQuery) query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+        if (dateRange.from) query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+        if (dateRange.to) query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
 
         const { data, error } = await query;
         if (error) throw error;
@@ -382,12 +390,11 @@ export default function AdminLeads() {
     },
   });
 
-  // Handle highlight param - auto-open lead profile modal
+  // Handle highlight param
   useEffect(() => {
     if (leads && leads.length > 0) {
       const params = new URLSearchParams(window.location.search);
       const highlightId = params.get("highlight");
-      
       if (highlightId) {
         const leadToHighlight = leads.find(l => l.id === highlightId);
         if (leadToHighlight) {
@@ -414,9 +421,11 @@ export default function AdminLeads() {
       const { data } = await supabase
         .from("facilities")
         .select("id, name, city, state")
-        .eq("status", "approved");
+        .eq("status", "approved")
+        .limit(2000);
       return data as Facility[];
     },
+    staleTime: 1000 * 60 * 5,
   });
 
   // Fetch lead source breakdown
@@ -425,14 +434,11 @@ export default function AdminLeads() {
     queryFn: async () => {
       let query = supabase
         .from("leads")
-        .select("source");
+        .select("source")
+        .limit(5000);
 
-      if (dateRange.from) {
-        query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
-      }
-      if (dateRange.to) {
-        query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
-      }
+      if (dateRange.from) query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+      if (dateRange.to) query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
 
       const { data, error } = await query;
       if (error) throw error;
@@ -452,6 +458,7 @@ export default function AdminLeads() {
         }))
         .sort((a, b) => b.value - a.value);
     },
+    staleTime: 1000 * 60 * 5,
   });
 
   const facilitiesMap = useMemo(() => {
@@ -497,12 +504,11 @@ export default function AdminLeads() {
       phone: lead.phone,
       created_at: lead.created_at,
       status: lead.status,
-      exclusivity: (lead as any).redistribution_status || null,
-      qualified: lead.email_verified || null,
+      exclusivity: lead.redistribution_status || null,
+      qualified: lead.qualified ?? null,
       urgency: lead.urgency || null,
       primary_substance: lead.primary_substance || null,
       insurance_type: lead.insurance_type || null,
-      insurance_provider: lead.insurance_provider || null,
       level_of_care: lead.level_of_care || null,
       location_city_state: lead.location_city_state || null,
       location_zip: lead.location_zip || null,
@@ -519,35 +525,19 @@ export default function AdminLeads() {
   const { data: redistStats } = useQuery({
     queryKey: ["admin-leads-redistribution-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leads")
-        .select("redistribution_status");
-      
-      if (error) throw error;
-      
-      const counts = { exclusive: 0, extended: 0, expired: 0, none: 0 };
-      (data || []).forEach((lead) => {
-        const status = lead.redistribution_status as keyof typeof counts;
-        if (status && counts[status] !== undefined) {
-          counts[status]++;
-        } else {
-          counts.none++;
-        }
-      });
-      return counts;
+      const [exclusiveRes, extendedRes, expiredRes] = await Promise.all([
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "exclusive"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "extended"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "expired"),
+      ]);
+      return {
+        exclusive: exclusiveRes.count || 0,
+        extended: extendedRes.count || 0,
+        expired: expiredRes.count || 0,
+      };
     },
+    staleTime: 1000 * 60 * 2,
   });
-
-  // Stats
-  const stats = useMemo(() => {
-    if (!leads) return { total: 0, newCount: 0, contacted: 0 };
-    
-    return {
-      total: leads.length,
-      newCount: leads.filter((l) => l.status === "new").length,
-      contacted: leads.filter((l) => l.status === "contacted").length,
-    };
-  }, [leads]);
 
   const totalSourceLeads = useMemo(() => {
     return (sourceBreakdown || []).reduce((sum, item) => sum + item.value, 0);
@@ -559,7 +549,7 @@ export default function AdminLeads() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Inquiries</h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Direct facility inquiries from seekers
           </p>
         </div>
@@ -574,20 +564,20 @@ export default function AdminLeads() {
         </Button>
       </div>
 
-      {/* Enterprise KPI Summary Bar */}
+      {/* KPI Summary Bar - uses independent counts, not page data */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-stretch divide-y sm:divide-y-0 sm:divide-x divide-border">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-y sm:divide-y-0 divide-border">
             {/* Total */}
             <button
               onClick={() => handleFilterChange(setStatusFilter)("all")}
               className={cn(
-                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                "flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
                 statusFilter === "all" && "bg-accent/10 ring-1 ring-inset ring-accent"
               )}
             >
               <Users className="h-4 w-4 text-primary mb-1" />
-              <span className="text-xl font-bold tabular-nums">{totalCount || 0}</span>
+              <span className="text-xl font-bold tabular-nums">{kpiStats?.total ?? "—"}</span>
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</span>
             </button>
 
@@ -595,12 +585,12 @@ export default function AdminLeads() {
             <button
               onClick={() => handleFilterChange(setStatusFilter)("new")}
               className={cn(
-                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                "flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
                 statusFilter === "new" && "bg-accent/10 ring-1 ring-inset ring-accent"
               )}
             >
               <Mail className="h-4 w-4 text-info mb-1" />
-              <span className="text-xl font-bold tabular-nums">{stats.newCount}</span>
+              <span className="text-xl font-bold tabular-nums">{kpiStats?.newCount ?? "—"}</span>
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">New</span>
             </button>
 
@@ -608,52 +598,65 @@ export default function AdminLeads() {
             <button
               onClick={() => handleFilterChange(setStatusFilter)("contacted")}
               className={cn(
-                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                "flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
                 statusFilter === "contacted" && "bg-accent/10 ring-1 ring-inset ring-accent"
               )}
             >
               <Phone className="h-4 w-4 text-chart-3 mb-1" />
-              <span className="text-xl font-bold tabular-nums">{stats.contacted}</span>
+              <span className="text-xl font-bold tabular-nums">{kpiStats?.contacted ?? "—"}</span>
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Contacted</span>
             </button>
 
-            {/* Redistribution Stats (compact) */}
-            {redistStats && (redistStats.exclusive > 0 || redistStats.extended > 0) && (
-              <div className="hidden lg:flex flex-1 min-w-[200px] items-center justify-center gap-3 p-3 bg-muted/30">
+            {/* Converted */}
+            <button
+              onClick={() => handleFilterChange(setStatusFilter)("converted")}
+              className={cn(
+                "flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                statusFilter === "converted" && "bg-accent/10 ring-1 ring-inset ring-accent"
+              )}
+            >
+              <Zap className="h-4 w-4 text-success mb-1" />
+              <span className="text-xl font-bold tabular-nums">{kpiStats?.converted ?? "—"}</span>
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Converted</span>
+            </button>
+
+            {/* Redistribution Stats */}
+            {redistStats && (
+              <>
                 <button
                   onClick={() => handleFilterChange(setRedistributionFilter)("exclusive")}
                   className={cn(
-                    "flex flex-col items-center p-2 rounded-lg transition-colors hover:bg-background/50",
-                    redistributionFilter === "exclusive" && "bg-background ring-1 ring-accent"
+                    "flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50 bg-muted/20",
+                    redistributionFilter === "exclusive" && "bg-accent/10 ring-1 ring-inset ring-accent"
                   )}
                 >
-                  <Timer className="h-3.5 w-3.5 text-warning mb-0.5" />
-                  <span className="text-lg font-bold tabular-nums">{redistStats.exclusive}</span>
-                  <span className="text-[9px] uppercase text-muted-foreground">Exclusive</span>
+                  <Timer className="h-4 w-4 text-warning mb-1" />
+                  <span className="text-xl font-bold tabular-nums">{redistStats.exclusive}</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Exclusive</span>
                 </button>
                 <button
                   onClick={() => handleFilterChange(setRedistributionFilter)("extended")}
                   className={cn(
-                    "flex flex-col items-center p-2 rounded-lg transition-colors hover:bg-background/50",
-                    redistributionFilter === "extended" && "bg-background ring-1 ring-accent"
+                    "flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50 bg-muted/20",
+                    redistributionFilter === "extended" && "bg-accent/10 ring-1 ring-inset ring-accent"
                   )}
                 >
-                  <Share2 className="h-3.5 w-3.5 text-info mb-0.5" />
-                  <span className="text-lg font-bold tabular-nums">{redistStats.extended}</span>
-                  <span className="text-[9px] uppercase text-muted-foreground">Redistributed</span>
+                  <Share2 className="h-4 w-4 text-info mb-1" />
+                  <span className="text-xl font-bold tabular-nums">{redistStats.extended}</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Redistributed</span>
                 </button>
                 <button
                   onClick={() => handleFilterChange(setRedistributionFilter)("expired")}
                   className={cn(
-                    "flex flex-col items-center p-2 rounded-lg transition-colors hover:bg-background/50",
-                    redistributionFilter === "expired" && "bg-background ring-1 ring-accent"
+                    "flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50 bg-muted/20",
+                    redistributionFilter === "expired" && "bg-accent/10 ring-1 ring-inset ring-accent"
                   )}
                 >
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground mb-0.5" />
-                  <span className="text-lg font-bold tabular-nums">{redistStats.expired}</span>
-                  <span className="text-[9px] uppercase text-muted-foreground">Expired</span>
+                  <Clock className="h-4 w-4 text-muted-foreground mb-1" />
+                  <span className="text-xl font-bold tabular-nums">{redistStats.expired}</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Expired</span>
                 </button>
-              </div>
+              </>
             )}
           </div>
         </CardContent>
@@ -692,7 +695,7 @@ export default function AdminLeads() {
                     </Pie>
                     <RechartsTooltip 
                       formatter={(value: number, name: string) => [
-                        `${value} inquiries (${((value / totalSourceLeads) * 100).toFixed(1)}%)`,
+                        `${value} inquiries (${totalSourceLeads > 0 ? ((value / totalSourceLeads) * 100).toFixed(1) : 0}%)`,
                         name
                       ]}
                     />
@@ -700,7 +703,7 @@ export default function AdminLeads() {
                   </RechartsPieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                   No inquiry data available
                 </div>
               )}
@@ -719,7 +722,7 @@ export default function AdminLeads() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium truncate">{source.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
+                          <span className="text-sm text-muted-foreground ml-2 tabular-nums">
                             {source.value} ({percentage.toFixed(1)}%)
                           </span>
                         </div>
@@ -734,7 +737,7 @@ export default function AdminLeads() {
                   );
                 })
               ) : (
-                <div className="text-center text-muted-foreground py-8">
+                <div className="text-center text-muted-foreground py-8 text-sm">
                   No source data available
                 </div>
               )}
@@ -742,7 +745,7 @@ export default function AdminLeads() {
                 <div className="pt-3 border-t">
                   <div className="flex items-center justify-between text-sm font-semibold">
                     <span>Total Inquiries</span>
-                    <span>{totalSourceLeads}</span>
+                    <span className="tabular-nums">{totalSourceLeads}</span>
                   </div>
                 </div>
               )}
@@ -755,13 +758,16 @@ export default function AdminLeads() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, email, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => handleFilterChange(setSearchQuery)(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => {
+                    setSearchInput(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="pl-9"
                 />
               </div>
@@ -806,6 +812,12 @@ export default function AdminLeads() {
                     <SelectItem value="expired">Expired</SelectItem>
                   </SelectContent>
                 </Select>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters} className="gap-1.5 text-muted-foreground hover:text-foreground h-10">
+                    <X className="h-3.5 w-3.5" />
+                    Clear
+                  </Button>
+                )}
               </div>
             </div>
             {/* Date Range Filter */}
@@ -863,7 +875,7 @@ export default function AdminLeads() {
                   </PopoverContent>
                 </Popover>
               )}
-              {(dateRange.from || dateRange.to) && (
+              {(dateRange.from || dateRange.to) && datePreset !== "custom" && (
                 <Badge variant="secondary" className="text-xs">
                   {dateRange.from && dateRange.to
                     ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
@@ -880,16 +892,19 @@ export default function AdminLeads() {
       {/* Inquiries Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            Inquiries ({totalCount || 0})
+            Inquiries
+            <Badge variant="secondary" className="ml-1 tabular-nums">
+              {totalCount ?? 0}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
           ) : filteredLeads && filteredLeads.length > 0 ? (
@@ -897,14 +912,14 @@ export default function AdminLeads() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Distribution</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="min-w-[220px]">Contact</TableHead>
+                    <TableHead className="min-w-[100px]">Status</TableHead>
+                    <TableHead className="min-w-[120px]">Distribution</TableHead>
+                    <TableHead className="min-w-[150px]">Provider</TableHead>
+                    <TableHead className="min-w-[120px]">Location</TableHead>
+                    <TableHead className="min-w-[100px]">Source</TableHead>
+                    <TableHead className="min-w-[130px]">Submitted</TableHead>
+                    <TableHead className="text-right w-[60px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -929,10 +944,12 @@ export default function AdminLeads() {
                                 <Mail className="h-3 w-3 shrink-0" />
                                 {lead.email}
                               </span>
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {lead.phone}
-                              </span>
+                              {lead.phone && (
+                                <span className="flex items-center gap-1 hidden sm:flex">
+                                  <Phone className="h-3 w-3" />
+                                  {lead.phone}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </TableCell>
@@ -949,7 +966,7 @@ export default function AdminLeads() {
                         <TableCell>
                           {assignedFacility ? (
                             <div className="flex items-center gap-1.5">
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                               <span className="text-sm truncate max-w-[150px]">
                                 {assignedFacility.name}
                               </span>
@@ -961,7 +978,7 @@ export default function AdminLeads() {
                         <TableCell>
                           {lead.location_city_state || lead.location_zip ? (
                             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                              <MapPin className="h-3.5 w-3.5" />
+                              <MapPin className="h-3.5 w-3.5 shrink-0" />
                               <span className="truncate max-w-[120px]">
                                 {lead.location_city_state || lead.location_zip}
                               </span>
@@ -971,12 +988,12 @@ export default function AdminLeads() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">
                             {formatSourceLabel(lead.source)}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm text-muted-foreground whitespace-nowrap">
                             {format(new Date(lead.created_at), "MMM d, h:mm a")}
                           </span>
                         </TableCell>
@@ -1002,20 +1019,27 @@ export default function AdminLeads() {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-12">
+            <div className="text-center py-16">
               <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">No inquiries found</p>
+              <p className="text-muted-foreground font-medium">No inquiries found</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Inquiries will appear here when seekers contact providers
+                {hasActiveFilters
+                  ? "Try adjusting your filters to see more results"
+                  : "Inquiries will appear here when seekers contact providers"}
               </p>
+              {hasActiveFilters && (
+                <Button variant="link" size="sm" onClick={clearAllFilters} className="mt-3 text-primary">
+                  Clear all filters
+                </Button>
+              )}
             </div>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t">
-              <p className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} inquiries
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t">
+              <p className="text-sm text-muted-foreground tabular-nums">
+                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount}
               </p>
               <div className="flex items-center gap-2">
                 <Button
