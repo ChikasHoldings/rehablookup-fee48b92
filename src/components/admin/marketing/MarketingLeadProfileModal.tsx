@@ -594,7 +594,7 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Gender</p>
-                    <p className="font-medium text-sm">{lead.gender || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.gender || "—"}</p>
                   </div>
                 </div>
               </div>
