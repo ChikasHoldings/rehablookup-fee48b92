@@ -235,6 +235,7 @@ export function Header({
             {/* Find Rehab mega-menu - always visible on md+ */}
             <div
               className="relative"
+              data-nav-menu="find-treatment"
               onMouseEnter={() => {
                 if (megaMenuTimeoutRef.current) clearTimeout(megaMenuTimeoutRef.current);
                 setOpenMegaMenu("find-treatment");
