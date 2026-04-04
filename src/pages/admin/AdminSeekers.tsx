@@ -436,7 +436,7 @@ export default function AdminSeekers() {
               <Input
                 placeholder="Search by name, email, city, or state..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="pl-9"
               />
             </div>
