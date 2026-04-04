@@ -234,12 +234,12 @@ export function TwoFactorEnforcementDialog({
 
         {step === "recovery" && (
           <div className="space-y-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-success/5 border border-success/20 rounded-lg p-4">
               <div className="flex gap-3">
-                <ShieldCheck className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                <ShieldCheck className="h-5 w-5 text-success shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-medium text-green-800">2FA Enabled Successfully!</p>
-                  <p className="text-sm text-green-700">
+                  <p className="font-medium text-foreground">2FA Enabled Successfully!</p>
+                  <p className="text-sm text-muted-foreground">
                     Save these recovery codes. They can be used to access your account if you lose your authenticator.
                   </p>
                 </div>
