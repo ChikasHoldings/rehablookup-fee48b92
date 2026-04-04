@@ -1783,14 +1783,14 @@ interface KPICardProps {
 }
 
 const colorClasses = {
-  blue: { bg: "bg-primary/10", icon: "text-primary", border: "border-blue-100" },
-  purple: { bg: "bg-purple-50", icon: "text-accent-foreground", border: "border-purple-100" },
+  blue: { bg: "bg-primary/10", icon: "text-primary", border: "border-primary/20" },
+  purple: { bg: "bg-accent/50", icon: "text-accent-foreground", border: "border-accent" },
   green: { bg: "bg-success/10", icon: "text-success", border: "border-success/20" },
-  amber: { bg: "bg-warning/10", icon: "text-warning", border: "border-amber-100" },
+  amber: { bg: "bg-warning/10", icon: "text-warning", border: "border-warning/20" },
   red: { bg: "bg-destructive/10", icon: "text-destructive", border: "border-destructive/20" },
-  cyan: { bg: "bg-info/10", icon: "text-info", border: "border-cyan-100" },
+  cyan: { bg: "bg-info/10", icon: "text-info", border: "border-info/20" },
   emerald: { bg: "bg-success/10", icon: "text-success", border: "border-success/20" },
-  slate: { bg: "bg-slate-50", icon: "text-muted-foreground", border: "border-border" },
+  slate: { bg: "bg-muted", icon: "text-muted-foreground", border: "border-border" },
 };
 
 function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPICardProps) {
