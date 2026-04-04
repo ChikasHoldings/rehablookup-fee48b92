@@ -446,8 +446,8 @@ export default function SeekerReviews() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-amber-100">
-            <Star className="h-5 w-5 text-amber-600" />
+          <div className="p-2 rounded-lg bg-warning/10">
+            <Star className="h-5 w-5 text-warning" />
           </div>
           <h1 className="text-2xl font-display font-bold">My Reviews</h1>
         </div>
