@@ -426,6 +426,8 @@ const AppInner = () => {
             <Route path="/us-rehab/uk-patients" element={<PublicRouteGuard><RehabUSAFromUK /></PublicRouteGuard>} />
             <Route path="/us-rehab/uae-middle-east" element={<PublicRouteGuard><RehabUSAFromUAE /></PublicRouteGuard>} />
             <Route path="/us-rehab/australian-patients" element={<PublicRouteGuard><RehabUSAFromAustralia /></PublicRouteGuard>} />
+            <Route path="/us-rehab/canadian-patients" element={<PublicRouteGuard><RehabUSAFromCanada /></PublicRouteGuard>} />
+            <Route path="/us-rehab/european-patients" element={<PublicRouteGuard><RehabUSAFromEurope /></PublicRouteGuard>} />
             {/* Treatment-specific SEO pages */}
             <Route path="/us-rehab/alcohol-rehab-usa" element={<PublicRouteGuard><AlcoholRehabUSA /></PublicRouteGuard>} />
             <Route path="/us-rehab/drug-rehab-usa" element={<PublicRouteGuard><DrugRehabUSA /></PublicRouteGuard>} />
