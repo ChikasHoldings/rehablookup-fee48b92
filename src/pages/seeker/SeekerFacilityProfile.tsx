@@ -477,20 +477,20 @@ export default function SeekerFacilityProfile() {
                   )}
                   {yearsInBusiness && yearsInBusiness > 0 && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
-                      <Clock className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-blue-600 shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{yearsInBusiness}+ years</span>
+                      <Clock className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{yearsInBusiness}+ years</span>
                     </div>
                   )}
                   {genderLabel && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
-                      <Users className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-purple-600 shrink-0" />
+                      <Users className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
                       <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{genderLabel}</span>
                     </div>
                   )}
                   {facility.bed_count && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
-                      <Bed className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-emerald-600 shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{facility.bed_count} beds</span>
+                      <Bed className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{facility.bed_count} beds</span>
                     </div>
                   )}
                 </div>
