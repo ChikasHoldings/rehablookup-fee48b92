@@ -99,8 +99,8 @@ export function ForcePasswordChangeDialog({ open, onPasswordChanged }: ForcePass
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader className="text-center">
-          <div className="mx-auto bg-amber-100 p-3 rounded-full w-fit mb-2">
-            <KeyRound className="h-6 w-6 text-amber-600" />
+          <div className="mx-auto bg-warning/10 p-3 rounded-full w-fit mb-2">
+            <KeyRound className="h-6 w-6 text-warning" />
           </div>
           <DialogTitle className="text-xl">Change Your Password</DialogTitle>
           <DialogDescription>

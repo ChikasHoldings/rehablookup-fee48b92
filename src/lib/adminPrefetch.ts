@@ -16,6 +16,9 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
   "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
   "/admin/placement-revenue": () => import("@/pages/admin/PlacementRevenueDashboard"),
+  "/admin/support": () => import("@/pages/admin/AdminSupport"),
+  "/admin/marketing": () => import("@/pages/admin/AdminMarketing"),
+  "/admin/blog": () => import("@/pages/admin/AdminBlog"),
 };
 
 // Adjacent pages to prefetch based on current page (ordered by priority)
@@ -36,6 +39,9 @@ const adjacentPagesMap: Record<string, string[]> = {
   "/admin/reviews": ["/admin/providers"],
   "/admin/concierge": ["/admin", "/admin/placement-revenue", "/admin/providers"],
   "/admin/placement-revenue": ["/admin/concierge", "/admin/subscriptions"],
+  "/admin/support": ["/admin", "/admin/leads", "/admin/concierge"],
+  "/admin/marketing": ["/admin/leads", "/admin", "/admin/analytics"],
+  "/admin/blog": ["/admin", "/admin/marketing", "/admin/providers"],
 };
 
 // Track already prefetched routes to avoid duplicate fetches

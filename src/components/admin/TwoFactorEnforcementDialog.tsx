@@ -141,12 +141,12 @@ export function TwoFactorEnforcementDialog({
 
         {step === "intro" && (
           <div className="space-y-6">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="bg-warning/5 border border-warning/20 rounded-lg p-4">
               <div className="flex gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-medium text-amber-800">Security Requirement</p>
-                  <p className="text-sm text-amber-700">
+                  <p className="font-medium text-foreground">Security Requirement</p>
+                  <p className="text-sm text-muted-foreground">
                     Two-factor authentication protects your admin account from unauthorized access. 
                     You'll need an authenticator app like Google Authenticator or Authy.
                   </p>
@@ -234,12 +234,12 @@ export function TwoFactorEnforcementDialog({
 
         {step === "recovery" && (
           <div className="space-y-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-success/5 border border-success/20 rounded-lg p-4">
               <div className="flex gap-3">
-                <ShieldCheck className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                <ShieldCheck className="h-5 w-5 text-success shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-medium text-green-800">2FA Enabled Successfully!</p>
-                  <p className="text-sm text-green-700">
+                  <p className="font-medium text-foreground">2FA Enabled Successfully!</p>
+                  <p className="text-sm text-muted-foreground">
                     Save these recovery codes. They can be used to access your account if you lose your authenticator.
                   </p>
                 </div>
@@ -266,7 +266,7 @@ export function TwoFactorEnforcementDialog({
                   >
                     {copied ? (
                       <>
-                        <Check className="mr-2 h-4 w-4 text-green-500" />
+                        <Check className="mr-2 h-4 w-4 text-success" />
                         Copied
                       </>
                     ) : (
@@ -288,8 +288,8 @@ export function TwoFactorEnforcementDialog({
               </>
             )}
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-800">
+            <div className="bg-warning/5 border border-warning/20 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">
                 <strong>Important:</strong> These codes will only be shown once. Store them securely before continuing.
               </p>
             </div>
