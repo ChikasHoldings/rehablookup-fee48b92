@@ -132,27 +132,34 @@ export default function RehabUSAFromEurope() {
         </section>
 
         {/* CTA */}
-        <section className="py-16 md:py-24 bg-primary relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-3xl mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-4xl font-display font-bold text-primary-foreground mb-4">
-              Start Your Recovery Journey
-            </h2>
-            <p className="text-lg text-primary-foreground/80 mb-10 max-w-xl mx-auto">
-              Our international team understands the unique needs of European patients. Confidential consultation available in English.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-              <Link to="/international/apply">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-10 h-14 shadow-lg">
-                  Apply for Treatment
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-primary-foreground/60">
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> Free consultation</span>
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> 100% confidential</span>
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> ESTA & visa guidance</span>
+        <section className="py-16 md:py-20 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-accent/5 p-8 md:p-12 shadow-lg">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+                <div className="relative text-center">
+                  <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                    Start Your Recovery Journey
+                  </h2>
+                  <p className="text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
+                    Our international team understands the unique needs of European patients. Confidential consultation available in English.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-8">
+                    {["Confidential Consultation", "ESTA & Visa Guidance", "Multilingual Support"].map(item => (
+                      <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Link to="/international/apply">
+                    <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 text-base font-semibold px-8 py-6 shadow-md">
+                      Apply for Treatment
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
