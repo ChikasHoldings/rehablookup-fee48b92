@@ -183,7 +183,7 @@ const ArticleDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_articles")
-        .select("*")
+        .select("id, title, slug, excerpt, content, author, author_date, category, category_label, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords, featured, status")
         .eq("slug", normalizedSlug)
         .eq("status", "published")
         .single();
