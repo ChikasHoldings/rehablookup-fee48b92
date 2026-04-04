@@ -724,7 +724,7 @@ export function SingleQuestionFlow({
       </div>
       
       {/* Trust indicators - Mobile Compact */}
-      <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
+      <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
           <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
           <span>HIPAA Compliant</span>
