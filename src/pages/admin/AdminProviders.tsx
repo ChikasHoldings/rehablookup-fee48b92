@@ -203,7 +203,14 @@ export default function AdminProviders() {
           .from("pro_subscriptions")
           .select("facility_id")
           .eq("status", "active");
-        return proFacilities?.length || 0;
+        const proIds = proFacilities?.map(p => p.facility_id) || [];
+        if (proIds.length === 0) return 0;
+        let proQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", proIds);
+        if (searchQuery) {
+          proQuery = proQuery.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        }
+        const { count: proCount } = await proQuery;
+        return proCount || 0;
       } else if (activeTab === "placement") {
         query = query.eq("concierge_network_opted_in", true);
       }
