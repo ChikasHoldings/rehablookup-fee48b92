@@ -311,10 +311,65 @@ const ArticleDetail = () => {
 
   // Render content blocks from JSON structure
   const renderContent = () => {
-    return article.content.map((block, index) => {
+    return article.content.map((block: any, index: number) => {
       const isAfterMidpoint = index === Math.floor(article.content.length / 2);
+
+      // Handle legacy string-based content format
+      if (typeof block === "string") {
+        const text = block.trim();
+        if (!text) return null;
+
+        // Markdown-style headings
+        if (text.startsWith("### ")) {
+          return (
+            <h3 key={index} className="font-display text-lg font-semibold text-foreground mt-6 mb-3 scroll-mt-20">
+              {text.slice(4)}
+            </h3>
+          );
+        }
+        if (text.startsWith("## ")) {
+          return (
+            <h2 key={index} className="font-display text-xl font-bold text-foreground mt-8 mb-4 scroll-mt-20">
+              {text.slice(3)}
+            </h2>
+          );
+        }
+
+        // Bullet list lines (consecutive lines starting with "- ")
+        if (text.startsWith("- ")) {
+          const items = text.split("\n").filter((l: string) => l.trim().startsWith("- "));
+          return (
+            <ul key={index} className="list-disc pl-6 space-y-2 text-muted-foreground">
+              {items.map((item: string, i: number) => (
+                <li key={i} className="leading-relaxed">
+                  {parseContentWithLinks(item.replace(/^-\s*/, ""))}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+
+        // Blockquote
+        if (text.startsWith("> ")) {
+          return (
+            <blockquote key={index} className="border-l-4 border-primary/30 pl-4 py-2 my-6 italic text-muted-foreground bg-muted/30 rounded-r-lg">
+              {parseContentWithLinks(text.slice(2))}
+            </blockquote>
+          );
+        }
+
+        // Regular paragraph
+        return (
+          <div key={index}>
+            {isAfterMidpoint && <MidArticleCTA />}
+            <p className="text-muted-foreground leading-relaxed">
+              {parseContentWithLinks(text)}
+            </p>
+          </div>
+        );
+      }
       
-      // Handle heading blocks
+      // Handle structured heading blocks
       if (block.type === "heading") {
         const HeadingTag = block.level === 3 ? "h3" : "h2";
         const headingClass = block.level === 3 
@@ -333,7 +388,7 @@ const ArticleDetail = () => {
           <div key={index}>
             {isAfterMidpoint && <MidArticleCTA />}
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-              {block.items.map((item, i) => (
+              {block.items.map((item: string, i: number) => (
                 <li key={i} className="leading-relaxed">
                   {parseContentWithLinks(item)}
                 </li>
