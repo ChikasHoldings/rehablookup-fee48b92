@@ -26,7 +26,8 @@ import {
 } from "lucide-react";
 
 export default function ComparisonPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const slug = location.pathname.replace(/^\//, "");
   const config = comparisonPages.find((p) => p.slug === slug);
 
   if (!config) {
