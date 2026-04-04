@@ -895,7 +895,7 @@ export function MarketingLeadProfileModal({
                     <CreditCard className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Insurance</h4>
                   </div>
-                  <p className="text-sm">{lead.insurance_type || "To be verified"}</p>
+                  <p className="text-sm">{lead.insurance_type || "—"}</p>
                   {lead.insurance_provider && (
                     <p className="text-xs text-muted-foreground mt-1">Provider: {lead.insurance_provider}</p>
                   )}
