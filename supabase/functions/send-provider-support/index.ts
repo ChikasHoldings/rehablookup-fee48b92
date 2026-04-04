@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
                 <tr>
                   <td style="padding: 8px 0; font-size: 14px; color: #6b7280; width: 70px;">From:</td>
-                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937; font-weight: 500;">${name}</td>
+                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937; font-weight: 500;">${escapeHtml(name)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Email:</td>
