@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, CountriesServed, InternationalFAQ, PlacementCTA } from "./components";
-import { DollarSign, CheckCircle, TrendingUp, Shield } from "lucide-react";
+import { DollarSign, CheckCircle, TrendingUp, Shield, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-international-rehab.jpg";
 
