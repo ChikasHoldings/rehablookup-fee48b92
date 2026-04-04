@@ -97,6 +97,7 @@ const QUESTIONS: Question[] = [
     subtitle: "Don't worry if you're unsure — we can help guide you",
     icon: <Stethoscope className="h-6 w-6" />,
     field: "levelOfCare",
+    required: true,
     options: LEVEL_OF_CARE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
