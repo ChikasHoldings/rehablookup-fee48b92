@@ -108,6 +108,7 @@ export function Header({
   const [openMegaMenu, setOpenMegaMenu] = useState<string | null>(null);
   const [mobileExpandedMenu, setMobileExpandedMenu] = useState<string | null>(null);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const megaMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { role, isLoading: roleLoading, isAuthenticated, userId } = useUserRole();
