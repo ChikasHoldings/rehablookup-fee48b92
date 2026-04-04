@@ -752,11 +752,11 @@ export function PlanSettingsTab() {
                       </TableCell>
                       <TableCell>
                         {promo.active ? (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
                             Active
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
+                          <Badge variant="outline" className="bg-muted text-muted-foreground">
                             Inactive
                           </Badge>
                         )}
