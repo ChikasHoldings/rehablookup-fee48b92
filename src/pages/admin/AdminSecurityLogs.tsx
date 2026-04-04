@@ -977,7 +977,7 @@ export default function AdminSecurityLogs() {
                           paginatedLogs?.map((log) => {
                             const blocked = isIdentifierBlocked(log.identifier);
                             return (
-                              <TableRow key={log.id} className={blocked ? "bg-red-50/50 dark:bg-red-950/20" : ""}>
+                              <TableRow key={log.id} className={blocked ? "bg-destructive/5" : ""}>
                                 <TableCell className="whitespace-nowrap">
                                   <div className="flex items-center gap-2">
                                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
