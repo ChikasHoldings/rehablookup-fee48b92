@@ -164,7 +164,7 @@ export default function DetoxNearMe() {
               {/* Horizontal scroll on mobile, grid on larger screens */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {facilities.slice(0, 12).map((f) => (
-                  
+                  <div key={f.id || f.name}>
                     <TreatmentCenterCard center={f as any} />
                   </div>
                 ))}

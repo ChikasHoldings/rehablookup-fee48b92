@@ -217,7 +217,7 @@ export default function SuboxoneClinicNearMe() {
               {/* Horizontal scroll on mobile, grid on larger screens */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {facilities.slice(0, 12).map((facility) => (
-                  
+                   <div key={facility.id || facility.name}>
                     <TreatmentCenterCard
                       center={facility as any}
                     />

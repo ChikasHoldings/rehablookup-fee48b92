@@ -197,10 +197,9 @@ export default function MethadoneClinicNearMe() {
             <div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {facilities.slice(0, 12).map((facility) => (
-                  <TreatmentCenterCard
-                    key={facility.id}
-                    center={facility as any}
-                  />
+                  <div key={facility.id || facility.name}>
+                    <TreatmentCenterCard center={facility as any} />
+                  </div>
                 ))}
               </div>
 
