@@ -232,7 +232,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
               <Card className="bg-muted/20">
                 <CardContent className="p-4 space-y-3">
                   <DetailRow icon={MapPin} label="Country" value={selectedMatch.international_placement_cases?.client_country || "—"} />
-                  <DetailRow icon={DollarSign} label="Budget" value={BUDGET_LABELS[selectedMatch.international_placement_cases?.intake_data?.budget_range as string] || "Not specified"} />
+                  <DetailRow icon={DollarSign} label="Budget" value={BUDGET_LABELS[selectedMatch.international_placement_cases?.intake_data?.budget_range as string] || "—"} />
                   <DetailRow icon={Clock} label="Urgency">
                     <UrgencyBadge urgency={selectedMatch.international_placement_cases?.intake_data?.urgency as string} />
                   </DetailRow>
