@@ -171,7 +171,7 @@ const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink
         {link.highlight && <ArrowRight className="h-3 w-3" />}
         <span>{link.name}</span>
         {link.badge && (
-          <span className="ml-1 inline-flex items-center rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent leading-none">
+          <span className="ml-1 inline-flex items-center rounded-full bg-accent/15 px-1.5 py-0.5 text-xs font-semibold text-accent leading-none">
             {link.badge}
           </span>
         )}
