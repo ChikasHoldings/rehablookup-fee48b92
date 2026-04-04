@@ -51,18 +51,23 @@ Deno.serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
-    // Check if requesting user is admin
-    const { data: isAdmin } = await supabase.rpc("has_role", {
+    // CRITICAL: Only Super Admins can create admin users
+    const { data: isSuperAdmin } = await supabase.rpc("is_super_admin", {
       _user_id: requestingUser.id,
-      _role: "admin",
     });
 
-    if (!isAdmin) {
-      throw new Error("Only admins can create admin users");
+    if (!isSuperAdmin) {
+      throw new Error("Only Super Admins can create admin users");
     }
 
     const body: CreateAdminUserRequest = await req.json();
     const { email, displayName, adminRole, permissions } = body;
+
+    // Validate role value
+    const validRoles = ["super_admin", "manager", "customer_rep", "advisor"];
+    if (!validRoles.includes(adminRole)) {
+      throw new Error("Invalid admin role");
+    }
 
     console.log("[CREATE-ADMIN-USER] Creating admin user:", { email, displayName, adminRole });
 
@@ -113,10 +118,6 @@ Deno.serve(async (req) => {
     const userId = newUser.user.id;
     console.log("[CREATE-ADMIN-USER] User created:", userId);
 
-    // IMPORTANT: Do NOT create a provider profile (profiles table) for admin users
-    // This would trigger the prevent_admin_double_account check
-    // Admin users should ONLY have admin_user_profiles records
-
     // Assign admin role in user_roles table FIRST (before any other tables)
     const { error: roleError } = await supabase.from("user_roles").insert({
       user_id: userId,
@@ -154,12 +155,24 @@ Deno.serve(async (req) => {
       console.error("[CREATE-ADMIN-USER] Failed to create admin profile:", adminProfileError);
     }
 
-    // Insert permissions
+    // Build permissions - always include the role-appropriate entries
     const permissionInserts = Object.entries(permissions).map(([key, granted]) => ({
       user_id: userId,
       permission_key: key,
       granted,
     }));
+
+    // CRITICAL: If creating a super_admin, ensure the super_admin permission is set
+    if (adminRole === "super_admin") {
+      const hasSuperAdminPerm = permissionInserts.some(p => p.permission_key === "super_admin");
+      if (!hasSuperAdminPerm) {
+        permissionInserts.push({
+          user_id: userId,
+          permission_key: "super_admin",
+          granted: true,
+        });
+      }
+    }
 
     if (permissionInserts.length > 0) {
       const { error: permError } = await supabase
