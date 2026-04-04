@@ -112,7 +112,11 @@ const CityDrugAddiction = () => {
         <div className="container relative z-10">
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Treatment Types", href: "/treatment-types" },\n              { label: "Drug Addiction", href: "/treatment-types/drug-addiction" },\n              { label: {stateName}, href: `/treatment-types/drug-addiction/${stateSlug },\n              { label: {cityName} }'}]
+            items={[
+              { label: "Drug Addiction", href: "/treatment-types/drug-addiction" },
+              { label: stateName, href: `/treatment-types/drug-addiction/${stateSlug}` },
+              { label: cityName },
+            ]}
           /><div className="flex items-center gap-2 text-white/80 mb-3">
             <MapPin className="h-4 w-4" />
             <span className="text-sm">{cityName}, {abbreviation}</span>

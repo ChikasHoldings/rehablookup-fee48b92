@@ -83,7 +83,9 @@ export default function ComparisonPage() {
         <div className="container relative z-10 py-12 md:py-16 lg:py-20">
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Treatment Types", href: "/treatment-types" }'}]
+            items={[
+              { label: "Treatment Types", href: "/treatment-types" },
+            ]}
           />
 
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-4">

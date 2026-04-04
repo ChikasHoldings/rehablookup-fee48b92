@@ -284,7 +284,9 @@ const TreatmentTypes = () => {
         <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Treatment Types" }'}]
+            items={[
+              { label: "Treatment Types" },
+            ]}
           /><div className="mx-auto max-w-2xl text-center">
             <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Treatment Programs

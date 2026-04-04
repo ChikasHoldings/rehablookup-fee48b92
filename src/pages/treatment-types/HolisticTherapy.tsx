@@ -168,7 +168,10 @@ const HolisticTherapy = () => {
           {/* Breadcrumbs */}
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Treatment Types", href: "/treatment-types" },\n              { label: "Holistic Therapy" }'}]
+            items={[
+              { label: "Treatment Types", href: "/treatment-types" },
+              { label: "Holistic Therapy" },
+            ]}
           /><div className="text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
               <Sparkles className="h-4 w-4 text-accent" />

@@ -117,7 +117,11 @@ const CityOutpatientPrograms = () => {
         <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Outpatient", href: "/treatment-types/outpatient-programs" },\n              { label: {stateName}, href: `/treatment-types/outpatient-programs/${stateSlug },\n              { label: {cityName} }'}]
+            items={[
+              { label: "Outpatient", href: "/treatment-types/outpatient-programs" },
+              { label: stateName, href: `/treatment-types/outpatient-programs/${stateSlug}` },
+              { label: cityName },
+            ]}
           /><div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
               <Sparkles className="h-4 w-4 text-accent" />

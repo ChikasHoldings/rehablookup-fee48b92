@@ -90,7 +90,10 @@ export default function LuxuryRehab() {
         <div className="container relative z-10 max-w-4xl">
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Treatment Types", href: "/treatment-types" }'}]
+            items={[
+              { label: "Treatment Types", href: "/treatment-types" },
+              { label: "Luxury Rehab" },
+            ]}
           />
 
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-4">

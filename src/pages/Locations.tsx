@@ -112,7 +112,9 @@ const Locations = () => {
         <div className="container relative">
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Locations" }'}]
+            items={[
+              { label: "Locations" },
+            ]}
           /><div className="mx-auto max-w-3xl text-center">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm border border-white/10">
               <Map className="h-4 w-4" />

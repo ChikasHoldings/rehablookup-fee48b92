@@ -181,7 +181,10 @@ const DualDiagnosisTreatment = () => {
         <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Treatment Types", href: "/treatment-types" },\n              { label: "Dual Diagnosis" }'}]
+            items={[
+              { label: "Treatment Types", href: "/treatment-types" },
+              { label: "Dual Diagnosis" },
+            ]}
           /><div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
               <Brain className="h-4 w-4 text-accent" />

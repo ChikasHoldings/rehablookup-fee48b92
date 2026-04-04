@@ -98,7 +98,9 @@ const About = () => {
         <div className="container relative">
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "About" }'}]
+            items={[
+              { label: "About" },
+            ]}
           /><div className="mx-auto max-w-2xl lg:max-w-3xl text-center">
             <div className="mb-4 md:mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 md:px-5 py-2 md:py-2.5 backdrop-blur-sm border border-white/10">
               <Heart className="h-4 w-4 md:h-5 md:w-5 text-accent" />

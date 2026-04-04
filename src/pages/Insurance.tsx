@@ -415,7 +415,9 @@ export default function Insurance() {
         <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "Insurance Coverage" }'}]
+            items={[
+              { label: "Insurance Coverage" },
+            ]}
           /><div className="mx-auto max-w-2xl text-center">
             <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Insurance Coverage for Addiction Treatment

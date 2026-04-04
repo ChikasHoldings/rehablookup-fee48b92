@@ -150,7 +150,9 @@ const HowItWorks = () => {
         <div className="container relative">
           <BreadcrumbNav
             className="mb-4"
-            items=[{'{ label: "How It Works" }'}]
+            items={[
+              { label: "How It Works" },
+            ]}
           /><div className="mx-auto max-w-2xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
               <CheckCircle className="h-4 w-4 text-accent" />
