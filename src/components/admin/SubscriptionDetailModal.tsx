@@ -700,7 +700,7 @@ export function SubscriptionDetailModal({
             <AlertDialogAction
               onClick={confirmActionHandler}
               disabled={manageMutation.isPending}
-              className={confirmAction === "cancel_immediately" ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"}
+              className={confirmAction === "cancel_immediately" ? "bg-destructive hover:bg-destructive/90" : "bg-warning hover:bg-warning/90 text-warning-foreground"}
             >
               {manageMutation.isPending ? (
                 <>
