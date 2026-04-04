@@ -103,19 +103,19 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
           </PrefetchLink>
         </div>
 
-        {/* Right: Locations + Near Me — side by side */}
-        <div className="w-[235px] px-4 pb-3 pt-1">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
+        {/* Right: Locations + Near Me */}
+        <div className="w-[235px] px-4 pb-4 pt-1">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-accent" />
             Popular Locations
           </p>
-          <div className="grid grid-cols-2 gap-0 mb-1">
+          <div className="grid grid-cols-2 gap-0">
             {popularLocations.map((loc) => (
               <PrefetchLink
                 key={loc.href}
                 to={loc.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[6px] text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <ChevronRight className="h-3 w-3 text-border group-hover:text-accent transition-colors shrink-0" />
                 {loc.label}
@@ -123,26 +123,25 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
           <PrefetchLink to="/locations" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 text-[11px] font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-1.5 text-[11px] font-semibold text-primary hover:text-primary/80">
             All states <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
-          {/* Near Me as pill tags instead of a list */}
-          <div className="border-t border-border/30 pt-2 mt-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.12em] px-1 mb-1.5">Near Me</p>
-            <div className="flex flex-wrap gap-1">
-              {nearMePages.map((page) => (
-                <PrefetchLink
-                  key={page.href}
-                  to={page.href}
-                  onClick={onNavigate}
-                  className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2.5 py-[3px] text-[10px] text-muted-foreground hover:text-foreground hover:border-accent/40 hover:bg-accent/[0.04] transition-all"
-                >
-                  <Search className="h-2.5 w-2.5 text-accent/50" />
-                  {page.label}
-                </PrefetchLink>
-              ))}
-            </div>
+          <div className="border-t border-border/30 pt-2.5 mt-2">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-1 mb-1.5">
+              Near Me
+            </p>
+            {nearMePages.map((page) => (
+              <PrefetchLink
+                key={page.href}
+                to={page.href}
+                onClick={onNavigate}
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              >
+                <Search className="h-3 w-3 text-accent/50 group-hover:text-accent shrink-0" />
+                {page.label}
+              </PrefetchLink>
+            ))}
           </div>
         </div>
       </div>
