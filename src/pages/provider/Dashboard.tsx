@@ -361,8 +361,8 @@ export default function ProviderDashboardPage() {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span>{facility.name}</span>
                         {facility.status === "approved" && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success bg-success/10 px-1.5 py-0.5 rounded">
+                            <span className="h-1.5 w-1.5 rounded-full bg-success" />
                             Live
                           </span>
                         )}
