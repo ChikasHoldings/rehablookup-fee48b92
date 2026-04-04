@@ -591,7 +591,7 @@ export default function AdminProfile() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/5"
                                 disabled={revokingSessionId === session.id}
                               >
                                 {revokingSessionId === session.id ? (
