@@ -110,8 +110,8 @@ function ReviewsSection({ facilityId, facilityName }: { facilityId: string; faci
   return (
     <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
       <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
-        <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-amber-500/10">
-          <MessageSquare className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-amber-600" />
+        <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-warning/10">
+          <MessageSquare className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-warning" />
         </div>
         <h2 className="font-semibold text-sm sm:text-base text-foreground">Reviews</h2>
       </div>
@@ -431,13 +431,13 @@ export default function SeekerFacilityProfile() {
                         size="sm" 
                       />
                       {facility.featured && (
-                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-amber-50 text-amber-700 border-amber-200">
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-warning/10 text-warning border-warning/20">
                           <Sparkles className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Featured
                         </Badge>
                       )}
                       {facility.verified && (
-                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-success/10 text-success border-success/20">
                           <Shield className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Verified
                         </Badge>
@@ -477,20 +477,20 @@ export default function SeekerFacilityProfile() {
                   )}
                   {yearsInBusiness && yearsInBusiness > 0 && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
-                      <Clock className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-blue-600 shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{yearsInBusiness}+ years</span>
+                      <Clock className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{yearsInBusiness}+ years</span>
                     </div>
                   )}
                   {genderLabel && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
-                      <Users className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-purple-600 shrink-0" />
+                      <Users className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
                       <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{genderLabel}</span>
                     </div>
                   )}
                   {facility.bed_count && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
-                      <Bed className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-emerald-600 shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{facility.bed_count} beds</span>
+                      <Bed className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{facility.bed_count} beds</span>
                     </div>
                   )}
                 </div>

@@ -135,8 +135,8 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                 {/* Years badge */}
                 {yearsInBusiness && yearsInBusiness > 0 && (
                   <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-sm rounded px-1 py-0.5 shadow-sm">
-                    <Clock className="h-2 w-2 text-blue-600" />
-                    <span className="text-[8px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
+                    <Clock className="h-2 w-2 text-primary" />
+                    <span className="text-[8px] font-semibold text-primary tabular-nums">{yearsInBusiness}+ yrs</span>
                   </div>
                 )}
               </div>
@@ -188,13 +188,13 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
               
               {/* Pro badge (replaces old Featured/Professional badges) */}
               {isPro && (
-                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
+                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-warning/10 text-warning border border-warning/20 shadow-sm">
                   <Sparkles className="h-2 w-2" />
                   Pro
                 </Badge>
               )}
               {facility.verified && (
-                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
+                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-success/10 text-success border border-success/20 shadow-sm">
                   <Shield className="h-2 w-2" />
                   Verified
                 </Badge>

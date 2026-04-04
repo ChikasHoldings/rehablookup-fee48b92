@@ -1,42 +1,39 @@
 import { formatDistanceToNow } from "date-fns";
 import { Helmet } from "react-helmet-async";
-import { Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings } from "lucide-react";
+import { 
+  Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings,
+  Send, Heart, Star, Building2, MapPin, Calendar, HeartHandshake, UserCheck, CheckCircle
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSeekerNotifications, SeekerNotification } from "@/hooks/useSeekerNotifications";
 import { cn } from "@/lib/utils";
 
-const notificationTypeIcons: Record<string, string> = {
-  // System & Welcome
-  system: "🔔",
-  welcome: "👋",
-  // Facility Related
-  facility_update: "🏥",
-  saved_facility: "❤️",
-  facility_contacted: "📞",
-  facility_contacted_you: "📞",
-  // Request Related
-  request_update: "📋",
-  request_confirmation: "📝",
-  // Review Related
-  review_response: "💬",
-  review_approved: "✅",
-  review_rejected: "❌",
-  // Tour Related
-  tour_proposed: "📅",
-  tour_confirmed: "✅",
-  tour_cancelled: "❌",
-  concierge_tour_proposed: "📅",
-  concierge_tour_confirmed: "✅",
-  concierge_tour_cancelled: "❌",
-  // Concierge Related
-  concierge_intake_received: "💙",
-  concierge_matches_found: "📍",
-  concierge_provider_interested: "👤",
-  concierge_provider_confirmed: "🏥",
-  concierge_placement_complete: "🎉",
-  concierge_message_received: "💬",
+const notificationTypeIcons: Record<string, React.ReactNode> = {
+  system: <Bell className="h-5 w-5 text-primary" />,
+  welcome: <Bell className="h-5 w-5 text-success" />,
+  facility_update: <Building2 className="h-5 w-5 text-primary" />,
+  saved_facility: <Heart className="h-5 w-5 text-primary" />,
+  facility_contacted: <Send className="h-5 w-5 text-primary" />,
+  facility_contacted_you: <Send className="h-5 w-5 text-primary" />,
+  request_update: <Send className="h-5 w-5 text-success" />,
+  request_confirmation: <Send className="h-5 w-5 text-success" />,
+  review_response: <Star className="h-5 w-5 text-warning" />,
+  review_approved: <Star className="h-5 w-5 text-success" />,
+  review_rejected: <Star className="h-5 w-5 text-destructive" />,
+  tour_proposed: <Calendar className="h-5 w-5 text-primary" />,
+  tour_confirmed: <Calendar className="h-5 w-5 text-success" />,
+  tour_cancelled: <Calendar className="h-5 w-5 text-destructive" />,
+  concierge_tour_proposed: <Calendar className="h-5 w-5 text-primary" />,
+  concierge_tour_confirmed: <Calendar className="h-5 w-5 text-success" />,
+  concierge_tour_cancelled: <Calendar className="h-5 w-5 text-destructive" />,
+  concierge_intake_received: <HeartHandshake className="h-5 w-5 text-primary" />,
+  concierge_matches_found: <MapPin className="h-5 w-5 text-success" />,
+  concierge_provider_interested: <UserCheck className="h-5 w-5 text-primary" />,
+  concierge_provider_confirmed: <Building2 className="h-5 w-5 text-success" />,
+  concierge_placement_complete: <CheckCircle className="h-5 w-5 text-success" />,
+  concierge_message_received: <Send className="h-5 w-5 text-primary" />,
 };
 
 function NotificationItem({
@@ -55,8 +52,8 @@ function NotificationItem({
         !notification.read && "bg-primary/5"
       )}
     >
-      <div className="text-2xl shrink-0">
-        {notificationTypeIcons[notification.type] || "🔔"}
+      <div className="shrink-0 mt-0.5 flex items-center justify-center h-9 w-9 rounded-lg bg-muted">
+        {notificationTypeIcons[notification.type] || <Bell className="h-5 w-5 text-muted-foreground" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
@@ -141,7 +138,7 @@ export default function SeekerNotifications() {
             </div>
             <div>
               <h1 className="text-2xl font-display font-bold">Notifications</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground tabular-nums">
                 {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
               </p>
             </div>

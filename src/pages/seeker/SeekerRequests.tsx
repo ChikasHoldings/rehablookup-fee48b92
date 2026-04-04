@@ -77,19 +77,19 @@ function RequestCardSkeleton() {
 function getStatusBadge(status: string) {
   switch (status) {
     case "new":
-      return <Badge className="bg-blue-100 text-blue-700 border-0 text-[10px]">Pending Review</Badge>;
+      return <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Pending Review</Badge>;
     case "contacted":
-      return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Facility Responded</Badge>;
+      return <Badge className="bg-success/10 text-success border-0 text-[10px]">Facility Responded</Badge>;
     case "in_progress":
-      return <Badge className="bg-amber-100 text-amber-700 border-0 text-[10px]">In Progress</Badge>;
+      return <Badge className="bg-warning/10 text-warning border-0 text-[10px]">In Progress</Badge>;
     case "scheduled":
-      return <Badge className="bg-purple-100 text-purple-700 border-0 text-[10px]">Scheduled</Badge>;
+      return <Badge className="bg-accent/10 text-accent-foreground border-0 text-[10px]">Scheduled</Badge>;
     case "admitted":
-      return <Badge className="bg-green-100 text-green-700 border-0 text-[10px]">Admitted</Badge>;
+      return <Badge className="bg-success/10 text-success border-0 text-[10px]">Admitted</Badge>;
     case "closed":
-      return <Badge className="bg-gray-100 text-gray-700 border-0 text-[10px]">Closed</Badge>;
+      return <Badge className="bg-muted text-muted-foreground border-0 text-[10px]">Closed</Badge>;
     case "expired":
-      return <Badge className="bg-gray-100 text-gray-500 border-0 text-[10px]">Expired</Badge>;
+      return <Badge className="bg-muted text-muted-foreground/70 border-0 text-[10px]">Expired</Badge>;
     default:
       return <Badge variant="secondary" className="text-[10px]">Submitted</Badge>;
   }
@@ -159,7 +159,7 @@ function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick:
             </div>
           </div>
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 tabular-nums">
               <Clock className="h-3 w-3" />
               {formatDate(request.created_at)}
             </span>
@@ -167,8 +167,8 @@ function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick:
               <Badge variant="outline" className="text-[10px] py-0">{getUrgencyLabel(request.urgency)}</Badge>
             )}
             {hasProviderResponse && (
-              <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px] gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
+              <Badge className="bg-success/10 text-success border-0 text-[10px] gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-success inline-block" />
                 Response Available
               </Badge>
             )}
@@ -337,8 +337,8 @@ export default function SeekerRequests() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-blue-100">
-            <Send className="h-5 w-5 text-blue-600" />
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Send className="h-5 w-5 text-primary" />
           </div>
           <h1 className="text-2xl font-display font-bold">Inbox</h1>
         </div>
@@ -360,8 +360,8 @@ export default function SeekerRequests() {
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100">
-              <Send className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+            <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+              <Send className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
               <h1 className="text-lg sm:text-2xl font-display font-bold">Inbox</h1>

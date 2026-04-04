@@ -45,21 +45,21 @@ function SeekerRequestSuccess({
   onClose?: () => void;
 }) {
   return (
-    <Card className="border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800/50">
+    <Card className="border-success/20 bg-success/5 dark:bg-success/10 dark:border-success/30">
       <CardContent className="p-6 text-center">
-        <div className="mx-auto w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center mb-4">
-          <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+        <div className="mx-auto w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mb-4">
+          <CheckCircle className="h-7 w-7 text-success" />
         </div>
-        <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100 mb-2">
+        <h3 className="text-lg font-semibold text-foreground mb-2">
           Request Sent, {firstName}!
         </h3>
-        <p className="text-sm text-emerald-700 dark:text-emerald-300 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           {facilityName} will reach out to you soon via your preferred contact method.
         </p>
         
-        <div className="flex items-start gap-2 rounded-lg bg-emerald-100/50 dark:bg-emerald-900/30 p-3 mb-4 text-left">
-          <Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
-          <p className="text-xs text-emerald-700 dark:text-emerald-300">
+        <div className="flex items-start gap-2 rounded-lg bg-success/5 p-3 mb-4 text-left">
+          <Shield className="h-4 w-4 text-success mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
             Your information is confidential and only shared with this treatment facility.
           </p>
         </div>

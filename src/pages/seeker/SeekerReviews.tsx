@@ -175,7 +175,7 @@ function ReviewCard({
                   key={star}
                   className={`h-4 w-4 ${
                     star <= review.rating
-                      ? "fill-amber-400 text-amber-400"
+                      ? "fill-warning text-warning"
                       : "text-muted-foreground/30"
                   }`}
                 />
@@ -420,11 +420,11 @@ export default function SeekerReviews() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Published</Badge>;
+        return <Badge className="bg-success/10 text-success border-0 text-[10px]">Published</Badge>;
       case 'pending':
-        return <Badge className="bg-amber-100 text-amber-700 border-0 text-[10px]">Pending Review</Badge>;
+        return <Badge className="bg-warning/10 text-warning border-0 text-[10px]">Pending Review</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-700 border-0 text-[10px]">Rejected</Badge>;
+        return <Badge className="bg-destructive/10 text-destructive border-0 text-[10px]">Rejected</Badge>;
       default:
         return null;
     }
@@ -446,8 +446,8 @@ export default function SeekerReviews() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-amber-100">
-            <Star className="h-5 w-5 text-amber-600" />
+          <div className="p-2 rounded-lg bg-warning/10">
+            <Star className="h-5 w-5 text-warning" />
           </div>
           <h1 className="text-2xl font-display font-bold">My Reviews</h1>
         </div>
@@ -470,8 +470,8 @@ export default function SeekerReviews() {
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-amber-100">
-              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+            <div className="p-1.5 sm:p-2 rounded-lg bg-warning/10">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
             </div>
             <h1 className="text-lg sm:text-2xl font-display font-bold">My Reviews</h1>
           </div>
@@ -548,8 +548,8 @@ export default function SeekerReviews() {
                     <Star
                       className={`h-6 w-6 transition-colors ${
                         star <= editRating
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-muted-foreground hover:text-amber-400"
+                          ? "fill-warning text-warning"
+                          : "text-muted-foreground hover:text-warning"
                       }`}
                     />
                   </button>
