@@ -1014,7 +1014,7 @@ export default function AdminSecurityLogs() {
                                 </TableCell>
                                 <TableCell>
                                   {log.success === true ? (
-                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                                    <Badge className="bg-success/10 text-success hover:bg-success/10 border-transparent">
                                       <CheckCircle2 className="h-3 w-3 mr-1" />
                                       Success
                                     </Badge>
