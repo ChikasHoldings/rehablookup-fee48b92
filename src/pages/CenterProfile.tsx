@@ -54,7 +54,7 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -1230,27 +1230,14 @@ const CenterProfile = () => {
           {/* Nearby Facilities */}
           {nearbyFacilities.length > 0 && (
             <div className="mt-10 pt-8 border-t border-border">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/80">
-                  <MapPin className="h-4 w-4 text-primary" />
-                </div>
-                <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
-                  More Facilities in {facility.state}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nearbyFacilities.slice(0, 6).map((center: any) => (
-                  <TreatmentCenterCard key={center.id} center={center} variant="compact" />
-                ))}
-              </div>
-              <div className="text-center mt-6">
-                <Link to={`/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}`}>
-                  <Button variant="outline" className="gap-2">
-                    View All in {facility.state}
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+              <FacilityShowcaseGrid
+                facilities={nearbyFacilities}
+                title={`More Facilities in ${facility.state}`}
+                subtitle="Explore other treatment centers in the area"
+                viewAllHref={`/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}`}
+                viewAllLabel={`View All in ${facility.state}`}
+                maxItems={7}
+              />
             </div>
           )}
         </div>

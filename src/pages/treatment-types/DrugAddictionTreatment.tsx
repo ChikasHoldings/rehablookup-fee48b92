@@ -4,7 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
 import {
   Pill,
   ArrowRight,
@@ -307,13 +307,7 @@ const DrugAddictionTreatment = () => {
             </div>
 
             {/* Horizontal scroll on mobile, grid on larger screens */}
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-              {relatedCenters.map((center) => (
-                <div key={center.id} className="flex-shrink-0 w-[300px] md:w-auto snap-center">
-                  <TreatmentCenterCard center={center} />
-                </div>
-              ))}
-            </div>
+            <FacilityShowcaseGrid facilities={relatedCenters as any[]} />
             {/* Scroll indicator for mobile */}
             <div className="flex justify-center gap-1.5 mt-3 md:hidden">
               <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>

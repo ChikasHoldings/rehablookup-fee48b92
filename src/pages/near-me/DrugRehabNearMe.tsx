@@ -5,7 +5,7 @@ import { SEO, generateTreatmentNearMeSchema, generateNearMeSchema } from "@/comp
 import { NearMeHero } from "@/components/seo/NearMeHero";
 import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection, getDrugRehabNearMeFAQs } from "@/components/seo/TreatmentFAQSection";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -207,15 +207,7 @@ export default function DrugRehabNearMe() {
           ) : (
             <div className="treatment-listings">
               {/* Horizontal scroll on mobile, grid on larger screens */}
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {facilities.slice(0, 12).map((facility) => (
-                   <div key={facility.id || facility.name}>
-                    <TreatmentCenterCard
-                      center={facility as any}
-                    />
-                  </div>
-                ))}
-              </div>
+              <FacilityShowcaseGrid facilities={facilities.slice(0, 12) as any[]} />
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
