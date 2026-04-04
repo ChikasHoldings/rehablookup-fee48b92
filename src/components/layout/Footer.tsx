@@ -376,7 +376,7 @@ export const Footer = memo(function Footer() {
             <div className="flex items-center gap-3">
               <a
                 href="mailto:help@rehablookup.com"
-                className="text-[11px] text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors hidden sm:inline-flex items-center gap-1"
+                className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors hidden sm:inline-flex items-center gap-1"
               >
                 <Mail className="h-3 w-3" /> help@rehablookup.com
               </a>
