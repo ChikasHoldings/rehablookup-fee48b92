@@ -796,33 +796,14 @@ const CenterProfile = () => {
                     )
                   }
                 >
-                  {/* Main Image */}
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted shadow-inner mb-4">
+                  {/* Main Image — clean, no overlays */}
+                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-4">
                     <img 
                       src={galleryImages[activeGalleryIndex]} 
                       alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
-                    {galleryImages.length > 1 && (
-                      <>
-                        <button
-                          onClick={() => setActiveGalleryIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-card/95 backdrop-blur-sm flex items-center justify-center shadow-lg active:scale-95 hover:bg-card transition-all"
-                        >
-                          <ChevronLeft className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => setActiveGalleryIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-card/95 backdrop-blur-sm flex items-center justify-center shadow-lg active:scale-95 hover:bg-card transition-all"
-                        >
-                          <ChevronRight className="h-5 w-5" />
-                        </button>
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium shadow-md">
-                          {activeGalleryIndex + 1} / {galleryImages.length}
-                        </div>
-                      </>
-                    )}
                   </div>
                   
                   {/* Thumbnails */}
