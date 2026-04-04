@@ -57,7 +57,7 @@ export function useAdminUserNotifications() {
       });
       notification.onclick = () => {
         window.focus();
-        if (link) {
+        if (link && link.startsWith("/")) {
           window.location.href = link;
         } else {
           window.location.href = "/admin/notifications";
