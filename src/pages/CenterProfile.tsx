@@ -1,4 +1,5 @@
 import { useParams, Link, useLocation } from "react-router-dom";
+import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
@@ -577,7 +578,14 @@ const CenterProfile = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
                 </>
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10" />
+                <>
+                  <img 
+                    src={facilityPlaceholder} 
+                    alt={`${facility.name} facility`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+                </>
               )}
               
               {/* Badges on hero */}
