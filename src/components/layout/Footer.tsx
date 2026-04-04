@@ -344,7 +344,7 @@ export const Footer = memo(function Footer() {
           <div className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             {/* Left: Copyright + Legal */}
             <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <p className="text-[11px] text-primary-foreground/40">
+              <p className="text-xs text-primary-foreground/40">
                 © {currentYear} RehabLookup. All rights reserved. Not a medical provider.
               </p>
               <nav className="flex items-center gap-3">
