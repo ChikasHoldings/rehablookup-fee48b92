@@ -5,7 +5,7 @@ import { Globe, ArrowRight, CheckCircle, Shield, Clock, Plane } from "lucide-rea
 export function InternationalCTA() {
   return (
     <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-br from-primary/5 via-background to-accent/5 border-y border-border/50 overflow-hidden">
-      <div className="container">
+      <div className="container px-4 md:px-6 lg:px-8">
         <div className="relative rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
           {/* Background decorative elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />

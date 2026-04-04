@@ -53,13 +53,13 @@ export const PageFAQ = memo(function PageFAQ({
   };
 
   return (
-    <section className={cn("py-12 md:py-16", className)}>
+    <section className={cn("py-10 md:py-12 lg:py-16", className)}>
       {withSchema && (
         <Helmet>
           <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
         </Helmet>
       )}
-      <div className="container max-w-3xl">
+      <div className="container max-w-3xl px-4 md:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-foreground md:text-3xl">
             {title}
