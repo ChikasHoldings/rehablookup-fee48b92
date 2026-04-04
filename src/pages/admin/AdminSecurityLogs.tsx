@@ -813,7 +813,7 @@ export default function AdminSecurityLogs() {
               <CheckCircle2 className="h-3.5 w-3.5" />
               Successful Logins
             </CardDescription>
-            <CardTitle className="text-2xl text-emerald-600">{stats.successfulLogins}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-success">{stats.successfulLogins}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
