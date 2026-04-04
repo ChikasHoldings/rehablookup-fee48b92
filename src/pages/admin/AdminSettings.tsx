@@ -481,7 +481,7 @@ export default function AdminSettings() {
         case "notifications":
           const { data: notifications } = await supabase
             .from("admin_notifications")
-            .select("*")
+            .select("id, type, title, message, read, created_at")
             .order("created_at", { ascending: false })
             .limit(1000);
           data = notifications || [];

@@ -160,7 +160,7 @@ export default function AdminProfile() {
       if (!userData?.id) return [];
       const { data, error } = await supabase
         .from("admin_audit_log")
-        .select("*")
+        .select("id, admin_user_id, action_type, target_type, target_id, details, created_at")
         .eq("admin_user_id", userData.id)
         .order("created_at", { ascending: false })
         .limit(20);
