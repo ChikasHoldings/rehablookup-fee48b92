@@ -22,23 +22,14 @@ export default function CityTreatmentPage() {
 
   const { treatment, city } = parsed;
 
-  // If slug doesn't match any known combination, show 404
-  if (!slug || (!treatment && !city)) {
-    return <Navigate to="/404" replace />;
-  }
-
-  if (!treatment || !city) {
-    return <Navigate to="/404" replace />;
-  }
-
   // Filter facilities by city/state and treatment type
   const facilities = useMemo(() => {
+    if (!treatment || !city) return [];
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const cityLower = city.city.toLowerCase();
     const stateLower = city.state.toLowerCase();
     const filterLower = treatment.filterKey.toLowerCase();
 
-    // First try exact city match
     let filtered = allFacilities.filter((f) => {
       const cityMatch = f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower;
       const typeMatch =
@@ -47,7 +38,6 @@ export default function CityTreatmentPage() {
       return cityMatch && typeMatch;
     });
 
-    // Fall back to state match if not enough results
     if (filtered.length < 3) {
       filtered = allFacilities.filter((f) => {
         const stateMatch = f.state.toLowerCase() === stateLower;
@@ -58,7 +48,6 @@ export default function CityTreatmentPage() {
       });
     }
 
-    // Fall back to just state if still not enough
     if (filtered.length < 3) {
       filtered = allFacilities.filter(
         (f) => f.state.toLowerCase() === stateLower
@@ -68,11 +57,14 @@ export default function CityTreatmentPage() {
     return filtered.slice(0, 12);
   }, [approvedFacilities, city, treatment]);
 
-  const faqs = generateCityTreatmentFAQs(treatment, city);
+  const faqs = useMemo(() => {
+    if (!treatment || !city) return [];
+    return generateCityTreatmentFAQs(treatment, city);
+  }, [treatment, city]);
 
-  // Build related city links (same treatment, different cities in same state + nearby)
   const relatedCityLinks = useMemo(() => {
-    const sameTreatment = topCities
+    if (!treatment || !city) return [];
+    return topCities
       .filter((c) => c.slug !== city.slug)
       .filter((c) => c.stateSlug === city.stateSlug || city.nearbyCities.includes(c.slug))
       .slice(0, 8)
@@ -80,11 +72,10 @@ export default function CityTreatmentPage() {
         title: `${treatment.shortLabel} in ${c.city}`,
         href: `/${getCityTreatmentSlug(treatment, c)}`,
       }));
-    return sameTreatment;
   }, [city, treatment]);
 
-  // Build related treatment links (same city, different treatments)
   const relatedStateLinks = useMemo(() => {
+    if (!treatment || !city) return [];
     return seoTreatmentTypes
       .filter((t) => t.slug !== treatment.slug)
       .map((t) => ({
@@ -93,9 +84,13 @@ export default function CityTreatmentPage() {
       }));
   }, [city, treatment]);
 
+  // Early returns AFTER all hooks
+  if (!slug || !treatment || !city) {
+    return <Navigate to="/404" replace />;
+  }
+
   const pageTitle = `${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr}`;
 
-  // JSON-LD structured data
   const structuredData = [
     {
       "@context": "https://schema.org",
@@ -103,10 +98,7 @@ export default function CityTreatmentPage() {
       name: pageTitle,
       description: `Find ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare accredited facilities, verify insurance coverage, and start treatment today.`,
       url: `https://rehablookup.com/${slug}`,
-      about: {
-        "@type": "MedicalCondition",
-        name: "Substance Use Disorder",
-      },
+      about: { "@type": "MedicalCondition", name: "Substance Use Disorder" },
       audience: {
         "@type": "PeopleAudience",
         geographicArea: {
@@ -122,10 +114,7 @@ export default function CityTreatmentPage() {
       mainEntity: faqs.map((faq) => ({
         "@type": "Question",
         name: faq.question,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: faq.answer,
-        },
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
     },
     {
@@ -133,7 +122,7 @@ export default function CityTreatmentPage() {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: "https://rehablookup.com" },
-        { "@type": "ListItem", position: 2, name: treatment.pluralLabel, item: `https://rehablookup.com/${treatment.slug === "dual-diagnosis-treatment" ? "dual-diagnosis-treatment" : treatment.slug + "-centers" === treatment.slug ? treatment.slug : treatment.slug.replace("-rehab", "-rehab-centers")}` },
+        { "@type": "ListItem", position: 2, name: treatment.pluralLabel, item: `https://rehablookup.com/${treatment.slug}-centers` },
         { "@type": "ListItem", position: 3, name: `${city.city}, ${city.stateAbbr}`, item: `https://rehablookup.com/${slug}` },
       ],
     },
