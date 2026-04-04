@@ -443,8 +443,8 @@ export default function AdminSettings() {
           break;
         case "analytics":
           const [viewsResult, interactionsResult] = await Promise.all([
-            supabase.from("facility_views").select("*").order("view_date", { ascending: false }).limit(1000),
-            supabase.from("facility_interactions").select("*").order("interaction_date", { ascending: false }).limit(1000),
+            supabase.from("facility_views").select("facility_id, view_date, view_count, created_at").order("view_date", { ascending: false }).limit(1000),
+            supabase.from("facility_interactions").select("id, facility_id, interaction_type, interaction_count, interaction_date, created_at").order("interaction_date", { ascending: false }).limit(1000),
           ]);
           
           if (format === "csv") {
