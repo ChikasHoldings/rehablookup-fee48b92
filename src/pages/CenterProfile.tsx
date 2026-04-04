@@ -953,21 +953,20 @@ const CenterProfile = () => {
                   title="Insurance Accepted"
                   iconColor="bg-amber-500/10 text-amber-600"
                 >
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {(showAllInsurance ? insuranceList : insuranceList.slice(0, 8)).map((ins) => (
                       <Badge 
                         key={ins} 
-                        variant="secondary" 
-                        className="px-3 py-1.5 text-sm bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50 hover:bg-amber-500/15 transition-colors font-medium"
+                        variant="outline" 
+                        className="px-2.5 py-1 text-xs font-medium hover:bg-muted/50 transition-colors"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
                         {ins}
                       </Badge>
                     ))}
                     {insuranceList.length > 8 && (
                       <button
                         onClick={() => setShowAllInsurance(!showAllInsurance)}
-                        className="px-3 py-1.5 text-sm font-semibold text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-full transition-all cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 rounded-full transition-all cursor-pointer"
                       >
                         {showAllInsurance ? 'Show less' : `+${insuranceList.length - 8} more`}
                       </button>
