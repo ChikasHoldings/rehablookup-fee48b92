@@ -320,7 +320,7 @@ export function SubscriptionDetailModal({
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleAction("cancel_immediately")}
-                            className="text-red-600 focus:text-red-600 text-xs sm:text-sm"
+                            className="text-destructive focus:text-destructive text-xs sm:text-sm"
                           >
                             <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                             Cancel Immediately
