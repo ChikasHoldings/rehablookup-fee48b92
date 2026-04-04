@@ -2,10 +2,16 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InternationalPageHero } from "./components";
-import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Star, ChevronRight, Plane, FileText, Heart, Sparkles, Phone } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Star, ChevronRight, Plane, FileText, Heart, Sparkles, Globe, Building2 } from "lucide-react";
 import heroImage from "@/assets/hero-uk-rehab.jpg";
+
+const fadeUp = {
+  initial: { opacity: 0, y: 16 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+};
 
 export default function RehabUSAFromUK() {
   return (
@@ -29,9 +35,6 @@ export default function RehabUSAFromUK() {
         ]}
       />
 
-
-
-
       <InternationalPageHero
         flag="🇬🇧"
         badge="For British & Irish Residents"
@@ -43,95 +46,117 @@ export default function RehabUSAFromUK() {
         heroAlt="Luxury oceanfront rehab facility in California for UK patients"
       />
 
-      {/* Why UK Patients Choose US */}
-      <section className="py-16 md:py-20 bg-background">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-12">
-            <span className="text-sm font-semibold uppercase tracking-wide text-primary mb-2 block">Why America</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Why British Patients Choose American Rehab</h2>
-            <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">The US offers advantages that simply aren't available through the NHS or UK private sector.</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-5">
+      {/* Stats Bar */}
+      <section className="border-b border-border bg-primary text-primary-foreground py-3">
+        <div className="container px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center max-w-4xl mx-auto">
             {[
-              { icon: Clock, title: "No NHS Waiting Lists", desc: "NHS addiction services often involve weeks or months of waiting. US facilities admit within 24-72 hours with full medical detox on-site." },
-              { icon: Shield, title: "Complete Privacy from UK Systems", desc: "Treatment records stay in the US, protected by HIPAA law. No GP notifications, no employer disclosures, no UK insurance records." },
-              { icon: Star, title: "World-Leading Clinical Care", desc: "Access cutting-edge therapies like NAD+, neurofeedback, EMDR, and psychedelic-assisted treatment not yet available in UK facilities." },
-              { icon: MapPin, title: "Healing Environments", desc: "From Malibu's oceanfront to Arizona's desert retreats — therapeutic settings that accelerate recovery far from London's pressure." },
-            ].map((item) => (
-              <div key={item.title} className="group p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-primary/20 hover:shadow-sm transition-all">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+              { icon: Globe, value: "10hr", label: "Direct Flight" },
+              { icon: Shield, value: "100%", label: "HIPAA Protected" },
+              { icon: Clock, value: "24hr", label: "Admission Speed" },
+              { icon: Building2, value: "200+", label: "US Facilities" },
+            ].map((s) => (
+              <div key={s.label} className="px-1">
+                <div className="flex items-center justify-center gap-1.5 mb-0.5">
+                  <s.icon className="h-3.5 w-3.5 text-accent shrink-0" />
+                  <span className="text-xl font-bold">{s.value}</span>
+                </div>
+                <p className="text-[10px] md:text-xs text-primary-foreground/80">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why UK Patients Choose US */}
+      <section className="py-14 md:py-20 bg-background">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="text-center mb-12">
+            <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">Why America</p>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Why British Patients Choose American Rehab</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">The US offers advantages that simply aren't available through the NHS or UK private sector.</p>
+          </motion.div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            {[
+              { icon: Clock, title: "No NHS Waiting Lists", desc: "US facilities admit within 24-72 hours with full medical detox on-site. No referrals, no gatekeeping." },
+              { icon: Shield, title: "Complete Privacy", desc: "Treatment records stay in the US, protected by HIPAA. No GP notifications, no employer disclosures." },
+              { icon: Star, title: "World-Leading Care", desc: "Access cutting-edge therapies like NAD+, neurofeedback, EMDR, and psychedelic-assisted treatment." },
+              { icon: MapPin, title: "Healing Environments", desc: "From Malibu's oceanfront to Arizona's desert retreats — therapeutic settings that accelerate recovery." },
+            ].map((item, i) => (
+              <motion.div key={item.title} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="bg-background border rounded-xl p-5 md:p-6 hover:shadow-lg transition-shadow">
+                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
                   <item.icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-              </div>
+                <h3 className="font-semibold text-foreground mb-1.5 text-sm md:text-base">{item.title}</h3>
+                <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-16 md:py-20 bg-muted/20">
+      <section className="py-14 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="text-center mb-12">
-            <span className="text-sm font-semibold uppercase tracking-wide text-primary mb-2 block">Process</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">How It Works for UK Patients</h2>
-          </div>
-          <div className="grid md:grid-cols-4 gap-6">
+          <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="text-center mb-12">
+            <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">Process</p>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">How It Works for UK Patients</h2>
+            <p className="text-sm text-muted-foreground max-w-lg mx-auto">A streamlined process designed for British residents seeking US treatment</p>
+          </motion.div>
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment needs." },
               { step: "2", title: "Get Matched", desc: "Our UK-experienced advisors match you with ideal US facilities." },
               { step: "3", title: "Arrange Travel", desc: "We coordinate flights, ESTA, and airport transfers." },
               { step: "4", title: "Begin Recovery", desc: "Arrive and begin your personalised treatment programme." },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="h-11 w-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-4 font-bold text-base">{item.step}</div>
+            ].map((item, i) => (
+              <motion.div key={item.step} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="text-center">
+                <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-4 font-bold text-lg">{item.step}</div>
                 <h3 className="font-semibold text-foreground mb-2 text-sm">{item.title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Key Considerations */}
-      <section className="py-16 md:py-20 bg-background">
+      <section className="py-14 md:py-20 bg-background">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="text-center mb-10">
-            <span className="text-sm font-semibold uppercase tracking-wide text-primary mb-2 block">Practical Info</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">What UK Patients Need to Know</h2>
-          </div>
+          <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="text-center mb-10">
+            <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">Practical Info</p>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">What UK Patients Need to Know</h2>
+          </motion.div>
           <div className="space-y-4">
             {[
               { icon: Plane, title: "Travel & Entry", content: "UK citizens travel visa-free under the ESTA Visa Waiver Program for stays up to 90 days. Apply online at least 72 hours before travel. For longer programmes, a B-2 medical visa is recommended. Our team provides supporting documentation." },
-              { icon: FileText, title: "Costs & Payment", content: "UK patients typically invest £12,000–£65,000+ per month for US treatment, depending on the facility level. This is self-pay as NHS coverage doesn't extend abroad. Wire transfers, credit cards, and payment plans are accepted. Many families find the investment worthwhile for immediate access and premium care." },
-              { icon: Heart, title: "Aftercare & Return", content: "We coordinate your return to the UK with continuing care: local therapists, SMART Recovery and 12-step meetings, and virtual follow-up sessions with your US clinical team to maintain progress." },
-            ].map((item) => (
-              <div key={item.title} className="flex gap-4 p-6 rounded-xl border border-border/50 bg-muted/20">
-                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+              { icon: FileText, title: "Costs & Payment", content: "UK patients typically invest £12,000–£65,000+ per month for US treatment, depending on the facility level. This is self-pay as NHS coverage doesn't extend abroad. Wire transfers, credit cards, and payment plans are accepted." },
+              { icon: Heart, title: "Aftercare & Return", content: "We coordinate your return to the UK with continuing care: local therapists, SMART Recovery and 12-step meetings, and virtual follow-up sessions with your US clinical team." },
+            ].map((item, i) => (
+              <motion.div key={item.title} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="flex gap-4 p-5 md:p-6 rounded-xl border bg-background hover:shadow-md transition-shadow">
+                <div className="h-11 w-11 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                   <item.icon className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-1.5 text-base">{item.title}</h3>
+                  <h3 className="font-semibold text-foreground mb-1.5 text-sm md:text-base">{item.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{item.content}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Popular Destinations */}
-      <section className="py-16 md:py-20 bg-muted/20">
+      <section className="py-14 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 text-primary mb-3">
-              <MapPin className="h-5 w-5" />
-              <span className="text-sm font-semibold uppercase tracking-wide">Destinations</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Popular US Destinations for UK Patients</h2>
-            <p className="text-base text-muted-foreground max-w-2xl mx-auto">British clients frequently choose these locations for their world-class facilities and direct flight access.</p>
-          </div>
+          <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="text-center mb-10">
+            <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">Destinations</p>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Popular US Destinations for UK Patients</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">British clients frequently choose these locations for their world-class facilities and direct flight access.</p>
+          </motion.div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { state: "California", desc: "Malibu luxury, LA celebrity rehab, year-round sun", emoji: "🌴", href: "/us-rehab/luxury-rehab-california" },
@@ -140,36 +165,39 @@ export default function RehabUSAFromUK() {
               { state: "New York", desc: "Executive programmes, Hamptons privacy", emoji: "🗽", href: "/rehab-centers/new-york" },
               { state: "Colorado", desc: "Mountain retreats, adventure therapy", emoji: "⛰️", href: "/rehab-centers/colorado" },
               { state: "Texas", desc: "Ranch-style facilities, affordable luxury", emoji: "🤠", href: "/rehab-centers/texas" },
-            ].map((dest) => (
-              <Link key={dest.state} to={dest.href} className="group block p-5 bg-background rounded-xl border border-border/50 hover:border-primary/20 hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">{dest.emoji}</span>
-                  <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{dest.state}</h3>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{dest.desc}</p>
-              </Link>
+            ].map((dest, i) => (
+              <motion.div key={dest.state} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.06 }}>
+                <Link to={dest.href} className="group block p-5 bg-background rounded-xl border hover:border-primary/30 hover:shadow-lg transition-all h-full">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl">{dest.emoji}</span>
+                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{dest.state}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{dest.desc}</p>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="py-16 md:py-20 bg-background">
+      <section className="py-14 md:py-20 bg-background">
         <div className="container mx-auto px-4 max-w-3xl">
-          <div className="text-center mb-10">
-            <span className="text-sm font-semibold uppercase tracking-wide text-primary mb-2 block">FAQ</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">UK to US Treatment FAQs</h2>
-            <p className="text-base text-muted-foreground">Common questions from British patients considering treatment in America.</p>
-          </div>
-          <div className="space-y-4">
+          <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="text-center mb-10">
+            <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">FAQ</p>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">UK to US Treatment FAQs</h2>
+            <p className="text-sm text-muted-foreground">Common questions from British patients considering treatment in America.</p>
+          </motion.div>
+          <div className="space-y-3">
             {[
               { q: "Can UK citizens get rehab treatment in America?", a: "Yes. US rehab centres welcome patients from the United Kingdom. Most facilities have experience with international admissions and can coordinate ESTA documentation, travel logistics, and aftercare planning for UK residents." },
-              { q: "Is US rehab better than UK rehab?", a: "The US offers distinct advantages: immediate admission (no NHS waiting lists), complete privacy from UK systems, access to luxury and executive programmes, and innovative treatments not yet available in the UK. Many British residents choose US treatment for discretion and premium clinical care." },
-              { q: "How much does US rehab cost for UK patients?", a: "UK patients typically invest £12,000–£65,000+ per month, depending on the facility and luxury level. This is self-pay as NHS coverage doesn't extend to US facilities. Many find the investment worthwhile for immediate access and world-class care." },
-              { q: "What travel documents do I need?", a: "UK citizens enter the US visa-free via the ESTA Visa Waiver Program for treatment stays up to 90 days. For longer programmes, a B-2 tourist visa for medical treatment is recommended. Our team provides supporting documentation." },
+              { q: "Is US rehab better than UK rehab?", a: "The US offers distinct advantages: immediate admission (no NHS waiting lists), complete privacy from UK systems, access to luxury and executive programmes, and innovative treatments not yet available in the UK." },
+              { q: "How much does US rehab cost for UK patients?", a: "UK patients typically invest £12,000–£65,000+ per month, depending on the facility and luxury level. This is self-pay as NHS coverage doesn't extend to US facilities." },
+              { q: "What travel documents do I need?", a: "UK citizens enter the US visa-free via the ESTA Visa Waiver Program for treatment stays up to 90 days. For longer programmes, a B-2 tourist visa for medical treatment is recommended." },
               { q: "Will my treatment be confidential from UK employers?", a: "Absolutely. US treatment facilities operate independently of UK healthcare systems. Records are protected by US HIPAA laws and cannot be shared with UK employers, insurers, or government agencies without your explicit consent." },
             ].map((faq, i) => (
-              <details key={i} className="group bg-muted/20 rounded-xl border border-border/50 overflow-hidden">
+              <motion.details key={i} {...fadeUp} transition={{ duration: 0.3, delay: i * 0.05 }}
+                className="group bg-background rounded-xl border overflow-hidden hover:shadow-sm transition-shadow">
                 <summary className="flex items-center justify-between cursor-pointer p-5 text-sm font-semibold text-foreground hover:text-primary transition-colors">
                   {faq.q}
                   <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-4 group-open:rotate-90 transition-transform" />
@@ -177,16 +205,16 @@ export default function RehabUSAFromUK() {
                 <div className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed border-t border-border/30 pt-4">
                   {faq.a}
                 </div>
-              </details>
+              </motion.details>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-16 md:py-20 bg-muted/20">
+      <section className="py-14 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+          <motion.div {...fadeUp} transition={{ duration: 0.5 }} className="max-w-4xl mx-auto">
             <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-accent/5 p-8 md:p-12 shadow-lg">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
               <div className="relative text-center">
@@ -194,8 +222,8 @@ export default function RehabUSAFromUK() {
                   <Sparkles className="h-4 w-4" />
                   <span>UK Patient Specialist Team</span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Start Your American Recovery Journey</h2>
-                <p className="text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our UK-experienced advisors understand your needs. Get placed in premium US facilities with full travel coordination.</p>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Start Your American Recovery Journey</h2>
+                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our UK-experienced advisors understand your needs. Get placed in premium US facilities with full travel coordination.</p>
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-8">
                   {["Confidential Consultation", "ESTA Guidance", "Airport Transfers"].map(item => (
                     <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -204,12 +232,12 @@ export default function RehabUSAFromUK() {
                     </div>
                   ))}
                 </div>
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base px-8 py-6 shadow-md">
+                <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-base px-8 py-6 shadow-lg shadow-accent/25">
                   <Link to="/international/apply" className="flex items-center gap-2">Apply for Treatment <ArrowRight className="h-5 w-5" /></Link>
                 </Button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -225,9 +253,9 @@ export default function RehabUSAFromUK() {
                   { href: "/us-rehab/uae-middle-east", label: "UAE & Middle East" },
                   { href: "/us-rehab/european-patients", label: "European Patients" },
                   { href: "/us-rehab/australian-patients", label: "Australian Patients" },
-                  { href: "/us-rehab/international-patients", label: "All International" },
+                  { href: "/international", label: "International Placement" },
                 ].map((link) => (
-                  <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/40 transition-colors">
+                  <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                   </Link>
@@ -244,7 +272,7 @@ export default function RehabUSAFromUK() {
                   { href: "/us-rehab/best-rehab-usa", label: "Best Rehab in USA" },
                   { href: "/rehab-centers", label: "Search All Facilities" },
                 ].map((link) => (
-                  <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/40 transition-colors">
+                  <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                   </Link>
