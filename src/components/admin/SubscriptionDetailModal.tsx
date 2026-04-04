@@ -569,8 +569,8 @@ export function SubscriptionDetailModal({
                           className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full bg-blue-500/10">
-                              <Receipt className="h-4 w-4 text-blue-600" />
+                            <div className="p-2 rounded-full bg-info/10">
+                              <Receipt className="h-4 w-4 text-info" />
                             </div>
                             <div>
                               <p className="font-medium">{invoice.number || `Invoice ${invoice.id.slice(-8)}`}</p>
