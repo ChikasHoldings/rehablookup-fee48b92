@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgMarketingStrategies from "@/assets/provider-guides/pg-marketing-strategies.jpg";
+import admissionsDashboard from "@/assets/provider-guides/admissions-dashboard.jpg";
 
 export default function RehabMarketingStrategies() {
   return (
