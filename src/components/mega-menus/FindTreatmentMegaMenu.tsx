@@ -76,7 +76,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Treatment Types — 2-col with icon + desc */}
         <div className="flex-1 px-5 pb-4 pt-1 border-r border-border/30">
-          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
             <Shield className="h-3 w-3" />
             Treatment Types
           </p>
