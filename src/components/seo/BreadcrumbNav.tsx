@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Home } from "lucide-react";
+import { Home, ChevronRight } from "lucide-react";
 
 export interface BreadcrumbItem {
   label: string;
@@ -9,10 +9,10 @@ export interface BreadcrumbItem {
 interface BreadcrumbNavProps {
   items: BreadcrumbItem[];
   className?: string;
+  variant?: "dark" | "light";
 }
 
-export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
-  // Generate JSON-LD structured data
+export function BreadcrumbNav({ items, className = "", variant = "dark" }: BreadcrumbNavProps) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -32,29 +32,34 @@ export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
     ],
   };
 
+  const colors = variant === "dark"
+    ? { link: "text-white/60 hover:text-white", current: "text-white/90", sep: "text-white/30", home: "text-white/60 hover:text-white" }
+    : { link: "text-muted-foreground hover:text-foreground", current: "text-foreground", sep: "text-muted-foreground/40", home: "text-muted-foreground hover:text-foreground" };
+
   return (
     <>
-      {/* JSON-LD for search engines */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      
-      {/* Visual breadcrumb navigation */}
-      <nav 
-        aria-label="Breadcrumb" 
-        className={`flex items-center justify-center text-sm text-muted-foreground ${className}`}
+      <nav
+        aria-label="Breadcrumb"
+        className={`text-sm ${className}`}
       >
-        <ol className="flex items-center gap-1 whitespace-nowrap" itemScope itemType="https://schema.org/BreadcrumbList">
-          <li 
-            className="flex items-center" 
-            itemProp="itemListElement" 
-            itemScope 
+        <ol
+          className="flex flex-row items-center gap-1.5 flex-nowrap"
+          itemScope
+          itemType="https://schema.org/BreadcrumbList"
+        >
+          <li
+            className="inline-flex items-center shrink-0"
+            itemProp="itemListElement"
+            itemScope
             itemType="https://schema.org/ListItem"
           >
-            <Link 
-              to="/" 
-              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            <Link
+              to="/"
+              className={`inline-flex items-center gap-1 transition-colors ${colors.home}`}
               itemProp="item"
             >
               <Home className="h-3.5 w-3.5" />
@@ -62,27 +67,27 @@ export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
             </Link>
             <meta itemProp="position" content="1" />
           </li>
-          
+
           {items.map((item, index) => (
-            <li 
-              key={index} 
-              className="flex items-center"
-              itemProp="itemListElement" 
-              itemScope 
+            <li
+              key={index}
+              className="inline-flex items-center shrink-0"
+              itemProp="itemListElement"
+              itemScope
               itemType="https://schema.org/ListItem"
             >
-              <span className="mx-1 text-muted-foreground/50">/</span>
+              <ChevronRight className={`h-3 w-3 mx-0.5 ${colors.sep}`} />
               {item.href ? (
-                <Link 
-                  to={item.href} 
-                  className="hover:text-foreground transition-colors"
+                <Link
+                  to={item.href}
+                  className={`transition-colors ${colors.link}`}
                   itemProp="item"
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
               ) : (
-                <span 
-                  className="text-foreground font-medium" 
+                <span
+                  className={`font-medium ${colors.current}`}
                   itemProp="name"
                   aria-current="page"
                 >

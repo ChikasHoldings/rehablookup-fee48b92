@@ -261,13 +261,6 @@ export default function Resources() {
         ]}
       />
 
-      {/* Visual Breadcrumb Navigation */}
-      <div className="bg-muted/30 border-b">
-        <div className="container py-3">
-          <BreadcrumbNav items={[{ label: "Resources" }]} />
-        </div>
-      </div>
-
       {/* Hero Section - Compact navy style matching platform pages */}
       <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
@@ -276,6 +269,7 @@ export default function Resources() {
         </div>
         
         <div className="container relative">
+          <BreadcrumbNav items={[{ label: "Resources" }]} className="mb-4" />
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
               <BookOpen className="h-4 w-4 text-accent" />

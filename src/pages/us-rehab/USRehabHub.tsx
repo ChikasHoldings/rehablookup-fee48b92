@@ -48,7 +48,7 @@ const USRehabHub = () => {
       />
 
       <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav items={[{ label: "US Rehab" }]} />
+        <BreadcrumbNav className="mb-4" items={[{ label: "US Rehab" }]} />
       </div>
 
       <InternationalHero

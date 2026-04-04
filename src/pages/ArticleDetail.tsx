@@ -445,22 +445,18 @@ const ArticleDetail = () => {
         publishedTime={article.published_at || undefined}
       />
 
-      {/* Visual Breadcrumb Navigation */}
-      <div className="bg-muted/30 border-b">
-        <div className="container py-3">
+      {/* Hero */}
+      <div className="bg-gradient-to-b from-muted/60 via-muted/30 to-background py-12 md:py-16">
+        <div className="container">
           <BreadcrumbNav
             items={[
               { label: "Resources", href: "/resources" },
               { label: article.category_label, href: `/resources?category=${article.category}` },
               { label: article.title },
             ]}
+            className="mb-4"
+            variant="light"
           />
-        </div>
-      </div>
-
-      {/* Hero */}
-      <div className="bg-gradient-to-b from-muted/60 via-muted/30 to-background py-12 md:py-16">
-        <div className="container">
           <div className="max-w-4xl mx-auto">
 
             <div className="mb-4">

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, CheckCircle, Heart, Search } from "lucide-react";
+import { MapPin, Building2, CheckCircle, Heart, Search, ChevronRight } from "lucide-react";
 
 interface NearMeHeroProps {
   title: string;
@@ -41,20 +41,26 @@ export function NearMeHero({
       
       <div className="container relative z-10 py-10 md:py-14 lg:py-16">
         {/* Breadcrumb navigation */}
-        <nav className="mb-5 text-center" aria-label="Breadcrumb">
-          <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
-            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-            <span className="text-white/50">/</span>
-            <Link to="/treatment-types" className="text-white/70 hover:text-white transition-colors">Treatment</Link>
-            <span className="text-white/50">/</span>
-            <span className="text-white font-medium speakable-headline">{treatmentType}</span>
+        <nav className="mb-5" aria-label="Breadcrumb">
+          <ol className="flex flex-row items-center gap-1.5 flex-nowrap text-sm">
+            <li className="inline-flex items-center shrink-0">
+              <Link to="/" className="text-white/60 hover:text-white transition-colors">Home</Link>
+            </li>
+            <li className="inline-flex items-center shrink-0">
+              <ChevronRight className="h-3 w-3 text-white/30 mx-0.5" />
+              <Link to="/treatment-types" className="text-white/60 hover:text-white transition-colors">Treatment</Link>
+            </li>
+            <li className="inline-flex items-center shrink-0">
+              <ChevronRight className="h-3 w-3 text-white/30 mx-0.5" />
+              <span className="text-white/90 font-medium speakable-headline">{treatmentType}</span>
+            </li>
             {location?.state && (
-              <>
-                <span className="text-white/50">/</span>
-                <span className="text-white font-medium">{locationString}</span>
-              </>
+              <li className="inline-flex items-center shrink-0">
+                <ChevronRight className="h-3 w-3 text-white/30 mx-0.5" />
+                <span className="text-white/90 font-medium">{locationString}</span>
+              </li>
             )}
-          </span>
+          </ol>
         </nav>
 
         <div className="max-w-3xl">

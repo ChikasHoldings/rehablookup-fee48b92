@@ -605,22 +605,18 @@ const CenterProfile = () => {
         modifiedTime={facility.updated_at}
       />
 
-      {/* Visual Breadcrumb Navigation */}
-      <div className="bg-muted/30 border-b">
-        <div className="container py-3">
+      {/* Main Content */}
+      <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-8">
+        <div className="container max-w-7xl px-4 py-6 md:px-6 md:py-10">
           <BreadcrumbNav
             items={[
               { label: "Find Rehab", href: "/rehab-centers" },
               { label: facility.state, href: `/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}` },
               { label: facility.name },
             ]}
+            className="mb-4"
+            variant="light"
           />
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-8">
-        <div className="container max-w-7xl px-4 py-6 md:px-6 md:py-10">
           {/* Pending Status Banner */}
           {isOwner && isPending && (
             <Alert className="mb-6 border-amber-300/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-sm">
