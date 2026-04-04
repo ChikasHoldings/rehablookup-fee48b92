@@ -558,7 +558,7 @@ export function ProviderDetailModal({
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Wallet className="h-5 w-5 mx-auto mb-2 text-emerald-500" />
-                    <p className="text-2xl font-bold text-emerald-600">
+                    <p className="text-2xl font-bold text-success">
                       ${((creditBalance || 0) / 100).toFixed(2)}
                     </p>
                     <p className="text-xs text-muted-foreground">Credit Balance</p>
