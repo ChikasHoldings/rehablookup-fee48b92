@@ -94,7 +94,7 @@ export default function AdminReviews() {
     
     const { data, error } = await supabase
       .from('facility_reviews')
-      .select('*')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, disputed, admin_notes, reviewed_at, reviewed_by, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {
