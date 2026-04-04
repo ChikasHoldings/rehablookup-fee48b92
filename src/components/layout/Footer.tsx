@@ -162,7 +162,7 @@ const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink
     <li>
       <Link
         to={link.path}
-        className={`inline-flex items-center gap-1.5 text-[13px] leading-relaxed transition-colors duration-150 ${
+        className={`inline-flex items-center gap-1.5 text-sm leading-relaxed transition-colors duration-150 ${
           link.highlight
             ? "text-accent font-medium hover:text-accent/80"
             : "text-primary-foreground/55 hover:text-primary-foreground"
