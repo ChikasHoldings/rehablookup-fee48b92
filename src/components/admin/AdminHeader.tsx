@@ -609,7 +609,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     {fullName}
                   </span>
                   <span className="text-[11px] text-slate-400 leading-tight">
-                    Administrator
+                    {ROLE_DISPLAY[adminRole || "customer_rep"]?.label || "Administrator"}
                   </span>
                 </div>
               </Button>
