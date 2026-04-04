@@ -66,9 +66,10 @@ export function AddListingCard({
         throw error;
       }
       
-      if (data?.url) {
-        // Open in same window for better UX
+      if (data?.url && (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com"))) {
         window.location.href = data.url;
+      } else if (data?.url) {
+        throw new Error("Invalid checkout URL");
       } else {
         throw new Error("No checkout URL returned");
       }

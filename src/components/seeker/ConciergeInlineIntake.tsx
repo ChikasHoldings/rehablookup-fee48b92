@@ -254,8 +254,12 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           sessionId: data.sessionId,
         }));
         
-        // Redirect to Stripe checkout
-        window.location.href = data.url;
+        // Redirect to Stripe checkout (validate URL origin)
+        if (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com")) {
+          window.location.href = data.url;
+        } else {
+          throw new Error("Invalid checkout URL");
+        }
       } else {
         throw new Error("No checkout URL returned");
       }
