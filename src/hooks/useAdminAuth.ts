@@ -67,10 +67,10 @@ const routePermissionMap: Record<string, string> = {
   "/admin/concierge": "placements",
   "/admin/support": "support",
   "/admin/placement-revenue": "placements",
-  "/admin/credentials": "credentials",
+  "/admin/credentials": "providers",
   "/admin/security-logs": "security_logs",
   "/admin/marketing": "leads",
-  "/admin/blog": "dashboard",
+  "/admin/blog": "providers",
   "/admin/international": "placements",
 };
 
