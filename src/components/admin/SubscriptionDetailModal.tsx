@@ -141,8 +141,8 @@ interface SubscriptionDetailModalProps {
 const PlanBadge = forwardRef<HTMLDivElement, { plan: string }>(
   function PlanBadge({ plan }, ref) {
     const config: Record<string, { label: string; className: string }> = {
-      free: { label: "Free", className: "bg-slate-100 text-slate-700 border-slate-200" },
-      pro: { label: "Pro", className: "bg-amber-100 text-amber-700 border-amber-200" },
+      free: { label: "Free", className: "bg-muted text-muted-foreground border-border" },
+      pro: { label: "Pro", className: "bg-warning/10 text-warning border-warning/30" },
     };
     const { label, className } = config[plan] || { label: plan, className: "bg-muted text-muted-foreground" };
     return <Badge ref={ref} variant="outline" className={className}>{label}</Badge>;
@@ -153,7 +153,7 @@ const StatusBadge = forwardRef<HTMLDivElement, { status: string; isPaused?: bool
   function StatusBadge({ status, isPaused }, ref) {
     if (isPaused) {
       return (
-        <Badge ref={ref} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 flex items-center gap-1">
+        <Badge ref={ref} variant="outline" className="bg-info/10 text-info border-info/30 flex items-center gap-1">
           <Pause className="h-3 w-3" />
           Paused
         </Badge>
@@ -161,18 +161,18 @@ const StatusBadge = forwardRef<HTMLDivElement, { status: string; isPaused?: bool
     }
 
     const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-      active: { label: "Active", className: "bg-green-50 text-green-700 border-green-200", icon: <CheckCircle2 className="h-3 w-3" /> },
-      canceled: { label: "Canceled", className: "bg-red-50 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3" /> },
-      past_due: { label: "Past Due", className: "bg-red-50 text-red-700 border-red-200", icon: <AlertCircle className="h-3 w-3" /> },
-      trialing: { label: "Trial", className: "bg-purple-50 text-purple-700 border-purple-200", icon: <Clock className="h-3 w-3" /> },
-      incomplete: { label: "Incomplete", className: "bg-slate-50 text-slate-600 border-slate-200", icon: <AlertCircle className="h-3 w-3" /> },
-      paid: { label: "Paid", className: "bg-green-50 text-green-700 border-green-200", icon: <CheckCircle2 className="h-3 w-3" /> },
-      open: { label: "Open", className: "bg-blue-50 text-blue-700 border-blue-200", icon: <Clock className="h-3 w-3" /> },
-      void: { label: "Void", className: "bg-slate-50 text-slate-600 border-slate-200", icon: <XCircle className="h-3 w-3" /> },
-      uncollectible: { label: "Uncollectible", className: "bg-red-50 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3" /> },
-      succeeded: { label: "Succeeded", className: "bg-green-50 text-green-700 border-green-200", icon: <CheckCircle2 className="h-3 w-3" /> },
-      failed: { label: "Failed", className: "bg-red-50 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3" /> },
-      pending: { label: "Pending", className: "bg-amber-50 text-amber-700 border-amber-200", icon: <Clock className="h-3 w-3" /> },
+      active: { label: "Active", className: "bg-success/10 text-success border-success/30", icon: <CheckCircle2 className="h-3 w-3" /> },
+      canceled: { label: "Canceled", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <XCircle className="h-3 w-3" /> },
+      past_due: { label: "Past Due", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <AlertCircle className="h-3 w-3" /> },
+      trialing: { label: "Trial", className: "bg-info/10 text-info border-info/30", icon: <Clock className="h-3 w-3" /> },
+      incomplete: { label: "Incomplete", className: "bg-muted text-muted-foreground border-border", icon: <AlertCircle className="h-3 w-3" /> },
+      paid: { label: "Paid", className: "bg-success/10 text-success border-success/30", icon: <CheckCircle2 className="h-3 w-3" /> },
+      open: { label: "Open", className: "bg-info/10 text-info border-info/30", icon: <Clock className="h-3 w-3" /> },
+      void: { label: "Void", className: "bg-muted text-muted-foreground border-border", icon: <XCircle className="h-3 w-3" /> },
+      uncollectible: { label: "Uncollectible", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <XCircle className="h-3 w-3" /> },
+      succeeded: { label: "Succeeded", className: "bg-success/10 text-success border-success/30", icon: <CheckCircle2 className="h-3 w-3" /> },
+      failed: { label: "Failed", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <XCircle className="h-3 w-3" /> },
+      pending: { label: "Pending", className: "bg-warning/10 text-warning border-warning/30", icon: <Clock className="h-3 w-3" /> },
     };
     const { label, className, icon } = config[status] || { label: status, className: "bg-muted text-muted-foreground", icon: null };
     return (
@@ -187,17 +187,17 @@ const StatusBadge = forwardRef<HTMLDivElement, { status: string; isPaused?: bool
 function TimelineIcon({ type }: { type: string }) {
   switch (type) {
     case "created":
-      return <ArrowUpRight className="h-4 w-4 text-green-500" />;
+      return <ArrowUpRight className="h-4 w-4 text-success" />;
     case "plan_changed":
-      return <ChevronUp className="h-4 w-4 text-blue-500" />;
+      return <ChevronUp className="h-4 w-4 text-info" />;
     case "canceled":
-      return <XCircle className="h-4 w-4 text-red-500" />;
+      return <XCircle className="h-4 w-4 text-destructive" />;
     case "reactivated":
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      return <CheckCircle2 className="h-4 w-4 text-success" />;
     case "payment_succeeded":
-      return <DollarSign className="h-4 w-4 text-green-500" />;
+      return <DollarSign className="h-4 w-4 text-success" />;
     case "payment_failed":
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
+      return <AlertCircle className="h-4 w-4 text-destructive" />;
     default:
       return <Clock className="h-4 w-4 text-muted-foreground" />;
   }
@@ -313,14 +313,14 @@ export function SubscriptionDetailModal({
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={() => handleAction("cancel")}
-                            className="text-amber-600 focus:text-amber-600 text-xs sm:text-sm"
+                            className="text-warning focus:text-warning text-xs sm:text-sm"
                           >
                             <Ban className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                             Cancel at Period End
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleAction("cancel_immediately")}
-                            className="text-red-600 focus:text-red-600 text-xs sm:text-sm"
+                            className="text-destructive focus:text-destructive text-xs sm:text-sm"
                           >
                             <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                             Cancel Immediately
@@ -382,12 +382,12 @@ export function SubscriptionDetailModal({
                     <>
                       {/* Status Alerts */}
                       {isPaused && (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-purple-200 bg-purple-50">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-info/30 bg-info/5">
                           <div className="flex items-center gap-2 flex-1">
-                            <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 shrink-0" />
+                            <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-info shrink-0" />
                             <div>
-                              <p className="font-medium text-purple-900 text-sm sm:text-base">Subscription Paused</p>
-                              <p className="text-xs sm:text-sm text-purple-700">Billing is paused. No charges will be made until resumed.</p>
+                              <p className="font-medium text-foreground text-sm sm:text-base">Subscription Paused</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Billing is paused. No charges will be made until resumed.</p>
                             </div>
                           </div>
                           <Button size="sm" onClick={() => handleAction("resume")} disabled={manageMutation.isPending} className="self-start sm:self-auto text-xs sm:text-sm h-8">
@@ -397,12 +397,12 @@ export function SubscriptionDetailModal({
                       )}
 
                       {isCanceling && (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-amber-200 bg-amber-50">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-warning/30 bg-warning/5">
                           <div className="flex items-center gap-2 flex-1">
-                            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 shrink-0" />
+                            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-warning shrink-0" />
                             <div>
-                              <p className="font-medium text-amber-900 text-sm sm:text-base">Cancellation Scheduled</p>
-                              <p className="text-xs sm:text-sm text-amber-700">
+                              <p className="font-medium text-foreground text-sm sm:text-base">Cancellation Scheduled</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 Will cancel on {format(new Date(subscription.current_period_end), "MMM d, yyyy")}
                               </p>
                             </div>
@@ -432,8 +432,8 @@ export function SubscriptionDetailModal({
                           </div>
 
                           <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-green-500/10">
-                              <DollarSign className="h-5 w-5 text-green-600" />
+                            <div className="p-2 rounded-full bg-success/10">
+                              <DollarSign className="h-5 w-5 text-success" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Monthly Revenue</p>
@@ -444,8 +444,8 @@ export function SubscriptionDetailModal({
 
                         <div className="space-y-4">
                           <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-blue-500/10">
-                              <Calendar className="h-5 w-5 text-blue-600" />
+                            <div className="p-2 rounded-full bg-info/10">
+                              <Calendar className="h-5 w-5 text-info" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Current Period</p>
@@ -459,8 +459,8 @@ export function SubscriptionDetailModal({
                           </div>
 
                           <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-amber-500/10">
-                              <User className="h-5 w-5 text-amber-600" />
+                            <div className="p-2 rounded-full bg-warning/10">
+                              <User className="h-5 w-5 text-warning" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Leads Unlocked This Month</p>
@@ -521,10 +521,10 @@ export function SubscriptionDetailModal({
                         >
                           <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-full ${
-                              payment.status === "succeeded" ? "bg-green-500/10" : "bg-red-500/10"
+                              payment.status === "succeeded" ? "bg-success/10" : "bg-destructive/10"
                             }`}>
                               <CreditCard className={`h-4 w-4 ${
-                                payment.status === "succeeded" ? "text-green-600" : "text-red-600"
+                                payment.status === "succeeded" ? "text-success" : "text-destructive"
                               }`} />
                             </div>
                             <div>
@@ -569,8 +569,8 @@ export function SubscriptionDetailModal({
                           className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full bg-blue-500/10">
-                              <Receipt className="h-4 w-4 text-blue-600" />
+                            <div className="p-2 rounded-full bg-info/10">
+                              <Receipt className="h-4 w-4 text-info" />
                             </div>
                             <div>
                               <p className="font-medium">{invoice.number || `Invoice ${invoice.id.slice(-8)}`}</p>
@@ -700,7 +700,7 @@ export function SubscriptionDetailModal({
             <AlertDialogAction
               onClick={confirmActionHandler}
               disabled={manageMutation.isPending}
-              className={confirmAction === "cancel_immediately" ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"}
+              className={confirmAction === "cancel_immediately" ? "bg-destructive hover:bg-destructive/90" : "bg-warning hover:bg-warning/90 text-warning-foreground"}
             >
               {manageMutation.isPending ? (
                 <>

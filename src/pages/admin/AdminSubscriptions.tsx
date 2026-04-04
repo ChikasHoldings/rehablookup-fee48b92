@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   CreditCard,
   DollarSign,
@@ -9,8 +11,6 @@ import {
   AlertTriangle,
   Search,
   ArrowUpRight,
-  ArrowDownRight,
-  RefreshCw,
   ChevronUp,
   ChevronDown,
   Minus,
@@ -22,10 +22,6 @@ import {
   ExternalLink,
   Settings2,
   Star,
-  Crown,
-  Eye,
-  MapPin,
-  Info,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,8 +31,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -115,62 +109,40 @@ type Profile = {
   last_name: string;
 };
 
-// Plan badge component
+/* ───── Plan badge ───── */
 function PlanBadge({ plan }: { plan: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    free: { label: "Free", className: "bg-slate-100 text-slate-700 border-slate-200" },
-    pro: { label: "Pro", className: "bg-amber-100 text-amber-700 border-amber-200" },
+    free: { label: "Free", className: "bg-muted text-muted-foreground border-border" },
+    pro: { label: "Pro", className: "bg-warning/10 text-warning border-warning/30" },
   };
-
   const { label, className } = config[plan] || { label: plan, className: "bg-muted text-muted-foreground" };
-
-  return (
-    <Badge variant="outline" className={className}>
-      {label}
-    </Badge>
-  );
+  return <Badge variant="outline" className={className}>{label}</Badge>;
 }
 
-// Status badge component
+/* ───── Status badge ───── */
 function StatusBadge({ status, cancelAtPeriodEnd }: { status: string; cancelAtPeriodEnd?: boolean }) {
   if (cancelAtPeriodEnd) {
-    return (
-      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-        Canceling
-      </Badge>
-    );
+    return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Canceling</Badge>;
   }
-
   const config: Record<string, { label: string; className: string }> = {
-    active: { label: "Active", className: "bg-green-50 text-green-700 border-green-200" },
-    canceled: { label: "Canceled", className: "bg-red-50 text-red-700 border-red-200" },
-    past_due: { label: "Past Due", className: "bg-red-50 text-red-700 border-red-200" },
-    trialing: { label: "Trial", className: "bg-purple-50 text-purple-700 border-purple-200" },
-    incomplete: { label: "Incomplete", className: "bg-slate-50 text-slate-600 border-slate-200" },
+    active: { label: "Active", className: "bg-success/10 text-success border-success/30" },
+    canceled: { label: "Canceled", className: "bg-destructive/10 text-destructive border-destructive/30" },
+    past_due: { label: "Past Due", className: "bg-destructive/10 text-destructive border-destructive/30" },
+    trialing: { label: "Trial", className: "bg-info/10 text-info border-info/30" },
+    incomplete: { label: "Incomplete", className: "bg-muted text-muted-foreground border-border" },
   };
-
   const { label, className } = config[status] || { label: status, className: "bg-muted text-muted-foreground" };
-
-  return (
-    <Badge variant="outline" className={className}>
-      {label}
-    </Badge>
-  );
+  return <Badge variant="outline" className={className}>{label}</Badge>;
 }
 
-// Event type icon
+/* ───── Event icon ───── */
 function EventIcon({ type }: { type: string }) {
   switch (type) {
-    case "upgrade":
-      return <ChevronUp className="h-4 w-4 text-green-500" />;
-    case "downgrade":
-      return <ChevronDown className="h-4 w-4 text-amber-500" />;
-    case "canceled":
-      return <Minus className="h-4 w-4 text-red-500" />;
-    case "new":
-      return <ArrowUpRight className="h-4 w-4 text-blue-500" />;
-    default:
-      return null;
+    case "upgrade": return <ChevronUp className="h-4 w-4 text-success" />;
+    case "downgrade": return <ChevronDown className="h-4 w-4 text-warning" />;
+    case "canceled": return <Minus className="h-4 w-4 text-destructive" />;
+    case "new": return <ArrowUpRight className="h-4 w-4 text-info" />;
+    default: return null;
   }
 }
 
@@ -194,11 +166,35 @@ type EnrichedSubscription = {
   location_limit: number;
 };
 
+const VALID_TABS = ["overview", "subscriptions", "featured", "retention", "settings"] as const;
+type ValidTab = typeof VALID_TABS[number];
+
 export default function AdminSubscriptions() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminSubscriptions");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Sync tab from URL
+  const tabFromUrl = searchParams.get("tab") as ValidTab | null;
+  const [activeTab, setActiveTab] = useState<string>(
+    tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : "overview"
+  );
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSearchParams(tab === "overview" ? {} : { tab }, { replace: true });
+  };
+
+  // Sync URL → state on nav
+  useEffect(() => {
+    const t = searchParams.get("tab") as ValidTab | null;
+    if (t && VALID_TABS.includes(t) && t !== activeTab) {
+      setActiveTab(t);
+    }
+  }, [searchParams]);
+
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 350);
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -208,7 +204,6 @@ export default function AdminSubscriptions() {
   const [selectedSubscription, setSelectedSubscription] = useState<EnrichedSubscription | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // Invalidate subscription queries helper
   const invalidateSubscriptionQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-subscription-stats"] });
     queryClient.invalidateQueries({ queryKey: ["admin-subscriptions-facilities"] });
@@ -217,187 +212,125 @@ export default function AdminSubscriptions() {
     queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
   }, [queryClient]);
 
-  // Real-time subscriptions for facilities, leads, lead unlocks, and retention changes - always active
+  /* ───── Realtime channels ───── */
   useEffect(() => {
-    const facilitiesChannel = supabase
-      .channel("admin-subscriptions-facilities-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "facilities" },
-        (payload) => {
-          invalidateSubscriptionQueries();
-          if (payload.eventType === "INSERT") {
-            toast.info("New provider registered", {
-              description: "Subscription data updated",
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    // Real-time for lead unlocks (providers paying to unlock leads)
-    const leadUnlocksChannel = supabase
-      .channel("admin-subscriptions-lead-unlocks-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "lead_unlocks" },
-        () => {
+    const channels = [
+      supabase
+        .channel("admin-subs-facilities-rt")
+        .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () => invalidateSubscriptionQueries())
+        .subscribe(),
+      supabase
+        .channel("admin-subs-unlocks-rt")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "lead_unlocks" }, () => {
           queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
           queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
-        }
-      )
-      .subscribe();
-
-    // Real-time for new leads received (affects at-risk calculations)
-    const leadsChannel = supabase
-      .channel("admin-subscriptions-leads-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        () => {
+        })
+        .subscribe(),
+      supabase
+        .channel("admin-subs-leads-rt")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, () => {
           queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
-        }
-      )
-      .subscribe();
-
-    // Real-time for retention outreach alerts
-    const alertsChannel = supabase
-      .channel("admin-retention-alerts-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "subscription_alerts" },
-        () => {
+        })
+        .subscribe(),
+      supabase
+        .channel("admin-subs-alerts-rt")
+        .on("postgres_changes", { event: "*", schema: "public", table: "subscription_alerts" }, () => {
           queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
-        }
-      )
-      .subscribe();
-
-    // Real-time for activity log (login events affect re-engagement metrics)
-    const activityChannel = supabase
-      .channel("admin-retention-activity-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "account_activity_log" },
-        () => {
+        })
+        .subscribe(),
+      supabase
+        .channel("admin-subs-activity-rt")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "account_activity_log" }, () => {
           queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
           queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
-        }
-      )
-      .subscribe();
+        })
+        .subscribe(),
+    ];
 
-    return () => {
-      supabase.removeChannel(facilitiesChannel);
-      supabase.removeChannel(leadUnlocksChannel);
-      supabase.removeChannel(leadsChannel);
-      supabase.removeChannel(alertsChannel);
-      supabase.removeChannel(activityChannel);
-    };
+    return () => { channels.forEach((ch) => supabase.removeChannel(ch)); };
   }, [invalidateSubscriptionQueries, queryClient]);
 
-  // Fetch subscription stats from Stripe
-  const { data: stripeStats, isLoading: isLoadingStripe, refetch, error: stripeError } = useQuery({
+  /* ───── Data queries ───── */
+  const { data: stripeStats, isLoading: isLoadingStripe, error: stripeError } = useQuery({
     queryKey: ["admin-subscription-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-revenue-stats");
       if (error) throw error;
       return data as SubscriptionStats;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Fetch all facilities
   const { data: facilities, isLoading: isLoadingFacilities, error: facilitiesError } = useQuery({
     queryKey: ["admin-subscriptions-facilities"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facilities")
-        .select("id, name, slug, city, state, facility_type, status, verified, featured, suspended, user_id, logo_url, phone, email, created_at, updated_at")
-        .order("created_at", { ascending: false });
+        .select("id, name, city, state, status, featured, logo_url, user_id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1000);
       if (error) throw error;
       return data as Facility[];
     },
   });
 
-  // Fetch profiles to map emails
   const { data: profiles, error: profilesError } = useQuery({
     queryKey: ["admin-subscriptions-profiles"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, email, first_name, last_name");
+        .select("user_id, email, first_name, last_name")
+        .limit(1000);
       if (error) throw error;
       return data as Profile[];
     },
   });
 
-  // Fetch lead unlock counts (leads actually paid for, not just received)
   const { data: leadCounts, error: leadCountsError } = useQuery({
     queryKey: ["admin-subscription-lead-counts"],
     queryFn: async () => {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
-
       const { data } = await supabase
         .from("lead_unlocks")
         .select("facility_id")
-        .gte("created_at", startOfMonth.toISOString());
-
+        .gte("created_at", startOfMonth.toISOString())
+        .limit(5000);
       const counts: Record<string, number> = {};
-      data?.forEach((unlock) => {
-        if (unlock.facility_id) {
-          counts[unlock.facility_id] = (counts[unlock.facility_id] || 0) + 1;
-        }
+      data?.forEach((u) => {
+        if (u.facility_id) counts[u.facility_id] = (counts[u.facility_id] || 0) + 1;
       });
       return counts;
     },
   });
 
-  // Log query errors
-  useEffect(() => {
-    if (stripeError) logError("fetch_subscription_stats", stripeError, { queryKey: "admin-subscription-stats" });
-  }, [stripeError, logError]);
+  /* ───── Error logging ───── */
+  useEffect(() => { if (stripeError) logError("fetch_subscription_stats", stripeError); }, [stripeError, logError]);
+  useEffect(() => { if (facilitiesError) logError("fetch_facilities", facilitiesError); }, [facilitiesError, logError]);
+  useEffect(() => { if (profilesError) logError("fetch_profiles", profilesError); }, [profilesError, logError]);
+  useEffect(() => { if (leadCountsError) logError("fetch_lead_counts", leadCountsError); }, [leadCountsError, logError]);
 
-  useEffect(() => {
-    if (facilitiesError) logError("fetch_facilities", facilitiesError, { queryKey: "admin-subscriptions-facilities" });
-  }, [facilitiesError, logError]);
-
-  useEffect(() => {
-    if (profilesError) logError("fetch_profiles", profilesError, { queryKey: "admin-subscriptions-profiles" });
-  }, [profilesError, logError]);
-
-  useEffect(() => {
-    if (leadCountsError) logError("fetch_lead_counts", leadCountsError, { queryKey: "admin-subscription-lead-counts" });
-  }, [leadCountsError, logError]);
-
-  // Map email to profile
+  /* ───── Derived data ───── */
   const emailToProfile = useMemo(() => {
     const map: Record<string, Profile> = {};
-    profiles?.forEach((p) => {
-      map[p.email.toLowerCase()] = p;
-    });
+    profiles?.forEach((p) => { map[p.email.toLowerCase()] = p; });
     return map;
   }, [profiles]);
 
-  // Map user_id to facility
   const userToFacility = useMemo(() => {
     const map: Record<string, Facility> = {};
-    facilities?.forEach((f) => {
-      map[f.user_id] = f;
-    });
+    facilities?.forEach((f) => { map[f.user_id] = f; });
     return map;
   }, [facilities]);
 
-  // Combine subscription data with facility data
   const enrichedSubscriptions = useMemo(() => {
     if (!stripeStats?.subscriptions) return [];
-
     return stripeStats.subscriptions.map((sub) => {
       const profile = emailToProfile[sub.customer_email.toLowerCase()];
       const facility = profile ? userToFacility[profile.user_id] : null;
       const leadsUsed = facility ? (leadCounts?.[facility.id] || 0) : 0;
       const planDetails = PLAN_DETAILS[sub.plan as keyof typeof PLAN_DETAILS];
-
       return {
         ...sub,
         facility_name: facility?.name || "No facility",
@@ -409,87 +342,61 @@ export default function AdminSubscriptions() {
     });
   }, [stripeStats?.subscriptions, emailToProfile, userToFacility, leadCounts]);
 
-  // Filter subscriptions
+  /* ───── Filtering ───── */
   const filteredSubscriptions = useMemo(() => {
     return enrichedSubscriptions.filter((sub) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesName = sub.facility_name.toLowerCase().includes(query);
-        const matchesEmail = sub.customer_email.toLowerCase().includes(query);
-        if (!matchesName && !matchesEmail) return false;
+      if (debouncedSearch) {
+        const q = debouncedSearch.toLowerCase();
+        if (!sub.facility_name.toLowerCase().includes(q) && !sub.customer_email.toLowerCase().includes(q)) return false;
       }
-
-      // Plan filter
       if (planFilter !== "all" && sub.plan !== planFilter) return false;
-
-      // Status filter
       if (statusFilter === "active" && sub.status !== "active") return false;
       if (statusFilter === "canceled" && sub.status !== "canceled") return false;
       if (statusFilter === "canceling" && !sub.cancel_at_period_end) return false;
       if (statusFilter === "past_due" && sub.status !== "past_due") return false;
-
       return true;
     });
-  }, [enrichedSubscriptions, searchQuery, planFilter, statusFilter]);
+  }, [enrichedSubscriptions, debouncedSearch, planFilter, statusFilter]);
 
-  // Sort subscriptions
+  /* ───── Sorting ───── */
   const sortedSubscriptions = useMemo(() => {
     const planOrder = { free: 0, pro: 1 };
     const statusOrder = { active: 0, trialing: 1, past_due: 2, incomplete: 3, canceled: 4 };
-
     return [...filteredSubscriptions].sort((a, b) => {
-      let comparison = 0;
-
+      let cmp = 0;
       switch (sortColumn) {
-        case "name":
-          comparison = a.facility_name.localeCompare(b.facility_name);
+        case "name": cmp = a.facility_name.localeCompare(b.facility_name); break;
+        case "plan": cmp = (planOrder[a.plan as keyof typeof planOrder] || 0) - (planOrder[b.plan as keyof typeof planOrder] || 0); break;
+        case "status": {
+          const sa = a.cancel_at_period_end ? "canceling" : a.status;
+          const sb = b.cancel_at_period_end ? "canceling" : b.status;
+          cmp = (statusOrder[sa as keyof typeof statusOrder] || 0) - (statusOrder[sb as keyof typeof statusOrder] || 0);
           break;
-        case "plan":
-          comparison = (planOrder[a.plan as keyof typeof planOrder] || 0) - (planOrder[b.plan as keyof typeof planOrder] || 0);
-          break;
-        case "status":
-          const aStatus = a.cancel_at_period_end ? "canceling" : a.status;
-          const bStatus = b.cancel_at_period_end ? "canceling" : b.status;
-          comparison = (statusOrder[aStatus as keyof typeof statusOrder] || 0) - (statusOrder[bStatus as keyof typeof statusOrder] || 0);
-          break;
-        case "revenue":
-          comparison = a.monthly_amount - b.monthly_amount;
-          break;
-        case "renews":
-          comparison = new Date(a.current_period_end).getTime() - new Date(b.current_period_end).getTime();
-          break;
+        }
+        case "revenue": cmp = a.monthly_amount - b.monthly_amount; break;
+        case "renews": cmp = new Date(a.current_period_end).getTime() - new Date(b.current_period_end).getTime(); break;
       }
-
-      return sortDirection === "asc" ? comparison : -comparison;
+      return sortDirection === "asc" ? cmp : -cmp;
     });
   }, [filteredSubscriptions, sortColumn, sortDirection]);
 
-  // Handle column sort click
-  const handleSort = (column: SortColumn) => {
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortColumn(column);
-      setSortDirection("asc");
-    }
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortColumn(col); setSortDirection("asc"); }
     setCurrentPage(1);
   };
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, planFilter, statusFilter]);
+  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(sortedSubscriptions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedSubscriptions = sortedSubscriptions.slice(startIndex, endIndex);
+  /* ───── Pagination ───── */
+  const totalPages = Math.max(1, Math.ceil(sortedSubscriptions.length / itemsPerPage));
+  const paginatedSubscriptions = sortedSubscriptions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const isLoading = isLoadingStripe || isLoadingFacilities;
 
-  // Calculate plan distribution for visual indicator
   const planDistribution = useMemo(() => {
     if (!stripeStats) return { free: 0, pro: 0 };
     const total = stripeStats.active_subscriptions || 1;
@@ -499,108 +406,120 @@ export default function AdminSubscriptions() {
     };
   }, [stripeStats]);
 
-  // Safe data accessors
-  const safePaginatedSubscriptions = paginatedSubscriptions || [];
-  const safeRecentEvents = stripeStats?.recent_events || [];
+  /* ───── Sort header helper ───── */
+  const SortHeader = ({ col, children }: { col: SortColumn; children: React.ReactNode }) => (
+    <TableHead
+      className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+      onClick={() => handleSort(col)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortColumn === col && (
+          sortDirection === "asc" ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Subscriptions</h1>
-        <p className="text-muted-foreground">Monitor revenue, plan distribution, and churn</p>
+        <p className="text-sm text-muted-foreground">Monitor revenue, plan distribution, and churn</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <LayoutDashboard className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="subscriptions" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            Subscriptions
-          </TabsTrigger>
-          <TabsTrigger value="featured" className="flex items-center gap-2">
-            <Star className="h-4 w-4" />
-            Featured
-          </TabsTrigger>
-          <TabsTrigger value="retention" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Retention
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:grid sm:w-full sm:max-w-3xl sm:grid-cols-5">
+            <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">Subscriptions</span>
+            </TabsTrigger>
+            <TabsTrigger value="featured" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Star className="h-4 w-4" />
+              <span className="hidden sm:inline">Featured</span>
+            </TabsTrigger>
+            <TabsTrigger value="retention" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Retention</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Settings2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* Overview Tab */}
+        {/* ═══════ Overview Tab ═══════ */}
         <TabsContent value="overview" className="space-y-6">
           {/* Revenue Stats */}
           <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-            <Card className="border-border/40">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-emerald-500/10 shrink-0">
-                    <DollarSign className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">MRR</p>
-                    <p className="text-lg sm:text-xl font-bold leading-tight">${stripeStats?.mrr?.toLocaleString() || "0"}</p>
-                  </div>
-                  <div className={`flex items-center gap-0.5 text-xs font-medium shrink-0 ${(stripeStats?.mrr_growth || 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+            {[
+              {
+                label: "MRR",
+                value: isLoading ? null : `$${stripeStats?.mrr?.toLocaleString() || "0"}`,
+                icon: DollarSign,
+                iconBg: "bg-success/10",
+                iconColor: "text-success",
+                extra: isLoading ? null : (
+                  <span className={`flex items-center gap-0.5 text-xs font-medium ${(stripeStats?.mrr_growth || 0) >= 0 ? "text-success" : "text-destructive"}`}>
                     {(stripeStats?.mrr_growth || 0) >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                     {stripeStats?.mrr_growth || 0}%
+                  </span>
+                ),
+              },
+              {
+                label: "Active",
+                value: isLoading ? null : String(stripeStats?.active_subscriptions || 0),
+                icon: CreditCard,
+                iconBg: "bg-info/10",
+                iconColor: "text-info",
+                extra: isLoading ? null : (
+                  <span className="text-xs font-medium text-success">+{stripeStats?.new_last_30_days || 0}</span>
+                ),
+              },
+              {
+                label: "Churn",
+                value: isLoading ? null : `${stripeStats?.churn_rate || 0}%`,
+                icon: TrendingDown,
+                iconBg: "bg-destructive/10",
+                iconColor: "text-destructive",
+                extra: isLoading ? null : (
+                  <span className="text-xs font-medium text-destructive">{stripeStats?.canceled_last_30_days || 0}</span>
+                ),
+              },
+              {
+                label: "At-Risk",
+                value: isLoading ? null : String(enrichedSubscriptions.filter((s) => s.cancel_at_period_end).length),
+                icon: AlertTriangle,
+                iconBg: "bg-warning/10",
+                iconColor: "text-warning",
+                extra: null,
+              },
+            ].map((card) => (
+              <Card key={card.label} className="border-border/40">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${card.iconBg} shrink-0`}>
+                      <card.icon className={`h-4 w-4 ${card.iconColor}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{card.label}</p>
+                      {card.value === null ? (
+                        <Skeleton className="h-6 w-16 mt-1" />
+                      ) : (
+                        <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums">{card.value}</p>
+                      )}
+                    </div>
+                    {card.extra && <div className="shrink-0">{card.extra}</div>}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/40">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-blue-500/10 shrink-0">
-                    <CreditCard className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Active</p>
-                    <p className="text-lg sm:text-xl font-bold leading-tight">{stripeStats?.active_subscriptions || 0}</p>
-                  </div>
-                  <span className="text-xs font-medium text-emerald-600 shrink-0">+{stripeStats?.new_last_30_days || 0}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/40">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-destructive/10 shrink-0">
-                    <TrendingDown className="h-4 w-4 text-destructive" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Churn</p>
-                    <p className="text-lg sm:text-xl font-bold leading-tight">{stripeStats?.churn_rate || 0}%</p>
-                  </div>
-                  <span className="text-xs font-medium text-destructive shrink-0">{stripeStats?.canceled_last_30_days || 0}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/40">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-warning/10 shrink-0">
-                    <AlertTriangle className="h-4 w-4 text-warning" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">At-Risk</p>
-                    <p className="text-lg sm:text-xl font-bold leading-tight">
-                      {enrichedSubscriptions.filter((s) => s.cancel_at_period_end).length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
           {/* Plan Distribution */}
@@ -613,25 +532,19 @@ export default function AdminSubscriptions() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Free</span>
-                    <span className="text-sm text-muted-foreground">{stripeStats?.free_count || 0}</span>
+                    <span className="text-sm text-muted-foreground tabular-nums">{stripeStats?.free_count || 0}</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-slate-400 rounded-full transition-all duration-500"
-                      style={{ width: `${planDistribution.free}%` }}
-                    />
+                    <div className="h-full bg-muted-foreground/40 rounded-full transition-all duration-500" style={{ width: `${planDistribution.free}%` }} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Pro</span>
-                    <span className="text-sm text-muted-foreground">{stripeStats?.pro_count || 0}</span>
+                    <span className="text-sm text-muted-foreground tabular-nums">{stripeStats?.pro_count || 0}</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                      style={{ width: `${planDistribution.pro}%` }}
-                    />
+                    <div className="h-full bg-warning rounded-full transition-all duration-500" style={{ width: `${planDistribution.pro}%` }} />
                   </div>
                 </div>
               </div>
@@ -650,17 +563,15 @@ export default function AdminSubscriptions() {
             <CardContent>
               {isLoading ? (
                 <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
                   ))}
                 </div>
               ) : stripeStats?.recent_events && stripeStats.recent_events.length > 0 ? (
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {stripeStats.recent_events.slice(0, 9).map((event, i) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                      <div className="mt-0.5">
-                        <EventIcon type={event.type} />
-                      </div>
+                      <div className="mt-0.5"><EventIcon type={event.type} /></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{event.customer_email}</p>
                         <p className="text-xs text-muted-foreground">
@@ -677,23 +588,26 @@ export default function AdminSubscriptions() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center py-4 text-sm text-muted-foreground">No recent activity</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <CreditCard className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">No recent activity</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* All Subscriptions Tab */}
+        {/* ═══════ All Subscriptions Tab ═══════ */}
         <TabsContent value="subscriptions" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5" />
                     All Subscriptions
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="tabular-nums">
                     {sortedSubscriptions.length} of {enrichedSubscriptions.length} providers
                   </CardDescription>
                 </div>
@@ -712,7 +626,7 @@ export default function AdminSubscriptions() {
                   />
                 </div>
                 <Select value={planFilter} onValueChange={setPlanFilter}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-36">
                     <SelectValue placeholder="Plan" />
                   </SelectTrigger>
                   <SelectContent>
@@ -722,7 +636,7 @@ export default function AdminSubscriptions() {
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-36">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -737,8 +651,15 @@ export default function AdminSubscriptions() {
 
               {isLoading ? (
                 <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <Skeleton className="h-4 w-40 flex-1" />
+                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
                   ))}
                 </div>
               ) : sortedSubscriptions.length > 0 ? (
@@ -748,113 +669,47 @@ export default function AdminSubscriptions() {
                       <Table>
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
-                            <TableHead 
-                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                              onClick={() => handleSort("name")}
-                            >
-                              <div className="flex items-center gap-1">
-                                Provider
-                                {sortColumn === "name" && (
-                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                                )}
-                              </div>
-                            </TableHead>
-                            <TableHead 
-                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                              onClick={() => handleSort("plan")}
-                            >
-                              <div className="flex items-center gap-1">
-                                Plan
-                                {sortColumn === "plan" && (
-                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                                )}
-                              </div>
-                            </TableHead>
-                            <TableHead 
-                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                              onClick={() => handleSort("status")}
-                            >
-                              <div className="flex items-center gap-1">
-                                Status
-                                {sortColumn === "status" && (
-                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                                )}
-                              </div>
-                            </TableHead>
+                            <SortHeader col="name">Provider</SortHeader>
+                            <SortHeader col="plan">Plan</SortHeader>
+                            <SortHeader col="status">Status</SortHeader>
                             <TableHead>Leads</TableHead>
-                            <TableHead 
-                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                              onClick={() => handleSort("revenue")}
-                            >
-                              <div className="flex items-center gap-1">
-                                Revenue
-                                {sortColumn === "revenue" && (
-                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                                )}
-                              </div>
-                            </TableHead>
-                            <TableHead 
-                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                              onClick={() => handleSort("renews")}
-                            >
-                              <div className="flex items-center gap-1">
-                                Renews
-                                {sortColumn === "renews" && (
-                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                                )}
-                              </div>
-                            </TableHead>
+                            <SortHeader col="revenue">Revenue</SortHeader>
+                            <SortHeader col="renews">Renews</SortHeader>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {paginatedSubscriptions.map((sub) => (
-                            <TableRow 
+                            <TableRow
                               key={sub.customer_id}
                               className="cursor-pointer hover:bg-muted/50"
-                              onClick={() => {
-                                setSelectedSubscription(sub);
-                                setIsDetailModalOpen(true);
-                              }}
+                              onClick={() => { setSelectedSubscription(sub); setIsDetailModalOpen(true); }}
                             >
-                              <TableCell>
+                              <TableCell className="min-w-[200px]">
                                 <div className="min-w-0">
-                                  <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
-                                  <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                    {sub.customer_email}
-                                  </p>
+                                  <p className="font-medium truncate max-w-[200px] text-sm">{sub.facility_name}</p>
+                                  <p className="text-xs text-muted-foreground truncate max-w-[200px]">{sub.customer_email}</p>
                                 </div>
                               </TableCell>
-                              <TableCell>
-                                <PlanBadge plan={sub.plan} />
-                              </TableCell>
-                              <TableCell>
-                                <StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} />
-                              </TableCell>
+                              <TableCell><PlanBadge plan={sub.plan} /></TableCell>
+                              <TableCell><StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} /></TableCell>
                               <TableCell>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-2 cursor-default" onClick={(e) => e.stopPropagation()}>
-                                      <span className="text-sm text-muted-foreground">
-                                        {sub.leads_used} this month
-                                      </span>
-                                    </div>
+                                    <span className="text-sm text-muted-foreground tabular-nums cursor-default" onClick={(e) => e.stopPropagation()}>
+                                      {sub.leads_used} this mo
+                                    </span>
                                   </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{sub.leads_used} leads unlocked this month</p>
-                                  </TooltipContent>
+                                  <TooltipContent><p>{sub.leads_used} leads unlocked this month</p></TooltipContent>
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <span className="font-medium">${sub.monthly_amount}</span>
+                                <span className="font-medium tabular-nums">${sub.monthly_amount}</span>
                                 <span className="text-muted-foreground">/mo</span>
                               </TableCell>
                               <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-muted-foreground">
-                                    {format(new Date(sub.current_period_end), "MMM d, yyyy")}
-                                  </span>
-                                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
+                                <span className="text-sm text-muted-foreground tabular-nums">
+                                  {format(new Date(sub.current_period_end), "MMM d, yyyy")}
+                                </span>
                               </TableCell>
                             </TableRow>
                           ))}
@@ -863,20 +718,12 @@ export default function AdminSubscriptions() {
                     </div>
                   </TooltipProvider>
 
-                  {/* Pagination Controls */}
+                  {/* Pagination */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground tabular-nums">
                       <span>Showing</span>
-                      <Select 
-                        value={itemsPerPage.toString()} 
-                        onValueChange={(value) => {
-                          setItemsPerPage(Number(value));
-                          setCurrentPage(1);
-                        }}
-                      >
-                        <SelectTrigger className="w-[70px] h-8">
-                          <SelectValue />
-                        </SelectTrigger>
+                      <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                        <SelectTrigger className="w-[70px] h-8"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="10">10</SelectItem>
                           <SelectItem value="25">25</SelectItem>
@@ -886,123 +733,48 @@ export default function AdminSubscriptions() {
                       </Select>
                       <span>of {sortedSubscriptions.length} results</span>
                     </div>
-
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Previous
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                        <ChevronLeft className="h-4 w-4 mr-1" />Prev
                       </Button>
-                      <div className="flex items-center gap-1">
-                        {totalPages <= 7 ? (
-                          [...Array(totalPages)].map((_, i) => (
-                            <Button
-                              key={i + 1}
-                              variant={currentPage === i + 1 ? "default" : "outline"}
-                              size="sm"
-                              className="w-8 h-8 p-0"
-                              onClick={() => setCurrentPage(i + 1)}
-                            >
-                              {i + 1}
-                            </Button>
-                          ))
-                        ) : (
-                          <>
-                            {currentPage > 3 && (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-8 h-8 p-0"
-                                  onClick={() => setCurrentPage(1)}
-                                >
-                                  1
-                                </Button>
-                                {currentPage > 4 && <span className="px-1 text-muted-foreground">...</span>}
-                              </>
-                            )}
-                            {[...Array(5)].map((_, i) => {
-                              let pageNum: number;
-                              if (currentPage <= 3) {
-                                pageNum = i + 1;
-                              } else if (currentPage >= totalPages - 2) {
-                                pageNum = totalPages - 4 + i;
-                              } else {
-                                pageNum = currentPage - 2 + i;
-                              }
-                              if (pageNum < 1 || pageNum > totalPages) return null;
-                              return (
-                                <Button
-                                  key={pageNum}
-                                  variant={currentPage === pageNum ? "default" : "outline"}
-                                  size="sm"
-                                  className="w-8 h-8 p-0"
-                                  onClick={() => setCurrentPage(pageNum)}
-                                >
-                                  {pageNum}
-                                </Button>
-                              );
-                            })}
-                            {currentPage < totalPages - 2 && (
-                              <>
-                                {currentPage < totalPages - 3 && <span className="px-1 text-muted-foreground">...</span>}
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-8 h-8 p-0"
-                                  onClick={() => setCurrentPage(totalPages)}
-                                >
-                                  {totalPages}
-                                </Button>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4 ml-1" />
+                      <span className="text-sm text-muted-foreground tabular-nums">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                        Next<ChevronRight className="h-4 w-4 ml-1" />
                       </Button>
                     </div>
                   </div>
                 </>
               ) : (
-                <p className="text-center py-8 text-muted-foreground">No subscriptions found</p>
+                <div className="text-center py-12 text-muted-foreground">
+                  <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p className="font-medium">No subscriptions found</p>
+                  <p className="text-sm mt-1">Try adjusting your filters</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Retention Analytics Tab */}
+        {/* ═══════ Retention Tab ═══════ */}
         <TabsContent value="retention" className="space-y-6">
-          {/* At-Risk Providers Section */}
           <AtRiskProvidersCard />
-          
-          {/* Retention Dashboard with Outreach Analytics */}
           <RetentionDashboard />
         </TabsContent>
 
-        {/* Featured Placement Tab */}
+        {/* ═══════ Featured Tab ═══════ */}
         <TabsContent value="featured" className="space-y-6">
           <FeaturedPlacementTab />
         </TabsContent>
 
-        {/* Plan Settings Tab */}
+        {/* ═══════ Settings Tab ═══════ */}
         <TabsContent value="settings" className="space-y-6">
           <PlanSettingsTab />
         </TabsContent>
       </Tabs>
 
-      {/* Subscription Detail Modal */}
+      {/* Detail Modal */}
       <SubscriptionDetailModal
         subscription={selectedSubscription}
         open={isDetailModalOpen}
