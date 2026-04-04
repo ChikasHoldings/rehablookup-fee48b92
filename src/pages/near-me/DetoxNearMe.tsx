@@ -5,7 +5,7 @@ import { SEO, generateTreatmentNearMeSchema, generateNearMeSchema } from "@/comp
 import { NearMeHero } from "@/components/seo/NearMeHero";
 import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection, getDetoxNearMeFAQs } from "@/components/seo/TreatmentFAQSection";
-import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -161,7 +161,23 @@ export default function DetoxNearMe() {
             <SearchResultsLoading />
           ) : (
             <>
-              <FacilityShowcaseGrid facilities={facilities.slice(0, 12) as any[]} />
+              {/* Horizontal scroll on mobile, grid on larger screens */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {facilities.slice(0, 12).map((f) => (
+                  <div key={f.id || f.name}>
+                    <TreatmentCenterCard center={f as any} />
+                  </div>
+                ))}
+              </div>
+              {facilities.length > 12 && (
+                <div className="mt-8 text-center">
+                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                    <Button variant="outline" size="lg" className="gap-2">
+                      View All {facilities.length} Centers <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </>
           )}
         </div>

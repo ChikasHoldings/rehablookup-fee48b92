@@ -24,7 +24,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 
 const faqs = [
   {
@@ -190,7 +190,11 @@ export default function LuxuryRehab() {
               <h2 className="text-2xl font-bold text-foreground">Premium Treatment Facilities</h2>
               <p className="mt-2 text-muted-foreground">Verified luxury rehab centers with world-class clinical programs.</p>
             </div>
-            <FacilityShowcaseGrid facilities={luxuryFacilities as any[]} />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+              {luxuryFacilities.map((facility) => (
+                <TreatmentCenterCard key={facility.id} center={facility} featured={facility.featured} variant="compact" />
+              ))}
+            </div>
             <div className="text-center mt-8">
               <Button asChild variant="outline" size="lg">
                 <Link to="/rehab-centers">View All Centers <ArrowRight className="h-4 w-4 ml-1" /></Link>

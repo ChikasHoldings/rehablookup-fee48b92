@@ -5,7 +5,7 @@ import { SEO, generateNearMeSchema } from "@/components/SEO";
 import { NearMeHero } from "@/components/seo/NearMeHero";
 import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
-import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { statesData } from "@/data/locationSeoData";
@@ -216,7 +216,13 @@ export default function FreeRehabNearMe() {
             <SearchResultsLoading />
           ) : (
             <div>
-              <FacilityShowcaseGrid facilities={facilities.slice(0, 12) as any[]} />
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {facilities.slice(0, 12).map((facility) => (
+                  <div key={facility.id || facility.name}>
+                    <TreatmentCenterCard center={facility as any} />
+                  </div>
+                ))}
+              </div>
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
