@@ -333,12 +333,19 @@ const CITY_TREATMENT_PREFIXES = [
 
 // Insurance + State cross pages
 const INSURANCE_SLUGS = [
-  "aetna-rehab-coverage", "bcbs-rehab-coverage", "cigna-rehab-coverage",
-  "unitedhealthcare-rehab-coverage", "humana-rehab-coverage"
+  "aetna-rehab", "bcbs-treatment", "cigna-rehab",
+  "united-healthcare-rehab", "humana-rehab", "kaiser-rehab",
+  "medicare-rehab", "medicaid-rehab", "anthem-rehab"
 ];
 const INSURANCE_STATES = [
-  "california", "florida", "texas", "new-york", "arizona",
-  "colorado", "ohio", "pennsylvania", "illinois"
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut",
+  "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+  "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan",
+  "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "new-hampshire",
+  "new-jersey", "new-mexico", "new-york", "north-carolina", "north-dakota", "ohio",
+  "oklahoma", "oregon", "pennsylvania", "rhode-island", "south-carolina", "south-dakota",
+  "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west-virginia",
+  "wisconsin", "wyoming"
 ];
 
 function generateStateRoutes(): RouteEntry[] {
