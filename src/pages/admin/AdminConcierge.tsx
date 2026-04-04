@@ -130,17 +130,21 @@ export default function AdminConcierge() {
     },
   });
 
-  const filteredCases = cases?.filter((c) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      c.user_name?.toLowerCase().includes(q) ||
-      c.user_email?.toLowerCase().includes(q) ||
-      c.user_phone?.includes(q)
-    );
+  // Fetch full case data when a case is selected
+  const { data: selectedCase } = useQuery({
+    queryKey: ["admin-concierge-case-detail", selectedCaseId],
+    queryFn: async () => {
+      if (!selectedCaseId) return undefined;
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select("*")
+        .eq("id", selectedCaseId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCaseId,
   });
-
-  const selectedCase = cases?.find((c) => c.id === selectedCaseId);
 
   const handleStatusClick = (status: string) => {
     setStatusFilter(status as CaseStatus);
