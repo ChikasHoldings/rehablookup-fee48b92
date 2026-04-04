@@ -91,9 +91,9 @@ function MetricCard({
 
 // Mask name helper (e.g., "John Smith" -> "John S.")
 const maskName = (name: string): string => {
-  if (!name) return "Anonymous";
+  if (!name) return "Verified User";
   const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return `${parts[0].charAt(0).toUpperCase()}.`;
+  if (parts.length === 1) return parts[0];
   const firstName = parts[0];
   const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
   return `${firstName} ${lastInitial}.`;

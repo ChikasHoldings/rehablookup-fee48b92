@@ -286,7 +286,7 @@ export default function AdminSeekers() {
     if (user.display_name) return user.display_name;
     if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
     if (user.first_name) return user.first_name;
-    return "Anonymous User";
+    return "Verified User";
   };
 
   const getInitials = (user: UserProfile) => {

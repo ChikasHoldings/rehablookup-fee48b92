@@ -109,12 +109,12 @@ export function ReviewsList({
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                         <span className="text-sm font-semibold text-primary">
-                          {review.reviewer_first_name?.charAt(0) || 'A'}
-                          {review.reviewer_last_initial || ''}
+                          {review.reviewer_first_name?.charAt(0) || 'V'}
+                          {review.reviewer_last_initial || 'U'}
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{review.user_display_name || 'Anonymous'}</p>
+                        <p className="font-medium text-foreground">{review.user_display_name || 'Verified User'}</p>
                         {(review.reviewer_city || review.reviewer_state) && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                             <MapPin className="h-3 w-3" />
