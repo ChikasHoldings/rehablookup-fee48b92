@@ -576,7 +576,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Concierge User</span>
                           {hasConcierge ? (
-                            <Badge className="bg-purple-100 text-purple-700 border-purple-200">Yes</Badge>
+                            <Badge variant="outline" className="bg-chart-3/10 text-chart-3 border-chart-3/30">Yes</Badge>
                           ) : (
                             <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
                           )}
