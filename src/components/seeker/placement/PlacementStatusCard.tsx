@@ -87,10 +87,10 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full shrink-0"
+                className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-success/10 rounded-full shrink-0"
               >
-                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-[10px] sm:text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
+                <span className="text-[10px] sm:text-sm font-medium text-success">
                   Complete
                 </span>
               </motion.div>
