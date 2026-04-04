@@ -395,9 +395,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
 
               {/* Data Sources Info */}
               {aggregatedData?.sources && aggregatedData.sources.length > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-info/5 border border-info/20">
+                  <Info className="h-4 w-4 text-info flex-shrink-0" />
+                  <span className="text-sm text-info">
                     Contact info sourced from: {aggregatedData.sources.join(", ")}
                   </span>
                 </div>
