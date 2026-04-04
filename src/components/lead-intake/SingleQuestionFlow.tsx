@@ -107,6 +107,7 @@ const QUESTIONS: Question[] = [
     subtitle: "This helps us find facilities that accept your coverage",
     icon: <Shield className="h-6 w-6" />,
     field: "insuranceType",
+    required: true,
     options: INSURANCE_TYPE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
