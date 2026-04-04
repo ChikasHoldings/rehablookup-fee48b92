@@ -781,7 +781,7 @@ export function PlanSettingsTab() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/5"
                             onClick={() => setDeleteConfirm(coupon?.id || promo.coupon.id)}
                             title="Delete coupon"
                           >
