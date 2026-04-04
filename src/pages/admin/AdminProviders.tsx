@@ -22,10 +22,20 @@ import {
 
 const ITEMS_PER_PAGE = 15;
 
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function AdminProviders() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminProviders");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const searchQuery = useDebounce(searchInput, 350);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
