@@ -562,7 +562,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                           {isBanned ? (
                             <Badge variant="destructive">Banned</Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30">Active</Badge>
                           )}
                         </div>
                         <div className="flex justify-between">
