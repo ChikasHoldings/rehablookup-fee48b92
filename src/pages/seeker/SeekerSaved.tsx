@@ -88,8 +88,8 @@ export default function SeekerSaved() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-rose-100">
-            <Bookmark className="h-5 w-5 text-rose-600" />
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Bookmark className="h-5 w-5 text-primary" />
           </div>
           <h1 className="text-2xl font-display font-bold">Saved Facilities</h1>
         </div>
