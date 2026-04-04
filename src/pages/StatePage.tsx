@@ -43,6 +43,7 @@ const treatmentTypesData = [
 ];
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 // State capital images mapping
 const stateCapitalImages: Record<string, string> = {
