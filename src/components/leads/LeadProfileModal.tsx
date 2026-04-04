@@ -333,7 +333,7 @@ export function LeadProfileModal({
   };
 
   const formatLevelOfCare = (level: string | null) => {
-    if (!level) return "Not specified";
+    if (!level) return "To be determined";
     const map: Record<string, string> = {
       detox: "Detox",
       residential: "Residential Inpatient",
