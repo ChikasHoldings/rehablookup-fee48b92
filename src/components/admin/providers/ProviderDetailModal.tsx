@@ -412,11 +412,11 @@ export function ProviderDetailModal({
   const getLeadStatusBadge = (status: string) => {
     switch (status) {
       case "new":
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-700">New</Badge>;
+        return <Badge variant="secondary" className="bg-info/10 text-info border-info/20">New</Badge>;
       case "contacted":
-        return <Badge className="bg-emerald-100 text-emerald-700">Contacted</Badge>;
+        return <Badge className="bg-success/10 text-success border-success/20">Contacted</Badge>;
       case "converted":
-        return <Badge className="bg-purple-100 text-purple-700">Converted</Badge>;
+        return <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/20">Converted</Badge>;
       case "lost":
         return <Badge variant="destructive">Lost</Badge>;
       default:
