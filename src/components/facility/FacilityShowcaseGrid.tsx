@@ -59,7 +59,7 @@ function FacilityShowcaseCard({
     <button
       onClick={() => navigate(detailUrl, { state: { fromSearch: true } })}
       className={cn(
-        "relative overflow-hidden rounded-xl bg-card border group text-left transition-all duration-300 w-full",
+        "relative overflow-hidden rounded-xl bg-card border group text-left transition-all duration-300 w-full h-full flex flex-col",
         "hover:shadow-lg hover:border-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         isFeatured
           ? "border-amber-200/60 ring-1 ring-amber-100/40"
