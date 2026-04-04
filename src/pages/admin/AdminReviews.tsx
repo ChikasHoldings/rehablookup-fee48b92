@@ -162,11 +162,11 @@ export default function AdminReviews() {
       supabase.from('facilities').select('id, name').in('id', facilityIds),
       userIds.length > 0
         ? supabase.from('seeker_profiles').select('user_id, first_name, last_name, city, state, display_name').in('user_id', userIds)
-        : Promise.resolve({ data: [] })
+        : Promise.resolve({ data: [] as { user_id: string; first_name: string | null; last_name: string | null; city: string | null; state: string | null; display_name: string | null }[] })
     ]);
 
-    const facilityMap = new Map(facilitiesResult.data?.map(f => [f.id, f.name]) || []);
-    const profileMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
+    const facilityMap = new Map(facilitiesResult.data?.map(f => [f.id, f.name] as const) || []);
+    const profileMap = new Map((profilesResult.data || []).map(p => [p.user_id, p] as const));
 
     const enrichedReviews: ReviewWithDetails[] = (data || []).map(review => {
       const profile = profileMap.get(review.user_id);
