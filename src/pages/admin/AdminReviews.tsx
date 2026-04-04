@@ -117,13 +117,16 @@ export default function AdminReviews() {
 
     const enrichedReviews: ReviewWithDetails[] = (data || []).map(review => {
       const profile = profileMap.get(review.user_id);
-      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || 'Anonymous';
+      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
       const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+      const displayName = firstName
+        ? firstName + (lastInitial ? ` ${lastInitial}.` : '')
+        : 'Verified User';
       
       return {
         ...review,
         facility_name: facilityMap.get(review.facility_id) || 'Unknown Facility',
-        reviewer_name: firstName + (lastInitial ? ` ${lastInitial}.` : ''),
+        reviewer_name: displayName,
         reviewer_city: profile?.city || null,
         reviewer_state: profile?.state || null
       };
