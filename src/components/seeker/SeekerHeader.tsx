@@ -413,29 +413,31 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 p-1 sm:pl-1.5 sm:pr-2.5 rounded-lg transition-all duration-200 active:scale-[0.98]"
+                  className="gap-0 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 p-1 sm:px-1.5 rounded-xl transition-all duration-200 active:scale-[0.98]"
                   aria-label="User menu"
                 >
-                  <div className="relative">
-                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-white/30">
-                      {avatarUrl ? (
-                        <AvatarImage 
-                          src={avatarUrl} 
-                          alt={userName || "User"} 
-                          className="object-cover"
-                        />
-                      ) : null}
-                      <AvatarFallback className="bg-gradient-to-br from-white/40 to-white/20 text-white text-xs font-bold">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-400 border-2 border-primary" />
-                  </div>
-                  <div className="hidden md:flex flex-col items-start">
-                    <span className="text-sm font-semibold text-white leading-tight max-w-[100px] truncate">
-                      {userName || "User"}
-                    </span>
-                    <span className="text-[10px] text-white/60 leading-tight">My Account</span>
+                  <div className="flex items-center gap-2 bg-white/10 rounded-lg px-2 py-1">
+                    <div className="relative shrink-0">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-white/30">
+                        {avatarUrl ? (
+                          <AvatarImage 
+                            src={avatarUrl} 
+                            alt={userName || "User"} 
+                            className="object-cover"
+                          />
+                        ) : null}
+                        <AvatarFallback className="bg-gradient-to-br from-white/40 to-white/20 text-white text-xs font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-400 border-2 border-primary" />
+                    </div>
+                    <div className="hidden md:flex flex-col items-start">
+                      <span className="text-sm font-semibold text-white leading-tight max-w-[100px] truncate">
+                        {userName || "User"}
+                      </span>
+                      <span className="text-[10px] text-white/60 leading-tight">My Account</span>
+                    </div>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
