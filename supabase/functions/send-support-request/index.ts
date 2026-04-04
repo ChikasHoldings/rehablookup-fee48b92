@@ -64,7 +64,10 @@ Deno.serve(async (req) => {
     }
 
     const body: SupportRequest = await req.json();
-    const { category, subject, message, source = "provider" } = body;
+    const category = sanitizeStr(body.category, 50);
+    const subject = sanitizeStr(body.subject, 200);
+    const message = sanitizeStr(body.message, 5000);
+    const source = body.source || "provider";
 
     if (!category || !subject || !message) {
       return new Response(

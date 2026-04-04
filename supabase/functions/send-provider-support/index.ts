@@ -23,6 +23,14 @@ const topicLabels: Record<string, string> = {
   other: "Other",
 };
 
+// Input sanitization helpers
+function sanitizeStr(str: string, maxLen = 500): string {
+  return str.trim().replace(/[<>]/g, "").slice(0, maxLen);
+}
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
