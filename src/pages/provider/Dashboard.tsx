@@ -662,7 +662,7 @@ export default function ProviderDashboardPage() {
               <CardContent className="p-3.5">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-foreground">
+                    <span className="text-2xl font-bold text-foreground tabular-nums">
                       {creditsLoading ? (
                         <Skeleton className="h-7 w-16" />
                       ) : (
