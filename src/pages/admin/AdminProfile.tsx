@@ -407,12 +407,12 @@ export default function AdminProfile() {
       </div>
 
       {/* Account Status Card */}
-      <Card className="border-l-4 border-l-green-500">
+      <Card className="border-l-4 border-l-success">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-2 rounded-full bg-green-100">
-                <Shield className="h-5 w-5 text-green-600" />
+              <div className="p-2 rounded-full bg-success/10">
+                <Shield className="h-5 w-5 text-success" />
               </div>
               <div>
                 <p className="font-medium">Account Status: Active</p>
@@ -423,7 +423,7 @@ export default function AdminProfile() {
                 </p>
               </div>
             </div>
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+            <Badge className="bg-success/10 text-success hover:bg-success/10">
               {profile?.status || "active"}
             </Badge>
           </div>
