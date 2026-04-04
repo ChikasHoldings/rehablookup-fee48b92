@@ -459,8 +459,8 @@ export function SubscriptionDetailModal({
                           </div>
 
                           <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-amber-500/10">
-                              <User className="h-5 w-5 text-amber-600" />
+                            <div className="p-2 rounded-full bg-warning/10">
+                              <User className="h-5 w-5 text-warning" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Leads Unlocked This Month</p>
