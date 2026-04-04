@@ -11,6 +11,16 @@ export default function CostInsurancePage() {
   const config = costInsurancePages.find((p) => p.slug === slug);
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
+  const facilities = useMemo(() => {
+    if (!config) return [];
+    const allFacilities = [...treatmentCenters, ...approvedFacilities];
+    if (config.filterKey) {
+      const filterLower = config.filterKey.toLowerCase();
+      return allFacilities.filter((f) => f.insuranceAccepted?.some((i) => i.toLowerCase().includes(filterLower)) || f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower))).slice(0, 12);
+    }
+    return allFacilities.sort((a, b) => (a.featured && !b.featured ? -1 : !a.featured && b.featured ? 1 : 0)).slice(0, 12);
+  }, [approvedFacilities, config]);
+
   if (!config) {
     return <Navigate to="/404" replace />;
   }

@@ -11,6 +11,20 @@ export default function TreatmentHubPage() {
   const config = treatmentHubPages.find((p) => p.slug === slug);
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
+  const matchingTreatment = useMemo(() => config ? seoTreatmentTypes.find((t) => t.filterKey === config.filterKey) : null, [config]);
+
+  const facilities = useMemo(() => {
+    if (!config) return [];
+    const allFacilities = [...treatmentCenters, ...approvedFacilities];
+    const filterLower = config.filterKey.toLowerCase();
+    return allFacilities.filter((f) => f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) || f.description?.toLowerCase().includes(filterLower)).sort((a, b) => (a.featured && !b.featured ? -1 : !a.featured && b.featured ? 1 : 0)).slice(0, 12);
+  }, [approvedFacilities, config]);
+
+  const relatedCityLinks = useMemo(() => {
+    if (!matchingTreatment) return [];
+    return topCities.slice(0, 12).map((city) => ({ title: `${matchingTreatment.shortLabel} in ${city.city}`, href: `/${getCityTreatmentSlug(matchingTreatment, city)}` }));
+  }, [matchingTreatment]);
+
   if (!config) {
     return <Navigate to="/404" replace />;
   }
