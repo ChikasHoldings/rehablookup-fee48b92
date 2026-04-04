@@ -187,17 +187,17 @@ const StatusBadge = forwardRef<HTMLDivElement, { status: string; isPaused?: bool
 function TimelineIcon({ type }: { type: string }) {
   switch (type) {
     case "created":
-      return <ArrowUpRight className="h-4 w-4 text-green-500" />;
+      return <ArrowUpRight className="h-4 w-4 text-success" />;
     case "plan_changed":
-      return <ChevronUp className="h-4 w-4 text-blue-500" />;
+      return <ChevronUp className="h-4 w-4 text-info" />;
     case "canceled":
-      return <XCircle className="h-4 w-4 text-red-500" />;
+      return <XCircle className="h-4 w-4 text-destructive" />;
     case "reactivated":
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      return <CheckCircle2 className="h-4 w-4 text-success" />;
     case "payment_succeeded":
-      return <DollarSign className="h-4 w-4 text-green-500" />;
+      return <DollarSign className="h-4 w-4 text-success" />;
     case "payment_failed":
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
+      return <AlertCircle className="h-4 w-4 text-destructive" />;
     default:
       return <Clock className="h-4 w-4 text-muted-foreground" />;
   }
