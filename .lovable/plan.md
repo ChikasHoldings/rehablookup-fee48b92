@@ -1,253 +1,113 @@
 
 
-# SEO Enhancement Strategy: 10,000+ Monthly Organic Visitors
+# Plan: SEO Expansion — Substance Pages, City Expansion, Insurance+State Pages, Hreflang & Best-in-State Roundups
 
-## Current Baseline
+## What We're Building
 
-| Asset Type | Current Count | Potential Traffic |
-|------------|---------------|-------------------|
-| Blog Articles | 72 | Medium-High |
-| Near-Me Pages | 30 | High |
-| Facility Profiles | 2 | Low (need more!) |
-| Location Pages | 80 | Medium |
-| Insurance Pages | 13 | Medium |
+Based on the audit recommendations, we'll implement 5 major SEO expansions plus a sitemap update. All pages use the proven `SEOLandingTemplate` pattern with rich content, FAQ schema, and internal linking.
 
 ---
 
-## The 5-Pillar Strategy
+## Phase 1: Substance-Specific Landing Pages (6 pages)
 
-### Pillar 1: Facility Acquisition (Critical)
+**New pages under `/substance/`:**
+- `/cocaine-addiction-treatment`
+- `/opioid-addiction-treatment`
+- `/heroin-addiction-treatment`
+- `/meth-addiction-treatment`
+- `/prescription-drug-rehab`
+- `/benzodiazepine-addiction-treatment`
 
-**Problem**: Only 2 approved facilities severely limits local SEO potential.
-
-**Solution**: Each facility profile creates:
-- 1 unique indexable page with LocalBusiness schema
-- Backlink opportunities from provider websites
-- User-generated reviews/signals
-- City-specific keyword targeting
-
-**Target**: 100+ facilities within 6 months
-
-**Estimated Traffic**: 50-200 visitors/month per active facility profile
-
----
-
-### Pillar 2: Long-Tail Keyword Content Expansion
-
-**High-Volume Keywords Currently Untargeted**:
-
-| Keyword | Monthly Searches | Difficulty |
-|---------|------------------|------------|
-| "is my loved one an alcoholic" | 5,400 | Low |
-| "how to talk to someone about addiction" | 3,200 | Low |
-| "does insurance cover rehab" | 8,100 | Medium |
-| "difference between rehab and detox" | 2,900 | Low |
-| "what is PHP treatment" | 4,500 | Low |
-| "can you visit someone in rehab" | 6,200 | Low |
-| "how to find a good rehab" | 3,800 | Low |
-| "celebrities who went to rehab" | 12,000 | Medium |
-| "drug rehab vs alcohol rehab" | 1,800 | Low |
-| "what happens on day 1 of rehab" | 2,400 | Low |
-
-**Implementation**:
-
-Create 20 additional articles targeting these keywords with:
-- 1,500+ words per article
-- Internal links to relevant treatment types
-- FAQ sections with schema markup
-- Custom images (already proven to work)
+**Implementation:**
+- Add `SubstanceConfig` type to `src/data/seoPageConfig.ts` with content, FAQs, symptoms, treatment approaches
+- Create `src/pages/seo/SubstanceTreatmentPage.tsx` — a single dynamic page component using `SEOLandingTemplate`
+- Each page includes: detailed intro (200+ words), 3-4 content sections (signs/symptoms, treatment approaches, recovery timeline, insurance), FAQ schema (5+ questions), facility listings filtered by substance keyword, internal links to city combos and insurance pages
+- Register 6 routes in `App.tsx`
 
 ---
 
-### Pillar 3: Geographic Expansion
+## Phase 2: Expand City+Treatment Combos to 50 Cities (150 new combos)
 
-**Current Gap**: State pages exist but lack unique content.
+**Add 25 new cities** to `topCities` in `seoPageConfig.ts`:
+Nashville ✓ (exists), San Diego ✓, Portland ✓, Minneapolis, Detroit, San Antonio ✓, Sacramento, Tampa, Charlotte ✓, Salt Lake City, Baltimore, Milwaukee, Kansas City, Tucson, Raleigh, Richmond, New Orleans, Pittsburgh, Oklahoma City, Honolulu, Albuquerque, Omaha, Virginia Beach, Boise, Spokane
 
-**Solution**: Create state-specific content hubs:
-
-```
-/rehab-centers/california
-  └── /rehab-centers/california/los-angeles
-  └── /rehab-centers/california/san-diego
-  └── /resources/california-drug-rehab-laws
-  └── /resources/california-medi-cal-coverage
-```
-
-**Priority States** (highest search volume):
-1. California
-2. Florida  
-3. Texas
-4. New York
-5. Arizona
-6. Colorado
-7. Ohio
-8. Pennsylvania
-9. Illinois
-10. Georgia
-
-**Implementation**: 10 state-specific resource articles covering local laws, insurance, and facility options.
+**Implementation:**
+- Extend `topCities` array from 25 → 50 cities with proper state/nearby data
+- No new components needed — `CityTreatmentPage.tsx` already handles all combos dynamically
+- This adds 25 cities × 6 treatment types = **150 new pages** automatically
 
 ---
 
-### Pillar 4: Technical SEO Enhancements
+## Phase 3: Insurance + State Cross Pages (45 pages)
 
-#### A. Core Web Vitals Optimization
+**Pattern:** `/insurance/{provider}-rehab-coverage/{state}`
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| LCP | Good | Maintain |
-| FID | Good | Maintain |
-| CLS | Monitor | <0.1 |
+**Top 5 insurers × Top 9 states:**
+- Insurers: Aetna, BCBS, Cigna, UnitedHealthcare, Humana
+- States: California, Florida, Texas, New York, Arizona, Colorado, Ohio, Pennsylvania, Illinois
 
-#### B. Enhanced Schema Markup
-
-Add to facility profiles:
-- Review schema (when reviews exist)
-- FAQ schema on all treatment type pages
-- VideoObject schema for embedded videos
-- HowTo schema for process guides
-
-#### C. Internal Link Architecture
-
-Create topic clusters:
-
-```text
-                    ┌─────────────────┐
-                    │   Homepage      │
-                    └────────┬────────┘
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-┌───────▼──────┐    ┌───────▼──────┐    ┌───────▼──────┐
-│  Treatment   │    │   Locations  │    │  Resources   │
-│    Types     │    │              │    │   (Blog)     │
-└───────┬──────┘    └───────┬──────┘    └───────┬──────┘
-        │                   │                   │
-    ┌───┴───┐          ┌───┴───┐          ┌───┴───┐
-    │Detox  │          │State  │          │Guides │
-    │IOP    │          │City   │          │FAQs   │
-    │PHP    │          │Near-Me│          │Stories│
-    └───────┘          └───────┘          └───────┘
-```
+**Implementation:**
+- Add `InsuranceStateConfig` to `seoPageConfig.ts` with state-specific content (Medicaid expansion status, average costs, state regulations)
+- Create `src/pages/seo/InsuranceStatePage.tsx` using `SEOLandingTemplate`
+- Content includes: state insurance laws, provider network details, cost breakdowns, how to verify coverage, FAQ schema
+- Register wildcard routes in `App.tsx`: `/insurance/:provider-rehab-coverage/:state`
 
 ---
 
-### Pillar 5: Backlink and Authority Building
+## Phase 4: "Best Rehab Centers in [State]" Roundup Pages (10 pages)
 
-#### A. Provider Co-Marketing
+**States:** California, Florida, Texas, New York, Arizona, Colorado, Pennsylvania, Ohio, Illinois, Georgia
 
-When facilities sign up:
-- Encourage them to link to their RehabLookup profile
-- Create shareable badges/widgets for their sites
-- Offer "Verified" badges with embed code
-
-#### B. Resource Link Building
-
-Create linkable assets:
-- Infographics on addiction statistics
-- State-by-state rehab cost calculator
-- Insurance coverage comparison tool
-- Downloadable PDF guides
-
-#### C. HARO/Media Outreach
-
-Position for journalist queries on:
-- Addiction treatment costs
-- Rehab success rates
-- Insurance coverage topics
+**Implementation:**
+- Create `src/pages/seo/BestInStatePage.tsx`
+- Dynamic facility listings from database filtered by state
+- Content sections: state overview, treatment landscape, insurance options, how to choose
+- ItemList schema markup for rankings
+- Cross-links to city pages within the state, insurance pages, and treatment type pages
+- Register routes: `/best-rehab-centers-in-:state`
 
 ---
 
-## Implementation Roadmap
+## Phase 5: Hreflang Tags for International Pages
 
-### Phase 1: Content Expansion (Weeks 1-4)
-
-| Task | Impact |
-|------|--------|
-| Create 20 new long-tail articles | +3,000 visits/mo |
-| Add FAQ schema to treatment pages | +500 visits/mo (rich results) |
-| Create 10 state-specific guides | +1,500 visits/mo |
-
-### Phase 2: Technical Optimization (Weeks 2-4)
-
-| Task | Impact |
-|------|--------|
-| Add review schema to facility pages | Trust signals |
-| Implement article schema on all blog posts | Rich results |
-| Create topic cluster internal linking | +20% pageviews |
-
-### Phase 3: Authority Building (Ongoing)
-
-| Task | Impact |
-|------|--------|
-| Provider badge program | +5-10 backlinks/mo |
-| Create shareable infographics | +2-5 backlinks/mo |
-| Guest post outreach | +3-5 backlinks/mo |
-
-### Phase 4: Facility Growth (Ongoing)
-
-| Task | Impact |
-|------|--------|
-| Approve 10+ facilities/month | +500-2,000 visits/mo |
-| Enable facility reviews | Trust + engagement |
-| City-specific landing pages for each facility | Local SEO boost |
+**Implementation:**
+- Extend `SEO.tsx` props to accept `hreflang` entries: `{ lang: string; href: string }[]`
+- Add `<link rel="alternate" hreflang="..." href="..." />` tags in Helmet
+- Apply to all international pages:
+  - `/us-rehab/canadian-patients` → `hreflang="en-CA"`
+  - `/us-rehab/uk-patients` → `hreflang="en-GB"`
+  - `/us-rehab/australian-patients` → `hreflang="en-AU"`
+  - `/us-rehab/european-patients` → `hreflang="en-EU"` (and de, fr, etc.)
+  - `/us-rehab/uae-patients` → `hreflang="ar-AE"`
+- Each page gets `x-default` pointing to `/international`
 
 ---
 
-## Traffic Projection
+## Phase 6: Sitemap Update
 
-| Source | Month 3 | Month 6 | Month 12 |
-|--------|---------|---------|----------|
-| Blog/Resources | 3,000 | 5,000 | 8,000 |
-| Near-Me Pages | 1,500 | 3,000 | 5,000 |
-| Facility Profiles | 200 | 1,500 | 4,000 |
-| Location Pages | 500 | 1,000 | 2,000 |
-| Insurance Pages | 300 | 600 | 1,000 |
-| **Total** | **5,500** | **11,100** | **20,000** |
+**Update `supabase/functions/sitemap-facilities/index.ts`:**
+- Add all 6 substance treatment pages (priority 0.85)
+- Add 150 new city+treatment combo URLs from expanded cities
+- Add 45 insurance+state cross pages (priority 0.8)
+- Add 10 best-in-state roundup pages (priority 0.85)
+- Bump version to v4.0.0
 
 ---
 
-## Immediate Quick Wins
+## Files to Create/Modify
 
-1. **Add FAQ sections** to top 10 treatment type pages (rich snippets)
-2. **Create "vs" comparison articles** (high-intent keywords)
-3. **Optimize existing article titles** for CTR
-4. **Add last-updated dates** to all content (freshness signal)
-5. **Submit all new articles** to IndexNow immediately
+| Action | File | Purpose |
+|--------|------|---------|
+| Modify | `src/data/seoPageConfig.ts` | Add substance configs, 25 new cities, insurance-state configs, best-in-state configs |
+| Create | `src/pages/seo/SubstanceTreatmentPage.tsx` | Substance-specific landing pages |
+| Create | `src/pages/seo/InsuranceStatePage.tsx` | Insurance + state cross pages |
+| Create | `src/pages/seo/BestInStatePage.tsx` | Best rehab in state roundups |
+| Modify | `src/App.tsx` | Register ~15 new route patterns |
+| Modify | `src/components/SEO.tsx` | Add hreflang support |
+| Modify | 5 international page files | Add hreflang props |
+| Modify | `supabase/functions/sitemap-facilities/index.ts` | Add all new URLs |
+| Modify | `src/components/seo/InternalLinkingSection.tsx` | Add substance and best-in-state link groups |
 
----
-
-## Technical Implementation Summary
-
-### New Articles to Create
-
-1. Is My Loved One an Alcoholic? Warning Signs
-2. Does Insurance Cover Rehab? Complete Guide
-3. What is PHP (Partial Hospitalization)?
-4. Can You Visit Someone in Rehab?
-5. Celebrities Who Went to Rehab
-6. Day 1 in Rehab: What to Expect
-7. Drug Rehab vs Alcohol Rehab: Key Differences
-8. How to Talk to Someone About Their Addiction
-9. Detox vs Rehab: What's the Difference?
-10. How to Find a Good Rehab Center
-11. California Drug Rehab Laws & Resources
-12. Florida Addiction Treatment Guide
-13. Texas Rehab Coverage Under Medicaid
-14. What Questions to Ask Before Choosing Rehab
-15. Rehab for Depression and Addiction
-16. Does Health Insurance Cover Detox?
-17. How to Help Someone Who Doesn't Want Help
-18. Understanding Rehab Aftercare Programs
-19. Online vs In-Person Addiction Treatment
-20. How Much Does Rehab Cost Per Day?
-
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `sitemap-facilities/index.ts` | Add new article routes |
-| Treatment type pages | Add FAQ sections with schema |
-| `InternalLinkingSection.tsx` | Expand topic clusters |
-| Individual article pages | Add related articles component |
+## Estimated New Pages: **~220+ pages**
+## Estimated Additional Monthly Traffic: **8,000–15,000 visits** at maturity
 
