@@ -1027,7 +1027,7 @@ export function LeadProfileModal({
                           ? "Co-occurring Concern"
                           : lead.dual_diagnosis === "no"
                           ? "No Concern Indicated"
-                          : "Pending assessment"}
+                          : "—"}
                       </p>
                     </div>
 
