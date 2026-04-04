@@ -4,7 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { treatmentCenters } from "@/data/treatmentCenters";
+
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
