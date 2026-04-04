@@ -1184,9 +1184,8 @@ export default function AdminSecurityLogs() {
                             <Badge
                               variant={activity.failed_count >= 10 ? "destructive" : "secondary"}
                               className={cn(
-                                activity.failed_count >= 10 ? "" : 
-                                activity.failed_count >= 5 ? "bg-amber-100 text-amber-700" :
-                                "bg-yellow-100 text-yellow-700"
+                                "tabular-nums",
+                                activity.failed_count >= 10 ? "" : "bg-warning/10 text-warning"
                               )}
                             >
                               {activity.failed_count} failed attempts
