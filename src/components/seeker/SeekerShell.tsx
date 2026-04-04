@@ -211,6 +211,7 @@ export function SeekerShell() {
 
   // Get display name - prefer first name, fall back to display name or email
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
+  const resolvedIsAuthenticated = isAuthenticated || !!userId;
 
   // NEVER show skeleton - render shell immediately
   // Redirects happen via useEffect, render null during redirect
@@ -221,7 +222,7 @@ export function SeekerShell() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background isolate" data-shell>
       {/* Email Verification Banner */}
-      {isAuthenticated && !isLoading && !isEmailVerified && (
+      {resolvedIsAuthenticated && !isLoading && !isEmailVerified && (
         <EmailVerificationBanner email={userEmail} onVerified={() => setIsEmailVerified(true)} />
       )}
       
@@ -231,7 +232,7 @@ export function SeekerShell() {
           userName={displayName} 
           avatarUrl={profile?.avatar_url}
           onLogout={handleLogout} 
-          isAuthenticated={isAuthenticated}
+          isAuthenticated={resolvedIsAuthenticated}
         />
       </div>
 
@@ -241,12 +242,12 @@ export function SeekerShell() {
         className="flex-1 min-h-0 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
       >
         <Suspense fallback={null}>
-          <Outlet context={{ isAuthenticated, userName: displayName }} />
+          <Outlet context={{ isAuthenticated: resolvedIsAuthenticated, userName: displayName }} />
         </Suspense>
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <SeekerMobileNav isAuthenticated={isAuthenticated} />
+      <SeekerMobileNav isAuthenticated={resolvedIsAuthenticated} />
     </div>
   );
 }
