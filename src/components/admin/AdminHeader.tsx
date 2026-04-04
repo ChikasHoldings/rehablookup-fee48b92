@@ -480,7 +480,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
               >
                 <Bell className={`h-5 w-5 transition-transform ${bellAnimating ? "animate-wiggle" : ""}`} />
                 {unreadCount > 0 && (
-                  <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs border-2 border-slate-800 rounded-full ${bellAnimating ? "animate-pulse" : ""}`}>
+                  <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs border-2 border-slate-800 rounded-full tabular-nums ${bellAnimating ? "animate-pulse" : ""}`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
