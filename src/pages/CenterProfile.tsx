@@ -1014,17 +1014,13 @@ const CenterProfile = () => {
               <GoogleReviewsDisplay facilityId={facility.id} />
 
               {/* Our Team Section */}
-              <div className="mt-6">
-                <FacilityStaffSection facilityId={facility.id} />
-              </div>
+              <FacilityStaffSection facilityId={facility.id} />
 
               {/* Community Reviews Section */}
-              <div className="mt-6">
-                <FacilityReviewsSection 
-                  facilityId={facility.id} 
-                  facilityName={facility.name} 
-                />
-              </div>
+              <FacilityReviewsSection 
+                facilityId={facility.id} 
+                facilityName={facility.name} 
+              />
             </div>
 
             {/* Right Column - Sticky Sidebar */}
