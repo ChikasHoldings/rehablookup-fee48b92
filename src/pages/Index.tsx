@@ -1054,7 +1054,7 @@ const Index = () => {
         <div className="container px-4 md:px-6 lg:px-8 space-y-8 md:space-y-10">
           {/* Quick Links to Key Pages */}
           <div>
-            <h3 className="text-xl md:text-lg font-semibold text-foreground mb-4">
+            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">
               Explore RehabLookup
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">

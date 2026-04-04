@@ -339,7 +339,7 @@ export const Footer = memo(function Footer() {
       </div>
 
       {/* ── Bottom Bar ─────────────────────────────────────────────── */}
-      <div className="border-t border-primary-foreground/[0.06]">
+      <div className="border-t border-primary-foreground/[0.06] safe-area-bottom">
         <div className="container px-5 md:px-6 lg:px-8">
           <div className="py-4 flex flex-col items-center text-center gap-3 md:flex-row md:items-center md:justify-between md:text-left">
             {/* Left: Copyright + Legal */}
