@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { InternationalPageHero } from "./components";
 import { Globe, Plane, FileCheck, Heart, Users, MessageCircle, ArrowRight, CheckCircle, MapPin, ChevronRight, Sparkles, Phone } from "lucide-react";
+import heroImage from "@/assets/hero-international-rehab.jpg";
 
 const internationalServices = [
   { icon: Plane, title: "Travel Coordination", description: "Airport pickup, transportation, and arrival assistance arranged end-to-end." },
@@ -46,44 +48,16 @@ const InternationalPatients = () => {
         ]} />
       </div>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/[0.03] via-background to-background py-16 md:py-24">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/[0.04] rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-accent/[0.04] rounded-full blur-3xl" />
-        </div>
-        <div className="container relative mx-auto px-4 max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <Globe className="h-4 w-4" />
-            <span>Serving Clients from 50+ Countries</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 leading-tight tracking-tight">
-            US Rehab for International Patients
-          </h1>
-          <p className="text-lg md:text-xl text-primary font-semibold mb-3">
-            World-Class Treatment, Global Accessibility
-          </p>
-          <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            We specialise in helping international clients access America's finest addiction treatment facilities. From visa guidance to airport pickup, we handle every detail.
-          </p>
-          <div className="flex flex-wrap justify-center gap-5 mb-10">
-            {["200+ Vetted Facilities", "24-Hour Response", "100% Confidential"].map(t => (
-              <div key={t} className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">{t}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base px-8 py-6">
-              <Link to="/international/apply" className="flex items-center gap-2">Apply for Treatment <ArrowRight className="h-5 w-5" /></Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="text-base px-8 py-6 border-border">
-              <Link to="/concierge" className="flex items-center gap-2"><Phone className="h-4 w-4" /> Speak to an Advisor</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <InternationalPageHero
+        flag="🌍"
+        badge="Serving Clients from 50+ Countries"
+        title="US Rehab for International Patients"
+        subtitle="World-Class Treatment, Global Accessibility"
+        description="We specialise in helping international clients access America's finest addiction treatment facilities. From visa guidance to airport pickup, we handle every detail."
+        trustPoints={["200+ Vetted Facilities", "24-Hour Response", "100% Confidential"]}
+        heroImage={heroImage}
+        heroAlt="Panoramic view of luxury US rehab destinations for international patients"
+      />
 
       {/* Services */}
       <section className="py-16 md:py-20 bg-background">
