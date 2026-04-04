@@ -194,7 +194,7 @@ export function Header({
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setOpenMegaMenu(null)} />
                   <div
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 bg-background border border-border rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-150"
+                    className="fixed top-16 left-1/2 -translate-x-1/2 mt-1 z-50 bg-background border border-border rounded-xl shadow-2xl shadow-foreground/8 animate-in fade-in-0 zoom-in-[0.98] duration-200"
                     onMouseLeave={() => setOpenMegaMenu(null)}
                   >
                     <FindTreatmentMegaMenu onNavigate={() => setOpenMegaMenu(null)} />
