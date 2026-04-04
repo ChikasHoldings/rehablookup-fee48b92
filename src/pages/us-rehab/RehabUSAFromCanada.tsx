@@ -1,19 +1,20 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { Layout } from "@/components/layout/Layout";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { InternationalPageHero } from "./components";
 import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Globe, Users, Star, Phone, ChevronRight, Plane, FileText, Heart } from "lucide-react";
+import heroImage from "@/assets/hero-canada-rehab.jpg";
 
 export default function RehabUSAFromCanada() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Header />
+    <Layout>
       <SEO
         title="Rehab in USA for Canadians | Private Addiction Treatment from Canada"
         description="Canadians seeking private addiction treatment in the United States. Skip wait times, access world-class rehab facilities. Insurance guidance and visa support."
         canonical="/us-rehab/canadian-patients"
-        keywords={["rehab in USA from Canada", "Canadian addiction treatment USA", "private rehab for Canadians", "drug rehab USA from Canada", "alcohol rehab USA Canadians"]}
+        keywords={["rehab in USA from Canada", "Canadian addiction treatment USA", "private rehab for Canadians"]}
         structuredData={{
           "@context": "https://schema.org",
           "@type": "MedicalWebPage",
@@ -28,37 +29,25 @@ export default function RehabUSAFromCanada() {
         ]}
       />
 
+      <div className="container mx-auto px-4 pt-4">
+        <BreadcrumbNav items={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Canadian Patients" },
+        ]} />
+      </div>
+
+      <InternationalPageHero
+        flag="🇨🇦"
+        badge="For Canadian Residents"
+        title="World-Class Addiction Treatment in the USA — For Canadians"
+        subtitle="Skip the Wait Times. Access Premium US Programs."
+        description="Access private, evidence-based rehab programs across the United States with personalized support from intake to aftercare."
+        trustPoints={["No Visa Required", "24-72 Hour Admission", "100% Confidential"]}
+        heroImage={heroImage}
+        heroAlt="Mountain luxury rehab facility for Canadian patients"
+      />
+
       <main className="flex-1">
-        {/* Hero */}
-        <section className="relative bg-primary py-16 md:py-24 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-4xl mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
-              <Globe className="h-4 w-4 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/90">🇨🇦 For Canadian Residents</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6">
-              World-Class Addiction Treatment in the USA — For Canadians
-            </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">
-              Skip the wait times. Access private, evidence-based rehab programs across the United States with personalized support from intake to aftercare.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/international/apply">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg">
-                  Apply for Treatment
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/concierge">
-                <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
-                  <Phone className="h-4 w-4" />
-                  Speak to an Advisor
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
 
         {/* Why Canadians Choose US Rehab */}
         <section className="py-12 md:py-20">
