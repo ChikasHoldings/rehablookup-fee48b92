@@ -822,7 +822,7 @@ export default function AdminSecurityLogs() {
               <AlertTriangle className="h-3.5 w-3.5" />
               Suspicious Activity
             </CardDescription>
-            <CardTitle className="text-2xl text-amber-600">{stats.suspiciousCount}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-warning">{stats.suspiciousCount}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
