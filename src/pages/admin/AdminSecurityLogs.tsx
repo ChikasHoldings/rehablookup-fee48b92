@@ -1148,23 +1148,19 @@ export default function AdminSecurityLogs() {
                           <div className={cn(
                             "p-2 rounded-full",
                             blocked
-                              ? "bg-red-200 dark:bg-red-800"
+                              ? "bg-destructive/20"
                               : activity.failed_count >= 10
-                              ? "bg-red-100 dark:bg-red-900"
-                              : activity.failed_count >= 5
-                              ? "bg-amber-100 dark:bg-amber-900"
-                              : "bg-yellow-100 dark:bg-yellow-900"
+                              ? "bg-destructive/10"
+                              : "bg-warning/10"
                           )}>
                             {blocked ? (
-                              <Ban className="h-5 w-5 text-red-600" />
+                              <Ban className="h-5 w-5 text-destructive" />
                             ) : (
                               <Shield className={cn(
                                 "h-5 w-5",
                                 activity.failed_count >= 10
-                                  ? "text-red-600"
-                                  : activity.failed_count >= 5
-                                  ? "text-amber-600"
-                                  : "text-yellow-600"
+                                  ? "text-destructive"
+                                  : "text-warning"
                               )} />
                             )}
                           </div>
