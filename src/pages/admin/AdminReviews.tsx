@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,6 +69,50 @@ interface DisputeWithDetails {
   review?: ReviewWithDetails;
 }
 
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={cn(
+            "h-4 w-4",
+            star <= rating
+              ? "fill-warning text-warning"
+              : "text-muted-foreground/30"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ReviewCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="space-y-3 flex-1">
+            <Skeleton className="h-4 w-40" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32 mt-1" />
+              </div>
+            </div>
+            <Skeleton className="h-4 w-28" />
+          </div>
+          <Skeleton className="h-5 w-16" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-16 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminReviews() {
   const queryClient = useQueryClient();
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([]);
@@ -80,7 +125,6 @@ export default function AdminReviews() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; isOpen: boolean } | null>(null);
 
-  // Get current admin user ID
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -95,7 +139,8 @@ export default function AdminReviews() {
     const { data, error } = await supabase
       .from('facility_reviews')
       .select('id, facility_id, user_id, rating, review_text, status, helpful_count, disputed, admin_notes, reviewed_at, reviewed_by, created_at, updated_at')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(1000);
 
     if (error) {
       console.error('Error fetching reviews:', error);
@@ -107,9 +152,17 @@ export default function AdminReviews() {
     const facilityIds = [...new Set(data?.map(r => r.facility_id) || [])];
     const userIds = [...new Set(data?.map(r => r.user_id) || [])];
     
+    if (facilityIds.length === 0) {
+      setReviews([]);
+      setIsLoading(false);
+      return;
+    }
+
     const [facilitiesResult, profilesResult] = await Promise.all([
       supabase.from('facilities').select('id, name').in('id', facilityIds),
-      supabase.from('seeker_profiles').select('user_id, first_name, last_name, city, state, display_name').in('user_id', userIds)
+      userIds.length > 0
+        ? supabase.from('seeker_profiles').select('user_id, first_name, last_name, city, state, display_name').in('user_id', userIds)
+        : Promise.resolve({ data: [] })
     ]);
 
     const facilityMap = new Map(facilitiesResult.data?.map(f => [f.id, f.name]) || []);
@@ -140,37 +193,39 @@ export default function AdminReviews() {
     const { data: disputesData, error } = await supabase
       .from('review_disputes')
       .select('id, facility_id, review_id, disputed_by, reason, details, status, admin_notes, created_at, resolved_at, resolved_by')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
 
     if (error) {
       console.error('Error fetching disputes:', error);
       return;
     }
 
-    const reviewIds = [...new Set(disputesData?.map(d => d.review_id) || [])];
-    const facilityIds = [...new Set(disputesData?.map(d => d.facility_id) || [])];
+    if (!disputesData || disputesData.length === 0) {
+      setDisputes([]);
+      return;
+    }
 
-    const { data: reviewsData } = await supabase
-      .from('facility_reviews')
-      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at')
-      .in('id', reviewIds);
+    const reviewIds = [...new Set(disputesData.map(d => d.review_id))];
+    const facilityIds = [...new Set(disputesData.map(d => d.facility_id))];
 
-    const { data: facilitiesData } = await supabase
-      .from('facilities')
-      .select('id, name')
-      .in('id', facilityIds);
+    const [reviewsResult, facilitiesResult] = await Promise.all([
+      supabase
+        .from('facility_reviews')
+        .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at')
+        .in('id', reviewIds),
+      supabase.from('facilities').select('id, name').in('id', facilityIds),
+    ]);
 
-    // Get reviewer profiles for disputed reviews
-    const userIds = [...new Set(reviewsData?.map(r => r.user_id) || [])];
-    const { data: profilesData } = await supabase
-      .from('seeker_profiles')
-      .select('user_id, first_name, last_name, city, state, display_name')
-      .in('user_id', userIds);
+    const userIds = [...new Set(reviewsResult.data?.map(r => r.user_id) || [])];
+    const profilesResult = userIds.length > 0
+      ? await supabase.from('seeker_profiles').select('user_id, first_name, last_name, city, state, display_name').in('user_id', userIds)
+      : { data: [] };
 
-    const profileMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
-    const facilityMap = new Map(facilitiesData?.map(f => [f.id, f.name]) || []);
+    const profileMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
+    const facilityMap = new Map(facilitiesResult.data?.map(f => [f.id, f.name]) || []);
     
-    const reviewMap = new Map(reviewsData?.map(r => {
+    const reviewMap = new Map(reviewsResult.data?.map(r => {
       const profile = profileMap.get(r.user_id);
       const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
       const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
@@ -186,7 +241,7 @@ export default function AdminReviews() {
       }];
     }) || []);
 
-    const enrichedDisputes: DisputeWithDetails[] = (disputesData || []).map(dispute => ({
+    const enrichedDisputes: DisputeWithDetails[] = disputesData.map(dispute => ({
       ...dispute,
       facility_name: facilityMap.get(dispute.facility_id) || 'Unknown Facility',
       review: reviewMap.get(dispute.review_id) || undefined
@@ -199,27 +254,14 @@ export default function AdminReviews() {
     fetchReviews();
     fetchDisputes();
 
-    // Real-time subscriptions
     const reviewsChannel = supabase
       .channel('admin-reviews-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'facility_reviews' },
-        () => {
-          fetchReviews();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'facility_reviews' }, () => fetchReviews())
       .subscribe();
 
     const disputesChannel = supabase
       .channel('admin-disputes-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'review_disputes' },
-        () => {
-          fetchDisputes();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'review_disputes' }, () => fetchDisputes())
       .subscribe();
 
     return () => {
@@ -246,19 +288,11 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to approve review');
     } else {
-      // Send notifications to provider and seeker
       const review = reviews.find(r => r.id === reviewId);
       if (review) {
         supabase.functions.invoke('send-review-notification', {
-          body: {
-            type: 'review_approved',
-            reviewId,
-            facilityId: review.facility_id,
-            seekerId: review.user_id,
-          }
-        }).catch(() => {
-          // Notification failure is non-critical, review was still approved
-        });
+          body: { type: 'review_approved', reviewId, facilityId: review.facility_id, seekerId: review.user_id }
+        }).catch(() => {});
       }
       toast.success('Review approved');
       fetchReviews();
@@ -289,20 +323,11 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to reject review');
     } else {
-      // Send rejection notification to seeker
       const review = reviews.find(r => r.id === reviewId);
       if (review) {
         supabase.functions.invoke('send-review-notification', {
-          body: {
-            type: 'review_rejected',
-            reviewId,
-            facilityId: review.facility_id,
-            seekerId: review.user_id,
-            rejectionReason: adminNotes[reviewId],
-          }
-        }).catch(() => {
-          // Notification failure is non-critical, review was still rejected
-        });
+          body: { type: 'review_rejected', reviewId, facilityId: review.facility_id, seekerId: review.user_id, rejectionReason: adminNotes[reviewId] }
+        }).catch(() => {});
       }
       toast.success('Review rejected');
       fetchReviews();
@@ -339,10 +364,7 @@ export default function AdminReviews() {
   const handleUpholdDispute = async (dispute: DisputeWithDetails) => {
     setProcessingId(dispute.id);
 
-    await supabase
-      .from('facility_reviews')
-      .update({ status: 'hidden' })
-      .eq('id', dispute.review_id);
+    await supabase.from('facility_reviews').update({ status: 'hidden' }).eq('id', dispute.review_id);
 
     const { error } = await supabase
       .from('review_disputes')
@@ -354,17 +376,14 @@ export default function AdminReviews() {
       })
       .eq('id', dispute.id);
 
-    await supabase
-      .from('facility_reviews')
-      .update({ disputed: false })
-      .eq('id', dispute.review_id);
+    await supabase.from('facility_reviews').update({ disputed: false }).eq('id', dispute.review_id);
 
     setProcessingId(null);
 
     if (error) {
       toast.error('Failed to uphold dispute');
     } else {
-      toast.success('Dispute upheld - review hidden');
+      toast.success('Dispute upheld — review hidden');
       fetchReviews();
       fetchDisputes();
       queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
@@ -384,17 +403,14 @@ export default function AdminReviews() {
       })
       .eq('id', dispute.id);
 
-    await supabase
-      .from('facility_reviews')
-      .update({ disputed: false })
-      .eq('id', dispute.review_id);
+    await supabase.from('facility_reviews').update({ disputed: false }).eq('id', dispute.review_id);
 
     setProcessingId(null);
 
     if (error) {
       toast.error('Failed to dismiss dispute');
     } else {
-      toast.success('Dispute dismissed - review remains visible');
+      toast.success('Dispute dismissed — review remains visible');
       fetchReviews();
       fetchDisputes();
       queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
@@ -426,9 +442,10 @@ export default function AdminReviews() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Review Moderation</h1>
+          <h1 className="text-2xl font-bold text-foreground">Review Moderation</h1>
           <p className="text-muted-foreground">Manage user reviews and disputes</p>
         </div>
         <Button variant="outline" onClick={() => { fetchReviews(); fetchDisputes(); }} disabled={isLoading}>
@@ -437,8 +454,9 @@ export default function AdminReviews() {
         </Button>
       </div>
 
+      {/* KPI Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-border/40">
+        <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-warning/10 shrink-0">
@@ -446,12 +464,12 @@ export default function AdminReviews() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
-                <p className="text-lg sm:text-xl font-bold leading-tight">{pendingCount}</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums">{pendingCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/40">
+        <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-success/10 shrink-0">
@@ -459,12 +477,12 @@ export default function AdminReviews() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Approved</p>
-                <p className="text-lg sm:text-xl font-bold leading-tight">{approvedCount}</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums">{approvedCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/40">
+        <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-destructive/10 shrink-0">
@@ -472,63 +490,71 @@ export default function AdminReviews() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Rejected</p>
-                <p className="text-lg sm:text-xl font-bold leading-tight">{rejectedCount}</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums">{rejectedCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-border/40">
+        <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-orange-500/10 shrink-0">
-                <Flag className="h-4 w-4 text-orange-600" />
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-warning/10 shrink-0">
+                <Flag className="h-4 w-4 text-warning" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">Disputes</p>
-                <p className="text-lg sm:text-xl font-bold leading-tight">{pendingDisputesCount}</p>
+                <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums">{pendingDisputesCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList>
           <TabsTrigger value="pending" className="gap-2">
             <Clock className="h-4 w-4" />
-            Pending ({pendingCount})
+            Pending
+            <Badge variant="secondary" className="ml-1 tabular-nums">{pendingCount}</Badge>
           </TabsTrigger>
           <TabsTrigger value="approved" className="gap-2">
             <CheckCircle2 className="h-4 w-4" />
-            Approved ({approvedCount})
+            Approved
+            <Badge variant="secondary" className="ml-1 tabular-nums">{approvedCount}</Badge>
           </TabsTrigger>
           <TabsTrigger value="rejected" className="gap-2">
             <XCircle className="h-4 w-4" />
-            Rejected ({rejectedCount})
+            Rejected
+            <Badge variant="secondary" className="ml-1 tabular-nums">{rejectedCount}</Badge>
           </TabsTrigger>
           <TabsTrigger value="disputes" className="gap-2">
             <Flag className="h-4 w-4" />
-            Disputes ({pendingDisputesCount})
+            Disputes
+            {pendingDisputesCount > 0 && (
+              <Badge variant="destructive" className="ml-1 tabular-nums">{pendingDisputesCount}</Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
         {/* Disputes Tab */}
         <TabsContent value="disputes" className="mt-6">
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="space-y-4">
+              {[1, 2].map(i => <ReviewCardSkeleton key={i} />)}
             </div>
           ) : disputes.filter(d => d.status === 'pending').length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <Flag className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                <p className="text-muted-foreground">No pending disputes</p>
+                <p className="font-medium text-muted-foreground">No pending disputes</p>
+                <p className="text-sm text-muted-foreground mt-1">All disputes have been resolved</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
               {disputes.filter(d => d.status === 'pending').map((dispute) => (
-                <Card key={dispute.id} className="border-orange-200">
+                <Card key={dispute.id} className="border-warning/30">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -536,12 +562,12 @@ export default function AdminReviews() {
                           <Building2 className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{dispute.facility_name}</span>
                         </div>
-                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
                           <AlertTriangle className="h-3 w-3 mr-1" />
                           {getDisputeReasonLabel(dispute.reason)}
                         </Badge>
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground tabular-nums">
                         {formatDistanceToNow(new Date(dispute.created_at), { addSuffix: true })}
                       </span>
                     </div>
@@ -549,7 +575,7 @@ export default function AdminReviews() {
                   <CardContent className="space-y-4">
                     {dispute.review && (
                       <div className="bg-muted/50 p-4 rounded-lg">
-                        <p className="text-xs font-medium text-muted-foreground mb-3">ORIGINAL REVIEW</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">Original Review</p>
                         <div className="flex items-center gap-3 mb-3">
                           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                             <User className="h-4 w-4 text-primary" />
@@ -564,30 +590,18 @@ export default function AdminReviews() {
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 mb-2">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={cn(
-                                "h-4 w-4",
-                                star <= dispute.review!.rating
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-muted-foreground/30"
-                              )}
-                            />
-                          ))}
-                        </div>
+                        <StarRating rating={dispute.review.rating} />
                         {dispute.review.review_text ? (
-                          <p className="text-sm">{dispute.review.review_text}</p>
+                          <p className="text-sm mt-2">{dispute.review.review_text}</p>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">No review text</p>
+                          <p className="text-sm text-muted-foreground italic mt-2">No review text</p>
                         )}
                       </div>
                     )}
 
                     {dispute.details && (
-                      <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                        <p className="text-xs font-medium text-orange-700 mb-2">PROVIDER'S EXPLANATION</p>
+                      <div className="bg-warning/5 p-4 rounded-lg border border-warning/20">
+                        <p className="text-xs font-medium text-warning mb-2 uppercase tracking-wider">Provider's Explanation</p>
                         <p className="text-sm">{dispute.details}</p>
                       </div>
                     )}
@@ -639,14 +653,17 @@ export default function AdminReviews() {
         {['pending', 'approved', 'rejected'].map((tab) => (
           <TabsContent key={tab} value={tab} className="mt-6">
             {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => <ReviewCardSkeleton key={i} />)}
               </div>
             ) : filteredReviews.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <p className="text-muted-foreground">No {tab} reviews</p>
+                  <p className="font-medium text-muted-foreground">No {tab} reviews</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {tab === 'pending' ? 'No reviews awaiting moderation' : `No reviews with ${tab} status`}
+                  </p>
                 </CardContent>
               </Card>
             ) : (
@@ -677,20 +694,8 @@ export default function AdminReviews() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-0.5">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={cn(
-                                    "h-4 w-4",
-                                    star <= review.rating
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-muted-foreground/30"
-                                  )}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-sm text-muted-foreground">
+                            <StarRating rating={review.rating} />
+                            <span className="text-sm text-muted-foreground tabular-nums">
                               {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
                             </span>
                           </div>
@@ -701,6 +706,7 @@ export default function AdminReviews() {
                             review.status === 'rejected' ? 'destructive' : 
                             'secondary'
                           }
+                          className="capitalize"
                         >
                           {review.status}
                         </Badge>
@@ -766,6 +772,7 @@ export default function AdminReviews() {
                           onClick={() => handleDelete(review.id)}
                           disabled={processingId === review.id}
                         >
+                          <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                           Delete Review
                         </Button>
                       )}
