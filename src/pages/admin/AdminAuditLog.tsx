@@ -424,7 +424,7 @@ export default function AdminAuditLog() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Audit Log</h1>
+          <h1 className="text-2xl font-bold text-foreground">Audit Log</h1>
           <p className="text-muted-foreground">Track all administrative actions across the platform</p>
         </div>
         <div className="flex items-center gap-2">
