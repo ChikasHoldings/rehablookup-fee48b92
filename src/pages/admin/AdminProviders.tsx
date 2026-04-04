@@ -162,7 +162,7 @@ export default function AdminProviders() {
           if (proIds.length === 0) return [];
           query = supabase
             .from("facilities")
-            .select("*")
+            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
             .in("id", proIds)
             .order("created_at", { ascending: false })
             .range(from, to);
