@@ -1050,7 +1050,7 @@ export function generateEventSchema(event: {
         }
       : {
           "@type": "Place",
-          name: event.location || "TBD",
+          name: event.location || "Online",
           address: {
             "@type": "PostalAddress",
             addressCountry: "US",

@@ -194,10 +194,12 @@ export default function SeekerInternationalCase() {
 
           {/* Case Details */}
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Country</p>
-              <p className="font-medium">{placementCase.client_country || "—"}</p>
-            </div>
+            {placementCase.client_country && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Country</p>
+                <p className="font-medium">{placementCase.client_country}</p>
+              </div>
+            )}
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Preferred Language</p>
               <p className="font-medium">{placementCase.preferred_language || "English"}</p>

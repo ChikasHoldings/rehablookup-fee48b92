@@ -451,10 +451,10 @@ export function InternationalCasesTab() {
                           </div>
                         </td>
                         <td className="py-3 text-sm">
-                          {(c.intake_data?.urgency as string) || "—"}
+                          {(c.intake_data?.urgency as string) || "Not set"}
                         </td>
                         <td className="py-3 text-sm">
-                          {(c.intake_data?.budget_range as string) || "—"}
+                          {(c.intake_data?.budget_range as string) || "Not set"}
                         </td>
                         <td className="py-3">
                           <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
@@ -507,10 +507,10 @@ export function InternationalCasesTab() {
                     {invoices?.map((inv) => (
                       <tr key={inv.id} className="border-b last:border-0">
                         <td className="py-3">
-                          <div className="font-medium">{inv.case?.client_name || "—"}</div>
+                          <div className="font-medium">{inv.case?.client_name || "Client"}</div>
                           <div className="text-xs text-muted-foreground">{inv.case?.client_country}</div>
                         </td>
-                        <td className="py-3">{inv.facility?.name || "—"}</td>
+                        <td className="py-3">{inv.facility?.name || "Facility"}</td>
                         <td className="py-3 font-medium">
                           ${(inv.amount_cents / 100).toLocaleString()}
                         </td>
