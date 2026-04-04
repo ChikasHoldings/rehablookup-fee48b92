@@ -65,7 +65,7 @@ interface BlogArticle {
   image_url: string | null;
   author: string;
   author_date: string | null;
-  content: unknown;
+  content: Json;
   status: string;
   featured: boolean;
   published_at: string | null;

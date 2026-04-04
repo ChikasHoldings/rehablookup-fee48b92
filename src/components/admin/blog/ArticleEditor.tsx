@@ -211,11 +211,11 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
       if (isEditing && article) {
         const { error } = await supabase
           .from("blog_articles")
-          .update(articleData)
+          .update(articleData as any)
           .eq("id", article.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("blog_articles").insert(articleData);
+        const { error } = await supabase.from("blog_articles").insert(articleData as any);
         if (error) throw error;
       }
     },
