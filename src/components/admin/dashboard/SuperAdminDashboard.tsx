@@ -48,7 +48,6 @@ export function SuperAdminDashboard() {
     queryClient.invalidateQueries({ queryKey: ["admin-top-cities"] });
     queryClient.invalidateQueries({ queryKey: ["admin-recent-leads"] });
     queryClient.invalidateQueries({ queryKey: ["admin-revenue-stats"] });
-    queryClient.invalidateQueries({ queryKey: ["admin-subscription-breakdown"] });
     queryClient.invalidateQueries({ queryKey: ["admin-weekly-trends"] });
   }, [queryClient]);
 
@@ -69,7 +68,7 @@ export function SuperAdminDashboard() {
     };
   }, [invalidateDashboard]);
 
-  // Fetch revenue stats
+  // Fetch revenue stats (single call, also produces subscription breakdown)
   const { data: revenueStats, isLoading: loadingRevenue } = useQuery<RevenueStats>({
     queryKey: ["admin-revenue-stats"],
     queryFn: async () => {
@@ -88,24 +87,16 @@ export function SuperAdminDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch subscription breakdown
-  const { data: subscriptionBreakdown, isLoading: loadingBreakdown } = useQuery<SubscriptionBreakdown[]>({
-    queryKey: ["admin-subscription-breakdown"],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("get-revenue-stats");
-      if (error || !data?.subscriptionsByPlan) {
-        return [
-          { name: "Free", value: 0, color: PLAN_COLORS.free },
-          { name: "Pro", value: 0, color: PLAN_COLORS.pro },
-        ];
-      }
-      return [
-        { name: "Free", value: data.subscriptionsByPlan.free || 0, color: PLAN_COLORS.free },
-        { name: "Pro", value: data.subscriptionsByPlan.pro || 0, color: PLAN_COLORS.pro },
+  // Derive subscription breakdown from revenueStats (no duplicate API call)
+  const subscriptionBreakdown: SubscriptionBreakdown[] = revenueStats?.subscriptionsByPlan
+    ? [
+        { name: "Free", value: revenueStats.subscriptionsByPlan.free || 0, color: PLAN_COLORS.free },
+        { name: "Pro", value: revenueStats.subscriptionsByPlan.pro || 0, color: PLAN_COLORS.pro },
+      ]
+    : [
+        { name: "Free", value: 0, color: PLAN_COLORS.free },
+        { name: "Pro", value: 0, color: PLAN_COLORS.pro },
       ];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
 
   // Fetch weekly trends
   const { data: weeklyTrends } = useQuery({
@@ -115,17 +106,18 @@ export function SuperAdminDashboard() {
       const now = new Date();
       const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
       
-      const { data: leadsData } = await supabase
-        .from("leads")
-        .select("created_at")
-        .gte("created_at", startDate.toISOString())
-        .order("created_at", { ascending: true });
-      
-      const { data: facilitiesData } = await supabase
-        .from("facilities")
-        .select("created_at")
-        .gte("created_at", startDate.toISOString())
-        .order("created_at", { ascending: true });
+      const [{ data: leadsData }, { data: facilitiesData }] = await Promise.all([
+        supabase
+          .from("leads")
+          .select("created_at")
+          .gte("created_at", startDate.toISOString())
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("facilities")
+          .select("created_at")
+          .gte("created_at", startDate.toISOString())
+          .order("created_at", { ascending: true }),
+      ]);
       
       const leadsByDay: Record<string, number> = {};
       const providersByDay: Record<string, number> = {};
@@ -160,11 +152,11 @@ export function SuperAdminDashboard() {
     queryKey: ["admin-provider-stats"],
     queryFn: async () => {
       const [total, approved, pending, suspended, proSubs, placementFacilities] = await Promise.all([
-        supabase.from("facilities").select("*", { count: "exact", head: true }),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("status", "approved"),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("suspended", true),
-        supabase.from("pro_subscriptions").select("*", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("facilities").select("id", { count: "exact", head: true }),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
+        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("concierge_inquiries").select("placed_facility_id", { count: "exact", head: true }).not("placed_facility_id", "is", null).eq("placement_confirmed", true),
       ]);
       return {
@@ -174,7 +166,6 @@ export function SuperAdminDashboard() {
         suspended: suspended.count || 0,
         pro: proSubs.count || 0,
         placement: placementFacilities.count || 0,
-        // Legacy fields for backwards compat
         featured: proSubs.count || 0,
         verified: approved.count || 0,
       };
@@ -190,16 +181,15 @@ export function SuperAdminDashboard() {
       startOfMonth.setHours(0, 0, 0, 0);
 
       const [totalMonth, totalAll, verified, newLeads, unlocksMonth, unlocksAll, unlockRevenueMonth] = await Promise.all([
-        supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
-        supabase.from("leads").select("*", { count: "exact", head: true }),
-        supabase.from("leads").select("*", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
-        supabase.from("leads").select("*", { count: "exact", head: true }).eq("status", "new"),
-        supabase.from("lead_unlocks").select("*", { count: "exact", head: true }).gte("unlocked_at", startOfMonth.toISOString()),
-        supabase.from("lead_unlocks").select("*", { count: "exact", head: true }),
+        supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
+        supabase.from("leads").select("id", { count: "exact", head: true }),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("lead_unlocks").select("id", { count: "exact", head: true }).gte("unlocked_at", startOfMonth.toISOString()),
+        supabase.from("lead_unlocks").select("id", { count: "exact", head: true }),
         supabase.from("lead_unlocks").select("unlock_price_cents").gte("unlocked_at", startOfMonth.toISOString()),
       ]);
 
-      // Calculate unlock revenue for this month
       const monthlyUnlockRevenue = unlockRevenueMonth.data?.reduce((sum, u) => sum + (u.unlock_price_cents || 0), 0) || 0;
 
       return {
@@ -211,9 +201,7 @@ export function SuperAdminDashboard() {
         unlockedMonth: unlocksMonth.count || 0,
         unlockedAll: unlocksAll.count || 0,
         unlockRevenueMonth: monthlyUnlockRevenue,
-        // Unlock rate = unlocks this month / leads this month
         unlockRate: totalMonth.count ? Math.round(((unlocksMonth.count || 0) / totalMonth.count) * 100) : 0,
-        // Legacy field
         assigned: unlocksAll.count || 0,
       };
     },
@@ -224,9 +212,9 @@ export function SuperAdminDashboard() {
     queryKey: ["admin-redistribution-stats"],
     queryFn: async () => {
       const [exclusive, extended, expired] = await Promise.all([
-        supabase.from("leads").select("*", { count: "exact", head: true }).eq("redistribution_status", "exclusive"),
-        supabase.from("leads").select("*", { count: "exact", head: true }).eq("redistribution_status", "extended"),
-        supabase.from("leads").select("*", { count: "exact", head: true }).eq("redistribution_status", "expired"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "exclusive"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "extended"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "expired"),
       ]);
       return {
         exclusive: exclusive.count || 0,
@@ -309,22 +297,22 @@ export function SuperAdminDashboard() {
         subscriptionBreakdown={subscriptionBreakdown}
         loadingProviders={loadingProviders}
         loadingLeads={loadingLeads}
-        loadingBreakdown={loadingBreakdown}
+        loadingBreakdown={loadingRevenue}
       />
 
       {/* Lead Redistribution Stats */}
       <LeadRedistributionCard redistStats={redistStats} />
 
       {/* Quick Actions + Top Cities */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <QuickActionsCard providerStats={providerStats} />
         <TopCitiesCard topCities={topCities} />
       </div>
 
       {/* Recent Leads + Activity Widgets */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <RecentLeadsCard recentLeads={recentLeads} />
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <SubscriptionActivityWidget />
           <LowCreditMonitorWidget />
         </div>

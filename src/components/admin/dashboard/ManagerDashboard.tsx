@@ -40,6 +40,9 @@ export function ManagerDashboard() {
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["manager-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["manager-provider-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["manager-lead-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["manager-subscription-stats"] });
   }, [queryClient]);
 
   useEffect(() => {
@@ -78,10 +81,10 @@ export function ManagerDashboard() {
     queryKey: ["manager-provider-stats"],
     queryFn: async () => {
       const [total, approved, pending, featured] = await Promise.all([
-        supabase.from("facilities").select("*", { count: "exact", head: true }),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("status", "approved"),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("facilities").select("*", { count: "exact", head: true }).eq("featured", true),
+        supabase.from("facilities").select("id", { count: "exact", head: true }),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("featured", true),
       ]);
       return {
         total: total.count || 0,
@@ -102,10 +105,10 @@ export function ManagerDashboard() {
       startOfMonth.setHours(0, 0, 0, 0);
 
       const [totalMonth, totalAll, verified, newLeads] = await Promise.all([
-        supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
-        supabase.from("leads").select("*", { count: "exact", head: true }),
-        supabase.from("leads").select("*", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
-        supabase.from("leads").select("*", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
+        supabase.from("leads").select("id", { count: "exact", head: true }),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
       ]);
 
       return {
@@ -123,9 +126,9 @@ export function ManagerDashboard() {
     queryKey: ["manager-subscription-stats"],
     queryFn: async () => {
       const [active, trial, canceled] = await Promise.all([
-        supabase.from("pro_subscriptions").select("*", { count: "exact", head: true }).eq("status", "active"),
-        supabase.from("pro_subscriptions").select("*", { count: "exact", head: true }).eq("status", "trialing"),
-        supabase.from("pro_subscriptions").select("*", { count: "exact", head: true }).eq("status", "canceled"),
+        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "trialing"),
+        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "canceled"),
       ]);
       return {
         active: active.count || 0,
@@ -138,39 +141,41 @@ export function ManagerDashboard() {
   const actionItemsCount = (providerStats?.pending || 0) + (leadStats?.newLeads || 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg">
-          <Briefcase className="h-5 w-5 text-white" />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg shrink-0">
+          <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Manager Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Operations overview — Providers, Leads, Subscriptions & Analytics</p>
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground truncate">Manager Dashboard</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Operations overview — Providers, Leads, Subscriptions & Analytics</p>
         </div>
       </div>
 
       {/* Primary KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         {/* Revenue */}
-        <Card className="border-0 bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium opacity-90">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 opacity-70" />
+        <Card className="border-0 bg-primary text-primary-foreground shadow-md overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+            <CardTitle className="text-[10px] sm:text-sm font-medium opacity-90 truncate pr-1">Monthly Revenue</CardTitle>
+            <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-70 shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
             {loadingRevenue ? (
-              <Skeleton className="h-8 w-24 bg-white/20" />
+              <Skeleton className="h-6 sm:h-8 w-20 sm:w-24 bg-white/20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">${revenueStats?.monthlyRevenue?.toLocaleString() || "0"}</div>
-                <p className="text-xs opacity-80 mt-1 flex items-center gap-1">
+                <div className="text-lg sm:text-2xl font-bold truncate">${revenueStats?.monthlyRevenue?.toLocaleString() || "0"}</div>
+                <p className="text-[9px] sm:text-xs opacity-70 mt-0.5 sm:mt-1 flex items-center gap-0.5 sm:gap-1 truncate">
                   {revenueStats?.percentChange && revenueStats.percentChange >= 0 ? (
-                    <TrendingUp className="h-3 w-3" />
+                    <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                   ) : (
-                    <TrendingDown className="h-3 w-3" />
+                    <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                   )}
-                  {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last month
+                  <span className="truncate">
+                    {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last
+                  </span>
                 </p>
               </>
             )}
@@ -178,58 +183,58 @@ export function ManagerDashboard() {
         </Card>
 
         {/* Providers */}
-        <Card className="border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Providers</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+        <Card className="border shadow-sm overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Providers</CardTitle>
+            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
             {loadingProviders ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-6 sm:h-8 w-16 sm:w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{providerStats?.total?.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground mt-1">{providerStats?.approved} approved</p>
+                <div className="text-lg sm:text-2xl font-bold tabular-nums">{providerStats?.total?.toLocaleString()}</div>
+                <p className="text-[9px] sm:text-xs text-muted-foreground mt-0.5">{providerStats?.approved} approved</p>
               </>
             )}
           </CardContent>
         </Card>
 
         {/* Leads */}
-        <Card className="border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Leads</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+        <Card className="border shadow-sm overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Monthly Leads</CardTitle>
+            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
             {loadingLeads ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-6 sm:h-8 w-16 sm:w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{leadStats?.totalMonth?.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground mt-1">{leadStats?.verificationRate}% verified</p>
+                <div className="text-lg sm:text-2xl font-bold tabular-nums">{leadStats?.totalMonth?.toLocaleString()}</div>
+                <p className="text-[9px] sm:text-xs text-muted-foreground mt-0.5">{leadStats?.verificationRate}% verified</p>
               </>
             )}
           </CardContent>
         </Card>
 
         {/* Actions Needed */}
-        <Card className={`border shadow-sm ${actionItemsCount > 0 ? "border-warning/50 bg-warning/5" : ""}`}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Actions Needed</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+        <Card className={`border shadow-sm overflow-hidden ${actionItemsCount > 0 ? "border-warning/50 bg-warning/5" : ""}`}>
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
+            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Actions</CardTitle>
+            <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{actionItemsCount}</div>
-            <div className="flex gap-1.5 mt-1">
+          <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-lg sm:text-2xl font-bold tabular-nums">{actionItemsCount}</div>
+            <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
               {providerStats?.pending ? (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-warning/20 text-warning-foreground">
-                  {providerStats.pending} pending
+                <Badge variant="secondary" className="text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0 sm:py-0.5 bg-warning/20 text-warning-foreground hover:bg-warning/20 whitespace-nowrap">
+                  {providerStats.pending} pend
                 </Badge>
               ) : null}
               {leadStats?.newLeads ? (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-info/20 text-info-foreground">
-                  {leadStats.newLeads} new leads
+                <Badge variant="secondary" className="text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0 sm:py-0.5 bg-info/20 text-info-foreground hover:bg-info/20 whitespace-nowrap">
+                  {leadStats.newLeads} new
                 </Badge>
               ) : null}
             </div>
@@ -238,7 +243,7 @@ export function ManagerDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Provider Status */}
         <Card className="border shadow-sm">
           <CardHeader>
@@ -262,18 +267,18 @@ export function ManagerDashboard() {
               </div>
               <Progress value={providerStats?.approvalRate || 0} className="h-2" />
             </div>
-            <div className="grid grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-2">
               <div className="text-center p-2 rounded-lg bg-success/10">
-                <div className="text-lg font-bold text-success">{providerStats?.approved}</div>
-                <div className="text-xs text-muted-foreground">Approved</div>
+                <div className="text-base sm:text-lg font-bold text-success">{providerStats?.approved}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">Approved</div>
               </div>
               <div className="text-center p-2 rounded-lg bg-warning/10">
-                <div className="text-lg font-bold text-warning">{providerStats?.pending}</div>
-                <div className="text-xs text-muted-foreground">Pending</div>
+                <div className="text-base sm:text-lg font-bold text-warning">{providerStats?.pending}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">Pending</div>
               </div>
               <div className="text-center p-2 rounded-lg bg-primary/10">
-                <div className="text-lg font-bold text-primary">{providerStats?.featured}</div>
-                <div className="text-xs text-muted-foreground">Featured</div>
+                <div className="text-base sm:text-lg font-bold text-primary">{providerStats?.featured}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">Featured</div>
               </div>
             </div>
           </CardContent>
@@ -301,21 +306,21 @@ export function ManagerDashboard() {
                 <Skeleton className="h-12 w-full" />
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
-                  <CreditCard className="h-5 w-5 text-success mx-auto mb-1" />
-                  <div className="text-xl font-bold text-success">{subscriptionStats?.active}</div>
-                  <div className="text-xs text-muted-foreground">Active</div>
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                <div className="text-center p-2 sm:p-3 rounded-lg bg-success/10 border border-success/20">
+                  <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto mb-1" />
+                  <div className="text-lg sm:text-xl font-bold text-success">{subscriptionStats?.active}</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">Active</div>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-info/10 border border-info/20">
-                  <Target className="h-5 w-5 text-info mx-auto mb-1" />
-                  <div className="text-xl font-bold text-info">{subscriptionStats?.trial}</div>
-                  <div className="text-xs text-muted-foreground">Trial</div>
+                <div className="text-center p-2 sm:p-3 rounded-lg bg-info/10 border border-info/20">
+                  <Target className="h-4 w-4 sm:h-5 sm:w-5 text-info mx-auto mb-1" />
+                  <div className="text-lg sm:text-xl font-bold text-info">{subscriptionStats?.trial}</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">Trial</div>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
-                  <AlertCircle className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                  <div className="text-xl font-bold text-muted-foreground">{subscriptionStats?.canceled}</div>
-                  <div className="text-xs text-muted-foreground">Canceled</div>
+                <div className="text-center p-2 sm:p-3 rounded-lg bg-muted/50 border border-border">
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mx-auto mb-1" />
+                  <div className="text-lg sm:text-xl font-bold text-muted-foreground">{subscriptionStats?.canceled}</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">Canceled</div>
                 </div>
               </div>
             )}
@@ -330,10 +335,10 @@ export function ManagerDashboard() {
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {hasPermission("providers") && providerStats?.pending && providerStats.pending > 0 && (
-            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-warning/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-warning/10" asChild>
               <Link to="/admin/providers?status=pending">
-                <AlertCircle className="h-5 w-5 text-warning mr-3" />
-                <div className="flex flex-col items-start">
+                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-warning mr-2 sm:mr-3 shrink-0" />
+                <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Review Providers</span>
                   <span className="text-xs text-muted-foreground">{providerStats.pending} pending approval</span>
                 </div>
@@ -341,10 +346,10 @@ export function ManagerDashboard() {
             </Button>
           )}
           {hasPermission("leads") && (
-            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-info/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-info/10" asChild>
               <Link to="/admin/leads">
-                <Users className="h-5 w-5 text-info mr-3" />
-                <div className="flex flex-col items-start">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-info mr-2 sm:mr-3 shrink-0" />
+                <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Manage Leads</span>
                   <span className="text-xs text-muted-foreground">View all inquiries</span>
                 </div>
@@ -352,10 +357,10 @@ export function ManagerDashboard() {
             </Button>
           )}
           {hasPermission("subscriptions") && (
-            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-success/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-success/10" asChild>
               <Link to="/admin/subscriptions">
-                <CreditCard className="h-5 w-5 text-success mr-3" />
-                <div className="flex flex-col items-start">
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-success mr-2 sm:mr-3 shrink-0" />
+                <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Subscriptions</span>
                   <span className="text-xs text-muted-foreground">Billing & plans</span>
                 </div>
@@ -363,10 +368,10 @@ export function ManagerDashboard() {
             </Button>
           )}
           {hasPermission("analytics") && (
-            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-primary/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-primary/10" asChild>
               <Link to="/admin/analytics">
-                <BarChart3 className="h-5 w-5 text-primary mr-3" />
-                <div className="flex flex-col items-start">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary mr-2 sm:mr-3 shrink-0" />
+                <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Analytics</span>
                   <span className="text-xs text-muted-foreground">View detailed reports</span>
                 </div>
