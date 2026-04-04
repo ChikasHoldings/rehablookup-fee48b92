@@ -29,19 +29,22 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
   ) {
   const [isOpen, setIsOpen] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const internalRef = useRef<HTMLDivElement>(null);
+  const containerRef = (ref as React.RefObject<HTMLDivElement>) || internalRef;
   const filterInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const el = internalRef.current;
+      if (el && !el.contains(e.target as Node)) {
         setIsOpen(false);
         setFilterQuery("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isOpen]);
 
   // Focus filter input when dropdown opens
   useEffect(() => {
