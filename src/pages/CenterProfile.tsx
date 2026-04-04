@@ -123,7 +123,7 @@ function QuickFactCard({
   );
 }
 
-// Section Container Component
+// Section Container Component — borderless flowing layout
 function ProfileSection({ 
   icon: Icon, 
   title, 
@@ -140,17 +140,15 @@ function ProfileSection({
   action?: React.ReactNode;
 }) {
   return (
-    <div className={cn("rounded-xl border border-border/50 bg-card shadow-sm", className)}>
-      <div className="flex items-center justify-between p-4 md:p-5 border-b border-border/40">
-        <div className="flex items-center gap-3">
-          <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", iconColor.split(' ')[0])}>
-            <Icon className={cn("h-4 w-4", iconColor.split(' ')[1] || 'text-primary')} />
-          </div>
+    <div className={cn("", className)}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          <Icon className={cn("h-5 w-5", iconColor.split(' ')[1] || 'text-primary')} />
           <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
         </div>
         {action}
       </div>
-      <div className="p-4 md:p-5">
+      <div>
         {children}
       </div>
     </div>
