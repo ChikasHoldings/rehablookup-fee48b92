@@ -312,7 +312,7 @@ export function LeadProfileModal({
   const firstName = lead.name.split(" ")[0];
 
   const formatUrgency = (urgency: string | null) => {
-    if (!urgency) return "Not specified";
+    if (!urgency) return "Pending assessment";
     const map: Record<string, string> = {
       immediate: "Immediate (ASAP)",
       "within-week": "Within a Week",
@@ -333,7 +333,7 @@ export function LeadProfileModal({
   };
 
   const formatLevelOfCare = (level: string | null) => {
-    if (!level) return "Not specified";
+    if (!level) return "To be determined";
     const map: Record<string, string> = {
       detox: "Detox",
       residential: "Residential Inpatient",
@@ -346,7 +346,7 @@ export function LeadProfileModal({
   };
 
   const formatInsurance = (type: string | null) => {
-    if (!type) return "Not specified";
+    if (!type) return "To be verified";
     const map: Record<string, string> = {
       ppo: "PPO / Private Insurance",
       medicaid: "Medicaid",
@@ -830,7 +830,7 @@ export function LeadProfileModal({
                           ? "Themselves"
                           : lead.who_seeking_help === "loved-one"
                           ? "A Loved One"
-                          : "Not specified"}
+                          : "Themselves"}
                       </p>
                     </div>
 
@@ -1021,7 +1021,7 @@ export function LeadProfileModal({
                           ? "Co-occurring Concern"
                           : lead.dual_diagnosis === "no"
                           ? "No Concern Indicated"
-                          : "Not specified"}
+                          : "Pending assessment"}
                       </p>
                     </div>
 
@@ -1149,7 +1149,7 @@ export function LeadProfileModal({
                         {lead.budget_preference === "low" ? "Budget-conscious" :
                          lead.budget_preference === "medium" ? "Moderate" :
                          lead.budget_preference === "flexible" ? "Flexible / Cost not a concern" :
-                         lead.budget_preference || "Not specified"}
+                         lead.budget_preference || "To be discussed"}
                       </p>
                     </div>
                   </div>

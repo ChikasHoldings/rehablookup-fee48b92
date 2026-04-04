@@ -158,7 +158,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
               label="Payment"
               value={caseData.payment_type === "insurance" 
                 ? caseData.insurance_carrier || "Insurance"
-                : caseData.payment_type?.replace(/_/g, ' ') || "Not specified"}
+                : caseData.payment_type?.replace(/_/g, ' ') || "To be discussed"}
             />
             {caseData.timeline_urgency && (
               <DetailItem 

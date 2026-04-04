@@ -34,7 +34,7 @@ const formatValue = (value: string | string[]) => {
   if (Array.isArray(value)) {
     return value.length > 0 ? value.map(v => v.replace(/-/g, ' ')).join(', ') : 'None selected';
   }
-  return value ? value.replace(/-/g, ' ') : 'Not specified';
+  return value ? value.replace(/-/g, ' ') : '—';
 };
 
 export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
