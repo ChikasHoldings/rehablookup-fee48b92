@@ -65,6 +65,10 @@ const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-guides/Reh
 const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-guides/TreatmentCenterPatientAcquisition"));
 const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-guides/BehavioralHealthLeadGeneration"));
 
+// Provider Resource Hub
+const ProviderResourceHub = lazy(() => import("./pages/providers/ProviderResourceHub"));
+const ProviderResourceArticle = lazy(() => import("./pages/providers/ProviderResourceArticle"));
+
 // Concierge Placement (Paid Service) - lazy load
 const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding"));
 const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
@@ -517,6 +521,10 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-center-marketing-ideas" element={<PublicRouteGuard><RehabCenterMarketingIdeas /></PublicRouteGuard>} />
             <Route path="/provider-guides/treatment-center-patient-acquisition" element={<PublicRouteGuard><TreatmentCenterPatientAcquisition /></PublicRouteGuard>} />
             <Route path="/provider-guides/behavioral-health-lead-generation" element={<PublicRouteGuard><BehavioralHealthLeadGeneration /></PublicRouteGuard>} />
+
+            {/* Provider Resource Hub */}
+            <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
+            <Route path="/providers/resources/:slug" element={<PublicRouteGuard><ProviderResourceArticle /></PublicRouteGuard>} />
 
             {/* Provider Panel Routes */}
             <Route path="/provider" element={<ProviderShell />}>

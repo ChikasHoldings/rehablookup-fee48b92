@@ -75,7 +75,7 @@ const seoPages = [
 
 const quickLinks = [
   { href: "/for-providers", label: "Why List With Us", icon: Building2 },
-  { href: "/provider-resources", label: "Resource Hub", icon: BookOpen },
+  { href: "/providers/resources", label: "Resource Hub", icon: BookOpen },
   { href: "/provider-faq", label: "FAQ", icon: HelpCircle },
   { href: "/provider-support", label: "Support", icon: Headphones },
 ];

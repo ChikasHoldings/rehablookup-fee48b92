@@ -20,6 +20,7 @@ const PROVIDER_ALLOWED_ROUTES = [
   "/provider-support",
   "/provider-faq",
   "/provider-guides",
+  "/providers/resources",
   "/login",
   "/provider-signup",
   "/provider-forgot-password",
