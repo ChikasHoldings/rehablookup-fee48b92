@@ -349,7 +349,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                         <>
                           <span>{phone}</span>
                           {user.phone_verified && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-xs">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Verified
                             </Badge>
@@ -384,7 +384,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                       {userActivity?.reviews?.length || 0} Reviews
                     </Badge>
                     {hasConcierge && (
-                      <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1">
+                      <Badge variant="outline" className="bg-chart-3/10 text-chart-3 border-chart-3/30 gap-1">
                         <Shield className="h-3 w-3" />
                         Concierge User
                       </Badge>
@@ -395,9 +395,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
 
               {/* Data Sources Info */}
               {aggregatedData?.sources && aggregatedData.sources.length > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-info/5 border border-info/20">
+                  <Info className="h-4 w-4 text-info flex-shrink-0" />
+                  <span className="text-sm text-info">
                     Contact info sourced from: {aggregatedData.sources.join(", ")}
                   </span>
                 </div>
@@ -430,7 +430,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                     variant="outline" 
                     size="sm" 
                     onClick={handleUnban}
-                    className="gap-2 text-green-600 hover:text-green-700"
+                    className="gap-2 text-success hover:text-success"
                   >
                     <ShieldOff className="h-4 w-4" />
                     Unban User
@@ -440,7 +440,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                     variant="outline" 
                     size="sm" 
                     onClick={() => setBanDialogOpen(true)}
-                    className="gap-2 text-amber-600 hover:text-amber-700"
+                    className="gap-2 text-warning hover:text-warning"
                   >
                     <Ban className="h-4 w-4" />
                     Ban User
@@ -515,9 +515,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                           <span className="text-muted-foreground">Phone Verified</span>
                           <span className="font-medium">
                             {user.phone_verified ? (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Yes</Badge>
+                              <Badge variant="outline" className="bg-success/10 text-success border-success/30">Yes</Badge>
                             ) : (
-                              <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
+                              <Badge variant="outline" className="bg-muted text-muted-foreground border-border">No</Badge>
                             )}
                           </span>
                         </div>
@@ -562,7 +562,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                           {isBanned ? (
                             <Badge variant="destructive">Banned</Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30">Active</Badge>
                           )}
                         </div>
                         <div className="flex justify-between">
@@ -576,9 +576,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Concierge User</span>
                           {hasConcierge ? (
-                            <Badge className="bg-purple-100 text-purple-700 border-purple-200">Yes</Badge>
+                            <Badge variant="outline" className="bg-chart-3/10 text-chart-3 border-chart-3/30">Yes</Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
+                            <Badge variant="outline" className="bg-muted text-muted-foreground border-border">No</Badge>
                           )}
                         </div>
                       </div>
@@ -614,7 +614,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                   {hasConcierge && (
                     <div className="space-y-3">
                       <h4 className="font-semibold flex items-center gap-2 text-sm">
-                        <Shield className="h-4 w-4 text-purple-600" />
+                        <Shield className="h-4 w-4 text-chart-3" />
                         Concierge Requests ({userActivity?.conciergeInquiries?.length || 0})
                       </h4>
                       <div className="space-y-2">
@@ -628,9 +628,9 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                     variant="outline" 
                                     className={cn(
                                       "text-xs",
-                                      inquiry.status === 'matched' && "bg-green-50 text-green-700 border-green-200",
-                                      inquiry.status === 'pending' && "bg-yellow-50 text-yellow-700 border-yellow-200",
-                                      inquiry.status === 'closed' && "bg-slate-50 text-slate-500 border-slate-200"
+                                     inquiry.status === 'matched' && "bg-success/10 text-success border-success/30",
+                                      inquiry.status === 'pending' && "bg-warning/10 text-warning border-warning/30",
+                                      inquiry.status === 'closed' && "bg-muted text-muted-foreground border-border"
                                     )}
                                   >
                                     {inquiry.status}
@@ -641,7 +641,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                       variant="outline" 
                                       className={cn(
                                         "text-xs",
-                                        (inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded') && "bg-green-50 text-green-700 border-green-200"
+                                        (inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded') && "bg-success/10 text-success border-success/30"
                                       )}
                                     >
                                       {inquiry.payment_status}
@@ -693,7 +693,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                     className={cn(
                                       "h-4 w-4",
                                       i < review.rating
-                                        ? "fill-yellow-400 text-yellow-400"
+                                        ? "fill-warning text-warning"
                                         : "text-muted-foreground/30"
                                     )}
                                   />
@@ -703,11 +703,11 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                 variant="outline" 
                                 className={cn(
                                   "text-xs",
-                                  review.status === 'approved' && "bg-green-50 text-green-700 border-green-200",
-                                  review.status === 'pending' && "bg-yellow-50 text-yellow-700 border-yellow-200",
-                                  review.status === 'rejected' && "bg-red-50 text-red-700 border-red-200"
-                                )}
-                              >
+                                   review.status === 'approved' && "bg-success/10 text-success border-success/30",
+                                   review.status === 'pending' && "bg-warning/10 text-warning border-warning/30",
+                                   review.status === 'rejected' && "bg-destructive/10 text-destructive border-destructive/30"
+                                 )}
+                               >
                                 {review.status}
                               </Badge>
                             </div>
@@ -822,7 +822,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Ban className="h-5 w-5 text-amber-600" />
+              <Ban className="h-5 w-5 text-warning" />
               Ban User
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -843,7 +843,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
             <AlertDialogAction
               onClick={handleBan}
               disabled={isBanning}
-              className="bg-amber-600 text-white hover:bg-amber-700"
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
             >
               {isBanning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Ban User
