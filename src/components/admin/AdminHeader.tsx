@@ -50,10 +50,10 @@ type Notification = {
 
 // Role display config
 const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
-  super_admin: { label: "Super Admin", color: "bg-amber-500/10 text-amber-600" },
-  manager: { label: "Manager", color: "bg-blue-500/10 text-blue-600" },
-  customer_rep: { label: "Customer Rep", color: "bg-emerald-500/10 text-emerald-600" },
-  advisor: { label: "Placement Advisor", color: "bg-purple-500/10 text-purple-600" },
+  super_admin: { label: "Super Admin", color: "bg-warning/10 text-warning" },
+  manager: { label: "Manager", color: "bg-primary/10 text-primary" },
+  customer_rep: { label: "Customer Rep", color: "bg-success/10 text-success" },
+  advisor: { label: "Placement Advisor", color: "bg-accent/50 text-accent-foreground" },
 };
 
 function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperAdmin = false, hasPermission = () => false }: AdminHeaderProps) {
