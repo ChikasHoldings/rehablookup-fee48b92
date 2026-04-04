@@ -22,10 +22,20 @@ import {
 
 const ITEMS_PER_PAGE = 15;
 
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function AdminProviders() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminProviders");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const searchQuery = useDebounce(searchInput, 350);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -356,10 +366,10 @@ export default function AdminProviders() {
     setCurrentPage(1);
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+  // Reset page when debounced search changes
+  useEffect(() => {
     setCurrentPage(1);
-  };
+  }, [searchQuery]);
 
   const handleStatusChange = (id: string, newStatus: string) => {
     updateProvider.mutate({
@@ -483,8 +493,8 @@ export default function AdminProviders() {
         <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name, city, or email..."
-          value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="pl-8 sm:pl-9 h-9 text-sm"
         />
       </div>
@@ -532,7 +542,7 @@ export default function AdminProviders() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
             <p className="text-sm text-muted-foreground">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} providers
+              <span className="tabular-nums">Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} providers</span>
             </p>
             <div className="flex items-center gap-2">
               <Button

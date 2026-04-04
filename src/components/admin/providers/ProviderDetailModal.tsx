@@ -412,11 +412,11 @@ export function ProviderDetailModal({
   const getLeadStatusBadge = (status: string) => {
     switch (status) {
       case "new":
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-700">New</Badge>;
+        return <Badge variant="secondary" className="bg-info/10 text-info border-info/20">New</Badge>;
       case "contacted":
-        return <Badge className="bg-emerald-100 text-emerald-700">Contacted</Badge>;
+        return <Badge className="bg-success/10 text-success border-success/20">Contacted</Badge>;
       case "converted":
-        return <Badge className="bg-purple-100 text-purple-700">Converted</Badge>;
+        return <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/20">Converted</Badge>;
       case "lost":
         return <Badge variant="destructive">Lost</Badge>;
       default:
@@ -456,7 +456,7 @@ export function ProviderDetailModal({
                   </Badge>
                 )}
                 {provider.concierge_network_opted_in && (
-                  <Badge variant="outline" className="text-purple-600 border-purple-300 gap-1">
+                  <Badge variant="outline" className="text-chart-3 border-chart-3/30 gap-1">
                     <Handshake className="h-3 w-3" />
                     Placement Network
                   </Badge>
@@ -558,7 +558,7 @@ export function ProviderDetailModal({
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Wallet className="h-5 w-5 mx-auto mb-2 text-emerald-500" />
-                    <p className="text-2xl font-bold text-emerald-600">
+                    <p className="text-2xl font-bold text-success">
                       ${((creditBalance || 0) / 100).toFixed(2)}
                     </p>
                     <p className="text-xs text-muted-foreground">Credit Balance</p>
@@ -855,7 +855,7 @@ export function ProviderDetailModal({
                                       </Badge>
                                     )}
                                     {facility.concierge_network_opted_in && (
-                                      <Badge variant="outline" className="text-purple-600 border-purple-200 text-xs">
+                                      <Badge variant="outline" className="text-chart-3 border-chart-3/30 text-xs">
                                         <Handshake className="h-3 w-3 mr-0.5" />
                                         Placement
                                       </Badge>
@@ -1017,14 +1017,14 @@ export function ProviderDetailModal({
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {acc.verified ? (
-                                  <Badge className="bg-emerald-100 text-emerald-700">
+                                <div className="flex items-center gap-2">
+1021:                                 {acc.verified ? (
+                                  <Badge className="bg-success/10 text-success border-success/20">
                                     <CheckCircle className="h-3 w-3 mr-1" />
                                     Verified
                                   </Badge>
                                 ) : hasDetails ? (
-                                  <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                                  <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
                                     Pending Review
                                   </Badge>
                                 ) : (
@@ -1196,7 +1196,7 @@ export function ProviderDetailModal({
                               </>
                             )}
                             {doc.status === "verified" && (
-                              <Badge className="bg-emerald-600 text-white">
+                              <Badge className="bg-success/10 text-success border-success/20">
                                 <BadgeCheck className="h-3 w-3 mr-1" />
                                 Verified
                               </Badge>
@@ -1240,7 +1240,9 @@ export function ProviderDetailModal({
                           Pro Active
                         </Badge>
                         <div>
-                          <p className="font-semibold">$399/month</p>
+                          <p className="font-semibold">
+                            ${selectedProviderPro.price_cents ? (selectedProviderPro.price_cents / 100).toFixed(0) : "—"}/month
+                          </p>
                           {selectedProviderPro.current_period_end && (
                             <p className="text-sm text-muted-foreground">
                               Renews {format(new Date(selectedProviderPro.current_period_end), "PPP")}
@@ -1248,7 +1250,7 @@ export function ProviderDetailModal({
                           )}
                         </div>
                       </div>
-                      <Badge className="bg-emerald-100 text-emerald-700">
+                      <Badge className="bg-success/10 text-success border-success/20">
                         {selectedProviderPro.unlock_discount_percent}% Discount
                       </Badge>
                     </div>
@@ -1272,7 +1274,7 @@ export function ProviderDetailModal({
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-3xl font-bold text-emerald-600">
+                      <p className="text-3xl font-bold text-success">
                         ${((creditBalance || 0) / 100).toFixed(2)}
                       </p>
                       <p className="text-sm text-muted-foreground">Available for lead unlocks</p>
@@ -1299,7 +1301,7 @@ export function ProviderDetailModal({
                   {provider.concierge_network_opted_in ? (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-purple-600 border-purple-300 gap-1">
+                        <Badge variant="outline" className="text-chart-3 border-chart-3/30 gap-1">
                           <CheckCircle className="h-3 w-3" />
                           Opted In
                         </Badge>
@@ -1315,7 +1317,7 @@ export function ProviderDetailModal({
                           <p className="text-xs text-muted-foreground">Introductions</p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg text-center">
-                          <p className="text-2xl font-bold text-purple-600">{placementStats?.placements || 0}</p>
+                          <p className="text-2xl font-bold text-chart-3">{placementStats?.placements || 0}</p>
                           <p className="text-xs text-muted-foreground">Placements</p>
                         </div>
                       </div>
