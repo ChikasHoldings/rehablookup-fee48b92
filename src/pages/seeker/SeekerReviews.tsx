@@ -420,11 +420,11 @@ export default function SeekerReviews() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Published</Badge>;
+        return <Badge className="bg-success/10 text-success border-0 text-[10px]">Published</Badge>;
       case 'pending':
-        return <Badge className="bg-amber-100 text-amber-700 border-0 text-[10px]">Pending Review</Badge>;
+        return <Badge className="bg-warning/10 text-warning border-0 text-[10px]">Pending Review</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-700 border-0 text-[10px]">Rejected</Badge>;
+        return <Badge className="bg-destructive/10 text-destructive border-0 text-[10px]">Rejected</Badge>;
       default:
         return null;
     }
