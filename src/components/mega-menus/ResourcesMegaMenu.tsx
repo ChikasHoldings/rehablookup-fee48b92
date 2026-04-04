@@ -75,10 +75,7 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
                 className="group flex items-center gap-2 rounded-md px-2 py-[7px] hover:bg-muted/40 transition-colors"
               >
                 <ChevronRight className="h-3 w-3 text-border group-hover:text-accent transition-colors shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground leading-tight">{tool.label}</p>
-                  <p className="text-xs text-muted-foreground leading-tight">{tool.desc}</p>
-                </div>
+                <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground leading-tight">{tool.label}</p>
               </PrefetchLink>
             ))}
           </div>
