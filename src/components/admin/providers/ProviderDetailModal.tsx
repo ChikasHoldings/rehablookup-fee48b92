@@ -1240,7 +1240,9 @@ export function ProviderDetailModal({
                           Pro Active
                         </Badge>
                         <div>
-                          <p className="font-semibold">$399/month</p>
+                          <p className="font-semibold">
+                            ${selectedProviderPro.price_cents ? (selectedProviderPro.price_cents / 100).toFixed(0) : "—"}/month
+                          </p>
                           {selectedProviderPro.current_period_end && (
                             <p className="text-sm text-muted-foreground">
                               Renews {format(new Date(selectedProviderPro.current_period_end), "PPP")}
@@ -1248,7 +1250,7 @@ export function ProviderDetailModal({
                           )}
                         </div>
                       </div>
-                      <Badge className="bg-emerald-100 text-emerald-700">
+                      <Badge className="bg-success/10 text-success border-success/20">
                         {selectedProviderPro.unlock_discount_percent}% Discount
                       </Badge>
                     </div>
