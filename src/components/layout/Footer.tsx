@@ -28,14 +28,7 @@ const locationLinks: FooterLink[] = [
   { name: "Colorado", path: "/rehab-centers/colorado" },
   { name: "Ohio", path: "/rehab-centers/ohio" },
   { name: "Pennsylvania", path: "/rehab-centers/pennsylvania" },
-  { name: "Illinois", path: "/rehab-centers/illinois" },
-  { name: "Georgia", path: "/rehab-centers/georgia" },
-  { name: "Tennessee", path: "/rehab-centers/tennessee" },
-  { name: "North Carolina", path: "/rehab-centers/north-carolina" },
-  { name: "New Jersey", path: "/rehab-centers/new-jersey" },
-  { name: "Massachusetts", path: "/rehab-centers/massachusetts" },
-  { name: "Washington", path: "/rehab-centers/washington" },
-  { name: "View All States", path: "/locations", highlight: true },
+  { name: "View All States →", path: "/locations", highlight: true },
 ];
 
 const treatmentLinks: FooterLink[] = [
