@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
         const facilityEmail = invoice.facilities?.email;
         const facilityName = invoice.facilities?.name || "Provider";
         const amountDue = ((invoice.override_amount_cents || invoice.amount_cents) / 100).toFixed(2);
-        const dueDate = invoice.due_at ? new Date(invoice.due_at).toLocaleDateString() : "N/A";
+        const dueDate = invoice.due_at ? new Date(invoice.due_at).toLocaleDateString() : "Not yet set";
 
         if (facilityEmail) {
           await resend.emails.send({
