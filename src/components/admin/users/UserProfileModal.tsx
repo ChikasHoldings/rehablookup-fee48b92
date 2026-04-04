@@ -440,7 +440,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                     variant="outline" 
                     size="sm" 
                     onClick={() => setBanDialogOpen(true)}
-                    className="gap-2 text-amber-600 hover:text-amber-700"
+                    className="gap-2 text-warning hover:text-warning"
                   >
                     <Ban className="h-4 w-4" />
                     Ban User
