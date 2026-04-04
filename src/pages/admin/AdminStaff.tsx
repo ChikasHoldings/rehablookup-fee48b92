@@ -98,6 +98,7 @@ const STATUS_CONFIG = {
 
 export default function AdminStaff() {
   const { logError } = useAdminErrorHandler("AdminStaff");
+  const { isSuperAdmin } = useAdminAuth();
   const { adminUsers, isLoading, manageAdminUser, isManaging, refetch } = useAdminUserManagement();
   
   const [searchQuery, setSearchQuery] = useState("");
