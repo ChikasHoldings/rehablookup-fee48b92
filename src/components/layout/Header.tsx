@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
@@ -17,14 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Provider dropdown links
-const providerDropdownLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-faq", label: "FAQ" },
-  { href: "/provider-support", label: "Support" },
-];
+import { ProviderMegaMenu, ProviderMegaMenuMobile } from "@/components/provider-seo/ProviderMegaMenu";
 
 export interface NavLink {
   href: string;
@@ -182,38 +175,36 @@ export function Header({
               );
             })}
 
-            {/* For Providers dropdown - hidden on tablet, visible on lg+ */}
-            <DropdownMenu open={providerDropdownOpen} onOpenChange={setProviderDropdownOpen}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "hidden lg:flex items-center h-10 gap-1 px-3.5 text-[15px] font-medium transition-colors whitespace-nowrap",
-                    location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider")
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  For Providers
-                  <ChevronDown className={cn(
-                    "h-3.5 w-3.5 transition-transform duration-200",
-                    providerDropdownOpen && "rotate-180"
-                  )} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-background border border-border shadow-lg z-50">
-                {providerDropdownLinks.map((dropdownLink) => (
-                  <DropdownMenuItem key={dropdownLink.href} asChild>
-                    <PrefetchLink
-                      to={dropdownLink.href}
-                      className="w-full cursor-pointer"
-                      onClick={() => setProviderDropdownOpen(false)}
-                    >
-                      {dropdownLink.label}
-                    </PrefetchLink>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* For Providers mega-menu - hidden on tablet, visible on lg+ */}
+            <div className="hidden lg:block relative">
+              <button
+                onClick={() => setProviderDropdownOpen(!providerDropdownOpen)}
+                onMouseEnter={() => setProviderDropdownOpen(true)}
+                className={cn(
+                  "flex items-center h-10 gap-1 px-3.5 text-[15px] font-medium transition-colors whitespace-nowrap",
+                  location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider-seo")
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                For Providers
+                <ChevronDown className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-200",
+                  providerDropdownOpen && "rotate-180"
+                )} />
+              </button>
+              {providerDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProviderDropdownOpen(false)} />
+                  <div
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 bg-background border border-border rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-150"
+                    onMouseLeave={() => setProviderDropdownOpen(false)}
+                  >
+                    <ProviderMegaMenu onNavigate={() => setProviderDropdownOpen(false)} />
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* "More" dropdown - visible on tablet only */}
             <DropdownMenu open={moreDropdownOpen} onOpenChange={setMoreDropdownOpen}>
@@ -436,27 +427,12 @@ export function Header({
                             mobileProviderExpanded && "rotate-180"
                           )} />
                         </button>
-                        {/* Provider sub-links - collapsible */}
+                        {/* Provider mega-menu mobile - collapsible */}
                         <div className={cn(
-                          "ml-8 space-y-1 overflow-hidden transition-all duration-300",
-                          mobileProviderExpanded ? "max-h-48 opacity-100 mt-1" : "max-h-0 opacity-0"
+                          "ml-4 overflow-hidden transition-all duration-300",
+                          mobileProviderExpanded ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"
                         )}>
-                          {providerDropdownLinks.map((subLink, subIndex) => (
-                            <PrefetchLink
-                              key={subLink.href}
-                              to={subLink.href}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className={cn(
-                                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
-                                location.pathname === subLink.href
-                                  ? "text-primary"
-                                  : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              <ChevronRight className="h-3.5 w-3.5" />
-                              {subLink.label}
-                            </PrefetchLink>
-                          ))}
+                          <ProviderMegaMenuMobile onNavigate={() => setMobileMenuOpen(false)} />
                         </div>
                       </div>
                     );
