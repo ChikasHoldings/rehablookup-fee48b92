@@ -356,7 +356,7 @@ export const Footer = memo(function Footer() {
                   <Link
                     key={l.to}
                     to={l.to}
-                    className="text-[11px] text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
+                    className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
                   >
                     {l.label}
                   </Link>
