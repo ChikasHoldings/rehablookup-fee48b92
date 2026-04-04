@@ -240,7 +240,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("leads")
-        .select("id, facility_id, name, email, phone, status, source, created_at, urgency, level_of_care")
+        .select("id, facility_id, name, email, phone, status, source, created_at, urgency, level_of_care, insurance_type, message, inquiry_type")
         .eq("facility_id", provider.id)
         .order("created_at", { ascending: false })
         .limit(50);
