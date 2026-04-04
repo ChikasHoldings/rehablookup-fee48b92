@@ -34,6 +34,7 @@ import {
   Mail,
   Award,
   ShieldCheck,
+  Sparkles,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
