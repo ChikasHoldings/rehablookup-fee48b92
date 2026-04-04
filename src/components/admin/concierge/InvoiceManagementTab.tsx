@@ -319,7 +319,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                             {STATUS_CONFIG[invoice.status]?.label || invoice.status}
                           </Badge>
                           {invoice.waived && (
-                            <Badge variant="outline" className="text-amber-600 border-amber-300">
+                            <Badge variant="outline" className="text-warning border-warning/30">
                               Waived
                             </Badge>
                           )}
