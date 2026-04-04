@@ -313,7 +313,7 @@ export function SubscriptionDetailModal({
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={() => handleAction("cancel")}
-                            className="text-amber-600 focus:text-amber-600 text-xs sm:text-sm"
+                            className="text-warning focus:text-warning text-xs sm:text-sm"
                           >
                             <Ban className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                             Cancel at Period End
