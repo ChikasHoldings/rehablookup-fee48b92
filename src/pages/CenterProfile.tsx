@@ -123,7 +123,7 @@ function QuickFactCard({
   );
 }
 
-// Section Container Component — borderless flowing layout
+// Section Container Component — premium flowing layout
 function ProfileSection({ 
   icon: Icon, 
   title, 
@@ -141,16 +141,16 @@ function ProfileSection({
 }) {
   return (
     <div className={cn("", className)}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
-          <Icon className={cn("h-5 w-5", iconColor.split(' ')[1] || 'text-primary')} />
-          <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/80">
+            <Icon className={cn("h-4 w-4", iconColor.split(' ')[1] || 'text-primary')} />
+          </div>
+          <h2 className="font-display text-lg font-bold tracking-tight text-foreground">{title}</h2>
         </div>
         {action}
       </div>
-      <div>
-        {children}
-      </div>
+      <div>{children}</div>
     </div>
   );
 }
