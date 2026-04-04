@@ -69,7 +69,7 @@ export default function PlacementRevenueDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("placement_invoices")
-        .select("id, case_id, inquiry_id, facility_id, amount_cents, fee_type, status, due_at, paid_at, created_at, override_amount_cents, override_reason, discount_percent, discount_reason, notes, receipt_url, stripe_payment_intent_id, waive_reason, updated_at")
+        .select("id, case_id, inquiry_id, facility_id, amount_cents, fee_type, status, due_at, paid_at, created_at, override_amount_cents, override_reason, discount_percent, discount_reason, notes, receipt_url, stripe_payment_intent_id, waive_reason, waived, waived_at, waived_by, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
