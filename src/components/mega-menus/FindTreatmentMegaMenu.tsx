@@ -105,16 +105,19 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
 
           {/* Concierge CTA with Image */}
           <Link to="/concierge" onClick={onNavigate} className="group block mt-2.5">
-            <div className="relative rounded-lg overflow-hidden h-[68px]">
+            <div className="relative rounded-xl overflow-hidden h-[100px]">
               <img src={conciergeImg} alt="Free treatment matching" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-              <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/60 to-foreground/30" />
-              <div className="relative h-full flex items-center justify-between px-3.5">
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/65 to-foreground/20" />
+              <div className="relative h-full flex items-center justify-between px-4">
                 <div>
-                  <p className="text-[12px] font-bold text-white leading-tight">Free Concierge Matching</p>
-                  <p className="text-[10px] text-white/70 leading-tight mt-0.5">Get matched with the right center in 24hrs</p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles className="h-3.5 w-3.5 text-accent" />
+                    <p className="text-[13px] font-bold text-white leading-tight">Free Concierge Matching</p>
+                  </div>
+                  <p className="text-[11px] text-white/75 leading-snug max-w-[260px]">Our specialists will match you with the right treatment center within 24 hours — completely free.</p>
                 </div>
-                <div className="h-7 px-3 rounded-md bg-accent text-accent-foreground text-[10px] font-semibold flex items-center gap-1 shrink-0 group-hover:bg-accent/90 transition-colors shadow-sm">
-                  Get Matched <ArrowRight className="h-3 w-3" />
+                <div className="h-8 px-4 rounded-lg bg-accent text-accent-foreground text-[11px] font-semibold flex items-center gap-1.5 shrink-0 group-hover:bg-accent/90 transition-colors shadow-md">
+                  Get Matched <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </div>
             </div>
