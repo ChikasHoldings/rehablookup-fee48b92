@@ -342,7 +342,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                           )}
                         </div>
                         {invoice.discount_percent > 0 && (
-                          <p className="text-xs text-emerald-600">
+                          <p className="text-xs text-success">
                             {invoice.discount_percent}% discount ({invoice.discount_reason || "Pro"})
                           </p>
                         )}

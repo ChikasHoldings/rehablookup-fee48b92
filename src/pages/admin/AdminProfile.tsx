@@ -737,7 +737,7 @@ export default function AdminProfile() {
             {/* System Alerts */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+                <div className="p-2 rounded-lg bg-warning/10 text-warning">
                   <FileWarning className="h-4 w-4" />
                 </div>
                 <div>

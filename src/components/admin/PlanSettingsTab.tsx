@@ -946,7 +946,7 @@ export function PlanSettingsTab() {
             <AlertDialogAction
               onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm)}
               disabled={deleteMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {deleteMutation.isPending ? (
                 <>
