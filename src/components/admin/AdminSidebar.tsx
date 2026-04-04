@@ -110,11 +110,15 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
     if (isNavGroup(entry)) {
       return entry.items.some((item) => hasPermission(item.permission));
     }
-    return entry.permission === "dashboard" || hasPermission(entry.permission);
+    // Dashboard is always visible
+    if (entry.permission === "dashboard") return true;
+    return hasPermission(entry.permission);
   };
 
   const canViewItem = (item: NavItem): boolean => {
-    return isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission);
+    if (isSuperAdmin) return true;
+    if (item.permission === "dashboard") return true;
+    return hasPermission(item.permission);
   };
 
   const getItemCount = (item: NavItem): number => {
