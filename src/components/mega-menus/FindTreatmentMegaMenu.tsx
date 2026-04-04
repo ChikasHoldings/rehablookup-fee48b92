@@ -136,7 +136,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={loc.href}
                 to={loc.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-1.5 rounded-md px-2 py-[6px] text-[13px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[6px] text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <ChevronRight className="h-3 w-3 text-border group-hover:text-accent transition-colors shrink-0" />
                 {loc.label}
