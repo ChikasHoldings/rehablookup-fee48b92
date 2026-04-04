@@ -1196,7 +1196,7 @@ export function ProviderDetailModal({
                               </>
                             )}
                             {doc.status === "verified" && (
-                              <Badge className="bg-emerald-600 text-white">
+                              <Badge className="bg-success/10 text-success border-success/20">
                                 <BadgeCheck className="h-3 w-3 mr-1" />
                                 Verified
                               </Badge>
