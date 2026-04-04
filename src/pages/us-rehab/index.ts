@@ -17,3 +17,12 @@ export { default as AlcoholRehabUSA } from './AlcoholRehabUSA';
 export { default as DrugRehabUSA } from './DrugRehabUSA';
 export { default as DualDiagnosisUSA } from './DualDiagnosisUSA';
 export { default as CelebrityRehabUSA } from './CelebrityRehabUSA';
+// High-intent international SEO pages
+export { default as TravelToUSAForRehab } from './TravelToUSAForRehab';
+export { default as CostOfRehabUSA } from './CostOfRehabUSA';
+export { default as ForeignersRehabUSA } from './ForeignersRehabUSA';
+export { default as PayingForRehabUSANoInsurance } from './PayingForRehabUSANoInsurance';
+export { default as AffordableRehabUSA } from './AffordableRehabUSA';
+export { default as FastAdmissionRehabUSA } from './FastAdmissionRehabUSA';
+export { default as SameDayDetoxUSA } from './SameDayDetoxUSA';
+export { default as TopDetoxCentersUSA } from './TopDetoxCentersUSA';
