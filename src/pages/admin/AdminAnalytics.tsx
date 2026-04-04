@@ -241,9 +241,10 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       let query = supabase
         .from("facility_interactions")
-        .select("*, facilities!inner(city, state)")
+        .select("id, facility_id, interaction_date, interaction_count, interaction_type, facilities!inner(city, state)")
         .gte("interaction_date", format(dateRange.from, "yyyy-MM-dd"))
-        .lte("interaction_date", format(dateRange.to, "yyyy-MM-dd"));
+        .lte("interaction_date", format(dateRange.to, "yyyy-MM-dd"))
+        .limit(5000);
       
       if (selectedState !== "all") {
         query = query.eq("facilities.state", selectedState);
