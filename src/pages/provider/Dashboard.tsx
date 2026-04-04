@@ -487,7 +487,7 @@ export default function ProviderDashboardPage() {
                               <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
                               <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
                               {!isUnlocked && (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded">
                                   <Lock className="h-2.5 w-2.5" />
                                   Locked
                                 </span>
