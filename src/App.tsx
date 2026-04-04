@@ -287,6 +287,7 @@ const AppInner = () => {
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
       console.error("Unhandled rejection:", event.reason);
+      Sentry.captureException(event.reason || new Error("Unhandled promise rejection"));
       // Prevent default browser error handling which can crash/blank the app
       event.preventDefault();
     };
