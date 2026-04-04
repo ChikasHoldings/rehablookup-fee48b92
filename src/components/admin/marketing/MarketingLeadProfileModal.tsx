@@ -578,7 +578,7 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Level of Care</p>
-                    <p className="font-medium text-sm">{lead.level_of_care || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.level_of_care || "To be determined"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Insurance</p>
