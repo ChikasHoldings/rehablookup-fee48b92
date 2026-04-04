@@ -236,17 +236,30 @@ export function ProviderSEOPageLayout({
                     </div>
                   )}
 
-                  {/* Image before last section */}
+                  {/* Image card before last section */}
                   {idx === sections.length - 2 && sections.length > 3 && (
-                    <div className="my-10 rounded-2xl overflow-hidden border border-border shadow-sm">
-                      <img
-                        src={treatmentFacility}
-                        alt="Modern treatment center facility exterior"
-                        width={1280}
-                        height={720}
-                        className="w-full h-auto object-cover"
-                        loading="lazy"
-                      />
+                    <div className="my-10 rounded-2xl overflow-hidden border border-border bg-muted/20">
+                      <div className="grid md:grid-cols-5 gap-0">
+                        <div className="md:col-span-2 hidden md:block">
+                          <img
+                            src={treatmentFacility}
+                            alt="Modern treatment center facility exterior"
+                            width={640}
+                            height={360}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="md:col-span-3 p-6 md:p-8 flex flex-col justify-center">
+                          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Stand Out Online</p>
+                          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+                            Your Facility Deserves to Be Found
+                          </h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Families searching for treatment choose the facilities they can find. A strong directory presence ensures your center is visible to the people who need you most.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
