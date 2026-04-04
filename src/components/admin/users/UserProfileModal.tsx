@@ -693,7 +693,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                     className={cn(
                                       "h-4 w-4",
                                       i < review.rating
-                                        ? "fill-yellow-400 text-yellow-400"
+                                        ? "fill-warning text-warning"
                                         : "text-muted-foreground/30"
                                     )}
                                   />
