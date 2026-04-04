@@ -1,12 +1,13 @@
 import { useMemo } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { costInsurancePages } from "@/data/seoPageConfig";
 
 export default function CostInsurancePage() {
-  const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const slug = location.pathname.replace(/^\//, "");
   const config = costInsurancePages.find((p) => p.slug === slug);
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
