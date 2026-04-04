@@ -565,13 +565,15 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
               </ScrollArea>
               {sortedNotifications.length > 0 && (
                 <div className="border-t p-2 flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    className="flex-1 text-sm" 
-                    onClick={() => navigate("/admin/providers?status=pending")}
-                  >
-                    View Pending
-                  </Button>
+                  {(isSuperAdmin || hasPermission("providers")) && (
+                    <Button 
+                      variant="ghost" 
+                      className="flex-1 text-sm" 
+                      onClick={() => navigate("/admin/providers?status=pending")}
+                    >
+                      View Pending
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     className="flex-1 text-sm" 
