@@ -614,7 +614,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                   {hasConcierge && (
                     <div className="space-y-3">
                       <h4 className="font-semibold flex items-center gap-2 text-sm">
-                        <Shield className="h-4 w-4 text-purple-600" />
+                        <Shield className="h-4 w-4 text-chart-3" />
                         Concierge Requests ({userActivity?.conciergeInquiries?.length || 0})
                       </h4>
                       <div className="space-y-2">
