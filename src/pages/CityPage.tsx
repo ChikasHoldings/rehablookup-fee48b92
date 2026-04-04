@@ -4,7 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { treatmentCenters } from "@/data/treatmentCenters";
+
 import { getStateBySlug, getCityBySlug } from "@/data/locationSeoData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
@@ -186,43 +186,33 @@ const CityPage = () => {
   
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
-  const allCenters = useMemo(() => {
-    return [...treatmentCenters, ...approvedFacilities];
-  }, [approvedFacilities]);
-
   const cityCenters = useMemo(() => {
     if (!stateData || !cityData) return [];
     const cityNameLower = cityData.name.toLowerCase();
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrevLower = stateData.abbreviation.toLowerCase();
     
-    return allCenters.filter(center => {
+    return approvedFacilities.filter(center => {
       const centerCity = center.city.toLowerCase();
       const centerState = center.state.toLowerCase();
       const cityMatch = centerCity === cityNameLower || centerCity.includes(cityNameLower);
       const stateMatch = centerState === stateNameLower || centerState === stateAbbrevLower;
       return cityMatch && stateMatch;
     }).sort((a, b) => {
-      // Pro and Featured subscriptions first (same tier)
-      const aPro = (a as any).isPro ? 2 : 0;
-      const bPro = (b as any).isPro ? 2 : 0;
-      const aFeatured = (a as any).hasFeaturedSubscription ? 2 : 0;
-      const bFeatured = (b as any).hasFeaturedSubscription ? 2 : 0;
-      
-      const aTier = Math.max(aPro, aFeatured);
-      const bTier = Math.max(bPro, bFeatured);
-      
-      if (bTier !== aTier) return bTier - aTier;
+      // Pro subscriptions first
+      const aPro = (a as any).isPro ? 1 : 0;
+      const bPro = (b as any).isPro ? 1 : 0;
+      if (bPro !== aPro) return bPro - aPro;
       
       // Then by calculated ranking score
       const aScore = (a as any).calculatedRankingScore || 0;
       const bScore = (b as any).calculatedRankingScore || 0;
       if (bScore !== aScore) return bScore - aScore;
       
-      // Fallback to rating
-      return b.rating - a.rating;
+      // Fallback to name
+      return a.name.localeCompare(b.name);
     });
-  }, [allCenters, stateData, cityData]);
+  }, [approvedFacilities, stateData, cityData]);
 
   const otherCities = stateData?.cities.filter(c => c.slug !== citySlug) || [];
   const displayedCities = showAllCities ? otherCities : otherCities.slice(0, 8);
@@ -388,7 +378,7 @@ const CityPage = () => {
                 ))}
               </div>
               <div className="mt-8 text-center">
-                <Link to={`/search-results?state=${stateData.name}&city=${cityData.name}`}>
+                <Link to={`/search-results?location=${encodeURIComponent(cityData.name + ', ' + stateData.name)}`}>
                   <Button variant="outline" size="lg" className="gap-2">
                     View All Facilities
                     <ArrowRight className="h-4 w-4" />
