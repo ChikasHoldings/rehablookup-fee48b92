@@ -68,8 +68,8 @@ function FacilityShowcaseCard({
     >
       {/* Image */}
       <div className={cn(
-        "relative w-full overflow-hidden bg-muted",
-        size === "large" ? "aspect-[16/10]" : "aspect-[16/9]"
+        "relative w-full overflow-hidden bg-muted flex-1 min-h-0",
+        size === "large" ? "" : "aspect-[16/9]"
       )}>
         {hasImage ? (
           <img
