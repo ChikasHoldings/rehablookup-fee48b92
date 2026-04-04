@@ -1226,8 +1226,98 @@ const CenterProfile = () => {
 
             <ConciergeCTACard compact />
           </div>
+
+          {/* Nearby Facilities */}
+          {nearbyFacilities.length > 0 && (
+            <div className="mt-10 pt-8 border-t border-border">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/80">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
+                  More Facilities in {facility.state}
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nearbyFacilities.slice(0, 6).map((center: any) => (
+                  <TreatmentCenterCard key={center.id} center={center} variant="compact" />
+                ))}
+              </div>
+              <div className="text-center mt-6">
+                <Link to={`/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}`}>
+                  <Button variant="outline" className="gap-2">
+                    View All in {facility.state}
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Photo Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] p-0 bg-black/95 border-none">
+          <VisuallyHidden>
+            <DialogTitle>{facility.name} Photo Gallery</DialogTitle>
+          </VisuallyHidden>
+          <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full">
+            <img
+              src={galleryImages[activeGalleryIndex]}
+              alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
+              className="w-full h-full object-contain"
+            />
+            {galleryImages.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveGalleryIndex(activeGalleryIndex === 0 ? galleryImages.length - 1 : activeGalleryIndex - 1)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveGalleryIndex(activeGalleryIndex === galleryImages.length - 1 ? 0 : activeGalleryIndex + 1)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </>
+            )}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/60 text-white text-sm font-medium">
+              {activeGalleryIndex + 1} / {galleryImages.length}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-2 right-2 h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          {galleryImages.length > 1 && (
+            <div className="hidden sm:flex gap-1.5 p-3 overflow-x-auto bg-black/80">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveGalleryIndex(idx)}
+                  className={cn(
+                    "shrink-0 w-14 h-10 rounded overflow-hidden transition-all",
+                    idx === activeGalleryIndex ? "ring-2 ring-white opacity-100" : "opacity-50 hover:opacity-75"
+                  )}
+                >
+                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Request Info Modal */}
       <RequestInfoModal
