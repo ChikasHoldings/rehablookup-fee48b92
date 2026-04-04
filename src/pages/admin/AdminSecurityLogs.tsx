@@ -1433,7 +1433,7 @@ export default function AdminSecurityLogs() {
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <ShieldCheck className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+                  <ShieldCheck className="h-12 w-12 text-success mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground">No Blocked Identifiers</h3>
                   <p className="text-muted-foreground mt-1">
                     No IP addresses or emails are currently blocked
