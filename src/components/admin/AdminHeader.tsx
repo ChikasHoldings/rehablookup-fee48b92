@@ -557,7 +557,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                   </div>
                 ) : (
                   <div className="py-8 text-center text-muted-foreground">
-                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500/50" />
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-success/50" />
                     <p className="text-sm font-medium">All caught up!</p>
                     <p className="text-xs">No pending actions</p>
                   </div>
