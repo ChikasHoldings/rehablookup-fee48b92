@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgAdmissionsGrowth from "@/assets/provider-guides/pg-admissions-growth.jpg";
+import admissionsTeam from "@/assets/provider-guides/admissions-team.jpg";
 
 export default function RehabAdmissionsGrowth() {
   return (
