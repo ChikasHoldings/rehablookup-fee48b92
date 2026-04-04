@@ -727,12 +727,12 @@ export function PlanSettingsTab() {
                               {format(new Date(expiresAt), "MMM d, yyyy")}
                             </span>
                             {isExpired && (
-                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-red-50 text-red-600 border-red-200">
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/20">
                                 Expired
                               </Badge>
                             )}
                             {isExpiringSoon && !isExpired && (
-                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-amber-50 text-amber-600 border-amber-200">
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-warning/10 text-warning border-warning/20">
                                 Soon
                               </Badge>
                             )}
