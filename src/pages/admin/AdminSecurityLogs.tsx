@@ -804,7 +804,7 @@ export default function AdminSecurityLogs() {
               <XCircle className="h-3.5 w-3.5" />
               Failed Attempts
             </CardDescription>
-            <CardTitle className="text-2xl text-destructive">{stats.failedAttempts}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-destructive">{stats.failedAttempts}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
