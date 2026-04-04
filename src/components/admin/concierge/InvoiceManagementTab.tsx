@@ -336,7 +336,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                             </span>
                           )}
                           {invoice.paid_at && (
-                            <span className="text-emerald-600">
+                            <span className="text-success">
                               Paid {format(new Date(invoice.paid_at), "MMM d, yyyy")}
                             </span>
                           )}
