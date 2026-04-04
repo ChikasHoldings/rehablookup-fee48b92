@@ -787,10 +787,10 @@ export default function AdminAnalytics() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Analytics Dashboard</h1>
+          <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
           <p className="text-muted-foreground mt-1">Platform performance metrics and insights</p>
         </div>
-        <Badge variant="outline" className="text-xs font-normal">
+        <Badge variant="outline" className="text-xs font-normal tabular-nums">
           {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
         </Badge>
       </div>
