@@ -56,14 +56,14 @@ const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
 const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
 
 // Provider SEO Pages
-const GetMoreRehabPatients = lazy(() => import("./pages/provider-seo/GetMoreRehabPatients"));
-const RehabAdmissionsGrowth = lazy(() => import("./pages/provider-seo/RehabAdmissionsGrowth"));
-const RehabMarketingStrategies = lazy(() => import("./pages/provider-seo/RehabMarketingStrategies"));
-const AddictionTreatmentLeadGeneration = lazy(() => import("./pages/provider-seo/AddictionTreatmentLeadGeneration"));
-const IncreaseRehabAdmissions = lazy(() => import("./pages/provider-seo/IncreaseRehabAdmissions"));
-const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-seo/RehabCenterMarketingIdeas"));
-const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-seo/TreatmentCenterPatientAcquisition"));
-const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-seo/BehavioralHealthLeadGeneration"));
+const GetMoreRehabPatients = lazy(() => import("./pages/provider-guides/GetMoreRehabPatients"));
+const RehabAdmissionsGrowth = lazy(() => import("./pages/provider-guides/RehabAdmissionsGrowth"));
+const RehabMarketingStrategies = lazy(() => import("./pages/provider-guides/RehabMarketingStrategies"));
+const AddictionTreatmentLeadGeneration = lazy(() => import("./pages/provider-guides/AddictionTreatmentLeadGeneration"));
+const IncreaseRehabAdmissions = lazy(() => import("./pages/provider-guides/IncreaseRehabAdmissions"));
+const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-guides/RehabCenterMarketingIdeas"));
+const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-guides/TreatmentCenterPatientAcquisition"));
+const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-guides/BehavioralHealthLeadGeneration"));
 
 // Concierge Placement (Paid Service) - lazy load
 const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding"));
@@ -509,14 +509,14 @@ const AppInner = () => {
             <Route path="/provider/signup" element={<ProviderSignup />} />
             
             {/* Provider SEO Pages */}
-            <Route path="/provider-seo/get-more-rehab-patients" element={<PublicRouteGuard><GetMoreRehabPatients /></PublicRouteGuard>} />
-            <Route path="/provider-seo/rehab-admissions-growth" element={<PublicRouteGuard><RehabAdmissionsGrowth /></PublicRouteGuard>} />
-            <Route path="/provider-seo/rehab-marketing-strategies" element={<PublicRouteGuard><RehabMarketingStrategies /></PublicRouteGuard>} />
-            <Route path="/provider-seo/addiction-treatment-lead-generation" element={<PublicRouteGuard><AddictionTreatmentLeadGeneration /></PublicRouteGuard>} />
-            <Route path="/provider-seo/increase-rehab-admissions" element={<PublicRouteGuard><IncreaseRehabAdmissions /></PublicRouteGuard>} />
-            <Route path="/provider-seo/rehab-center-marketing-ideas" element={<PublicRouteGuard><RehabCenterMarketingIdeas /></PublicRouteGuard>} />
-            <Route path="/provider-seo/treatment-center-patient-acquisition" element={<PublicRouteGuard><TreatmentCenterPatientAcquisition /></PublicRouteGuard>} />
-            <Route path="/provider-seo/behavioral-health-lead-generation" element={<PublicRouteGuard><BehavioralHealthLeadGeneration /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-rehab-patients" element={<PublicRouteGuard><GetMoreRehabPatients /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-admissions-growth" element={<PublicRouteGuard><RehabAdmissionsGrowth /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-marketing-strategies" element={<PublicRouteGuard><RehabMarketingStrategies /></PublicRouteGuard>} />
+            <Route path="/provider-guides/addiction-treatment-lead-generation" element={<PublicRouteGuard><AddictionTreatmentLeadGeneration /></PublicRouteGuard>} />
+            <Route path="/provider-guides/increase-rehab-admissions" element={<PublicRouteGuard><IncreaseRehabAdmissions /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-marketing-ideas" element={<PublicRouteGuard><RehabCenterMarketingIdeas /></PublicRouteGuard>} />
+            <Route path="/provider-guides/treatment-center-patient-acquisition" element={<PublicRouteGuard><TreatmentCenterPatientAcquisition /></PublicRouteGuard>} />
+            <Route path="/provider-guides/behavioral-health-lead-generation" element={<PublicRouteGuard><BehavioralHealthLeadGeneration /></PublicRouteGuard>} />
 
             {/* Provider Panel Routes */}
             <Route path="/provider" element={<ProviderShell />}>

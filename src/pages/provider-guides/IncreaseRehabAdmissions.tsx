@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function IncreaseRehabAdmissions() {
   return (
@@ -6,7 +6,7 @@ export default function IncreaseRehabAdmissions() {
       title="Increase Rehab Admissions"
       metaTitle="How to Increase Rehab Admissions: A Data-Driven Guide | RehabLookup"
       metaDescription="Data-backed strategies to increase admissions at your rehab facility. From optimizing your intake process to building referral networks."
-      canonical="/provider-seo/increase-rehab-admissions"
+      canonical="/provider-guides/increase-rehab-admissions"
       keywords={["increase rehab admissions", "how to increase rehab admissions", "boost treatment center census", "rehab occupancy rate", "treatment center census growth"]}
       heroHeadline="How to Increase Rehab Admissions: A Data-Driven Guide"
       heroSubheadline="The difference between full census and empty beds often comes down to systems, not luck. Here's the data."

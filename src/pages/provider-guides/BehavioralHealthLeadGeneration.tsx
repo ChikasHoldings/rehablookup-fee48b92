@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function BehavioralHealthLeadGeneration() {
   return (
@@ -6,7 +6,7 @@ export default function BehavioralHealthLeadGeneration() {
       title="Behavioral Health Lead Generation"
       metaTitle="Behavioral Health Lead Generation: Ethical, Effective Strategies | RehabLookup"
       metaDescription="Generate quality behavioral health leads without aggressive tactics. Learn ethical, sustainable strategies for mental health and addiction treatment facilities."
-      canonical="/provider-seo/behavioral-health-lead-generation"
+      canonical="/provider-guides/behavioral-health-lead-generation"
       keywords={["behavioral health lead generation", "mental health leads", "behavioral health marketing", "substance abuse lead generation", "behavioral health referrals"]}
       heroHeadline="Behavioral Health Lead Generation: Ethical and Effective"
       heroSubheadline="Your patients deserve better than being treated as 'leads.' Here's how to attract the right people ethically."

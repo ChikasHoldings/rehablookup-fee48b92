@@ -25,14 +25,14 @@ interface ProviderSEOPageProps {
 }
 
 const relatedPages = [
-  { href: "/provider-seo/get-more-rehab-patients", label: "Get More Patients" },
-  { href: "/provider-seo/rehab-admissions-growth", label: "Grow Admissions" },
-  { href: "/provider-seo/rehab-marketing-strategies", label: "Marketing Strategies" },
-  { href: "/provider-seo/addiction-treatment-lead-generation", label: "Lead Generation" },
-  { href: "/provider-seo/increase-rehab-admissions", label: "Increase Admissions" },
-  { href: "/provider-seo/rehab-center-marketing-ideas", label: "Marketing Ideas" },
-  { href: "/provider-seo/treatment-center-patient-acquisition", label: "Patient Acquisition" },
-  { href: "/provider-seo/behavioral-health-lead-generation", label: "Behavioral Health Leads" },
+  { href: "/provider-guides/get-more-rehab-patients", label: "Get More Patients" },
+  { href: "/provider-guides/rehab-admissions-growth", label: "Grow Admissions" },
+  { href: "/provider-guides/rehab-marketing-strategies", label: "Marketing Strategies" },
+  { href: "/provider-guides/addiction-treatment-lead-generation", label: "Lead Generation" },
+  { href: "/provider-guides/increase-rehab-admissions", label: "Increase Admissions" },
+  { href: "/provider-guides/rehab-center-marketing-ideas", label: "Marketing Ideas" },
+  { href: "/provider-guides/treatment-center-patient-acquisition", label: "Patient Acquisition" },
+  { href: "/provider-guides/behavioral-health-lead-generation", label: "Behavioral Health Leads" },
 ];
 
 export function ProviderSEOPageLayout({

@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function RehabAdmissionsGrowth() {
   return (
@@ -6,7 +6,7 @@ export default function RehabAdmissionsGrowth() {
       title="Grow Rehab Admissions"
       metaTitle="How to Grow Admissions for Your Rehab Center | RehabLookup"
       metaDescription="Actionable strategies to increase admissions at your treatment facility. Learn what drives census growth for rehab centers in 2026."
-      canonical="/provider-seo/rehab-admissions-growth"
+      canonical="/provider-guides/rehab-admissions-growth"
       keywords={["grow rehab admissions", "increase treatment center admissions", "rehab census growth", "how to get admissions for rehab center", "treatment facility admissions"]}
       heroHeadline="How to Get More Admissions for Your Rehab Center"
       heroSubheadline="Admissions growth isn't about marketing harder — it's about being found by the right families at the right time."

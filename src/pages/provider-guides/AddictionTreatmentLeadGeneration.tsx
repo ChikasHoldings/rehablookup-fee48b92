@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function AddictionTreatmentLeadGeneration() {
   return (
@@ -6,7 +6,7 @@ export default function AddictionTreatmentLeadGeneration() {
       title="Addiction Treatment Lead Generation"
       metaTitle="Addiction Treatment Lead Generation: Quality Over Quantity | RehabLookup"
       metaDescription="Stop buying bad leads. Learn how to generate high-quality addiction treatment leads that actually convert to admissions at your facility."
-      canonical="/provider-seo/addiction-treatment-lead-generation"
+      canonical="/provider-guides/addiction-treatment-lead-generation"
       keywords={["addiction treatment lead generation", "rehab leads", "treatment center leads", "substance abuse referrals", "qualified treatment leads"]}
       heroHeadline="Addiction Treatment Lead Generation: Quality Over Quantity"
       heroSubheadline="The industry's lead generation model is broken. Here's how to build a system that delivers patients who actually need your help."
