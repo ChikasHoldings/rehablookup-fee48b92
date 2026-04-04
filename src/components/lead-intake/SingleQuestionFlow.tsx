@@ -117,6 +117,7 @@ const QUESTIONS: Question[] = [
     subtitle: "Age-appropriate care makes a difference",
     icon: <Calendar className="h-6 w-6" />,
     field: "ageRange",
+    required: true,
     options: AGE_RANGE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
