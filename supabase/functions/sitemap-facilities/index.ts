@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Version tracking for deployment verification - update on each deployment
-const VERSION = "v2.4.0";
+const VERSION = "v2.5.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
