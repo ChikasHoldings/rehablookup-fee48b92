@@ -469,15 +469,17 @@ export function AdvisorDashboard() {
               </div>
             </Link>
           </Button>
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-cyan-50 dark:hover:bg-cyan-950/20" asChild>
-            <Link to="/admin/support">
-              <Headphones className="h-5 w-5 text-cyan-500 mr-3" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Support Inbox</span>
-                <span className="text-xs text-muted-foreground">Seeker communications</span>
-              </div>
-            </Link>
-          </Button>
+          {hasPermission("support") && (
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-cyan-50 dark:hover:bg-cyan-950/20" asChild>
+              <Link to="/admin/support">
+                <Headphones className="h-5 w-5 text-cyan-500 mr-3" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">Support Inbox</span>
+                  <span className="text-xs text-muted-foreground">Seeker communications</span>
+                </div>
+              </Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

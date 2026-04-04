@@ -21,6 +21,7 @@ import {
 
 export function CustomerRepDashboard() {
   const queryClient = useQueryClient();
+  const { hasPermission } = useAdminAuth();
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["rep-stats"] });
