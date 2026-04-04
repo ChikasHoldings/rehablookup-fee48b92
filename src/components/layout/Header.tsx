@@ -485,8 +485,15 @@ export function Header({
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
                   <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
-                    <User className="h-4 w-4" />
-                    My Account
+                    <Avatar className="h-6 w-6">
+                      {seekerProfile?.avatar_url ? (
+                        <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                        {seekerInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    {seekerDisplayName || "My Account"}
                     {favoritesCount > 0 && (
                       <span className="absolute top-2 right-3 h-5 w-5 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
