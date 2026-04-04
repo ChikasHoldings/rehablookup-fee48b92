@@ -432,8 +432,8 @@ export function SubscriptionDetailModal({
                           </div>
 
                           <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-green-500/10">
-                              <DollarSign className="h-5 w-5 text-green-600" />
+                            <div className="p-2 rounded-full bg-success/10">
+                              <DollarSign className="h-5 w-5 text-success" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Monthly Revenue</p>
