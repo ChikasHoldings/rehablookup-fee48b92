@@ -55,7 +55,7 @@ interface SeekerPlacementModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const formatLabel = (value: string | null | undefined, fallback = "Not specified") => {
+const formatLabel = (value: string | null | undefined, fallback = "—") => {
   if (!value) return fallback;
   return value.replace(/[_-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 };
