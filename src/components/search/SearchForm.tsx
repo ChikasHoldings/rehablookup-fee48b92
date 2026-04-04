@@ -153,15 +153,15 @@ export function SearchForm({
     }
   };
 
-  // Directory variant - Rehabs.com style horizontal search bar
+  // Directory variant - enterprise-grade horizontal search bar
   if (variant === "directory") {
     return (
       <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
-        <div className="flex flex-col rounded-xl bg-card shadow-2xl ring-1 ring-white/10 md:flex-row">
+        <div className="flex flex-col rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl ring-1 ring-white/15 md:flex-row">
           {/* Where */}
-          <div className="group relative flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
-            <div className="p-4 md:p-5">
-              <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+          <div className="group relative flex-1 border-b border-border/40 transition-colors hover:bg-muted/20 md:border-b-0 md:border-r">
+            <div className="p-4 md:px-5 md:py-4">
+              <label className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
                 {isZipLookupLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : zipcodeData && !isZipcode ? (
@@ -169,24 +169,24 @@ export function SearchForm({
                 ) : (
                   <MapPin className="h-3.5 w-3.5" />
                 )}
-                Where
+                Location
               </label>
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="City, State, or ZIP code"
+                placeholder="Enter city, state, or ZIP code"
                 value={location}
                 onChange={(e) => handleLocationChange(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 onKeyDown={handleKeyDown}
                 className={cn(
-                  "w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none",
+                  "w-full bg-transparent text-[15px] font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none",
                   zipcodeData && !isZipcode && "text-green-700 dark:text-green-400"
                 )}
                 autoComplete="off"
               />
               {isZipLookupLoading && (
-                <p className="mt-1 text-xs text-muted-foreground animate-pulse">Looking up ZIP code...</p>
+                <p className="mt-1 text-[11px] text-muted-foreground animate-pulse">Resolving ZIP code…</p>
               )}
             </div>
             
@@ -194,28 +194,29 @@ export function SearchForm({
             {showSuggestions && suggestions.length > 0 && (
               <div
                 ref={suggestionsRef}
-                className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+                className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-2xl"
               >
                 {suggestions.map((suggestion, index) => (
                   <button
                     key={suggestion.type === "state" ? suggestion.abbr : `${suggestion.name}-${suggestion.state}`}
                     type="button"
                     onClick={() => handleSelectSuggestion(suggestion)}
-                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                    className={cn(
+                      "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors",
                       index === highlightedIndex
                         ? "bg-primary/10 text-foreground"
-                        : "text-foreground hover:bg-muted"
-                    }`}
+                        : "text-foreground hover:bg-muted/60"
+                    )}
                   >
                     {suggestion.type === "state" ? (
                       <Navigation className="h-4 w-4 shrink-0 text-primary" />
                     ) : (
                       <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
                     )}
-                    <span className="flex-1 truncate">
+                    <span className="flex-1 truncate font-medium">
                       {formatLocationSuggestion(suggestion)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground/70 font-medium uppercase tracking-wider">
                       {suggestion.type === "state" ? "State" : "City"}
                     </span>
                   </button>
@@ -225,13 +226,13 @@ export function SearchForm({
           </div>
           
           {/* Type of Care - Multi-select */}
-          <div className="group flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
-            <div className="p-4 md:p-5">
+          <div className="group flex-1 border-b border-border/40 transition-colors hover:bg-muted/20 md:border-b-0 md:border-r">
+            <div className="p-4 md:px-5 md:py-4">
               <MultiSelectDropdown
                 options={treatmentTypeOptions}
                 selected={selectedTreatmentTypes}
                 onChange={setSelectedTreatmentTypes}
-                placeholder="All treatment types"
+                placeholder="Select care level"
                 icon={<Stethoscope className="h-3.5 w-3.5" />}
                 label="Type of Care"
               />
@@ -239,13 +240,13 @@ export function SearchForm({
           </div>
 
           {/* Insurance - Multi-select */}
-          <div className="group flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
-            <div className="p-4 md:p-5">
+          <div className="group flex-1 border-b border-border/40 transition-colors hover:bg-muted/20 md:border-b-0 md:border-r">
+            <div className="p-4 md:px-5 md:py-4">
               <MultiSelectDropdown
                 options={insuranceProviderOptions}
                 selected={selectedInsurance}
                 onChange={setSelectedInsurance}
-                placeholder="All insurance"
+                placeholder="Select your plan"
                 icon={<Shield className="h-3.5 w-3.5" />}
                 label="Insurance"
               />
@@ -253,10 +254,10 @@ export function SearchForm({
           </div>
 
           {/* Submit */}
-          <div className="flex items-center bg-primary/5 p-3 md:p-4">
-            <Button type="submit" size="lg" className="w-full h-12 px-8 text-base font-bold shadow-lg transition-transform hover:scale-[1.02] md:w-auto gap-2">
+          <div className="flex items-center p-3 md:p-4">
+            <Button type="submit" size="lg" className="w-full h-12 px-8 text-[15px] font-bold shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl md:w-auto gap-2.5 rounded-xl">
               <Search className="h-5 w-5" />
-              Find Rehab
+              Search Centers
             </Button>
           </div>
         </div>
