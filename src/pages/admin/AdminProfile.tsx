@@ -508,10 +508,10 @@ export default function AdminProfile() {
             <div className="space-y-4">
               {/* Current Session */}
               {currentSession && (
-                <div className="border rounded-lg p-4 bg-green-50/50 border-green-200">
+                <div className="border rounded-lg p-4 bg-success/5 border-success/20">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4">
-                      <div className="p-2 rounded-lg bg-green-100 text-green-600">
+                      <div className="p-2 rounded-lg bg-success/10 text-success">
                         {getDeviceIcon(currentSession.device_name, currentSession.browser)}
                       </div>
                       <div className="space-y-1">
@@ -520,7 +520,7 @@ export default function AdminProfile() {
                             {currentSession.browser || "Unknown Browser"}
                             {currentSession.os && ` on ${currentSession.os}`}
                           </p>
-                          <Badge className="bg-green-100 text-green-700 text-xs">Current</Badge>
+                          <Badge className="bg-success/10 text-success text-xs">Current</Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {currentSession.ip_address && (
