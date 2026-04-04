@@ -4,7 +4,6 @@ import {
   Building2,
   TrendingUp,
   Users,
-  FileText,
   BookOpen,
   HelpCircle,
   Headphones,
@@ -15,8 +14,8 @@ import {
   Lightbulb,
   Heart,
   Zap,
+  Sparkles,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface MegaMenuProps {
   onNavigate?: () => void;
@@ -82,27 +81,32 @@ const quickLinks = [
 
 export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
   return (
-    <div className="w-[680px] max-w-[90vw] p-5">
-      <div className="grid grid-cols-[1fr_200px] gap-6">
-        {/* Left: SEO Articles Grid */}
+    <div className="w-[720px] max-w-[90vw] p-6">
+      <div className="grid grid-cols-[1fr_210px] gap-8">
+        {/* Left: Growth Guides */}
         <div>
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h3 className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] mb-4 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-accent" />
             Growth Guides
           </h3>
-          <div className="grid grid-cols-2 gap-1">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
             {seoPages.map((page) => (
               <PrefetchLink
                 key={page.href}
                 to={page.href}
                 onClick={onNavigate}
-                className="group flex items-start gap-2.5 rounded-lg p-2 hover:bg-muted/60 transition-colors"
+                className="group flex items-start gap-3 rounded-xl px-2.5 py-2.5 hover:bg-accent/[0.06] transition-all duration-200"
               >
-                <div className="h-8 w-8 rounded-md bg-primary/8 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-primary/15 transition-colors">
-                  <page.icon className="h-4 w-4 text-primary" />
+                <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-accent/20 group-hover:shadow-sm transition-all duration-200">
+                  <page.icon className="h-4 w-4 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground leading-tight">{page.label}</p>
-                  <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-1">{page.desc}</p>
+                  <p className="text-[13px] font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+                    {page.label}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground leading-snug mt-0.5 line-clamp-1">
+                    {page.desc}
+                  </p>
                 </div>
               </PrefetchLink>
             ))}
@@ -110,32 +114,34 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
         </div>
 
         {/* Right: Quick Links + CTA */}
-        <div className="border-l border-border pl-5">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <div className="border-l border-border/60 pl-6 flex flex-col">
+          <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-4">
             Quick Links
           </h3>
-          <div className="space-y-1 mb-5">
+          <div className="space-y-0.5 mb-6">
             {quickLinks.map((link) => (
               <PrefetchLink
                 key={link.href}
                 to={link.href}
                 onClick={onNavigate}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
               >
-                <link.icon className="h-3.5 w-3.5" />
+                <link.icon className="h-4 w-4 text-accent/70 group-hover:text-accent transition-colors" />
                 {link.label}
               </PrefetchLink>
             ))}
           </div>
 
           {/* CTA */}
-          <div className="rounded-xl bg-primary/5 border border-primary/15 p-3">
-            <p className="text-sm font-semibold text-foreground mb-1">List Your Facility</p>
-            <p className="text-xs text-muted-foreground leading-snug mb-3">
+          <div className="mt-auto rounded-xl bg-gradient-to-br from-primary/[0.07] to-accent/[0.07] border border-primary/10 p-4">
+            <p className="text-sm font-bold text-foreground mb-1">
+              List Your Facility
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
               Free listing. Verified leads. Start in 5 minutes.
             </p>
             <Link to="/provider-signup" onClick={onNavigate}>
-              <button className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium py-2 hover:bg-primary/90 transition-colors">
+              <button className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold py-2 hover:bg-accent/90 shadow-sm hover:shadow-md transition-all duration-200">
                 Get Started
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
@@ -158,9 +164,9 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
             key={link.href}
             to={link.href}
             onClick={onNavigate}
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
           >
-            <link.icon className="h-4 w-4" />
+            <link.icon className="h-4 w-4 text-accent" />
             {link.label}
           </PrefetchLink>
         ))}
@@ -168,7 +174,8 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Growth Guides */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
+        <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-2 flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5" />
           Growth Guides
         </p>
         {seoPages.slice(0, 4).map((page) => (
@@ -176,16 +183,16 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
             key={page.href}
             to={page.href}
             onClick={onNavigate}
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/[0.06] transition-colors"
           >
-            <page.icon className="h-4 w-4" />
+            <page.icon className="h-4 w-4 text-accent" />
             {page.label}
           </PrefetchLink>
         ))}
         <PrefetchLink
-          to="/provider-resources"
+          to="/providers/resources"
           onClick={onNavigate}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-primary font-medium"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-accent font-semibold"
         >
           View All Resources
           <ArrowRight className="h-3.5 w-3.5" />
