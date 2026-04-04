@@ -395,10 +395,20 @@ function generateTreatmentGeoRoutes(): RouteEntry[] {
 
 function generateCityTreatmentComboRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
-  for (const combo of CITY_TREATMENT_COMBOS) {
-    for (const city of combo.cities) {
+  for (const prefix of CITY_TREATMENT_PREFIXES) {
+    for (const city of ALL_CITY_SLUGS) {
       routes.push({
-        path: `/${combo.prefix}-${city}`,
+        path: `/${prefix}-${city}`,
+        priority: 0.8,
+        changefreq: "weekly"
+      });
+    }
+  }
+  // Insurance + State cross pages
+  for (const ins of INSURANCE_SLUGS) {
+    for (const state of INSURANCE_STATES) {
+      routes.push({
+        path: `/insurance/${ins}/${state}`,
         priority: 0.8,
         changefreq: "weekly"
       });
