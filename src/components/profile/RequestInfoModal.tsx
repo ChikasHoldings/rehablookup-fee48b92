@@ -294,6 +294,15 @@ export function RequestInfoModal({
 
   const isPro = facilityPlan === "pro";
 
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!open) {
+      setFormSubmitted(false);
+      setNearbyFacilities([]);
+      setLoadingNearby(false);
+    }
+  }, [open]);
+
   // Fetch lead usage to check capacity
   useEffect(() => {
     if (open) {
