@@ -271,7 +271,7 @@ export function Header({
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "flex items-center h-16 px-2.5 lg:px-3 text-sm lg:text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2 border-transparent",
+                  "flex items-center h-[68px] px-2.5 lg:px-3 text-[14px] lg:text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2 border-transparent",
                   location.pathname === link.href ? "text-foreground border-accent" : "text-muted-foreground hover:text-foreground"
                 )}
               >
