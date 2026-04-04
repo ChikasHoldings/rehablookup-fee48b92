@@ -231,7 +231,7 @@ export default function AdminAuditLog() {
     queryFn: async () => {
       let query = supabase
         .from("admin_audit_log")
-        .select("*")
+        .select("id, admin_user_id, action_type, target_type, target_id, details, created_at")
         .order("created_at", { ascending: false });
 
       if (dateRange.from) {

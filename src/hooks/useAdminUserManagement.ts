@@ -265,7 +265,7 @@ export function useAdminUserManagement() {
       // Get permissions
       const { data: permissions, error: permissionsError } = await supabase
         .from("admin_user_permissions")
-        .select("*")
+        .select("user_id, permission_key, granted")
         .in("user_id", adminUserIds);
 
       if (permissionsError) {

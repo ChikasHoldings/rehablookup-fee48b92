@@ -117,7 +117,7 @@ export function useSupportTicketNotes(ticketId: string) {
     queryFn: async () => {
       const { data: notes, error } = await supabase
         .from("support_ticket_notes")
-        .select("*")
+        .select("id, ticket_id, author_id, content, created_at")
         .eq("ticket_id", ticketId)
         .order("created_at", { ascending: true });
 
