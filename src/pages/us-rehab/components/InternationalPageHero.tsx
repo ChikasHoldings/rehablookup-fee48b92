@@ -48,7 +48,7 @@ export const InternationalPageHero = ({
           className="max-w-2xl"
         >
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 px-4 py-1.5 rounded-full text-sm font-medium mb-5 backdrop-blur-sm">
-            <span className="text-base">{flag}</span>
+            <span className="text-xl">{flag}</span>
             <span>{badge}</span>
           </div>
 

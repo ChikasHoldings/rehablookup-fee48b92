@@ -169,7 +169,7 @@ export default function RehabUSAFromAustralia() {
               <motion.div key={dest.state} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.06 }}>
                 <Link to={dest.href} className="group block p-5 bg-background rounded-xl border hover:border-primary/30 hover:shadow-lg transition-all h-full">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{dest.emoji}</span>
+                    <span className="text-3xl">{dest.emoji}</span>
                     <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{dest.state}</h3>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{dest.desc}</p>
