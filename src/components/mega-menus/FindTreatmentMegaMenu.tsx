@@ -6,6 +6,7 @@ import {
   MapPin, Search, ArrowRight, Pill, Wine, Brain, Building2, Heart,
   Sparkles, Activity, Users, Shield, ChevronRight,
 } from "lucide-react";
+import conciergeImg from "@/assets/images/concierge-matching.jpg";
 
 interface MegaMenuProps {
   onNavigate?: () => void;
