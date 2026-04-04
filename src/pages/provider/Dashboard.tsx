@@ -282,17 +282,17 @@ export default function ProviderDashboardPage() {
         return { 
           label: "Live", 
           icon: CheckCircle, 
-          bgClass: "bg-emerald-500/10",
-          textClass: "text-emerald-600",
-          dotClass: "bg-emerald-500"
+          bgClass: "bg-success/10",
+          textClass: "text-success",
+          dotClass: "bg-success"
         };
       case "pending":
         return { 
           label: "Under Review", 
           icon: Clock, 
-          bgClass: "bg-amber-500/10",
-          textClass: "text-amber-600",
-          dotClass: "bg-amber-500"
+          bgClass: "bg-warning/10",
+          textClass: "text-warning",
+          dotClass: "bg-warning"
         };
       default:
         return { 
