@@ -11,69 +11,101 @@ interface MegaMenuProps {
 }
 
 const guides = [
-  { href: "/resources/signs-of-addiction", label: "Signs of Addiction", desc: "Recognize warning signs", icon: Heart },
-  { href: "/resources/what-to-expect-in-rehab", label: "What to Expect", desc: "Step-by-step journey", icon: FileText },
-  { href: "/resources/insurance-coverage-guide", label: "Insurance Coverage", desc: "Understanding benefits", icon: Shield },
-  { href: "/resources/paying-for-rehab", label: "Paying for Rehab", desc: "Financing options", icon: DollarSign },
-  { href: "/resources/detox-timeline", label: "Detox Timeline", desc: "What happens in detox", icon: Sparkles },
-  { href: "/resources/choosing-right-program", label: "Choosing a Program", desc: "Match your needs", icon: BookOpen },
+  { href: "/resources/signs-of-addiction", label: "Signs of Addiction", desc: "Recognize warning signs early", icon: Heart },
+  { href: "/resources/what-to-expect-in-rehab", label: "What to Expect in Rehab", desc: "Your treatment journey", icon: FileText },
+  { href: "/resources/insurance-coverage-guide", label: "Insurance Coverage", desc: "Understanding your benefits", icon: Shield },
+  { href: "/resources/paying-for-rehab", label: "Paying for Rehab", desc: "Financing & payment options", icon: DollarSign },
+  { href: "/resources/detox-timeline", label: "Detox Timeline", desc: "What happens during detox", icon: Sparkles },
+  { href: "/resources/choosing-right-program", label: "Choosing a Program", desc: "Match needs to the right care", icon: BookOpen },
 ];
 
 const tools = [
-  { href: "/cost-estimator", label: "Cost Estimator", icon: Calculator },
-  { href: "/insurance", label: "Insurance Checker", icon: Shield },
-  { href: "/faq", label: "FAQ", icon: HelpCircle },
-  { href: "/how-it-works", label: "How It Works", icon: Info },
+  { href: "/cost-estimator", label: "Cost Estimator", desc: "Get instant estimates", icon: Calculator },
+  { href: "/insurance", label: "Insurance Checker", desc: "Verify your coverage", icon: Shield },
+  { href: "/faq", label: "FAQ", desc: "Common questions", icon: HelpCircle },
+  { href: "/how-it-works", label: "How It Works", desc: "Our matching process", icon: Info },
 ];
 
 export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
   return (
-    <div className="w-[560px] max-w-[92vw] p-3.5">
-      {/* Guides — compact 2-col list */}
-      <div className="grid grid-cols-2 gap-x-2 gap-y-0">
-        {guides.map((guide) => (
+    <div className="w-[620px] max-w-[92vw] p-4">
+      {/* Top: Featured guides as compact cards — 3-col */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {guides.slice(0, 3).map((guide) => (
           <PrefetchLink
             key={guide.href}
             to={guide.href}
             onClick={onNavigate}
-            className="group flex items-center gap-2.5 rounded-md px-2 py-[6px] hover:bg-accent/[0.05] transition-colors"
+            className="group rounded-lg border border-border/50 p-3 hover:border-accent/30 hover:shadow-sm transition-all"
           >
-            <div className="h-6 w-6 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
-              <guide.icon className="h-3 w-3 text-accent" />
+            <div className="h-7 w-7 rounded-md bg-accent/10 flex items-center justify-center mb-2 group-hover:bg-accent/15 transition-colors">
+              <guide.icon className="h-3.5 w-3.5 text-accent" />
             </div>
-            <div className="min-w-0">
-              <p className="text-[12px] font-medium text-foreground/90 group-hover:text-foreground leading-tight">{guide.label}</p>
-              <p className="text-[10px] text-muted-foreground leading-tight">{guide.desc}</p>
-            </div>
+            <p className="text-[12px] font-semibold text-foreground leading-tight mb-0.5 group-hover:text-primary transition-colors">{guide.label}</p>
+            <p className="text-[10px] text-muted-foreground leading-snug">{guide.desc}</p>
           </PrefetchLink>
         ))}
       </div>
 
-      <PrefetchLink to="/resources" onClick={onNavigate}
-        className="inline-flex items-center gap-1 px-2 pt-1.5 text-[11px] font-semibold text-primary hover:text-primary/80">
-        All articles <ArrowRight className="h-2.5 w-2.5" />
-      </PrefetchLink>
-
-      {/* Bottom: Tools row + CTA */}
-      <div className="flex items-center gap-3 border-t border-border/40 mt-2 pt-2.5">
-        <div className="flex-1 flex flex-wrap gap-1.5">
-          {tools.map((tool) => (
-            <PrefetchLink
-              key={tool.href}
-              to={tool.href}
-              onClick={onNavigate}
-              className="group inline-flex items-center gap-1.5 rounded-full border border-border/50 px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-accent/40 hover:bg-accent/[0.04] transition-all"
-            >
-              <tool.icon className="h-3 w-3 text-accent/60 group-hover:text-accent" />
-              {tool.label}
-            </PrefetchLink>
-          ))}
+      {/* Bottom: remaining guides + tools + CTA */}
+      <div className="flex gap-4 border-t border-border/40 pt-3">
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-1.5">More Guides</p>
+          <div className="space-y-0">
+            {guides.slice(3).map((guide) => (
+              <PrefetchLink
+                key={guide.href}
+                to={guide.href}
+                onClick={onNavigate}
+                className="group flex items-center gap-2 rounded-md px-1.5 py-1.5 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              >
+                <guide.icon className="h-3.5 w-3.5 text-accent/60 group-hover:text-accent" />
+                {guide.label}
+              </PrefetchLink>
+            ))}
+          </div>
+          <PrefetchLink to="/resources" onClick={onNavigate}
+            className="inline-flex items-center gap-1 px-1.5 pt-1.5 text-[11px] font-semibold text-primary hover:text-primary/80">
+            All articles <ArrowRight className="h-3 w-3" />
+          </PrefetchLink>
         </div>
-        <Link to="/concierge" onClick={onNavigate}>
-          <Button size="sm" className="gap-1 h-7 bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-semibold shadow-sm whitespace-nowrap px-4">
-            Get Help <ArrowRight className="h-2.5 w-2.5" />
-          </Button>
-        </Link>
+
+        <div className="w-px bg-border/40" />
+
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-1.5">Interactive Tools</p>
+          <div className="space-y-0">
+            {tools.map((tool) => (
+              <PrefetchLink
+                key={tool.href}
+                to={tool.href}
+                onClick={onNavigate}
+                className="group flex items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-muted/40 transition-colors"
+              >
+                <tool.icon className="h-3.5 w-3.5 text-accent/60 group-hover:text-accent" />
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium text-foreground/90 group-hover:text-foreground">{tool.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{tool.desc}</p>
+                </div>
+              </PrefetchLink>
+            ))}
+          </div>
+        </div>
+
+        {/* Compact CTA */}
+        <div className="w-[130px] shrink-0">
+          <div className="rounded-lg bg-gradient-to-br from-primary/[0.06] to-accent/[0.06] border border-primary/10 p-3 h-full flex flex-col justify-center">
+            <p className="text-[12px] font-bold text-foreground mb-0.5">Need Help?</p>
+            <p className="text-[10px] text-muted-foreground leading-snug mb-2">
+              Free treatment matching.
+            </p>
+            <Link to="/concierge" onClick={onNavigate}>
+              <Button size="sm" className="w-full h-7 bg-accent text-accent-foreground hover:bg-accent/90 text-[10px] font-semibold gap-1">
+                Get Help <ArrowRight className="h-2.5 w-2.5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
