@@ -89,6 +89,12 @@ export default function AdminSeekers() {
         query = query.or("phone_verified.is.null,phone_verified.eq.false");
       }
 
+      // Server-side name/location search
+      if (searchQuery && searchQuery.length >= 2) {
+        const q = searchQuery.trim();
+        query = query.or(`display_name.ilike.%${q}%,first_name.ilike.%${q}%,last_name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`);
+      }
+
       const { count, error } = await query;
       if (error) throw error;
       return count || 0;
@@ -113,6 +119,12 @@ export default function AdminSeekers() {
         profileQuery = profileQuery.eq("phone_verified", true);
       } else if (verificationFilter === "unverified") {
         profileQuery = profileQuery.or("phone_verified.is.null,phone_verified.eq.false");
+      }
+
+      // Server-side name/location search
+      if (searchQuery && searchQuery.length >= 2) {
+        const q = searchQuery.trim();
+        profileQuery = profileQuery.or(`display_name.ilike.%${q}%,first_name.ilike.%${q}%,last_name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`);
       }
 
       const { data: profiles, error } = await profileQuery;
@@ -424,7 +436,7 @@ export default function AdminSeekers() {
               <Input
                 placeholder="Search by name, email, city, or state..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="pl-9"
               />
             </div>

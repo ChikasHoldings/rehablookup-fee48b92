@@ -122,6 +122,7 @@ const SearchResults = () => {
   const treatment = searchParams.get("treatment") || "";
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
+  const queryParam = searchParams.get("q") || ""; // Free-text search from header/seeker
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const sortParam = (searchParams.get("sort") as SortOption) || "proximity";
   
@@ -258,6 +259,20 @@ const SearchResults = () => {
           if (cStateAbbr && locationMatch.nearbyStates.includes(cStateAbbr.toUpperCase())) return true;
         }
         if (c.zipCode.includes(locationForFilter)) return true;
+        return false;
+      });
+    }
+
+    // Free-text search (from header search bar / seeker home ?q= param)
+    if (queryParam) {
+      const q = queryParam.toLowerCase();
+      results = results.filter((c) => {
+        if (c.name.toLowerCase().includes(q)) return true;
+        if (c.description?.toLowerCase().includes(q)) return true;
+        if (c.city.toLowerCase().includes(q)) return true;
+        if (c.state.toLowerCase().includes(q)) return true;
+        if (c.treatmentTypes.some((t) => t.toLowerCase().includes(q))) return true;
+        if (c.insuranceAccepted.some((i) => i.toLowerCase().includes(q))) return true;
         return false;
       });
     }
@@ -402,9 +417,9 @@ const SearchResults = () => {
     });
 
     return results;
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly]);
 
-  const hasFilters = location || treatment || insurance || type || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
+  const hasFilters = location || treatment || insurance || type || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   // Count active filters
@@ -448,14 +463,21 @@ const SearchResults = () => {
   };
 
   // Determine if this is a search with query params (should be noindexed)
-  const hasSearchParams = !!(location || treatment || insurance || type || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
+  const hasSearchParams = !!(location || treatment || insurance || type || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
   const shouldNoindex = hasSearchParams || filteredCenters.length === 0;
+
+  // Determine display title
+  const searchDisplayTitle = queryParam
+    ? `Results for "${queryParam}"`
+    : location
+      ? `Rehab Centers Near ${location}`
+      : "Find Treatment Centers";
 
   return (
     <Layout>
       <SEO
-        title={location ? `Rehab Centers Near ${location}` : "Find Treatment Centers"}
-        description={`Browse ${filteredCenters.length} verified addiction treatment centers${location ? ` near ${location}` : ""}. Compare rehab programs, check insurance, and start recovery.`}
+        title={searchDisplayTitle}
+        description={`Browse ${filteredCenters.length} verified addiction treatment centers${location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""}. Compare rehab programs, check insurance, and start recovery.`}
         canonical="/search-results"
         noindex={shouldNoindex}
         structuredData={!shouldNoindex ? generateSearchResultsSchema({
@@ -493,9 +515,13 @@ const SearchResults = () => {
                     <span className="text-primary">{filteredCenters.length}</span>
                     <span className="text-foreground"> Treatment Centers</span>
                   </span>
-                  {location && (
+                  {(location || queryParam) && (
                     <p className="text-xs text-muted-foreground">
-                      Near <span className="text-foreground font-medium">{location}</span>
+                      {queryParam ? (
+                        <>Results for "<span className="text-foreground font-medium">{queryParam}</span>"</>
+                      ) : (
+                        <>Near <span className="text-foreground font-medium">{location}</span></>
+                      )}
                     </p>
                   )}
                 </div>
@@ -715,6 +741,16 @@ const SearchResults = () => {
           {hasFilters && (
             <div className="flex items-center gap-2 flex-wrap pb-3 animate-fade-in">
               <span className="text-xs font-medium text-muted-foreground mr-1">Active:</span>
+              {queryParam && (
+                <button
+                  onClick={() => clearFilter("q")}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <Search className="h-3 w-3" />
+                  "{queryParam}"
+                  <X className="h-3 w-3 ml-0.5" />
+                </button>
+              )}
               {location && (
                 <button
                   onClick={() => clearFilter("location")}
