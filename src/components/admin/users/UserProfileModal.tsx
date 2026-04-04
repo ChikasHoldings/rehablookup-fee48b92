@@ -384,7 +384,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                       {userActivity?.reviews?.length || 0} Reviews
                     </Badge>
                     {hasConcierge && (
-                      <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1">
+                      <Badge variant="outline" className="bg-chart-3/10 text-chart-3 border-chart-3/30 gap-1">
                         <Shield className="h-3 w-3" />
                         Concierge User
                       </Badge>
