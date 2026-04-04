@@ -718,7 +718,7 @@ export default function AdminProfile() {
             {/* Subscription Changes */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
+                <div className="p-2 rounded-lg bg-accent text-accent-foreground">
                   <CreditCard className="h-4 w-4" />
                 </div>
                 <div>
