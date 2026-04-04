@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgLeadGeneration from "@/assets/provider-guides/pg-lead-generation.jpg";
+import pgGetMorePatients from "@/assets/provider-guides/pg-get-more-patients.jpg";
 
 export default function AddictionTreatmentLeadGeneration() {
   return (

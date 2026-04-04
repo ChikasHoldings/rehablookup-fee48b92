@@ -64,6 +64,10 @@ export default function RehabMarketingStrategies() {
       ]}
       ctaHeadline="Add the Highest-ROI Channel to Your Marketing Mix"
       ctaSubheadline="It takes 5 minutes to list your facility. Zero cost to get started."
+      images={[
+        { src: pgMarketingStrategies, alt: "Digital marketing analytics dashboards for a rehab center campaign", caption: "The most cost-effective strategy is organic visibility — it compounds over time." },
+        { src: admissionsDashboard, alt: "Marketing KPI dashboard tracking cost per admission", caption: "Track cost per qualified inquiry, not vanity metrics." },
+      ]}
     />
   );
 }

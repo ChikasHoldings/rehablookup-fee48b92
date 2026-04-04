@@ -60,6 +60,10 @@ export default function IncreaseRehabAdmissions() {
           content: "RehabLookup delivers what treatment centers need most: visibility with high-intent families actively searching for treatment. Listing is free, setup takes minutes, and our platform handles the SEO and traffic generation. You focus on providing great care — we'll make sure families can find you.",
         },
       ]}
+      images={[
+        { src: pgIncreaseAdmissions, alt: "Welcoming treatment center reception area optimized for patient intake", caption: "Your intake experience is your most important first impression." },
+        { src: pgAdmissionsGrowth, alt: "Data-driven admissions growth visualization", caption: "A 5% improvement in conversion rate can equal a 30% increase in admissions." },
+      ]}
     />
   );
 }

@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgPatientAcquisition from "@/assets/provider-guides/pg-patient-acquisition.jpg";
+import treatmentFacility from "@/assets/provider-guides/treatment-facility.jpg";
 
 export default function TreatmentCenterPatientAcquisition() {
   return (

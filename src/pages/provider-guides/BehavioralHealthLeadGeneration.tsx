@@ -1,4 +1,6 @@
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
+import pgBehavioralHealth from "@/assets/provider-guides/pg-behavioral-health.jpg";
+import pgLeadGeneration from "@/assets/provider-guides/pg-lead-generation.jpg";
 
 export default function BehavioralHealthLeadGeneration() {
   return (
