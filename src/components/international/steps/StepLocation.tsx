@@ -76,8 +76,11 @@ export function StepLocation({ data, onChange }: StepLocationProps) {
             </SelectTrigger>
             <SelectContent className="max-h-[300px] bg-background z-50">
               {COUNTRY_OPTIONS.map((c) => (
-                <SelectItem key={c} value={c} className="cursor-pointer">
-                  {c}
+                <SelectItem key={c.name} value={c.name} className="cursor-pointer">
+                  <span className="flex items-center gap-2">
+                    <span className="text-lg leading-none">{c.flag}</span>
+                    <span>{c.name}</span>
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
