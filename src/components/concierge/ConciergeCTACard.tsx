@@ -65,7 +65,7 @@ export function ConciergeCTACard({ className, compact = false }: ConciergeCTACar
           </Button>
         </Link>
 
-        <p className="text-[10px] text-center text-muted-foreground mt-3">
+        <p className="text-xs text-center text-muted-foreground mt-3">
           Our placement specialists are here to help
         </p>
       </div>

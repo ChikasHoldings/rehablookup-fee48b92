@@ -553,7 +553,7 @@ export default function Login() {
           </div>
           
           <div className="relative max-w-md text-white">
-            <h1 className="text-4xl xl:text-5xl font-display font-bold mb-6">
+            <h1 className="text-3xl xl:text-4xl font-display font-bold mb-6">
               Welcome Back
             </h1>
             <p className="text-lg text-white/80 mb-8">

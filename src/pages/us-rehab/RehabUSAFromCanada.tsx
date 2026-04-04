@@ -37,7 +37,7 @@ export default function RehabUSAFromCanada() {
               <Globe className="h-4 w-4 text-primary-foreground/80" />
               <span className="text-sm font-medium text-primary-foreground/90">🇨🇦 For Canadian Residents</span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-display font-bold text-primary-foreground leading-tight mb-6">
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6">
               World-Class Addiction Treatment in the USA — For Canadians
             </h1>
             <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">

@@ -169,7 +169,7 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
             )}
           </Button>
 
-          <div className="flex items-center justify-center gap-2 mt-3 md:mt-4 text-[10px] md:text-xs text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 mt-3 md:mt-4 text-xs text-muted-foreground">
             <Shield className="h-3 w-3 md:h-3.5 md:w-3.5" />
             Secure payment via Stripe
           </div>

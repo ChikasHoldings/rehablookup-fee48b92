@@ -492,7 +492,7 @@ export function SingleQuestionFlow({
                   className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.firstName && "border-destructive")}
                   autoComplete="given-name"
                 />
-                {errors.firstName && <p className="text-[10px] sm:text-xs text-destructive">{errors.firstName}</p>}
+                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
               </div>
               <div className="space-y-1.5 sm:space-y-2">
                 <Label className="text-xs sm:text-sm font-medium">Last Name *</Label>
@@ -506,7 +506,7 @@ export function SingleQuestionFlow({
                   className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.lastName && "border-destructive")}
                   autoComplete="family-name"
                 />
-                {errors.lastName && <p className="text-[10px] sm:text-xs text-destructive">{errors.lastName}</p>}
+                {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
               </div>
             </div>
             
@@ -520,7 +520,7 @@ export function SingleQuestionFlow({
                 }}
                 className={cn("h-11 sm:h-12", errors.phone && "border-destructive")}
               />
-              {errors.phone && <p className="text-[10px] sm:text-xs text-destructive">{errors.phone}</p>}
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
             </div>
             
             <div className="space-y-1.5 sm:space-y-2">
@@ -537,7 +537,7 @@ export function SingleQuestionFlow({
                 }}
                 className={cn("h-11 sm:h-12", errors.email && "border-destructive")}
               />
-              {errors.email && <p className="text-[10px] sm:text-xs text-destructive">{errors.email}</p>}
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
             </div>
             
             <Button 
@@ -559,7 +559,7 @@ export function SingleQuestionFlow({
               )}
             </Button>
             
-            <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center">
               🔒 Your information is confidential and protected
             </p>
           </div>
@@ -724,7 +724,7 @@ export function SingleQuestionFlow({
       </div>
       
       {/* Trust indicators - Mobile Compact */}
-      <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
+      <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
           <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
           <span>HIPAA Compliant</span>
