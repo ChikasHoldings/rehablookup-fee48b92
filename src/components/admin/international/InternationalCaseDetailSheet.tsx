@@ -253,7 +253,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                 </h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><span className="text-muted-foreground">Email:</span> {caseData.client_email}</div>
-                  <div><span className="text-muted-foreground">Phone:</span> {caseData.client_phone || "—"}</div>
+                  {caseData.client_phone && <div><span className="text-muted-foreground">Phone:</span> {caseData.client_phone}</div>}
                   <div><span className="text-muted-foreground">Country:</span> {caseData.client_country}</div>
                   <div><span className="text-muted-foreground">Language:</span> {caseData.preferred_language || "English"}</div>
                 </div>
