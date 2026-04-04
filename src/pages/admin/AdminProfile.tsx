@@ -401,7 +401,7 @@ export default function AdminProfile() {
           <p className="text-muted-foreground">Manage your admin account settings and security</p>
         </div>
         <Badge variant="outline" className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
           Live
         </Badge>
       </div>
