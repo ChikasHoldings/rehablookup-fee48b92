@@ -512,15 +512,16 @@ const AppInner = () => {
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
-            <Route path="/insurance/aetna" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/bcbs" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
-            <Route path="/insurance/cigna" element={<PublicRouteGuard><CignaRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/united-healthcare" element={<PublicRouteGuard><UnitedHealthcareRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/humana" element={<PublicRouteGuard><HumanaRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/kaiser" element={<PublicRouteGuard><KaiserRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/medicare" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/medicaid" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
-            <Route path="/insurance/anthem" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
+            {/* Insurance short URLs → redirect to canonical */}
+            <Route path="/insurance/aetna" element={<Navigate to="/insurance/aetna-rehab" replace />} />
+            <Route path="/insurance/bcbs" element={<Navigate to="/insurance/bcbs-treatment" replace />} />
+            <Route path="/insurance/cigna" element={<Navigate to="/insurance/cigna-rehab" replace />} />
+            <Route path="/insurance/united-healthcare" element={<Navigate to="/insurance/united-healthcare-rehab" replace />} />
+            <Route path="/insurance/humana" element={<Navigate to="/insurance/humana-rehab" replace />} />
+            <Route path="/insurance/kaiser" element={<Navigate to="/insurance/kaiser-rehab" replace />} />
+            <Route path="/insurance/medicare" element={<Navigate to="/insurance/medicare-rehab" replace />} />
+            <Route path="/insurance/medicaid" element={<Navigate to="/insurance/medicaid-rehab" replace />} />
+            <Route path="/insurance/anthem" element={<Navigate to="/insurance/anthem-rehab" replace />} />
             {/* Insurance Routes - Canonical URLs (for internal links) */}
             <Route path="/insurance/aetna-rehab" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
             <Route path="/insurance/bcbs-treatment" element={<PublicRouteGuard><BCBSTreatment /></PublicRouteGuard>} />
