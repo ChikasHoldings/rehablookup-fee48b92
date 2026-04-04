@@ -31,15 +31,15 @@ interface PlacementStatusCardProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: string; bgColor: string }> = {
-  new: { label: "Submitted", icon: Clock, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500" },
-  pending: { label: "Submitted", icon: Clock, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500" },
-  reviewing: { label: "Under Review", icon: Search, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-500" },
-  matching: { label: "Finding Treatment Options", icon: Users, color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-500" },
-  matched: { label: "Facilities Found", icon: Users, color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-500" },
-  introductions_sent: { label: "Introductions Sent", icon: Send, color: "text-indigo-600 dark:text-indigo-400", bgColor: "bg-indigo-500" },
-  in_contact: { label: "In Contact", icon: MessageCircle, color: "text-teal-600 dark:text-teal-400", bgColor: "bg-teal-500" },
-  confirming: { label: "Awaiting Confirmation", icon: Clock, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-500" },
-  placed: { label: "Successfully Placed", icon: CheckCircle, color: "text-emerald-600 dark:text-emerald-400", bgColor: "bg-emerald-500" },
+  new: { label: "Submitted", icon: Clock, color: "text-primary", bgColor: "bg-primary" },
+  pending: { label: "Submitted", icon: Clock, color: "text-primary", bgColor: "bg-primary" },
+  reviewing: { label: "Under Review", icon: Search, color: "text-warning", bgColor: "bg-warning" },
+  matching: { label: "Finding Treatment Options", icon: Users, color: "text-primary", bgColor: "bg-primary" },
+  matched: { label: "Facilities Found", icon: Users, color: "text-primary", bgColor: "bg-primary" },
+  introductions_sent: { label: "Introductions Sent", icon: Send, color: "text-primary", bgColor: "bg-primary" },
+  in_contact: { label: "In Contact", icon: MessageCircle, color: "text-primary", bgColor: "bg-primary" },
+  confirming: { label: "Awaiting Confirmation", icon: Clock, color: "text-warning", bgColor: "bg-warning" },
+  placed: { label: "Successfully Placed", icon: CheckCircle, color: "text-success", bgColor: "bg-success" },
   closed: { label: "Closed", icon: XCircle, color: "text-muted-foreground", bgColor: "bg-muted" },
 };
 
