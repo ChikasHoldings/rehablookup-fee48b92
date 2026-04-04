@@ -322,19 +322,21 @@ const StatePage = () => {
           {isLoading ? (
             <SearchResultsLoading count={6} />
           ) : stateCenters.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {stateCenters.slice(0, 12).map(center => (
-                <TreatmentCenterCard key={center.id} center={center} />
-              ))}
-            </div>
-            <div className="mt-8 text-center">
-              <Link to={`/search-results?state=${stateData.name}`}>
-                <Button variant="outline" size="lg" className="gap-2">
-                  View All Facilities
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
+            <>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {stateCenters.slice(0, 12).map(center => (
+                  <TreatmentCenterCard key={center.id} center={center} />
+                ))}
+              </div>
+              <div className="mt-8 text-center">
+                <Link to={`/search-results?state=${stateData.name}`}>
+                  <Button variant="outline" size="lg" className="gap-2">
+                    View All Facilities
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </>
           ) : (
             <div className="rounded-xl border bg-card p-12 text-center">
               <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
