@@ -157,6 +157,8 @@ const MalibuRehabCenters = lazy(() => import("./pages/us-rehab/MalibuRehabCenter
 const RehabUSAFromUK = lazy(() => import("./pages/us-rehab/RehabUSAFromUK"));
 const RehabUSAFromUAE = lazy(() => import("./pages/us-rehab/RehabUSAFromUAE"));
 const RehabUSAFromAustralia = lazy(() => import("./pages/us-rehab/RehabUSAFromAustralia"));
+const RehabUSAFromCanada = lazy(() => import("./pages/us-rehab/RehabUSAFromCanada"));
+const RehabUSAFromEurope = lazy(() => import("./pages/us-rehab/RehabUSAFromEurope"));
 // Treatment-specific SEO pages
 const AlcoholRehabUSA = lazy(() => import("./pages/us-rehab/AlcoholRehabUSA"));
 const DrugRehabUSA = lazy(() => import("./pages/us-rehab/DrugRehabUSA"));
@@ -424,6 +426,8 @@ const AppInner = () => {
             <Route path="/us-rehab/uk-patients" element={<PublicRouteGuard><RehabUSAFromUK /></PublicRouteGuard>} />
             <Route path="/us-rehab/uae-middle-east" element={<PublicRouteGuard><RehabUSAFromUAE /></PublicRouteGuard>} />
             <Route path="/us-rehab/australian-patients" element={<PublicRouteGuard><RehabUSAFromAustralia /></PublicRouteGuard>} />
+            <Route path="/us-rehab/canadian-patients" element={<PublicRouteGuard><RehabUSAFromCanada /></PublicRouteGuard>} />
+            <Route path="/us-rehab/european-patients" element={<PublicRouteGuard><RehabUSAFromEurope /></PublicRouteGuard>} />
             {/* Treatment-specific SEO pages */}
             <Route path="/us-rehab/alcohol-rehab-usa" element={<PublicRouteGuard><AlcoholRehabUSA /></PublicRouteGuard>} />
             <Route path="/us-rehab/drug-rehab-usa" element={<PublicRouteGuard><DrugRehabUSA /></PublicRouteGuard>} />

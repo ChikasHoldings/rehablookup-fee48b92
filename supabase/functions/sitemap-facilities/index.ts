@@ -162,6 +162,8 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/us-rehab/uk-patients", priority: 0.8, changefreq: "weekly" },
   { path: "/us-rehab/uae-middle-east", priority: 0.75, changefreq: "weekly" },
   { path: "/us-rehab/australian-patients", priority: 0.75, changefreq: "weekly" },
+  { path: "/us-rehab/canadian-patients", priority: 0.8, changefreq: "weekly" },
+  { path: "/us-rehab/european-patients", priority: 0.8, changefreq: "weekly" },
   { path: "/us-rehab/alcohol-rehab-usa", priority: 0.8, changefreq: "weekly" },
   { path: "/us-rehab/drug-rehab-usa", priority: 0.8, changefreq: "weekly" },
   { path: "/us-rehab/dual-diagnosis-usa", priority: 0.75, changefreq: "weekly" },
