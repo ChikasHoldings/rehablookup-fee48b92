@@ -121,9 +121,9 @@ SettingRow.displayName = "SettingRow";
 
 const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warning"; label: string }) => {
   const config = {
-    active: "bg-green-100 text-green-700 border-green-200",
-    inactive: "bg-slate-100 text-slate-600 border-slate-200",
-    warning: "bg-amber-100 text-amber-700 border-amber-200",
+    active: "bg-green-100 text-success border-green-200",
+    inactive: "bg-muted text-muted-foreground border-border",
+    warning: "bg-amber-100 text-warning border-amber-200",
   };
   
   return (
@@ -731,14 +731,14 @@ export default function AdminSettings() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Globe className="h-5 w-5 text-blue-500" />
+                      <Globe className="h-5 w-5 text-primary" />
                       Platform Settings
                     </CardTitle>
                     <CardDescription>General platform configuration options</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1">
                     <SettingRow
-                      icon={<Server className="h-4 w-4 text-slate-500" />}
+                      icon={<Server className="h-4 w-4 text-muted-foreground" />}
                       title="Maintenance Mode"
                       description="Temporarily disable public access to the platform"
                     >
@@ -755,7 +755,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Zap className="h-4 w-4 text-slate-500" />}
+                      icon={<Zap className="h-4 w-4 text-muted-foreground" />}
                       title="API Rate Limiting"
                       description="Control request throttling for API endpoints"
                     >
@@ -781,7 +781,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                       title="Session Timeout"
                       description="Auto logout after period of inactivity"
                     >
@@ -814,14 +814,14 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Palette className="h-5 w-5 text-purple-500" />
+                    <Palette className="h-5 w-5 text-primary" />
                     Appearance
                   </CardTitle>
                   <CardDescription>Customize your admin panel look and feel</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <SettingRow
-                    icon={<Palette className="h-4 w-4 text-slate-500" />}
+                    icon={<Palette className="h-4 w-4 text-muted-foreground" />}
                     title="Theme Mode"
                     description="Choose between light and dark themes"
                   >
@@ -847,7 +847,7 @@ export default function AdminSettings() {
                   </SettingRow>
                   <Separator />
                   <SettingRow
-                    icon={<Activity className="h-4 w-4 text-slate-500" />}
+                    icon={<Activity className="h-4 w-4 text-muted-foreground" />}
                     title="Compact Mode"
                     description="Use condensed layouts for data tables"
                   >
@@ -864,7 +864,7 @@ export default function AdminSettings() {
                   </SettingRow>
                   <Separator />
                   <SettingRow
-                    icon={<FileText className="h-4 w-4 text-slate-500" />}
+                    icon={<FileText className="h-4 w-4 text-muted-foreground" />}
                     title="Show Timestamps"
                     description="Display relative or absolute timestamps"
                   >
@@ -896,7 +896,7 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Activity className="h-5 w-5 text-green-500" />
+                    <Activity className="h-5 w-5 text-success" />
                     System Status
                   </CardTitle>
                   <CardDescription>Current platform health and performance</CardDescription>
@@ -906,52 +906,52 @@ export default function AdminSettings() {
                     <div className={cn(
                       "p-4 rounded-lg border",
                       maintenanceEnabled 
-                        ? "bg-amber-50 border-amber-100" 
-                        : "bg-green-50 border-green-100"
+                        ? "bg-warning/10 border-warning/20" 
+                        : "bg-success/10 border-success/20"
                     )}>
                       <div className={cn(
                         "flex items-center gap-2 mb-1",
-                        maintenanceEnabled ? "text-amber-700" : "text-green-700"
+                        maintenanceEnabled ? "text-warning" : "text-success"
                       )}>
                         <Server className="h-4 w-4" />
                         <span className="text-sm font-medium">API Server</span>
                       </div>
                       <p className={cn(
                         "text-2xl font-bold",
-                        maintenanceEnabled ? "text-amber-700" : "text-green-700"
+                        maintenanceEnabled ? "text-warning" : "text-success"
                       )}>
                         {maintenanceEnabled ? "Maintenance" : "Healthy"}
                       </p>
                       <p className={cn(
                         "text-xs mt-1",
-                        maintenanceEnabled ? "text-amber-600" : "text-green-600"
+                        maintenanceEnabled ? "text-warning/80" : "text-success/80"
                       )}>
                         {maintenanceEnabled ? "Maintenance mode active" : "99.9% uptime"}
                       </p>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Database className="h-4 w-4" />
                         <span className="text-sm font-medium">Database</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Connected</p>
-                      <p className="text-xs text-green-600 mt-1">{stats?.totalFacilities || 0} facilities, {stats?.totalLeads || 0} leads</p>
+                      <p className="text-2xl font-bold text-success">Connected</p>
+                      <p className="text-xs text-success/80 mt-1">{stats?.totalFacilities || 0} facilities, {stats?.totalLeads || 0} leads</p>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Mail className="h-4 w-4" />
                         <span className="text-sm font-medium">Email Service</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Active</p>
-                      <p className="text-xs text-green-600 mt-1">Resend configured</p>
+                      <p className="text-2xl font-bold text-success">Active</p>
+                      <p className="text-xs text-success/80 mt-1">Resend configured</p>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Zap className="h-4 w-4" />
                         <span className="text-sm font-medium">Edge Functions</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Running</p>
-                      <p className="text-xs text-green-600 mt-1">{edgeFunctionsCount || 24} functions deployed</p>
+                      <p className="text-2xl font-bold text-success">Running</p>
+                      <p className="text-xs text-success/80 mt-1">{edgeFunctionsCount || 24} functions deployed</p>
                     </div>
                   </div>
                 </CardContent>
@@ -960,7 +960,7 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Database className="h-5 w-5 text-blue-500" />
+                    <Database className="h-5 w-5 text-primary" />
                     Platform Statistics
                   </CardTitle>
                   <CardDescription>Real-time platform data overview</CardDescription>
@@ -982,13 +982,13 @@ export default function AdminSettings() {
                     <div className={cn(
                       "p-4 rounded-lg border",
                       (stats?.pendingFlags || 0) > 0 
-                        ? "bg-amber-50 border-amber-200" 
+                        ? "bg-warning/10 border-warning/30" 
                         : "bg-muted/50"
                     )}>
                       <p className="text-sm text-muted-foreground">Pending Flags</p>
                       <p className={cn(
                         "text-2xl font-bold",
-                        (stats?.pendingFlags || 0) > 0 && "text-amber-700"
+                        (stats?.pendingFlags || 0) > 0 && "text-warning"
                       )}>
                         {stats?.pendingFlags || 0}
                       </p>
@@ -1016,14 +1016,14 @@ export default function AdminSettings() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Smartphone className="h-5 w-5 text-purple-500" />
+                      <Smartphone className="h-5 w-5 text-primary" />
                       Two-Factor Authentication
                     </CardTitle>
                     <CardDescription>Configure 2FA enforcement and settings</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1">
                     <SettingRow
-                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      icon={<Shield className="h-4 w-4 text-muted-foreground" />}
                       title="Require 2FA"
                       description="Enforce 2FA for all admin accounts"
                     >
@@ -1038,7 +1038,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                       title="2FA Grace Period"
                       description="Days to set up 2FA after enforcement"
                     >
@@ -1063,7 +1063,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Key className="h-4 w-4 text-slate-500" />}
+                      icon={<Key className="h-4 w-4 text-muted-foreground" />}
                       title="Recovery Codes"
                       description="Number of backup codes per user"
                     >
@@ -1092,14 +1092,14 @@ export default function AdminSettings() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Lock className="h-5 w-5 text-amber-500" />
+                      <Lock className="h-5 w-5 text-warning" />
                       Password Policy
                     </CardTitle>
                     <CardDescription>Configure password requirements</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1">
                     <SettingRow
-                      icon={<Key className="h-4 w-4 text-slate-500" />}
+                      icon={<Key className="h-4 w-4 text-muted-foreground" />}
                       title="Minimum Length"
                       description="Required minimum password length"
                     >
@@ -1124,7 +1124,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      icon={<Shield className="h-4 w-4 text-muted-foreground" />}
                       title="Require Uppercase"
                       description="Must include uppercase letters"
                     >
@@ -1139,7 +1139,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      icon={<Activity className="h-4 w-4 text-muted-foreground" />}
                       title="Require Numbers"
                       description="Must include numeric characters"
                     >
@@ -1154,7 +1154,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Key className="h-4 w-4 text-slate-500" />}
+                      icon={<Key className="h-4 w-4 text-muted-foreground" />}
                       title="Require Special Characters"
                       description="Must include symbols (!@#$%)"
                     >
@@ -1169,7 +1169,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                       title="Password Expiry"
                       description="Force password change after period"
                     >
@@ -1202,14 +1202,14 @@ export default function AdminSettings() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Globe className="h-5 w-5 text-blue-500" />
+                      <Globe className="h-5 w-5 text-primary" />
                       IP Access Control
                     </CardTitle>
                     <CardDescription>Restrict admin panel access by IP address</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <SettingRow
-                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      icon={<Shield className="h-4 w-4 text-muted-foreground" />}
                       title="Enable IP Whitelist"
                       description="Only allow whitelisted IPs to access admin"
                     >
@@ -1237,14 +1237,14 @@ export default function AdminSettings() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Ban className="h-5 w-5 text-red-500" />
+                      <Ban className="h-5 w-5 text-destructive" />
                       Brute Force Protection
                     </CardTitle>
                     <CardDescription>Automatic lockout and blocking settings</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1">
                     <SettingRow
-                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      icon={<Activity className="h-4 w-4 text-muted-foreground" />}
                       title="Failed Login Threshold"
                       description="Attempts before lockout triggers"
                     >
@@ -1268,7 +1268,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                       title="Lockout Duration"
                       description="How long accounts stay locked"
                     >
@@ -1293,7 +1293,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      icon={<Shield className="h-4 w-4 text-muted-foreground" />}
                       title="Auto-Block Threshold"
                       description="Block IP after excessive failures"
                     >
@@ -1331,72 +1331,72 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Activity className="h-5 w-5 text-blue-500" />
+                    <Activity className="h-5 w-5 text-primary" />
                     Security Status
                   </CardTitle>
                   <CardDescription>Current security feature status</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Shield className="h-4 w-4" />
                         <span className="text-sm font-medium">Role-Based Access</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Enabled</p>
-                      <p className="text-xs text-green-600 mt-1">Granular permissions active</p>
+                      <p className="text-2xl font-bold text-success">Enabled</p>
+                      <p className="text-xs text-success/80 mt-1">Granular permissions active</p>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Activity className="h-4 w-4" />
                         <span className="text-sm font-medium">Session Tracking</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Active</p>
-                      <p className="text-xs text-green-600 mt-1">All sessions monitored</p>
+                      <p className="text-2xl font-bold text-success">Active</p>
+                      <p className="text-xs text-success/80 mt-1">All sessions monitored</p>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <FileText className="h-4 w-4" />
                         <span className="text-sm font-medium">Audit Logging</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Recording</p>
-                      <p className="text-xs text-green-600 mt-1">All actions logged</p>
+                      <p className="text-2xl font-bold text-success">Recording</p>
+                      <p className="text-xs text-success/80 mt-1">All actions logged</p>
                     </div>
                     <div className={cn(
                       "p-4 rounded-lg border",
                       getSetting('two_factor_required') 
-                        ? "bg-green-50 border-green-100" 
-                        : "bg-amber-50 border-amber-100"
+                        ? "bg-success/10 border-success/20" 
+                        : "bg-warning/10 border-warning/20"
                     )}>
                       <div className={cn(
                         "flex items-center gap-2 mb-1",
-                        getSetting('two_factor_required') ? "text-green-700" : "text-amber-700"
+                        getSetting('two_factor_required') ? "text-success" : "text-warning"
                       )}>
                         <Smartphone className="h-4 w-4" />
                         <span className="text-sm font-medium">2FA Status</span>
                       </div>
                       <p className={cn(
                         "text-2xl font-bold",
-                        getSetting('two_factor_required') ? "text-green-700" : "text-amber-700"
+                        getSetting('two_factor_required') ? "text-success" : "text-warning"
                       )}>
                         {getSetting('two_factor_required') ? 'Required' : 'Optional'}
                       </p>
                       <p className={cn(
                         "text-xs mt-1",
-                        getSetting('two_factor_required') ? "text-green-600" : "text-amber-600"
+                        getSetting('two_factor_required') ? "text-success/80" : "text-warning/80"
                       )}>
                         {getSetting('two_factor_required') ? 'All admins must use 2FA' : 'Consider enabling'}
                       </p>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Key className="h-4 w-4" />
                         <span className="text-sm font-medium">Password Policy</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">
+                      <p className="text-2xl font-bold text-success">
                         {(getSetting('password_min_length') as { length?: number })?.length || 8}+ chars
                       </p>
-                      <p className="text-xs text-green-600 mt-1">
+                      <p className="text-xs text-success/80 mt-1">
                         {(getSetting('password_require_special') as { enabled?: boolean })?.enabled ? 'Complex required' : 'Standard'}
                       </p>
                     </div>
@@ -1411,32 +1411,32 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Shield className="h-5 w-5 text-green-500" />
+                    <Shield className="h-5 w-5 text-success" />
                     Security Overview
                   </CardTitle>
                   <CardDescription>Current security posture and recommendations</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
-                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-success/10 border border-success/20">
+                      <CheckCircle className="h-8 w-8 text-success" />
                       <div>
-                        <p className="font-medium text-green-800">Row Level Security Enabled</p>
-                        <p className="text-sm text-green-600">All database tables have RLS policies configured</p>
+                        <p className="font-medium text-success">Row Level Security Enabled</p>
+                        <p className="text-sm text-success/80">All database tables have RLS policies configured</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
-                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-success/10 border border-success/20">
+                      <CheckCircle className="h-8 w-8 text-success" />
                       <div>
-                        <p className="font-medium text-green-800">HTTPS Enforced</p>
-                        <p className="text-sm text-green-600">All connections are encrypted with TLS 1.3</p>
+                        <p className="font-medium text-success">HTTPS Enforced</p>
+                        <p className="text-sm text-success/80">All connections are encrypted with TLS 1.3</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
-                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-success/10 border border-success/20">
+                      <CheckCircle className="h-8 w-8 text-success" />
                       <div>
-                        <p className="font-medium text-green-800">Brute Force Protection</p>
-                        <p className="text-sm text-green-600">
+                        <p className="font-medium text-success">Brute Force Protection</p>
+                        <p className="text-sm text-success/80">
                           Auto-lockout after {(getSetting('failed_login_lockout') as { attempts?: number })?.attempts || 5} failed attempts, 
                           IP blocked after {(getSetting('auto_block_threshold') as { attempts?: number })?.attempts || 10} attempts
                         </p>
@@ -1445,24 +1445,24 @@ export default function AdminSettings() {
                     <div className={cn(
                       "flex items-center gap-4 p-4 rounded-lg border",
                       getSetting('two_factor_required') 
-                        ? "bg-green-50 border-green-100" 
-                        : "bg-amber-50 border-amber-100"
+                        ? "bg-success/10 border-success/20" 
+                        : "bg-warning/10 border-warning/20"
                     )}>
                       {getSetting('two_factor_required') ? (
-                        <CheckCircle className="h-8 w-8 text-green-500" />
+                        <CheckCircle className="h-8 w-8 text-success" />
                       ) : (
-                        <AlertTriangle className="h-8 w-8 text-amber-500" />
+                        <AlertTriangle className="h-8 w-8 text-warning" />
                       )}
                       <div className="flex-1">
                         <p className={cn(
                           "font-medium",
-                          getSetting('two_factor_required') ? "text-green-800" : "text-amber-800"
+                          getSetting('two_factor_required') ? "text-success" : "text-amber-800"
                         )}>
                           Two-Factor Authentication
                         </p>
                         <p className={cn(
                           "text-sm",
-                          getSetting('two_factor_required') ? "text-green-600" : "text-amber-600"
+                          getSetting('two_factor_required') ? "text-success/80" : "text-warning/80"
                         )}>
                           {getSetting('two_factor_required') 
                             ? '2FA is required for all admin accounts' 
@@ -1476,24 +1476,24 @@ export default function AdminSettings() {
                     <div className={cn(
                       "flex items-center gap-4 p-4 rounded-lg border",
                       getSetting('ip_whitelist_enabled') 
-                        ? "bg-green-50 border-green-100" 
+                        ? "bg-success/10 border-success/20" 
                         : "bg-muted/50"
                     )}>
                       {getSetting('ip_whitelist_enabled') ? (
-                        <CheckCircle className="h-8 w-8 text-green-500" />
+                        <CheckCircle className="h-8 w-8 text-success" />
                       ) : (
                         <Shield className="h-8 w-8 text-muted-foreground" />
                       )}
                       <div className="flex-1">
                         <p className={cn(
                           "font-medium",
-                          getSetting('ip_whitelist_enabled') ? "text-green-800" : "text-foreground"
+                          getSetting('ip_whitelist_enabled') ? "text-success" : "text-foreground"
                         )}>
                           IP Whitelist
                         </p>
                         <p className={cn(
                           "text-sm",
-                          getSetting('ip_whitelist_enabled') ? "text-green-600" : "text-muted-foreground"
+                          getSetting('ip_whitelist_enabled') ? "text-success/80" : "text-muted-foreground"
                         )}>
                           {getSetting('ip_whitelist_enabled') 
                             ? 'Admin access restricted to specific IPs' 
@@ -1501,21 +1501,21 @@ export default function AdminSettings() {
                         </p>
                       </div>
                       {getSetting('ip_whitelist_enabled') && (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>
+                        <Badge className="bg-green-100 text-success hover:bg-green-100">Active</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
-                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-success/10 border border-success/20">
+                      <CheckCircle className="h-8 w-8 text-success" />
                       <div className="flex-1">
-                        <p className="font-medium text-green-800">Password Policy</p>
-                        <p className="text-sm text-green-600">
+                        <p className="font-medium text-success">Password Policy</p>
+                        <p className="text-sm text-success/80">
                           Min {(getSetting('password_min_length') as { length?: number })?.length || 8} characters
                           {(getSetting('password_require_uppercase') as { enabled?: boolean })?.enabled !== false && ', uppercase'}
                           {(getSetting('password_require_numbers') as { enabled?: boolean })?.enabled !== false && ', numbers'}
                           {(getSetting('password_require_special') as { enabled?: boolean })?.enabled && ', special chars'}
                         </p>
                       </div>
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Configured</Badge>
+                      <Badge className="bg-green-100 text-success hover:bg-green-100">Configured</Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -1583,14 +1583,14 @@ export default function AdminSettings() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Mail className="h-5 w-5 text-blue-500" />
+                      <Mail className="h-5 w-5 text-primary" />
                       Email Notifications
                     </CardTitle>
                     <CardDescription>Configure admin email alerts</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1">
                     <SettingRow
-                      icon={<Users className="h-4 w-4 text-slate-500" />}
+                      icon={<Users className="h-4 w-4 text-muted-foreground" />}
                       title="New Provider Signups"
                       description="Get notified when providers register"
                     >
@@ -1605,7 +1605,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Zap className="h-4 w-4 text-slate-500" />}
+                      icon={<Zap className="h-4 w-4 text-muted-foreground" />}
                       title="New Lead Submissions"
                       description="Alert when new leads are submitted"
                     >
@@ -1620,7 +1620,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
+                      icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
                       title="Payment Failures"
                       description="Alert when subscription payments fail"
                     >
@@ -1635,7 +1635,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      icon={<Shield className="h-4 w-4 text-muted-foreground" />}
                       title="Security Alerts"
                       description="Brute force attacks and suspicious activity"
                     >
@@ -1650,7 +1650,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      icon={<Activity className="h-4 w-4 text-muted-foreground" />}
                       title="System Alerts"
                       description="Critical system status notifications"
                     >
@@ -1665,7 +1665,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
+                      icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
                       title="Churn Risk Alerts"
                       description="Notify when providers are at risk of churning"
                     >
@@ -1685,14 +1685,14 @@ export default function AdminSettings() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Bell className="h-5 w-5 text-purple-500" />
+                      <Bell className="h-5 w-5 text-primary" />
                       In-App Notifications
                     </CardTitle>
                     <CardDescription>Configure dashboard alerts</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1">
                     <SettingRow
-                      icon={<Users className="h-4 w-4 text-slate-500" />}
+                      icon={<Users className="h-4 w-4 text-muted-foreground" />}
                       title="Pending Approvals"
                       description="Show badge for pending provider reviews"
                     >
@@ -1707,7 +1707,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<FileText className="h-4 w-4 text-slate-500" />}
+                      icon={<FileText className="h-4 w-4 text-muted-foreground" />}
                       title="Flagged Content"
                       description="Notify about flagged images or content"
                     >
@@ -1722,7 +1722,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      icon={<Shield className="h-4 w-4 text-muted-foreground" />}
                       title="Security Events"
                       description="Alert on login attempts and security events"
                     >
@@ -1737,7 +1737,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      icon={<Activity className="h-4 w-4 text-muted-foreground" />}
                       title="Subscription Changes"
                       description="Notify on upgrades, downgrades, and cancellations"
                     >
@@ -1752,7 +1752,7 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
+                      icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
                       title="At-Risk Providers"
                       description="Notify when providers show churn signals"
                     >
@@ -1773,7 +1773,7 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Clock className="h-5 w-5 text-green-500" />
+                    <Clock className="h-5 w-5 text-success" />
                     Digest & Summary
                   </CardTitle>
                   <CardDescription>Configure periodic summary notifications</CardDescription>
@@ -2048,14 +2048,14 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Settings className="h-5 w-5 text-slate-500" />
+                    <Settings className="h-5 w-5 text-muted-foreground" />
                     Notification Behavior
                   </CardTitle>
                   <CardDescription>Configure how notifications are delivered and displayed</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <SettingRow
-                    icon={<Bell className="h-4 w-4 text-slate-500" />}
+                    icon={<Bell className="h-4 w-4 text-muted-foreground" />}
                     title="Sound Notifications"
                     description="Play sound for new notifications"
                   >
@@ -2070,7 +2070,7 @@ export default function AdminSettings() {
                   </SettingRow>
                   <Separator />
                   <SettingRow
-                    icon={<Globe className="h-4 w-4 text-slate-500" />}
+                    icon={<Globe className="h-4 w-4 text-muted-foreground" />}
                     title="Browser Notifications"
                     description="Show desktop notifications when app is in background"
                   >
@@ -2094,7 +2094,7 @@ export default function AdminSettings() {
                   </SettingRow>
                   <Separator />
                   <SettingRow
-                    icon={<Clock className="h-4 w-4 text-slate-500" />}
+                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                     title="Auto-mark as Read"
                     description="Automatically mark notifications as read after viewing"
                   >
@@ -2120,7 +2120,7 @@ export default function AdminSettings() {
                   </SettingRow>
                   <Separator />
                   <SettingRow
-                    icon={<Trash2 className="h-4 w-4 text-slate-500" />}
+                    icon={<Trash2 className="h-4 w-4 text-muted-foreground" />}
                     title="Auto-delete Old Notifications"
                     description="Automatically remove notifications older than"
                   >
@@ -2151,43 +2151,43 @@ export default function AdminSettings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Activity className="h-5 w-5 text-blue-500" />
+                    <Activity className="h-5 w-5 text-primary" />
                     Notification Status
                   </CardTitle>
                   <CardDescription>Current notification system status and configuration overview</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Mail className="h-4 w-4" />
                         <span className="text-sm font-medium">Email Service</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Active</p>
-                      <p className="text-xs text-green-600 mt-1">Resend configured</p>
+                      <p className="text-2xl font-bold text-success">Active</p>
+                      <p className="text-xs text-success/80 mt-1">Resend configured</p>
                     </div>
                     <div className={cn(
                       "p-4 rounded-lg border",
                       getSetting('daily_summary_enabled') 
-                        ? "bg-green-50 border-green-100" 
+                        ? "bg-success/10 border-success/20" 
                         : "bg-muted/50"
                     )}>
                       <div className={cn(
                         "flex items-center gap-2 mb-1",
-                        getSetting('daily_summary_enabled') ? "text-green-700" : "text-muted-foreground"
+                        getSetting('daily_summary_enabled') ? "text-success" : "text-muted-foreground"
                       )}>
                         <Clock className="h-4 w-4" />
                         <span className="text-sm font-medium">Daily Digest</span>
                       </div>
                       <p className={cn(
                         "text-2xl font-bold",
-                        getSetting('daily_summary_enabled') ? "text-green-700" : "text-muted-foreground"
+                        getSetting('daily_summary_enabled') ? "text-success" : "text-muted-foreground"
                       )}>
                         {getSetting('daily_summary_enabled') ? 'Active' : 'Disabled'}
                       </p>
                       <p className={cn(
                         "text-xs mt-1",
-                        getSetting('daily_summary_enabled') ? "text-green-600" : "text-muted-foreground"
+                        getSetting('daily_summary_enabled') ? "text-success/80" : "text-muted-foreground"
                       )}>
                         {getSetting('daily_summary_enabled') 
                           ? `Sends at ${getSetting('daily_summary_time') || '09:00'}` 
@@ -2197,48 +2197,48 @@ export default function AdminSettings() {
                     <div className={cn(
                       "p-4 rounded-lg border",
                       getSetting('weekly_report_enabled') 
-                        ? "bg-green-50 border-green-100" 
+                        ? "bg-success/10 border-success/20" 
                         : "bg-muted/50"
                     )}>
                       <div className={cn(
                         "flex items-center gap-2 mb-1",
-                        getSetting('weekly_report_enabled') ? "text-green-700" : "text-muted-foreground"
+                        getSetting('weekly_report_enabled') ? "text-success" : "text-muted-foreground"
                       )}>
                         <FileText className="h-4 w-4" />
                         <span className="text-sm font-medium">Weekly Report</span>
                       </div>
                       <p className={cn(
                         "text-2xl font-bold",
-                        getSetting('weekly_report_enabled') ? "text-green-700" : "text-muted-foreground"
+                        getSetting('weekly_report_enabled') ? "text-success" : "text-muted-foreground"
                       )}>
                         {getSetting('weekly_report_enabled') ? 'Active' : 'Disabled'}
                       </p>
                       <p className={cn(
                         "text-xs mt-1",
-                        getSetting('weekly_report_enabled') ? "text-green-600" : "text-muted-foreground"
+                        getSetting('weekly_report_enabled') ? "text-success/80" : "text-muted-foreground"
                       )}>
                         {getSetting('weekly_report_enabled') 
                           ? `Sends every ${(getSetting('weekly_report_day') || 'monday').charAt(0).toUpperCase() + (getSetting('weekly_report_day') || 'monday').slice(1)}` 
                           : 'Not scheduled'}
                       </p>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2 text-success mb-1">
                         <Bell className="h-4 w-4" />
                         <span className="text-sm font-medium">In-App Alerts</span>
                       </div>
-                      <p className="text-2xl font-bold text-green-700">Active</p>
-                      <p className="text-xs text-green-600 mt-1">Real-time enabled</p>
+                      <p className="text-2xl font-bold text-success">Active</p>
+                      <p className="text-xs text-success/80 mt-1">Real-time enabled</p>
                     </div>
                   </div>
                   
                   {/* Configuration Summary */}
-                  <div className="mt-6 p-4 rounded-lg bg-blue-50 border border-blue-100">
+                  <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
                     <div className="flex items-start gap-3">
-                      <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                      <Info className="h-5 w-5 text-primary/80 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-blue-800">Configuration Summary</p>
-                        <ul className="text-sm text-blue-700 space-y-1">
+                        <p className="text-sm font-medium text-primary">Configuration Summary</p>
+                        <ul className="text-sm text-primary space-y-1">
                           <li>• Email notifications: {
                             [
                               getSetting('email_new_provider_signups') && 'New Providers',
@@ -2351,7 +2351,7 @@ export default function AdminSettings() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <HardDrive className="h-5 w-5 text-blue-500" />
+                  <HardDrive className="h-5 w-5 text-primary" />
                   Storage Usage
                 </CardTitle>
                 <CardDescription>File storage and media management</CardDescription>
@@ -2375,7 +2375,7 @@ export default function AdminSettings() {
                         </span>
                         <span className={cn(
                           "text-sm font-medium",
-                          storagePercent > 80 ? "text-red-600" : storagePercent > 60 ? "text-amber-600" : "text-muted-foreground"
+                          storagePercent > 80 ? "text-destructive" : storagePercent > 60 ? "text-warning/80" : "text-muted-foreground"
                         )}>
                           {storagePercent.toFixed(1)}%
                         </span>
@@ -2389,23 +2389,23 @@ export default function AdminSettings() {
                         )} 
                       />
                       {storagePercent > 80 && (
-                        <p className="text-xs text-red-600 mt-1">Storage usage is high. Consider cleaning up unused files.</p>
+                        <p className="text-xs text-destructive mt-1">Storage usage is high. Consider cleaning up unused files.</p>
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
-                        <p className="text-xs text-blue-600">Facility Images</p>
-                        <p className="text-lg font-semibold text-blue-700">
+                      <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                        <p className="text-xs text-primary/80">Facility Images</p>
+                        <p className="text-lg font-semibold text-primary">
                           {(storageData?.facilityImages ?? 0).toFixed(2)} GB
                         </p>
-                        <p className="text-xs text-blue-500 mt-1">Logos & galleries</p>
+                        <p className="text-xs text-primary mt-1">Logos & galleries</p>
                       </div>
-                      <div className="p-3 rounded-lg bg-purple-50 border border-purple-100">
-                        <p className="text-xs text-purple-600">Admin Avatars</p>
-                        <p className="text-lg font-semibold text-purple-700">
+                      <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                        <p className="text-xs text-primary/80">Admin Avatars</p>
+                        <p className="text-lg font-semibold text-primary">
                           {(storageData?.adminAvatars ?? 0).toFixed(2)} GB
                         </p>
-                        <p className="text-xs text-purple-500 mt-1">Profile pictures</p>
+                        <p className="text-xs text-primary mt-1">Profile pictures</p>
                       </div>
                     </div>
                     <Separator />
@@ -2424,7 +2424,7 @@ export default function AdminSettings() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className="flex-1 gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
+                            className="flex-1 gap-2 text-warning/80 border-amber-200 hover:bg-amber-50"
                           >
                             <Trash2 className="h-4 w-4" />
                             Cleanup Orphans
@@ -2433,7 +2433,7 @@ export default function AdminSettings() {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="flex items-center gap-2">
-                              <Trash2 className="h-5 w-5 text-amber-500" />
+                              <Trash2 className="h-5 w-5 text-warning" />
                               Cleanup Orphaned Files?
                             </AlertDialogTitle>
                             <AlertDialogDescription>
@@ -2465,7 +2465,7 @@ export default function AdminSettings() {
                                   toast.error("Storage cleanup failed", { description: errMsg });
                                 }
                               }}
-                              className="bg-amber-600 hover:bg-amber-700"
+                              className="bg-warning text-warning-foreground hover:bg-warning/90"
                             >
                               Run Cleanup
                             </AlertDialogAction>
@@ -2482,14 +2482,14 @@ export default function AdminSettings() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Database className="h-5 w-5 text-green-500" />
+                  <Database className="h-5 w-5 text-success" />
                   Database Backups
                 </CardTitle>
                 <CardDescription>Automated backup configuration</CardDescription>
               </CardHeader>
               <CardContent className="space-y-1">
                 <SettingRow
-                  icon={<Clock className="h-4 w-4 text-slate-500" />}
+                  icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                   title="Automatic Backups"
                   description="Daily automated database snapshots at 3:00 AM UTC"
                 >
@@ -2497,7 +2497,7 @@ export default function AdminSettings() {
                 </SettingRow>
                 <Separator />
                 <SettingRow
-                  icon={<HardDrive className="h-4 w-4 text-slate-500" />}
+                  icon={<HardDrive className="h-4 w-4 text-muted-foreground" />}
                   title="Backup Retention"
                   description="How long backups are stored"
                 >
@@ -2520,7 +2520,7 @@ export default function AdminSettings() {
                 </SettingRow>
                 <Separator />
                 <SettingRow
-                  icon={<Server className="h-4 w-4 text-slate-500" />}
+                  icon={<Server className="h-4 w-4 text-muted-foreground" />}
                   title="Backup Location"
                   description="Where backups are stored"
                 >
@@ -2528,10 +2528,10 @@ export default function AdminSettings() {
                 </SettingRow>
                 <Separator />
                 <div className="pt-4">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-100">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/20">
                     <div>
-                      <p className="text-sm font-medium text-green-800">Last backup</p>
-                      <p className="text-xs text-green-600">{formatBackupTime(backupInfo?.lastBackupTime)}</p>
+                      <p className="text-sm font-medium text-success">Last backup</p>
+                      <p className="text-xs text-success/80">{formatBackupTime(backupInfo?.lastBackupTime)}</p>
                     </div>
                     <StatusBadge status="active" label="Healthy" />
                   </div>
@@ -2544,7 +2544,7 @@ export default function AdminSettings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <History className="h-5 w-5 text-amber-500" />
+                <History className="h-5 w-5 text-warning" />
                 Audit Log Retention
               </CardTitle>
               <CardDescription>Configure how long audit logs are retained before automatic cleanup</CardDescription>
@@ -2553,7 +2553,7 @@ export default function AdminSettings() {
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-3">
                   <SettingRow
-                    icon={<Clock className="h-4 w-4 text-slate-500" />}
+                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                     title="Retention Period"
                     description="Logs older than this will be automatically cleaned up"
                   >
@@ -2600,7 +2600,7 @@ export default function AdminSettings() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
-                          <Trash2 className="h-5 w-5 text-amber-500" />
+                          <Trash2 className="h-5 w-5 text-warning" />
                           Run Audit Log Cleanup?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
@@ -2612,7 +2612,7 @@ export default function AdminSettings() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => runAuditLogCleanup.mutate()}
-                          className="bg-amber-600 hover:bg-amber-700"
+                          className="bg-warning text-warning-foreground hover:bg-warning/90"
                         >
                           Run Cleanup
                         </AlertDialogAction>
@@ -2621,9 +2621,9 @@ export default function AdminSettings() {
                   </AlertDialog>
                 </div>
               </div>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
-                <Info className="h-4 w-4 text-blue-600 shrink-0" />
-                <p className="text-sm text-blue-700">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <Info className="h-4 w-4 text-primary/80 shrink-0" />
+                <p className="text-sm text-primary">
                   Audit logs are automatically cleaned up based on the retention period. Run manual cleanup to immediately remove old entries.
                 </p>
               </div>
@@ -2634,7 +2634,7 @@ export default function AdminSettings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="h-5 w-5 text-purple-500" />
+                <FileText className="h-5 w-5 text-primary" />
                 Data Export
               </CardTitle>
               <CardDescription>Export platform data for analysis or compliance (JSON or CSV)</CardDescription>
@@ -2649,9 +2649,9 @@ export default function AdminSettings() {
                     disabled={exportData.isPending}
                   >
                     {exportData.isPending ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     ) : (
-                      <Download className="h-5 w-5 text-blue-500" />
+                      <Download className="h-5 w-5 text-primary" />
                     )}
                     <span>Export Providers</span>
                     <span className="text-xs text-muted-foreground">{stats?.totalFacilities || 0} records</span>
@@ -2674,9 +2674,9 @@ export default function AdminSettings() {
                     disabled={exportData.isPending}
                   >
                     {exportData.isPending ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-green-500" />
+                      <Loader2 className="h-5 w-5 animate-spin text-success" />
                     ) : (
-                      <Download className="h-5 w-5 text-green-500" />
+                      <Download className="h-5 w-5 text-success" />
                     )}
                     <span>Export Leads</span>
                     <span className="text-xs text-muted-foreground">{stats?.totalLeads || 0} records</span>
@@ -2699,9 +2699,9 @@ export default function AdminSettings() {
                     disabled={exportData.isPending}
                   >
                     {exportData.isPending ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     ) : (
-                      <Activity className="h-5 w-5 text-purple-500" />
+                      <Activity className="h-5 w-5 text-primary" />
                     )}
                     <span>Export Analytics</span>
                     <span className="text-xs text-muted-foreground">Views & Interactions</span>
@@ -2724,9 +2724,9 @@ export default function AdminSettings() {
                     disabled={exportData.isPending}
                   >
                     {exportData.isPending ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                      <Loader2 className="h-5 w-5 animate-spin text-warning" />
                     ) : (
-                      <Download className="h-5 w-5 text-amber-500" />
+                      <Download className="h-5 w-5 text-warning" />
                     )}
                     <span>Export Audit Log</span>
                     <span className="text-xs text-muted-foreground">Last 1000 entries</span>
@@ -2742,9 +2742,9 @@ export default function AdminSettings() {
                   </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
-                <Info className="h-4 w-4 text-blue-600 shrink-0" />
-                <p className="text-sm text-blue-700">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <Info className="h-4 w-4 text-primary/80 shrink-0" />
+                <p className="text-sm text-primary">
                   JSON exports include full data structure. CSV exports are optimized for spreadsheet analysis.
                 </p>
               </div>
@@ -2755,7 +2755,7 @@ export default function AdminSettings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Activity className="h-5 w-5 text-indigo-500" />
+                <Activity className="h-5 w-5 text-primary" />
                 Data Statistics
               </CardTitle>
               <CardDescription>Overview of platform data with real-time updates</CardDescription>
@@ -2769,33 +2769,33 @@ export default function AdminSettings() {
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
-                    <div className="flex items-center gap-2 text-blue-700 mb-1">
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex items-center gap-2 text-primary mb-1">
                       <Users className="h-4 w-4" />
                       <span className="text-sm font-medium">Total Providers</span>
                     </div>
-                    <p className="text-2xl font-bold text-blue-700">{stats?.totalFacilities || 0}</p>
+                    <p className="text-2xl font-bold text-primary">{stats?.totalFacilities || 0}</p>
                   </div>
-                  <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                    <div className="flex items-center gap-2 text-green-700 mb-1">
+                  <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                    <div className="flex items-center gap-2 text-success mb-1">
                       <FileText className="h-4 w-4" />
                       <span className="text-sm font-medium">Total Leads</span>
                     </div>
-                    <p className="text-2xl font-bold text-green-700">{stats?.totalLeads || 0}</p>
+                    <p className="text-2xl font-bold text-success">{stats?.totalLeads || 0}</p>
                   </div>
-                  <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
-                    <div className="flex items-center gap-2 text-purple-700 mb-1">
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex items-center gap-2 text-primary mb-1">
                       <Shield className="h-4 w-4" />
                       <span className="text-sm font-medium">Admin Users</span>
                     </div>
-                    <p className="text-2xl font-bold text-purple-700">{stats?.totalAdminUsers || 0}</p>
+                    <p className="text-2xl font-bold text-primary">{stats?.totalAdminUsers || 0}</p>
                   </div>
-                  <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
-                    <div className="flex items-center gap-2 text-amber-700 mb-1">
+                  <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+                    <div className="flex items-center gap-2 text-warning mb-1">
                       <AlertTriangle className="h-4 w-4" />
                       <span className="text-sm font-medium">Pending Flags</span>
                     </div>
-                    <p className="text-2xl font-bold text-amber-700">{stats?.pendingFlags || 0}</p>
+                    <p className="text-2xl font-bold text-warning">{stats?.pendingFlags || 0}</p>
                   </div>
                 </div>
               )}
@@ -2806,7 +2806,7 @@ export default function AdminSettings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Database className="h-5 w-5 text-cyan-500" />
+                <Database className="h-5 w-5 text-primary" />
                 Database Tables
               </CardTitle>
               <CardDescription>Row counts and table health</CardDescription>
@@ -2815,42 +2815,42 @@ export default function AdminSettings() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="h-2 w-2 rounded-full bg-success" />
                     <span className="text-sm font-medium">facilities</span>
                   </div>
                   <Badge variant="secondary">{stats?.totalFacilities || 0} rows</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="h-2 w-2 rounded-full bg-success" />
                     <span className="text-sm font-medium">leads</span>
                   </div>
                   <Badge variant="secondary">{stats?.totalLeads || 0} rows</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="h-2 w-2 rounded-full bg-success" />
                     <span className="text-sm font-medium">user_roles</span>
                   </div>
                   <Badge variant="secondary">{stats?.totalAdminUsers || 0} rows</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="h-2 w-2 rounded-full bg-success" />
                     <span className="text-sm font-medium">flagged_images</span>
                   </div>
                   <Badge variant="secondary">{stats?.pendingFlags || 0} pending</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="h-2 w-2 rounded-full bg-success" />
                     <span className="text-sm font-medium">platform_settings</span>
                   </div>
                   <Badge variant="secondary">{Object.keys(platformSettings || {}).length} settings</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="h-2 w-2 rounded-full bg-success" />
                     <span className="text-sm font-medium">edge_functions</span>
                   </div>
                   <Badge variant="secondary">{edgeFunctionsCount || 0} deployed</Badge>
@@ -2860,25 +2860,25 @@ export default function AdminSettings() {
           </Card>
 
           {/* Danger Zone */}
-          <Card className="border-red-200">
+          <Card className="border-destructive/30">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg text-red-600">
+              <CardTitle className="flex items-center gap-2 text-lg text-destructive">
                 <AlertTriangle className="h-5 w-5" />
                 Danger Zone
               </CardTitle>
               <CardDescription>Irreversible actions that affect the entire platform</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-100">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/10 border border-destructive/20">
                 <div>
-                  <p className="font-medium text-red-800">Clear All Cache</p>
-                  <p className="text-sm text-red-600">Reset all cached data across the platform</p>
+                  <p className="font-medium text-destructive">Clear All Cache</p>
+                  <p className="text-sm text-destructive">Reset all cached data across the platform</p>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="text-red-600 border-red-300 hover:bg-red-50"
+                      className="text-destructive border-destructive/40 hover:bg-destructive/10"
                       disabled={clearCache.isPending}
                     >
                       {clearCache.isPending ? (
@@ -2890,7 +2890,7 @@ export default function AdminSettings() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                        <AlertTriangle className="h-5 w-5 text-destructive" />
                         Clear All Cache?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
@@ -2902,7 +2902,7 @@ export default function AdminSettings() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => clearCache.mutate()}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Clear Cache
                       </AlertDialogAction>
@@ -2910,16 +2910,16 @@ export default function AdminSettings() {
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
-              <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-100">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/10 border border-destructive/20">
                 <div>
-                  <p className="font-medium text-red-800">Purge Old Data</p>
-                  <p className="text-sm text-red-600">Remove audit logs older than {auditLogRetentionDays} days</p>
+                  <p className="font-medium text-destructive">Purge Old Data</p>
+                  <p className="text-sm text-destructive">Remove audit logs older than {auditLogRetentionDays} days</p>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="text-red-600 border-red-300 hover:bg-red-50"
+                      className="text-destructive border-destructive/40 hover:bg-destructive/10"
                       disabled={runAuditLogCleanup.isPending}
                     >
                       {runAuditLogCleanup.isPending ? (
@@ -2931,7 +2931,7 @@ export default function AdminSettings() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                        <AlertTriangle className="h-5 w-5 text-destructive" />
                         Purge Old Audit Logs?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
@@ -2943,7 +2943,7 @@ export default function AdminSettings() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => runAuditLogCleanup.mutate()}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Purge Data
                       </AlertDialogAction>
