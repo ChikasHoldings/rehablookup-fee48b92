@@ -139,7 +139,7 @@ export default function AdminReviews() {
   const fetchDisputes = async () => {
     const { data: disputesData, error } = await supabase
       .from('review_disputes')
-      .select('*')
+      .select('id, facility_id, review_id, provider_user_id, reason, details, status, admin_notes, created_at, resolved_at, resolved_by')
       .order('created_at', { ascending: false });
 
     if (error) {
