@@ -23,7 +23,7 @@ export function useLeadUnlocks(facilityId?: string) {
 
       let queryBuilder = supabase
         .from("lead_unlocks")
-        .select("*")
+        .select("id, lead_id, facility_id, unlock_price_cents, unlocked_at, payment_method, provider_id")
         .order("unlocked_at", { ascending: false });
 
       if (facilityId) {

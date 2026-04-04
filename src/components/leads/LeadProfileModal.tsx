@@ -127,7 +127,7 @@ export function LeadProfileModal({
       if (!lead?.id) return [];
       const { data, error } = await supabase
         .from("lead_notes")
-        .select("*")
+        .select("id, lead_id, note, user_id, created_at")
         .eq("lead_id", lead.id)
         .order("created_at", { ascending: false });
       if (error) throw error;

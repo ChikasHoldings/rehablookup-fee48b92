@@ -66,7 +66,7 @@ export function useFacilityStaff(facilityId: string | undefined) {
       
       const { data, error } = await supabase
         .from("facility_staff")
-        .select("*")
+        .select("id, facility_id, name, job_title, bio, photo_url, display_order, is_visible, created_at, updated_at")
         .eq("facility_id", facilityId)
         .order("display_order", { ascending: true });
 

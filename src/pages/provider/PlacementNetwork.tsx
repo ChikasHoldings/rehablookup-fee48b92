@@ -144,7 +144,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("*")
+        .select("id, user_name, user_email, user_phone, status, placed_facility_id, placement_confirmed, placement_confirmed_at, provider_fee_cents, provider_fee_status, provider_fee_type, level_of_care, created_at, updated_at")
         .eq("placed_facility_id", selectedFacility.id)
         .eq("status", "placed")
         .order("placement_confirmed_at", { ascending: false });
@@ -160,7 +160,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("provider_payment_methods")
-        .select("*")
+        .select("id, facility_id, stripe_payment_method_id, type, card_brand, last_four, bank_name, is_default, created_at")
         .eq("facility_id", selectedFacility.id)
         .order("is_default", { ascending: false });
       if (error) return [];
@@ -175,7 +175,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("placement_invoices")
-        .select("*")
+        .select("id, facility_id, inquiry_id, case_id, amount_cents, status, stripe_invoice_id, due_at, paid_at, receipt_url, created_at")
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false });
       if (error) return [];
@@ -190,7 +190,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return null;
       const { data, error } = await supabase
         .from("pro_subscriptions")
-        .select("*")
+        .select("id, facility_id, stripe_subscription_id, status, plan_type, current_period_start, current_period_end, unlock_discount_percent, created_at")
         .eq("facility_id", selectedFacility.id)
         .eq("status", "active")
         .maybeSingle();
