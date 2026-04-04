@@ -822,7 +822,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Ban className="h-5 w-5 text-amber-600" />
+              <Ban className="h-5 w-5 text-warning" />
               Ban User
             </AlertDialogTitle>
             <AlertDialogDescription>
