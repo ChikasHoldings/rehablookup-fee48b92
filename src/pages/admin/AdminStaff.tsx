@@ -283,11 +283,13 @@ export default function AdminStaff() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => openPermissions(user)}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Edit Role & Permissions
-                </DropdownMenuItem>
-                {user.status === "pending_password_reset" && (
+                {isSuperAdmin && (
+                  <DropdownMenuItem onClick={() => openPermissions(user)}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Edit Role & Permissions
+                  </DropdownMenuItem>
+                )}
+                {user.status === "pending_password_reset" && isSuperAdmin && (
                   <DropdownMenuItem 
                     onClick={() => setConfirmAction({ action: "resend_invitation", user })}
                     className="text-blue-600 focus:text-blue-600"
@@ -296,35 +298,41 @@ export default function AdminStaff() {
                     Resend Invitation
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => setConfirmAction({ action: "reset_password", user })}>
-                  <KeyRound className="h-4 w-4 mr-2" />
-                  Reset Password
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {user.status === "active" ? (
-                  <DropdownMenuItem 
-                    onClick={() => setConfirmAction({ action: "suspend", user })}
-                    className="text-amber-600 focus:text-amber-600"
-                  >
-                    <Ban className="h-4 w-4 mr-2" />
-                    Suspend User
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem 
-                    onClick={() => setConfirmAction({ action: "unsuspend", user })}
-                    className="text-emerald-600 focus:text-emerald-600"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Reactivate User
+                {isSuperAdmin && (
+                  <DropdownMenuItem onClick={() => setConfirmAction({ action: "reset_password", user })}>
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    Reset Password
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem 
-                  onClick={() => setConfirmAction({ action: "delete", user })}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete User
-                </DropdownMenuItem>
+                {isSuperAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    {user.status === "active" ? (
+                      <DropdownMenuItem 
+                        onClick={() => setConfirmAction({ action: "suspend", user })}
+                        className="text-amber-600 focus:text-amber-600"
+                      >
+                        <Ban className="h-4 w-4 mr-2" />
+                        Suspend User
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem 
+                        onClick={() => setConfirmAction({ action: "unsuspend", user })}
+                        className="text-emerald-600 focus:text-emerald-600"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Reactivate User
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem 
+                      onClick={() => setConfirmAction({ action: "delete", user })}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete User
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
