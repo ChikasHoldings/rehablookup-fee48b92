@@ -1136,12 +1136,12 @@ export default function AdminSecurityLogs() {
                         className={cn(
                           "flex items-center justify-between rounded-lg p-4 border",
                           blocked
-                            ? "bg-red-100 border-red-300 dark:bg-red-950/40 dark:border-red-800"
+                            ? "bg-destructive/10 border-destructive/30"
                             : activity.failed_count >= 10
-                            ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
+                            ? "bg-destructive/5 border-destructive/20"
                             : activity.failed_count >= 5
-                            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
-                            : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900"
+                            ? "bg-warning/10 border-warning/30"
+                            : "bg-warning/5 border-warning/20"
                         )}
                       >
                         <div className="flex items-center gap-4">
