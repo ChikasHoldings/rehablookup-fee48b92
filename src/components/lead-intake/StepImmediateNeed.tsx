@@ -196,13 +196,16 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
         <div className="space-y-3 animate-fade-in">
           <Label className="text-sm font-medium flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
-            Your relationship to the patient
+            Your relationship to the patient <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.relationshipToPatient}
-            onValueChange={(value) => updateFormData({ relationshipToPatient: value })}
+            onValueChange={(value) => {
+              updateFormData({ relationshipToPatient: value });
+              setErrors(prev => ({ ...prev, relationshipToPatient: "" }));
+            }}
           >
-            <SelectTrigger className="h-12 text-sm">
+            <SelectTrigger className={cn("h-12 text-sm", errors.relationshipToPatient && "border-destructive")}>
               <SelectValue placeholder="Select relationship" />
             </SelectTrigger>
             <SelectContent>
@@ -213,6 +216,12 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
               ))}
             </SelectContent>
           </Select>
+          {errors.relationshipToPatient && (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-destructive" />
+              {errors.relationshipToPatient}
+            </p>
+          )}
         </div>
       )}
 
