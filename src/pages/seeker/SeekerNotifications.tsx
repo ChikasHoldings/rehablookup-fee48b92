@@ -52,8 +52,8 @@ function NotificationItem({
         !notification.read && "bg-primary/5"
       )}
     >
-      <div className="text-2xl shrink-0">
-        {notificationTypeIcons[notification.type] || "🔔"}
+      <div className="shrink-0 mt-0.5 flex items-center justify-center h-9 w-9 rounded-lg bg-muted">
+        {notificationTypeIcons[notification.type] || <Bell className="h-5 w-5 text-muted-foreground" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
