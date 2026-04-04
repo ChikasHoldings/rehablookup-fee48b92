@@ -24,6 +24,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 
