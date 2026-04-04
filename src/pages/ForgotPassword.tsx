@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import headerLogo from "@/assets/logo-header.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -106,6 +107,11 @@ export default function ForgotPassword() {
 
   if (success) {
     return (
+      <>
+      <Helmet>
+        <title>Reset Password | RehabLookup</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="min-h-screen flex flex-col bg-background">
         <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
           <div className="container h-14 flex items-center">
@@ -149,10 +155,16 @@ export default function ForgotPassword() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   return (
+    <>
+    <Helmet>
+      <title>Forgot Password | RehabLookup</title>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="container h-14 flex items-center justify-between">
@@ -274,5 +286,6 @@ export default function ForgotPassword() {
         </div>
       </div>
     </div>
+    </>
   );
 }

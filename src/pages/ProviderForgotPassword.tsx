@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,8 @@ export default function ProviderForgotPassword() {
 
   if (isEmailSent) {
     return (
+      <>
+      <Helmet><title>Check Your Email | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
       <div className="flex min-h-screen flex-col bg-background">
         <Header 
           navLinks={providerNavLinks} 
@@ -171,10 +174,13 @@ export default function ProviderForgotPassword() {
         
         <Footer />
       </div>
+      </>
     );
   }
 
   return (
+    <>
+    <Helmet><title>Forgot Password | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
     <div className="flex min-h-screen flex-col bg-background">
       <Header 
         navLinks={providerNavLinks} 
@@ -247,5 +253,6 @@ export default function ProviderForgotPassword() {
       
       <Footer />
     </div>
+    </>
   );
 }

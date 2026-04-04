@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,6 +100,8 @@ export default function ProviderSupport() {
   };
 
   return (
+    <>
+    <Helmet><title>Provider Support | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
@@ -294,5 +297,6 @@ export default function ProviderSupport() {
       </main>
       <Footer />
     </div>
+    </>
   );
 }
