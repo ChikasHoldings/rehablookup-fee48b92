@@ -586,7 +586,7 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Seeking For</p>
-                    <p className="font-medium text-sm">{lead.who_seeking_help || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.who_seeking_help || "Themselves"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Age Range</p>
