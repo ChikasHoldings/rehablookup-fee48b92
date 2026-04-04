@@ -468,15 +468,15 @@ export default function AdminAuditLog() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-primary">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Actions</p>
-                <p className="text-2xl font-bold">{filteredLogs.length}</p>
+                <p className="text-2xl font-bold tabular-nums">{filteredLogs.length}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
-                <ClipboardList className="h-5 w-5 text-blue-500" />
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ClipboardList className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
