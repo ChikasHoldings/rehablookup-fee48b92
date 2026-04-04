@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
                     </tr>
                     <tr>
                       <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Reason:</td>
-                      <td style="padding: 8px 0; color: #111827;">${reason || "Not specified"}</td>
+                      <td style="padding: 8px 0; color: #111827;">${reason || "—"}</td>
                     </tr>
                     <tr>
                       <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Expires:</td>

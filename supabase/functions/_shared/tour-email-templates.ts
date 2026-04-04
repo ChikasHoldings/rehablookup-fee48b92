@@ -175,7 +175,7 @@ function formatTourType(type: string): string {
 }
 
 function formatPreferredDates(dates: string[]): string {
-  if (!dates || dates.length === 0) return "Not specified";
+  if (!dates || dates.length === 0) return "Flexible";
   return dates.map(d => {
     try {
       return new Date(d).toLocaleDateString("en-US", { 
