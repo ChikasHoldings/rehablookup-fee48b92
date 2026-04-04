@@ -478,6 +478,24 @@ const AppInner = () => {
             <Route path="/us-rehab/drug-rehab-usa" element={<PublicRouteGuard><DrugRehabUSA /></PublicRouteGuard>} />
             <Route path="/us-rehab/dual-diagnosis-usa" element={<PublicRouteGuard><DualDiagnosisUSA /></PublicRouteGuard>} />
             <Route path="/us-rehab/celebrity-rehab-usa" element={<PublicRouteGuard><CelebrityRehabUSA /></PublicRouteGuard>} />
+            {/* High-intent international SEO pages */}
+            <Route path="/travel-to-usa-for-rehab" element={<PublicRouteGuard><TravelToUSAForRehab /></PublicRouteGuard>} />
+            <Route path="/cost-of-rehab-in-usa-for-international-patients" element={<PublicRouteGuard><CostOfRehabUSA /></PublicRouteGuard>} />
+            <Route path="/can-foreigners-go-to-rehab-in-usa" element={<PublicRouteGuard><ForeignersRehabUSA /></PublicRouteGuard>} />
+            <Route path="/paying-for-rehab-in-usa-without-insurance" element={<PublicRouteGuard><PayingForRehabUSANoInsurance /></PublicRouteGuard>} />
+            <Route path="/affordable-rehab-in-usa" element={<PublicRouteGuard><AffordableRehabUSA /></PublicRouteGuard>} />
+            <Route path="/fast-admission-rehab-usa" element={<PublicRouteGuard><FastAdmissionRehabUSA /></PublicRouteGuard>} />
+            <Route path="/same-day-detox-usa" element={<PublicRouteGuard><SameDayDetoxUSA /></PublicRouteGuard>} />
+            <Route path="/top-detox-centers-usa" element={<PublicRouteGuard><TopDetoxCentersUSA /></PublicRouteGuard>} />
+            {/* SEO redirect routes - alternate URLs to existing pages */}
+            <Route path="/rehab-in-usa-for-canadians" element={<Navigate to="/us-rehab/canadian-patients" replace />} />
+            <Route path="/rehab-in-usa-for-uk-patients" element={<Navigate to="/us-rehab/uk-patients" replace />} />
+            <Route path="/rehab-in-usa-for-international-patients" element={<Navigate to="/international" replace />} />
+            <Route path="/best-rehab-centers-in-usa-for-foreigners" element={<Navigate to="/can-foreigners-go-to-rehab-in-usa" replace />} />
+            <Route path="/best-rehab-centers-in-usa" element={<Navigate to="/us-rehab/best-rehab-usa" replace />} />
+            <Route path="/luxury-rehab-centers-usa" element={<Navigate to="/us-rehab/luxury-rehab-america" replace />} />
+            <Route path="/private-rehab-usa" element={<Navigate to="/us-rehab/private-rehab-america" replace />} />
+            <Route path="/confidential-rehab-usa" element={<Navigate to="/us-rehab/private-rehab-america" replace />} />
             
             {/* Treatment center profile pages */}
             <Route path="/treatment-centers/:slug" element={<PublicRouteGuard><TreatmentCenterProfile /></PublicRouteGuard>} />
