@@ -2,9 +2,8 @@ import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, MapPin, Crown, ShieldCheck, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Crown, ShieldCheck, ArrowRight, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 
 interface FacilityItem {
   id: string;
@@ -48,7 +47,8 @@ function FacilityShowcaseCard({
 }) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
-  const heroImage = facility.gallery_urls?.[0] || facility.image || facility.logo_url;
+  const heroImage = facility.gallery_urls?.[0] || facility.image;
+  const logoImage = facility.logo_url;
   const hasImage = heroImage && !imgError;
   const isFeatured = facility.hasFeaturedSubscription || facility.featured;
   const detailUrl = facility.isFromDatabase && facility.slug
@@ -59,18 +59,17 @@ function FacilityShowcaseCard({
     <button
       onClick={() => navigate(detailUrl, { state: { fromSearch: true } })}
       className={cn(
-        "relative overflow-hidden rounded-xl bg-card border group text-left transition-all duration-300",
-        "hover:shadow-xl hover:border-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        size === "large" ? "col-span-2 row-span-2" : "",
+        "relative overflow-hidden rounded-xl bg-card border group text-left transition-all duration-300 w-full",
+        "hover:shadow-lg hover:border-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         isFeatured
-          ? "border-amber-200/60 ring-1 ring-amber-100/50"
-          : "border-border/50"
+          ? "border-amber-200/60 ring-1 ring-amber-100/40"
+          : "border-border/60"
       )}
     >
       {/* Image */}
       <div className={cn(
         "relative w-full overflow-hidden bg-muted",
-        size === "large" ? "aspect-[4/3]" : "aspect-[16/10]"
+        size === "large" ? "aspect-[16/10]" : "aspect-[16/9]"
       )}>
         {hasImage ? (
           <img
@@ -81,16 +80,14 @@ function FacilityShowcaseCard({
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-background">
-            <span className="font-display text-2xl font-bold text-muted-foreground/40">
-              {getInitials(facility.name)}
-            </span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+            <Building2 className="h-10 w-10 text-muted-foreground/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+        <div className="absolute top-2 left-2 flex items-center gap-1.5">
           {isFeatured && (
             <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2 py-0.5 shadow-md text-[10px] font-bold uppercase tracking-wider">
               <Crown className="h-2.5 w-2.5" />
@@ -104,21 +101,30 @@ function FacilityShowcaseCard({
             </Badge>
           )}
         </div>
+      </div>
 
-        {/* Info overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-3">
+      {/* Info bar below image */}
+      <div className="p-3 flex items-start gap-2.5">
+        {/* Logo */}
+        <div className="shrink-0 h-9 w-9 rounded-lg border border-border/60 bg-muted overflow-hidden flex items-center justify-center">
+          {logoImage ? (
+            <img src={logoImage} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-xs font-bold text-muted-foreground/60">
+              {getInitials(facility.name)}
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
           <h3 className={cn(
-            "font-display font-bold text-white leading-tight line-clamp-2 drop-shadow-lg",
-            size === "large" ? "text-lg md:text-xl" : "text-sm"
+            "font-semibold text-foreground leading-tight line-clamp-1",
+            size === "large" ? "text-sm" : "text-xs"
           )}>
             {facility.name}
           </h3>
-          <div className="flex items-center gap-1 mt-1">
-            <MapPin className="h-3 w-3 text-white/70 shrink-0" />
-            <span className={cn(
-              "text-white/80 font-medium",
-              size === "large" ? "text-sm" : "text-xs"
-            )}>
+          <div className="flex items-center gap-1 mt-0.5">
+            <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+            <span className="text-[11px] text-muted-foreground truncate">
               {facility.city}, {facility.state}
             </span>
           </div>
@@ -135,7 +141,7 @@ export function FacilityShowcaseGrid({
   viewAllHref,
   viewAllLabel = "View All",
   className,
-  maxItems = 7,
+  maxItems = 8,
 }: FacilityShowcaseGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -143,13 +149,15 @@ export function FacilityShowcaseGrid({
 
   if (facilities.length === 0) return null;
 
-  // First featured facility gets the large card
-  const featuredFacilities = facilities.filter(f => f.hasFeaturedSubscription || f.featured);
-  const regularFacilities = facilities.filter(f => !f.hasFeaturedSubscription && !f.featured);
-  
-  // Arrange: featured first (large), then regular (small)
-  const heroFacility = featuredFacilities[0] || facilities[0];
-  const restFacilities = facilities.filter(f => f.id !== heroFacility.id).slice(0, maxItems - 1);
+  const sorted = [...facilities].sort((a, b) => {
+    const af = a.hasFeaturedSubscription || a.featured ? 1 : 0;
+    const bf = b.hasFeaturedSubscription || b.featured ? 1 : 0;
+    return bf - af;
+  });
+
+  const display = sorted.slice(0, maxItems);
+  const heroFacility = display[0];
+  const restFacilities = display.slice(1);
 
   const updateScrollState = () => {
     if (!scrollRef.current) return;
@@ -160,7 +168,7 @@ export function FacilityShowcaseGrid({
 
   const scroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
-    const scrollAmount = scrollRef.current.clientWidth * 0.6;
+    const scrollAmount = scrollRef.current.clientWidth * 0.55;
     scrollRef.current.scrollBy({
       left: direction === "left" ? -scrollAmount : scrollAmount,
       behavior: "smooth",
@@ -168,18 +176,18 @@ export function FacilityShowcaseGrid({
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("rounded-2xl border border-border/60 bg-card p-4 md:p-6", className)}>
       {/* Header */}
       {(title || viewAllHref) && (
-        <div className="flex items-end justify-between mb-5">
+        <div className="flex items-end justify-between mb-4">
           <div>
             {title && (
-              <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight text-foreground">
+              <h2 className="font-display text-lg md:text-xl font-bold tracking-tight text-foreground">
                 {title}
               </h2>
             )}
             {subtitle && (
-              <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
             )}
           </div>
           {viewAllHref && (
@@ -193,45 +201,43 @@ export function FacilityShowcaseGrid({
         </div>
       )}
 
-      {/* Scrollable Grid Container */}
+      {/* Scrollable row */}
       <div className="relative group/scroll">
-        {/* Scroll Buttons */}
         {canScrollLeft && (
           <button
             onClick={() => scroll("left")}
-            className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card border border-border shadow-lg flex items-center justify-center text-foreground hover:bg-muted transition-all opacity-0 group-hover/scroll:opacity-100"
+            className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-card border border-border shadow-lg flex items-center justify-center text-foreground hover:bg-muted transition-all opacity-0 group-hover/scroll:opacity-100"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
         )}
-        {canScrollRight && (
+        {canScrollRight && restFacilities.length > 2 && (
           <button
             onClick={() => scroll("right")}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card border border-border shadow-lg flex items-center justify-center text-foreground hover:bg-muted transition-all opacity-0 group-hover/scroll:opacity-100"
+            className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-card border border-border shadow-lg flex items-center justify-center text-foreground hover:bg-muted transition-all opacity-0 group-hover/scroll:opacity-100"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         )}
 
-        {/* Scrollable area */}
         <div
           ref={scrollRef}
           onScroll={updateScrollState}
-          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
+          className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x"
         >
-          {/* Hero / Featured card — larger */}
-          <div className="shrink-0 snap-start w-[280px] sm:w-[340px] md:w-[400px]">
+          {/* Hero card */}
+          <div className="shrink-0 snap-start w-[260px] sm:w-[300px] md:w-[340px]">
             <FacilityShowcaseCard facility={heroFacility} size="large" />
           </div>
 
-          {/* Regular cards column pairs */}
+          {/* Stacked pairs */}
           {restFacilities.length > 0 && (() => {
             const pairs: FacilityItem[][] = [];
             for (let i = 0; i < restFacilities.length; i += 2) {
               pairs.push(restFacilities.slice(i, i + 2));
             }
             return pairs.map((pair, pairIdx) => (
-              <div key={pairIdx} className="shrink-0 snap-start w-[220px] sm:w-[260px] md:w-[300px] flex flex-col gap-3">
+              <div key={pairIdx} className="shrink-0 snap-start w-[220px] sm:w-[240px] md:w-[270px] flex flex-col gap-3">
                 {pair.map((f) => (
                   <FacilityShowcaseCard key={f.id} facility={f} size="small" />
                 ))}
@@ -240,12 +246,11 @@ export function FacilityShowcaseGrid({
           })()}
         </div>
 
-        {/* Fade edges */}
-        {canScrollRight && (
-          <div className="absolute top-0 right-0 bottom-2 w-12 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+        {canScrollRight && restFacilities.length > 2 && (
+          <div className="absolute top-0 right-0 bottom-1 w-10 bg-gradient-to-l from-card to-transparent pointer-events-none rounded-r-2xl" />
         )}
         {canScrollLeft && (
-          <div className="absolute top-0 left-0 bottom-2 w-12 bg-gradient-to-r from-background to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 bottom-1 w-10 bg-gradient-to-r from-card to-transparent pointer-events-none rounded-l-2xl" />
         )}
       </div>
     </div>
