@@ -1842,7 +1842,7 @@ function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPIC
             <Skeleton className="h-7 w-16" />
           ) : (
             <>
-              <div className="text-2xl font-bold text-foreground">{value}</div>
+              <div className="text-2xl font-bold text-foreground tabular-nums">{value}</div>
               {renderChange()}
             </>
           )}
