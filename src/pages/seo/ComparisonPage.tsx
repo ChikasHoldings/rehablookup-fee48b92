@@ -25,6 +25,7 @@ import {
   Building2,
 } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 export default function ComparisonPage() {
   const location = useLocation();
@@ -80,15 +81,13 @@ export default function ComparisonPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
         <MedicalPatternBackground />
         <div className="container relative z-10 py-12 md:py-16 lg:py-20">
-          <nav className="mb-6" aria-label="Breadcrumb">
-            <ol className="flex items-center gap-1.5 text-sm">
-              <li><Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link></li>
-              <li className="text-white/40">/</li>
-              <li><Link to="/treatment-types" className="text-white/70 hover:text-white transition-colors">Treatment Types</Link></li>
-              <li className="text-white/40">/</li>
-              <li className="text-white font-medium">{config.title}</li>
-            </ol>
-          </nav>
+          <BreadcrumbNav
+            className="mb-4"
+            items={[
+              { label: "Treatment Types", href: "/treatment-types" },
+              { label: config.title },
+            ]}
+          />
 
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-4">
             <Scale className="h-4 w-4 text-accent" />

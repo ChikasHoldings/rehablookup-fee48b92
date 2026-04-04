@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 interface InsuranceProvider {
   name: string;
@@ -412,16 +413,12 @@ export default function Insurance() {
       <section className="relative overflow-hidden bg-primary py-10 md:py-12">
         <div className="container">
         <MedicalPatternBackground />
-          {/* Breadcrumb */}
-          <nav className="mb-5 text-sm leading-none text-center">
-            <span className="inline-flex items-center gap-2 whitespace-nowrap">
-              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-              <span className="text-white/50">/</span>
-              <span className="text-white font-medium">Insurance Coverage</span>
-            </span>
-          </nav>
-          
-          <div className="mx-auto max-w-2xl text-center">
+          <BreadcrumbNav
+            className="mb-4"
+            items={[
+              { label: "Insurance Coverage" },
+            ]}
+          /><div className="mx-auto max-w-2xl text-center">
             <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Insurance Coverage for Addiction Treatment
             </h1>
