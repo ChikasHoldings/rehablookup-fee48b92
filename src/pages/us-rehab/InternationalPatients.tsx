@@ -41,13 +41,6 @@ const InternationalPatients = () => {
         ]}
       />
 
-      <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav items={[
-          { label: "US Rehab", href: "/us-rehab" },
-          { label: "International Patients" },
-        ]} />
-      </div>
-
       <InternationalPageHero
         flag="🌍"
         badge="Serving Clients from 50+ Countries"
