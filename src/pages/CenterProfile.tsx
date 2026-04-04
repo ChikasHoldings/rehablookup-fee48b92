@@ -596,68 +596,59 @@ const CenterProfile = () => {
             </Link>
           )}
 
-          {/* Hero Header Card */}
-          <div className="mb-8 rounded-2xl border border-border/50 bg-card shadow-lg overflow-hidden">
-            {/* Hero Image / Gradient Background */}
-            <div className="relative h-48 md:h-64 overflow-hidden">
+          {/* Hero Header */}
+          <div className="mb-8 rounded-2xl bg-card shadow-lg overflow-hidden border border-border/30">
+            {/* Hero Image */}
+            <div className="relative h-52 md:h-72 overflow-hidden">
               {galleryImages.length > 0 ? (
-                <>
-                  <img 
-                    src={galleryImages[0]} 
-                    alt={facility.name}
-                    className="w-full h-full object-cover"
-                    width={800}
-                    height={400}
-                    loading="eager"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-                </>
+                <img 
+                  src={galleryImages[0]} 
+                  alt={facility.name}
+                  className="w-full h-full object-cover"
+                  width={800}
+                  height={400}
+                  loading="eager"
+                />
               ) : (
-                <>
-                  <img 
-                    src={facilityPlaceholder} 
-                    alt={`${facility.name} facility`}
-                    className="w-full h-full object-cover"
-                    width={800}
-                    height={400}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-                </>
+                <img 
+                  src={facilityPlaceholder} 
+                  alt={`${facility.name} facility`}
+                  className="w-full h-full object-cover"
+                  width={800}
+                  height={400}
+                />
               )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               
-              {/* Badges on hero */}
-              <div className="absolute top-4 left-4 flex items-center gap-2 flex-wrap">
-                {/* Rating badge - prominent on hero */}
+              {/* Status Badges — top left */}
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
                 {ratingData.averageRating && ratingData.reviewCount > 0 && (
-                  <div className="bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <span className="font-bold text-sm text-foreground">{ratingData.averageRating.toFixed(1)}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground font-medium">({ratingData.reviewCount})</span>
+                  <div className="bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md flex items-center gap-1">
+                    <svg className="h-3.5 w-3.5 fill-amber-500" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className="font-bold text-xs text-foreground">{ratingData.averageRating.toFixed(1)}</span>
+                    <span className="text-[10px] text-muted-foreground">({ratingData.reviewCount})</span>
                   </div>
                 )}
                 {hasFeaturedSubscription && (
-                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1.5 px-3 py-1.5 shadow-lg text-xs font-bold uppercase tracking-wide">
-                    <Crown className="h-3.5 w-3.5" />
+                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-[10px] font-bold uppercase tracking-wider">
+                    <Crown className="h-3 w-3" />
                     Featured
                   </Badge>
                 )}
                 {facility.verified && (
-                  <Badge className="bg-emerald-500 text-white border-0 gap-1.5 px-3 py-1.5 shadow-lg text-xs font-bold uppercase tracking-wide">
-                    <ShieldCheck className="h-3.5 w-3.5" />
+                  <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-[10px] font-bold uppercase tracking-wider">
+                    <ShieldCheck className="h-3 w-3" />
                     Verified
                   </Badge>
                 )}
               </div>
               
-              {/* Facility info overlay */}
+              {/* Facility identity overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-                <div className="flex items-end gap-4">
-                  {/* Logo */}
-                  <div className="h-20 w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-xl border-4 border-card bg-card shadow-xl">
+                <div className="flex items-end gap-3.5">
+                  <div className="h-16 w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-xl border-[3px] border-card bg-card shadow-xl">
                     {hasValidLogo ? (
                       <img 
                         src={facility.logo_url!} 
@@ -668,88 +659,74 @@ const CenterProfile = () => {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                        <span className="font-display text-2xl md:text-3xl font-bold text-primary">
-                          {initials}
-                        </span>
+                        <span className="font-display text-xl md:text-2xl font-bold text-primary">{initials}</span>
                       </div>
                     )}
                   </div>
-                  
-                  {/* Name and Location */}
-                  <div className="flex-1 min-w-0 pb-1">
-                    <h1 className="speakable-headline font-display text-xl md:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
+                  <div className="flex-1 min-w-0 pb-0.5">
+                    <h1 className="speakable-headline font-display text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
                       {facility.name}
                     </h1>
-                    <div className="speakable-contact flex items-center gap-2 mt-1.5">
-                      <MapPin className="h-4 w-4 text-white/80 shrink-0" />
-                      <span className="text-sm md:text-base text-white/90 font-medium">{facility.city}, {facility.state}</span>
+                    <div className="speakable-contact flex items-center gap-1.5 mt-1">
+                      <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
+                      <span className="text-sm text-white/85 font-medium">{facility.city}, {facility.state}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Stats Bar */}
-            <div className="bg-muted/40 border-t border-border/50 px-4 py-3 md:px-6 md:py-4">
-              <div className="flex items-center gap-3 md:gap-6 overflow-x-auto pb-1 -mb-1">
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Stethoscope className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">{facility.facility_type}</span>
-                </div>
+            {/* Quick Stats — horizontal pills */}
+            <div className="px-4 py-3 md:px-6 md:py-3.5 border-t border-border/30 bg-muted/30">
+              <div className="flex items-center gap-2 md:gap-3 overflow-x-auto pb-0.5 -mb-0.5 scrollbar-hide">
+                <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                  <Stethoscope className="h-3.5 w-3.5 text-primary" />
+                  {facility.facility_type}
+                </span>
                 {yearsInBusiness && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Clock className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">{yearsInBusiness}+ years</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    {yearsInBusiness}+ years
+                  </span>
                 )}
                 {genderLabel && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-violet-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">{genderLabel}</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    {genderLabel}
+                  </span>
                 )}
                 {facility.bed_count && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                      <Bed className="h-4 w-4 text-emerald-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">{facility.bed_count} beds</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Bed className="h-3.5 w-3.5 text-muted-foreground" />
+                    {facility.bed_count} beds
+                  </span>
                 )}
                 {insuranceList.length > 0 && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <Shield className="h-4 w-4 text-amber-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Accepts Insurance</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                    Insurance
+                  </span>
                 )}
               </div>
             </div>
 
-            {/* Action Buttons - Responsive for all screens */}
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 border-t border-border/50 px-4 py-4 md:px-6 bg-card">
+            {/* CTA Buttons */}
+            <div className="flex items-stretch gap-2 px-4 py-3 md:px-6 border-t border-border/30 bg-card">
               <Button 
                 size="lg" 
-                className="flex-1 gap-2 h-12 text-base font-semibold shadow-md"
+                className="flex-1 gap-2 h-11 text-sm font-semibold shadow-sm"
                 onClick={() => setRequestModalOpen(true)}
               >
-                <Phone className="h-5 w-5" />
+                <Phone className="h-4 w-4" />
                 Request Call
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                className="flex-1 gap-2 h-12 text-base font-semibold border-2"
+                className="flex-1 gap-2 h-11 text-sm font-semibold"
                 onClick={() => setRequestModalOpen(true)}
               >
-                <MessageSquare className="h-5 w-5" />
+                <MessageSquare className="h-4 w-4" />
                 Request Info
               </Button>
               {showContactDetails && facility.website && (
@@ -758,12 +735,12 @@ const CenterProfile = () => {
                   target="_blank" 
                   rel="noopener noreferrer"
                   onClick={() => trackInteraction("website")}
-                  className="flex-1 sm:flex-none"
+                  className="hidden sm:block"
                 >
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 h-12 border-2">
+                  <Button variant="ghost" size="lg" className="gap-1.5 h-11 text-sm font-medium text-muted-foreground hover:text-foreground">
                     <Globe className="h-4 w-4" />
                     Website
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3 w-3" />
                   </Button>
                 </a>
               )}
