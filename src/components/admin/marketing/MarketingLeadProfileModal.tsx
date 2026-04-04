@@ -912,7 +912,7 @@ export function MarketingLeadProfileModal({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Not specified</p>
+                    <p className="text-sm text-muted-foreground">None reported</p>
                   )}
                 </div>
 
