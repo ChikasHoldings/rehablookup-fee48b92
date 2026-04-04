@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, CheckCircle, Heart, Search } from "lucide-react";
+import { MapPin, Building2, CheckCircle, Heart, Search, ChevronRight } from "lucide-react";
 
 interface NearMeHeroProps {
   title: string;
