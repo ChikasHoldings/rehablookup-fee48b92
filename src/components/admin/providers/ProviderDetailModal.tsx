@@ -1017,14 +1017,14 @@ export function ProviderDetailModal({
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {acc.verified ? (
-                                  <Badge className="bg-emerald-100 text-emerald-700">
+                                <div className="flex items-center gap-2">
+1021:                                 {acc.verified ? (
+                                  <Badge className="bg-success/10 text-success border-success/20">
                                     <CheckCircle className="h-3 w-3 mr-1" />
                                     Verified
                                   </Badge>
                                 ) : hasDetails ? (
-                                  <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                                  <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
                                     Pending Review
                                   </Badge>
                                 ) : (
