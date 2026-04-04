@@ -75,7 +75,7 @@ export function useSeekerNotifications() {
       });
       notification.onclick = () => {
         window.focus();
-        if (link) {
+        if (link && link.startsWith("/")) {
           window.location.href = link;
         }
         notification.close();
