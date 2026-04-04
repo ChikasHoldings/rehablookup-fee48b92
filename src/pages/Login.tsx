@@ -528,6 +528,11 @@ export default function Login() {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>Sign In | RehabLookup</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
