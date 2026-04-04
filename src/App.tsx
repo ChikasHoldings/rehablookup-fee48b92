@@ -522,6 +522,10 @@ const AppInner = () => {
             <Route path="/provider-guides/treatment-center-patient-acquisition" element={<PublicRouteGuard><TreatmentCenterPatientAcquisition /></PublicRouteGuard>} />
             <Route path="/provider-guides/behavioral-health-lead-generation" element={<PublicRouteGuard><BehavioralHealthLeadGeneration /></PublicRouteGuard>} />
 
+            {/* Provider Resource Hub */}
+            <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
+            <Route path="/providers/resources/:slug" element={<PublicRouteGuard><ProviderResourceArticle /></PublicRouteGuard>} />
+
             {/* Provider Panel Routes */}
             <Route path="/provider" element={<ProviderShell />}>
               <Route index element={<Navigate to="/provider/dashboard" replace />} />
