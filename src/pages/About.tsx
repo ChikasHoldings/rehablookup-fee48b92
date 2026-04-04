@@ -400,6 +400,8 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={aboutFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };

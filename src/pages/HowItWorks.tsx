@@ -382,6 +382,8 @@ const HowItWorks = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={howItWorksFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };

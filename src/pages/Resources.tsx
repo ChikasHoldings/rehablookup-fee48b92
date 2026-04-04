@@ -471,6 +471,8 @@ export default function Resources() {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={resourcesFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 }

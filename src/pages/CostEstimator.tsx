@@ -458,6 +458,8 @@ const CostEstimator = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={costEstimatorFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };

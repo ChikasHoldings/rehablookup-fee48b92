@@ -1125,6 +1125,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };

@@ -811,6 +811,8 @@ export default function Insurance() {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={insuranceFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 }
