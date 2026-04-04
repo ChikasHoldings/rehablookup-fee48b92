@@ -716,7 +716,7 @@ export default function AdminAuditLog() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6 pt-4 border-t">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground tabular-nums">
                 Page {currentPage} of {totalPages}
               </p>
               <div className="flex items-center gap-2">
