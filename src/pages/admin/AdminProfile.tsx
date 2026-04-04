@@ -661,7 +661,7 @@ export default function AdminProfile() {
             {/* New Providers */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
                   <UserCheck className="h-4 w-4" />
                 </div>
                 <div>
