@@ -291,9 +291,7 @@ const TreatmentCenterProfile = () => {
                     About This Facility
                   </h2>
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {center.description}
-                </p>
+                <TruncatedText text={center.description} />
               </div>
 
               {/* Program Overview */}
