@@ -338,32 +338,16 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           </>
         ) : (
-          <div className={cn(
-            "flex h-full w-full items-center justify-center",
-            showFeaturedBadge 
-              ? "bg-gradient-to-br from-amber-50 via-amber-100/50 to-amber-50"
-              : "bg-gradient-to-br from-muted via-background to-muted"
-          )}>
-            <div className="text-center">
-              <div className={cn(
-                "mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-2xl",
-                showFeaturedBadge ? "bg-amber-200/60" : "bg-muted-foreground/10"
-              )}>
-                <span className={cn(
-                  "font-display text-xl font-bold",
-                  showFeaturedBadge ? "text-amber-600" : "text-muted-foreground/60"
-                )}>
-                  {initials}
-                </span>
-              </div>
-              <span className={cn(
-                "text-xs font-medium",
-                showFeaturedBadge ? "text-amber-500/80" : "text-muted-foreground/50"
-              )}>
-                No photo available
-              </span>
-            </div>
-          </div>
+          <>
+            <img
+              src={facilityPlaceholder}
+              alt={`${center.name} treatment facility placeholder image`}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          </>
         )}
         
         {/* Top badge */}
