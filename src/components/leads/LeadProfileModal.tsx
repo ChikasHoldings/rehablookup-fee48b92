@@ -335,20 +335,24 @@ export function LeadProfileModal({
   };
 
   const formatLevelOfCare = (level: string | null) => {
-    if (!level) return "To be determined";
+    if (!level) return null;
     const map: Record<string, string> = {
-      detox: "Detox",
+      detox: "Medical Detox",
+      inpatient: "Inpatient / Residential",
       residential: "Residential Inpatient",
       php: "Partial Hospitalization (PHP)",
       iop: "Intensive Outpatient (IOP)",
       outpatient: "Outpatient",
-      "not-sure": "Not Sure",
+      "sober-living": "Sober Living",
+      mat: "Medication-Assisted Treatment",
+      "dual-diagnosis": "Dual Diagnosis",
+      "not-sure": "Not Sure — Needs Guidance",
     };
     return map[level] || level;
   };
 
   const formatInsurance = (type: string | null) => {
-    if (!type) return "To be verified";
+    if (!type) return null;
     const map: Record<string, string> = {
       ppo: "PPO / Private Insurance",
       medicaid: "Medicaid",

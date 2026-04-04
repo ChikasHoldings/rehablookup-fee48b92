@@ -553,7 +553,7 @@ Deno.serve(async (req) => {
         phone: data.phone,
         preferred_contact: data.preferredContact || "phone",
         message: data.message,
-        urgency: data.urgency || "not_sure",
+        urgency: data.urgency || null,
         level_of_care: data.levelOfCare || null,
         insurance_type: data.insuranceType || null,
         insurance_provider: data.insuranceProvider || null,
