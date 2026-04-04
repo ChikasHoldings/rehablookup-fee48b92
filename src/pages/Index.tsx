@@ -1017,6 +1017,8 @@ const Index = () => {
                       src={article.image} 
                       alt={article.title}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      width={400}
+                      height={200}
                       loading="lazy"
                     />
                   </div>
