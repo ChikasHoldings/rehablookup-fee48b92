@@ -144,14 +144,14 @@ export function UnlockHistoryTab() {
     const rows = unlocks.map(u => {
       const tx = transactionMap.get(u.lead_id);
       return [
-        u.lead?.name || "N/A",
-        u.lead?.email || "N/A",
-        u.lead?.phone || "N/A",
-        u.lead?.location_city_state || "N/A",
-        u.lead?.level_of_care || "N/A",
+        u.lead?.name || "",
+        u.lead?.email || "",
+        u.lead?.phone || "",
+        u.lead?.location_city_state || "",
+        u.lead?.level_of_care || "",
         getInquiryTypeLabel(u.lead?.inquiry_type),
         format(new Date(u.unlocked_at), "yyyy-MM-dd HH:mm"),
-        tx?.base_price_cents ? `$${(tx.base_price_cents / 100).toFixed(2)}` : "N/A",
+        tx?.base_price_cents ? `$${(tx.base_price_cents / 100).toFixed(2)}` : "",
         tx?.discount_amount_cents ? `$${(tx.discount_amount_cents / 100).toFixed(2)}` : "$0.00",
         `$${(u.unlock_price_cents / 100).toFixed(2)}`
       ];

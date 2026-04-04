@@ -355,10 +355,12 @@ export function AdvisorDashboard() {
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {inquiry.user_phone?.slice(-4) || "N/A"}
-                          </span>
+                          {inquiry.user_phone && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              •••• {inquiry.user_phone.slice(-4)}
+                            </span>
+                          )}
                           {location && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <MapPin className="h-3 w-3" />

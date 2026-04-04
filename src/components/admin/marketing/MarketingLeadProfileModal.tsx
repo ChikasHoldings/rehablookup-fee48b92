@@ -808,7 +808,7 @@ export function MarketingLeadProfileModal({
                                   {inquiry.primary_concern || "Concierge Request"}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {format(new Date(inquiry.created_at), "MMM d, yyyy")} • {inquiry.level_of_care || "N/A"}
+                                  {format(new Date(inquiry.created_at), "MMM d, yyyy")}{inquiry.level_of_care ? ` • ${inquiry.level_of_care}` : ""}
                                 </p>
                               </div>
                             </div>
