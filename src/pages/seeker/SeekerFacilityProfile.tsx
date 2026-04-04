@@ -110,8 +110,8 @@ function ReviewsSection({ facilityId, facilityName }: { facilityId: string; faci
   return (
     <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
       <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
-        <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-amber-500/10">
-          <MessageSquare className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-amber-600" />
+        <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-warning/10">
+          <MessageSquare className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-warning" />
         </div>
         <h2 className="font-semibold text-sm sm:text-base text-foreground">Reviews</h2>
       </div>
