@@ -152,7 +152,7 @@ export default function AdminReviews() {
 
     const { data: reviewsData } = await supabase
       .from('facility_reviews')
-      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, created_at')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at')
       .in('id', reviewIds);
 
     const { data: facilitiesData } = await supabase
