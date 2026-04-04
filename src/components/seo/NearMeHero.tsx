@@ -39,6 +39,7 @@ export function NearMeHero({
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
       <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
+      <MedicalPatternBackground />
       
       <div className="container relative z-10 py-10 md:py-14 lg:py-16">
         {/* Breadcrumb navigation */}
