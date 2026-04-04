@@ -363,7 +363,7 @@ export const Footer = memo(function Footer() {
                 ))}
                 <a
                   href="/sitemap.xml"
-                  className="text-[11px] text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
+                  className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
