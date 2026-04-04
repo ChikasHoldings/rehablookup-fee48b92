@@ -406,9 +406,9 @@ export function RequestInfoModal({
 
   // Custom success handler for the form
   const renderSuccess = ({ firstName }: { firstName: string; facilityName?: string | null }) => {
-    // Trigger nearby fetch when success renders
-    if (nearbyFacilities.length === 0 && !loadingNearby) {
-      fetchNearbyFacilities();
+    // Mark form as submitted to trigger nearby fetch via useEffect
+    if (!formSubmitted) {
+      setTimeout(() => setFormSubmitted(true), 0);
     }
     
     return (
