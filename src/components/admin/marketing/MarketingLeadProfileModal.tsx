@@ -577,14 +577,18 @@ export function MarketingLeadProfileModal({
                       {formatUrgency(lead.urgency)}
                     </Badge>
                   </div>
-                  <div className="p-3 rounded-lg border bg-card">
-                    <p className="text-xs text-muted-foreground mb-1">Level of Care</p>
-                    <p className="font-medium text-sm">{lead.level_of_care || "—"}</p>
-                  </div>
-                  <div className="p-3 rounded-lg border bg-card">
-                    <p className="text-xs text-muted-foreground mb-1">Insurance</p>
-                    <p className="font-medium text-sm">{lead.insurance_type || "—"}</p>
-                  </div>
+                  {lead.level_of_care && (
+                    <div className="p-3 rounded-lg border bg-card">
+                      <p className="text-xs text-muted-foreground mb-1">Level of Care</p>
+                      <p className="font-medium text-sm">{lead.level_of_care}</p>
+                    </div>
+                  )}
+                  {lead.insurance_type && (
+                    <div className="p-3 rounded-lg border bg-card">
+                      <p className="text-xs text-muted-foreground mb-1">Insurance</p>
+                      <p className="font-medium text-sm">{lead.insurance_type}</p>
+                    </div>
+                  )}
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Seeking For</p>
                     <p className="font-medium text-sm">{lead.who_seeking_help || "Themselves"}</p>
@@ -593,10 +597,12 @@ export function MarketingLeadProfileModal({
                     <p className="text-xs text-muted-foreground mb-1">Age Range</p>
                     <p className="font-medium text-sm">{lead.age_range || "Adult"}</p>
                   </div>
-                  <div className="p-3 rounded-lg border bg-card">
-                    <p className="text-xs text-muted-foreground mb-1">Gender</p>
-                    <p className="font-medium text-sm">{lead.gender || "—"}</p>
-                  </div>
+                  {lead.gender && (
+                    <div className="p-3 rounded-lg border bg-card">
+                      <p className="text-xs text-muted-foreground mb-1">Gender</p>
+                      <p className="font-medium text-sm">{lead.gender}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
