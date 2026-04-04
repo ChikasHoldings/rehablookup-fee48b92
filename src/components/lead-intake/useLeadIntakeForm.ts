@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LeadIntakeFormData, initialLeadIntakeFormData, TOTAL_STEPS } from "./types";
 import { analytics } from "@/lib/analytics";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
