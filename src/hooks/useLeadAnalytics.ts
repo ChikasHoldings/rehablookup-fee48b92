@@ -71,7 +71,7 @@ export function useLeadAnalytics(facilityId: string | undefined, dateRange?: Dat
       // Fetch all leads for the facility
       const { data: leads, error } = await supabase
         .from("leads")
-        .select("*")
+        .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, inquiry_type, primary_substance, who_seeking_help")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: true });
 

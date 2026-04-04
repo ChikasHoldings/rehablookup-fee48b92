@@ -29,7 +29,7 @@ export function ProviderTrustForm({ facilityId, userId, yearEstablished, onYearC
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facility_accreditations")
-        .select("*")
+        .select("id, facility_id, accreditation_type, document_name, document_url, expiry_date, issuing_authority, notes, rejection_reason, verification_number, verification_url, verified, verified_at, verified_by, created_at")
         .eq("facility_id", facilityId);
       if (error) throw error;
       return data || [];

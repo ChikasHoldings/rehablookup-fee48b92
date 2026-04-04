@@ -47,7 +47,7 @@ export function usePendingChanges(facilityId: string | undefined) {
 
       const { data, error } = await supabase
         .from("facility_pending_changes")
-        .select("*")
+        .select("id, facility_id, provider_id, pending_payload, pending_status, changed_fields, review_notes, reviewed_at, reviewed_by_admin_id, submitted_at, created_at, updated_at")
         .eq("facility_id", facilityId)
         .order("submitted_at", { ascending: false })
         .limit(1)
