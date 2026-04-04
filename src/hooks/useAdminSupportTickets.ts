@@ -52,7 +52,7 @@ export function useAdminSupportTickets(filters: SupportTicketFilters = {}) {
     queryFn: async () => {
       let query = supabase
         .from("support_tickets")
-        .select("*")
+        .select("id, sender_name, sender_email, sender_user_id, subject, message, category, priority, status, source, assigned_to, assigned_by, assigned_at, resolved_by, resolved_at, resolution_notes, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (filters.status && filters.status !== "all") {
@@ -117,7 +117,7 @@ export function useSupportTicketNotes(ticketId: string) {
     queryFn: async () => {
       const { data: notes, error } = await supabase
         .from("support_ticket_notes")
-        .select("*")
+        .select("id, ticket_id, author_id, content, created_at")
         .eq("ticket_id", ticketId)
         .order("created_at", { ascending: true });
 

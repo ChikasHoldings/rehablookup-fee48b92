@@ -73,7 +73,7 @@ type Lead = {
   phone: string;
   status: string;
   created_at: string;
-  email_verified: boolean | null;
+  email_verified?: boolean | null;
   source: string | null;
   urgency: string | null;
 };
@@ -171,7 +171,7 @@ export function ProviderDetailModal({
       if (!provider?.user_id) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("*")
+        .select("user_id, first_name, last_name, email, phone, created_at")
         .eq("user_id", provider.user_id)
         .maybeSingle();
       return data;
@@ -186,7 +186,7 @@ export function ProviderDetailModal({
       if (!provider?.user_id) return [];
       const { data } = await supabase
         .from("facilities")
-        .select("*")
+        .select("id, name, slug, city, state, facility_type, status, verified, featured, suspended, created_at, updated_at, logo_url, phone, email")
         .eq("user_id", provider.user_id)
         .order("created_at", { ascending: false });
       return data as Facility[];
@@ -224,7 +224,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return null;
       const { data } = await supabase
         .from("pro_subscriptions")
-        .select("*")
+        .select("id, facility_id, status, price_cents, current_period_end, stripe_subscription_id, unlock_discount_percent, created_at")
         .eq("facility_id", provider.id)
         .eq("status", "active")
         .maybeSingle();
@@ -240,7 +240,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("leads")
-        .select("*")
+        .select("id, facility_id, name, email, phone, status, source, created_at, urgency, level_of_care, insurance_type, message, inquiry_type")
         .eq("facility_id", provider.id)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -256,7 +256,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("flagged_images")
-        .select("*")
+        .select("id, facility_id, image_type, image_url, reason, flagged_at, resolved, resolved_at")
         .eq("facility_id", provider.id)
         .eq("resolved", false);
       return (data || []) as FlaggedImage[];
@@ -271,7 +271,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("facility_accreditations")
-        .select("*")
+        .select("id, facility_id, accreditation_type, issuing_authority, verification_number, verified, verified_at, expiry_date, document_url, created_at")
         .eq("facility_id", provider.id)
         .order("created_at", { ascending: true });
       return (data || []) as Accreditation[];
@@ -286,7 +286,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("facility_credential_documents")
-        .select("*")
+        .select("id, facility_id, document_type, document_name, document_url, status, uploaded_at, verified_at, verified_by, rejection_reason")
         .eq("facility_id", provider.id)
         .order("uploaded_at", { ascending: false });
       return (data || []) as CredentialDocument[];

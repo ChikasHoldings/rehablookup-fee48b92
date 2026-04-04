@@ -174,7 +174,7 @@ export default function AdminSecurityLogs() {
     queryFn: async () => {
       let query = supabase
         .from("rate_limit_log")
-        .select("*")
+        .select("id, identifier, action_type, success, created_at, metadata")
         .gte("created_at", dateFrom.toISOString())
         .lte("created_at", dateTo.toISOString())
         .order("created_at", { ascending: false })
@@ -241,7 +241,7 @@ export default function AdminSecurityLogs() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blocked_identifiers")
-        .select("*")
+        .select("id, identifier, identifier_type, reason, blocked_by, blocked_at, expires_at, is_active")
         .order("blocked_at", { ascending: false });
 
       if (error) throw error;

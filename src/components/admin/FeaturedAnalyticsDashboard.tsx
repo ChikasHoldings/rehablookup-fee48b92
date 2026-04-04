@@ -132,7 +132,7 @@ export function FeaturedAnalyticsDashboard() {
       // Fetch analytics events
       const { data: analyticsData } = await supabase
         .from("featured_placement_analytics")
-        .select("*")
+        .select("id, facility_id, event_date, event_type, event_count, metadata")
         .in("facility_id", featuredIds)
         .gte("event_date", startDateStr);
 

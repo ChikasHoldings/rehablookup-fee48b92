@@ -168,7 +168,7 @@ export function MarketingLeadProfileModal({
         userId = matchingSeeker.user_id;
         const { data: profile } = await supabase
           .from("seeker_profiles")
-          .select("*")
+          .select("user_id, first_name, last_name, display_name, phone, zipcode, city, state, created_at")
           .eq("user_id", matchingSeeker.user_id)
           .single();
         seekerProfile = profile;

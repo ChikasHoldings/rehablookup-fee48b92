@@ -127,7 +127,7 @@ export function InternationalCasesTab() {
     queryFn: async () => {
       let query = supabase
         .from("international_placement_cases")
-        .select("*")
+        .select("id, user_id, client_name, client_email, client_phone, client_country, preferred_language, status, priority, intake_data, payment_status, payment_amount_cents, admin_notes, assigned_advisor_id, matched_facility_ids, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (statusFilter !== "all") {

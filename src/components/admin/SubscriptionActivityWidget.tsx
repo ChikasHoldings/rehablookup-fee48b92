@@ -61,7 +61,7 @@ const SubscriptionActivityWidget = forwardRef<HTMLDivElement>(function Subscript
     queryFn: async () => {
       const { data, error } = await supabase
         .from("admin_notifications")
-        .select("*")
+        .select("id, type, title, message, metadata, read, created_at")
         .in("type", ["new_subscription", "subscription_cancelled", "payment_failed", "subscription_renewed"])
         .order("created_at", { ascending: false })
         .limit(6);

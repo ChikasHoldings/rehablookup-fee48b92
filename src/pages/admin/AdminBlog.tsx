@@ -105,7 +105,7 @@ export default function AdminBlog() {
     queryFn: async () => {
       let query = supabase
         .from("blog_articles")
-        .select("*")
+        .select("id, title, slug, excerpt, author, category, category_label, status, featured, image_url, read_time, published_at, created_at, updated_at")
         .order("updated_at", { ascending: false });
 
       if (categoryFilter !== "all") {

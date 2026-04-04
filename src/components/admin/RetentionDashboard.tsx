@@ -83,7 +83,7 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
       // Fetch retention outreach alerts
       const { data: alerts, error: alertsError } = await supabase
         .from("subscription_alerts")
-        .select("*")
+        .select("id, user_id, alert_type, alert_key, created_at, resend_id")
         .eq("alert_type", "retention_outreach")
         .order("created_at", { ascending: false });
 
@@ -92,7 +92,7 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
       // Fetch email tracking events
       const { data: trackingEvents } = await supabase
         .from("email_tracking_events")
-        .select("*")
+        .select("id, email_id, email_type, event_type, recipient_email, created_at")
         .eq("email_type", "retention_outreach");
 
       // Calculate email tracking stats

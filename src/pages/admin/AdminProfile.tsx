@@ -125,7 +125,7 @@ export default function AdminProfile() {
       if (!userData?.id) return null;
       const { data, error } = await supabase
         .from("admin_user_profiles")
-        .select("*")
+        .select("user_id, display_name, first_name, last_name, avatar_url, admin_role, status, force_password_change, mfa_enabled, mfa_skip, last_login_at, created_at, updated_at, notify_new_leads, notify_new_providers, notify_security_events, notify_subscription_changes, notify_system_alerts, email_digest_frequency")
         .eq("user_id", userData.id)
         .maybeSingle();
       
@@ -142,7 +142,7 @@ export default function AdminProfile() {
       if (!userData?.id) return [];
       const { data, error } = await supabase
         .from("user_sessions")
-        .select("*")
+        .select("id, user_id, device_name, browser, os, location, ip_address, last_active_at, created_at, is_current")
         .eq("user_id", userData.id)
         .is("revoked_at", null)
         .order("last_active_at", { ascending: false });
@@ -160,7 +160,7 @@ export default function AdminProfile() {
       if (!userData?.id) return [];
       const { data, error } = await supabase
         .from("admin_audit_log")
-        .select("*")
+        .select("id, admin_user_id, action_type, target_type, target_id, details, created_at")
         .eq("admin_user_id", userData.id)
         .order("created_at", { ascending: false })
         .limit(20);

@@ -55,7 +55,7 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("concierge_case_events")
-        .select("*")
+        .select("id, inquiry_id, event_type, event_data, actor_id, actor_type, created_at")
         .eq("inquiry_id", caseData.id)
         .order("created_at", { ascending: false })
         .limit(50);

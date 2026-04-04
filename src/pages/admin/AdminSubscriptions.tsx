@@ -311,7 +311,7 @@ export default function AdminSubscriptions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facilities")
-        .select("*")
+        .select("id, name, slug, city, state, facility_type, status, verified, featured, suspended, user_id, logo_url, phone, email, created_at, updated_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Facility[];

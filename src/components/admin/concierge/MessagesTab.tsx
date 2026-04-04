@@ -76,7 +76,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
       if (!selectedThread?.id) return [];
       const { data, error } = await supabase
         .from("concierge_messages")
-        .select("*")
+        .select("id, thread_id, sender_id, sender_type, content, attachment_url, attachment_name, read_at, created_at")
         .eq("thread_id", selectedThread.id)
         .order("created_at", { ascending: true });
       if (error) throw error;

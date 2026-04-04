@@ -219,7 +219,7 @@ export default function AdminSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_settings")
-        .select("*");
+        .select("id, setting_key, setting_value, updated_by, updated_at");
       
       if (error) throw error;
       
@@ -443,8 +443,8 @@ export default function AdminSettings() {
           break;
         case "analytics":
           const [viewsResult, interactionsResult] = await Promise.all([
-            supabase.from("facility_views").select("*").order("view_date", { ascending: false }).limit(1000),
-            supabase.from("facility_interactions").select("*").order("interaction_date", { ascending: false }).limit(1000),
+            supabase.from("facility_views").select("facility_id, view_date, view_count, created_at").order("view_date", { ascending: false }).limit(1000),
+            supabase.from("facility_interactions").select("id, facility_id, interaction_type, interaction_count, interaction_date, created_at").order("interaction_date", { ascending: false }).limit(1000),
           ]);
           
           if (format === "csv") {
@@ -463,7 +463,7 @@ export default function AdminSettings() {
         case "audit":
           const { data: auditLogs } = await supabase
             .from("admin_audit_log")
-            .select("*")
+            .select("id, admin_user_id, action_type, target_type, target_id, details, created_at")
             .order("created_at", { ascending: false })
             .limit(1000);
           data = auditLogs || [];
@@ -481,7 +481,7 @@ export default function AdminSettings() {
         case "notifications":
           const { data: notifications } = await supabase
             .from("admin_notifications")
-            .select("*")
+            .select("id, type, title, message, read, created_at")
             .order("created_at", { ascending: false })
             .limit(1000);
           data = notifications || [];

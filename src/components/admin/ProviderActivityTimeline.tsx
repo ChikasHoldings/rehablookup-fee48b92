@@ -50,7 +50,7 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
       // Fetch admin audit log for this facility
       const { data: auditLogs } = await supabase
         .from("admin_audit_log")
-        .select("*")
+        .select("id, action_type, target_type, target_id, details, created_at")
         .or(`target_id.eq.${facilityId},target_id.eq.${userId}`)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -102,7 +102,7 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
       // Fetch provider notifications sent to this provider
       const { data: notifications } = await supabase
         .from("provider_notifications")
-        .select("*")
+        .select("id, title, message, type, created_at, metadata")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(30);
@@ -125,7 +125,7 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
       // Fetch flagged images for this facility
       const { data: flaggedImages } = await supabase
         .from("flagged_images")
-        .select("*")
+        .select("id, facility_id, image_type, image_url, reason, flagged_at, resolved, resolved_at")
         .eq("facility_id", facilityId)
         .order("flagged_at", { ascending: false })
         .limit(20);

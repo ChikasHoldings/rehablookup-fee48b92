@@ -73,7 +73,7 @@ export const RecentNotificationsPanel = forwardRef<HTMLDivElement>(function Rece
 
       const { data, error } = await supabase
         .from("admin_user_notifications")
-        .select("*")
+        .select("id, type, title, message, link, read, created_at, metadata")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(10);
