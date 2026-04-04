@@ -14,6 +14,7 @@ interface SEOProps {
   publishedTime?: string;
   modifiedTime?: string;
   locale?: string;
+  hreflang?: { lang: string; href: string }[];
 }
 
 const SITE_NAME = "RehabLookup";
