@@ -699,7 +699,7 @@ export default function AdminProfile() {
             {/* Security Events */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-50 text-red-600">
+                <div className="p-2 rounded-lg bg-destructive/10 text-destructive">
                   <ShieldCheck className="h-4 w-4" />
                 </div>
                 <div>
