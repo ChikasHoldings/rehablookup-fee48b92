@@ -43,7 +43,7 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Guides */}
         <div className="flex-1 p-5">
-          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-3 flex items-center gap-1.5">
+          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-3 flex items-center gap-1.5">
             <Sparkles className="h-3 w-3" />
             Growth Guides
           </p>
@@ -53,14 +53,14 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={page.href}
                 to={page.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-accent/[0.06] transition-colors"
+                className="group flex items-center gap-2.5 rounded-lg px-2 py-[7px] hover:bg-accent/[0.06] transition-colors"
               >
                 <div className="h-7 w-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
                   <page.icon className="h-3.5 w-3.5 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-medium text-foreground/90 group-hover:text-foreground leading-tight">{page.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{page.desc}</p>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-foreground leading-tight">{page.label}</p>
+                  <p className="text-xs text-muted-foreground/90 leading-tight">{page.desc}</p>
                 </div>
               </PrefetchLink>
             ))}
