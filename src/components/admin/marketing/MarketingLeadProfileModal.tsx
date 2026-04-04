@@ -583,7 +583,7 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Insurance</p>
-                    <p className="font-medium text-sm">{lead.insurance_type || "To be verified"}</p>
+                    <p className="font-medium text-sm">{lead.insurance_type || "—"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Seeking For</p>
