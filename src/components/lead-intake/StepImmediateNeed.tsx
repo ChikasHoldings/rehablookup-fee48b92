@@ -343,13 +343,16 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
       <div className="space-y-3">
         <Label className="text-sm font-medium flex items-center gap-2">
           <ArrowRight className="h-4 w-4 text-primary" />
-          How urgent is the need?
+          How urgent is the need? <span className="text-destructive">*</span>
         </Label>
         <Select
           value={formData.urgency}
-          onValueChange={(value) => updateFormData({ urgency: value })}
+          onValueChange={(value) => {
+            updateFormData({ urgency: value });
+            setErrors(prev => ({ ...prev, urgency: "" }));
+          }}
         >
-          <SelectTrigger className="h-12 text-sm">
+          <SelectTrigger className={cn("h-12 text-sm", errors.urgency && "border-destructive")}>
             <SelectValue placeholder="Select urgency level" />
           </SelectTrigger>
           <SelectContent>
@@ -365,6 +368,12 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
             ))}
           </SelectContent>
         </Select>
+        {errors.urgency && (
+          <p className="text-xs text-destructive flex items-center gap-1">
+            <span className="h-1 w-1 rounded-full bg-destructive" />
+            {errors.urgency}
+          </p>
+        )}
       </div>
 
       <Button onClick={handleNext} className="w-full h-14 text-base font-semibold rounded-xl shadow-sm" size="lg">
