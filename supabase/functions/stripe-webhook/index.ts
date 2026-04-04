@@ -403,6 +403,48 @@ Deno.serve(async (req) => {
                 metadata: { lead_id: leadId, amount_cents: amountTotal },
               });
 
+              // Notify seeker that the facility is reviewing their inquiry
+              try {
+                const { data: leadData } = await supabaseAdmin
+                  .from("leads")
+                  .select("email")
+                  .eq("id", leadId)
+                  .maybeSingle();
+
+                if (leadData?.email) {
+                  // Find the seeker's user_id from their email via seeker_profiles + auth
+                  const { data: seekerUser } = await supabaseAdmin.rpc(
+                    "get_seeker_emails_for_admin"
+                  );
+                  const seekerMatch = (seekerUser || []).find(
+                    (s: { email: string }) => s.email?.toLowerCase() === leadData.email.toLowerCase()
+                  );
+
+                  if (seekerMatch?.user_id) {
+                    // Get facility name for a meaningful notification
+                    const { data: facilityData } = await supabaseAdmin
+                      .from("facilities")
+                      .select("name")
+                      .eq("id", facilityId)
+                      .maybeSingle();
+
+                    const facilityName = facilityData?.name || "A treatment center";
+
+                    await supabaseAdmin.from("seeker_notifications").insert({
+                      user_id: seekerMatch.user_id,
+                      type: "facility_contacted_you",
+                      title: "Facility Reviewing Your Inquiry",
+                      message: `${facilityName} has reviewed your inquiry and may reach out to you soon.`,
+                      link: "/account/requests",
+                      metadata: { lead_id: leadId, facility_id: facilityId },
+                    });
+                    logStep("Seeker notification created for lead unlock", { seekerUserId: seekerMatch.user_id });
+                  }
+                }
+              } catch (seekerNotifErr) {
+                logStep("Non-critical: seeker notification failed", { error: String(seekerNotifErr) });
+              }
+
               logStep("Lead unlock fully processed via Stripe");
             }
           }
