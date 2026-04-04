@@ -99,6 +99,8 @@ function ArticleCard({ article }: { article: DBArticle }) {
           src={article.image_url || defaultImage}
           alt={article.title}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          width={600}
+          height={300}
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
