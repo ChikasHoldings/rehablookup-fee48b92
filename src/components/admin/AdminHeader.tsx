@@ -716,8 +716,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                   onSelect={() => { navigate(`/admin/providers?search=${encodeURIComponent(provider.name)}`); setSearchOpen(false); setSearchQuery(""); }}
                   className="flex items-center gap-3"
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                    <Building2 className="h-4 w-4 text-blue-500" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Building2 className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{provider.name}</p>
@@ -727,8 +727,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     </p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    provider.status === "approved" ? "bg-green-500/10 text-green-600" :
-                    provider.status === "pending" ? "bg-amber-500/10 text-amber-600" :
+                    provider.status === "approved" ? "bg-success/10 text-success" :
+                    provider.status === "pending" ? "bg-warning/10 text-warning" :
                     "bg-muted text-muted-foreground"
                   }`}>
                     {provider.status}
