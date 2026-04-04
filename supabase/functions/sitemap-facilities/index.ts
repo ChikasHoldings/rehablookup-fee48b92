@@ -292,11 +292,8 @@ const TREATMENT_TYPES_WITH_GEO = [
 // All 50 states for near-me state pages (full coverage)
 const TOP_STATES_FOR_NEAR_ME = [...US_STATES];
 
-// Top 10 states for treatment type geo pages
-const TOP_STATES_FOR_TREATMENT = [
-  "california", "florida", "texas", "new-york", "arizona",
-  "colorado", "ohio", "pennsylvania", "illinois", "georgia"
-];
+// All 50 states for treatment type geo pages
+const TOP_STATES_FOR_TREATMENT = [...US_STATES];
 
 // Top cities per state for treatment geo
 const TOP_CITIES_FOR_TREATMENT: Record<string, string[]> = {
