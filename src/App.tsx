@@ -55,6 +55,16 @@ const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
 const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
 const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
 
+// Provider SEO Pages
+const GetMoreRehabPatients = lazy(() => import("./pages/provider-seo/GetMoreRehabPatients"));
+const RehabAdmissionsGrowth = lazy(() => import("./pages/provider-seo/RehabAdmissionsGrowth"));
+const RehabMarketingStrategies = lazy(() => import("./pages/provider-seo/RehabMarketingStrategies"));
+const AddictionTreatmentLeadGeneration = lazy(() => import("./pages/provider-seo/AddictionTreatmentLeadGeneration"));
+const IncreaseRehabAdmissions = lazy(() => import("./pages/provider-seo/IncreaseRehabAdmissions"));
+const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-seo/RehabCenterMarketingIdeas"));
+const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-seo/TreatmentCenterPatientAcquisition"));
+const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-seo/BehavioralHealthLeadGeneration"));
+
 // Concierge Placement (Paid Service) - lazy load
 const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding"));
 const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
