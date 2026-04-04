@@ -184,27 +184,53 @@ export default function SeekerRequests() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!isReady) return;
-    if (isAuthenticated && email) {
-      fetchRequests(email);
-      loadSavedData();
-    } else {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, isReady, email]);
+    let isCancelled = false;
 
-  const fetchRequests = async (userEmail: string) => {
-    if (!userEmail) {
-      setIsLoading(false);
-      return;
-    }
+    const syncRequests = async () => {
+      if (!isReady) return;
+
+      setRequests([]);
+      setSavedData(null);
+
+      if (!isAuthenticated || !email || !userId) {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (!isCancelled) {
+        setIsLoading(true);
+        loadSavedData(userId);
+      }
+
+      const nextRequests = await fetchRequests(email);
+
+      if (!isCancelled) {
+        setRequests(nextRequests);
+        setIsLoading(false);
+      }
+    };
+
+    void syncRequests();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isAuthenticated, isReady, email, userId]);
+
+  const fetchRequests = async (userEmail: string): Promise<SubmittedRequest[]> => {
+    const normalizedEmail = userEmail.trim().toLowerCase();
+    if (!normalizedEmail) return [];
 
     try {
-      // First get leads for this user's email
+      // Only show actual facility-targeted requests for this signed-in email.
+      // This excludes legacy generic/header inquiries that should not appear in Inbox.
       const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select('id, facility_id, created_at, status, urgency, preferred_contact')
-        .eq('email', userEmail)
+        .eq('email', normalizedEmail)
+        .not('facility_id', 'is', null)
         .order('created_at', { ascending: false })
         .limit(200);
 
@@ -213,39 +239,35 @@ export default function SeekerRequests() {
       }
 
       if (!leadsData || leadsData.length === 0) {
-        setRequests([]);
-        setIsLoading(false);
-        return;
+        return [];
       }
 
-      // Get facility details for leads that have facility_id
-      const facilityIds = leadsData
-        .filter(l => l.facility_id)
-        .map(l => l.facility_id as string);
-      
+      const facilityIds = Array.from(
+        new Set(leadsData.map((lead) => lead.facility_id).filter(Boolean))
+      ) as string[];
+
       let facilitiesMap: Record<string, any> = {};
-      
+
       if (facilityIds.length > 0) {
         const { data: facilitiesData } = await supabase
           .from('facilities')
           .select('id, name, slug, city, state, logo_url')
           .in('id', facilityIds);
-        
+
         if (facilitiesData) {
-          facilitiesMap = facilitiesData.reduce((acc, f) => {
-            acc[f.id] = f;
+          facilitiesMap = facilitiesData.reduce((acc, facility) => {
+            acc[facility.id] = facility;
             return acc;
           }, {} as Record<string, any>);
         }
       }
 
-      // Map leads with facility data
-      const mappedRequests: SubmittedRequest[] = leadsData.map(req => {
+      return leadsData.map((req) => {
         const facility = req.facility_id ? facilitiesMap[req.facility_id] : null;
         return {
           id: req.id,
           facility_id: req.facility_id || '',
-          facility_name: facility?.name || 'General Inquiry',
+          facility_name: facility?.name || 'Treatment Center',
           facility_slug: facility?.slug || null,
           facility_city: facility?.city || '',
           facility_state: facility?.state || '',
@@ -253,32 +275,35 @@ export default function SeekerRequests() {
           created_at: req.created_at,
           status: req.status,
           urgency: req.urgency,
-          preferred_contact: req.preferred_contact
+          preferred_contact: req.preferred_contact,
         };
       });
-
-      setRequests(mappedRequests);
     } catch (error: any) {
       console.error('Error fetching requests:', error);
       toast({
-        title: "Error loading requests",
-        description: "Could not load your requests. Please try again.",
-        variant: "destructive"
+        title: 'Error loading requests',
+        description: 'Could not load your requests. Please try again.',
+        variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
+      return [];
     }
   };
 
-  const loadSavedData = () => {
-    if (!userId) return;
-    const saved = localStorage.getItem(`seeker_request_data_${userId}`);
-    if (saved) {
-      try {
-        setSavedData(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse saved data', e);
-      }
+  const loadSavedData = (currentUserId: string) => {
+    setSavedData(null);
+    if (!currentUserId) return;
+
+    const storageKey = `seeker_request_data_${currentUserId}`;
+    const saved = localStorage.getItem(storageKey);
+
+    if (!saved) return;
+
+    try {
+      setSavedData(JSON.parse(saved));
+    } catch (e) {
+      localStorage.removeItem(storageKey);
+      console.error('Failed to parse saved data', e);
+      setSavedData(null);
     }
   };
 
@@ -287,14 +312,23 @@ export default function SeekerRequests() {
     setShowNewRequest(true);
   };
 
-  const handleRequestSuccess = () => {
+  const handleRequestSuccess = async () => {
     if (userId && savedData) {
       localStorage.setItem(`seeker_request_data_${userId}`, JSON.stringify(savedData));
     }
-    
+
     setShowNewRequest(false);
     setSelectedFacility(null);
-    if (email) fetchRequests(email);
+
+    if (!email) {
+      setRequests([]);
+      return;
+    }
+
+    setIsLoading(true);
+    const nextRequests = await fetchRequests(email);
+    setRequests(nextRequests);
+    setIsLoading(false);
   };
 
   const formatDate = (dateString: string) => {
