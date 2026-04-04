@@ -126,7 +126,7 @@ export default function BCBSTreatment() {
       {/* Hero Section */}
       <section className="bg-primary py-10 md:py-14">
         <div className="container">
-          <BreadcrumbNav
+          <BreadcrumbNav className="mb-4"
             items={[
               { label: "Insurance", href: "/insurance" },
               { label: "BCBS Treatment Coverage" },
