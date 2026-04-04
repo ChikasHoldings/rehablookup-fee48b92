@@ -73,7 +73,7 @@ type Lead = {
   phone: string;
   status: string;
   created_at: string;
-  email_verified: boolean | null;
+  email_verified?: boolean | null;
   source: string | null;
   urgency: string | null;
 };
