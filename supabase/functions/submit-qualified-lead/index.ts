@@ -201,7 +201,7 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
               </table>
               
               <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                If you have any questions in the meantime, feel free to reply to this email or contact us at <a href="mailto:help@rehablookup.com" style="color: #0f766e; text-decoration: none;">help@rehablookup.com</a>.
+                If you have any questions in the meantime, feel free to contact us at <a href="mailto:help@rehablookup.com" style="color: #0f766e; text-decoration: none;">help@rehablookup.com</a>.
               </p>
             </td>
           </tr>
