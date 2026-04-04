@@ -711,8 +711,8 @@ export function PlanSettingsTab() {
                         {expiresAt ? (
                           <div className={cn(
                             "flex items-center gap-1.5 text-sm",
-                            isExpired && "text-red-600",
-                            isExpiringSoon && !isExpired && "text-amber-600"
+                            isExpired && "text-destructive",
+                            isExpiringSoon && !isExpired && "text-warning"
                           )}>
                             {isExpired ? (
                               <XCircle className="h-3.5 w-3.5" />
