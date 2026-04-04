@@ -397,8 +397,8 @@ export default function ProviderDashboardPage() {
                 value={viewsCount}
                 subtitle="Last 30 days"
                 icon={Eye}
-                iconBg="bg-blue-500/10"
-                iconColor="text-blue-600"
+                iconBg="bg-primary/10"
+                iconColor="text-primary"
                 isLoading={isLoading}
               />
               <MetricCard
@@ -406,8 +406,8 @@ export default function ProviderDashboardPage() {
                 value={totalLeadsCount}
                 subtitle={totalLeadsCount > 0 ? `${recentLeads.filter(l => l.status === 'new').length} new` : "No inquiries yet"}
                 icon={TrendingUp}
-                iconBg="bg-emerald-500/10"
-                iconColor="text-emerald-600"
+                iconBg="bg-success/10"
+                iconColor="text-success"
                 action={totalLeadsCount > 0 ? { label: "View", href: "/provider/inquiries" } : undefined}
                 isLoading={leadsLoading}
               />
