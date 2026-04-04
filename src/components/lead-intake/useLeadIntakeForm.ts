@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LeadIntakeFormData, initialLeadIntakeFormData, TOTAL_STEPS } from "./types";
 import { analytics } from "@/lib/analytics";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
@@ -24,6 +25,8 @@ interface UseLeadIntakeFormOptions {
 export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { user, isAuthenticated } = useAuthReady();
+  const hasPrePopulated = useRef(false);
   
   // Parse facility info from URL, but allow overrides from props
   const urlFacilityId = searchParams.get("facility");
@@ -103,6 +106,53 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     loadSavedData();
   }, []);
   
+  // Pre-populate form with logged-in seeker's profile data
+  useEffect(() => {
+    if (!isAuthenticated || !user || hasPrePopulated.current) return;
+    hasPrePopulated.current = true;
+
+    const prefill = async () => {
+      try {
+        const { data: profile } = await supabase
+          .from("seeker_profiles")
+          .select("first_name, last_name, phone, zipcode, city, state")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            firstName: prev.firstName || profile.first_name || "",
+            lastName: prev.lastName || profile.last_name || "",
+            phone: prev.phone || profile.phone || "",
+            email: prev.email || user.email || "",
+            locationZip: prev.locationZip || profile.zipcode || "",
+            locationCityState: prev.locationCityState || 
+              (profile.city && profile.state ? `${profile.city}, ${profile.state}` : ""),
+          }));
+          
+          // Auto-mark email as verified for logged-in users
+          if (user.email) {
+            setIsEmailVerified(true);
+            setCodeSent(true);
+          }
+        } else if (user.email) {
+          // No seeker profile but still logged in - fill email
+          setFormData(prev => ({
+            ...prev,
+            email: prev.email || user.email || "",
+          }));
+          setIsEmailVerified(true);
+          setCodeSent(true);
+        }
+      } catch (err) {
+        console.error("[useLeadIntakeForm] Failed to prefill from profile:", err);
+      }
+    };
+
+    prefill();
+  }, [isAuthenticated, user]);
+
   // Save form data to localStorage
   useEffect(() => {
     if (!isSubmitted) {
