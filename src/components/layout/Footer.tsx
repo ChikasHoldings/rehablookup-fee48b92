@@ -206,7 +206,7 @@ const MobileAccordion = memo(function MobileAccordion({ title, links }: FooterSe
         className="flex w-full items-center justify-between py-3.5 text-left"
         aria-expanded={open}
       >
-        <span className="text-sm font-semibold text-primary-foreground/90">{title}</span>
+        <span className="text-[15px] font-semibold text-primary-foreground/90">{title}</span>
         <ChevronDown
           className={`h-4 w-4 text-primary-foreground/40 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
