@@ -108,7 +108,7 @@ export function useSessionManager(options: UseSessionManagerOptions = {}) {
 
       const { data, error } = await supabase
         .from("user_sessions")
-        .select("*")
+        .select("id, user_id, device_name, browser, os, location, ip_address, last_active_at, created_at, is_current, expires_at")
         .eq("user_id", user.id)
         .is("revoked_at", null)
         .order("last_active_at", { ascending: false });

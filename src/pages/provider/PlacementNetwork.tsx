@@ -190,7 +190,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return null;
       const { data, error } = await supabase
         .from("pro_subscriptions")
-        .select("*")
+        .select("id, facility_id, stripe_subscription_id, status, plan_type, current_period_start, current_period_end, unlock_discount_percent, created_at")
         .eq("facility_id", selectedFacility.id)
         .eq("status", "active")
         .maybeSingle();

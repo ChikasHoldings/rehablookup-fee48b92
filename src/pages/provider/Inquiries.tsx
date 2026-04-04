@@ -102,7 +102,7 @@ export default function ProviderInquiriesPage() {
       
       const { data: allLeads, error } = await supabase
         .from("leads_provider_view")
-        .select("*")
+        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, is_unlocked")
         .order("created_at", { ascending: false });
       
       if (error) throw error;
