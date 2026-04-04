@@ -1301,7 +1301,7 @@ export function ProviderDetailModal({
                   {provider.concierge_network_opted_in ? (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-purple-600 border-purple-300 gap-1">
+                        <Badge variant="outline" className="text-chart-3 border-chart-3/30 gap-1">
                           <CheckCircle className="h-3 w-3" />
                           Opted In
                         </Badge>
