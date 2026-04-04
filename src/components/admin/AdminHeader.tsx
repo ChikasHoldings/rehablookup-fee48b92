@@ -843,10 +843,12 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                 </CommandItem>
               </CommandGroup>
               <CommandGroup heading="Settings & Administration">
-                <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </CommandItem>
+                {(isSuperAdmin || hasPermission("settings")) && (
+                  <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </CommandItem>
+                )}
                 {canViewUsers && (
                   <CommandItem onSelect={() => { navigate("/admin/users"); setSearchOpen(false); }}>
                     <Shield className="h-4 w-4 mr-2" />
