@@ -24,8 +24,6 @@ import {
   Building2,
   BadgeCheck,
   ExternalLink,
-  ChevronLeft,
-  ChevronRight,
   Image as ImageIcon,
   MessageSquare,
   Flag,
@@ -37,12 +35,16 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
-import { TrustBadgesInline, TrustBadgesSection } from "@/components/trust/TrustBadgesSection";
+import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
+import { TrustBadge, AccreditationType } from "@/components/trust/TrustBadge";
 import { GoogleReviewsCard } from "@/components/reviews/GoogleReviewsCard";
 import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSection";
 import { usePublicGoogleReviews } from "@/hooks/useGoogleReviews";
@@ -52,6 +54,9 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface FacilityData {
   id: string;
