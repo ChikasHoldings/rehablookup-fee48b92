@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { resourcesFaqs } from "@/data/pageFaqs";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -471,6 +473,8 @@ export default function Resources() {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={resourcesFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 }

@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { treatmentTypesFaqs } from "@/data/pageFaqs";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -641,6 +643,8 @@ const TreatmentTypes = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={treatmentTypesFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };

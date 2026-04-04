@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { locationsFaqs } from "@/data/pageFaqs";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -392,6 +394,8 @@ const Locations = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={locationsFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };

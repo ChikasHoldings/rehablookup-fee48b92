@@ -1,4 +1,6 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { homeFaqs } from "@/data/pageFaqs";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -1125,6 +1127,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };

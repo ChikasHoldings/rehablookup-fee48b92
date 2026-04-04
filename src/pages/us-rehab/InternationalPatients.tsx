@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { internationalFaqs } from "@/data/pageFaqs";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -210,6 +212,8 @@ const InternationalPatients = () => {
           </motion.div>
         </div>
       </section>
+
+      <PageFAQ faqs={internationalFaqs} className="border-t border-border bg-muted/30" />
     </Layout>
   );
 };
