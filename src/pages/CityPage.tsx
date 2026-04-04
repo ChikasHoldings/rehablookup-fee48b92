@@ -366,6 +366,47 @@ const CityPage = () => {
         </div>
       </section>
 
+      {/* Results - Always at the top under hero */}
+      <section className="bg-background py-10 md:py-14">
+        <div className="container">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground">
+              Treatment Centers in {cityData.name}
+            </h2>
+            <p className="mt-1 text-muted-foreground">
+              {cityCenters.length} verified facilities in {fullLocation}
+            </p>
+          </div>
+
+          {isLoading ? (
+            <SearchResultsLoading count={6} />
+          ) : cityCenters.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {cityCenters.map(center => (
+                <TreatmentCenterCard key={center.id} center={center} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card p-12 text-center">
+              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet in {cityData.name}</h3>
+              <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+                We're actively adding verified treatment centers. In the meantime, 
+                explore treatment options across {stateData.name} or get personalized help.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to={`/rehab-centers/${stateData.slug}`}>
+                  <Button variant="outline">View All {stateData.name} Centers</Button>
+                </Link>
+                <Link to="/concierge">
+                  <Button>Find Treatment</Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Trust Signals */}
       <section className="border-b bg-card py-8">
         <div className="container">
@@ -407,47 +448,6 @@ const CityPage = () => {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Results */}
-      <section className="bg-background py-10 md:py-14">
-        <div className="container">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">
-              Treatment Centers in {cityData.name}
-            </h2>
-            <p className="mt-1 text-muted-foreground">
-              {cityCenters.length} verified facilities in {fullLocation}
-            </p>
-          </div>
-
-          {isLoading ? (
-            <SearchResultsLoading count={6} />
-          ) : cityCenters.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {cityCenters.map(center => (
-                <TreatmentCenterCard key={center.id} center={center} />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border bg-card p-12 text-center">
-              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet in {cityData.name}</h3>
-              <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-                We're actively adding verified treatment centers. In the meantime, 
-                explore treatment options across {stateData.name} or get personalized help.
-              </p>
-              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to={`/rehab-centers/${stateData.slug}`}>
-                  <Button variant="outline">View All {stateData.name} Centers</Button>
-                </Link>
-                <Link to="/concierge">
-                  <Button>Find Treatment</Button>
-                </Link>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 

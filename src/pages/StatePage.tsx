@@ -305,53 +305,38 @@ const StatePage = () => {
         </div>
       </section>
 
-      {/* Expanded Cities Section */}
-      <section className="border-b bg-card py-10">
+      {/* Results - Always at the top under hero */}
+      <section className="bg-background py-10 md:py-14">
         <div className="container">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-foreground">
-                Find Treatment by City in {stateData.name}
+              <h2 className="text-2xl font-bold text-foreground">
+                Treatment Centers in {stateData.name}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Browse {stateData.cities.length} cities with verified rehab centers
+              <p className="mt-1 text-muted-foreground">
+                {stateCenters.length} verified facilities available
               </p>
             </div>
           </div>
-          
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {displayedCities?.map(city => (
-              <Link
-                key={city.slug}
-                to={`/rehab-centers/${stateData.slug}/${city.slug}`}
-                className="group flex items-center justify-between rounded-xl border bg-background p-4 transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-                    <MapPin className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                      {city.name}
-                    </span>
-                    <p className="text-xs text-muted-foreground">View Centers</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-primary" />
+
+          {isLoading ? (
+            <SearchResultsLoading count={6} />
+          ) : stateCenters.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {stateCenters.map(center => (
+                <TreatmentCenterCard key={center.id} center={center} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card p-12 text-center">
+              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet</h3>
+              <p className="mt-2 text-muted-foreground">
+                We're actively adding verified treatment centers in {stateData.name}.
+              </p>
+              <Link to="/concierge" className="mt-6 inline-block">
+                <Button>Find Treatment</Button>
               </Link>
-            ))}
-          </div>
-          
-          {stateData.cities.length > 12 && (
-            <div className="mt-6 text-center">
-              <Button
-                variant="outline"
-                onClick={() => setShowAllCities(!showAllCities)}
-                className="gap-2"
-              >
-                {showAllCities ? 'Show Less' : `Show All ${stateData.cities.length} Cities`}
-                <ChevronDown className={cn("h-4 w-4 transition-transform", showAllCities && "rotate-180")} />
-              </Button>
             </div>
           )}
         </div>
@@ -401,38 +386,53 @@ const StatePage = () => {
         </div>
       </section>
 
-      {/* Results */}
-      <section className="bg-background py-10 md:py-14">
+      {/* Expanded Cities Section */}
+      <section className="border-b bg-card py-10">
         <div className="container">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                Treatment Centers in {stateData.name}
+              <h2 className="text-xl font-bold text-foreground">
+                Find Treatment by City in {stateData.name}
               </h2>
-              <p className="mt-1 text-muted-foreground">
-                {stateCenters.length} verified facilities available
+              <p className="mt-1 text-sm text-muted-foreground">
+                Browse {stateData.cities.length} cities with verified rehab centers
               </p>
             </div>
           </div>
-
-          {isLoading ? (
-            <SearchResultsLoading count={6} />
-          ) : stateCenters.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {stateCenters.map(center => (
-                <TreatmentCenterCard key={center.id} center={center} />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border bg-card p-12 text-center">
-              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet</h3>
-              <p className="mt-2 text-muted-foreground">
-                We're actively adding verified treatment centers in {stateData.name}.
-              </p>
-              <Link to="/concierge" className="mt-6 inline-block">
-                <Button>Find Treatment</Button>
+          
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {displayedCities?.map(city => (
+              <Link
+                key={city.slug}
+                to={`/rehab-centers/${stateData.slug}/${city.slug}`}
+                className="group flex items-center justify-between rounded-xl border bg-background p-4 transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                    <MapPin className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                      {city.name}
+                    </span>
+                    <p className="text-xs text-muted-foreground">View Centers</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-primary" />
               </Link>
+            ))}
+          </div>
+          
+          {stateData.cities.length > 12 && (
+            <div className="mt-6 text-center">
+              <Button
+                variant="outline"
+                onClick={() => setShowAllCities(!showAllCities)}
+                className="gap-2"
+              >
+                {showAllCities ? 'Show Less' : `Show All ${stateData.cities.length} Cities`}
+                <ChevronDown className={cn("h-4 w-4 transition-transform", showAllCities && "rotate-180")} />
+              </Button>
             </div>
           )}
         </div>
