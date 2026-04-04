@@ -29,6 +29,30 @@ import {
 } from "lucide-react";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 
+const TRUNCATE_LIMIT = 400;
+
+function TruncatedText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const needsTruncation = text.length > TRUNCATE_LIMIT;
+  const displayText = !expanded && needsTruncation
+    ? text.slice(0, TRUNCATE_LIMIT).trimEnd() + "…"
+    : text;
+
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{displayText}</p>
+      {needsTruncation && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          {expanded ? <>Show Less <ChevronUp className="h-4 w-4" /></> : <>Read More <ChevronDown className="h-4 w-4" /></>}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // Generate initials from facility name
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
