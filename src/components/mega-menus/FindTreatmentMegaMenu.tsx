@@ -6,6 +6,7 @@ import {
   MapPin, Search, ArrowRight, Pill, Wine, Brain, Building2, Heart,
   Sparkles, Activity, Users, Shield, ChevronRight,
 } from "lucide-react";
+import conciergeImg from "@/assets/images/concierge-matching.jpg";
 
 interface MegaMenuProps {
   onNavigate?: () => void;
@@ -101,6 +102,23 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             className="inline-flex items-center gap-1 px-2 pt-2 text-[11px] font-semibold text-primary hover:text-primary/80">
             All treatment types <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
+
+          {/* Concierge CTA with Image */}
+          <Link to="/concierge" onClick={onNavigate} className="group block mt-2.5">
+            <div className="relative rounded-lg overflow-hidden h-[68px]">
+              <img src={conciergeImg} alt="Free treatment matching" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/60 to-foreground/30" />
+              <div className="relative h-full flex items-center justify-between px-3.5">
+                <div>
+                  <p className="text-[12px] font-bold text-white leading-tight">Free Concierge Matching</p>
+                  <p className="text-[10px] text-white/70 leading-tight mt-0.5">Get matched with the right center in 24hrs</p>
+                </div>
+                <div className="h-7 px-3 rounded-md bg-accent text-accent-foreground text-[10px] font-semibold flex items-center gap-1 shrink-0 group-hover:bg-accent/90 transition-colors shadow-sm">
+                  Get Matched <ArrowRight className="h-3 w-3" />
+                </div>
+              </div>
+            </div>
+          </Link>
         </div>
 
         {/* Right: Locations + Near Me */}
@@ -146,23 +164,6 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
         </div>
       </div>
 
-      {/* Bottom CTA banner */}
-      <div className="flex items-center justify-between border-t border-border/40 px-5 py-3 bg-gradient-to-r from-accent/[0.04] via-transparent to-primary/[0.04] rounded-b-xl">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center">
-            <Heart className="h-4 w-4 text-accent" />
-          </div>
-          <div>
-            <p className="text-[12px] font-semibold text-foreground leading-tight">Need help choosing?</p>
-            <p className="text-[10px] text-muted-foreground">Free confidential matching with our concierge team</p>
-          </div>
-        </div>
-        <Link to="/concierge" onClick={onNavigate}>
-          <Button size="sm" className="gap-1.5 h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-semibold shadow-sm px-5">
-            Get Matched <ArrowRight className="h-3 w-3" />
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 }
