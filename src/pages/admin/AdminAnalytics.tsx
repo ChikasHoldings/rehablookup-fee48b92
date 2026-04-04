@@ -952,10 +952,10 @@ export default function AdminAnalytics() {
 
       {/* Comparison Period Badge */}
       {compareMode && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-slate-50 rounded-lg px-4 py-2 border border-slate-200">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-2 border">
           <GitCompare className="h-4 w-4" />
           <span>
-            Comparing to previous period: <span className="font-medium">{format(previousDateRange.from, "MMM d")} - {format(previousDateRange.to, "MMM d, yyyy")}</span>
+            Comparing to previous period: <span className="font-medium tabular-nums">{format(previousDateRange.from, "MMM d")} - {format(previousDateRange.to, "MMM d, yyyy")}</span>
           </span>
         </div>
       )}
