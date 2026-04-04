@@ -4,6 +4,9 @@ import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ArrowRight, CheckCircle, TrendingUp, Users, Shield, Zap, Building2, Phone, Star, Clock, ChevronRight } from "lucide-react";
+import admissionsDashboard from "@/assets/provider-guides/admissions-dashboard.jpg";
+import admissionsTeam from "@/assets/provider-guides/admissions-team.jpg";
+import treatmentFacility from "@/assets/provider-guides/treatment-facility.jpg";
 
 interface SEOSection {
   heading: string;
