@@ -337,7 +337,7 @@ export default function AdminAuditLog() {
     return actionConfig[actionType] || { 
       icon: <ClipboardList className="h-4 w-4" />, 
       label: actionType.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
-      color: "text-slate-500 bg-slate-50"
+      color: "text-muted-foreground bg-muted"
     };
   };
 
