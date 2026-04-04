@@ -294,11 +294,12 @@ const SearchResults = () => {
       );
     }
 
-    // Insurance filter from search form
+    // Insurance filter from search form (supports comma-separated multi-select)
     if (insurance) {
+      const insuranceValues = insurance.split(",").map(i => i.trim().toLowerCase()).filter(Boolean);
       results = results.filter((c) =>
-        c.insuranceAccepted.some((i) =>
-          i.toLowerCase().includes(insurance.toLowerCase())
+        insuranceValues.some(iv =>
+          c.insuranceAccepted.some((i) => i.toLowerCase().includes(iv))
         )
       );
     }
