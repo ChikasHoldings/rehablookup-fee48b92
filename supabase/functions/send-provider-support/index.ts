@@ -49,7 +49,11 @@ Deno.serve(async (req) => {
     }
 
     const body: ProviderSupportRequest = await req.json();
-    const { name, email, topic, message, userId } = body;
+    const name = sanitizeStr(body.name, 100);
+    const email = body.email?.trim()?.toLowerCase()?.slice(0, 255) || "";
+    const topic = sanitizeStr(body.topic, 50);
+    const message = sanitizeStr(body.message, 5000);
+    const userId = body.userId;
 
     if (!name || !email || !topic || !message) {
       console.error("[SEND-PROVIDER-SUPPORT] Missing required fields");
