@@ -559,7 +559,7 @@ export function SingleQuestionFlow({
               )}
             </Button>
             
-            <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center">
               🔒 Your information is confidential and protected
             </p>
           </div>
