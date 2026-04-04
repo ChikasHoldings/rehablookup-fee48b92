@@ -401,7 +401,7 @@ export function PlanSettingsTab() {
                       </Label>
                       <Input
                         id="name"
-                        placeholder="e.g., SUMMER2024"
+                        placeholder="e.g., SUMMER2026"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
                         className="font-mono text-base tracking-wider"

@@ -392,7 +392,7 @@ Link to other articles with [[article-slug|link text]] syntax."
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, author_date: e.target.value }))
                       }
-                      placeholder="December 2025"
+                      placeholder="April 2026"
                     />
                   </div>
 

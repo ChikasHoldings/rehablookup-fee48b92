@@ -89,7 +89,7 @@ export function SEO({
     },
     image: `${SITE_URL}/og-image.jpg`,
     description: "RehabLookup helps individuals and families find verified drug and alcohol treatment centers across the United States.",
-    foundingDate: "2024",
+    foundingDate: "2026",
     slogan: "Find the Right Path to Recovery",
     knowsAbout: [
       "Addiction Treatment",
