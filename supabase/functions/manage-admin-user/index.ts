@@ -569,18 +569,30 @@ Deno.serve(async (req) => {
           throw new Error("Permissions are required");
         }
 
-        // Delete existing permissions
+        // CRITICAL: Preserve the super_admin permission - don't allow it to be stripped via permission updates
+        // Get current super_admin permission state
+        const { data: currentSuperPerm } = await supabase
+          .from("admin_user_permissions")
+          .select("granted")
+          .eq("user_id", targetUserId)
+          .eq("permission_key", "super_admin")
+          .maybeSingle();
+
+        // Delete existing permissions (except super_admin which is role-bound)
         await supabase
           .from("admin_user_permissions")
           .delete()
-          .eq("user_id", targetUserId);
+          .eq("user_id", targetUserId)
+          .neq("permission_key", "super_admin");
 
-        // Insert new permissions
-        const permissionInserts = Object.entries(permissions).map(([key, granted]) => ({
-          user_id: targetUserId,
-          permission_key: key,
-          granted,
-        }));
+        // Insert new permissions (filter out super_admin - it's managed by role changes only)
+        const permissionInserts = Object.entries(permissions)
+          .filter(([key]) => key !== "super_admin")
+          .map(([key, granted]) => ({
+            user_id: targetUserId,
+            permission_key: key,
+            granted,
+          }));
 
         if (permissionInserts.length > 0) {
           await supabase.from("admin_user_permissions").insert(permissionInserts);
