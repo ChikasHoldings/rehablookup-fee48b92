@@ -122,6 +122,7 @@ const SearchResults = () => {
   const treatment = searchParams.get("treatment") || "";
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
+  const queryParam = searchParams.get("q") || ""; // Free-text search from header/seeker
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const sortParam = (searchParams.get("sort") as SortOption) || "proximity";
   
