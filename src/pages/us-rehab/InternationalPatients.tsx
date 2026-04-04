@@ -125,7 +125,7 @@ const InternationalPatients = () => {
               <motion.div key={item.region} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.06 }}>
                 <Link to={item.href} className="group block p-5 bg-background rounded-xl border hover:border-primary/30 hover:shadow-lg transition-all h-full">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{item.flag}</span>
+                    <span className="text-3xl">{item.flag}</span>
                     <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-base">{item.region}</h3>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>

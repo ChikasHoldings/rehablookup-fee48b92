@@ -43,7 +43,7 @@ export const CountriesServed = () => {
           {countries.map((country) => {
             const inner = (
               <div className="flex flex-col items-center gap-2 p-4 bg-background rounded-xl border border-border/50 hover:border-primary/20 hover:shadow-sm transition-all h-full">
-                <span className="text-3xl">{country.flag}</span>
+                <span className="text-4xl">{country.flag}</span>
                 <span className="text-xs text-center text-muted-foreground font-medium leading-tight">
                   {country.name}
                 </span>
