@@ -463,14 +463,21 @@ const SearchResults = () => {
   };
 
   // Determine if this is a search with query params (should be noindexed)
-  const hasSearchParams = !!(location || treatment || insurance || type || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
+  const hasSearchParams = !!(location || treatment || insurance || type || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
   const shouldNoindex = hasSearchParams || filteredCenters.length === 0;
+
+  // Determine display title
+  const searchDisplayTitle = queryParam
+    ? `Results for "${queryParam}"`
+    : location
+      ? `Rehab Centers Near ${location}`
+      : "Find Treatment Centers";
 
   return (
     <Layout>
       <SEO
-        title={location ? `Rehab Centers Near ${location}` : "Find Treatment Centers"}
-        description={`Browse ${filteredCenters.length} verified addiction treatment centers${location ? ` near ${location}` : ""}. Compare rehab programs, check insurance, and start recovery.`}
+        title={searchDisplayTitle}
+        description={`Browse ${filteredCenters.length} verified addiction treatment centers${location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""}. Compare rehab programs, check insurance, and start recovery.`}
         canonical="/search-results"
         noindex={shouldNoindex}
         structuredData={!shouldNoindex ? generateSearchResultsSchema({
