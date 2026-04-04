@@ -580,37 +580,39 @@ export function InternationalCasesTab() {
       />
 
       {/* Waive Invoice Dialog */}
-      {waiveDialogInvoice && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-2">Waive Facility Invoice</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              This will mark the $4,500 facility fee as waived.
-            </p>
-            <div className="mb-4">
-              <label className="text-sm font-medium mb-1 block">Reason for waiving</label>
-              <textarea
+      <Dialog open={!!waiveDialogInvoice} onOpenChange={(open) => { if (!open) { setWaiveDialogInvoice(null); setWaiveReason(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Waive Facility Invoice</DialogTitle>
+            <DialogDescription>
+              This will mark the facility fee as waived. No payment will be collected.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Reason for waiving</Label>
+              <Textarea
                 value={waiveReason}
                 onChange={(e) => setWaiveReason(e.target.value)}
                 placeholder="Enter reason..."
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+                rows={3}
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setWaiveDialogInvoice(null); setWaiveReason(""); }}>
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => invoiceMutation.mutate({ action: "waive", invoiceId: waiveDialogInvoice, reason: waiveReason })}
-                disabled={!waiveReason || invoiceMutation.isPending}
-              >
-                Waive Invoice
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setWaiveDialogInvoice(null); setWaiveReason(""); }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => waiveDialogInvoice && invoiceMutation.mutate({ action: "waive", invoiceId: waiveDialogInvoice, reason: waiveReason })}
+              disabled={!waiveReason || invoiceMutation.isPending}
+            >
+              Waive Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
