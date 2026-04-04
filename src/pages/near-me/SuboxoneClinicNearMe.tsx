@@ -5,7 +5,7 @@ import { SEO, generateNearMeSchema } from "@/components/SEO";
 import { NearMeHero } from "@/components/seo/NearMeHero";
 import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { statesData } from "@/data/locationSeoData";
