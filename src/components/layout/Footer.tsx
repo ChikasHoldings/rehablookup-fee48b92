@@ -162,7 +162,7 @@ const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink
     <li>
       <Link
         to={link.path}
-        className={`inline-flex items-center gap-1.5 text-[13px] leading-relaxed transition-colors duration-150 ${
+        className={`inline-flex items-center gap-1.5 text-sm leading-relaxed transition-colors duration-150 ${
           link.highlight
             ? "text-accent font-medium hover:text-accent/80"
             : "text-primary-foreground/55 hover:text-primary-foreground"
@@ -171,7 +171,7 @@ const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink
         {link.highlight && <ArrowRight className="h-3 w-3" />}
         <span>{link.name}</span>
         {link.badge && (
-          <span className="ml-1 inline-flex items-center rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent leading-none">
+          <span className="ml-1 inline-flex items-center rounded-full bg-accent/15 px-1.5 py-0.5 text-xs font-semibold text-accent leading-none">
             {link.badge}
           </span>
         )}
@@ -183,7 +183,7 @@ const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink
 const FooterColumn = memo(function FooterColumn({ title, links }: FooterSection) {
   return (
     <div>
-      <h3 className="text-[11px] font-bold text-primary-foreground/80 uppercase tracking-[0.15em] mb-4">
+      <h3 className="text-xs font-bold text-primary-foreground/80 uppercase tracking-[0.15em] mb-4">
         {title}
       </h3>
       <ul className="space-y-2">
@@ -206,7 +206,7 @@ const MobileAccordion = memo(function MobileAccordion({ title, links }: FooterSe
         className="flex w-full items-center justify-between py-3.5 text-left"
         aria-expanded={open}
       >
-        <span className="text-sm font-semibold text-primary-foreground/90">{title}</span>
+        <span className="text-[15px] font-semibold text-primary-foreground/90">{title}</span>
         <ChevronDown
           className={`h-4 w-4 text-primary-foreground/40 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
@@ -320,7 +320,7 @@ export const Footer = memo(function Footer() {
                 />
               </Link>
               <div className="h-5 w-px bg-primary-foreground/10 hidden sm:block" />
-              <p className="text-[13px] text-primary-foreground/45 leading-snug max-w-xs">
+              <p className="text-sm text-primary-foreground/45 leading-snug max-w-xs">
                 Find trusted, accredited addiction treatment centers across the United States.
               </p>
             </div>
@@ -330,7 +330,7 @@ export const Footer = memo(function Footer() {
               {trustBadges.map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-1.5 text-primary-foreground/40">
                   <Icon className="h-3.5 w-3.5" />
-                  <span className="text-[11px] font-medium tracking-wide">{label}</span>
+                  <span className="text-xs font-medium tracking-wide">{label}</span>
                 </div>
               ))}
             </div>
@@ -344,7 +344,7 @@ export const Footer = memo(function Footer() {
           <div className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             {/* Left: Copyright + Legal */}
             <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <p className="text-[11px] text-primary-foreground/40">
+              <p className="text-xs text-primary-foreground/40">
                 © {currentYear} RehabLookup. All rights reserved. Not a medical provider.
               </p>
               <nav className="flex items-center gap-3">
@@ -356,14 +356,14 @@ export const Footer = memo(function Footer() {
                   <Link
                     key={l.to}
                     to={l.to}
-                    className="text-[11px] text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
+                    className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
                   >
                     {l.label}
                   </Link>
                 ))}
                 <a
                   href="/sitemap.xml"
-                  className="text-[11px] text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
+                  className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -376,7 +376,7 @@ export const Footer = memo(function Footer() {
             <div className="flex items-center gap-3">
               <a
                 href="mailto:help@rehablookup.com"
-                className="text-[11px] text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors hidden sm:inline-flex items-center gap-1"
+                className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors hidden sm:inline-flex items-center gap-1"
               >
                 <Mail className="h-3 w-3" /> help@rehablookup.com
               </a>
