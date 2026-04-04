@@ -122,7 +122,7 @@ export default function AdminProviders() {
     queryFn: async () => {
       const { data } = await supabase
         .from("pro_subscriptions")
-        .select("id, facility_id, status, plan_type, current_period_start, current_period_end, unlock_discount_percent, created_at")
+        .select("id, facility_id, status, unlock_discount_percent, current_period_end, price_cents, created_at")
         .eq("status", "active");
       
       const map: Record<string, ProSubscription> = {};
