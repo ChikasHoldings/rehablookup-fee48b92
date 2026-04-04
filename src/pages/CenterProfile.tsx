@@ -902,21 +902,21 @@ const CenterProfile = () => {
                   title="Services & Programs"
                   iconColor="bg-emerald-500/10 text-emerald-600"
                 >
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {(showAllServices ? services : services.slice(0, 8)).map((service) => (
                       <Badge 
                         key={service} 
                         variant="secondary" 
-                        className="px-3 py-1.5 text-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-emerald-500/15 transition-colors font-medium"
+                        className="px-2.5 py-1 text-xs bg-muted hover:bg-muted/80 text-foreground font-medium transition-colors"
                       >
-                        <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                        <CheckCircle className="h-3 w-3 mr-1 text-emerald-600" />
                         {service}
                       </Badge>
                     ))}
                     {services.length > 8 && (
                       <button
                         onClick={() => setShowAllServices(!showAllServices)}
-                        className="px-3 py-1.5 text-sm font-semibold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 rounded-full transition-all cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 rounded-full transition-all cursor-pointer"
                       >
                         {showAllServices ? 'Show less' : `+${services.length - 8} more`}
                       </button>
