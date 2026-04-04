@@ -149,7 +149,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
           </PrefetchLink>
 
           <div className="border-t border-border/30 pt-2.5 mt-2">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-1 mb-1.5">
+            <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">
               Near Me
             </p>
             {nearMePages.map((page) => (
