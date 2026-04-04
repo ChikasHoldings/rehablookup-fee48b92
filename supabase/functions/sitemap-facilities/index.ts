@@ -220,6 +220,34 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/treatment-center-patient-acquisition", priority: 0.8, changefreq: "monthly" },
   { path: "/provider-guides/behavioral-health-lead-generation", priority: 0.8, changefreq: "monthly" },
 
+  // ==================== COMPARISON PAGES ====================
+  { path: "/inpatient-vs-outpatient-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/detox-vs-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/private-vs-public-rehab", priority: 0.85, changefreq: "monthly" },
+
+  // ==================== TREATMENT HUB PAGES ====================
+  { path: "/alcohol-rehab-centers", priority: 0.85, changefreq: "weekly" },
+  { path: "/drug-rehab-centers", priority: 0.85, changefreq: "weekly" },
+  { path: "/detox-centers", priority: 0.85, changefreq: "weekly" },
+  { path: "/inpatient-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/outpatient-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/dual-diagnosis-treatment", priority: 0.85, changefreq: "weekly" },
+
+  // ==================== COST & INSURANCE HUB PAGES ====================
+  { path: "/rehab-cost", priority: 0.85, changefreq: "monthly" },
+  { path: "/does-insurance-cover-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/free-rehab-centers", priority: 0.85, changefreq: "monthly" },
+  { path: "/medicaid-rehab-centers", priority: 0.85, changefreq: "monthly" },
+
+  // ==================== FAQ PAGES ====================
+  { path: "/faq", priority: 0.7, changefreq: "monthly" },
+  { path: "/provider-faq", priority: 0.7, changefreq: "monthly" },
+
+  // ==================== CANONICAL TREATMENT ROUTES ====================
+  { path: "/treatment-types/alcohol-rehabilitation", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/residential-inpatient", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/holistic-therapy", priority: 0.8, changefreq: "weekly" },
+
   // ==================== LEGAL PAGES ====================
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
