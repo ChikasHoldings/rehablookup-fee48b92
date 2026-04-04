@@ -843,7 +843,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
             <AlertDialogAction
               onClick={handleBan}
               disabled={isBanning}
-              className="bg-amber-600 text-white hover:bg-amber-700"
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
             >
               {isBanning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Ban User
