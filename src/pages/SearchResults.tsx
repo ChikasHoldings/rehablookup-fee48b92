@@ -515,9 +515,13 @@ const SearchResults = () => {
                     <span className="text-primary">{filteredCenters.length}</span>
                     <span className="text-foreground"> Treatment Centers</span>
                   </span>
-                  {location && (
+                  {(location || queryParam) && (
                     <p className="text-xs text-muted-foreground">
-                      Near <span className="text-foreground font-medium">{location}</span>
+                      {queryParam ? (
+                        <>Results for "<span className="text-foreground font-medium">{queryParam}</span>"</>
+                      ) : (
+                        <>Near <span className="text-foreground font-medium">{location}</span></>
+                      )}
                     </p>
                   )}
                 </div>
