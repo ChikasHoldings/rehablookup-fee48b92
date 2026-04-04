@@ -135,8 +135,8 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                 {/* Years badge */}
                 {yearsInBusiness && yearsInBusiness > 0 && (
                   <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-sm rounded px-1 py-0.5 shadow-sm">
-                    <Clock className="h-2 w-2 text-blue-600" />
-                    <span className="text-[8px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
+                    <Clock className="h-2 w-2 text-primary" />
+                    <span className="text-[8px] font-semibold text-primary tabular-nums">{yearsInBusiness}+ yrs</span>
                   </div>
                 )}
               </div>
