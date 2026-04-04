@@ -111,21 +111,17 @@ export default function UnitedHealthcareRehab() {
         structuredData={faqSchema}
       />
 
-      {/* Visual Breadcrumb Navigation */}
-      <div className="bg-muted/30 border-b">
-        <div className="container py-3">
+
+
+      {/* Hero Section */}
+      <section className="bg-primary py-10 md:py-14">
+        <div className="container">
           <BreadcrumbNav
             items={[
               { label: "Insurance", href: "/insurance" },
               { label: "United Healthcare Rehab" },
             ]}
           />
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="bg-primary py-10 md:py-14">
-        <div className="container">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-4 flex items-center justify-center gap-3">
               <img 
