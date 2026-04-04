@@ -9,9 +9,10 @@ export interface BreadcrumbItem {
 interface BreadcrumbNavProps {
   items: BreadcrumbItem[];
   className?: string;
+  variant?: "dark" | "light";
 }
 
-export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
+export function BreadcrumbNav({ items, className = "", variant = "dark" }: BreadcrumbNavProps) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -30,6 +31,10 @@ export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
       })),
     ],
   };
+
+  const colors = variant === "dark"
+    ? { link: "text-white/60 hover:text-white", current: "text-white/90", sep: "text-white/30", home: "text-white/60 hover:text-white" }
+    : { link: "text-muted-foreground hover:text-foreground", current: "text-foreground", sep: "text-muted-foreground/40", home: "text-muted-foreground hover:text-foreground" };
 
   return (
     <>
@@ -54,7 +59,7 @@ export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
           >
             <Link
               to="/"
-              className="inline-flex items-center gap-1 text-white/60 hover:text-white transition-colors"
+              className={`inline-flex items-center gap-1 transition-colors ${colors.home}`}
               itemProp="item"
             >
               <Home className="h-3.5 w-3.5" />
@@ -71,18 +76,18 @@ export function BreadcrumbNav({ items, className = "" }: BreadcrumbNavProps) {
               itemScope
               itemType="https://schema.org/ListItem"
             >
-              <ChevronRight className="h-3 w-3 text-white/30 mx-0.5" />
+              <ChevronRight className={`h-3 w-3 mx-0.5 ${colors.sep}`} />
               {item.href ? (
                 <Link
                   to={item.href}
-                  className="text-white/60 hover:text-white transition-colors"
+                  className={`transition-colors ${colors.link}`}
                   itemProp="item"
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
               ) : (
                 <span
-                  className="text-white/90 font-medium"
+                  className={`font-medium ${colors.current}`}
                   itemProp="name"
                   aria-current="page"
                 >
