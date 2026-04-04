@@ -444,8 +444,8 @@ export function SubscriptionDetailModal({
 
                         <div className="space-y-4">
                           <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-blue-500/10">
-                              <Calendar className="h-5 w-5 text-blue-600" />
+                            <div className="p-2 rounded-full bg-info/10">
+                              <Calendar className="h-5 w-5 text-info" />
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Current Period</p>
