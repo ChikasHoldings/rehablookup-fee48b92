@@ -39,7 +39,7 @@ const benefits = [
 
 export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
   return (
-    <div className="w-[720px] max-w-[92vw]">
+    <div className="w-[min(720px,calc(100vw-2rem))]">
       <div className="flex">
         {/* Left: Guides */}
         <div className="flex-1 p-5">

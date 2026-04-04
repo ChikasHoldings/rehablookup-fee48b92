@@ -37,7 +37,7 @@ const programTypes = [
 
 export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
   return (
-    <div className="w-[700px] max-w-[92vw]">
+    <div className="w-[min(700px,calc(100vw-2rem))]">
       <div className="flex">
         {/* Left: Country pages */}
         <div className="flex-1 px-5 py-4 border-r border-border/30">

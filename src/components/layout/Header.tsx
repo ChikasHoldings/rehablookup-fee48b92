@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
@@ -159,6 +159,53 @@ export function Header({
   // Items in "More" dropdown on md (tablet)
   const tabletHiddenItems = megaMenuItems.slice(1); // hide Resources, International, For Providers on tablet
 
+  const getDesktopMegaMenuStyle = (menuId: string): CSSProperties => {
+    const gutter = 16;
+    const menuWidths: Record<string, number> = {
+      "find-treatment": 740,
+      "resources": 680,
+      "international": 700,
+      "for-providers": 720,
+    };
+
+    if (typeof window === "undefined") {
+      return {
+        position: "fixed",
+        top: "64px",
+        left: `${gutter}px`,
+        maxWidth: `calc(100vw - ${gutter * 2}px)`,
+      };
+    }
+
+    const headerEl = document.querySelector("header") as HTMLElement | null;
+    const triggerEl = document.querySelector(`[data-nav-menu="${menuId}"]`) as HTMLElement | null;
+    const menuWidth = Math.min(menuWidths[menuId] ?? 720, window.innerWidth - gutter * 2);
+
+    if (!headerEl || !triggerEl) {
+      return {
+        position: "fixed",
+        top: "64px",
+        left: `${gutter}px`,
+        maxWidth: `calc(100vw - ${gutter * 2}px)`,
+      };
+    }
+
+    const headerRect = headerEl.getBoundingClientRect();
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const preferredLeft = triggerRect.left + triggerRect.width / 2 - menuWidth / 2;
+    const safeLeft = Math.min(
+      Math.max(preferredLeft, gutter),
+      window.innerWidth - gutter - menuWidth
+    );
+
+    return {
+      position: "fixed",
+      top: `${Math.round(headerRect.bottom)}px`,
+      left: `${Math.round(safeLeft)}px`,
+      maxWidth: `calc(100vw - ${gutter * 2}px)`,
+    };
+  };
+
   return (
     <>
       {/* Backdrop for closing mega menus */}
@@ -185,6 +232,7 @@ export function Header({
             {/* Find Rehab mega-menu - always visible on md+ */}
             <div
               className="relative"
+              data-nav-menu="find-treatment"
               onMouseEnter={() => {
                 if (megaMenuTimeoutRef.current) clearTimeout(megaMenuTimeoutRef.current);
                 setOpenMegaMenu("find-treatment");
@@ -208,7 +256,10 @@ export function Header({
                 <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", openMegaMenu === "find-treatment" && "rotate-180")} />
               </button>
               {openMegaMenu === "find-treatment" && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150 max-w-[calc(100vw-2rem)]">
+                <div
+                  className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
+                  style={getDesktopMegaMenuStyle("find-treatment")}
+                >
                   <FindTreatmentMegaMenu onNavigate={() => setOpenMegaMenu(null)} />
                 </div>
               )}
@@ -233,6 +284,7 @@ export function Header({
               <div
                 key={item.id}
                 className="hidden lg:block relative"
+                data-nav-menu={item.id}
                 onMouseEnter={() => {
                   if (megaMenuTimeoutRef.current) clearTimeout(megaMenuTimeoutRef.current);
                   setOpenMegaMenu(item.id);
@@ -256,10 +308,10 @@ export function Header({
                   <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", openMegaMenu === item.id && "rotate-180")} />
                 </button>
                 {openMegaMenu === item.id && (
-                  <div className={cn(
-                    "absolute top-full mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150 max-w-[calc(100vw-2rem)]",
-                    item.id === "for-providers" || item.id === "international" ? "right-0" : "left-1/2 -translate-x-1/2"
-                  )}>
+                  <div
+                    className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
+                    style={getDesktopMegaMenuStyle(item.id)}
+                  >
                     <MegaMenuContent id={item.id} onNavigate={() => setOpenMegaMenu(null)} />
                   </div>
                 )}
