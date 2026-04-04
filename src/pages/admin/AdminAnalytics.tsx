@@ -197,7 +197,8 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facilities")
-        .select("id, name, city, state, status, lead_limit_override");
+        .select("id, name, city, state, status, lead_limit_override")
+        .limit(5000);
       if (error) throw error;
       return data || [];
     },
