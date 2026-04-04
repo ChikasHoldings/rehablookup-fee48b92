@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { costEstimatorFaqs } from "@/data/pageFaqs";
 import { Calculator, DollarSign, Shield, Clock, AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";

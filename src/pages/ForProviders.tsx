@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { forProvidersFaqs } from "@/data/pageFaqs";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { SEO } from "@/components/SEO";
