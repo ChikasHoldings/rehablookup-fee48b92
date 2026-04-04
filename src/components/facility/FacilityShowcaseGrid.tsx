@@ -59,7 +59,7 @@ function FacilityShowcaseCard({
     <button
       onClick={() => navigate(detailUrl, { state: { fromSearch: true } })}
       className={cn(
-        "relative overflow-hidden rounded-xl bg-card border group text-left transition-all duration-300 w-full",
+        "relative overflow-hidden rounded-xl bg-card border group text-left transition-all duration-300 w-full h-full flex flex-col",
         "hover:shadow-lg hover:border-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         isFeatured
           ? "border-amber-200/60 ring-1 ring-amber-100/40"
@@ -68,8 +68,8 @@ function FacilityShowcaseCard({
     >
       {/* Image */}
       <div className={cn(
-        "relative w-full overflow-hidden bg-muted",
-        size === "large" ? "aspect-[16/10]" : "aspect-[16/9]"
+        "relative w-full overflow-hidden bg-muted flex-1 min-h-0",
+        size === "large" ? "" : "aspect-[16/9]"
       )}>
         {hasImage ? (
           <img
@@ -225,9 +225,11 @@ export function FacilityShowcaseGrid({
           onScroll={updateScrollState}
           className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x"
         >
-          {/* Hero card */}
-          <div className="shrink-0 snap-start w-[260px] sm:w-[300px] md:w-[340px]">
-            <FacilityShowcaseCard facility={heroFacility} size="large" />
+          {/* Hero card — matches the height of a stacked pair */}
+          <div className="shrink-0 snap-start w-[260px] sm:w-[300px] md:w-[340px] self-stretch flex">
+            <div className="w-full flex flex-col">
+              <FacilityShowcaseCard facility={heroFacility} size="large" />
+            </div>
           </div>
 
           {/* Stacked pairs */}
