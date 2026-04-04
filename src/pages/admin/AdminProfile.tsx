@@ -459,7 +459,7 @@ export default function AdminProfile() {
               {otherSessions.length > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1.5 text-red-600 hover:text-red-700">
+                    <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
                       <LogOut className="h-4 w-4" />
                       Revoke All Others
                     </Button>
