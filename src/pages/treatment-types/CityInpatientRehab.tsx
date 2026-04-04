@@ -20,6 +20,7 @@ import {
   Building2,
 } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const programTypes = [
   {
@@ -110,17 +111,10 @@ const CityInpatientRehab = () => {
       <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
         <MedicalPatternBackground />
-          <nav className="mb-5 flex items-center gap-2 text-sm leading-none whitespace-nowrap">
-            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-            <span className="text-white/50">/</span>
-            <Link to="/treatment-types/residential-inpatient" className="text-white/70 hover:text-white transition-colors">Inpatient</Link>
-            <span className="text-white/50">/</span>
-            <Link to={`/treatment-types/residential-inpatient/${stateSlug}`} className="text-white/70 hover:text-white transition-colors">{stateName}</Link>
-            <span className="text-white/50">/</span>
-            <span className="text-white font-medium">{cityName}</span>
-          </nav>
-
-          <div className="max-w-3xl">
+          <BreadcrumbNav
+            className="mb-4"
+            items=[{'{ label: "Inpatient", href: "/treatment-types/residential-inpatient" },\n              { label: {stateName}, href: `/treatment-types/residential-inpatient/${stateSlug },\n              { label: {cityName} }'}]
+          /><div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
               <Sparkles className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Residential Treatment in {cityName}</span>

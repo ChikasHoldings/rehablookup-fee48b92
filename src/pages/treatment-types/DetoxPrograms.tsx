@@ -30,6 +30,7 @@ import {
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const detoxTypes = [
   {
@@ -174,17 +175,10 @@ const DetoxPrograms = () => {
       <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
         <MedicalPatternBackground />
-          <nav className="mb-5 text-center">
-            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
-              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-              <span className="text-white/50">/</span>
-              <Link to="/treatment-types" className="text-white/70 hover:text-white transition-colors">Treatment Types</Link>
-              <span className="text-white/50">/</span>
-              <span className="text-white font-medium">Detox Programs</span>
-            </span>
-          </nav>
-
-          <div className="max-w-3xl">
+          <BreadcrumbNav
+            className="mb-4"
+            items=[{'{ label: "Treatment Types", href: "/treatment-types" },\n              { label: "Detox Programs" }'}]
+          /><div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
               <Sparkles className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Medical Detox Centers</span>

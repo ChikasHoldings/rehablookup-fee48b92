@@ -40,6 +40,7 @@ const treatmentTypesData = [
   { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types", param: "?type=holistic" },
 ];
 import { cn } from "@/lib/utils";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 // City images mapping
 const cityImages: Record<string, Record<string, string>> = {
@@ -302,17 +303,10 @@ const CityPage = () => {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
         <div className="container relative z-10">
-          <nav className="mb-5 flex items-center gap-2 text-sm leading-none whitespace-nowrap">
-            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-            <span className="text-white/50">/</span>
-            <Link to="/rehab-centers" className="text-white/70 hover:text-white transition-colors">Find Rehab</Link>
-            <span className="text-white/50">/</span>
-            <Link to={`/rehab-centers/${stateData.slug}`} className="text-white/70 hover:text-white transition-colors">{stateData.name}</Link>
-            <span className="text-white/50">/</span>
-            <span className="text-white font-medium">{cityData.name}</span>
-          </nav>
-
-          <div className="max-w-3xl">
+          <BreadcrumbNav
+            className="mb-4"
+            items=[{'{ label: "Find Rehab", href: "/rehab-centers" },\n              { label: {stateData.name}, href: `/rehab-centers/${stateData.slug },\n              { label: {cityData.name} }'}]
+          /><div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
               <MapPin className="h-4 w-4" />
               {fullLocation}

@@ -22,6 +22,7 @@ import step1Image from "@/assets/how-it-works/step-1-search.png";
 import step2Image from "@/assets/how-it-works/step-2-compare.png";
 import step3Image from "@/assets/how-it-works/step-3-connect.png";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const steps = [
   {
@@ -147,16 +148,10 @@ const HowItWorks = () => {
         </div>
         
         <div className="container relative">
-          {/* Breadcrumb */}
-          <nav className="mb-5 text-center">
-            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
-              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-              <span className="text-white/50">/</span>
-              <span className="text-white font-medium">How It Works</span>
-            </span>
-          </nav>
-          
-          <div className="mx-auto max-w-2xl text-center">
+          <BreadcrumbNav
+            className="mb-4"
+            items=[{'{ label: "How It Works" }'}]
+          /><div className="mx-auto max-w-2xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
               <CheckCircle className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Simple 3-Step Process</span>

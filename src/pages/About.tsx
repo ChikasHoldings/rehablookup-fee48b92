@@ -19,6 +19,7 @@ import {
 import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const values = [
   {
@@ -95,16 +96,10 @@ const About = () => {
         </div>
         
         <div className="container relative">
-          {/* Breadcrumb */}
-          <nav className="mb-5 md:mb-6 text-center">
-            <span className="inline-flex items-center gap-2 text-sm md:text-base whitespace-nowrap">
-              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-              <span className="text-white/50">/</span>
-              <span className="text-white font-medium">About</span>
-            </span>
-          </nav>
-          
-          <div className="mx-auto max-w-2xl lg:max-w-3xl text-center">
+          <BreadcrumbNav
+            className="mb-4"
+            items=[{'{ label: "About" }'}]
+          /><div className="mx-auto max-w-2xl lg:max-w-3xl text-center">
             <div className="mb-4 md:mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 md:px-5 py-2 md:py-2.5 backdrop-blur-sm border border-white/10">
               <Heart className="h-4 w-4 md:h-5 md:w-5 text-accent" />
               <span className="text-sm md:text-base font-medium text-primary-foreground">Our Story</span>

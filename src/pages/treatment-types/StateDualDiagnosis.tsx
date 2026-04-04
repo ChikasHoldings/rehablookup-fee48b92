@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const mentalHealthConditions = [
   {
@@ -105,17 +106,10 @@ const StateDualDiagnosis = () => {
       <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
         <MedicalPatternBackground />
-          <nav className="mb-5 flex items-center gap-2 text-sm leading-none whitespace-nowrap">
-            <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-            <span className="text-white/50">/</span>
-            <Link to="/treatment-types" className="text-white/70 hover:text-white transition-colors">Treatment Types</Link>
-            <span className="text-white/50">/</span>
-            <Link to="/treatment-types/dual-diagnosis-treatment" className="text-white/70 hover:text-white transition-colors">Dual Diagnosis</Link>
-            <span className="text-white/50">/</span>
-            <span className="text-white font-medium">{stateName}</span>
-          </nav>
-
-          <div className="max-w-3xl">
+          <BreadcrumbNav
+            className="mb-4"
+            items=[{'{ label: "Treatment Types", href: "/treatment-types" },\n              { label: "Dual Diagnosis", href: "/treatment-types/dual-diagnosis-treatment" },\n              { label: {stateName} }'}]
+          /><div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
               <Brain className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Co-Occurring Disorder Treatment</span>

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/accordion";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const holisticTherapies = [
   {
@@ -165,17 +166,10 @@ const HolisticTherapy = () => {
         <div className="container">
         <MedicalPatternBackground />
           {/* Breadcrumbs */}
-          <nav className="mb-5 text-center">
-            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
-              <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
-              <span className="text-white/50">/</span>
-              <Link to="/treatment-types" className="text-white/70 hover:text-white transition-colors">Treatment Types</Link>
-              <span className="text-white/50">/</span>
-              <span className="text-white font-medium">Holistic Therapy</span>
-            </span>
-          </nav>
-
-          <div className="text-center">
+          <BreadcrumbNav
+            className="mb-4"
+            items=[{'{ label: "Treatment Types", href: "/treatment-types" },\n              { label: "Holistic Therapy" }'}]
+          /><div className="text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
               <Sparkles className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Complementary Treatment</span>
