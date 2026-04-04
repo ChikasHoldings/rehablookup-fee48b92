@@ -1224,7 +1224,7 @@ export default function AdminSecurityLogs() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+                  <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground">No Suspicious Activity</h3>
                   <p className="text-muted-foreground mt-1">
                     No identifiers with 3+ failed attempts in the last hour
