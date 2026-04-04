@@ -194,20 +194,14 @@ export default function WomensRehabNearMe() {
             <SearchResultsLoading />
           ) : (
             <div>
-              {/* Horizontal scroll on mobile, grid on larger screens */}
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {facilities.slice(0, 12).map((facility) => (
-                  <div key={facility.id || facility.name}>
-                    <TreatmentCenterCard center={facility as any} />
-                  </div>
-                ))}
-              </div>
-
-              {facilities.length > 12 && (
-                <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
-                    <Button variant="outline" size="lg" className="gap-2">
-                      View All {facilities.length} Centers
+              <FacilityShowcaseGrid
+                facilities={facilities.slice(0, 12) as any[]}
+                title="Treatment Centers Near You"
+                subtitle={`${facilities.length} verified women's rehab centers`}
+                viewAllHref={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}
+                viewAllLabel={`View All ${facilities.length} Centers`}
+              />
+            </div>
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
