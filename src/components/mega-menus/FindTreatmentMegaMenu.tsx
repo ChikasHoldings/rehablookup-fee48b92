@@ -144,7 +144,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
           <PrefetchLink to="/locations" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 pt-1.5 text-[11px] font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-1.5 text-xs font-semibold text-primary hover:text-primary/80">
             All states <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
