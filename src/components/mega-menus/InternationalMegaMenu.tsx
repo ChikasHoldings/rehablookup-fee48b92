@@ -11,6 +11,7 @@ interface MegaMenuProps {
 }
 
 const countryPages = [
+  { href: "/international", label: "International Placement", flag: "🌐" },
   { href: "/us-rehab/uk-patients", label: "United Kingdom & Ireland", flag: "🇬🇧" },
   { href: "/us-rehab/canadian-patients", label: "Canada", flag: "🇨🇦" },
   { href: "/us-rehab/european-patients", label: "Europe", flag: "🇪🇺" },
