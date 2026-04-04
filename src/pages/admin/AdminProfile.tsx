@@ -125,7 +125,7 @@ export default function AdminProfile() {
       if (!userData?.id) return null;
       const { data, error } = await supabase
         .from("admin_user_profiles")
-        .select("*")
+        .select("user_id, display_name, first_name, last_name, avatar_url, admin_role, status, force_password_change, mfa_enabled, mfa_skip, last_login_at, created_at, updated_at, notify_new_leads, notify_new_providers, notify_security_events, notify_subscription_changes, notify_system_alerts, email_digest_frequency")
         .eq("user_id", userData.id)
         .maybeSingle();
       
