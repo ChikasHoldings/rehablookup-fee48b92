@@ -24,8 +24,6 @@ import {
   Building2,
   BadgeCheck,
   ExternalLink,
-  ChevronLeft,
-  ChevronRight,
   Image as ImageIcon,
   MessageSquare,
   Flag,
@@ -37,12 +35,16 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
-import { TrustBadgesInline, TrustBadgesSection } from "@/components/trust/TrustBadgesSection";
+import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
+import { TrustBadge, AccreditationType } from "@/components/trust/TrustBadge";
 import { GoogleReviewsCard } from "@/components/reviews/GoogleReviewsCard";
 import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSection";
 import { usePublicGoogleReviews } from "@/hooks/useGoogleReviews";
@@ -52,6 +54,9 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface FacilityData {
   id: string;
@@ -219,6 +224,7 @@ const CenterProfile = () => {
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
   
   const fromSearch = location.state?.fromSearch;
@@ -420,6 +426,47 @@ const CenterProfile = () => {
 
   // Fetch facility rating for badge display
   const ratingData = useFacilityRating(facility?.id);
+
+  // Fetch nearby/related facilities from same state
+  const { data: nearbyFacilities = [] } = useQuery({
+    queryKey: ["nearby-facilities", facility?.state, facility?.id],
+    queryFn: async () => {
+      if (!facility) return [];
+      const { data } = await supabase
+        .from("facilities")
+        .select("id, name, slug, city, state, zip_code, address, phone, description, facility_type, featured, verified, logo_url, gallery_urls, year_established")
+        .eq("state", facility.state)
+        .eq("status", "approved")
+        .neq("id", facility.id)
+        .limit(6);
+      return (data || []).map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        city: f.city,
+        state: f.state,
+        zipCode: f.zip_code,
+        address: f.address,
+        phone: f.phone,
+        description: f.description || "",
+        treatmentTypes: [],
+        insuranceAccepted: [],
+        amenities: [],
+        rating: null,
+        reviewCount: 0,
+        image: f.gallery_urls?.[0] || f.logo_url || null,
+        featured: f.featured,
+        verified: f.verified,
+        logo_url: f.logo_url,
+        gallery_urls: f.gallery_urls,
+        year_established: f.year_established,
+        isFromDatabase: true,
+        programOverview: "",
+      }));
+    },
+    enabled: !!facility?.id && !!facility?.state,
+    staleTime: 1000 * 60 * 10,
+  });
 
   useEffect(() => {
     if (facility?.id) {
@@ -750,8 +797,8 @@ const CenterProfile = () => {
           {/* Main Content Grid */}
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr,380px]">
             {/* Left Column - Main Content */}
-            <div className="space-y-8 lg:space-y-10 min-w-0 divide-y divide-border/40 [&>*]:pt-8 [&>*:first-child]:pt-0">
-              {/* Gallery */}
+            <div className="space-y-0 min-w-0 divide-y divide-border [&>*]:py-8 [&>*:first-child]:pt-0">
+              {/* Gallery — compact grid with lightbox */}
               {galleryImages.length > 0 && (
                 <ProfileSection 
                   icon={ImageIcon} 
@@ -773,35 +820,31 @@ const CenterProfile = () => {
                     )
                   }
                 >
-                  {/* Main Image */}
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-3">
-                    <img 
-                      src={galleryImages[activeGalleryIndex]} 
-                      alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
-                      className="w-full h-full object-cover transition-opacity duration-300"
-                      loading="lazy"
-                    />
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 rounded-xl overflow-hidden">
+                    {galleryImages.slice(0, 8).map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => { setActiveGalleryIndex(idx); setLightboxOpen(true); }}
+                        className={cn(
+                          "relative aspect-square overflow-hidden bg-muted group",
+                          idx === 0 && "col-span-2 row-span-2"
+                        )}
+                      >
+                        <img 
+                          src={img} 
+                          alt={`${facility.name} - Photo ${idx + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        {idx === 7 && galleryImages.length > 8 && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <span className="text-white font-bold text-base">+{galleryImages.length - 8}</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
                   </div>
-                  
-                  {/* Thumbnails — compact, minimal */}
-                  {galleryImages.length > 1 && (
-                    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                      {galleryImages.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveGalleryIndex(idx)}
-                          className={cn(
-                            "shrink-0 w-16 h-11 rounded-md overflow-hidden transition-all",
-                            idx === activeGalleryIndex 
-                              ? "ring-2 ring-primary ring-offset-1 ring-offset-background opacity-100" 
-                              : "opacity-50 hover:opacity-80"
-                          )}
-                        >
-                          <img src={img} alt={`${facility.name} photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </ProfileSection>
               )}
 
@@ -978,25 +1021,50 @@ const CenterProfile = () => {
                 </ProfileSection>
               )}
 
-              {/* Trust & Accreditations */}
-              <TrustBadgesSection
-                verified={facility.verified || false}
-                yearEstablished={facility.year_established}
-                accreditations={facility.facility_accreditations || []}
-                facilityType={facility.facility_type}
-              />
+              {/* Trust & Accreditations — inline, no card wrapper */}
+              {(() => {
+                const verifiedAccreditations = (facility.facility_accreditations || []).filter(a => a.verified);
+                const isLuxury = facility.facility_type?.toLowerCase().includes("luxury");
+                const hasContent = facility.verified || (yearsInBusiness && yearsInBusiness > 0) || verifiedAccreditations.length > 0 || isLuxury;
+                if (!hasContent) return null;
+                return (
+                  <ProfileSection
+                    icon={ShieldCheck}
+                    title="Trust & Accreditations"
+                    iconColor="bg-emerald-500/10 text-emerald-600"
+                  >
+                    <div className="flex flex-wrap gap-2">
+                      {isLuxury && <TrustBadge type="luxury" />}
+                      {facility.verified && <TrustBadge type="verified" />}
+                      {yearsInBusiness && yearsInBusiness > 0 && <TrustBadge type="years" years={yearsInBusiness} />}
+                      {verifiedAccreditations.map((acc) => (
+                        <TrustBadge key={acc.accreditation_type} type={acc.accreditation_type as AccreditationType} verified={acc.verified} />
+                      ))}
+                    </div>
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      Accreditations are verified by our team. Learn more about what these badges mean.
+                    </p>
+                  </ProfileSection>
+                );
+              })()}
 
-              {/* Google Reviews - shown below trust badges */}
+              {/* Google Reviews */}
               <GoogleReviewsDisplay facilityId={facility.id} />
 
               {/* Our Team Section */}
               <FacilityStaffSection facilityId={facility.id} />
 
-              {/* Community Reviews Section */}
-              <FacilityReviewsSection 
-                facilityId={facility.id} 
-                facilityName={facility.name} 
-              />
+              {/* Community Reviews — single consolidated section */}
+              <ProfileSection
+                icon={MessageSquare}
+                title="Community Reviews"
+                iconColor="bg-violet-500/10 text-violet-600"
+              >
+                <FacilityReviewsSection 
+                  facilityId={facility.id} 
+                  facilityName={facility.name} 
+                />
+              </ProfileSection>
             </div>
 
             {/* Right Column - Sticky Sidebar */}
@@ -1158,8 +1226,98 @@ const CenterProfile = () => {
 
             <ConciergeCTACard compact />
           </div>
+
+          {/* Nearby Facilities */}
+          {nearbyFacilities.length > 0 && (
+            <div className="mt-10 pt-8 border-t border-border">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/80">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
+                  More Facilities in {facility.state}
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nearbyFacilities.slice(0, 6).map((center: any) => (
+                  <TreatmentCenterCard key={center.id} center={center} variant="compact" />
+                ))}
+              </div>
+              <div className="text-center mt-6">
+                <Link to={`/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}`}>
+                  <Button variant="outline" className="gap-2">
+                    View All in {facility.state}
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Photo Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] p-0 bg-black/95 border-none">
+          <VisuallyHidden>
+            <DialogTitle>{facility.name} Photo Gallery</DialogTitle>
+          </VisuallyHidden>
+          <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full">
+            <img
+              src={galleryImages[activeGalleryIndex]}
+              alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
+              className="w-full h-full object-contain"
+            />
+            {galleryImages.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveGalleryIndex(activeGalleryIndex === 0 ? galleryImages.length - 1 : activeGalleryIndex - 1)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveGalleryIndex(activeGalleryIndex === galleryImages.length - 1 ? 0 : activeGalleryIndex + 1)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </>
+            )}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/60 text-white text-sm font-medium">
+              {activeGalleryIndex + 1} / {galleryImages.length}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-2 right-2 h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          {galleryImages.length > 1 && (
+            <div className="hidden sm:flex gap-1.5 p-3 overflow-x-auto bg-black/80">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveGalleryIndex(idx)}
+                  className={cn(
+                    "shrink-0 w-14 h-10 rounded overflow-hidden transition-all",
+                    idx === activeGalleryIndex ? "ring-2 ring-white opacity-100" : "opacity-50 hover:opacity-75"
+                  )}
+                >
+                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Request Info Modal */}
       <RequestInfoModal

@@ -25,7 +25,7 @@ export function FacilityReviewsSection({ facilityId, facilityName }: FacilityRev
   } = useFacilityReviews(facilityId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 [&_.border]:border-0 [&_.shadow-sm]:shadow-none [&_.rounded-lg]:rounded-none [&>div>div]:bg-transparent">
       <ReviewForm
         facilityName={facilityName}
         userReview={userReview}
