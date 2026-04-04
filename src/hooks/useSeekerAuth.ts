@@ -34,7 +34,7 @@ export function useSeekerAuth() {
   const fetchProfile = useCallback(async (userId: string, userEmail?: string) => {
     const { data, error } = await supabase
       .from('seeker_profiles')
-      .select('*')
+      .select('id, user_id, first_name, last_name, display_name, phone, email, zipcode, city, state, avatar_url, phone_verified, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
     

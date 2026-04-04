@@ -42,7 +42,7 @@ export function ReviewsList({
       const reviewIds = reviews.map(r => r.id);
       const { data } = await supabase
         .from('review_responses')
-        .select('*')
+        .select('id, review_id, responder_name, response_text, status, created_at')
         .in('review_id', reviewIds)
         .eq('status', 'active');
 
