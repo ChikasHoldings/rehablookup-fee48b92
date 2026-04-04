@@ -102,6 +102,23 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             className="inline-flex items-center gap-1 px-2 pt-2 text-[11px] font-semibold text-primary hover:text-primary/80">
             All treatment types <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
+
+          {/* Concierge CTA with Image */}
+          <Link to="/concierge" onClick={onNavigate} className="group block mt-2.5">
+            <div className="relative rounded-lg overflow-hidden h-[68px]">
+              <img src={conciergeImg} alt="Free treatment matching" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/60 to-foreground/30" />
+              <div className="relative h-full flex items-center justify-between px-3.5">
+                <div>
+                  <p className="text-[12px] font-bold text-white leading-tight">Free Concierge Matching</p>
+                  <p className="text-[10px] text-white/70 leading-tight mt-0.5">Get matched with the right center in 24hrs</p>
+                </div>
+                <div className="h-7 px-3 rounded-md bg-accent text-accent-foreground text-[10px] font-semibold flex items-center gap-1 shrink-0 group-hover:bg-accent/90 transition-colors shadow-sm">
+                  Get Matched <ArrowRight className="h-3 w-3" />
+                </div>
+              </div>
+            </div>
+          </Link>
         </div>
 
         {/* Right: Locations + Near Me */}
