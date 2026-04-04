@@ -224,6 +224,7 @@ const CenterProfile = () => {
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
   
   const fromSearch = location.state?.fromSearch;
