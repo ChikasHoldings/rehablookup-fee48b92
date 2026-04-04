@@ -480,7 +480,7 @@ export default function AdminProfile() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleRevokeAllOtherSessions}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-destructive hover:bg-destructive/90"
                         disabled={isRevokingAll}
                       >
                         {isRevokingAll ? (
