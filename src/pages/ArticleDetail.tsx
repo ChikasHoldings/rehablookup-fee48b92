@@ -455,6 +455,7 @@ const ArticleDetail = () => {
               { label: article.title },
             ]}
             className="mb-4"
+            variant="light"
           />
           <div className="max-w-4xl mx-auto">
 

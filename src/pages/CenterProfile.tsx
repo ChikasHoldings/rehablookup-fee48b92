@@ -615,6 +615,7 @@ const CenterProfile = () => {
               { label: facility.name },
             ]}
             className="mb-4"
+            variant="light"
           />
           {/* Pending Status Banner */}
           {isOwner && isPending && (
