@@ -54,7 +54,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
       {/* Premium search bar */}
       <div className="px-5 pt-4 pb-3">
         <form onSubmit={handleSearch} className="relative group/search">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
             <Search className="h-4 w-4 text-accent" />
           </div>
           <input
@@ -62,7 +62,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             placeholder="Search by city, state, or treatment type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-12 pl-14 pr-28 rounded-xl border border-border/60 bg-muted/30 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 focus:bg-background transition-all shadow-sm"
+            className="w-full h-12 pl-14 pr-28 rounded-xl border-2 border-accent/30 bg-accent/[0.04] text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 focus:bg-background transition-all shadow-sm"
           />
           <button
             type="submit"
