@@ -755,8 +755,8 @@ const CenterProfile = () => {
           {/* Main Content Grid */}
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr,380px]">
             {/* Left Column - Main Content */}
-            <div className="space-y-8 lg:space-y-10 min-w-0 divide-y divide-border/40 [&>*]:pt-8 [&>*:first-child]:pt-0">
-              {/* Gallery */}
+            <div className="space-y-0 min-w-0 divide-y divide-border [&>*]:py-8 [&>*:first-child]:pt-0">
+              {/* Gallery — compact grid with lightbox */}
               {galleryImages.length > 0 && (
                 <ProfileSection 
                   icon={ImageIcon} 
@@ -778,35 +778,31 @@ const CenterProfile = () => {
                     )
                   }
                 >
-                  {/* Main Image */}
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-3">
-                    <img 
-                      src={galleryImages[activeGalleryIndex]} 
-                      alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
-                      className="w-full h-full object-cover transition-opacity duration-300"
-                      loading="lazy"
-                    />
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 rounded-xl overflow-hidden">
+                    {galleryImages.slice(0, 8).map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => { setActiveGalleryIndex(idx); setLightboxOpen(true); }}
+                        className={cn(
+                          "relative aspect-square overflow-hidden bg-muted group",
+                          idx === 0 && "col-span-2 row-span-2"
+                        )}
+                      >
+                        <img 
+                          src={img} 
+                          alt={`${facility.name} - Photo ${idx + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        {idx === 7 && galleryImages.length > 8 && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <span className="text-white font-bold text-base">+{galleryImages.length - 8}</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
                   </div>
-                  
-                  {/* Thumbnails — compact, minimal */}
-                  {galleryImages.length > 1 && (
-                    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                      {galleryImages.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveGalleryIndex(idx)}
-                          className={cn(
-                            "shrink-0 w-16 h-11 rounded-md overflow-hidden transition-all",
-                            idx === activeGalleryIndex 
-                              ? "ring-2 ring-primary ring-offset-1 ring-offset-background opacity-100" 
-                              : "opacity-50 hover:opacity-80"
-                          )}
-                        >
-                          <img src={img} alt={`${facility.name} photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </ProfileSection>
               )}
 
@@ -983,25 +979,50 @@ const CenterProfile = () => {
                 </ProfileSection>
               )}
 
-              {/* Trust & Accreditations */}
-              <TrustBadgesSection
-                verified={facility.verified || false}
-                yearEstablished={facility.year_established}
-                accreditations={facility.facility_accreditations || []}
-                facilityType={facility.facility_type}
-              />
+              {/* Trust & Accreditations — inline, no card wrapper */}
+              {(() => {
+                const verifiedAccreditations = (facility.facility_accreditations || []).filter(a => a.verified);
+                const isLuxury = facility.facility_type?.toLowerCase().includes("luxury");
+                const hasContent = facility.verified || (yearsInBusiness && yearsInBusiness > 0) || verifiedAccreditations.length > 0 || isLuxury;
+                if (!hasContent) return null;
+                return (
+                  <ProfileSection
+                    icon={ShieldCheck}
+                    title="Trust & Accreditations"
+                    iconColor="bg-emerald-500/10 text-emerald-600"
+                  >
+                    <div className="flex flex-wrap gap-2">
+                      {isLuxury && <TrustBadge type="luxury" />}
+                      {facility.verified && <TrustBadge type="verified" />}
+                      {yearsInBusiness && yearsInBusiness > 0 && <TrustBadge type="years" years={yearsInBusiness} />}
+                      {verifiedAccreditations.map((acc) => (
+                        <TrustBadge key={acc.accreditation_type} type={acc.accreditation_type as AccreditationType} verified={acc.verified} />
+                      ))}
+                    </div>
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      Accreditations are verified by our team. Learn more about what these badges mean.
+                    </p>
+                  </ProfileSection>
+                );
+              })()}
 
-              {/* Google Reviews - shown below trust badges */}
+              {/* Google Reviews */}
               <GoogleReviewsDisplay facilityId={facility.id} />
 
               {/* Our Team Section */}
               <FacilityStaffSection facilityId={facility.id} />
 
-              {/* Community Reviews Section */}
-              <FacilityReviewsSection 
-                facilityId={facility.id} 
-                facilityName={facility.name} 
-              />
+              {/* Community Reviews — single consolidated section */}
+              <ProfileSection
+                icon={MessageSquare}
+                title="Community Reviews"
+                iconColor="bg-violet-500/10 text-violet-600"
+              >
+                <FacilityReviewsSection 
+                  facilityId={facility.id} 
+                  facilityName={facility.name} 
+                />
+              </ProfileSection>
             </div>
 
             {/* Right Column - Sticky Sidebar */}
