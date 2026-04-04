@@ -186,6 +186,26 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/free-rehab-centers", priority: 0.85, changefreq: "monthly" },
   { path: "/medicaid-rehab-centers", priority: 0.85, changefreq: "monthly" },
 
+  // SUBSTANCE-SPECIFIC LANDING PAGES
+  { path: "/cocaine-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/opioid-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/heroin-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/meth-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/prescription-drug-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/benzodiazepine-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+
+  // BEST REHAB IN STATE ROUNDUP PAGES
+  { path: "/best-rehab-centers-in-california", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-florida", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-texas", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-new-york", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-arizona", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-colorado", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-pennsylvania", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-ohio", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-illinois", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-georgia", priority: 0.85, changefreq: "weekly" },
+
   // RESOURCE ARTICLES (static slugs)
   { path: "/resources/signs-of-addiction", priority: 0.8, changefreq: "monthly" },
   { path: "/resources/how-to-help-loved-one", priority: 0.8, changefreq: "monthly" },
