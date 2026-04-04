@@ -141,8 +141,8 @@ interface SubscriptionDetailModalProps {
 const PlanBadge = forwardRef<HTMLDivElement, { plan: string }>(
   function PlanBadge({ plan }, ref) {
     const config: Record<string, { label: string; className: string }> = {
-      free: { label: "Free", className: "bg-slate-100 text-slate-700 border-slate-200" },
-      pro: { label: "Pro", className: "bg-amber-100 text-amber-700 border-amber-200" },
+      free: { label: "Free", className: "bg-muted text-muted-foreground border-border" },
+      pro: { label: "Pro", className: "bg-warning/10 text-warning border-warning/30" },
     };
     const { label, className } = config[plan] || { label: plan, className: "bg-muted text-muted-foreground" };
     return <Badge ref={ref} variant="outline" className={className}>{label}</Badge>;
@@ -153,7 +153,7 @@ const StatusBadge = forwardRef<HTMLDivElement, { status: string; isPaused?: bool
   function StatusBadge({ status, isPaused }, ref) {
     if (isPaused) {
       return (
-        <Badge ref={ref} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 flex items-center gap-1">
+        <Badge ref={ref} variant="outline" className="bg-info/10 text-info border-info/30 flex items-center gap-1">
           <Pause className="h-3 w-3" />
           Paused
         </Badge>
@@ -161,18 +161,18 @@ const StatusBadge = forwardRef<HTMLDivElement, { status: string; isPaused?: bool
     }
 
     const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-      active: { label: "Active", className: "bg-green-50 text-green-700 border-green-200", icon: <CheckCircle2 className="h-3 w-3" /> },
-      canceled: { label: "Canceled", className: "bg-red-50 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3" /> },
-      past_due: { label: "Past Due", className: "bg-red-50 text-red-700 border-red-200", icon: <AlertCircle className="h-3 w-3" /> },
-      trialing: { label: "Trial", className: "bg-purple-50 text-purple-700 border-purple-200", icon: <Clock className="h-3 w-3" /> },
-      incomplete: { label: "Incomplete", className: "bg-slate-50 text-slate-600 border-slate-200", icon: <AlertCircle className="h-3 w-3" /> },
-      paid: { label: "Paid", className: "bg-green-50 text-green-700 border-green-200", icon: <CheckCircle2 className="h-3 w-3" /> },
-      open: { label: "Open", className: "bg-blue-50 text-blue-700 border-blue-200", icon: <Clock className="h-3 w-3" /> },
-      void: { label: "Void", className: "bg-slate-50 text-slate-600 border-slate-200", icon: <XCircle className="h-3 w-3" /> },
-      uncollectible: { label: "Uncollectible", className: "bg-red-50 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3" /> },
-      succeeded: { label: "Succeeded", className: "bg-green-50 text-green-700 border-green-200", icon: <CheckCircle2 className="h-3 w-3" /> },
-      failed: { label: "Failed", className: "bg-red-50 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3" /> },
-      pending: { label: "Pending", className: "bg-amber-50 text-amber-700 border-amber-200", icon: <Clock className="h-3 w-3" /> },
+      active: { label: "Active", className: "bg-success/10 text-success border-success/30", icon: <CheckCircle2 className="h-3 w-3" /> },
+      canceled: { label: "Canceled", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <XCircle className="h-3 w-3" /> },
+      past_due: { label: "Past Due", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <AlertCircle className="h-3 w-3" /> },
+      trialing: { label: "Trial", className: "bg-info/10 text-info border-info/30", icon: <Clock className="h-3 w-3" /> },
+      incomplete: { label: "Incomplete", className: "bg-muted text-muted-foreground border-border", icon: <AlertCircle className="h-3 w-3" /> },
+      paid: { label: "Paid", className: "bg-success/10 text-success border-success/30", icon: <CheckCircle2 className="h-3 w-3" /> },
+      open: { label: "Open", className: "bg-info/10 text-info border-info/30", icon: <Clock className="h-3 w-3" /> },
+      void: { label: "Void", className: "bg-muted text-muted-foreground border-border", icon: <XCircle className="h-3 w-3" /> },
+      uncollectible: { label: "Uncollectible", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <XCircle className="h-3 w-3" /> },
+      succeeded: { label: "Succeeded", className: "bg-success/10 text-success border-success/30", icon: <CheckCircle2 className="h-3 w-3" /> },
+      failed: { label: "Failed", className: "bg-destructive/10 text-destructive border-destructive/30", icon: <XCircle className="h-3 w-3" /> },
+      pending: { label: "Pending", className: "bg-warning/10 text-warning border-warning/30", icon: <Clock className="h-3 w-3" /> },
     };
     const { label, className, icon } = config[status] || { label: status, className: "bg-muted text-muted-foreground", icon: null };
     return (
