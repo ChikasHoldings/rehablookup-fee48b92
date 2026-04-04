@@ -657,12 +657,14 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     )}
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer px-3 py-2.5">
-                    <Settings className="h-4 w-4 text-muted-foreground" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
+                {(isSuperAdmin || hasPermission("settings")) && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer px-3 py-2.5">
+                      <Settings className="h-4 w-4 text-muted-foreground" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </div>
               
               <DropdownMenuSeparator />
