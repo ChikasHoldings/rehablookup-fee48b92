@@ -24,6 +24,7 @@ import {
   Users,
   Building2,
 } from "lucide-react";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 export default function ComparisonPage() {
   const location = useLocation();
@@ -77,6 +78,7 @@ export default function ComparisonPage() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/85">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
+        <MedicalPatternBackground />
         <div className="container relative z-10 py-12 md:py-16 lg:py-20">
           <nav className="mb-6" aria-label="Breadcrumb">
             <ol className="flex items-center gap-1.5 text-sm">

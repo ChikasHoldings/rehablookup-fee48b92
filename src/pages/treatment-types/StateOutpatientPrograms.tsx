@@ -20,6 +20,7 @@ import {
   Building2,
   GraduationCap,
 } from "lucide-react";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 const programTypes = [
   {
@@ -107,8 +108,9 @@ const StateOutpatientPrograms = () => {
       />
 
       {/* Hero Section */}
-      <section className="bg-primary py-12 md:py-16">
+      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
+        <MedicalPatternBackground />
           <nav className="mb-5 flex items-center gap-2 text-sm leading-none whitespace-nowrap">
             <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
             <span className="text-white/50">/</span>

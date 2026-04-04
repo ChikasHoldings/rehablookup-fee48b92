@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface InsuranceProvider {
   name: string;
@@ -408,8 +409,9 @@ export default function Insurance() {
       />
 
       {/* Hero Section - Matches TreatmentTypes */}
-      <section className="bg-primary py-10 md:py-12">
+      <section className="relative overflow-hidden bg-primary py-10 md:py-12">
         <div className="container">
+        <MedicalPatternBackground />
           {/* Breadcrumb */}
           <nav className="mb-5 text-sm leading-none text-center">
             <span className="inline-flex items-center gap-2 whitespace-nowrap">

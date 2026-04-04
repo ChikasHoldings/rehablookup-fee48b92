@@ -38,6 +38,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface TreatmentType {
   icon: LucideIcon;
@@ -277,8 +278,9 @@ const TreatmentTypes = () => {
       />
       
       {/* Streamlined Hero */}
-      <section className="bg-primary py-10 md:py-12">
+      <section className="relative overflow-hidden bg-primary py-10 md:py-12">
         <div className="container">
+        <MedicalPatternBackground />
           {/* Breadcrumb */}
           <nav className="mb-5 text-center">
             <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">

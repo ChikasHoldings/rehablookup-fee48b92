@@ -17,6 +17,7 @@ import {
   MessageCircle, Clock,
 } from "lucide-react";
 import heroImg from "@/assets/images/faq-hero-seeker.jpg";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface FAQItem { question: string; answer: string; }
 interface FAQCategory { id: string; name: string; icon: React.ElementType; description: string; faqs: FAQItem[]; }
@@ -151,6 +152,7 @@ const FAQ = () => {
       {/* Hero — Split Screen */}
       <section className="relative bg-primary overflow-hidden">
         <div className="container">
+        <MedicalPatternBackground />
           <div className="grid lg:grid-cols-2 gap-0 items-stretch min-h-[320px]">
             {/* Left: Content */}
             <div className="flex flex-col justify-center py-12 lg:py-16 lg:pr-12 relative z-10">
