@@ -143,7 +143,7 @@ export default function AdminProviders() {
 
         let query = supabase
           .from("facilities")
-          .select("*")
+          .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
           .order("created_at", { ascending: false })
           .range(from, to);
 
