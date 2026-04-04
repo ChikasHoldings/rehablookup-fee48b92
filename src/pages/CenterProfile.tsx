@@ -427,6 +427,47 @@ const CenterProfile = () => {
   // Fetch facility rating for badge display
   const ratingData = useFacilityRating(facility?.id);
 
+  // Fetch nearby/related facilities from same state
+  const { data: nearbyFacilities = [] } = useQuery({
+    queryKey: ["nearby-facilities", facility?.state, facility?.id],
+    queryFn: async () => {
+      if (!facility) return [];
+      const { data } = await supabase
+        .from("facilities")
+        .select("id, name, slug, city, state, zip_code, address, phone, description, facility_type, featured, verified, logo_url, gallery_urls, year_established")
+        .eq("state", facility.state)
+        .eq("status", "approved")
+        .neq("id", facility.id)
+        .limit(6);
+      return (data || []).map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        city: f.city,
+        state: f.state,
+        zipCode: f.zip_code,
+        address: f.address,
+        phone: f.phone,
+        description: f.description || "",
+        treatmentTypes: [],
+        insuranceAccepted: [],
+        amenities: [],
+        rating: null,
+        reviewCount: 0,
+        image: f.gallery_urls?.[0] || f.logo_url || null,
+        featured: f.featured,
+        verified: f.verified,
+        logo_url: f.logo_url,
+        gallery_urls: f.gallery_urls,
+        year_established: f.year_established,
+        isFromDatabase: true,
+        programOverview: "",
+      }));
+    },
+    enabled: !!facility?.id && !!facility?.state,
+    staleTime: 1000 * 60 * 10,
+  });
+
   useEffect(() => {
     if (facility?.id) {
       // Track view in facility_views (existing system)
