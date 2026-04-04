@@ -84,33 +84,6 @@ export function SeekerShell() {
   useEffect(() => {
     let isMounted = true;
 
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!isMounted) return;
-        
-        setUserEmail(session?.user?.email);
-        setUserId(session?.user?.id || null);
-
-        // Check email verification using security definer function
-        if (session?.user?.email) {
-          const { data: verified } = await supabase
-            .rpc('is_email_verified', { p_email: session.user.email });
-          
-          setIsEmailVerified(!!verified);
-        } else {
-          setIsEmailVerified(false);
-        }
-      } catch {
-        // Auth check failed silently
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
     // If useUserRole already resolved auth, seed userId/email from stored session immediately
     if (isAuthenticated) {
       try {
@@ -138,27 +111,23 @@ export function SeekerShell() {
         setUserEmail(session?.user?.email);
         setUserId(session?.user?.id || null);
 
-        // Check email verification using security definer function
+        // Check email verification
         if (session?.user?.email) {
           const { data: verified } = await supabase
             .rpc('is_email_verified', { p_email: session.user.email });
-          
           setIsEmailVerified(!!verified);
         } else {
           setIsEmailVerified(false);
         }
 
-        // Redirect to login if not authenticated AND no auth hash AND no stored session
-        if (!session && !hasAuthHash && !storedSession?.user) {
+        // Redirect to login if not authenticated and no stored session
+        if (!session && !isAuthenticated) {
           navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
-          return;
         }
       } catch {
         // Auth check failed silently
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -172,17 +141,14 @@ export function SeekerShell() {
         setUserId(session?.user?.id || null);
         setIsLoading(false);
 
-        // Check email verification using security definer function
         if (session?.user?.email) {
           const { data: verified } = await supabase
             .rpc('is_email_verified', { p_email: session.user.email });
-          
           if (isMounted) setIsEmailVerified(!!verified);
         } else {
           setIsEmailVerified(false);
         }
 
-        // Redirect to login if signed out
         if (event === "SIGNED_OUT") {
           navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
         }
@@ -193,7 +159,7 @@ export function SeekerShell() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, isAuthenticated]);
 
   const handleLogout = useCallback(async () => {
     try {
