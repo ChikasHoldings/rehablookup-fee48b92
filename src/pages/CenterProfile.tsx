@@ -574,6 +574,9 @@ const CenterProfile = () => {
                     src={galleryImages[0]} 
                     alt={facility.name}
                     className="w-full h-full object-cover"
+                    width={800}
+                    height={400}
+                    loading="eager"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
                 </>
