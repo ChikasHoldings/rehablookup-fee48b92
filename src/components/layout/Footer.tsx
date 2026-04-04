@@ -330,7 +330,7 @@ export const Footer = memo(function Footer() {
               {trustBadges.map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-1.5 text-primary-foreground/40">
                   <Icon className="h-3.5 w-3.5" />
-                  <span className="text-[11px] font-medium tracking-wide">{label}</span>
+                  <span className="text-xs font-medium tracking-wide">{label}</span>
                 </div>
               ))}
             </div>
