@@ -71,7 +71,7 @@ function MetricCard({
             {isLoading ? (
               <Skeleton className="h-5 sm:h-6 w-10 sm:w-12 mt-0.5" />
             ) : (
-              <p className="text-lg sm:text-xl font-bold text-foreground leading-tight">{value}</p>
+              <p className="text-lg sm:text-xl font-bold text-foreground leading-tight tabular-nums">{value}</p>
             )}
             {subtitle && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
           </div>
@@ -282,17 +282,17 @@ export default function ProviderDashboardPage() {
         return { 
           label: "Live", 
           icon: CheckCircle, 
-          bgClass: "bg-emerald-500/10",
-          textClass: "text-emerald-600",
-          dotClass: "bg-emerald-500"
+          bgClass: "bg-success/10",
+          textClass: "text-success",
+          dotClass: "bg-success"
         };
       case "pending":
         return { 
           label: "Under Review", 
           icon: Clock, 
-          bgClass: "bg-amber-500/10",
-          textClass: "text-amber-600",
-          dotClass: "bg-amber-500"
+          bgClass: "bg-warning/10",
+          textClass: "text-warning",
+          dotClass: "bg-warning"
         };
       default:
         return { 
@@ -361,8 +361,8 @@ export default function ProviderDashboardPage() {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span>{facility.name}</span>
                         {facility.status === "approved" && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success bg-success/10 px-1.5 py-0.5 rounded">
+                            <span className="h-1.5 w-1.5 rounded-full bg-success" />
                             Live
                           </span>
                         )}
@@ -397,8 +397,8 @@ export default function ProviderDashboardPage() {
                 value={viewsCount}
                 subtitle="Last 30 days"
                 icon={Eye}
-                iconBg="bg-blue-500/10"
-                iconColor="text-blue-600"
+                iconBg="bg-primary/10"
+                iconColor="text-primary"
                 isLoading={isLoading}
               />
               <MetricCard
@@ -406,8 +406,8 @@ export default function ProviderDashboardPage() {
                 value={totalLeadsCount}
                 subtitle={totalLeadsCount > 0 ? `${recentLeads.filter(l => l.status === 'new').length} new` : "No inquiries yet"}
                 icon={TrendingUp}
-                iconBg="bg-emerald-500/10"
-                iconColor="text-emerald-600"
+                iconBg="bg-success/10"
+                iconColor="text-success"
                 action={totalLeadsCount > 0 ? { label: "View", href: "/provider/inquiries" } : undefined}
                 isLoading={leadsLoading}
               />
@@ -479,7 +479,7 @@ export default function ProviderDashboardPage() {
                               )}
                             </div>
                             {index === 0 && lead.status === 'new' && (
-                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
+                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-success rounded-full border-2 border-background" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -487,7 +487,7 @@ export default function ProviderDashboardPage() {
                               <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
                               <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
                               {!isUnlocked && (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded">
                                   <Lock className="h-2.5 w-2.5" />
                                   Locked
                                 </span>
@@ -520,19 +520,19 @@ export default function ProviderDashboardPage() {
             <div className="space-y-2.5">
               {/* Locked Inquiries Alert */}
               {totalLeadsCount > 0 && (
-                <Card className="border-emerald-500/30 bg-emerald-500/5">
+                <Card className="border-success/30 bg-success/5">
                   <CardContent className="p-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                        <span className="text-sm font-bold text-white">{totalLeadsCount}</span>
+                      <div className="h-10 w-10 rounded-lg bg-success flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-white tabular-nums">{totalLeadsCount}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">
-                          {totalLeadsCount} Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} Available
+                          <span className="tabular-nums">{totalLeadsCount}</span> Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} Available
                         </p>
                         <p className="text-xs text-muted-foreground">Unlock to view details</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" asChild>
+                      <Button size="sm" className="h-7 text-xs bg-success hover:bg-success/90" asChild>
                         <Link to="/provider/inquiries">
                           View
                         </Link>
@@ -544,19 +544,19 @@ export default function ProviderDashboardPage() {
 
               {/* Urgent Leads Alert */}
               {urgentLeads.length > 0 && (
-                <Card className="border-l-2 border-l-amber-500">
+                <Card className="border-l-2 border-l-warning">
                   <CardContent className="p-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <div className="h-9 w-9 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="h-4 w-4 text-warning" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">
-                          {urgentLeads.length} Need Follow-up
+                          <span className="tabular-nums">{urgentLeads.length}</span> Need Follow-up
                         </p>
                         <p className="text-xs text-muted-foreground">Waiting 24h+</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700" asChild>
+                      <Button size="sm" className="h-7 text-xs bg-warning hover:bg-warning/90 text-warning-foreground" asChild>
                         <Link to="/provider/inquiries?status=new">
                           <Phone className="h-3.5 w-3.5 mr-1" />
                           Call
@@ -600,7 +600,7 @@ export default function ProviderDashboardPage() {
 
               {/* Status Banner */}
               {facility?.status !== "approved" && (
-                <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-amber-500' ? "border-l-amber-500" : "border-l-muted-foreground")}>
+                <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-warning' ? "border-l-warning" : "border-l-muted-foreground")}>
                   <CardContent className="p-3.5 flex items-center gap-3">
                     <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", statusConfig.bgClass)}>
                       <StatusIcon className={cn("h-4 w-4", statusConfig.textClass)} />
@@ -662,7 +662,7 @@ export default function ProviderDashboardPage() {
               <CardContent className="p-3.5">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-foreground">
+                    <span className="text-2xl font-bold text-foreground tabular-nums">
                       {creditsLoading ? (
                         <Skeleton className="h-7 w-16" />
                       ) : (
@@ -677,7 +677,7 @@ export default function ProviderDashboardPage() {
                     </Button>
                   </div>
                   {proStatus?.isPro && (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-500/10 px-2 py-1 rounded">
+                    <div className="flex items-center gap-1.5 text-xs text-warning bg-warning/10 px-2 py-1 rounded">
                       <Sparkles className="h-3 w-3" />
                       <span className="font-medium">Pro Member — 20% off unlocks</span>
                     </div>

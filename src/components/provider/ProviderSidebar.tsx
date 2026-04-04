@@ -139,7 +139,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
               <Wallet className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs font-semibold text-foreground">Credits</span>
             </div>
-            <span className="text-sm font-bold text-foreground">{balanceFormatted}</span>
+            <span className="text-sm font-bold text-foreground tabular-nums">{balanceFormatted}</span>
           </div>
           
           {proStatus?.isPro ? (
