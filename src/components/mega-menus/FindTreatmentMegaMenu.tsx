@@ -126,7 +126,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: Locations + Near Me */}
         <div className="w-[235px] px-4 pb-4 pt-1">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-accent" />
             Popular Locations
           </p>
