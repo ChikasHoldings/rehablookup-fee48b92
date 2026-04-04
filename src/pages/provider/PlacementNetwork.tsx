@@ -160,7 +160,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("provider_payment_methods")
-        .select("*")
+        .select("id, facility_id, stripe_payment_method_id, card_brand, card_last4, is_default, created_at")
         .eq("facility_id", selectedFacility.id)
         .order("is_default", { ascending: false });
       if (error) return [];
