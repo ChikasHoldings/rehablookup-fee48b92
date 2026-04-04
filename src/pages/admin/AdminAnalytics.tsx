@@ -756,11 +756,11 @@ export default function AdminAnalytics() {
     <div className="space-y-6">
       {/* Error Banner */}
       {hasError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-500 shrink-0" />
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
           <div className="flex-1">
-            <p className="font-medium text-red-800">Failed to load some data</p>
-            <p className="text-sm text-red-600">
+            <p className="font-medium text-destructive">Failed to load some data</p>
+            <p className="text-sm text-destructive/80">
               {viewsError && "Views failed to load. "}
               {interactionsError && "Interactions failed to load. "}
               {leadsError && "Leads failed to load. "}
