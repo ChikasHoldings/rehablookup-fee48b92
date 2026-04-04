@@ -52,7 +52,7 @@ const DrugRehabUSA = () => {
       />
 
       <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav items={[
+        <BreadcrumbNav className="mb-4" items={[
           { label: "US Rehab", href: "/us-rehab" },
           { label: "Drug Rehab USA" },
         ]} />
