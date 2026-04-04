@@ -65,95 +65,95 @@ type DateRange = {
 
 const actionConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
   // Provider actions
-  verified: { icon: <Shield className="h-4 w-4" />, label: "Marked as Verified", color: "text-blue-500 bg-blue-50" },
-  unverified: { icon: <Shield className="h-4 w-4" />, label: "Removed Verified Status", color: "text-slate-500 bg-slate-50" },
-  featured: { icon: <Star className="h-4 w-4" />, label: "Added to Featured", color: "text-amber-500 bg-amber-50" },
-  unfeatured: { icon: <Star className="h-4 w-4" />, label: "Removed from Featured", color: "text-slate-500 bg-slate-50" },
-  suspended: { icon: <Ban className="h-4 w-4" />, label: "Suspended Provider", color: "text-red-500 bg-red-50" },
-  unsuspended: { icon: <CheckCircle className="h-4 w-4" />, label: "Unsuspended Provider", color: "text-green-500 bg-green-50" },
-  status_changed_to_approved: { icon: <CheckCircle className="h-4 w-4" />, label: "Approved Provider", color: "text-green-500 bg-green-50" },
-  status_changed_to_pending: { icon: <CheckCircle className="h-4 w-4" />, label: "Set to Pending", color: "text-amber-500 bg-amber-50" },
-  status_changed_to_rejected: { icon: <Ban className="h-4 w-4" />, label: "Rejected Provider", color: "text-red-500 bg-red-50" },
-  notes_updated: { icon: <FileText className="h-4 w-4" />, label: "Updated Admin Notes", color: "text-slate-500 bg-slate-50" },
-  provider_deleted: { icon: <Ban className="h-4 w-4" />, label: "Deleted Provider", color: "text-red-500 bg-red-50" },
+  verified: { icon: <Shield className="h-4 w-4" />, label: "Marked as Verified", color: "text-primary bg-primary/10" },
+  unverified: { icon: <Shield className="h-4 w-4" />, label: "Removed Verified Status", color: "text-muted-foreground bg-muted" },
+  featured: { icon: <Star className="h-4 w-4" />, label: "Added to Featured", color: "text-warning bg-warning/10" },
+  unfeatured: { icon: <Star className="h-4 w-4" />, label: "Removed from Featured", color: "text-muted-foreground bg-muted" },
+  suspended: { icon: <Ban className="h-4 w-4" />, label: "Suspended Provider", color: "text-destructive bg-destructive/10" },
+  unsuspended: { icon: <CheckCircle className="h-4 w-4" />, label: "Unsuspended Provider", color: "text-success bg-success/10" },
+  status_changed_to_approved: { icon: <CheckCircle className="h-4 w-4" />, label: "Approved Provider", color: "text-success bg-success/10" },
+  status_changed_to_pending: { icon: <CheckCircle className="h-4 w-4" />, label: "Set to Pending", color: "text-warning bg-warning/10" },
+  status_changed_to_rejected: { icon: <Ban className="h-4 w-4" />, label: "Rejected Provider", color: "text-destructive bg-destructive/10" },
+  notes_updated: { icon: <FileText className="h-4 w-4" />, label: "Updated Admin Notes", color: "text-muted-foreground bg-muted" },
+  provider_deleted: { icon: <Ban className="h-4 w-4" />, label: "Deleted Provider", color: "text-destructive bg-destructive/10" },
   
   // Lead actions
-  lead_assigned: { icon: <ArrowRight className="h-4 w-4" />, label: "Assigned Lead to Provider", color: "text-blue-500 bg-blue-50" },
-  lead_status_changed: { icon: <ArrowRight className="h-4 w-4" />, label: "Changed Lead Status", color: "text-blue-500 bg-blue-50" },
-  lead_qualified: { icon: <CheckCircle className="h-4 w-4" />, label: "Qualified Lead", color: "text-green-500 bg-green-50" },
-  lead_override: { icon: <ArrowRight className="h-4 w-4" />, label: "Override Lead Assignment", color: "text-purple-500 bg-purple-50" },
+  lead_assigned: { icon: <ArrowRight className="h-4 w-4" />, label: "Assigned Lead to Provider", color: "text-primary bg-primary/10" },
+  lead_status_changed: { icon: <ArrowRight className="h-4 w-4" />, label: "Changed Lead Status", color: "text-primary bg-primary/10" },
+  lead_qualified: { icon: <CheckCircle className="h-4 w-4" />, label: "Qualified Lead", color: "text-success bg-success/10" },
+  lead_override: { icon: <ArrowRight className="h-4 w-4" />, label: "Override Lead Assignment", color: "text-accent-foreground bg-accent" },
   
   // Admin user management
-  admin_user_created: { icon: <User className="h-4 w-4" />, label: "Created Admin User", color: "text-green-500 bg-green-50" },
-  admin_user_deleted: { icon: <Ban className="h-4 w-4" />, label: "Deleted Admin User", color: "text-red-500 bg-red-50" },
-  admin_user_deactivated: { icon: <Ban className="h-4 w-4" />, label: "Deactivated Admin User", color: "text-red-500 bg-red-50" },
-  admin_user_suspended: { icon: <Ban className="h-4 w-4" />, label: "Suspended Admin User", color: "text-red-500 bg-red-50" },
-  admin_user_unsuspended: { icon: <CheckCircle className="h-4 w-4" />, label: "Unsuspended Admin User", color: "text-green-500 bg-green-50" },
-  admin_permissions_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Permissions", color: "text-blue-500 bg-blue-50" },
-  admin_role_updated: { icon: <Shield className="h-4 w-4" />, label: "Updated Role", color: "text-blue-500 bg-blue-50" },
-  admin_password_reset: { icon: <Key className="h-4 w-4" />, label: "Reset Password", color: "text-orange-500 bg-orange-50" },
-  admin_invitation_resent: { icon: <Bell className="h-4 w-4" />, label: "Resent Invitation", color: "text-blue-500 bg-blue-50" },
-  admin_mfa_skip_toggled: { icon: <Shield className="h-4 w-4" />, label: "Toggled MFA Skip", color: "text-purple-500 bg-purple-50" },
+  admin_user_created: { icon: <User className="h-4 w-4" />, label: "Created Admin User", color: "text-success bg-success/10" },
+  admin_user_deleted: { icon: <Ban className="h-4 w-4" />, label: "Deleted Admin User", color: "text-destructive bg-destructive/10" },
+  admin_user_deactivated: { icon: <Ban className="h-4 w-4" />, label: "Deactivated Admin User", color: "text-destructive bg-destructive/10" },
+  admin_user_suspended: { icon: <Ban className="h-4 w-4" />, label: "Suspended Admin User", color: "text-destructive bg-destructive/10" },
+  admin_user_unsuspended: { icon: <CheckCircle className="h-4 w-4" />, label: "Unsuspended Admin User", color: "text-success bg-success/10" },
+  admin_permissions_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Permissions", color: "text-primary bg-primary/10" },
+  admin_role_updated: { icon: <Shield className="h-4 w-4" />, label: "Updated Role", color: "text-primary bg-primary/10" },
+  admin_password_reset: { icon: <Key className="h-4 w-4" />, label: "Reset Password", color: "text-warning bg-warning/10" },
+  admin_invitation_resent: { icon: <Bell className="h-4 w-4" />, label: "Resent Invitation", color: "text-primary bg-primary/10" },
+  admin_mfa_skip_toggled: { icon: <Shield className="h-4 w-4" />, label: "Toggled MFA Skip", color: "text-accent-foreground bg-accent" },
   
   // Profile actions
-  profile_photo_updated: { icon: <Image className="h-4 w-4" />, label: "Updated Profile Photo", color: "text-purple-500 bg-purple-50" },
-  profile_name_updated: { icon: <User className="h-4 w-4" />, label: "Updated Profile Name", color: "text-purple-500 bg-purple-50" },
-  password_changed: { icon: <Key className="h-4 w-4" />, label: "Changed Password", color: "text-orange-500 bg-orange-50" },
+  profile_photo_updated: { icon: <Image className="h-4 w-4" />, label: "Updated Profile Photo", color: "text-accent-foreground bg-accent" },
+  profile_name_updated: { icon: <User className="h-4 w-4" />, label: "Updated Profile Name", color: "text-accent-foreground bg-accent" },
+  password_changed: { icon: <Key className="h-4 w-4" />, label: "Changed Password", color: "text-warning bg-warning/10" },
   
   // Notification actions
-  notifications_marked_read: { icon: <Bell className="h-4 w-4" />, label: "Marked Notifications Read", color: "text-slate-500 bg-slate-50" },
-  notifications_cleared: { icon: <Bell className="h-4 w-4" />, label: "Cleared Notifications", color: "text-slate-500 bg-slate-50" },
-  notification_preferences_updated: { icon: <Bell className="h-4 w-4" />, label: "Updated Notification Preferences", color: "text-purple-500 bg-purple-50" },
-  admin_notification_sent: { icon: <Bell className="h-4 w-4" />, label: "Sent Notification", color: "text-blue-500 bg-blue-50" },
+  notifications_marked_read: { icon: <Bell className="h-4 w-4" />, label: "Marked Notifications Read", color: "text-muted-foreground bg-muted" },
+  notifications_cleared: { icon: <Bell className="h-4 w-4" />, label: "Cleared Notifications", color: "text-muted-foreground bg-muted" },
+  notification_preferences_updated: { icon: <Bell className="h-4 w-4" />, label: "Updated Notification Preferences", color: "text-accent-foreground bg-accent" },
+  admin_notification_sent: { icon: <Bell className="h-4 w-4" />, label: "Sent Notification", color: "text-primary bg-primary/10" },
   
   // Session actions
-  session_revoked: { icon: <Shield className="h-4 w-4" />, label: "Revoked Session", color: "text-red-500 bg-red-50" },
-  login: { icon: <Key className="h-4 w-4" />, label: "Signed In", color: "text-green-500 bg-green-50" },
-  logout: { icon: <Key className="h-4 w-4" />, label: "Signed Out", color: "text-slate-500 bg-slate-50" },
+  session_revoked: { icon: <Shield className="h-4 w-4" />, label: "Revoked Session", color: "text-destructive bg-destructive/10" },
+  login: { icon: <Key className="h-4 w-4" />, label: "Signed In", color: "text-success bg-success/10" },
+  logout: { icon: <Key className="h-4 w-4" />, label: "Signed Out", color: "text-muted-foreground bg-muted" },
   
   // MFA actions
-  mfa_enabled: { icon: <Shield className="h-4 w-4" />, label: "Enabled MFA", color: "text-green-500 bg-green-50" },
-  mfa_disabled: { icon: <Shield className="h-4 w-4" />, label: "Disabled MFA", color: "text-red-500 bg-red-50" },
-  mfa_recovery_codes_regenerated: { icon: <Key className="h-4 w-4" />, label: "Regenerated Recovery Codes", color: "text-orange-500 bg-orange-50" },
+  mfa_enabled: { icon: <Shield className="h-4 w-4" />, label: "Enabled MFA", color: "text-success bg-success/10" },
+  mfa_disabled: { icon: <Shield className="h-4 w-4" />, label: "Disabled MFA", color: "text-destructive bg-destructive/10" },
+  mfa_recovery_codes_regenerated: { icon: <Key className="h-4 w-4" />, label: "Regenerated Recovery Codes", color: "text-warning bg-warning/10" },
   
   // Subscription actions
-  subscription_override: { icon: <CreditCard className="h-4 w-4" />, label: "Override Subscription", color: "text-purple-500 bg-purple-50" },
-  subscription_canceled: { icon: <CreditCard className="h-4 w-4" />, label: "Canceled Subscription", color: "text-red-500 bg-red-50" },
+  subscription_override: { icon: <CreditCard className="h-4 w-4" />, label: "Override Subscription", color: "text-accent-foreground bg-accent" },
+  subscription_canceled: { icon: <CreditCard className="h-4 w-4" />, label: "Canceled Subscription", color: "text-destructive bg-destructive/10" },
   
   // Featured placement actions
-  featured_pinned: { icon: <Star className="h-4 w-4" />, label: "Pinned to Featured", color: "text-amber-500 bg-amber-50" },
-  featured_unpinned: { icon: <Star className="h-4 w-4" />, label: "Unpinned from Featured", color: "text-slate-500 bg-slate-50" },
-  featured_settings_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Featured Settings", color: "text-blue-500 bg-blue-50" },
-  featured_order_updated: { icon: <Star className="h-4 w-4" />, label: "Updated Featured Order", color: "text-amber-500 bg-amber-50" },
-  legacy_featured: { icon: <Star className="h-4 w-4" />, label: "Added Legacy Featured", color: "text-amber-500 bg-amber-50" },
-  legacy_unfeatured: { icon: <Star className="h-4 w-4" />, label: "Removed Legacy Featured", color: "text-slate-500 bg-slate-50" },
-  pinned_featured: { icon: <Star className="h-4 w-4" />, label: "Pinned Featured", color: "text-purple-500 bg-purple-50" },
-  unpinned_featured: { icon: <Star className="h-4 w-4" />, label: "Unpinned Featured", color: "text-slate-500 bg-slate-50" },
+  featured_pinned: { icon: <Star className="h-4 w-4" />, label: "Pinned to Featured", color: "text-warning bg-warning/10" },
+  featured_unpinned: { icon: <Star className="h-4 w-4" />, label: "Unpinned from Featured", color: "text-muted-foreground bg-muted" },
+  featured_settings_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Featured Settings", color: "text-primary bg-primary/10" },
+  featured_order_updated: { icon: <Star className="h-4 w-4" />, label: "Updated Featured Order", color: "text-warning bg-warning/10" },
+  legacy_featured: { icon: <Star className="h-4 w-4" />, label: "Added Legacy Featured", color: "text-warning bg-warning/10" },
+  legacy_unfeatured: { icon: <Star className="h-4 w-4" />, label: "Removed Legacy Featured", color: "text-muted-foreground bg-muted" },
+  pinned_featured: { icon: <Star className="h-4 w-4" />, label: "Pinned Featured", color: "text-accent-foreground bg-accent" },
+  unpinned_featured: { icon: <Star className="h-4 w-4" />, label: "Unpinned Featured", color: "text-muted-foreground bg-muted" },
   
   // Image moderation
-  image_flagged: { icon: <Image className="h-4 w-4" />, label: "Flagged Image", color: "text-red-500 bg-red-50" },
-  image_resolved: { icon: <Image className="h-4 w-4" />, label: "Resolved Image Flag", color: "text-green-500 bg-green-50" },
-  image_removed: { icon: <Image className="h-4 w-4" />, label: "Removed Image", color: "text-red-500 bg-red-50" },
+  image_flagged: { icon: <Image className="h-4 w-4" />, label: "Flagged Image", color: "text-destructive bg-destructive/10" },
+  image_resolved: { icon: <Image className="h-4 w-4" />, label: "Resolved Image Flag", color: "text-success bg-success/10" },
+  image_removed: { icon: <Image className="h-4 w-4" />, label: "Removed Image", color: "text-destructive bg-destructive/10" },
   
   // Security actions
-  security_block_added: { icon: <Shield className="h-4 w-4" />, label: "Added Security Block", color: "text-red-500 bg-red-50" },
-  security_block_removed: { icon: <Shield className="h-4 w-4" />, label: "Removed Security Block", color: "text-green-500 bg-green-50" },
+  security_block_added: { icon: <Shield className="h-4 w-4" />, label: "Added Security Block", color: "text-destructive bg-destructive/10" },
+  security_block_removed: { icon: <Shield className="h-4 w-4" />, label: "Removed Security Block", color: "text-success bg-success/10" },
   
   // Location change actions
-  location_change_approved: { icon: <CheckCircle className="h-4 w-4" />, label: "Approved Location Change", color: "text-green-500 bg-green-50" },
-  location_change_rejected: { icon: <Ban className="h-4 w-4" />, label: "Rejected Location Change", color: "text-red-500 bg-red-50" },
+  location_change_approved: { icon: <CheckCircle className="h-4 w-4" />, label: "Approved Location Change", color: "text-success bg-success/10" },
+  location_change_rejected: { icon: <Ban className="h-4 w-4" />, label: "Rejected Location Change", color: "text-destructive bg-destructive/10" },
   
   // Settings actions
-  platform_settings_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Platform Settings", color: "text-blue-500 bg-blue-50" },
-  audit_logs_cleaned: { icon: <ClipboardList className="h-4 w-4" />, label: "Cleaned Audit Logs", color: "text-amber-500 bg-amber-50" },
-  clear_cache: { icon: <Settings className="h-4 w-4" />, label: "Cleared Platform Cache", color: "text-slate-500 bg-slate-50" },
+  platform_settings_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Platform Settings", color: "text-primary bg-primary/10" },
+  audit_logs_cleaned: { icon: <ClipboardList className="h-4 w-4" />, label: "Cleaned Audit Logs", color: "text-warning bg-warning/10" },
+  clear_cache: { icon: <Settings className="h-4 w-4" />, label: "Cleared Platform Cache", color: "text-muted-foreground bg-muted" },
   
   // Additional actions from DB
-  admin_login: { icon: <Key className="h-4 w-4" />, label: "Admin Login", color: "text-green-500 bg-green-50" },
-  verify_accreditation: { icon: <Shield className="h-4 w-4" />, label: "Verified Accreditation", color: "text-blue-500 bg-blue-50" },
-  subscription_get_promo_analytics: { icon: <CreditCard className="h-4 w-4" />, label: "Viewed Promo Analytics", color: "text-slate-500 bg-slate-50" },
-  subscription_create_coupon: { icon: <CreditCard className="h-4 w-4" />, label: "Created Coupon", color: "text-green-500 bg-green-50" },
-  storage_cleanup: { icon: <Settings className="h-4 w-4" />, label: "Cleaned Storage", color: "text-amber-500 bg-amber-50" },
+  admin_login: { icon: <Key className="h-4 w-4" />, label: "Admin Login", color: "text-success bg-success/10" },
+  verify_accreditation: { icon: <Shield className="h-4 w-4" />, label: "Verified Accreditation", color: "text-primary bg-primary/10" },
+  subscription_get_promo_analytics: { icon: <CreditCard className="h-4 w-4" />, label: "Viewed Promo Analytics", color: "text-muted-foreground bg-muted" },
+  subscription_create_coupon: { icon: <CreditCard className="h-4 w-4" />, label: "Created Coupon", color: "text-success bg-success/10" },
+  storage_cleanup: { icon: <Settings className="h-4 w-4" />, label: "Cleaned Storage", color: "text-warning bg-warning/10" },
 };
 
 const targetTypeConfig: Record<string, { icon: React.ReactNode; label: string }> = {
