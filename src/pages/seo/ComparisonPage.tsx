@@ -85,6 +85,7 @@ export default function ComparisonPage() {
             className="mb-4"
             items={[
               { label: "Treatment Types", href: "/treatment-types" },
+              { label: config.title },
             ]}
           />
 
