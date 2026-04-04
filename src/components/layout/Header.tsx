@@ -160,51 +160,48 @@ export function Header({
   const tabletHiddenItems = megaMenuItems.slice(1); // hide Resources, International, For Providers on tablet
 
   const getDesktopMegaMenuStyle = (menuId: string): CSSProperties => {
-    if (typeof window === "undefined") {
-      if (menuId === "for-providers" || menuId === "international") {
-        return { right: 0 };
-      }
-      return { left: 0 };
-    }
-
     const gutter = 16;
-    const widths: Record<string, number> = {
+    const menuWidths: Record<string, number> = {
       "find-treatment": 740,
       "resources": 680,
       "international": 700,
       "for-providers": 720,
     };
 
-    const menuWidth = Math.min(widths[menuId] ?? 720, window.innerWidth - gutter * 2);
-    const anchorFallbacks: Record<string, number> = {
-      "find-treatment": 0,
-      "resources": -160,
-      "international": -420,
-      "for-providers": -520,
-    };
-
-    const navEl = document.querySelector("header nav.hidden.md\\:flex") as HTMLElement | null;
-    const triggerSelector = menuId === "find-treatment"
-      ? '[data-nav-menu="find-treatment"]'
-      : `[data-nav-menu="${menuId}"]`;
-    const triggerEl = document.querySelector(triggerSelector) as HTMLElement | null;
-
-    if (!navEl || !triggerEl) {
-      if (menuId === "for-providers" || menuId === "international") {
-        return { right: 0, maxWidth: `calc(100vw - ${gutter * 2}px)` };
-      }
-      return { left: 0, maxWidth: `calc(100vw - ${gutter * 2}px)` };
+    if (typeof window === "undefined") {
+      return {
+        position: "fixed",
+        top: "64px",
+        left: `${gutter}px`,
+        maxWidth: `calc(100vw - ${gutter * 2}px)`,
+      };
     }
 
-    const navRect = navEl.getBoundingClientRect();
+    const headerEl = document.querySelector("header") as HTMLElement | null;
+    const triggerEl = document.querySelector(`[data-nav-menu="${menuId}"]`) as HTMLElement | null;
+    const menuWidth = Math.min(menuWidths[menuId] ?? 720, window.innerWidth - gutter * 2);
+
+    if (!headerEl || !triggerEl) {
+      return {
+        position: "fixed",
+        top: "64px",
+        left: `${gutter}px`,
+        maxWidth: `calc(100vw - ${gutter * 2}px)`,
+      };
+    }
+
+    const headerRect = headerEl.getBoundingClientRect();
     const triggerRect = triggerEl.getBoundingClientRect();
-    const preferredLeft = triggerRect.left - navRect.left + (triggerRect.width / 2) - (menuWidth / 2);
-    const minLeft = gutter - navRect.left;
-    const maxLeft = window.innerWidth - gutter - navRect.left - menuWidth;
-    const safeLeft = Math.min(Math.max(preferredLeft, minLeft), maxLeft);
+    const preferredLeft = triggerRect.left + triggerRect.width / 2 - menuWidth / 2;
+    const safeLeft = Math.min(
+      Math.max(preferredLeft, gutter),
+      window.innerWidth - gutter - menuWidth
+    );
 
     return {
-      left: `${safeLeft}px`,
+      position: "fixed",
+      top: `${Math.round(headerRect.bottom)}px`,
+      left: `${Math.round(safeLeft)}px`,
       maxWidth: `calc(100vw - ${gutter * 2}px)`,
     };
   };
