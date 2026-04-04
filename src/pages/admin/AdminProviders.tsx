@@ -366,10 +366,10 @@ export default function AdminProviders() {
     setCurrentPage(1);
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+  // Reset page when debounced search changes
+  useEffect(() => {
     setCurrentPage(1);
-  };
+  }, [searchQuery]);
 
   const handleStatusChange = (id: string, newStatus: string) => {
     updateProvider.mutate({
