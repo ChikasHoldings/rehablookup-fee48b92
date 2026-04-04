@@ -349,7 +349,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                         <>
                           <span>{phone}</span>
                           {user.phone_verified && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-xs">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Verified
                             </Badge>
