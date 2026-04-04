@@ -321,11 +321,12 @@ export function MarketingLeadProfileModal({
   };
 
   const formatUrgency = (urgency: string | null) => {
-    if (!urgency) return "Pending assessment";
+    if (!urgency) return null;
     const map: Record<string, string> = {
       immediate: "Immediate (ASAP)",
       "within-week": "Within a Week",
       "within-month": "Within a Month",
+      flexible: "Flexible",
       researching: "Just Researching",
     };
     return map[urgency] || urgency;
