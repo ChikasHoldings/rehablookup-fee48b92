@@ -250,10 +250,11 @@ function getFacilityNotificationEmail(
   const urgencyDisplay = details.urgency === 'immediate' ? '🔴 Immediate' 
     : details.urgency === 'within_week' ? '🟡 Within a week'
     : details.urgency === 'within_month' ? '🟢 Within a month'
-    : '⚪ Pending assessment';
+    : details.urgency === 'flexible' ? '🔵 Flexible'
+    : '⚪ Not specified';
   
   // Format level of care
-  const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'To be determined';
+  const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—';
   
   return `
 <!DOCTYPE html>
@@ -553,7 +554,7 @@ Deno.serve(async (req) => {
         phone: data.phone,
         preferred_contact: data.preferredContact || "phone",
         message: data.message,
-        urgency: data.urgency || "not_sure",
+        urgency: data.urgency || null,
         level_of_care: data.levelOfCare || null,
         insurance_type: data.insuranceType || null,
         insurance_provider: data.insuranceProvider || null,

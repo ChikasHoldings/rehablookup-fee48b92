@@ -321,11 +321,12 @@ export function MarketingLeadProfileModal({
   };
 
   const formatUrgency = (urgency: string | null) => {
-    if (!urgency) return "Pending assessment";
+    if (!urgency) return null;
     const map: Record<string, string> = {
       immediate: "Immediate (ASAP)",
       "within-week": "Within a Week",
       "within-month": "Within a Month",
+      flexible: "Flexible",
       researching: "Just Researching",
     };
     return map[urgency] || urgency;
@@ -578,11 +579,11 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Level of Care</p>
-                    <p className="font-medium text-sm">{lead.level_of_care || "To be determined"}</p>
+                    <p className="font-medium text-sm">{lead.level_of_care || "—"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Insurance</p>
-                    <p className="font-medium text-sm">{lead.insurance_type || "To be verified"}</p>
+                    <p className="font-medium text-sm">{lead.insurance_type || "—"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Seeking For</p>
@@ -886,7 +887,7 @@ export function MarketingLeadProfileModal({
                     <Stethoscope className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Level of Care</h4>
                   </div>
-                  <p className="text-sm">{lead.level_of_care || "To be determined"}</p>
+                  <p className="text-sm">{lead.level_of_care || "—"}</p>
                 </div>
 
                 <div className="p-4 rounded-lg border bg-card">
@@ -894,7 +895,7 @@ export function MarketingLeadProfileModal({
                     <CreditCard className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Insurance</h4>
                   </div>
-                  <p className="text-sm">{lead.insurance_type || "To be verified"}</p>
+                  <p className="text-sm">{lead.insurance_type || "—"}</p>
                   {lead.insurance_provider && (
                     <p className="text-xs text-muted-foreground mt-1">Provider: {lead.insurance_provider}</p>
                   )}

@@ -33,6 +33,9 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
     if (!formData.whoSeekingHelp) {
       newErrors.whoSeekingHelp = "Please select who is seeking help";
     }
+    if (formData.whoSeekingHelp === "loved-one" && !formData.relationshipToPatient) {
+      newErrors.relationshipToPatient = "Please select your relationship";
+    }
     if (!formData.locationZip || !/^\d{5}$/.test(formData.locationZip)) {
       newErrors.locationZip = "Please enter a valid 5-digit ZIP code";
     }
@@ -41,6 +44,9 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
     }
     if (!formData.gender) {
       newErrors.gender = "Please select a gender";
+    }
+    if (!formData.urgency) {
+      newErrors.urgency = "Please select urgency level";
     }
 
     setErrors(newErrors);
@@ -190,13 +196,16 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
         <div className="space-y-3 animate-fade-in">
           <Label className="text-sm font-medium flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
-            Your relationship to the patient
+            Your relationship to the patient <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.relationshipToPatient}
-            onValueChange={(value) => updateFormData({ relationshipToPatient: value })}
+            onValueChange={(value) => {
+              updateFormData({ relationshipToPatient: value });
+              setErrors(prev => ({ ...prev, relationshipToPatient: "" }));
+            }}
           >
-            <SelectTrigger className="h-12 text-sm">
+            <SelectTrigger className={cn("h-12 text-sm", errors.relationshipToPatient && "border-destructive")}>
               <SelectValue placeholder="Select relationship" />
             </SelectTrigger>
             <SelectContent>
@@ -207,6 +216,12 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
               ))}
             </SelectContent>
           </Select>
+          {errors.relationshipToPatient && (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-destructive" />
+              {errors.relationshipToPatient}
+            </p>
+          )}
         </div>
       )}
 
@@ -282,7 +297,7 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
-            Patient's Age Range
+            Patient's Age Range <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.ageRange}
@@ -304,7 +319,7 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center gap-2">
             <UserCircle className="h-4 w-4 text-primary" />
-            Patient's Gender
+            Patient's Gender <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.gender}
@@ -328,13 +343,16 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
       <div className="space-y-3">
         <Label className="text-sm font-medium flex items-center gap-2">
           <ArrowRight className="h-4 w-4 text-primary" />
-          How urgent is the need?
+          How urgent is the need? <span className="text-destructive">*</span>
         </Label>
         <Select
           value={formData.urgency}
-          onValueChange={(value) => updateFormData({ urgency: value })}
+          onValueChange={(value) => {
+            updateFormData({ urgency: value });
+            setErrors(prev => ({ ...prev, urgency: "" }));
+          }}
         >
-          <SelectTrigger className="h-12 text-sm">
+          <SelectTrigger className={cn("h-12 text-sm", errors.urgency && "border-destructive")}>
             <SelectValue placeholder="Select urgency level" />
           </SelectTrigger>
           <SelectContent>
@@ -350,6 +368,12 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
             ))}
           </SelectContent>
         </Select>
+        {errors.urgency && (
+          <p className="text-xs text-destructive flex items-center gap-1">
+            <span className="h-1 w-1 rounded-full bg-destructive" />
+            {errors.urgency}
+          </p>
+        )}
       </div>
 
       <Button onClick={handleNext} className="w-full h-14 text-base font-semibold rounded-xl shadow-sm" size="lg">
