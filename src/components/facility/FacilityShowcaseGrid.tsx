@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, MapPin, Crown, ShieldCheck, ArrowRight, Building2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Crown, ShieldCheck, ArrowRight, Building2, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FacilityItem {
@@ -38,13 +38,13 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function FacilityShowcaseCard({ 
-  facility, 
-  size = "small" 
-}: { 
-  facility: FacilityItem; 
-  size?: "large" | "small";
-}) {
+function formatFacilityType(type?: string | null): string {
+  if (!type) return "";
+  return type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/* ── Hero Card (first / featured) ── */
+function HeroShowcaseCard({ facility }: { facility: FacilityItem }) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const heroImage = facility.gallery_urls?.[0] || facility.image;
@@ -66,11 +66,8 @@ function FacilityShowcaseCard({
           : "border-border/60"
       )}
     >
-      {/* Image */}
-      <div className={cn(
-        "relative w-full overflow-hidden bg-muted flex-1 min-h-0",
-        size === "large" ? "" : "aspect-[16/9]"
-      )}>
+      {/* Image — fixed height, not stretching */}
+      <div className="relative w-full h-44 overflow-hidden bg-muted">
         {hasImage ? (
           <img
             src={heroImage!}
@@ -81,53 +78,168 @@ function FacilityShowcaseCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-            <Building2 className="h-10 w-10 text-muted-foreground/30" />
+            <Building2 className="h-12 w-12 text-muted-foreground/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+        {/* Logo + Name overlay at bottom of image */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-end gap-2.5">
+          <div className="shrink-0 h-10 w-10 rounded-lg border-2 border-white/30 bg-card/90 backdrop-blur-sm overflow-hidden flex items-center justify-center shadow-md">
+            {logoImage ? (
+              <img src={logoImage} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-xs font-bold text-muted-foreground">{getInitials(facility.name)}</span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-white text-sm leading-tight line-clamp-1 drop-shadow-sm">
+              {facility.name}
+            </h3>
+            <div className="flex items-center gap-1 mt-0.5">
+              <MapPin className="h-3 w-3 text-white/80 shrink-0" />
+              <span className="text-[11px] text-white/80 truncate">
+                {facility.city}, {facility.state}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content area */}
+      <div className="p-3.5 flex flex-col flex-1 gap-2.5">
+        {/* Trust badges row */}
+        <div className="flex flex-wrap items-center gap-1.5">
           {isFeatured && (
-            <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2 py-0.5 shadow-md text-[10px] font-bold uppercase tracking-wider">
+            <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
               <Crown className="h-2.5 w-2.5" />
               Featured
             </Badge>
           )}
           {facility.verified && (
-            <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2 py-0.5 shadow-md text-[10px] font-bold uppercase tracking-wider">
+            <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
               <ShieldCheck className="h-2.5 w-2.5" />
               Verified
             </Badge>
           )}
+          {facility.facility_type && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5 text-muted-foreground border-border/60">
+              {formatFacilityType(facility.facility_type)}
+            </Badge>
+          )}
+        </div>
+
+        {/* Description */}
+        {facility.description && (
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+            {facility.description}
+          </p>
+        )}
+
+        {/* Spacer to push button to bottom */}
+        <div className="flex-1" />
+
+        {/* CTA Button */}
+        <div className="pt-1">
+          <div className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary/10 hover:bg-primary/15 text-primary text-xs font-semibold py-2.5 transition-colors">
+            <Heart className="h-3.5 w-3.5" />
+            Check Availability
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* ── Compact Card (stacked pairs) ── */
+function CompactShowcaseCard({ facility }: { facility: FacilityItem }) {
+  const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
+  const heroImage = facility.gallery_urls?.[0] || facility.image;
+  const logoImage = facility.logo_url;
+  const hasImage = heroImage && !imgError;
+  const isFeatured = facility.hasFeaturedSubscription || facility.featured;
+  const detailUrl = facility.isFromDatabase && facility.slug
+    ? `/center/${facility.slug}`
+    : `/rehab-centers/${facility.id}`;
+
+  return (
+    <button
+      onClick={() => navigate(detailUrl, { state: { fromSearch: true } })}
+      className={cn(
+        "relative overflow-hidden rounded-xl bg-card border group text-left transition-all duration-300 w-full flex flex-col",
+        "hover:shadow-lg hover:border-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        isFeatured
+          ? "border-amber-200/60 ring-1 ring-amber-100/40"
+          : "border-border/60"
+      )}
+    >
+      {/* Image */}
+      <div className="relative w-full aspect-[16/9] overflow-hidden bg-muted">
+        {hasImage ? (
+          <img
+            src={heroImage!}
+            alt={facility.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+            <Building2 className="h-8 w-8 text-muted-foreground/30" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+        {/* Badges on image */}
+        <div className="absolute top-2 left-2 flex items-center gap-1">
+          {isFeatured && (
+            <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+              <Crown className="h-2 w-2" />
+              Featured
+            </Badge>
+          )}
+          {facility.verified && (
+            <Badge className="bg-emerald-500/90 text-white border-0 gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+              <ShieldCheck className="h-2 w-2" />
+              Verified
+            </Badge>
+          )}
+        </div>
+
+        {/* Logo + Name overlay */}
+        <div className="absolute bottom-2 left-2 right-2 flex items-end gap-2">
+          <div className="shrink-0 h-7 w-7 rounded-md border border-white/30 bg-card/90 backdrop-blur-sm overflow-hidden flex items-center justify-center">
+            {logoImage ? (
+              <img src={logoImage} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-[9px] font-bold text-muted-foreground">{getInitials(facility.name)}</span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-white text-[11px] leading-tight line-clamp-1 drop-shadow-sm">
+              {facility.name}
+            </h3>
+            <div className="flex items-center gap-0.5">
+              <MapPin className="h-2.5 w-2.5 text-white/80 shrink-0" />
+              <span className="text-[10px] text-white/80 truncate">
+                {facility.city}, {facility.state}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Info bar below image */}
-      <div className="p-3 flex items-start gap-2.5">
-        {/* Logo */}
-        <div className="shrink-0 h-9 w-9 rounded-lg border border-border/60 bg-muted overflow-hidden flex items-center justify-center">
-          {logoImage ? (
-            <img src={logoImage} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-xs font-bold text-muted-foreground/60">
-              {getInitials(facility.name)}
-            </span>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className={cn(
-            "font-semibold text-foreground leading-tight line-clamp-1",
-            size === "large" ? "text-sm" : "text-xs"
-          )}>
-            {facility.name}
-          </h3>
-          <div className="flex items-center gap-1 mt-0.5">
-            <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-            <span className="text-[11px] text-muted-foreground truncate">
-              {facility.city}, {facility.state}
-            </span>
-          </div>
+      {/* Minimal info below */}
+      <div className="p-2.5 flex flex-col gap-1.5">
+        {facility.description && (
+          <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">
+            {facility.description}
+          </p>
+        )}
+        <div className="flex items-center justify-center gap-1.5 rounded-md bg-primary/10 hover:bg-primary/15 text-primary text-[10px] font-semibold py-1.5 transition-colors">
+          <Heart className="h-3 w-3" />
+          Check Availability
         </div>
       </div>
     </button>
@@ -174,6 +286,12 @@ export function FacilityShowcaseGrid({
       behavior: "smooth",
     });
   };
+
+  // Build stacked pairs
+  const pairs: FacilityItem[][] = [];
+  for (let i = 0; i < restFacilities.length; i += 2) {
+    pairs.push(restFacilities.slice(i, i + 2));
+  }
 
   return (
     <div className={cn("rounded-2xl border border-border/60 bg-card p-4 md:p-6", className)}>
@@ -225,27 +343,19 @@ export function FacilityShowcaseGrid({
           onScroll={updateScrollState}
           className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x"
         >
-          {/* Hero card — matches the height of a stacked pair */}
-          <div className="shrink-0 snap-start w-[260px] sm:w-[300px] md:w-[340px] self-stretch flex">
-            <div className="w-full flex flex-col">
-              <FacilityShowcaseCard facility={heroFacility} size="large" />
-            </div>
+          {/* Hero card — rich details, fixed image height */}
+          <div className="shrink-0 snap-start w-[280px] sm:w-[300px] md:w-[320px]">
+            <HeroShowcaseCard facility={heroFacility} />
           </div>
 
           {/* Stacked pairs */}
-          {restFacilities.length > 0 && (() => {
-            const pairs: FacilityItem[][] = [];
-            for (let i = 0; i < restFacilities.length; i += 2) {
-              pairs.push(restFacilities.slice(i, i + 2));
-            }
-            return pairs.map((pair, pairIdx) => (
-              <div key={pairIdx} className="shrink-0 snap-start w-[220px] sm:w-[240px] md:w-[270px] flex flex-col gap-3">
-                {pair.map((f) => (
-                  <FacilityShowcaseCard key={f.id} facility={f} size="small" />
-                ))}
-              </div>
-            ));
-          })()}
+          {pairs.map((pair, pairIdx) => (
+            <div key={pairIdx} className="shrink-0 snap-start w-[220px] sm:w-[240px] md:w-[260px] flex flex-col gap-3">
+              {pair.map((f) => (
+                <CompactShowcaseCard key={f.id} facility={f} />
+              ))}
+            </div>
+          ))}
         </div>
 
         {canScrollRight && restFacilities.length > 2 && (
