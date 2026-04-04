@@ -164,23 +164,6 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
         </div>
       </div>
 
-      {/* Bottom CTA banner */}
-      <div className="flex items-center justify-between border-t border-border/40 px-5 py-3 bg-gradient-to-r from-accent/[0.04] via-transparent to-primary/[0.04] rounded-b-xl">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center">
-            <Heart className="h-4 w-4 text-accent" />
-          </div>
-          <div>
-            <p className="text-[12px] font-semibold text-foreground leading-tight">Need help choosing?</p>
-            <p className="text-[10px] text-muted-foreground">Free confidential matching with our concierge team</p>
-          </div>
-        </div>
-        <Link to="/concierge" onClick={onNavigate}>
-          <Button size="sm" className="gap-1.5 h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-semibold shadow-sm px-5">
-            Get Matched <ArrowRight className="h-3 w-3" />
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 }
