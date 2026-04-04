@@ -183,7 +183,7 @@ const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink
 const FooterColumn = memo(function FooterColumn({ title, links }: FooterSection) {
   return (
     <div>
-      <h3 className="text-[11px] font-bold text-primary-foreground/80 uppercase tracking-[0.15em] mb-4">
+      <h3 className="text-xs font-bold text-primary-foreground/80 uppercase tracking-[0.15em] mb-4">
         {title}
       </h3>
       <ul className="space-y-2">
