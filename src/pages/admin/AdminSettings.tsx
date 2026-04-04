@@ -1459,7 +1459,7 @@ export default function AdminSettings() {
                       <div className="flex-1">
                         <p className={cn(
                           "font-medium",
-                          getSetting('two_factor_required') ? "text-success" : "text-amber-800"
+                          getSetting('two_factor_required') ? "text-success" : "text-warning"
                         )}>
                           Two-Factor Authentication
                         </p>
