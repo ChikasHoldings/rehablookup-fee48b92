@@ -61,6 +61,9 @@ const CityTreatmentPage = lazy(() => import("./pages/seo/CityTreatmentPage"));
 const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
 const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
+const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
+const InsuranceStatePage = lazy(() => import("./pages/seo/InsuranceStatePage"));
+const BestInStatePage = lazy(() => import("./pages/seo/BestInStatePage"));
 
 // Provider SEO Pages
 const GetMoreRehabPatients = lazy(() => import("./pages/provider-guides/GetMoreRehabPatients"));
