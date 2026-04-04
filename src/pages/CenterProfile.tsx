@@ -1002,27 +1002,22 @@ const CenterProfile = () => {
             {/* Right Column - Sticky Sidebar */}
             <div className="hidden lg:block">
               <div className="sticky top-24 space-y-4">
-                {/* Contact CTA Card */}
+                {/* Contact CTA */}
                 <div 
                   ref={contactFormRef}
-                  className="rounded-xl border border-border/50 bg-card p-5 shadow-lg"
+                  className="rounded-2xl bg-card border border-border/40 p-6 shadow-sm"
                 >
-                  <div className="text-center mb-5">
-                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-md mb-3">
-                      <MessageSquare className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                    <h3 className="font-display text-lg font-bold text-foreground mb-1">
-                      Get Help Today
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Take the first step towards recovery
-                    </p>
-                  </div>
+                  <h3 className="font-display text-base font-bold text-foreground mb-1">
+                    Get Help Today
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Take the first step towards recovery
+                  </p>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <Button 
                       size="lg" 
-                      className="w-full gap-2 h-12 text-base font-semibold shadow-md"
+                      className="w-full gap-2 h-11 text-sm font-semibold"
                       onClick={() => setRequestModalOpen(true)}
                     >
                       <Sparkles className="h-4 w-4" />
@@ -1031,65 +1026,57 @@ const CenterProfile = () => {
 
                     {showContactDetails && (
                       <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
-                        <Button variant="outline" size="lg" className="w-full gap-2 h-11 text-sm font-semibold border-2">
-                          <Phone className="h-4 w-4" />
+                        <Button variant="outline" size="lg" className="w-full gap-2 h-10 text-xs font-semibold">
+                          <Phone className="h-3.5 w-3.5" />
                           {formatPhoneNumber(facility.phone)}
                         </Button>
                       </a>
                     )}
                   </div>
 
-                  {/* Trust indicators */}
-                  <div className="mt-5 pt-4 border-t border-border/50 space-y-3">
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 shrink-0">
-                        <Clock className="h-3.5 w-3.5 text-emerald-600" />
-                      </div>
-                      <span><strong className="text-foreground">Quick Response</strong> - Within 24 hours</span>
+                  <div className="mt-4 pt-3 border-t border-border/40 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3 text-emerald-600 shrink-0" />
+                      <span>Quick Response — Within 24 hours</span>
                     </div>
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                        <Shield className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span><strong className="text-foreground">100% Confidential</strong></span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Shield className="h-3 w-3 text-primary shrink-0" />
+                      <span>100% Confidential</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Facility Overview Card */}
-                <div className="rounded-xl border border-border/50 bg-card p-5 shadow-sm">
-                  <h3 className="font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-primary" />
-                    Quick Facts
-                  </h3>
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between py-1.5 text-sm">
+                {/* Quick Facts */}
+                <div className="rounded-2xl bg-card border border-border/40 p-5 shadow-sm">
+                  <h3 className="text-sm font-bold text-foreground mb-3">Quick Facts</h3>
+                  <div className="space-y-0 divide-y divide-border/30">
+                    <div className="flex items-center justify-between py-2 text-xs">
                       <span className="text-muted-foreground">Type</span>
                       <span className="font-medium text-foreground">{facility.facility_type}</span>
                     </div>
                     {genderLabel && (
-                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <div className="flex items-center justify-between py-2 text-xs">
                         <span className="text-muted-foreground">Gender</span>
                         <span className="font-medium text-foreground">{genderLabel}</span>
                       </div>
                     )}
                     {facility.bed_count && (
-                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <div className="flex items-center justify-between py-2 text-xs">
                         <span className="text-muted-foreground">Capacity</span>
                         <span className="font-medium text-foreground">{facility.bed_count} beds</span>
                       </div>
                     )}
                     {facility.year_established && (
-                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <div className="flex items-center justify-between py-2 text-xs">
                         <span className="text-muted-foreground">Established</span>
                         <span className="font-medium text-foreground">{facility.year_established}</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                    <div className="flex items-center justify-between py-2 text-xs">
                       <span className="text-muted-foreground">Programs</span>
                       <span className="font-medium text-foreground">{services.length}</span>
                     </div>
-                    <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                    <div className="flex items-center justify-between py-2 text-xs">
                       <span className="text-muted-foreground">Insurance</span>
                       <span className="font-medium text-foreground">{insuranceList.length} accepted</span>
                     </div>
