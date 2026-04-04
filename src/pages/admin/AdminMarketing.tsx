@@ -56,7 +56,7 @@ export default function AdminMarketing() {
     queryFn: async () => {
       let query = supabase
         .from("marketing_leads")
-        .select("id, first_name, last_name, email, phone, status, source, primary_substance, insurance_type, level_of_care, preferred_location, timeline, created_at, updated_at, converted_to_concierge, converted_at, admin_notes, followup_email_sent")
+        .select("id, first_name, last_name, email, phone, status, source, primary_substance, insurance_type, level_of_care, location_city_state, location_zip, urgency, created_at, updated_at, converted_to_concierge, converted_at, admin_notes, followup_email_sent, message, who_seeking_help, utm_source, utm_medium, utm_campaign")
         .order("created_at", { ascending: false })
         .limit(200);
 
