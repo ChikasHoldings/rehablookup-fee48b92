@@ -199,8 +199,6 @@ export default function MensRehabNearMe() {
                 viewAllLabel={`View All ${facilities.length} Centers`}
               />
             </div>
-              )}
-            </div>
           )}
         </div>
       </section>
