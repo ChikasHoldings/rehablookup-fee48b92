@@ -34,7 +34,7 @@ export function IPWhitelistDialog({ trigger }: IPWhitelistDialogProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_settings")
-        .select("*")
+        .select("id, setting_key, setting_value")
         .eq("setting_key", "ip_whitelist")
         .single();
 

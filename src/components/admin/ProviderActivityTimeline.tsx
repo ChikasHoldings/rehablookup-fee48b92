@@ -125,7 +125,7 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
       // Fetch flagged images for this facility
       const { data: flaggedImages } = await supabase
         .from("flagged_images")
-        .select("*")
+        .select("id, facility_id, image_type, image_url, reason, flagged_at, resolved, resolved_at")
         .eq("facility_id", facilityId)
         .order("flagged_at", { ascending: false })
         .limit(20);

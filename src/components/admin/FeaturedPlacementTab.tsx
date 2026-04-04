@@ -72,7 +72,7 @@ export function FeaturedPlacementTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facilities")
-        .select("*")
+        .select("id, name, slug, city, state, facility_type, featured, featured_pinned, featured_display_order, status, verified, logo_url, calculated_ranking_score, last_featured_shown_at, created_at")
         .eq("status", "approved")
         .order("name");
       if (error) throw error;

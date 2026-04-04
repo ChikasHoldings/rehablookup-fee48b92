@@ -35,7 +35,7 @@ export function LeadFormAnalytics({ dateRange }: LeadFormAnalyticsProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("request_help_analytics")
-        .select("*")
+        .select("id, event_type, step_name, session_id, facility_id, created_at, metadata")
         .gte("created_at", dateRange.from.toISOString())
         .lte("created_at", dateRange.to.toISOString())
         .order("created_at", { ascending: true });

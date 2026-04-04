@@ -211,7 +211,7 @@ export function SecurityAlertsPanel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blocked_identifiers")
-        .select("*")
+        .select("id, identifier, identifier_type, reason, blocked_by, blocked_at, expires_at, is_active")
         .eq("is_active", true)
         .order("blocked_at", { ascending: false })
         .limit(10);
