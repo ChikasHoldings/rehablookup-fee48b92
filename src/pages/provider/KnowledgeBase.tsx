@@ -77,7 +77,7 @@ Visit the Help & Support section or contact our team at providers@rehablookup.co
     category: "getting-started",
     tags: ["onboarding", "setup", "basics"],
     readTime: 5,
-    updatedAt: "2024-12-10"
+    updatedAt: "2026-03-10"
   },
   {
     id: "profile-setup",
@@ -112,7 +112,7 @@ Your profile information is used for:
     category: "getting-started",
     tags: ["profile", "setup", "account"],
     readTime: 3,
-    updatedAt: "2024-12-08"
+    updatedAt: "2026-03-08"
   },
   // Listing Management
   {
@@ -153,7 +153,7 @@ Write a clear, compassionate description that highlights:
     category: "listing",
     tags: ["optimization", "visibility", "best practices"],
     readTime: 6,
-    updatedAt: "2024-12-12"
+    updatedAt: "2026-03-12"
   },
   {
     id: "upload-images",
@@ -189,7 +189,7 @@ Quality images help families visualize your facility and build trust.
     category: "listing",
     tags: ["images", "photos", "branding"],
     readTime: 4,
-    updatedAt: "2024-12-05"
+    updatedAt: "2026-03-05"
   },
   // Leads
   {
@@ -229,7 +229,7 @@ Your Leads dashboard is your central hub for managing all incoming leads.
     category: "leads",
     tags: ["leads", "conversion", "follow-up"],
     readTime: 5,
-    updatedAt: "2024-12-11"
+    updatedAt: "2026-03-11"
   },
   {
     id: "lead-notifications",
@@ -272,7 +272,7 @@ Choose between:
     category: "leads",
     tags: ["notifications", "alerts", "settings"],
     readTime: 4,
-    updatedAt: "2024-12-09"
+    updatedAt: "2026-03-09"
   },
   // Billing
   {
@@ -328,7 +328,7 @@ We accept all major credit cards via Stripe for secure payments.
     category: "billing",
     tags: ["billing", "credits", "unlocks"],
     readTime: 5,
-    updatedAt: "2025-01-08"
+    updatedAt: "2026-03-08"
   },
   {
     id: "payment-methods",
@@ -364,7 +364,7 @@ Access your complete billing history and invoices through our secure Stripe bill
     category: "billing",
     tags: ["payment", "credit card", "invoices"],
     readTime: 3,
-    updatedAt: "2024-12-04"
+    updatedAt: "2026-03-04"
   },
   // Analytics
   {
@@ -408,7 +408,7 @@ Data-driven insights to improve your listing performance.
     category: "analytics",
     tags: ["metrics", "performance", "data"],
     readTime: 5,
-    updatedAt: "2024-12-10"
+    updatedAt: "2026-03-10"
   },
   // Account & Security
   {
@@ -458,7 +458,7 @@ Contact security@rehablookup.com for:
     category: "account",
     tags: ["security", "password", "safety"],
     readTime: 4,
-    updatedAt: "2024-12-06"
+    updatedAt: "2026-03-06"
   },
 ];
 
