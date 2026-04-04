@@ -555,7 +555,7 @@ export default function AdminReviews() {
                             <User className="h-4 w-4 text-primary" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{dispute.review.reviewer_name || 'Anonymous'}</p>
+                            <p className="text-sm font-medium">{dispute.review.reviewer_name || 'Verified User'}</p>
                             {(dispute.review.reviewer_city || dispute.review.reviewer_state) && (
                               <p className="text-xs text-muted-foreground flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
