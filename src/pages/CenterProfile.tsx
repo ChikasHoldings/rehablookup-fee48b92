@@ -849,89 +849,69 @@ const CenterProfile = () => {
                 title="Contact & Location"
                 iconColor="bg-blue-500/10 text-blue-600"
               >
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {/* Address Card */}
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50 hover:border-border hover:bg-muted/70 transition-all">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 shrink-0">
-                      <MapPin className="h-5 w-5 text-blue-600" />
-                    </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {/* Address */}
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
+                    <MapPin className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Address</p>
-                      <p className="text-sm text-foreground font-medium">
-                        {facility.address}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {facility.city}, {facility.state} {facility.zip_code}
-                      </p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Address</p>
+                      <p className="text-sm text-foreground font-medium">{facility.address}</p>
+                      <p className="text-sm text-muted-foreground">{facility.city}, {facility.state} {facility.zip_code}</p>
                     </div>
                   </div>
 
-                  {/* Phone Card */}
+                  {/* Phone */}
                   {showContactDetails ? (
                     <a 
                       href={`tel:${facility.phone}`}
                       onClick={() => trackInteraction("call")}
-                      className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
                     >
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 shrink-0 group-hover:bg-emerald-500/20 transition-colors">
-                        <Phone className="h-5 w-5 text-emerald-600" />
-                      </div>
+                      <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Phone</p>
-                        <p className="text-sm text-primary font-semibold group-hover:underline">
-                          {formatPhoneNumber(facility.phone)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Tap to call</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Phone</p>
+                        <p className="text-sm text-primary font-semibold group-hover:underline">{formatPhoneNumber(facility.phone)}</p>
                       </div>
                     </a>
                   ) : (
-                    <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted shrink-0">
-                        <Phone className="h-5 w-5 text-muted-foreground" />
-                      </div>
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
+                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Phone</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Phone</p>
                         <p className="text-sm text-muted-foreground">Use contact form to request a call</p>
                       </div>
                     </div>
                   )}
 
-                  {/* Website Card */}
+                  {/* Website */}
                   {showContactDetails && facility.website && (
                     <a 
                       href={facility.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       onClick={() => trackInteraction("website")}
-                      className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
                     >
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 shrink-0 group-hover:bg-violet-500/20 transition-colors">
-                        <Globe className="h-5 w-5 text-violet-600" />
-                      </div>
+                      <Globe className="h-4 w-4 text-violet-600 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Website</p>
-                        <p className="text-sm text-primary font-semibold flex items-center gap-1.5 group-hover:underline">
-                          Visit Website
-                          <ExternalLink className="h-3.5 w-3.5" />
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Website</p>
+                        <p className="text-sm text-primary font-semibold flex items-center gap-1 group-hover:underline">
+                          Visit Website <ExternalLink className="h-3 w-3" />
                         </p>
                       </div>
                     </a>
                   )}
 
-                  {/* Email Card - if available */}
+                  {/* Email */}
                   {showContactDetails && facility.email && (
                     <a 
                       href={`mailto:${facility.email}`}
-                      className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
                     >
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 shrink-0 group-hover:bg-amber-500/20 transition-colors">
-                        <Mail className="h-5 w-5 text-amber-600" />
-                      </div>
+                      <Mail className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Email</p>
-                        <p className="text-sm text-primary font-semibold truncate group-hover:underline">
-                          {facility.email}
-                        </p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Email</p>
+                        <p className="text-sm text-primary font-semibold truncate group-hover:underline">{facility.email}</p>
                       </div>
                     </a>
                   )}
