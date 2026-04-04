@@ -208,7 +208,7 @@ const About = () => {
               </div>
               
               {/* Stats */}
-              <div className="mt-8 grid grid-cols-3 gap-4">
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-xl bg-muted/50">
                   <div className="font-display text-2xl font-bold text-accent">500+</div>
                   <div className="text-sm text-muted-foreground">Verified Centers</div>

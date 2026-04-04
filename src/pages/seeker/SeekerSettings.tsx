@@ -767,7 +767,7 @@ export default function SeekerSettings() {
             {/* Location */}
             <div>
               <Label>Location</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1">
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input

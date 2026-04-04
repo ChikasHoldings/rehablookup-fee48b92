@@ -506,6 +506,9 @@ const ArticleDetail = () => {
                   src={articleImage}
                   alt={article.title}
                   className="w-full h-full object-cover"
+                  width={1200}
+                  height={675}
+                  loading="eager"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
               </div>

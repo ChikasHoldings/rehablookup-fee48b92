@@ -286,6 +286,9 @@ const HowItWorks = () => {
                               src={step.image} 
                               alt={step.title}
                               className="w-32 h-32 md:w-40 md:h-40 object-contain mb-4"
+                              width={160}
+                              height={160}
+                              loading="lazy"
                             />
                             <span className="text-xs font-medium text-muted-foreground">
                               {step.step === 1 && "Find your options"}
