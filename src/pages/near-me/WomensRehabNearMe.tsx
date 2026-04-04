@@ -202,12 +202,6 @@ export default function WomensRehabNearMe() {
                 viewAllLabel={`View All ${facilities.length} Centers`}
               />
             </div>
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
           )}
         </div>
       </section>
