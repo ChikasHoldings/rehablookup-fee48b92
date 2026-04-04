@@ -70,7 +70,7 @@ export function useProviderNotifications() {
 
       const { data, error } = await supabase
         .from("provider_notifications")
-        .select("id, user_id, title, message, type, read, link, metadata, created_at")
+        .select("id, user_id, facility_id, title, message, type, read, metadata, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);

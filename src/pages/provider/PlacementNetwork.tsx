@@ -175,7 +175,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("placement_invoices")
-        .select("id, facility_id, inquiry_id, amount_cents, status, stripe_invoice_id, due_date, paid_at, created_at")
+        .select("id, facility_id, inquiry_id, case_id, amount_cents, status, stripe_invoice_id, due_at, paid_at, receipt_url, created_at")
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false });
       if (error) return [];
