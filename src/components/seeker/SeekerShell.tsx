@@ -222,7 +222,7 @@ export function SeekerShell() {
         className="flex-1 min-h-0 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
       >
         <Suspense fallback={null}>
-          <Outlet context={{ isAuthenticated: resolvedIsAuthenticated, userName: displayName }} />
+          <Outlet context={{ isAuthenticated: resolvedIsAuthenticated, userName: displayName, userId }} />
         </Suspense>
       </main>
 
