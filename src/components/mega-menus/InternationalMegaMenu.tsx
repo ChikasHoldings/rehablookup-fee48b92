@@ -131,19 +131,49 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
 
 export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
   return (
-    <div className="space-y-3 px-1">
+    <div className="space-y-1">
+      {/* Countries */}
       <div>
-        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5">By Country</p>
+        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1 flex items-center gap-1.5">
+          <Globe className="h-3 w-3" />
+          International Patients
+        </p>
         {countryPages.map((page) => (
           <PrefetchLink key={page.href} to={page.href} onClick={onNavigate}
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-            <span>{page.flag}</span>
-            {page.label}
+            className="group flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-accent/[0.06] transition-colors">
+            <span className="text-base leading-none w-6 text-center">{page.flag}</span>
+            <p className="text-sm font-medium text-foreground leading-tight">{page.label}</p>
+            <ChevronRight className="h-3 w-3 text-border group-hover:text-accent shrink-0 ml-auto" />
           </PrefetchLink>
         ))}
+      </div>
+
+      {/* Popular Programs */}
+      <div className="border-t border-border/30 pt-2 mx-2">
+        <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">
+          Popular Programs
+        </p>
+        <div className="flex flex-wrap gap-1.5 px-1">
+          {programTypes.map((prog) => (
+            <PrefetchLink
+              key={prog.href}
+              to={prog.href}
+              onClick={onNavigate}
+              className="group inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs font-medium text-foreground/80 hover:text-foreground hover:border-accent/30 hover:bg-accent/[0.04] transition-all"
+            >
+              <prog.icon className="h-3 w-3 text-accent" />
+              {prog.label}
+            </PrefetchLink>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="border-t border-border/30 pt-2 mx-2">
         <PrefetchLink to="/international/apply" onClick={onNavigate}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-primary font-medium">
-          Apply for Treatment <ArrowRight className="h-3.5 w-3.5" />
+          className="flex items-center gap-2 px-1 py-1.5 text-xs text-accent font-semibold">
+          <Plane className="h-3.5 w-3.5" />
+          Apply for Treatment <ArrowRight className="h-3 w-3" />
         </PrefetchLink>
       </div>
     </div>

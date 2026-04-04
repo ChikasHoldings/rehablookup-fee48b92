@@ -3,7 +3,7 @@ import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown, Search, Globe } from "lucide-react";
+import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown, Search, Globe, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
@@ -433,91 +433,127 @@ export function Header({
       {/* Mobile Slide Panel */}
       <div 
         className={cn(
-          "fixed top-0 right-0 z-[101] h-full w-[320px] max-w-[85vw] md:hidden transition-all duration-500",
+          "fixed top-0 right-0 z-[101] h-full w-[340px] max-w-[88vw] md:hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="absolute inset-0 bg-background border-l border-border/40 shadow-2xl shadow-foreground/10" />
-        <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-primary via-primary/30 to-transparent">
-          <div className="absolute top-0 left-0 w-4 h-32 bg-gradient-to-r from-primary/20 to-transparent blur-xl" />
-        </div>
+        {/* Accent edge line */}
+        <div className="absolute top-0 left-0 w-[2px] h-full bg-gradient-to-b from-accent via-primary/40 to-transparent" />
         
         <div className="relative h-full flex flex-col">
           {/* Header */}
           <div className={cn(
-            "flex items-center justify-between px-6 h-16 border-b border-border/30 transition-all duration-500 delay-100",
+            "flex items-center justify-between px-5 h-16 border-b border-border/30 transition-all duration-500 delay-100",
             mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
           )}>
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
-                <span className="text-primary-foreground font-display font-bold text-sm">R</span>
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-lg shadow-accent/20">
+                <span className="text-accent-foreground font-display font-bold text-sm">R</span>
               </div>
-              <span className="font-display text-base font-semibold tracking-tight text-foreground">Menu</span>
+              <div>
+                <span className="font-display text-[15px] font-semibold tracking-tight text-foreground block leading-tight">RehabLookup</span>
+                <span className="text-[10px] text-muted-foreground leading-tight">Find Your Path to Recovery</span>
+              </div>
             </div>
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
             >
-              <X className="h-4.5 w-4.5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
 
           {/* Menu Content */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            <nav className="px-5 pt-6 pb-4">
-              <div className="space-y-1">
+          <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin">
+            <nav className="px-4 pt-5 pb-4">
+              <div className="space-y-0.5">
                 {/* Mega-menu items as expandable sections */}
                 {megaMenuItems.map((item, index) => {
                   const Icon = navIcons[item.id] || ChevronRight;
                   const isExpanded = mobileExpandedMenu === item.id;
-                  const delay = 150 + index * 40;
+                  const delay = 150 + index * 50;
 
                   return (
-                    <div key={item.id}>
+                    <div key={item.id} className={cn(
+                      "rounded-xl transition-colors duration-200",
+                      isExpanded && "bg-muted/40"
+                    )}>
                       <button
                         onClick={() => setMobileExpandedMenu(isExpanded ? null : item.id)}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200",
-                          item.isActive(location.pathname) ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted active:scale-[0.98]",
+                          "w-full flex items-center justify-between gap-3 rounded-xl px-3 py-3 text-[15px] font-semibold transition-all duration-200",
+                          item.isActive(location.pathname)
+                            ? "text-accent"
+                            : "text-foreground hover:bg-muted/50 active:scale-[0.98]",
                           mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
                         )}
                         style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className={cn("h-5 w-5 shrink-0", item.isActive(location.pathname) ? "text-primary" : "text-muted-foreground")} />
+                          <div className={cn(
+                            "h-9 w-9 rounded-lg flex items-center justify-center transition-colors",
+                            item.isActive(location.pathname)
+                              ? "bg-accent/15"
+                              : isExpanded ? "bg-accent/10" : "bg-muted/60"
+                          )}>
+                            <Icon className={cn(
+                              "h-[18px] w-[18px]",
+                              item.isActive(location.pathname) || isExpanded ? "text-accent" : "text-muted-foreground"
+                            )} />
+                          </div>
                           <span>{item.label}</span>
                         </div>
-                        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", isExpanded && "rotate-180")} />
+                        <div className={cn(
+                          "h-6 w-6 rounded-md flex items-center justify-center transition-all duration-200",
+                          isExpanded ? "bg-accent/15 rotate-180" : "bg-transparent"
+                        )}>
+                          <ChevronDown className={cn(
+                            "h-4 w-4 transition-colors",
+                            isExpanded ? "text-accent" : "text-muted-foreground"
+                          )} />
+                        </div>
                       </button>
                       <div className={cn(
-                        "ml-4 overflow-hidden transition-all duration-300",
-                        isExpanded ? "max-h-[600px] opacity-100 mt-1" : "max-h-0 opacity-0"
+                        "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                        isExpanded ? "max-h-[700px] opacity-100 pb-2" : "max-h-0 opacity-0"
                       )}>
-                        <MegaMenuMobileContent id={item.id} onNavigate={() => setMobileMenuOpen(false)} />
+                        <div className="px-1 pt-1">
+                          <MegaMenuMobileContent id={item.id} onNavigate={() => setMobileMenuOpen(false)} />
+                        </div>
                       </div>
                     </div>
                   );
                 })}
 
+                {/* Divider */}
+                <div className="!my-2.5 mx-3 border-t border-border/40" />
+
                 {/* Standalone links */}
                 {standaloneLinks.map((link, index) => {
                   const Icon = navIcons[link.href] || ChevronRight;
-                  const delay = 150 + (megaMenuItems.length + index) * 40;
+                  const delay = 150 + (megaMenuItems.length + index) * 50;
                   return (
                     <PrefetchLink
                       key={link.href}
                       to={link.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200",
-                        location.pathname === link.href ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted active:scale-[0.98]",
+                        "flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-semibold transition-all duration-200",
+                        location.pathname === link.href ? "bg-accent/10 text-accent" : "text-foreground hover:bg-muted/50 active:scale-[0.98]",
                         mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
                       )}
                       style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
                     >
-                      <Icon className={cn("h-5 w-5 shrink-0", location.pathname === link.href ? "text-primary" : "text-muted-foreground")} />
+                      <div className={cn(
+                        "h-9 w-9 rounded-lg flex items-center justify-center",
+                        location.pathname === link.href ? "bg-accent/15" : "bg-muted/60"
+                      )}>
+                        <Icon className={cn("h-[18px] w-[18px]", location.pathname === link.href ? "text-accent" : "text-muted-foreground")} />
+                      </div>
                       <span>{link.label}</span>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
                     </PrefetchLink>
                   );
                 })}
@@ -527,39 +563,44 @@ export function Header({
 
           {/* Footer CTA */}
           <div className={cn(
-            "border-t border-border/30 p-5 bg-gradient-to-t from-muted/40 to-transparent transition-all duration-500 delay-600",
+            "border-t border-border/30 p-4 bg-gradient-to-t from-muted/50 to-transparent transition-all duration-500 delay-500",
             mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {!roleLoading && isSeekerLoggedIn ? (
                 <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
-                  <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-0 relative px-2">
-                    <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-2 py-1">
-                      <Avatar className="h-6 w-6">
-                        {seekerProfile?.avatar_url ? (
-                          <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
-                        ) : null}
-                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">{seekerInitials}</AvatarFallback>
-                      </Avatar>
-                      {seekerDisplayName || "My Account"}
+                  <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-accent/[0.08] to-primary/[0.06] border border-accent/15 p-3">
+                    <Avatar className="h-10 w-10 ring-2 ring-accent/20">
+                      {seekerProfile?.avatar_url ? (
+                        <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="bg-accent/15 text-accent text-xs font-bold">{seekerInitials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{seekerDisplayName || "My Account"}</p>
+                      <p className="text-[11px] text-muted-foreground">View dashboard</p>
                     </div>
                     {favoritesCount > 0 && (
-                      <span className="absolute top-2 right-3 h-5 w-5 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                      <span className="h-6 min-w-[24px] px-1.5 bg-accent text-accent-foreground text-[11px] font-bold rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
                       </span>
                     )}
-                  </Button>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </div>
                 </PrefetchLink>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <PrefetchLink to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 shadow-lg shadow-primary/25 gap-2">
+                    <Button className="w-full h-12 text-sm font-semibold rounded-xl bg-gradient-to-r from-accent to-accent/90 text-accent-foreground shadow-lg shadow-accent/20 gap-2 active:scale-[0.98] transition-transform">
                       <User className="h-4 w-4" />
                       Sign In
                     </Button>
                   </PrefetchLink>
                   <PrefetchLink to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button variant="outline" className="w-full h-11 text-sm rounded-xl">Get Listed</Button>
+                    <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl border-border/60 gap-2">
+                      <Building2 className="h-4 w-4" />
+                      List Your Facility
+                    </Button>
                   </PrefetchLink>
                 </div>
               )}

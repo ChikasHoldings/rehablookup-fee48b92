@@ -182,42 +182,76 @@ export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
   };
 
   return (
-    <div className="space-y-3 px-1">
-      <form onSubmit={handleSearch} className="px-2 pt-1">
+    <div className="space-y-1">
+      {/* Search bar */}
+      <form onSubmit={handleSearch} className="px-2 pb-2">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md bg-accent/15 flex items-center justify-center">
+            <Search className="h-3 w-3 text-accent" />
+          </div>
           <input
             type="text"
-            placeholder="Search centers..."
+            placeholder="Search by city or treatment..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="w-full h-10 pl-11 pr-3 rounded-lg border border-accent/20 bg-accent/[0.04] text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30 transition-all"
           />
         </div>
       </form>
+
+      {/* Treatment Types */}
       <div>
-        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5">Treatment Types</p>
-        {treatmentTypes.slice(0, 5).map((item) => (
+        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1 flex items-center gap-1.5">
+          <Shield className="h-3 w-3" />
+          Treatment Types
+        </p>
+        {treatmentTypes.slice(0, 6).map((item) => (
           <PrefetchLink key={item.href} to={item.href} onClick={onNavigate}
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-            <item.icon className="h-4 w-4 text-accent" />
-            {item.label}
+            className="group flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-accent/[0.06] transition-colors">
+            <div className="h-7 w-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
+              <item.icon className="h-3.5 w-3.5 text-accent" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground leading-tight">{item.label}</p>
+              <p className="text-[11px] text-muted-foreground/80 leading-tight">{item.desc}</p>
+            </div>
           </PrefetchLink>
         ))}
         <PrefetchLink to="/treatment-types" onClick={onNavigate}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-primary font-medium">
-          All Types <ArrowRight className="h-3.5 w-3.5" />
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-accent font-semibold">
+          All treatment types <ArrowRight className="h-3 w-3" />
         </PrefetchLink>
       </div>
-      <div>
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-3 mb-1.5">Popular States</p>
-        {popularLocations.slice(0, 4).map((loc) => (
-          <PrefetchLink key={loc.href} to={loc.href} onClick={onNavigate}
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-            <MapPin className="h-4 w-4 text-accent" />
-            {loc.label}
-          </PrefetchLink>
-        ))}
+
+      {/* Popular Locations */}
+      <div className="border-t border-border/30 pt-2 mx-2">
+        <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1 flex items-center gap-1.5">
+          <MapPin className="h-3 w-3 text-accent" />
+          Popular States
+        </p>
+        <div className="grid grid-cols-2 gap-0.5">
+          {popularLocations.map((loc) => (
+            <PrefetchLink key={loc.href} to={loc.href} onClick={onNavigate}
+              className="group flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors">
+              <ChevronRight className="h-3 w-3 text-border group-hover:text-accent shrink-0" />
+              {loc.label}
+            </PrefetchLink>
+          ))}
+        </div>
+      </div>
+
+      {/* Near Me */}
+      <div className="border-t border-border/30 pt-2 mx-2">
+        <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1">Near Me</p>
+        <div className="grid grid-cols-2 gap-0.5">
+          {nearMePages.map((page) => (
+            <PrefetchLink key={page.href} to={page.href} onClick={onNavigate}
+              className="group flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors">
+              <Search className="h-3 w-3 text-accent/50 group-hover:text-accent shrink-0" />
+              {page.label}
+            </PrefetchLink>
+          ))}
+        </div>
       </div>
     </div>
   );
