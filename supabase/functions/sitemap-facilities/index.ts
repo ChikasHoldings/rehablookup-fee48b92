@@ -289,12 +289,8 @@ const TREATMENT_TYPES_WITH_GEO = [
   "detox-programs",
 ];
 
-// Top 15 states for near-me state pages
-const TOP_STATES_FOR_NEAR_ME = [
-  "california", "florida", "texas", "new-york", "arizona", "colorado",
-  "ohio", "pennsylvania", "illinois", "georgia", "tennessee", "massachusetts",
-  "michigan", "washington", "nevada"
-];
+// All 50 states for near-me state pages (full coverage)
+const TOP_STATES_FOR_NEAR_ME = [...US_STATES];
 
 // Top 10 states for treatment type geo pages
 const TOP_STATES_FOR_TREATMENT = [
