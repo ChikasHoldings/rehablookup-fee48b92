@@ -30,7 +30,7 @@ const NotFound = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/rehab-centers?location=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search-results?location=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
