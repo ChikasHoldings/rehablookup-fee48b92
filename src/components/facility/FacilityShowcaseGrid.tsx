@@ -225,9 +225,11 @@ export function FacilityShowcaseGrid({
           onScroll={updateScrollState}
           className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x"
         >
-          {/* Hero card */}
-          <div className="shrink-0 snap-start w-[260px] sm:w-[300px] md:w-[340px]">
-            <FacilityShowcaseCard facility={heroFacility} size="large" />
+          {/* Hero card — matches the height of a stacked pair */}
+          <div className="shrink-0 snap-start w-[260px] sm:w-[300px] md:w-[340px] self-stretch flex">
+            <div className="w-full flex flex-col">
+              <FacilityShowcaseCard facility={heroFacility} size="large" />
+            </div>
           </div>
 
           {/* Stacked pairs */}
