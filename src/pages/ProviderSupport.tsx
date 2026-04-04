@@ -100,6 +100,8 @@ export default function ProviderSupport() {
   };
 
   return (
+    <>
+    <Helmet><title>Provider Support | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
