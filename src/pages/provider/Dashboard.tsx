@@ -520,19 +520,19 @@ export default function ProviderDashboardPage() {
             <div className="space-y-2.5">
               {/* Locked Inquiries Alert */}
               {totalLeadsCount > 0 && (
-                <Card className="border-emerald-500/30 bg-emerald-500/5">
+                <Card className="border-success/30 bg-success/5">
                   <CardContent className="p-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                        <span className="text-sm font-bold text-white">{totalLeadsCount}</span>
+                      <div className="h-10 w-10 rounded-lg bg-success flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-white tabular-nums">{totalLeadsCount}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">
-                          {totalLeadsCount} Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} Available
+                          <span className="tabular-nums">{totalLeadsCount}</span> Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} Available
                         </p>
                         <p className="text-xs text-muted-foreground">Unlock to view details</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" asChild>
+                      <Button size="sm" className="h-7 text-xs bg-success hover:bg-success/90" asChild>
                         <Link to="/provider/inquiries">
                           View
                         </Link>
