@@ -542,7 +542,7 @@ export default function AdminProviders() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
             <p className="text-sm text-muted-foreground">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} providers
+              <span className="tabular-nums">Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} providers</span>
             </p>
             <div className="flex items-center gap-2">
               <Button
