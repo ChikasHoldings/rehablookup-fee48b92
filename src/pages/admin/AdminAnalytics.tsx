@@ -1034,17 +1034,17 @@ export default function AdminAnalytics() {
         </Card>
 
         {/* Leads Performance Card */}
-        <Card className="border-slate-200">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-cyan-50">
-                  <FileText className="h-4 w-4 text-cyan-600" />
+                <div className="p-2 rounded-lg bg-info/10">
+                  <FileText className="h-4 w-4 text-info" />
                 </div>
                 <CardTitle className="text-sm font-semibold">Lead Performance</CardTitle>
               </div>
               {compareMode && kpis.totalLeadsChange !== null && (
-                <Badge variant={kpis.totalLeadsChange >= 0 ? "default" : "destructive"} className="text-xs">
+                <Badge variant={kpis.totalLeadsChange >= 0 ? "default" : "destructive"} className="text-xs tabular-nums">
                   {kpis.totalLeadsChange >= 0 ? "+" : ""}{kpis.totalLeadsChange.toFixed(1)}%
                 </Badge>
               )}
@@ -1086,7 +1086,7 @@ export default function AdminAnalytics() {
                 </div>
                 <div className="flex-1 space-y-3">
                   <div>
-                    <div className="text-2xl font-bold text-slate-900">{kpis.totalLeads}</div>
+                    <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.totalLeads}</div>
                     <p className="text-xs text-muted-foreground">Total Leads</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
