@@ -62,7 +62,7 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
   return (
     <div ref={ref || dropdownRef} className="relative">
       {label && (
-        <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+        <label className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
           {icon}
           {label}
         </label>
@@ -73,9 +73,9 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex w-full items-center justify-between gap-2 text-left transition-colors",
-          "h-11 px-3 rounded-lg border border-border bg-background hover:bg-muted/50",
-          "text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-          selected.length > 0 ? "text-foreground" : "text-muted-foreground"
+          "bg-transparent hover:bg-transparent border-none p-0 h-auto",
+          "text-[15px] font-medium focus:outline-none",
+          selected.length > 0 ? "text-foreground" : "text-muted-foreground/60"
         )}
       >
         <span className="flex-1 truncate">{getDisplayText()}</span>
@@ -91,7 +91,7 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
           )}
           <ChevronDown
             className={cn(
-              "h-4 w-4 text-muted-foreground transition-transform duration-200",
+              "h-4 w-4 text-muted-foreground/50 transition-transform duration-200",
               isOpen && "rotate-180"
             )}
           />
