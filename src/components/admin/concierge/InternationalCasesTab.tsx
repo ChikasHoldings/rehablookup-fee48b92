@@ -304,7 +304,7 @@ export function InternationalCasesTab() {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-success">
               ${((stats?.total_revenue || 0) / 100).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Total Revenue</p>
