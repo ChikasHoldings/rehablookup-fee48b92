@@ -174,7 +174,7 @@ export default function AdminSecurityLogs() {
     queryFn: async () => {
       let query = supabase
         .from("rate_limit_log")
-        .select("*")
+        .select("id, identifier, action_type, success, created_at, metadata")
         .gte("created_at", dateFrom.toISOString())
         .lte("created_at", dateTo.toISOString())
         .order("created_at", { ascending: false })
