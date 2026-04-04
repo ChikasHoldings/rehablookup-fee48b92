@@ -517,7 +517,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                             {user.phone_verified ? (
                               <Badge variant="outline" className="bg-success/10 text-success border-success/30">Yes</Badge>
                             ) : (
-                              <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">No</Badge>
+                              <Badge variant="outline" className="bg-muted text-muted-foreground border-border">No</Badge>
                             )}
                           </span>
                         </div>
