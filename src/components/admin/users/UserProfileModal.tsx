@@ -703,11 +703,11 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                 variant="outline" 
                                 className={cn(
                                   "text-xs",
-                                  review.status === 'approved' && "bg-green-50 text-green-700 border-green-200",
-                                  review.status === 'pending' && "bg-yellow-50 text-yellow-700 border-yellow-200",
-                                  review.status === 'rejected' && "bg-red-50 text-red-700 border-red-200"
-                                )}
-                              >
+                                   review.status === 'approved' && "bg-success/10 text-success border-success/30",
+                                   review.status === 'pending' && "bg-warning/10 text-warning border-warning/30",
+                                   review.status === 'rejected' && "bg-destructive/10 text-destructive border-destructive/30"
+                                 )}
+                               >
                                 {review.status}
                               </Badge>
                             </div>
