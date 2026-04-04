@@ -411,9 +411,9 @@ const SearchResults = () => {
       if (proA !== proB) return proA - proB;
 
       switch (sortParam) {
-        case "rating-high": return (b.rating || 0) - (a.rating || 0);
-        case "rating-low": return (a.rating || 0) - (b.rating || 0);
-        case "reviews": return (b.reviewCount || 0) - (a.reviewCount || 0);
+        case "rating-high": return ((b as any).googleRating || 0) - ((a as any).googleRating || 0);
+        case "rating-low": return ((a as any).googleRating || 0) - ((b as any).googleRating || 0);
+        case "reviews": return ((b as any).googleReviewCount || 0) - ((a as any).googleReviewCount || 0);
         case "name-asc": return a.name.localeCompare(b.name);
         case "name-desc": return b.name.localeCompare(a.name);
         default: return 0;
