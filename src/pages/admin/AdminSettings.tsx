@@ -121,9 +121,9 @@ SettingRow.displayName = "SettingRow";
 
 const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warning"; label: string }) => {
   const config = {
-    active: "bg-green-100 text-success border-green-200",
+    active: "bg-success/10 text-success border-success/30",
     inactive: "bg-muted text-muted-foreground border-border",
-    warning: "bg-amber-100 text-warning border-amber-200",
+    warning: "bg-warning/10 text-warning border-warning/30",
   };
   
   return (
@@ -1504,7 +1504,7 @@ export default function AdminSettings() {
                         </p>
                       </div>
                       {getSetting('ip_whitelist_enabled') && (
-                        <Badge className="bg-green-100 text-success hover:bg-green-100">Active</Badge>
+                        <Badge className="bg-success/10 text-success hover:bg-success/10">Active</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-4 p-4 rounded-lg bg-success/10 border border-success/20">
@@ -1518,7 +1518,7 @@ export default function AdminSettings() {
                           {(getSetting('password_require_special') as { enabled?: boolean })?.enabled && ', special chars'}
                         </p>
                       </div>
-                      <Badge className="bg-green-100 text-success hover:bg-green-100">Configured</Badge>
+                      <Badge className="bg-success/10 text-success hover:bg-success/10">Configured</Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -2387,8 +2387,8 @@ export default function AdminSettings() {
                         value={storagePercent} 
                         className={cn(
                           "h-2",
-                          storagePercent > 80 && "[&>div]:bg-red-500",
-                          storagePercent > 60 && storagePercent <= 80 && "[&>div]:bg-amber-500"
+                          storagePercent > 80 && "[&>div]:bg-destructive",
+                          storagePercent > 60 && storagePercent <= 80 && "[&>div]:bg-warning"
                         )} 
                       />
                       {storagePercent > 80 && (
@@ -2427,7 +2427,7 @@ export default function AdminSettings() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className="flex-1 gap-2 text-warning/80 border-amber-200 hover:bg-amber-50"
+                            className="flex-1 gap-2 text-warning/80 border-warning/30 hover:bg-warning/10"
                           >
                             <Trash2 className="h-4 w-4" />
                             Cleanup Orphans
