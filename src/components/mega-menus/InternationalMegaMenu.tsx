@@ -31,6 +31,8 @@ const programTypes = [
   { href: "/us-rehab/executive-rehab", label: "Executive Rehab", icon: Shield },
   { href: "/us-rehab/private-rehab-america", label: "Private Programs", icon: Building2 },
   { href: "/us-rehab/best-rehab-usa", label: "Best in USA", icon: Sparkles },
+  { href: "/fast-admission-rehab-usa", label: "Fast Admission", icon: Heart },
+  { href: "/affordable-rehab-in-usa", label: "Affordable Rehab", icon: Globe },
 ];
 
 export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
