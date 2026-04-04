@@ -281,15 +281,40 @@ Deno.serve(async (req) => {
       throw new Error("Only admins can manage admin users");
     }
 
+    // Check if requesting user is Super Admin
+    const { data: requestorIsSuperAdmin } = await supabase.rpc("is_super_admin", {
+      _user_id: requestingUser.id,
+    });
+
     const body: ManageAdminUserRequest = await req.json();
     const { action, targetUserId, newRole, permissions } = body;
 
-    console.log("[MANAGE-ADMIN-USER] Action:", action, "Target:", targetUserId);
+    console.log("[MANAGE-ADMIN-USER] Action:", action, "Target:", targetUserId, "Requestor Super:", requestorIsSuperAdmin);
+
+    // CRITICAL: Role hierarchy enforcement
+    // Only Super Admins can perform destructive or role-altering actions
+    const superAdminOnlyActions = ["delete", "suspend", "unsuspend", "update_role", "update_permissions", "toggle_mfa_skip"];
+    if (superAdminOnlyActions.includes(action) && !requestorIsSuperAdmin) {
+      throw new Error("Only Super Admins can perform this action");
+    }
 
     // Prevent self-modification for certain actions
     if (action === "suspend" || action === "delete") {
       if (targetUserId === requestingUser.id) {
         throw new Error("You cannot suspend or delete your own account");
+      }
+    }
+
+    // Prevent modifying another Super Admin unless you are the requestor yourself
+    if (action !== "resend_invitation" && action !== "reset_password") {
+      const { data: targetIsSuperAdmin } = await supabase.rpc("is_super_admin", {
+        _user_id: targetUserId,
+      });
+      if (targetIsSuperAdmin && targetUserId !== requestingUser.id) {
+        // Only allow if requestor is also super admin
+        if (!requestorIsSuperAdmin) {
+          throw new Error("Cannot modify a Super Admin account");
+        }
       }
     }
 
