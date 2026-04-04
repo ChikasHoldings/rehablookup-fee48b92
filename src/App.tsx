@@ -382,6 +382,20 @@ const AppInner = () => {
             <Route path="/free-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             <Route path="/medicaid-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             
+            {/* Substance-Specific SEO Landing Pages */}
+            <Route path="/cocaine-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/opioid-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/heroin-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/meth-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/prescription-drug-rehab" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/benzodiazepine-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            
+            {/* Insurance + State Cross Pages */}
+            <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
+            
+            {/* Best Rehab Centers in [State] Roundup Pages */}
+            <Route path="/best-rehab-centers-in-:stateSlug" element={<PublicRouteGuard><BestInStatePage /></PublicRouteGuard>} />
+            
             {/* SEO City+Treatment Combo Pages - use full path parsing */}
             <Route path="/alcohol-rehab-in-*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
             <Route path="/drug-rehab-in-*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
