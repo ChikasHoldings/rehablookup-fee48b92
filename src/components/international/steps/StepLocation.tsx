@@ -10,15 +10,28 @@ import {
 } from "@/components/ui/select";
 
 const COUNTRY_OPTIONS = [
-  "Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria", "Bangladesh",
-  "Belgium", "Brazil", "Canada", "Chile", "China", "Colombia", "Czech Republic", "Denmark",
-  "Egypt", "Finland", "France", "Germany", "Greece", "Hong Kong", "Hungary", "India",
-  "Indonesia", "Ireland", "Israel", "Italy", "Japan", "Jordan", "Kenya", "Kuwait",
-  "Lebanon", "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand", "Nigeria",
-  "Norway", "Oman", "Pakistan", "Peru", "Philippines", "Poland", "Portugal", "Qatar",
-  "Romania", "Russia", "Saudi Arabia", "Singapore", "South Africa", "South Korea", "Spain",
-  "Sweden", "Switzerland", "Taiwan", "Thailand", "Turkey", "UAE", "Ukraine",
-  "United Kingdom", "Venezuela", "Vietnam", "Other"
+  { name: "Afghanistan", flag: "🇦🇫" }, { name: "Albania", flag: "🇦🇱" }, { name: "Algeria", flag: "🇩🇿" },
+  { name: "Argentina", flag: "🇦🇷" }, { name: "Australia", flag: "🇦🇺" }, { name: "Austria", flag: "🇦🇹" },
+  { name: "Bangladesh", flag: "🇧🇩" }, { name: "Belgium", flag: "🇧🇪" }, { name: "Brazil", flag: "🇧🇷" },
+  { name: "Canada", flag: "🇨🇦" }, { name: "Chile", flag: "🇨🇱" }, { name: "China", flag: "🇨🇳" },
+  { name: "Colombia", flag: "🇨🇴" }, { name: "Czech Republic", flag: "🇨🇿" }, { name: "Denmark", flag: "🇩🇰" },
+  { name: "Egypt", flag: "🇪🇬" }, { name: "Finland", flag: "🇫🇮" }, { name: "France", flag: "🇫🇷" },
+  { name: "Germany", flag: "🇩🇪" }, { name: "Greece", flag: "🇬🇷" }, { name: "Hong Kong", flag: "🇭🇰" },
+  { name: "Hungary", flag: "🇭🇺" }, { name: "India", flag: "🇮🇳" }, { name: "Indonesia", flag: "🇮🇩" },
+  { name: "Ireland", flag: "🇮🇪" }, { name: "Israel", flag: "🇮🇱" }, { name: "Italy", flag: "🇮🇹" },
+  { name: "Japan", flag: "🇯🇵" }, { name: "Jordan", flag: "🇯🇴" }, { name: "Kenya", flag: "🇰🇪" },
+  { name: "Kuwait", flag: "🇰🇼" }, { name: "Lebanon", flag: "🇱🇧" }, { name: "Malaysia", flag: "🇲🇾" },
+  { name: "Mexico", flag: "🇲🇽" }, { name: "Morocco", flag: "🇲🇦" }, { name: "Netherlands", flag: "🇳🇱" },
+  { name: "New Zealand", flag: "🇳🇿" }, { name: "Nigeria", flag: "🇳🇬" }, { name: "Norway", flag: "🇳🇴" },
+  { name: "Oman", flag: "🇴🇲" }, { name: "Pakistan", flag: "🇵🇰" }, { name: "Peru", flag: "🇵🇪" },
+  { name: "Philippines", flag: "🇵🇭" }, { name: "Poland", flag: "🇵🇱" }, { name: "Portugal", flag: "🇵🇹" },
+  { name: "Qatar", flag: "🇶🇦" }, { name: "Romania", flag: "🇷🇴" }, { name: "Russia", flag: "🇷🇺" },
+  { name: "Saudi Arabia", flag: "🇸🇦" }, { name: "Singapore", flag: "🇸🇬" }, { name: "South Africa", flag: "🇿🇦" },
+  { name: "South Korea", flag: "🇰🇷" }, { name: "Spain", flag: "🇪🇸" }, { name: "Sweden", flag: "🇸🇪" },
+  { name: "Switzerland", flag: "🇨🇭" }, { name: "Taiwan", flag: "🇹🇼" }, { name: "Thailand", flag: "🇹🇭" },
+  { name: "Turkey", flag: "🇹🇷" }, { name: "UAE", flag: "🇦🇪" }, { name: "Ukraine", flag: "🇺🇦" },
+  { name: "United Kingdom", flag: "🇬🇧" }, { name: "Venezuela", flag: "🇻🇪" }, { name: "Vietnam", flag: "🇻🇳" },
+  { name: "Other", flag: "🌍" },
 ];
 
 const LANGUAGE_OPTIONS = [
