@@ -86,7 +86,7 @@ export default function CityTreatmentPage() {
   }, [city, treatment]);
 
   // Early returns AFTER all hooks
-  if (!slug || !treatment || !city) {
+  if (!treatment || !city) {
     return <Navigate to="/404" replace />;
   }
 

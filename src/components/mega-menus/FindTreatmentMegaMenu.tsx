@@ -19,7 +19,7 @@ const treatmentTypes = [
   { href: "/treatment-types/detox-programs", label: "Detox Programs", desc: "Medical detoxification", icon: Activity },
   { href: "/treatment-types/residential-inpatient", label: "Inpatient Rehab", desc: "24/7 residential care", icon: Building2 },
   { href: "/treatment-types/outpatient-programs", label: "Outpatient", desc: "Flexible scheduling", icon: Users },
-  { href: "/treatment-types/holistic-treatment", label: "Holistic Therapy", desc: "Mind-body healing", icon: Heart },
+  { href: "/treatment-types/holistic-therapy", label: "Holistic Therapy", desc: "Mind-body healing", icon: Heart },
   { href: "/treatment-types/luxury-rehab", label: "Luxury Rehab", desc: "Premium facilities", icon: Sparkles },
 ];
 
