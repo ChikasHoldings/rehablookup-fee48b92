@@ -451,10 +451,10 @@ export function InternationalCasesTab() {
                           </div>
                         </td>
                         <td className="py-3 text-sm">
-                          {(c.intake_data?.urgency as string) || "—"}
+                          {(c.intake_data?.urgency as string) || "Not set"}
                         </td>
                         <td className="py-3 text-sm">
-                          {(c.intake_data?.budget_range as string) || "—"}
+                          {(c.intake_data?.budget_range as string) || "Not set"}
                         </td>
                         <td className="py-3">
                           <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
