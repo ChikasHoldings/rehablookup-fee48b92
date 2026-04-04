@@ -36,6 +36,12 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
     if (!formData.locationZip || !/^\d{5}$/.test(formData.locationZip)) {
       newErrors.locationZip = "Please enter a valid 5-digit ZIP code";
     }
+    if (!formData.ageRange) {
+      newErrors.ageRange = "Please select an age range";
+    }
+    if (!formData.gender) {
+      newErrors.gender = "Please select a gender";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
