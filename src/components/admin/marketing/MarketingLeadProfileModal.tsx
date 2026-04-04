@@ -888,24 +888,28 @@ export function MarketingLeadProfileModal({
             {/* Clinical Tab */}
             <TabsContent value="clinical" className="p-6 space-y-6 mt-0">
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="p-4 rounded-lg border bg-card">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Stethoscope className="h-4 w-4 text-primary" />
-                    <h4 className="font-semibold text-sm">Level of Care</h4>
+                {lead.level_of_care && (
+                  <div className="p-4 rounded-lg border bg-card">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Stethoscope className="h-4 w-4 text-primary" />
+                      <h4 className="font-semibold text-sm">Level of Care</h4>
+                    </div>
+                    <p className="text-sm">{lead.level_of_care}</p>
                   </div>
-                  <p className="text-sm">{lead.level_of_care || "—"}</p>
-                </div>
+                )}
 
-                <div className="p-4 rounded-lg border bg-card">
-                  <div className="flex items-center gap-2 mb-3">
-                    <CreditCard className="h-4 w-4 text-primary" />
-                    <h4 className="font-semibold text-sm">Insurance</h4>
+                {lead.insurance_type && (
+                  <div className="p-4 rounded-lg border bg-card">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CreditCard className="h-4 w-4 text-primary" />
+                      <h4 className="font-semibold text-sm">Insurance</h4>
+                    </div>
+                    <p className="text-sm">{lead.insurance_type}</p>
+                    {lead.insurance_provider && (
+                      <p className="text-xs text-muted-foreground mt-1">Provider: {lead.insurance_provider}</p>
+                    )}
                   </div>
-                  <p className="text-sm">{lead.insurance_type || "—"}</p>
-                  {lead.insurance_provider && (
-                    <p className="text-xs text-muted-foreground mt-1">Provider: {lead.insurance_provider}</p>
-                  )}
-                </div>
+                )}
 
                 <div className="p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-3">
@@ -954,7 +958,7 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="text-sm space-y-1">
                     <p>Age: {lead.age_range || "Adult"}</p>
-                    <p>Gender: {lead.gender || "—"}</p>
+                    {lead.gender && <p>Gender: {lead.gender}</p>}
                   </div>
                 </div>
 
@@ -966,13 +970,15 @@ export function MarketingLeadProfileModal({
                   <p className="text-sm">{lead.previous_treatment || "No prior treatment"}</p>
                 </div>
 
-                <div className="p-4 rounded-lg border bg-card">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Briefcase className="h-4 w-4 text-primary" />
-                    <h4 className="font-semibold text-sm">Employment</h4>
+                {lead.employment_status && (
+                  <div className="p-4 rounded-lg border bg-card">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Briefcase className="h-4 w-4 text-primary" />
+                      <h4 className="font-semibold text-sm">Employment</h4>
+                    </div>
+                    <p className="text-sm">{lead.employment_status}</p>
                   </div>
-                  <p className="text-sm">{lead.employment_status || "—"}</p>
-                </div>
+                )}
               </div>
             </TabsContent>
 
