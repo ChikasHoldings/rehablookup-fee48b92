@@ -102,7 +102,7 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
       // Fetch provider notifications sent to this provider
       const { data: notifications } = await supabase
         .from("provider_notifications")
-        .select("*")
+        .select("id, title, message, type, created_at, metadata")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(30);
