@@ -320,7 +320,7 @@ export const Footer = memo(function Footer() {
                 />
               </Link>
               <div className="h-5 w-px bg-primary-foreground/10 hidden sm:block" />
-              <p className="text-[13px] text-primary-foreground/45 leading-snug max-w-xs">
+              <p className="text-sm text-primary-foreground/45 leading-snug max-w-xs">
                 Find trusted, accredited addiction treatment centers across the United States.
               </p>
             </div>
