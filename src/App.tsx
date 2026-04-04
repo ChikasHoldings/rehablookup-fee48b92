@@ -171,6 +171,15 @@ const AlcoholRehabUSA = lazy(() => import("./pages/us-rehab/AlcoholRehabUSA"));
 const DrugRehabUSA = lazy(() => import("./pages/us-rehab/DrugRehabUSA"));
 const DualDiagnosisUSA = lazy(() => import("./pages/us-rehab/DualDiagnosisUSA"));
 const CelebrityRehabUSA = lazy(() => import("./pages/us-rehab/CelebrityRehabUSA"));
+// High-intent international SEO pages
+const TravelToUSAForRehab = lazy(() => import("./pages/us-rehab/TravelToUSAForRehab"));
+const CostOfRehabUSA = lazy(() => import("./pages/us-rehab/CostOfRehabUSA"));
+const ForeignersRehabUSA = lazy(() => import("./pages/us-rehab/ForeignersRehabUSA"));
+const PayingForRehabUSANoInsurance = lazy(() => import("./pages/us-rehab/PayingForRehabUSANoInsurance"));
+const AffordableRehabUSA = lazy(() => import("./pages/us-rehab/AffordableRehabUSA"));
+const FastAdmissionRehabUSA = lazy(() => import("./pages/us-rehab/FastAdmissionRehabUSA"));
+const SameDayDetoxUSA = lazy(() => import("./pages/us-rehab/SameDayDetoxUSA"));
+const TopDetoxCentersUSA = lazy(() => import("./pages/us-rehab/TopDetoxCentersUSA"));
 
 // Panel shells - eagerly loaded for instant rendering
 import { ProviderShell } from "./components/provider/ProviderShell";
