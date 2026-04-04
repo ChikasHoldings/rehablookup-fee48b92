@@ -795,7 +795,7 @@ export default function AdminSecurityLogs() {
               <Activity className="h-3.5 w-3.5" />
               Total Logs
             </CardDescription>
-            <CardTitle className="text-2xl">{stats.totalLogs}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums">{stats.totalLogs}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -804,7 +804,7 @@ export default function AdminSecurityLogs() {
               <XCircle className="h-3.5 w-3.5" />
               Failed Attempts
             </CardDescription>
-            <CardTitle className="text-2xl text-destructive">{stats.failedAttempts}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-destructive">{stats.failedAttempts}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -813,7 +813,7 @@ export default function AdminSecurityLogs() {
               <CheckCircle2 className="h-3.5 w-3.5" />
               Successful Logins
             </CardDescription>
-            <CardTitle className="text-2xl text-emerald-600">{stats.successfulLogins}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-success">{stats.successfulLogins}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -822,7 +822,7 @@ export default function AdminSecurityLogs() {
               <AlertTriangle className="h-3.5 w-3.5" />
               Suspicious Activity
             </CardDescription>
-            <CardTitle className="text-2xl text-amber-600">{stats.suspiciousCount}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-warning">{stats.suspiciousCount}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -831,7 +831,7 @@ export default function AdminSecurityLogs() {
               <Ban className="h-3.5 w-3.5" />
               Blocked Identifiers
             </CardDescription>
-            <CardTitle className="text-2xl text-red-600">{stats.blockedCount}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-destructive">{stats.blockedCount}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -977,7 +977,7 @@ export default function AdminSecurityLogs() {
                           paginatedLogs?.map((log) => {
                             const blocked = isIdentifierBlocked(log.identifier);
                             return (
-                              <TableRow key={log.id} className={blocked ? "bg-red-50/50 dark:bg-red-950/20" : ""}>
+                              <TableRow key={log.id} className={blocked ? "bg-destructive/5" : ""}>
                                 <TableCell className="whitespace-nowrap">
                                   <div className="flex items-center gap-2">
                                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1014,7 +1014,7 @@ export default function AdminSecurityLogs() {
                                 </TableCell>
                                 <TableCell>
                                   {log.success === true ? (
-                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                                    <Badge className="bg-success/10 text-success hover:bg-success/10 border-transparent">
                                       <CheckCircle2 className="h-3 w-3 mr-1" />
                                       Success
                                     </Badge>
@@ -1087,7 +1087,7 @@ export default function AdminSecurityLogs() {
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm">
+                        <span className="text-sm tabular-nums">
                           Page {currentPage} of {totalPages}
                         </span>
                         <Button
@@ -1112,7 +1112,7 @@ export default function AdminSecurityLogs() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <AlertTriangle className="h-5 w-5 text-warning" />
                 Suspicious Activity Monitor
               </CardTitle>
               <CardDescription>
@@ -1136,35 +1136,31 @@ export default function AdminSecurityLogs() {
                         className={cn(
                           "flex items-center justify-between rounded-lg p-4 border",
                           blocked
-                            ? "bg-red-100 border-red-300 dark:bg-red-950/40 dark:border-red-800"
+                            ? "bg-destructive/10 border-destructive/30"
                             : activity.failed_count >= 10
-                            ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
+                            ? "bg-destructive/5 border-destructive/20"
                             : activity.failed_count >= 5
-                            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
-                            : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900"
+                            ? "bg-warning/10 border-warning/30"
+                            : "bg-warning/5 border-warning/20"
                         )}
                       >
                         <div className="flex items-center gap-4">
                           <div className={cn(
                             "p-2 rounded-full",
                             blocked
-                              ? "bg-red-200 dark:bg-red-800"
+                              ? "bg-destructive/20"
                               : activity.failed_count >= 10
-                              ? "bg-red-100 dark:bg-red-900"
-                              : activity.failed_count >= 5
-                              ? "bg-amber-100 dark:bg-amber-900"
-                              : "bg-yellow-100 dark:bg-yellow-900"
+                              ? "bg-destructive/10"
+                              : "bg-warning/10"
                           )}>
                             {blocked ? (
-                              <Ban className="h-5 w-5 text-red-600" />
+                              <Ban className="h-5 w-5 text-destructive" />
                             ) : (
                               <Shield className={cn(
                                 "h-5 w-5",
                                 activity.failed_count >= 10
-                                  ? "text-red-600"
-                                  : activity.failed_count >= 5
-                                  ? "text-amber-600"
-                                  : "text-yellow-600"
+                                  ? "text-destructive"
+                                  : "text-warning"
                               )} />
                             )}
                           </div>
@@ -1188,9 +1184,8 @@ export default function AdminSecurityLogs() {
                             <Badge
                               variant={activity.failed_count >= 10 ? "destructive" : "secondary"}
                               className={cn(
-                                activity.failed_count >= 10 ? "" : 
-                                activity.failed_count >= 5 ? "bg-amber-100 text-amber-700" :
-                                "bg-yellow-100 text-yellow-700"
+                                "tabular-nums",
+                                activity.failed_count >= 10 ? "" : "bg-warning/10 text-warning"
                               )}
                             >
                               {activity.failed_count} failed attempts
@@ -1229,7 +1224,7 @@ export default function AdminSecurityLogs() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+                  <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground">No Suspicious Activity</h3>
                   <p className="text-muted-foreground mt-1">
                     No identifiers with 3+ failed attempts in the last hour
@@ -1247,7 +1242,7 @@ export default function AdminSecurityLogs() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Ban className="h-5 w-5 text-red-500" />
+                    <Ban className="h-5 w-5 text-destructive" />
                     Blocked Identifiers
                   </CardTitle>
                   <CardDescription>
@@ -1341,7 +1336,7 @@ export default function AdminSecurityLogs() {
                               </TableCell>
                               <TableCell>
                                 {isActive ? (
-                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                                  <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/10 border-transparent">
                                     <ShieldOff className="h-3 w-3 mr-1" />
                                     Active
                                   </Badge>
@@ -1366,9 +1361,9 @@ export default function AdminSecurityLogs() {
                                           onClick={() => toggleBlockMutation.mutate({ id: item.id, isActive: !item.is_active })}
                                         >
                                           {item.is_active ? (
-                                            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                                            <ShieldCheck className="h-4 w-4 text-success" />
                                           ) : (
-                                            <ShieldOff className="h-4 w-4 text-red-600" />
+                                            <ShieldOff className="h-4 w-4 text-destructive" />
                                           )}
                                         </Button>
                                       </TooltipTrigger>
@@ -1421,7 +1416,7 @@ export default function AdminSecurityLogs() {
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm">
+                        <span className="text-sm tabular-nums">
                           Page {blockedPage} of {totalBlockedPages}
                         </span>
                         <Button
@@ -1438,7 +1433,7 @@ export default function AdminSecurityLogs() {
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <ShieldCheck className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+                  <ShieldCheck className="h-12 w-12 text-success mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground">No Blocked Identifiers</h3>
                   <p className="text-muted-foreground mt-1">
                     No IP addresses or emails are currently blocked
@@ -1473,7 +1468,7 @@ export default function AdminSecurityLogs() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Status</p>
                   {selectedLog.success === true ? (
-                    <Badge className="bg-emerald-100 text-emerald-700">Success</Badge>
+                    <Badge className="bg-success/10 text-success border-transparent">Success</Badge>
                   ) : selectedLog.success === false ? (
                     <Badge variant="destructive">Failed</Badge>
                   ) : (
@@ -1565,7 +1560,7 @@ export default function AdminSecurityLogs() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Ban className="h-5 w-5 text-red-500" />
+              <Ban className="h-5 w-5 text-destructive" />
               Block Identifier
             </DialogTitle>
             <DialogDescription>
