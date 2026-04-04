@@ -632,8 +632,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     {fullName}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                  <Badge variant="secondary" className="w-fit mt-1.5 text-[10px] h-5 px-2 bg-amber-500/10 text-amber-600 border-0">
-                    Administrator
+                  <Badge variant="secondary" className={`w-fit mt-1.5 text-[10px] h-5 px-2 border-0 ${ROLE_DISPLAY[adminRole || "customer_rep"]?.color || "bg-amber-500/10 text-amber-600"}`}>
+                    {ROLE_DISPLAY[adminRole || "customer_rep"]?.label || "Administrator"}
                   </Badge>
                 </div>
               </div>
