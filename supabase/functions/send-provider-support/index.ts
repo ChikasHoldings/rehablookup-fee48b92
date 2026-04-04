@@ -23,6 +23,14 @@ const topicLabels: Record<string, string> = {
   other: "Other",
 };
 
+// Input sanitization helpers
+function sanitizeStr(str: string, maxLen = 500): string {
+  return str.trim().replace(/[<>]/g, "").slice(0, maxLen);
+}
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -41,7 +49,11 @@ Deno.serve(async (req) => {
     }
 
     const body: ProviderSupportRequest = await req.json();
-    const { name, email, topic, message, userId } = body;
+    const name = sanitizeStr(body.name, 100);
+    const email = body.email?.trim()?.toLowerCase()?.slice(0, 255) || "";
+    const topic = sanitizeStr(body.topic, 50);
+    const message = sanitizeStr(body.message, 5000);
+    const userId = body.userId;
 
     if (!name || !email || !topic || !message) {
       console.error("[SEND-PROVIDER-SUPPORT] Missing required fields");
@@ -132,7 +144,7 @@ Deno.serve(async (req) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
                 <tr>
                   <td style="padding: 8px 0; font-size: 14px; color: #6b7280; width: 70px;">From:</td>
-                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937; font-weight: 500;">${name}</td>
+                  <td style="padding: 8px 0; font-size: 15px; color: #1f2937; font-weight: 500;">${escapeHtml(name)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Email:</td>
@@ -148,7 +160,7 @@ Deno.serve(async (req) => {
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0 0 6px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Message</p>
-                    <p style="margin: 0; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                    <p style="margin: 0; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(message)}</p>
                   </td>
                 </tr>
               </table>
@@ -203,7 +215,7 @@ Deno.serve(async (req) => {
           <tr>
             <td style="padding: 32px 28px; background-color: #ffffff;">
               <p style="margin: 0 0 16px 0; font-size: 16px; color: #1f2937; line-height: 1.6;">
-                Hi ${name},
+                Hi ${escapeHtml(name)},
               </p>
               <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151; line-height: 1.6;">
                 Thank you for reaching out to our provider support team. We've received your message regarding <strong style="color: #1f2937;">${topicLabel}</strong> and will get back to you within 24 hours.
@@ -213,7 +225,7 @@ Deno.serve(async (req) => {
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0 0 6px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Your Message</p>
-                    <p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                    <p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(message)}</p>
                   </td>
                 </tr>
               </table>

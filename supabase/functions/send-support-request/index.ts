@@ -13,6 +13,14 @@ interface SupportRequest {
   source?: "provider" | "seeker";
 }
 
+// Input sanitization helpers
+function sanitizeStr(str: string, maxLen = 500): string {
+  return str.trim().replace(/[<>]/g, "").slice(0, maxLen);
+}
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -56,7 +64,10 @@ Deno.serve(async (req) => {
     }
 
     const body: SupportRequest = await req.json();
-    const { category, subject, message, source = "provider" } = body;
+    const category = sanitizeStr(body.category, 50);
+    const subject = sanitizeStr(body.subject, 200);
+    const message = sanitizeStr(body.message, 5000);
+    const source = body.source || "provider";
 
     if (!category || !subject || !message) {
       return new Response(
@@ -203,7 +214,7 @@ Deno.serve(async (req) => {
                 <tr>
                   <td style="padding: 16px 20px;">
                     <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Subject</p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 500; color: #1a1a1a;">${subject}</p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 500; color: #1a1a1a;">${escapeHtml(subject)}</p>
                   </td>
                 </tr>
               </table>
@@ -212,7 +223,7 @@ Deno.serve(async (req) => {
                 <tr>
                   <td style="padding: 16px 20px;">
                     <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Message</p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a; white-space: pre-wrap; line-height: 1.6;">${message}</p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a; white-space: pre-wrap; line-height: 1.6;">${escapeHtml(message)}</p>
                   </td>
                 </tr>
               </table>

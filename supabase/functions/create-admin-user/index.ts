@@ -13,6 +13,10 @@ interface CreateAdminUserRequest {
   permissions: Record<string, boolean>;
 }
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 function generateTempPassword(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
   let password = "";
@@ -219,7 +223,7 @@ Deno.serve(async (req) => {
           <tr>
             <td style="padding: 40px 32px;">
               <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 17px; color: #1a1a1a; line-height: 1.6;">
-                Hello ${displayName},
+                Hello ${escapeHtml(displayName)},
               </p>
               
               <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
