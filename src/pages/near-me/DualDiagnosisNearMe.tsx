@@ -183,9 +183,9 @@ export default function DualDiagnosisNearMe() {
           ) : (
             <div className="treatment-listings">
               {/* Horizontal scroll on mobile, grid on larger screens */}
-              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {facilities.slice(0, 12).map((facility) => (
-                  <div key={facility.id} className="flex-shrink-0 w-[300px] md:w-auto snap-center">
+                  
                     <TreatmentCenterCard center={facility as any} />
                   </div>
                 ))}
