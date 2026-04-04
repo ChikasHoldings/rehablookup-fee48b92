@@ -321,6 +321,7 @@ const StatePage = () => {
 
           {isLoading ? (
             <SearchResultsLoading count={6} />
+          ) : stateCenters.length > 0 ? (
             <FacilityShowcaseGrid
               facilities={stateCenters as any[]}
               viewAllHref={`/search-results?state=${stateData.name}`}
