@@ -382,12 +382,12 @@ export function SubscriptionDetailModal({
                     <>
                       {/* Status Alerts */}
                       {isPaused && (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-purple-200 bg-purple-50">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-info/30 bg-info/5">
                           <div className="flex items-center gap-2 flex-1">
-                            <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 shrink-0" />
+                            <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-info shrink-0" />
                             <div>
-                              <p className="font-medium text-purple-900 text-sm sm:text-base">Subscription Paused</p>
-                              <p className="text-xs sm:text-sm text-purple-700">Billing is paused. No charges will be made until resumed.</p>
+                              <p className="font-medium text-foreground text-sm sm:text-base">Subscription Paused</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Billing is paused. No charges will be made until resumed.</p>
                             </div>
                           </div>
                           <Button size="sm" onClick={() => handleAction("resume")} disabled={manageMutation.isPending} className="self-start sm:self-auto text-xs sm:text-sm h-8">
