@@ -4,9 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   MapPin, Search, ArrowRight, Pill, Wine, Brain, Building2, Heart,
-  Sparkles, Activity, Users, ChevronRight, Shield,
+  Sparkles, Activity, Users, Shield,
 } from "lucide-react";
-import megaMenuImg from "@/assets/mega-menu-treatment.jpg";
 
 interface MegaMenuProps {
   onNavigate?: () => void;
@@ -50,118 +49,96 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
   }, [searchQuery, navigate, onNavigate]);
 
   return (
-    <div className="w-[760px] max-w-[92vw]">
-      {/* Search bar at top */}
-      <div className="px-5 pt-5 pb-3">
+    <div className="w-[700px] max-w-[92vw]">
+      {/* Compact search */}
+      <div className="px-4 pt-3.5 pb-2.5">
         <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search by city, state, or treatment type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-11 pl-10 pr-24 rounded-xl border border-border bg-muted/40 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-all"
+            className="w-full h-9 pl-9 pr-20 rounded-lg border border-border bg-muted/30 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-all"
           />
           <button
             type="submit"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-4 rounded-lg bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary/90 transition-colors"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-3.5 rounded-md bg-primary text-primary-foreground text-[11px] font-semibold hover:bg-primary/90 transition-colors"
           >
             Search
           </button>
         </form>
       </div>
 
-      <div className="grid grid-cols-[1fr_1fr_200px] gap-0 border-t border-border/40">
-        {/* Treatment Types */}
-        <div className="p-4 border-r border-border/30">
-          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-2 mb-2 flex items-center gap-1.5">
-            <Shield className="h-3 w-3" />
-            Treatment Types
+      {/* Horizontal layout — no CTA panel, just content */}
+      <div className="flex border-t border-border/40">
+        {/* Treatment Types — compact 2-col grid */}
+        <div className="flex-1 p-3 border-r border-border/30">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.12em] px-1.5 mb-1.5 flex items-center gap-1">
+            <Shield className="h-2.5 w-2.5" /> Treatment Types
           </p>
-          <div className="space-y-0.5">
+          <div className="grid grid-cols-2 gap-x-1 gap-y-0">
             {treatmentTypes.map((item) => (
               <PrefetchLink
                 key={item.href}
                 to={item.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-accent/[0.06] transition-colors"
+                className="group flex items-center gap-2 rounded-md px-1.5 py-[5px] hover:bg-accent/[0.05] transition-colors"
               >
-                <div className="h-7 w-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
-                  <item.icon className="h-3.5 w-3.5 text-accent" />
-                </div>
-                <span className="text-[13px] font-medium text-foreground/90 group-hover:text-foreground">{item.label}</span>
+                <item.icon className="h-3.5 w-3.5 text-accent/70 group-hover:text-accent shrink-0" />
+                <span className="text-[12px] text-foreground/80 group-hover:text-foreground">{item.label}</span>
               </PrefetchLink>
             ))}
           </div>
           <PrefetchLink to="/treatment-types" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2.5 pt-2 text-[12px] font-semibold text-primary hover:text-primary/80">
-            All treatment types <ArrowRight className="h-3 w-3" />
+            className="inline-flex items-center gap-1 px-1.5 pt-1 text-[11px] font-semibold text-primary hover:text-primary/80">
+            All types <ArrowRight className="h-2.5 w-2.5" />
           </PrefetchLink>
         </div>
 
-        {/* Locations + Near Me */}
-        <div className="p-4">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-2 mb-2 flex items-center gap-1.5">
-            <MapPin className="h-3 w-3" />
-            Popular Locations
+        {/* Locations + Near Me — stacked */}
+        <div className="w-[200px] p-3">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.12em] px-1.5 mb-1.5 flex items-center gap-1">
+            <MapPin className="h-2.5 w-2.5" /> Locations
           </p>
-          <div className="grid grid-cols-2 gap-0.5 mb-4">
+          <div className="grid grid-cols-2 gap-x-1 gap-y-0 mb-2">
             {popularLocations.map((loc) => (
               <PrefetchLink
                 key={loc.href}
                 to={loc.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="rounded-md px-1.5 py-[5px] text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
               >
-                <MapPin className="h-3 w-3 text-accent/60 group-hover:text-accent" />
                 {loc.label}
               </PrefetchLink>
             ))}
           </div>
-          <PrefetchLink to="/locations" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2.5 text-[12px] font-semibold text-primary hover:text-primary/80 mb-4">
-            All states <ArrowRight className="h-3 w-3" />
-          </PrefetchLink>
 
-          <div className="border-t border-border/30 pt-3">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] px-2 mb-2">
-              Near Me
-            </p>
-            <div className="space-y-0.5">
-              {nearMePages.map((page) => (
-                <PrefetchLink
-                  key={page.href}
-                  to={page.href}
-                  onClick={onNavigate}
-                  className="group flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                >
-                  <Search className="h-3 w-3 text-accent/60 group-hover:text-accent" />
-                  {page.label}
-                </PrefetchLink>
-              ))}
-            </div>
+          <div className="border-t border-border/30 pt-2">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.12em] px-1.5 mb-1">Near Me</p>
+            {nearMePages.map((page) => (
+              <PrefetchLink
+                key={page.href}
+                to={page.href}
+                onClick={onNavigate}
+                className="group flex items-center gap-1.5 rounded-md px-1.5 py-[4px] text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              >
+                <Search className="h-2.5 w-2.5 text-accent/50 group-hover:text-accent" />
+                {page.label}
+              </PrefetchLink>
+            ))}
           </div>
         </div>
 
-        {/* CTA Panel */}
-        <div className="border-l border-border/30 bg-gradient-to-b from-primary/[0.03] to-accent/[0.03] p-4 flex flex-col">
-          <div className="rounded-xl overflow-hidden shadow-sm mb-3">
-            <img
-              src={megaMenuImg}
-              alt="Treatment facility"
-              className="w-full h-[100px] object-cover"
-              loading="lazy"
-              width={200}
-              height={100}
-            />
-          </div>
-          <p className="text-[13px] font-bold text-foreground leading-tight">Free Concierge</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed mt-1 mb-3 flex-1">
-            Our team matches you with the right facility — free & confidential.
+        {/* Slim CTA strip */}
+        <div className="w-[155px] border-l border-border/30 bg-gradient-to-b from-primary/[0.03] to-accent/[0.03] p-3 flex flex-col justify-center">
+          <p className="text-[12px] font-bold text-foreground leading-tight">Free Concierge</p>
+          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5 mb-2">
+            We match you with the right facility — free.
           </p>
           <Link to="/concierge" onClick={onNavigate}>
-            <Button size="sm" className="w-full gap-1.5 h-9 bg-accent text-accent-foreground hover:bg-accent/90 text-[12px] font-semibold shadow-sm">
-              Get Matched <ArrowRight className="h-3 w-3" />
+            <Button size="sm" className="w-full gap-1 h-7 bg-accent text-accent-foreground hover:bg-accent/90 text-[11px] font-semibold shadow-sm">
+              Get Matched <ArrowRight className="h-2.5 w-2.5" />
             </Button>
           </Link>
         </div>
