@@ -394,7 +394,7 @@ async function sendIntakeReceivedEmail(
   await createAdminNotification(supabase, {
     type: 'concierge_new_intake',
     title: 'New Placement Intake',
-    message: `New placement request from ${inquiry.user_name} (Case #${caseId}). Level of care: ${inquiry.level_of_care || 'To be determined'}.`,
+    message: `New placement request from ${inquiry.user_name} (Case #${caseId}). Level of care: ${inquiry.level_of_care || '—'}.`,
     metadata: { inquiry_id: inquiry.id },
   });
 }
