@@ -649,7 +649,7 @@ function SectionCard({ title, icon: Icon, children }: { title: string; icon: Rea
 }
 
 function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
-  if (!value || value === "Not specified") return null;
+  if (!value || value === "—") return null;
   return (
     <div className="flex items-start gap-2.5 py-2">
       <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
