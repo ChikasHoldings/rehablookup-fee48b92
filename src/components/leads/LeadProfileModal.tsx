@@ -830,7 +830,7 @@ export function LeadProfileModal({
                           ? "Themselves"
                           : lead.who_seeking_help === "loved-one"
                           ? "A Loved One"
-                          : "Not specified"}
+                          : "Themselves"}
                       </p>
                     </div>
 
