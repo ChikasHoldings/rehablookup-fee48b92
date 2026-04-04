@@ -175,38 +175,36 @@ export function Header({
               );
             })}
 
-            {/* For Providers dropdown - hidden on tablet, visible on lg+ */}
-            <DropdownMenu open={providerDropdownOpen} onOpenChange={setProviderDropdownOpen}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "hidden lg:flex items-center h-10 gap-1 px-3.5 text-[15px] font-medium transition-colors whitespace-nowrap",
-                    location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider")
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  For Providers
-                  <ChevronDown className={cn(
-                    "h-3.5 w-3.5 transition-transform duration-200",
-                    providerDropdownOpen && "rotate-180"
-                  )} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-background border border-border shadow-lg z-50">
-                {providerDropdownLinks.map((dropdownLink) => (
-                  <DropdownMenuItem key={dropdownLink.href} asChild>
-                    <PrefetchLink
-                      to={dropdownLink.href}
-                      className="w-full cursor-pointer"
-                      onClick={() => setProviderDropdownOpen(false)}
-                    >
-                      {dropdownLink.label}
-                    </PrefetchLink>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* For Providers mega-menu - hidden on tablet, visible on lg+ */}
+            <div className="hidden lg:block relative">
+              <button
+                onClick={() => setProviderDropdownOpen(!providerDropdownOpen)}
+                onMouseEnter={() => setProviderDropdownOpen(true)}
+                className={cn(
+                  "flex items-center h-10 gap-1 px-3.5 text-[15px] font-medium transition-colors whitespace-nowrap",
+                  location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider-seo")
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                For Providers
+                <ChevronDown className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-200",
+                  providerDropdownOpen && "rotate-180"
+                )} />
+              </button>
+              {providerDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProviderDropdownOpen(false)} />
+                  <div
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 bg-background border border-border rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-150"
+                    onMouseLeave={() => setProviderDropdownOpen(false)}
+                  >
+                    <ProviderMegaMenu onNavigate={() => setProviderDropdownOpen(false)} />
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* "More" dropdown - visible on tablet only */}
             <DropdownMenu open={moreDropdownOpen} onOpenChange={setMoreDropdownOpen}>
