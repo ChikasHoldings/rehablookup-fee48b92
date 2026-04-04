@@ -316,14 +316,29 @@ const TOP_CITIES_FOR_TREATMENT: Record<string, string[]> = {
   "georgia": ["atlanta"],
 };
 
-// City+Treatment combo pages
-const CITY_TREATMENT_COMBOS = [
-  { prefix: "alcohol-rehab-in", cities: ["dallas", "los-angeles", "houston", "miami", "chicago", "phoenix", "atlanta", "denver", "seattle", "boston"] },
-  { prefix: "drug-rehab-in", cities: ["dallas", "los-angeles", "houston", "miami", "chicago", "phoenix", "atlanta", "denver", "seattle", "boston"] },
-  { prefix: "detox-centers-in", cities: ["los-angeles", "houston", "miami", "chicago", "phoenix", "atlanta"] },
-  { prefix: "inpatient-rehab-in", cities: ["los-angeles", "houston", "miami", "chicago", "dallas"] },
-  { prefix: "outpatient-rehab-in", cities: ["los-angeles", "houston", "miami", "chicago", "dallas"] },
-  { prefix: "dual-diagnosis-treatment-in", cities: ["los-angeles", "houston", "miami", "chicago"] },
+// City+Treatment combo pages - all 50 cities × 6 treatment types (generated dynamically)
+const ALL_CITY_SLUGS = [
+  "new-york", "los-angeles", "chicago", "houston", "phoenix", "dallas", "miami", "atlanta",
+  "denver", "seattle", "san-diego", "san-francisco", "boston", "philadelphia", "san-antonio",
+  "austin", "jacksonville", "columbus", "charlotte", "indianapolis", "portland", "nashville",
+  "las-vegas", "memphis", "louisville", "minneapolis", "detroit", "sacramento", "tampa",
+  "salt-lake-city", "baltimore", "milwaukee", "kansas-city", "tucson", "raleigh", "richmond",
+  "new-orleans", "pittsburgh", "oklahoma-city", "honolulu", "albuquerque", "omaha",
+  "virginia-beach", "boise", "spokane", "orlando", "scottsdale", "st-louis", "cleveland", "cincinnati"
+];
+const CITY_TREATMENT_PREFIXES = [
+  "alcohol-rehab-in", "drug-rehab-in", "detox-centers-in",
+  "inpatient-rehab-in", "outpatient-rehab-in", "dual-diagnosis-treatment-in"
+];
+
+// Insurance + State cross pages
+const INSURANCE_SLUGS = [
+  "aetna-rehab-coverage", "bcbs-rehab-coverage", "cigna-rehab-coverage",
+  "unitedhealthcare-rehab-coverage", "humana-rehab-coverage"
+];
+const INSURANCE_STATES = [
+  "california", "florida", "texas", "new-york", "arizona",
+  "colorado", "ohio", "pennsylvania", "illinois"
 ];
 
 function generateStateRoutes(): RouteEntry[] {
