@@ -14,33 +14,33 @@ function getSupabaseStorageKey() {
   return `sb-${projectRef}-auth-token`;
 }
 
+function getStoredUser(): User | null {
+  try {
+    const stored = localStorage.getItem(getSupabaseStorageKey());
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    const session = parsed?.currentSession || parsed;
+    return session?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Non-blocking session hook for seeker panel child pages.
- * Uses outlet context for isAuthenticated (from SeekerShell)
- * and restores user from localStorage synchronously to avoid getSession deadlocks.
+ * Trusts restored local session immediately, then reconciles with live auth events.
  */
 export function useSeekerSession() {
-  const context = useOutletContext<SeekerOutletContext>();
-  const isAuthenticated = context?.isAuthenticated ?? false;
+  const context = useOutletContext<SeekerOutletContext | undefined>();
+  const initialUser = getStoredUser();
 
-  // Restore user synchronously from localStorage
-  const getStoredUser = (): User | null => {
-    try {
-      const stored = localStorage.getItem(getSupabaseStorageKey());
-      if (!stored) return null;
-      const parsed = JSON.parse(stored);
-      const session = parsed?.currentSession || parsed;
-      return session?.user ?? null;
-    } catch {
-      return null;
-    }
-  };
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [isReady, setIsReady] = useState(!!initialUser);
 
-  const [user, setUser] = useState<User | null>(getStoredUser);
-  const [isReady, setIsReady] = useState(!!getStoredUser());
+  const outletAuthenticated = context?.isAuthenticated ?? false;
+  const isAuthenticated = outletAuthenticated || !!user;
 
   useEffect(() => {
-    // Listen for auth changes (non-blocking)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
@@ -48,8 +48,7 @@ export function useSeekerSession() {
       }
     );
 
-    // If we didn't get a user from storage, mark ready after a short timeout
-    if (!getStoredUser()) {
+    if (!initialUser) {
       const t = setTimeout(() => setIsReady(true), 1500);
       return () => {
         clearTimeout(t);
@@ -58,7 +57,7 @@ export function useSeekerSession() {
     }
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [initialUser]);
 
   return {
     user,

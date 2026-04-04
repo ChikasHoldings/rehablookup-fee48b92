@@ -22,19 +22,70 @@ const CACHE_KEYS = {
 
 const CACHE_TTL = 60000; // 1 minute - short enough to be safe, long enough to feel instant
 
+function getSupabaseStorageKey() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const projectRef = supabaseUrl?.split("//")[1]?.split(".")[0] || "plckxokpyiubuekvodtc";
+  return `sb-${projectRef}-auth-token`;
+}
+
+function getStoredSupabaseSession() {
+  try {
+    const stored = localStorage.getItem(getSupabaseStorageKey());
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    return parsed?.currentSession || parsed;
+  } catch {
+    return null;
+  }
+}
+
+function inferRoleFromStoredSession(session: any, routeHint: UserRole = null): UserRole {
+  const accountType = session?.user?.user_metadata?.account_type;
+
+  if (accountType === "admin" || accountType === "provider" || accountType === "seeker") {
+    return accountType;
+  }
+
+  if (session?.user && routeHint === "seeker") {
+    return "seeker";
+  }
+
+  return null;
+}
+
 // Get cached auth state for instant initial render
-function getCachedAuthState(): { role: UserRole; userId: string | null; isAuth: boolean } | null {
+function getCachedAuthState(routeHint: UserRole = null): { role: UserRole; userId: string | null; isAuth: boolean } | null {
   try {
     const timestamp = localStorage.getItem(CACHE_KEYS.timestamp);
     if (!timestamp || Date.now() - parseInt(timestamp, 10) > CACHE_TTL) {
       return null;
     }
-    
-    const role = localStorage.getItem(CACHE_KEYS.role) as UserRole;
-    const userId = localStorage.getItem(CACHE_KEYS.userId);
-    const isAuth = localStorage.getItem(CACHE_KEYS.isAuth) === "true";
-    
-    return { role, userId, isAuth };
+
+    const cachedRole = (localStorage.getItem(CACHE_KEYS.role) as UserRole) || null;
+    const cachedUserId = localStorage.getItem(CACHE_KEYS.userId) || null;
+    const cachedIsAuth = localStorage.getItem(CACHE_KEYS.isAuth) === "true";
+
+    const storedSession = getStoredSupabaseSession();
+    const storedUserId = storedSession?.user?.id ?? null;
+
+    // Never trust cached auth/role for a different or missing active session.
+    if (cachedIsAuth && !storedUserId) {
+      return null;
+    }
+
+    if (!cachedIsAuth && storedUserId) {
+      return null;
+    }
+
+    if (cachedUserId && storedUserId && cachedUserId !== storedUserId) {
+      return null;
+    }
+
+    return {
+      role: cachedRole ?? inferRoleFromStoredSession(storedSession, routeHint),
+      userId: cachedUserId ?? storedUserId,
+      isAuth: cachedIsAuth && !!storedUserId,
+    };
   } catch {
     return null;
   }
@@ -58,24 +109,6 @@ function clearCachedAuthState() {
     Object.values(CACHE_KEYS).forEach(key => localStorage.removeItem(key));
   } catch {
     // Silent fail
-  }
-}
-
-
-function getSupabaseStorageKey() {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const projectRef = supabaseUrl?.split("//")[1]?.split(".")[0] || "plckxokpyiubuekvodtc";
-  return `sb-${projectRef}-auth-token`;
-}
-
-function getStoredSupabaseSession() {
-  try {
-    const stored = localStorage.getItem(getSupabaseStorageKey());
-    if (!stored) return null;
-    const parsed = JSON.parse(stored);
-    return parsed?.currentSession || parsed;
-  } catch {
-    return null;
   }
 }
 
@@ -132,28 +165,27 @@ const PROVIDER_ALLOWED_PUBLIC_ROUTES = [
  * Shows cached state immediately, then refreshes in background.
  */
 export function useUserRole(): UserRoleResult {
-  // Initialize from cache for instant perceived loading
-  const cached = getCachedAuthState();
-  
   // Route-based role hint for instant perceived loading on first visit
-  const routeHint = typeof window !== "undefined" 
+  const routeHint = typeof window !== "undefined"
     ? window.location.pathname.startsWith("/provider") ? "provider" as UserRole
     : window.location.pathname.startsWith("/admin") ? "admin" as UserRole
     : window.location.pathname.startsWith("/account") ? "seeker" as UserRole
     : null
     : null;
-  
-  // Use cache first, then route hint, for instant initial render
-  const initialRole = cached?.role ?? routeHint;
-  const initialAuth = cached?.isAuth ?? !!routeHint;
-  
+
+  const storedSession = typeof window !== "undefined" ? getStoredSupabaseSession() : null;
+  const storedUserId = storedSession?.user?.id ?? null;
+  const cached = getCachedAuthState(routeHint);
+
+  const initialRole = cached?.role ?? inferRoleFromStoredSession(storedSession, storedUserId ? routeHint : null);
+  const initialAuth = cached?.isAuth ?? !!storedUserId;
+
   const [role, setRole] = useState<UserRole>(initialRole);
-  // CRITICAL: Never start in loading state - trust cache/route hint
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(initialAuth);
-  const [userId, setUserId] = useState<string | null>(cached?.userId ?? null);
+  const [userId, setUserId] = useState<string | null>(cached?.userId ?? storedUserId);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
-  
+
   const mountedRef = useRef(true);
   const initializingRef = useRef(true);
   const roleCache = useRef<Map<string, { role: UserRole; timestamp: number }>>(new Map());
