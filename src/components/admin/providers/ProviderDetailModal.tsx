@@ -855,7 +855,7 @@ export function ProviderDetailModal({
                                       </Badge>
                                     )}
                                     {facility.concierge_network_opted_in && (
-                                      <Badge variant="outline" className="text-purple-600 border-purple-200 text-xs">
+                                      <Badge variant="outline" className="text-chart-3 border-chart-3/30 text-xs">
                                         <Handshake className="h-3 w-3 mr-0.5" />
                                         Placement
                                       </Badge>
