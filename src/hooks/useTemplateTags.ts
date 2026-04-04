@@ -10,7 +10,7 @@ export function useTemplateTags() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("template_tags")
-        .select("*")
+        .select("id, key, label, source, path, example_value, fallback, is_required, created_at")
         .order("source", { ascending: true })
         .order("key", { ascending: true });
 

@@ -122,7 +122,7 @@ export default function AdminProviders() {
     queryFn: async () => {
       const { data } = await supabase
         .from("pro_subscriptions")
-        .select("*")
+        .select("id, facility_id, status, unlock_discount_percent, current_period_end, price_cents, created_at")
         .eq("status", "active");
       
       const map: Record<string, ProSubscription> = {};
@@ -143,7 +143,7 @@ export default function AdminProviders() {
 
         let query = supabase
           .from("facilities")
-          .select("*")
+          .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
           .order("created_at", { ascending: false })
           .range(from, to);
 
@@ -162,7 +162,7 @@ export default function AdminProviders() {
           if (proIds.length === 0) return [];
           query = supabase
             .from("facilities")
-            .select("*")
+            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
             .in("id", proIds)
             .order("created_at", { ascending: false })
             .range(from, to);

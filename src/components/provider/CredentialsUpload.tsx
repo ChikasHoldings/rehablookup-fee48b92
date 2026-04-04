@@ -145,7 +145,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facility_credential_documents")
-        .select("*")
+        .select("id, facility_id, document_name, document_type, document_url, status, rejection_reason, uploaded_at, verified_at, verified_by")
         .eq("facility_id", facilityId)
         .order("uploaded_at", { ascending: false });
       

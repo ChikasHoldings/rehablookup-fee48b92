@@ -111,7 +111,7 @@ export default function AdminSeekers() {
       // Fetch base seeker profiles with pagination
       let profileQuery = supabase
         .from("seeker_profiles")
-        .select("*")
+        .select("id, user_id, first_name, last_name, display_name, phone, city, state, zipcode, phone_verified, phone_verified_at, avatar_url, created_at, updated_at")
         .order("created_at", { ascending: false })
         .range(from, to);
 

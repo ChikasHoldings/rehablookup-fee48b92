@@ -23,7 +23,7 @@ export function useAdminNotifications() {
       console.log('[useAdminNotifications] Fetching notifications...');
       const { data, error } = await supabase
         .from("admin_notifications")
-        .select("*")
+        .select("id, title, message, type, read, metadata, created_at")
         .order("created_at", { ascending: false })
         .limit(100);
 

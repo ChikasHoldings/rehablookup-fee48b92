@@ -76,7 +76,7 @@ export function useAdminUserNotifications() {
 
       const { data, error } = await supabase
         .from("admin_user_notifications")
-        .select("*")
+        .select("id, user_id, title, message, type, read, link, metadata, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50);

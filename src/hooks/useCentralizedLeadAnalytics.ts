@@ -105,7 +105,7 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
 
       const { data: allLeads, error: leadsError } = await supabase
         .from("leads_provider_view")
-        .select("*")
+        .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, primary_substance")
         .in("facility_id", facilityIds)
         .order("created_at", { ascending: true })
         .limit(2000);
