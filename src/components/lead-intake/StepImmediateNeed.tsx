@@ -33,6 +33,9 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
     if (!formData.whoSeekingHelp) {
       newErrors.whoSeekingHelp = "Please select who is seeking help";
     }
+    if (formData.whoSeekingHelp === "loved-one" && !formData.relationshipToPatient) {
+      newErrors.relationshipToPatient = "Please select your relationship";
+    }
     if (!formData.locationZip || !/^\d{5}$/.test(formData.locationZip)) {
       newErrors.locationZip = "Please enter a valid 5-digit ZIP code";
     }
@@ -41,6 +44,9 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
     }
     if (!formData.gender) {
       newErrors.gender = "Please select a gender";
+    }
+    if (!formData.urgency) {
+      newErrors.urgency = "Please select urgency level";
     }
 
     setErrors(newErrors);
