@@ -1,61 +1,126 @@
-import { forwardRef, memo, SVGProps } from "react";
+import { forwardRef, memo, SVGProps, useState } from "react";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link } from "react-router-dom";
-import { Mail, MapPin, ChevronDown, ExternalLink } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Mail, MapPin, ChevronDown, ArrowRight, Globe, Shield, Heart } from "lucide-react";
 
-// Popular locations for SEO
-const popularLocations = [
+// ─── LINK DATA (scalable — add entries freely) ────────────────────────────────
+
+interface FooterLink {
+  name: string;
+  path: string;
+  highlight?: boolean;
+}
+
+interface FooterSection {
+  title: string;
+  links: FooterLink[];
+}
+
+// Top states — easily expandable
+const locationLinks: FooterLink[] = [
   { name: "California", path: "/rehab-centers/california" },
   { name: "Florida", path: "/rehab-centers/florida" },
   { name: "Texas", path: "/rehab-centers/texas" },
   { name: "New York", path: "/rehab-centers/new-york" },
   { name: "Arizona", path: "/rehab-centers/arizona" },
-  { name: "All States", path: "/locations", highlight: true },
+  { name: "Colorado", path: "/rehab-centers/colorado" },
+  { name: "Ohio", path: "/rehab-centers/ohio" },
+  { name: "Pennsylvania", path: "/rehab-centers/pennsylvania" },
+  { name: "Illinois", path: "/rehab-centers/illinois" },
+  { name: "Georgia", path: "/rehab-centers/georgia" },
+  { name: "Tennessee", path: "/rehab-centers/tennessee" },
+  { name: "North Carolina", path: "/rehab-centers/north-carolina" },
+  { name: "All States →", path: "/locations", highlight: true },
 ];
 
-// Treatment types for SEO
-const treatmentTypes = [
+const treatmentLinks: FooterLink[] = [
   { name: "Detox Programs", path: "/treatment-types/detox-programs" },
   { name: "Inpatient Rehab", path: "/treatment-types/residential-inpatient" },
   { name: "Outpatient Programs", path: "/treatment-types/outpatient-programs" },
   { name: "Alcohol Rehab", path: "/treatment-types/alcohol-rehabilitation" },
+  { name: "Drug Addiction", path: "/treatment-types/drug-addiction-treatment" },
   { name: "Dual Diagnosis", path: "/treatment-types/dual-diagnosis-treatment" },
-  { name: "All Treatment Types", path: "/treatment-types", highlight: true },
+  { name: "Holistic Therapy", path: "/treatment-types/holistic-therapy" },
+  { name: "Luxury Rehab", path: "/treatment-types/luxury-rehab" },
+  { name: "All Treatments →", path: "/treatment-types", highlight: true },
 ];
 
-// Resources
-const resources = [
+const insuranceLinks: FooterLink[] = [
+  { name: "Aetna", path: "/insurance/aetna-rehab" },
+  { name: "Blue Cross", path: "/insurance/bcbs-treatment" },
+  { name: "Cigna", path: "/insurance/cigna-rehab" },
+  { name: "UnitedHealthcare", path: "/insurance/united-healthcare-rehab" },
+  { name: "Humana", path: "/insurance/humana-rehab" },
+  { name: "Medicare", path: "/insurance/medicare-rehab" },
+  { name: "Medicaid", path: "/insurance/medicaid-rehab" },
+  { name: "All Insurance →", path: "/insurance", highlight: true },
+];
+
+const resourceLinks: FooterLink[] = [
   { name: "Guides & Articles", path: "/resources" },
-  { name: "Insurance Guide", path: "/insurance" },
+  { name: "Signs of Addiction", path: "/resources/signs-of-addiction" },
+  { name: "What to Expect", path: "/resources/what-to-expect-in-rehab" },
+  { name: "Insurance Guide", path: "/resources/insurance-coverage-guide" },
+  { name: "Paying for Rehab", path: "/resources/paying-for-rehab" },
+  { name: "Detox Timeline", path: "/resources/detox-timeline" },
   { name: "Cost Estimator", path: "/cost-estimator" },
-  { name: "How It Works", path: "/how-it-works" },
   { name: "FAQ", path: "/faq" },
-  { name: "About Us", path: "/about" },
 ];
 
-// International Rehab SEO links
-const internationalLinks = [
+const internationalLinks: FooterLink[] = [
   { name: "International Placement", path: "/international" },
-  { name: "Rehab for UK Patients", path: "/us-rehab/uk-patients" },
-  { name: "Rehab for Canadians", path: "/us-rehab/canadian-patients" },
-  { name: "Travel to USA for Rehab", path: "/travel-to-usa-for-rehab" },
+  { name: "UK & Ireland", path: "/us-rehab/uk-patients" },
+  { name: "Canada", path: "/us-rehab/canadian-patients" },
+  { name: "Europe", path: "/us-rehab/european-patients" },
+  { name: "UAE & Middle East", path: "/us-rehab/uae-middle-east" },
+  { name: "Australia", path: "/us-rehab/australian-patients" },
+  { name: "Travel to USA", path: "/travel-to-usa-for-rehab" },
+  { name: "Cost for Intl Patients", path: "/cost-of-rehab-in-usa-for-international-patients" },
   { name: "International Admissions", path: "/can-foreigners-go-to-rehab-in-usa" },
-  { name: "Cost of Rehab in USA", path: "/cost-of-rehab-in-usa-for-international-patients" },
 ];
 
-// Company/Provider links
-const providerLinks = [
+const providerLinks: FooterLink[] = [
   { name: "Why List With Us", path: "/for-providers" },
-  { name: "Resource Hub", path: "/providers/resources" },
+  { name: "Provider Resources", path: "/providers/resources" },
   { name: "Growth Guides", path: "/provider-guides/get-more-rehab-patients" },
   { name: "Marketing Strategies", path: "/provider-guides/rehab-marketing-strategies" },
   { name: "Lead Generation", path: "/provider-guides/addiction-treatment-lead-generation" },
   { name: "Provider FAQ", path: "/provider-faq" },
-  { name: "List Your Facility", path: "/provider-signup", highlight: true },
+  { name: "List Your Facility →", path: "/provider-signup", highlight: true },
 ];
 
-// Social icons as inline SVGs with forwardRef for proper ref handling
+const companyLinks: FooterLink[] = [
+  { name: "About Us", path: "/about" },
+  { name: "How It Works", path: "/how-it-works" },
+  { name: "Contact", path: "/contact" },
+  { name: "Treatment Placement", path: "/concierge" },
+];
+
+const highIntentLinks: FooterLink[] = [
+  { name: "Best Rehab in USA", path: "/us-rehab/best-rehab-usa" },
+  { name: "Luxury Rehab America", path: "/us-rehab/luxury-rehab-america" },
+  { name: "Private Rehab", path: "/us-rehab/private-rehab-america" },
+  { name: "Executive Rehab", path: "/us-rehab/executive-rehab" },
+  { name: "Affordable Rehab", path: "/affordable-rehab-in-usa" },
+  { name: "Fast Admission", path: "/fast-admission-rehab-usa" },
+  { name: "Same-Day Detox", path: "/same-day-detox-usa" },
+  { name: "Top Detox Centers", path: "/top-detox-centers-usa" },
+];
+
+// All sections for mobile accordion
+const allSections: FooterSection[] = [
+  { title: "Find by Location", links: locationLinks },
+  { title: "Treatment Types", links: treatmentLinks },
+  { title: "Insurance", links: insuranceLinks },
+  { title: "US Treatment Programs", links: highIntentLinks },
+  { title: "International", links: internationalLinks },
+  { title: "Resources", links: resourceLinks },
+  { title: "For Providers", links: providerLinks },
+  { title: "Company", links: companyLinks },
+];
+
+// ─── SOCIAL ICONS ──────────────────────────────────────────────────────────────
+
 const XIcon = forwardRef<SVGSVGElement, SVGProps<SVGSVGElement>>((props, ref) => (
   <svg ref={ref} viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" {...props}>
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -84,77 +149,6 @@ const LinkedInIcon = forwardRef<SVGSVGElement, SVGProps<SVGSVGElement>>((props, 
 ));
 LinkedInIcon.displayName = "LinkedInIcon";
 
-// Footer link column component
-interface FooterColumnProps {
-  title: string;
-  links: { name: string; path: string; highlight?: boolean }[];
-}
-
-const FooterColumn = memo(forwardRef<HTMLDivElement, FooterColumnProps>(function FooterColumn({ title, links }, ref) {
-  return (
-    <div ref={ref}>
-      <p className="text-sm font-semibold text-primary-foreground uppercase tracking-wider mb-4" role="heading" aria-level={6}>
-        {title}
-      </p>
-      <ul className="space-y-3">
-        {links.map((item) => (
-          <li key={item.path}>
-            <Link
-              to={item.path}
-              className={`text-sm transition-colors duration-200 ${
-                item.highlight
-                  ? "text-accent font-medium hover:text-accent/80 inline-flex items-center gap-1"
-                  : "text-primary-foreground/70 hover:text-primary-foreground"
-              }`}
-            >
-              {item.name}
-              {item.highlight && <ExternalLink className="h-3 w-3" />}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}));
-FooterColumn.displayName = "FooterColumn";
-
-// Mobile accordion section
-interface MobileAccordionProps {
-  title: string;
-  links: { name: string; path: string; highlight?: boolean }[];
-}
-
-const MobileAccordion = forwardRef<HTMLDetailsElement, MobileAccordionProps>(function MobileAccordion({ title, links }, ref) {
-  return (
-    <details ref={ref} className="group border-b border-primary-foreground/10 last:border-b-0">
-      <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
-        <h4 className="text-sm font-semibold text-primary-foreground">{title}</h4>
-        <ChevronDown className="h-4 w-4 text-primary-foreground/60 transition-transform duration-200 group-open:rotate-180" />
-      </summary>
-      <div className="px-5 pb-4">
-        <ul className="space-y-3">
-          {links.map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                className={`text-sm transition-colors ${
-                  item.highlight
-                    ? "text-accent font-medium inline-flex items-center gap-1 hover:text-accent/80"
-                    : "text-primary-foreground/70 hover:text-primary-foreground"
-                }`}
-              >
-                {item.name}
-                {item.highlight && <ExternalLink className="h-3 w-3" />}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </details>
-  );
-});
-
-// Social link component
 const socialLinks = [
   { Icon: XIcon, href: "https://x.com/rehablookup", label: "X (Twitter)" },
   { Icon: FacebookIcon, href: "https://facebook.com/rehablookup", label: "Facebook" },
@@ -162,174 +156,223 @@ const socialLinks = [
   { Icon: LinkedInIcon, href: "https://linkedin.com/company/rehablookup", label: "LinkedIn" },
 ];
 
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────────
+
+const FooterLinkList = memo(function FooterLinkList({ links }: { links: FooterLink[] }) {
+  return (
+    <ul className="space-y-2">
+      {links.map((item) => (
+        <li key={item.path}>
+          <Link
+            to={item.path}
+            className={`text-[13px] leading-snug transition-colors duration-150 ${
+              item.highlight
+                ? "text-accent font-medium hover:text-accent/80"
+                : "text-primary-foreground/60 hover:text-primary-foreground"
+            }`}
+          >
+            {item.name}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+});
+
+const FooterColumn = memo(function FooterColumn({ title, links }: FooterSection) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-primary-foreground/90 uppercase tracking-widest mb-3">
+        {title}
+      </p>
+      <FooterLinkList links={links} />
+    </div>
+  );
+});
+
+const MobileAccordion = memo(function MobileAccordion({ title, links }: FooterSection) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-primary-foreground/8">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+        aria-expanded={open}
+      >
+        <span className="text-sm font-semibold text-primary-foreground">{title}</span>
+        <ChevronDown className={`h-4 w-4 text-primary-foreground/50 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 pt-0">
+          <FooterLinkList links={links} />
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ─── MAIN FOOTER ───────────────────────────────────────────────────────────────
+
 export const Footer = memo(function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-primary text-primary-foreground">
-      {/* Main Footer Content */}
-      <div className="container px-4 md:px-6 lg:px-8">
-        {/* Desktop Layout */}
-        <div className="hidden md:block py-8 lg:py-10">
-          <div className="grid grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8">
-            {/* Brand Column */}
-            <div className="col-span-2 lg:col-span-3 space-y-4">
-              <Link to="/" className="inline-block">
-                <img
-                  src={logoDarkBg}
-                  alt="RehabLookup"
-                  className="h-8 w-auto"
-                  width={153}
-                  height={32}
-                  loading="lazy"
-                />
+    <footer className="bg-primary text-primary-foreground" role="contentinfo">
+      {/* ── CTA Banner ─────────────────────────────────────────────── */}
+      <div className="border-b border-primary-foreground/10">
+        <div className="container px-4 md:px-6 lg:px-8">
+          <div className="py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+            <div className="flex items-start gap-3">
+              <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 shrink-0 mt-0.5">
+                <Heart className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-primary-foreground">
+                  Need Help Finding Treatment?
+                </p>
+                <p className="text-sm text-primary-foreground/60 mt-0.5">
+                  Our placement specialists connect you with the right facility — confidentially and at no cost to you.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2.5 shrink-0">
+              <Link
+                to="/concierge"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors"
+              >
+                Get Matched <ArrowRight className="h-4 w-4" />
               </Link>
-              <p className="text-sm text-primary-foreground/70">
-                Find trusted addiction treatment centers nationwide.
-              </p>
+              <Link
+                to="/international/apply"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary-foreground/20 px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-foreground/5 transition-colors"
+              >
+                <Globe className="h-4 w-4" /> International Patients
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              {/* Contact Info */}
-              <div className="space-y-3">
+      {/* ── Desktop Link Grid ──────────────────────────────────────── */}
+      <div className="container px-4 md:px-6 lg:px-8">
+        <div className="hidden md:block py-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-6 gap-y-8">
+            {/* Col 1: Locations */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="Locations" links={locationLinks} />
+            </div>
+            {/* Col 2: Treatment */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="Treatment" links={treatmentLinks} />
+            </div>
+            {/* Col 3: Insurance */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="Insurance" links={insuranceLinks} />
+            </div>
+            {/* Col 4: US Programs */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="US Programs" links={highIntentLinks} />
+            </div>
+            {/* Col 5: International */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="International" links={internationalLinks} />
+            </div>
+            {/* Col 6: Resources */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="Resources" links={resourceLinks} />
+            </div>
+            {/* Col 7: Providers */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="Providers" links={providerLinks} />
+            </div>
+            {/* Col 8: Company + Brand */}
+            <div className="lg:col-span-1">
+              <FooterColumn title="Company" links={companyLinks} />
+              <div className="mt-6 space-y-3">
+                <Link to="/" className="inline-block">
+                  <img
+                    src={logoDarkBg}
+                    alt="RehabLookup"
+                    className="h-7 w-auto"
+                    width={134}
+                    height={28}
+                    loading="lazy"
+                  />
+                </Link>
                 <a
                   href="mailto:help@rehablookup.com"
-                  className="flex items-center gap-2.5 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                  className="flex items-center gap-2 text-[13px] text-primary-foreground/60 hover:text-primary-foreground transition-colors"
                 >
-                  <Mail className="h-4 w-4 flex-shrink-0" />
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
                   help@rehablookup.com
                 </a>
-                <div className="flex items-start gap-2.5 text-sm text-primary-foreground/70">
-                  <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <span>Nationwide Coverage</span>
+                <div className="flex items-center gap-1.5">
+                  {socialLinks.map(({ Icon, href, label }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/8 text-primary-foreground/50 hover:bg-primary-foreground/15 hover:text-primary-foreground transition-all duration-200"
+                      aria-label={`Follow us on ${label}`}
+                    >
+                      <Icon />
+                    </a>
+                  ))}
                 </div>
               </div>
-
-              {/* Social Links */}
-              <div className="flex items-center gap-2">
-                {socialLinks.map(({ Icon, href, label }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20 hover:text-primary-foreground transition-all duration-200"
-                    aria-label={`Follow us on ${label}`}
-                  >
-                    <Icon />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Link Columns */}
-            <div className="lg:col-span-2">
-              <FooterColumn title="Locations" links={popularLocations} />
-            </div>
-            <div className="lg:col-span-2">
-              <FooterColumn title="Treatment" links={treatmentTypes} />
-            </div>
-            <div className="lg:col-span-2">
-              <FooterColumn title="Resources" links={resources} />
-            </div>
-            <div className="lg:col-span-1">
-              <FooterColumn title="🌍 International" links={internationalLinks} />
-            </div>
-            <div className="lg:col-span-2">
-              <FooterColumn title="For Providers" links={providerLinks} />
             </div>
           </div>
         </div>
 
-        {/* Mobile Layout */}
+        {/* ── Mobile Layout ───────────────────────────────────────── */}
         <div className="md:hidden">
-          {/* Brand Section */}
-          <div className="py-6 text-center border-b border-primary-foreground/10">
-            <Link to="/" className="inline-block mb-3">
-              <img
-                src={logoDarkBg}
-                alt="RehabLookup"
-                className="h-7 w-auto mx-auto"
-                width={134}
-                height={28}
-                loading="lazy"
-              />
+          {/* Brand */}
+          <div className="py-6 text-center">
+            <Link to="/" className="inline-block mb-2">
+              <img src={logoDarkBg} alt="RehabLookup" className="h-7 w-auto mx-auto" width={134} height={28} loading="lazy" />
             </Link>
-            <p className="text-sm text-primary-foreground/70 mb-4">
+            <p className="text-sm text-primary-foreground/60">
               Find trusted addiction treatment centers nationwide.
             </p>
-
-            {/* Contact */}
-            <div className="flex flex-col items-center gap-2 mb-4">
-              <a
-                href="mailto:help@rehablookup.com"
-                className="inline-flex items-center gap-2 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
-              >
-                <Mail className="h-4 w-4" />
-                help@rehablookup.com
-              </a>
-            </div>
-
-            {/* Social Links */}
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1.5 mt-3">
               {socialLinks.map(({ Icon, href, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20 hover:text-primary-foreground transition-all"
-                  aria-label={`Follow us on ${label}`}
-                >
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/8 text-primary-foreground/50 hover:bg-primary-foreground/15 hover:text-primary-foreground transition-all"
+                  aria-label={`Follow us on ${label}`}>
                   <Icon />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Accordion Links */}
-          <div className="border-b border-primary-foreground/10">
-            <MobileAccordion title="Locations" links={popularLocations} />
-            <MobileAccordion title="Treatment Types" links={treatmentTypes} />
-            <MobileAccordion title="Resources" links={resources} />
-            <MobileAccordion title="For Providers" links={providerLinks} />
+          {/* Accordion sections */}
+          <div className="border-t border-primary-foreground/8">
+            {allSections.map((section) => (
+              <MobileAccordion key={section.title} {...section} />
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
+      {/* ── Bottom Bar ─────────────────────────────────────────────── */}
       <div className="border-t border-primary-foreground/10">
         <div className="container px-4 md:px-6 lg:px-8">
-          <div className="py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Copyright */}
-            <p className="text-xs text-primary-foreground/60 text-center md:text-left">
-              © {currentYear} RehabLookup. All rights reserved.
+          <div className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <p className="text-xs text-primary-foreground/50 text-center md:text-left">
+              © {currentYear} RehabLookup. All rights reserved. Not a medical provider.
             </p>
-
-            {/* Legal Links */}
-            <nav className="flex flex-wrap items-center justify-center md:justify-end gap-x-6 gap-y-2">
-              <Link
-                to="/privacy-policy"
-                className="text-xs text-primary-foreground/60 hover:text-primary-foreground transition-colors"
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                to="/terms-of-service"
-                className="text-xs text-primary-foreground/60 hover:text-primary-foreground transition-colors"
-              >
-                Terms of Service
-              </Link>
-              <Link
-                to="/contact"
-                className="text-xs text-primary-foreground/60 hover:text-primary-foreground transition-colors"
-              >
-                Contact Us
-              </Link>
-              <a
-                href="/sitemap.xml"
-                className="text-xs text-primary-foreground/60 hover:text-primary-foreground transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+            <nav className="flex flex-wrap items-center justify-center md:justify-end gap-x-5 gap-y-1.5">
+              {[
+                { to: "/privacy-policy", label: "Privacy" },
+                { to: "/terms-of-service", label: "Terms" },
+                { to: "/contact", label: "Contact" },
+              ].map((l) => (
+                <Link key={l.to} to={l.to} className="text-xs text-primary-foreground/50 hover:text-primary-foreground transition-colors">
+                  {l.label}
+                </Link>
+              ))}
+              <a href="/sitemap.xml" className="text-xs text-primary-foreground/50 hover:text-primary-foreground transition-colors" target="_blank" rel="noopener noreferrer">
                 Sitemap
               </a>
             </nav>
