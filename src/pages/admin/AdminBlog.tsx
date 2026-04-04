@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -48,8 +49,10 @@ import {
   Globe,
   FileText,
   Archive,
+  Star,
 } from "lucide-react";
 import { ArticleEditor } from "@/components/admin/blog/ArticleEditor";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface BlogArticle {
   id: string;
@@ -62,7 +65,7 @@ interface BlogArticle {
   image_url: string | null;
   author: string;
   author_date: string | null;
-  content: string[];
+  content: unknown;
   status: string;
   featured: boolean;
   published_at: string | null;
@@ -93,6 +96,7 @@ const statusOptions = [
 export default function AdminBlog() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 350);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [editorOpen, setEditorOpen] = useState(false);
@@ -106,7 +110,8 @@ export default function AdminBlog() {
       let query = supabase
         .from("blog_articles")
         .select("id, title, slug, excerpt, author, category, category_label, status, featured, image_url, read_time, published_at, created_at, updated_at")
-        .order("updated_at", { ascending: false });
+        .order("updated_at", { ascending: false })
+        .limit(500);
 
       if (categoryFilter !== "all") {
         query = query.eq("category", categoryFilter);
@@ -120,6 +125,18 @@ export default function AdminBlog() {
       return data as BlogArticle[];
     },
   });
+
+  const filteredArticles = useMemo(() => {
+    if (!articles) return [];
+    if (!debouncedSearch) return articles;
+    const q = debouncedSearch.toLowerCase();
+    return articles.filter(
+      (a) =>
+        a.title.toLowerCase().includes(q) ||
+        a.slug.toLowerCase().includes(q) ||
+        a.author?.toLowerCase().includes(q)
+    );
+  }, [articles, debouncedSearch]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -163,18 +180,24 @@ export default function AdminBlog() {
     },
   });
 
-  const filteredArticles = articles?.filter((article) =>
-    article.title.toLowerCase().includes(search.toLowerCase()) ||
-    article.slug.toLowerCase().includes(search.toLowerCase())
-  );
-
   const handleCreateNew = () => {
     setEditingArticle(null);
     setEditorOpen(true);
   };
 
-  const handleEdit = (article: BlogArticle) => {
-    setEditingArticle(article);
+  const handleEdit = async (article: BlogArticle) => {
+    // Fetch full article data including content for the editor
+    const { data, error } = await supabase
+      .from("blog_articles")
+      .select("*")
+      .eq("id", article.id)
+      .single();
+
+    if (error || !data) {
+      toast({ title: "Failed to load article", variant: "destructive" });
+      return;
+    }
+    setEditingArticle(data as unknown as BlogArticle);
     setEditorOpen(true);
   };
 
@@ -192,7 +215,7 @@ export default function AdminBlog() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "published":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Published</Badge>;
+        return <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/10">Published</Badge>;
       case "draft":
         return <Badge variant="secondary">Draft</Badge>;
       case "archived":
@@ -202,16 +225,50 @@ export default function AdminBlog() {
     }
   };
 
+  const stats = useMemo(() => {
+    if (!articles) return { total: 0, published: 0, draft: 0, featured: 0 };
+    return {
+      total: articles.length,
+      published: articles.filter((a) => a.status === "published").length,
+      draft: articles.filter((a) => a.status === "draft").length,
+      featured: articles.filter((a) => a.featured).length,
+    };
+  }, [articles]);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Blog Management</h1>
-        <p className="text-muted-foreground">Create and manage resource articles</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Blog Management</h1>
+          <p className="text-muted-foreground text-sm">Create and manage resource articles</p>
+        </div>
+        <Button onClick={handleCreateNew}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Article
+        </Button>
       </div>
 
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: "Total", value: stats.total, icon: FileText },
+          { label: "Published", value: stats.published, icon: Globe },
+          { label: "Drafts", value: stats.draft, icon: Edit },
+          { label: "Featured", value: stats.featured, icon: Star },
+        ].map((s) => (
+          <div key={s.label} className="rounded-lg border bg-card p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <s.icon className="h-4 w-4" />
+              {s.label}
+            </div>
+            <p className="text-2xl font-bold tabular-nums mt-1">{isLoading ? "–" : s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -221,85 +278,101 @@ export default function AdminBlog() {
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((opt) => (
-                <SelectItem key={opt.id} value={opt.id}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={handleCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Article
-          </Button>
-        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-36">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map((opt) => (
+              <SelectItem key={opt.id} value={opt.id}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Articles Table */}
-      <div className="border rounded-lg bg-background">
+      <div className="border rounded-lg bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40%]">Article</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="min-w-[280px]">Article</TableHead>
+              <TableHead className="min-w-[120px]">Category</TableHead>
+              <TableHead className="min-w-[100px]">Status</TableHead>
+              <TableHead className="min-w-[110px]">Updated</TableHead>
+              <TableHead className="text-right min-w-[60px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
+              Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton className="h-10 w-full" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-16 rounded flex-shrink-0" />
+                      <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                 </TableRow>
               ))
-            ) : filteredArticles?.length === 0 ? (
+            ) : filteredArticles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p>No articles found</p>
-                  <Button variant="link" onClick={handleCreateNew} className="mt-2">
-                    Create your first article
-                  </Button>
+                <TableCell colSpan={5} className="text-center py-16 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p className="font-medium">No articles found</p>
+                  <p className="text-sm mt-1">
+                    {search ? "Try adjusting your search or filters" : "Create your first article to get started"}
+                  </p>
+                  {!search && (
+                    <Button variant="outline" onClick={handleCreateNew} className="mt-4" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Article
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredArticles?.map((article) => (
-                <TableRow key={article.id}>
+              filteredArticles.map((article) => (
+                <TableRow key={article.id} className="group">
                   <TableCell>
-                    <div className="flex items-start gap-3">
-                      {article.image_url && (
+                    <div className="flex items-center gap-3">
+                      {article.image_url ? (
                         <img
                           src={article.image_url}
-                          alt={`Thumbnail for ${article.title}`}
-                          className="w-16 h-10 object-cover rounded"
+                          alt=""
+                          className="w-16 h-10 object-cover rounded flex-shrink-0"
+                          loading="lazy"
                         />
+                      ) : (
+                        <div className="w-16 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       )}
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{article.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium truncate text-sm">{article.title}</p>
+                          {article.featured && <Star className="h-3.5 w-3.5 text-warning fill-warning flex-shrink-0" />}
+                        </div>
                         <p className="text-xs text-muted-foreground truncate">
                           /resources/{article.slug}
                         </p>
@@ -307,16 +380,16 @@ export default function AdminBlog() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{article.category_label}</Badge>
+                    <Badge variant="outline" className="text-xs">{article.category_label}</Badge>
                   </TableCell>
                   <TableCell>{getStatusBadge(article.status)}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="text-muted-foreground text-sm tabular-nums">
                     {format(new Date(article.updated_at), "MMM d, yyyy")}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -331,11 +404,13 @@ export default function AdminBlog() {
                           <Eye className="h-4 w-4 mr-2" />
                           Preview
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         {article.status !== "published" && (
                           <DropdownMenuItem
                             onClick={() =>
                               updateStatusMutation.mutate({ id: article.id, status: "published" })
                             }
+                            disabled={updateStatusMutation.isPending}
                           >
                             <Globe className="h-4 w-4 mr-2" />
                             Publish
@@ -346,6 +421,7 @@ export default function AdminBlog() {
                             onClick={() =>
                               updateStatusMutation.mutate({ id: article.id, status: "draft" })
                             }
+                            disabled={updateStatusMutation.isPending}
                           >
                             <FileText className="h-4 w-4 mr-2" />
                             Unpublish
@@ -356,11 +432,13 @@ export default function AdminBlog() {
                             onClick={() =>
                               updateStatusMutation.mutate({ id: article.id, status: "archived" })
                             }
+                            disabled={updateStatusMutation.isPending}
                           >
                             <Archive className="h-4 w-4 mr-2" />
                             Archive
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleDelete(article)}
                           className="text-destructive focus:text-destructive"
@@ -376,6 +454,12 @@ export default function AdminBlog() {
             )}
           </TableBody>
         </Table>
+        {/* Results count */}
+        {!isLoading && filteredArticles.length > 0 && (
+          <div className="px-4 py-3 border-t text-xs text-muted-foreground tabular-nums">
+            Showing {filteredArticles.length} of {articles?.length ?? 0} articles
+          </div>
+        )}
       </div>
 
       {/* Article Editor Dialog */}
@@ -401,12 +485,13 @@ export default function AdminBlog() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

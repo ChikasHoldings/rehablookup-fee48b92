@@ -23,6 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Save, Eye } from "lucide-react";
+import type { Json } from "@/integrations/supabase/types";
 
 interface BlogArticle {
   id: string;
@@ -35,7 +36,7 @@ interface BlogArticle {
   image_url: string | null;
   author: string;
   author_date: string | null;
-  content: string[];
+  content: Json;
   status: string;
   featured: boolean;
   published_at: string | null;
@@ -66,11 +67,61 @@ const generateSlug = (title: string): string => {
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
-    .trim();
+    .replace(/^-|-$/g, "");
 };
+
+/**
+ * Serialize JSON content blocks back to editable text.
+ * Handles both legacy string[] and structured {type, content} blocks.
+ */
+function contentToText(content: Json): string {
+  if (!content) return "";
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((block) => {
+        if (typeof block === "string") return block;
+        if (block && typeof block === "object" && "content" in block) {
+          const b = block as { type?: string; content?: string; level?: number; items?: string[] };
+          if (b.type === "heading") return `${"#".repeat(b.level || 2)} ${b.content || ""}`;
+          if (b.type === "list" && Array.isArray(b.items)) return b.items.map((i) => `- ${i}`).join("\n");
+          if (b.type === "quote") return `> ${b.content || ""}`;
+          if (b.type === "callout") return `> **Note:** ${b.content || ""}`;
+          return b.content || "";
+        }
+        return JSON.stringify(block);
+      })
+      .join("\n\n");
+  }
+  return JSON.stringify(content, null, 2);
+}
+
+/**
+ * Parse editor text back to structured content blocks.
+ */
+function textToContent(text: string): Json {
+  const paragraphs = text.split("\n\n").map((p) => p.trim()).filter((p) => p.length > 0);
+  return paragraphs.map((p) => {
+    // Heading
+    const headingMatch = p.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      return { type: "heading", level: headingMatch[1].length, content: headingMatch[2] };
+    }
+    // List
+    if (p.split("\n").every((line) => line.match(/^[-*]\s/))) {
+      return { type: "list", items: p.split("\n").map((l) => l.replace(/^[-*]\s/, "").trim()) };
+    }
+    // Quote
+    if (p.startsWith("> ")) {
+      return { type: "quote", content: p.replace(/^>\s?/gm, "") };
+    }
+    return { type: "paragraph", content: p };
+  }) as Json;
+}
 
 export function ArticleEditor({ open, onOpenChange, article, onSuccess }: ArticleEditorProps) {
   const isEditing = !!article;
+  const [activeTab, setActiveTab] = useState("content");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -90,6 +141,7 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
   });
 
   useEffect(() => {
+    if (!open) return;
     if (article) {
       setFormData({
         title: article.title,
@@ -100,9 +152,9 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
         image_url: article.image_url || "",
         author: article.author,
         author_date: article.author_date || "",
-        content: Array.isArray(article.content) ? article.content.join("\n\n") : "",
+        content: contentToText(article.content),
         status: article.status,
-        featured: article.featured,
+        featured: article.featured ?? false,
         meta_title: article.meta_title || "",
         meta_description: article.meta_description || "",
         seo_keywords: article.seo_keywords?.join(", ") || "",
@@ -125,35 +177,36 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
         seo_keywords: "",
       });
     }
+    setActiveTab("content");
   }, [article, open]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const categoryLabel = categories.find((c) => c.id === data.category)?.label || data.category;
-      const contentArray = data.content
-        .split("\n\n")
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0);
 
-      const articleData = {
-        title: data.title,
-        slug: data.slug,
-        excerpt: data.excerpt,
+      const articleData: Record<string, unknown> = {
+        title: data.title.trim(),
+        slug: data.slug.trim(),
+        excerpt: data.excerpt.trim(),
         category: data.category,
         category_label: categoryLabel,
-        read_time: data.read_time,
-        image_url: data.image_url || null,
-        author: data.author,
-        author_date: data.author_date || null,
-        content: contentArray,
+        read_time: data.read_time || "5 min read",
+        image_url: data.image_url?.trim() || null,
+        author: data.author.trim() || "RehabLookup Editorial Team",
+        author_date: data.author_date?.trim() || null,
+        content: textToContent(data.content),
         status: data.status,
         featured: data.featured,
-        meta_title: data.meta_title || null,
-        meta_description: data.meta_description || null,
+        meta_title: data.meta_title?.trim() || null,
+        meta_description: data.meta_description?.trim() || null,
         seo_keywords: data.seo_keywords
-          ? data.seo_keywords.split(",").map((k) => k.trim()).filter((k) => k)
+          ? data.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean)
           : null,
       };
+
+      if (data.status === "published") {
+        articleData.published_at = new Date().toISOString();
+      }
 
       if (isEditing && article) {
         const { error } = await supabase
@@ -167,7 +220,7 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
       }
     },
     onSuccess: () => {
-      toast({ title: isEditing ? "Article updated" : "Article created" });
+      toast({ title: isEditing ? "Article updated successfully" : "Article created successfully" });
       onSuccess();
     },
     onError: (error) => {
@@ -187,28 +240,48 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
     }));
   };
 
+  const validate = (): boolean => {
+    if (!formData.title.trim()) {
+      toast({ title: "Title is required", variant: "destructive" });
+      return false;
+    }
+    if (!formData.slug.trim()) {
+      toast({ title: "Slug is required", variant: "destructive" });
+      return false;
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formData.slug.trim())) {
+      toast({ title: "Slug must be lowercase letters, numbers, and hyphens only", variant: "destructive" });
+      return false;
+    }
+    if (!formData.excerpt.trim()) {
+      toast({ title: "Excerpt is required", variant: "destructive" });
+      return false;
+    }
+    if (!formData.content.trim()) {
+      toast({ title: "Content is required", variant: "destructive" });
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.slug || !formData.excerpt || !formData.content) {
-      toast({
-        title: "Missing required fields",
-        description: "Please fill in title, slug, excerpt, and content",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!validate()) return;
     saveMutation.mutate(formData);
   };
 
   const handleSaveAsDraft = () => {
-    setFormData((prev) => ({ ...prev, status: "draft" }));
-    setTimeout(() => saveMutation.mutate({ ...formData, status: "draft" }), 0);
+    if (!validate()) return;
+    saveMutation.mutate({ ...formData, status: "draft" });
   };
 
   const handlePublish = () => {
-    setFormData((prev) => ({ ...prev, status: "published" }));
-    setTimeout(() => saveMutation.mutate({ ...formData, status: "published" }), 0);
+    if (!validate()) return;
+    saveMutation.mutate({ ...formData, status: "published" });
   };
+
+  const metaTitleLen = formData.meta_title.length;
+  const metaDescLen = formData.meta_description.length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -218,7 +291,7 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <Tabs defaultValue="content" className="flex flex-col flex-1 min-h-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
             <TabsList className="mx-6 mt-4 w-fit">
               <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="seo">SEO & Settings</TabsTrigger>
@@ -227,9 +300,9 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
             <TabsContent value="content" className="flex-1 min-h-0 mt-0">
               <ScrollArea className="h-full px-6 py-4">
                 <div className="space-y-4 pb-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="title">Title *</Label>
+                      <Label htmlFor="title">Title <span className="text-destructive">*</span></Label>
                       <Input
                         id="title"
                         value={formData.title}
@@ -238,18 +311,21 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="slug">Slug *</Label>
+                      <Label htmlFor="slug">Slug <span className="text-destructive">*</span></Label>
                       <Input
                         id="slug"
                         value={formData.slug}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") }))
+                        }
                         placeholder="article-slug"
+                        className="font-mono text-sm"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="excerpt">Excerpt *</Label>
+                    <Label htmlFor="excerpt">Excerpt <span className="text-destructive">*</span></Label>
                     <Textarea
                       id="excerpt"
                       value={formData.excerpt}
@@ -259,9 +335,9 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
+                      <Label>Category</Label>
                       <Select
                         value={formData.category}
                         onValueChange={(value) =>
@@ -309,27 +385,29 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
                       onChange={(e) => setFormData((prev) => ({ ...prev, image_url: e.target.value }))}
                       placeholder="https://..."
                     />
+                    {formData.image_url && (
+                      <img
+                        src={formData.image_url}
+                        alt="Preview"
+                        className="h-24 w-auto rounded border object-cover mt-2"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="content">
-                      Content * <span className="text-muted-foreground text-xs">(Markdown supported, separate paragraphs with blank lines)</span>
+                      Content <span className="text-destructive">*</span>
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      Use ## for headings. Use [[article-slug|link text]] for internal links.
+                      Use ## for headings, - for lists, {">"} for quotes. Separate blocks with blank lines.
                     </p>
                     <Textarea
                       id="content"
                       value={formData.content}
                       onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-                      placeholder="Write your article content here...
-
-Use ## for headings.
-
-Separate paragraphs with blank lines.
-
-Link to other articles with [[article-slug|link text]] syntax."
-                      rows={16}
+                      placeholder="Write your article content here..."
+                      rows={18}
                       className="font-mono text-sm"
                     />
                   </div>
@@ -350,8 +428,8 @@ Link to other articles with [[article-slug|link text]] syntax."
                       }
                       placeholder="SEO title (defaults to article title)"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      {formData.meta_title.length}/60 characters
+                    <p className={`text-xs tabular-nums ${metaTitleLen > 60 ? "text-destructive" : "text-muted-foreground"}`}>
+                      {metaTitleLen}/60 characters
                     </p>
                   </div>
 
@@ -366,8 +444,8 @@ Link to other articles with [[article-slug|link text]] syntax."
                       placeholder="SEO description (defaults to excerpt)"
                       rows={3}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      {formData.meta_description.length}/160 characters
+                    <p className={`text-xs tabular-nums ${metaDescLen > 160 ? "text-destructive" : "text-muted-foreground"}`}>
+                      {metaDescLen}/160 characters
                     </p>
                   </div>
 
@@ -416,10 +494,11 @@ Link to other articles with [[article-slug|link text]] syntax."
           </Tabs>
 
           {/* Footer Actions */}
-          <div className="flex justify-between items-center px-6 py-4 border-t bg-muted/30 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-6 py-4 border-t bg-muted/30 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => window.open(`/resources/${formData.slug}`, "_blank")}
               disabled={!formData.slug}
             >
@@ -430,6 +509,7 @@ Link to other articles with [[article-slug|link text]] syntax."
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={handleSaveAsDraft}
                 disabled={saveMutation.isPending}
               >
@@ -440,10 +520,8 @@ Link to other articles with [[article-slug|link text]] syntax."
                 )}
                 Save Draft
               </Button>
-              <Button type="button" onClick={handlePublish} disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : null}
+              <Button type="button" size="sm" onClick={handlePublish} disabled={saveMutation.isPending}>
+                {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Publish
               </Button>
             </div>
