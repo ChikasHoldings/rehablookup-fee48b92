@@ -80,39 +80,53 @@ export function SeekerShell() {
     }
   }, [role, isRoleLoading, navigate]);
 
-  // Auth check - use synchronous localStorage session for immediate auth resolution
+  // Auth check - use getSession as source of truth, trust useUserRole for immediate state
   useEffect(() => {
     let isMounted = true;
-    
-    // Check if URL contains Supabase auth hash tokens (email verification redirect)
-    const hasAuthHash = typeof window !== "undefined" && (
-      window.location.hash.includes('access_token') ||
-      window.location.hash.includes('type=signup') ||
-      window.location.hash.includes('type=recovery') ||
-      window.location.hash.includes('type=magiclink')
-    );
 
-    // Synchronously check localStorage for session to avoid blank flash
-    const getStoredSession = () => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        setUserEmail(session?.user?.email);
+        setUserId(session?.user?.id || null);
+
+        // Check email verification using security definer function
+        if (session?.user?.email) {
+          const { data: verified } = await supabase
+            .rpc('is_email_verified', { p_email: session.user.email });
+          
+          setIsEmailVerified(!!verified);
+        } else {
+          setIsEmailVerified(false);
+        }
+      } catch {
+        // Auth check failed silently
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // If useUserRole already resolved auth, seed userId/email from stored session immediately
+    if (isAuthenticated) {
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
         const projectRef = supabaseUrl?.split("//")[1]?.split(".")[0] || "plckxokpyiubuekvodtc";
         const key = `sb-${projectRef}-auth-token`;
         const stored = localStorage.getItem(key);
-        if (!stored) return null;
-        const parsed = JSON.parse(stored);
-        return parsed?.currentSession || parsed;
-      } catch {
-        return null;
-      }
-    };
-
-    const storedSession = getStoredSession();
-    
-    // Set initial state from localStorage synchronously
-    if (storedSession?.user) {
-      setUserEmail(storedSession.user.email);
-      setUserId(storedSession.user.id);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const s = parsed?.currentSession || parsed;
+          if (s?.user) {
+            setUserEmail(s.user.email);
+            setUserId(s.user.id);
+          }
+        }
+      } catch {}
     }
 
     const checkAuth = async () => {
