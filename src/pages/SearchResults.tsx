@@ -277,10 +277,13 @@ const SearchResults = () => {
       });
     }
 
-    // Treatment filter from search form
+    // Treatment filter from search form (supports comma-separated multi-select)
     if (treatment) {
+      const treatmentValues = treatment.split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
       results = results.filter((c) =>
-        c.treatmentTypes.some((t) => t.toLowerCase() === treatment.toLowerCase())
+        treatmentValues.some(tv => 
+          c.treatmentTypes.some((t) => t.toLowerCase() === tv || t.toLowerCase().includes(tv))
+        )
       );
     }
 
