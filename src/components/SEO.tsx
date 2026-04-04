@@ -62,6 +62,7 @@ export function SEO({
   publishedTime,
   modifiedTime,
   locale = "en_US",
+  hreflang,
 }: SEOProps) {
   const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
   
