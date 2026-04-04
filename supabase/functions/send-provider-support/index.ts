@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
           <tr>
             <td style="padding: 32px 28px; background-color: #ffffff;">
               <p style="margin: 0 0 16px 0; font-size: 16px; color: #1f2937; line-height: 1.6;">
-                Hi ${name},
+                Hi ${escapeHtml(name)},
               </p>
               <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151; line-height: 1.6;">
                 Thank you for reaching out to our provider support team. We've received your message regarding <strong style="color: #1f2937;">${topicLabel}</strong> and will get back to you within 24 hours.
