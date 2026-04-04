@@ -83,7 +83,7 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
       // Fetch retention outreach alerts
       const { data: alerts, error: alertsError } = await supabase
         .from("subscription_alerts")
-        .select("id, facility_id, alert_type, status, details, created_at, resolved_at")
+        .select("id, user_id, alert_type, alert_key, created_at, resend_id")
         .eq("alert_type", "retention_outreach")
         .order("created_at", { ascending: false });
 
