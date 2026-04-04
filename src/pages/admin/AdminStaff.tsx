@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import {
   Search,
   UserPlus,
