@@ -64,6 +64,10 @@ export default function RehabCenterMarketingIdeas() {
       ]}
       ctaHeadline="Start With the Easiest Win"
       ctaSubheadline="List your facility on RehabLookup in under 5 minutes. Free to get started."
+      images={[
+        { src: pgMarketingIdeas, alt: "Marketing team brainstorming creative strategies for a treatment center", caption: "The best marketing ideas come from understanding what families actually search for." },
+        { src: pgMarketingStrategies, alt: "Multi-channel marketing analytics for rehab center campaigns", caption: "Diversify your marketing channels to build sustainable admissions growth." },
+      ]}
     />
   );
 }

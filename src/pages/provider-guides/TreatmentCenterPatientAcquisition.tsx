@@ -61,6 +61,10 @@ export default function TreatmentCenterPatientAcquisition() {
       ]}
       ctaHeadline="Build Your Acquisition System — Start Free"
       ctaSubheadline="Your RehabLookup listing is the fastest way to build organic discoverability."
+      images={[
+        { src: pgPatientAcquisition, alt: "Healthcare referral network connecting hospitals and treatment centers", caption: "The strongest acquisition channels are built on relationships and organic trust." },
+        { src: treatmentFacility, alt: "Welcoming treatment center facility", caption: "Organic discoverability puts your facility in front of families when they need you most." },
+      ]}
     />
   );
 }
