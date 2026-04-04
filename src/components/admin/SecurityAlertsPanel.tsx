@@ -194,7 +194,7 @@ export function SecurityAlertsPanel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rate_limit_log")
-        .select("*")
+        .select("id, identifier, action_type, success, created_at, metadata")
         .eq("success", false)
         .order("created_at", { ascending: false })
         .limit(20);
