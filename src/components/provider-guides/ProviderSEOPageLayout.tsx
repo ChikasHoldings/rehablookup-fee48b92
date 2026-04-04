@@ -62,6 +62,7 @@ export function ProviderSEOPageLayout({
   sections,
   ctaHeadline = "Ready to Grow Your Admissions?",
   ctaSubheadline = "Join hundreds of treatment centers already receiving high-intent patient inquiries through RehabLookup.",
+  images,
 }: ProviderSEOPageProps) {
   // Insert a mid-article CTA after the 2nd section
   const midCTAIndex = Math.min(2, sections.length);
