@@ -677,7 +677,7 @@ export default function ProviderDashboardPage() {
                     </Button>
                   </div>
                   {proStatus?.isPro && (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-500/10 px-2 py-1 rounded">
+                    <div className="flex items-center gap-1.5 text-xs text-warning bg-warning/10 px-2 py-1 rounded">
                       <Sparkles className="h-3 w-3" />
                       <span className="font-medium">Pro Member — 20% off unlocks</span>
                     </div>

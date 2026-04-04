@@ -108,9 +108,9 @@ export function ProviderWelcomeModal({
         {/* Body Section */}
         <div className="p-5 sm:p-6 space-y-4">
           {/* Status Banner */}
-          <div className="flex items-center gap-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3">
-            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <p className="text-xs text-amber-800 dark:text-amber-200">
+          <div className="flex items-center gap-2.5 rounded-lg bg-warning/5 border border-warning/20 p-3">
+            <Clock className="h-4 w-4 text-warning flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
               Review takes 24-48 hours. We'll email you once approved.
             </p>
           </div>
