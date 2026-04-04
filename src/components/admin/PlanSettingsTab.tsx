@@ -324,9 +324,9 @@ export function PlanSettingsTab() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             {/* Free Plan */}
-            <div className="rounded-lg border p-4 bg-slate-50/50">
+            <div className="rounded-lg border p-4 bg-muted/50">
               <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">Free</Badge>
+                <Badge variant="outline">Free</Badge>
                 <span className="text-2xl font-bold">Free</span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -337,9 +337,9 @@ export function PlanSettingsTab() {
             </div>
 
             {/* Pro Plan */}
-            <div className="rounded-lg border p-4 bg-amber-50/50 border-amber-200">
+            <div className="rounded-lg border p-4 bg-warning/5 border-warning/20">
               <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Pro</Badge>
+                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Pro</Badge>
                 <span className="text-2xl font-bold">{PLAN_DETAILS.pro.price}<span className="text-sm font-normal">{PLAN_DETAILS.pro.period}</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
