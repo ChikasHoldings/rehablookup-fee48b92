@@ -1560,7 +1560,7 @@ export default function AdminSecurityLogs() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Ban className="h-5 w-5 text-red-500" />
+              <Ban className="h-5 w-5 text-destructive" />
               Block Identifier
             </DialogTitle>
             <DialogDescription>
