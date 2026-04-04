@@ -171,7 +171,7 @@ export function Header({
     if (typeof window === "undefined") {
       return {
         position: "fixed",
-        top: "64px",
+        top: "68px",
         left: `${gutter}px`,
         maxWidth: `calc(100vw - ${gutter * 2}px)`,
       };
@@ -184,7 +184,7 @@ export function Header({
     if (!headerEl || !triggerEl) {
       return {
         position: "fixed",
-        top: "64px",
+        top: "68px",
         left: `${gutter}px`,
         maxWidth: `calc(100vw - ${gutter * 2}px)`,
       };
@@ -213,15 +213,15 @@ export function Header({
         <div className="fixed inset-0 z-40" onClick={() => setOpenMegaMenu(null)} />
       )}
       <header className="sticky top-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
-        <div className="container flex h-16 items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
+        <div className="container flex h-[68px] items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
             <img 
               src={headerLogo}
               alt="RehabLookup" 
-              className="h-8 w-auto"
-              width={134}
-              height={32}
+              className="h-9 w-auto"
+              width={150}
+              height={36}
               loading="eager"
               decoding="async"
             />
@@ -244,7 +244,7 @@ export function Header({
               <button
                 onClick={() => setOpenMegaMenu(openMegaMenu === "find-treatment" ? null : "find-treatment")}
                 className={cn(
-                  "flex items-center h-16 gap-1 px-2.5 lg:px-3 text-sm lg:text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2",
+                  "flex items-center h-[68px] gap-1 px-2.5 lg:px-3 text-[14px] lg:text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2",
                   openMegaMenu === "find-treatment"
                     ? "text-foreground border-accent"
                     : megaMenuItems[0].isActive(location.pathname)
@@ -253,7 +253,7 @@ export function Header({
                 )}
               >
                 Find Rehab
-                <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", openMegaMenu === "find-treatment" && "rotate-180")} />
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openMegaMenu === "find-treatment" && "rotate-180")} />
               </button>
               {openMegaMenu === "find-treatment" && (
                 <div
@@ -271,7 +271,7 @@ export function Header({
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "flex items-center h-16 px-2.5 lg:px-3 text-sm lg:text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2 border-transparent",
+                  "flex items-center h-[68px] px-2.5 lg:px-3 text-[14px] lg:text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2 border-transparent",
                   location.pathname === link.href ? "text-foreground border-accent" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -296,7 +296,7 @@ export function Header({
                 <button
                   onClick={() => setOpenMegaMenu(openMegaMenu === item.id ? null : item.id)}
                   className={cn(
-                    "flex items-center h-16 gap-1 px-3 text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2",
+                    "flex items-center h-[68px] gap-1 px-3 text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2",
                     openMegaMenu === item.id
                       ? "text-foreground border-accent"
                       : item.isActive(location.pathname)
@@ -305,7 +305,7 @@ export function Header({
                   )}
                 >
                   {item.label}
-                  <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", openMegaMenu === item.id && "rotate-180")} />
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openMegaMenu === item.id && "rotate-180")} />
                 </button>
                 {openMegaMenu === item.id && (
                   <div
@@ -321,7 +321,7 @@ export function Header({
             {/* "More" dropdown on tablet */}
             <DropdownMenu open={moreDropdownOpen} onOpenChange={setMoreDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="flex lg:hidden items-center h-16 gap-1 px-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground whitespace-nowrap border-b-2 border-transparent">
+                <button className="flex lg:hidden items-center h-[68px] gap-1 px-2.5 text-[14px] font-semibold text-muted-foreground hover:text-foreground whitespace-nowrap border-b-2 border-transparent">
                   More
                   <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", moreDropdownOpen && "rotate-180")} />
                 </button>
