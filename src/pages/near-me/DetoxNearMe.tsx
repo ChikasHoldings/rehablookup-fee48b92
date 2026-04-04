@@ -161,23 +161,7 @@ export default function DetoxNearMe() {
             <SearchResultsLoading />
           ) : (
             <>
-              {/* Horizontal scroll on mobile, grid on larger screens */}
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {facilities.slice(0, 12).map((f) => (
-                  <div key={f.id || f.name}>
-                    <TreatmentCenterCard center={f as any} />
-                  </div>
-                ))}
-              </div>
-              {facilities.length > 12 && (
-                <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
-                    <Button variant="outline" size="lg" className="gap-2">
-                      View All {facilities.length} Centers <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              )}
+              <FacilityShowcaseGrid facilities={facilities.slice(0, 12) as any[]} />
             </>
           )}
         </div>
