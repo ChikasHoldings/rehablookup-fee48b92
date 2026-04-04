@@ -1816,7 +1816,7 @@ function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPIC
         ) : (
           <TrendingDown className="h-3 w-3" />
         )}
-        <span>{isPositive ? "+" : ""}{change.toFixed(1)}%</span>
+        <span className="tabular-nums">{isPositive ? "+" : ""}{change.toFixed(1)}%</span>
       </div>
     );
   };
