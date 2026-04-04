@@ -498,17 +498,17 @@ export default function AdminAuditLog() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-500">
+        <Card className="border-l-4 border-l-warning">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Lead Actions</p>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold tabular-nums">
                   {filteredLogs.filter(l => l.target_type === "lead").length}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center">
-                <Users className="h-5 w-5 text-amber-500" />
+              <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-warning" />
               </div>
             </div>
           </CardContent>
