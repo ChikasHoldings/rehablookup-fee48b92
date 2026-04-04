@@ -47,7 +47,7 @@ export default function AdminConcierge() {
     queryFn: async () => {
       let query = supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, payment_amount_cents, primary_concern, level_of_care, timeline_urgency, preferred_state, preferred_city, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, admin_notes, created_at, updated_at")
+        .select("id, user_name, user_email, user_phone, user_id, status, payment_status, payment_amount_cents, primary_concern, level_of_care, timeline_urgency, preferred_state, preferred_city, desired_location_state, desired_location_city, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, admin_notes, match_count, placed_facility_id, placement_confirmed, seeker_rating, seeker_feedback, intake_data, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (statusFilter === "in_progress") {
