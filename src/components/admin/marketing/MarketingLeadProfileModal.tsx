@@ -17,7 +17,6 @@ import {
   Shield,
   MessageSquare,
   Star,
-  Heart,
   Building2,
   FileText,
   Activity,
@@ -27,7 +26,6 @@ import {
   TrendingUp,
   Target,
   Globe,
-  Hash,
   Sparkles,
   UserCheck,
   Users,
@@ -131,7 +129,6 @@ export function MarketingLeadProfileModal({
   const [adminNotes, setAdminNotes] = useState("");
   const queryClient = useQueryClient();
 
-  // Sync admin notes when lead changes
   React.useEffect(() => {
     if (lead) {
       setAdminNotes(lead.admin_notes || "");
@@ -144,26 +141,19 @@ export function MarketingLeadProfileModal({
     queryKey: ["marketing-lead-journey", lead?.email, lead?.phone],
     queryFn: async (): Promise<LeadJourneyData> => {
       if (!lead) return {
-        hasAccount: false,
-        hasConcierge: false,
-        conciergeInquiries: [],
-        hasReviews: false,
-        reviews: [],
-        hasFavorites: false,
-        favoriteCount: 0,
-        providerCommunications: [],
-        leadInquiries: [],
+        hasAccount: false, hasConcierge: false, conciergeInquiries: [],
+        hasReviews: false, reviews: [], hasFavorites: false, favoriteCount: 0,
+        providerCommunications: [], leadInquiries: [],
       };
 
-      // Check for seeker account by email
       const { data: seekerEmails } = await supabase.rpc("get_seeker_emails_for_admin");
-      const matchingSeeker = seekerEmails?.find((s: any) => 
+      const matchingSeeker = seekerEmails?.find((s: any) =>
         s.email?.toLowerCase() === lead.email.toLowerCase()
       );
-      
+
       let seekerProfile = null;
       let userId: string | null = null;
-      
+
       if (matchingSeeker) {
         userId = matchingSeeker.user_id;
         const { data: profile } = await supabase
@@ -174,14 +164,13 @@ export function MarketingLeadProfileModal({
         seekerProfile = profile;
       }
 
-      // Check concierge inquiries by email or phone
       const { data: conciergeInquiries } = await supabase
         .from("concierge_inquiries")
         .select("id, status, created_at, primary_concern, level_of_care, payment_status, user_name")
         .or(`user_email.ilike.${lead.email},user_phone.eq.${lead.phone}`)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50);
 
-      // Check for reviews if user has an account
       let reviews: any[] = [];
       let favoriteCount = 0;
       if (userId) {
@@ -189,7 +178,8 @@ export function MarketingLeadProfileModal({
           .from("facility_reviews")
           .select("id, rating, review_text, status, created_at, facility_id")
           .eq("user_id", userId)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(50);
         reviews = userReviews || [];
 
         const { count } = await supabase
@@ -199,20 +189,16 @@ export function MarketingLeadProfileModal({
         favoriteCount = count || 0;
       }
 
-      // Check for provider communications (leads submitted to facilities)
       const { data: leadInquiries } = await supabase
         .from("leads")
-        .select(`
-          id, name, email, phone, status, created_at, facility_id,
-          provider_response_status, provider_responded_at
-        `)
+        .select("id, name, email, phone, status, created_at, facility_id, provider_response_status, provider_responded_at")
         .or(`email.ilike.${lead.email},phone.eq.${lead.phone}`)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
 
-      // Get unique facility IDs for enrichment
       const facilityIds = [...new Set(leadInquiries?.map(l => l.facility_id).filter(Boolean) || [])];
       let facilitiesMap: Record<string, any> = {};
-      
+
       if (facilityIds.length > 0) {
         const { data: facilities } = await supabase
           .from("facilities")
@@ -242,7 +228,6 @@ export function MarketingLeadProfileModal({
     enabled: !!lead && open,
   });
 
-  // Fetch requested facilities
   const { data: requestedFacilities } = useQuery({
     queryKey: ["marketing-lead-facilities", lead?.facilities_requested],
     queryFn: async () => {
@@ -256,7 +241,6 @@ export function MarketingLeadProfileModal({
     enabled: !!(lead?.facilities_requested?.length),
   });
 
-  // Update status mutation
   const updateStatus = useMutation({
     mutationFn: async (newStatus: string) => {
       if (!lead) return;
@@ -271,12 +255,9 @@ export function MarketingLeadProfileModal({
       toast.success("Status updated");
       onUpdated?.();
     },
-    onError: () => {
-      toast.error("Failed to update status");
-    },
+    onError: () => toast.error("Failed to update status"),
   });
 
-  // Update admin notes mutation
   const updateNotes = useMutation({
     mutationFn: async (notes: string) => {
       if (!lead) return;
@@ -291,9 +272,7 @@ export function MarketingLeadProfileModal({
       toast.success("Notes saved");
       onUpdated?.();
     },
-    onError: () => {
-      toast.error("Failed to save notes");
-    },
+    onError: () => toast.error("Failed to save notes"),
   });
 
   const handleCopy = async (text: string, field: string) => {
@@ -306,16 +285,16 @@ export function MarketingLeadProfileModal({
   if (!lead) return null;
 
   const fullName = `${lead.first_name} ${lead.last_name}`;
-  
+
   const getStatusBadge = () => {
     if (lead.converted_to_concierge) {
-      return <Badge className="bg-violet-100 text-violet-700 border-violet-200">Concierge</Badge>;
+      return <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/30">Concierge</Badge>;
     }
     if ((lead.facilities_requested?.length || 0) > 0) {
-      return <Badge className="bg-green-100 text-green-700 border-green-200">Engaged</Badge>;
+      return <Badge className="bg-success/10 text-success border-success/30">Engaged</Badge>;
     }
     if (lead.followup_email_sent) {
-      return <Badge className="bg-blue-100 text-blue-700 border-blue-200">Followed Up</Badge>;
+      return <Badge className="bg-info/10 text-info border-info/30">Followed Up</Badge>;
     }
     return <Badge variant="secondary">New</Badge>;
   };
@@ -334,31 +313,29 @@ export function MarketingLeadProfileModal({
 
   const getUrgencyColor = (urgency: string | null) => {
     const colors: Record<string, string> = {
-      immediate: "text-red-600 bg-red-50 border-red-200",
-      "within-week": "text-amber-600 bg-amber-50 border-amber-200",
-      "within-month": "text-blue-600 bg-blue-50 border-blue-200",
-      researching: "text-slate-600 bg-slate-50 border-slate-200",
+      immediate: "text-destructive bg-destructive/10 border-destructive/30",
+      "within-week": "text-warning bg-warning/10 border-warning/30",
+      "within-month": "text-info bg-info/10 border-info/30",
+      researching: "text-muted-foreground bg-muted border-border",
     };
     return colors[urgency || ""] || "text-muted-foreground bg-muted border-border";
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="w-[95vw] max-w-4xl h-[90vh] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <DialogHeader className="p-6 pb-5 border-b bg-gradient-to-r from-muted/50 via-muted/30 to-transparent flex-shrink-0">
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-xl font-semibold text-primary">
-                {lead.first_name[0]}{lead.last_name[0]}
+        <DialogHeader className="p-4 sm:p-6 pb-4 sm:pb-5 border-b bg-gradient-to-r from-muted/50 via-muted/30 to-transparent flex-shrink-0">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg sm:text-xl font-semibold text-primary">
+                {lead.first_name?.[0]}{lead.last_name?.[0]}
               </span>
             </div>
-            
-            {/* Info */}
+
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 flex-wrap">
-                <DialogTitle className="text-xl font-semibold truncate">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <DialogTitle className="text-lg sm:text-xl font-semibold truncate">
                   {fullName}
                 </DialogTitle>
                 {getStatusBadge()}
@@ -367,8 +344,8 @@ export function MarketingLeadProfileModal({
                   Marketing Lead
                 </Badge>
               </div>
-              
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
+
+              <div className="flex items-center gap-3 sm:gap-4 mt-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />
                   {format(new Date(lead.created_at), "MMM d, yyyy")}
@@ -386,25 +363,25 @@ export function MarketingLeadProfileModal({
               {/* Journey Quick Stats */}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
                 {journeyData?.hasAccount && (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1">
+                  <Badge className="bg-success/10 text-success border-success/30 gap-1">
                     <UserCheck className="h-3 w-3" />
                     Account Created
                   </Badge>
                 )}
                 {journeyData?.hasConcierge && (
-                  <Badge className="bg-violet-100 text-violet-700 border-violet-200 gap-1">
+                  <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/30 gap-1">
                     <Shield className="h-3 w-3" />
                     Concierge
                   </Badge>
                 )}
                 {(journeyData?.leadInquiries?.length || 0) > 0 && (
-                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 gap-1">
+                  <Badge className="bg-info/10 text-info border-info/30 gap-1">
                     <MessageSquare className="h-3 w-3" />
                     {journeyData?.leadInquiries?.length} Inquiries
                   </Badge>
                 )}
                 {journeyData?.hasReviews && (
-                  <Badge className="bg-amber-100 text-amber-700 border-amber-200 gap-1">
+                  <Badge className="bg-warning/10 text-warning border-warning/30 gap-1">
                     <Star className="h-3 w-3" />
                     {journeyData?.reviews?.length} Reviews
                   </Badge>
@@ -422,34 +399,34 @@ export function MarketingLeadProfileModal({
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <div className="border-b px-6 bg-muted/20 flex-shrink-0">
-            <TabsList className="h-11 w-full justify-start bg-transparent gap-1 p-0">
+          <div className="border-b px-4 sm:px-6 bg-muted/20 flex-shrink-0 overflow-x-auto scrollbar-hide">
+            <TabsList className="h-11 w-auto inline-flex sm:w-full justify-start bg-transparent gap-1 p-0">
               <TabsTrigger
                 value="overview"
-                className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
-                <User className="h-4 w-4" />
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="journey"
-                className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
-                <Activity className="h-4 w-4" />
+                <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Journey
               </TabsTrigger>
               <TabsTrigger
                 value="clinical"
-                className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
-                <Stethoscope className="h-4 w-4" />
+                <Stethoscope className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Clinical
               </TabsTrigger>
               <TabsTrigger
                 value="tracking"
-                className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 UTM
               </TabsTrigger>
             </TabsList>
@@ -457,18 +434,18 @@ export function MarketingLeadProfileModal({
 
           <ScrollArea className="flex-1 overflow-auto">
             {/* Overview Tab */}
-            <TabsContent value="overview" className="p-6 space-y-6 mt-0">
+            <TabsContent value="overview" className="p-4 sm:p-6 space-y-5 sm:space-y-6 mt-0">
               {/* Quick Actions */}
-              <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-muted/30 border">
-                <Button variant="outline" className="gap-2" asChild>
+              <div className="flex flex-wrap items-center gap-3 p-3 sm:p-4 rounded-xl bg-muted/30 border">
+                <Button variant="outline" className="gap-2 text-xs sm:text-sm h-8 sm:h-9" asChild>
                   <a href={`tel:${lead.phone}`}>
-                    <Phone className="h-4 w-4 text-green-600" />
+                    <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success" />
                     Call
                   </a>
                 </Button>
-                <Button variant="outline" className="gap-2" asChild>
+                <Button variant="outline" className="gap-2 text-xs sm:text-sm h-8 sm:h-9" asChild>
                   <a href={`mailto:${lead.email}`}>
-                    <Mail className="h-4 w-4 text-blue-600" />
+                    <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-info" />
                     Email
                   </a>
                 </Button>
@@ -478,7 +455,7 @@ export function MarketingLeadProfileModal({
                     onValueChange={(value) => updateStatus.mutate(value)}
                     disabled={updateStatus.isPending}
                   >
-                    <SelectTrigger className="w-full sm:w-[160px]">
+                    <SelectTrigger className="w-full sm:w-[160px] h-8 sm:h-9 text-xs sm:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -499,13 +476,13 @@ export function MarketingLeadProfileModal({
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {/* Phone */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-50/50 dark:from-green-950/20 dark:to-green-950/10 border border-green-100 dark:border-green-900">
+                  <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-success/5 border border-success/20">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                        <Phone className="h-5 w-5 text-green-600" />
+                      <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-success/10 flex items-center justify-center">
+                        <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground">{lead.phone}</p>
+                        <p className="font-semibold text-foreground text-sm">{lead.phone}</p>
                         <p className="text-xs text-muted-foreground">
                           {lead.preferred_contact === "call" ? "✓ Preferred" : "Phone"}
                         </p>
@@ -514,11 +491,11 @@ export function MarketingLeadProfileModal({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8 sm:h-9 sm:w-9"
                       onClick={() => handleCopy(lead.phone, "phone")}
                     >
                       {copiedField === "phone" ? (
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-success" />
                       ) : (
                         <Copy className="h-4 w-4" />
                       )}
@@ -526,13 +503,13 @@ export function MarketingLeadProfileModal({
                   </div>
 
                   {/* Email */}
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-blue-950/20 dark:to-blue-950/10 border border-blue-100 dark:border-blue-900">
+                  <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-info/5 border border-info/20">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                        <Mail className="h-5 w-5 text-blue-600" />
+                      <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-info/10 flex items-center justify-center">
+                        <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-info" />
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground truncate max-w-[180px]">{lead.email}</p>
+                        <p className="font-semibold text-foreground truncate max-w-[160px] sm:max-w-[180px] text-sm">{lead.email}</p>
                         <p className="text-xs text-muted-foreground">
                           {lead.preferred_contact === "email" ? "✓ Preferred" : "Email"}
                         </p>
@@ -541,11 +518,11 @@ export function MarketingLeadProfileModal({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9"
+                      className="h-8 w-8 sm:h-9 sm:w-9"
                       onClick={() => handleCopy(lead.email, "email")}
                     >
                       {copiedField === "email" ? (
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-success" />
                       ) : (
                         <Copy className="h-4 w-4" />
                       )}
@@ -557,9 +534,7 @@ export function MarketingLeadProfileModal({
                 {(lead.location_city_state || lead.location_zip) && (
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      {lead.location_city_state || lead.location_zip}
-                    </span>
+                    <span className="text-sm">{lead.location_city_state || lead.location_zip}</span>
                   </div>
                 )}
               </div>
@@ -570,11 +545,11 @@ export function MarketingLeadProfileModal({
                   <FileText className="h-4 w-4 text-primary" />
                   Key Details
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Urgency</p>
                     <Badge variant="outline" className={cn("text-xs", getUrgencyColor(lead.urgency))}>
-                      {formatUrgency(lead.urgency)}
+                      {formatUrgency(lead.urgency) || "—"}
                     </Badge>
                   </div>
                   {lead.level_of_care && (
@@ -636,7 +611,7 @@ export function MarketingLeadProfileModal({
                     <MessageSquare className="h-4 w-4 text-primary" />
                     Message
                   </h3>
-                  <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="p-3 sm:p-4 rounded-lg bg-muted/50 border">
                     <p className="text-sm whitespace-pre-wrap">{lead.message}</p>
                   </div>
                 </div>
@@ -652,23 +627,22 @@ export function MarketingLeadProfileModal({
                   placeholder="Add notes about this lead..."
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[100px] text-sm"
                 />
                 <Button
                   size="sm"
                   onClick={() => updateNotes.mutate(adminNotes)}
-                  disabled={updateNotes.isPending || adminNotes === lead.admin_notes}
+                  disabled={updateNotes.isPending || adminNotes === (lead.admin_notes || "")}
+                  className="h-8 text-xs sm:text-sm"
                 >
-                  {updateNotes.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
+                  {updateNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
                   Save Notes
                 </Button>
               </div>
             </TabsContent>
 
             {/* Journey Tab */}
-            <TabsContent value="journey" className="p-6 space-y-6 mt-0">
+            <TabsContent value="journey" className="p-4 sm:p-6 space-y-5 sm:space-y-6 mt-0">
               {journeyLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -676,87 +650,78 @@ export function MarketingLeadProfileModal({
               ) : (
                 <>
                   {/* Journey Summary */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     <div className={cn(
-                      "p-4 rounded-xl border text-center",
-                      journeyData?.hasAccount ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" : "bg-muted/50"
+                      "p-3 sm:p-4 rounded-xl border text-center",
+                      journeyData?.hasAccount ? "bg-success/5 border-success/20" : "bg-muted/50"
                     )}>
                       <div className={cn(
-                        "h-10 w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
-                        journeyData?.hasAccount ? "bg-emerald-500/20" : "bg-muted"
+                        "h-9 w-9 sm:h-10 sm:w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
+                        journeyData?.hasAccount ? "bg-success/10" : "bg-muted"
                       )}>
                         {journeyData?.hasAccount ? (
-                          <CheckCircle className="h-5 w-5 text-emerald-600" />
+                          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
                         ) : (
-                          <XCircle className="h-5 w-5 text-muted-foreground" />
+                          <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                         )}
                       </div>
                       <p className="font-semibold text-sm">Account</p>
-                      <p className="text-xs text-muted-foreground">
-                        {journeyData?.hasAccount ? "Created" : "None"}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{journeyData?.hasAccount ? "Created" : "None"}</p>
                     </div>
 
                     <div className={cn(
-                      "p-4 rounded-xl border text-center",
-                      (journeyData?.leadInquiries?.length || 0) > 0 ? "bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800" : "bg-muted/50"
+                      "p-3 sm:p-4 rounded-xl border text-center",
+                      (journeyData?.leadInquiries?.length || 0) > 0 ? "bg-info/5 border-info/20" : "bg-muted/50"
                     )}>
                       <div className={cn(
-                        "h-10 w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
-                        (journeyData?.leadInquiries?.length || 0) > 0 ? "bg-blue-500/20" : "bg-muted"
+                        "h-9 w-9 sm:h-10 sm:w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
+                        (journeyData?.leadInquiries?.length || 0) > 0 ? "bg-info/10" : "bg-muted"
                       )}>
                         <MessageSquare className={cn(
-                          "h-5 w-5",
-                          (journeyData?.leadInquiries?.length || 0) > 0 ? "text-blue-600" : "text-muted-foreground"
+                          "h-4 w-4 sm:h-5 sm:w-5",
+                          (journeyData?.leadInquiries?.length || 0) > 0 ? "text-info" : "text-muted-foreground"
                         )} />
                       </div>
                       <p className="font-semibold text-sm">Inquiries</p>
-                      <p className="text-xs text-muted-foreground">
-                        {journeyData?.leadInquiries?.length || 0} sent
-                      </p>
+                      <p className="text-xs text-muted-foreground">{journeyData?.leadInquiries?.length || 0} sent</p>
                     </div>
 
                     <div className={cn(
-                      "p-4 rounded-xl border text-center",
-                      journeyData?.hasConcierge ? "bg-violet-50 border-violet-200 dark:bg-violet-950/20 dark:border-violet-800" : "bg-muted/50"
+                      "p-3 sm:p-4 rounded-xl border text-center",
+                      journeyData?.hasConcierge ? "bg-chart-3/5 border-chart-3/20" : "bg-muted/50"
                     )}>
                       <div className={cn(
-                        "h-10 w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
-                        journeyData?.hasConcierge ? "bg-violet-500/20" : "bg-muted"
+                        "h-9 w-9 sm:h-10 sm:w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
+                        journeyData?.hasConcierge ? "bg-chart-3/10" : "bg-muted"
                       )}>
-                        {journeyData?.hasConcierge ? (
-                          <Shield className="h-5 w-5 text-violet-600" />
-                        ) : (
-                          <Shield className="h-5 w-5 text-muted-foreground" />
-                        )}
+                        <Shield className={cn(
+                          "h-4 w-4 sm:h-5 sm:w-5",
+                          journeyData?.hasConcierge ? "text-chart-3" : "text-muted-foreground"
+                        )} />
                       </div>
                       <p className="font-semibold text-sm">Concierge</p>
-                      <p className="text-xs text-muted-foreground">
-                        {journeyData?.conciergeInquiries?.length || 0} requests
-                      </p>
+                      <p className="text-xs text-muted-foreground">{journeyData?.conciergeInquiries?.length || 0} requests</p>
                     </div>
 
                     <div className={cn(
-                      "p-4 rounded-xl border text-center",
-                      journeyData?.hasReviews ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800" : "bg-muted/50"
+                      "p-3 sm:p-4 rounded-xl border text-center",
+                      journeyData?.hasReviews ? "bg-warning/5 border-warning/20" : "bg-muted/50"
                     )}>
                       <div className={cn(
-                        "h-10 w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
-                        journeyData?.hasReviews ? "bg-amber-500/20" : "bg-muted"
+                        "h-9 w-9 sm:h-10 sm:w-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
+                        journeyData?.hasReviews ? "bg-warning/10" : "bg-muted"
                       )}>
                         <Star className={cn(
-                          "h-5 w-5",
-                          journeyData?.hasReviews ? "text-amber-600" : "text-muted-foreground"
+                          "h-4 w-4 sm:h-5 sm:w-5",
+                          journeyData?.hasReviews ? "text-warning" : "text-muted-foreground"
                         )} />
                       </div>
                       <p className="font-semibold text-sm">Reviews</p>
-                      <p className="text-xs text-muted-foreground">
-                        {journeyData?.reviews?.length || 0} written
-                      </p>
+                      <p className="text-xs text-muted-foreground">{journeyData?.reviews?.length || 0} written</p>
                     </div>
                   </div>
 
-                  {/* Inquiries to Providers */}
+                  {/* Provider Inquiries */}
                   {(journeyData?.leadInquiries?.length || 0) > 0 && (
                     <div className="space-y-3">
                       <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -767,13 +732,11 @@ export function MarketingLeadProfileModal({
                         {journeyData?.leadInquiries?.map((inquiry: any) => (
                           <div key={inquiry.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                                <Building2 className="h-4 w-4 text-blue-600" />
+                              <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center">
+                                <Building2 className="h-4 w-4 text-info" />
                               </div>
                               <div>
-                                <p className="font-medium text-sm">
-                                  {inquiry.facility?.name || "Unknown Facility"}
-                                </p>
+                                <p className="font-medium text-sm">{inquiry.facility?.name || "Unknown Facility"}</p>
                                 <p className="text-xs text-muted-foreground">
                                   {format(new Date(inquiry.created_at), "MMM d, yyyy")}
                                 </p>
@@ -781,13 +744,11 @@ export function MarketingLeadProfileModal({
                             </div>
                             <div className="flex items-center gap-2">
                               {inquiry.provider_response_status && (
-                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
                                   {inquiry.provider_response_status}
                                 </Badge>
                               )}
-                              <Badge variant="secondary" className="text-xs">
-                                {inquiry.status}
-                              </Badge>
+                              <Badge variant="secondary" className="text-xs">{inquiry.status}</Badge>
                             </div>
                           </div>
                         ))}
@@ -806,13 +767,11 @@ export function MarketingLeadProfileModal({
                         {journeyData?.conciergeInquiries?.map((inquiry: any) => (
                           <div key={inquiry.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                                <Shield className="h-4 w-4 text-violet-600" />
+                              <div className="h-8 w-8 rounded-lg bg-chart-3/10 flex items-center justify-center">
+                                <Shield className="h-4 w-4 text-chart-3" />
                               </div>
                               <div>
-                                <p className="font-medium text-sm">
-                                  {inquiry.primary_concern || "Concierge Request"}
-                                </p>
+                                <p className="font-medium text-sm">{inquiry.primary_concern || "Concierge Request"}</p>
                                 <p className="text-xs text-muted-foreground">
                                   {format(new Date(inquiry.created_at), "MMM d, yyyy")}{inquiry.level_of_care ? ` • ${inquiry.level_of_care}` : ""}
                                 </p>
@@ -820,7 +779,9 @@ export function MarketingLeadProfileModal({
                             </div>
                             <Badge variant="outline" className={cn(
                               "text-xs",
-                              (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded") ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+                              (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded")
+                                ? "bg-success/10 text-success"
+                                : "bg-warning/10 text-warning"
                             )}>
                               {inquiry.status}
                             </Badge>
@@ -847,14 +808,12 @@ export function MarketingLeadProfileModal({
                                     key={i}
                                     className={cn(
                                       "h-4 w-4",
-                                      i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
+                                      i < review.rating ? "fill-warning text-warning" : "text-muted-foreground"
                                     )}
                                   />
                                 ))}
                               </div>
-                              <Badge variant="outline" className="text-xs">
-                                {review.status}
-                              </Badge>
+                              <Badge variant="outline" className="text-xs">{review.status}</Badge>
                             </div>
                             {review.review_text && (
                               <p className="text-sm text-muted-foreground line-clamp-2">{review.review_text}</p>
@@ -869,13 +828,13 @@ export function MarketingLeadProfileModal({
                   )}
 
                   {/* Empty State */}
-                  {!journeyData?.hasAccount && 
-                   (journeyData?.leadInquiries?.length || 0) === 0 && 
-                   !journeyData?.hasConcierge && 
+                  {!journeyData?.hasAccount &&
+                   (journeyData?.leadInquiries?.length || 0) === 0 &&
+                   !journeyData?.hasConcierge &&
                    !journeyData?.hasReviews && (
                     <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">No journey activity found for this lead</p>
+                      <AlertCircle className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+                      <p className="text-muted-foreground font-medium">No journey activity found for this lead</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         They haven't created an account or engaged further yet
                       </p>
@@ -886,10 +845,10 @@ export function MarketingLeadProfileModal({
             </TabsContent>
 
             {/* Clinical Tab */}
-            <TabsContent value="clinical" className="p-6 space-y-6 mt-0">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <TabsContent value="clinical" className="p-4 sm:p-6 space-y-5 sm:space-y-6 mt-0">
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
                 {lead.level_of_care && (
-                  <div className="p-4 rounded-lg border bg-card">
+                  <div className="p-3 sm:p-4 rounded-lg border bg-card">
                     <div className="flex items-center gap-2 mb-3">
                       <Stethoscope className="h-4 w-4 text-primary" />
                       <h4 className="font-semibold text-sm">Level of Care</h4>
@@ -899,7 +858,7 @@ export function MarketingLeadProfileModal({
                 )}
 
                 {lead.insurance_type && (
-                  <div className="p-4 rounded-lg border bg-card">
+                  <div className="p-3 sm:p-4 rounded-lg border bg-card">
                     <div className="flex items-center gap-2 mb-3">
                       <CreditCard className="h-4 w-4 text-primary" />
                       <h4 className="font-semibold text-sm">Insurance</h4>
@@ -911,7 +870,7 @@ export function MarketingLeadProfileModal({
                   </div>
                 )}
 
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-3 sm:p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Brain className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Primary Substance</h4>
@@ -927,7 +886,7 @@ export function MarketingLeadProfileModal({
                   )}
                 </div>
 
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-3 sm:p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Activity className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Co-occurring Conditions</h4>
@@ -943,7 +902,7 @@ export function MarketingLeadProfileModal({
                   )}
                 </div>
 
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-3 sm:p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Users className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Seeking Help For</h4>
@@ -951,7 +910,7 @@ export function MarketingLeadProfileModal({
                   <p className="text-sm">{lead.who_seeking_help || "Themselves"}</p>
                 </div>
 
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-3 sm:p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <User className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Demographics</h4>
@@ -962,7 +921,7 @@ export function MarketingLeadProfileModal({
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-3 sm:p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Clock className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Previous Treatment</h4>
@@ -971,7 +930,7 @@ export function MarketingLeadProfileModal({
                 </div>
 
                 {lead.employment_status && (
-                  <div className="p-4 rounded-lg border bg-card">
+                  <div className="p-3 sm:p-4 rounded-lg border bg-card">
                     <div className="flex items-center gap-2 mb-3">
                       <Briefcase className="h-4 w-4 text-primary" />
                       <h4 className="font-semibold text-sm">Employment</h4>
@@ -983,60 +942,60 @@ export function MarketingLeadProfileModal({
             </TabsContent>
 
             {/* UTM Tracking Tab */}
-            <TabsContent value="tracking" className="p-6 space-y-6 mt-0">
-              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+            <TabsContent value="tracking" className="p-4 sm:p-6 space-y-5 sm:space-y-6 mt-0">
+              <div className="p-3 sm:p-4 rounded-xl bg-info/5 border border-info/20">
                 <div className="flex items-center gap-2 mb-4">
-                  <Globe className="h-5 w-5 text-blue-600" />
+                  <Globe className="h-5 w-5 text-info" />
                   <h3 className="font-semibold">Campaign Attribution</h3>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Source</p>
-                    <p className="font-medium">{lead.utm_source || "direct"}</p>
+                    <p className="font-medium text-sm">{lead.utm_source || "direct"}</p>
                   </div>
                   {lead.utm_medium && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Medium</p>
-                      <p className="font-medium">{lead.utm_medium}</p>
+                      <p className="font-medium text-sm">{lead.utm_medium}</p>
                     </div>
                   )}
                   {lead.utm_campaign && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Campaign</p>
-                      <p className="font-medium">{lead.utm_campaign}</p>
+                      <p className="font-medium text-sm">{lead.utm_campaign}</p>
                     </div>
                   )}
                   {lead.utm_content && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Content</p>
-                      <p className="font-medium">{lead.utm_content}</p>
+                      <p className="font-medium text-sm">{lead.utm_content}</p>
                     </div>
                   )}
                   {lead.utm_term && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Term</p>
-                      <p className="font-medium">{lead.utm_term}</p>
+                      <p className="font-medium text-sm">{lead.utm_term}</p>
                     </div>
                   )}
                   {lead.landing_page && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Landing Page</p>
-                      <p className="font-medium truncate">{lead.landing_page}</p>
+                      <p className="font-medium truncate text-sm">{lead.landing_page}</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Follow-up Status */}
-              <div className="p-4 rounded-lg border bg-card">
+              <div className="p-3 sm:p-4 rounded-lg border bg-card">
                 <div className="flex items-center gap-2 mb-3">
                   <Send className="h-4 w-4 text-primary" />
                   <h4 className="font-semibold text-sm">Follow-up Status</h4>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     {lead.followup_email_sent ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <CheckCircle className="h-4 w-4 text-success" />
                     ) : (
                       <XCircle className="h-4 w-4 text-muted-foreground" />
                     )}
@@ -1053,15 +1012,15 @@ export function MarketingLeadProfileModal({
               </div>
 
               {/* Conversion Status */}
-              <div className="p-4 rounded-lg border bg-card">
+              <div className="p-3 sm:p-4 rounded-lg border bg-card">
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="h-4 w-4 text-primary" />
                   <h4 className="font-semibold text-sm">Conversion</h4>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     {lead.converted_to_concierge ? (
-                      <CheckCircle className="h-4 w-4 text-violet-600" />
+                      <CheckCircle className="h-4 w-4 text-chart-3" />
                     ) : (
                       <XCircle className="h-4 w-4 text-muted-foreground" />
                     )}
