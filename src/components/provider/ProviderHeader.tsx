@@ -449,16 +449,16 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                         className={cn(
                           "w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-left opacity-70",
                           facility.id === selectedFacility?.id 
-                            ? "bg-amber-500/5 border border-amber-500/20" 
+                            ? "bg-warning/5 border border-warning/20" 
                             : "hover:bg-muted/50"
                         )}
                         onClick={() => handleFacilitySelect(facility)}
                       >
-                        <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 overflow-hidden">
+                        <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center shrink-0 overflow-hidden">
                           {facility.logo_url ? (
                             <img src={facility.logo_url} alt={`${facility.name} logo`} className="h-full w-full object-cover" />
                           ) : (
-                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                            <AlertCircle className="h-4 w-4 text-warning" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -466,9 +466,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                           <p className="text-[11px] text-muted-foreground truncate">Pending review</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-warning" />
                           {facility.id === selectedFacility?.id && (
-                            <Check className="h-4 w-4 text-amber-600" />
+                            <Check className="h-4 w-4 text-warning" />
                           )}
                         </div>
                       </button>

@@ -85,7 +85,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
                   <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
                 </div>
                 {showBadge && (
-                  <span className="absolute -top-1 -right-1.5 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                  <span className="absolute -top-1 -right-1.5 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums">
                     {badgeCount > 9 ? "9+" : badgeCount}
                   </span>
                 )}

@@ -71,7 +71,7 @@ function MetricCard({
             {isLoading ? (
               <Skeleton className="h-5 sm:h-6 w-10 sm:w-12 mt-0.5" />
             ) : (
-              <p className="text-lg sm:text-xl font-bold text-foreground leading-tight">{value}</p>
+              <p className="text-lg sm:text-xl font-bold text-foreground leading-tight tabular-nums">{value}</p>
             )}
             {subtitle && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
           </div>
