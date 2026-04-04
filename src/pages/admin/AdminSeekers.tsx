@@ -121,6 +121,12 @@ export default function AdminSeekers() {
         profileQuery = profileQuery.or("phone_verified.is.null,phone_verified.eq.false");
       }
 
+      // Server-side name/location search
+      if (searchQuery && searchQuery.length >= 2) {
+        const q = searchQuery.trim();
+        profileQuery = profileQuery.or(`display_name.ilike.%${q}%,first_name.ilike.%${q}%,last_name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`);
+      }
+
       const { data: profiles, error } = await profileQuery;
 
       if (error) {
