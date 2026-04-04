@@ -35,6 +35,8 @@ import {
   Award,
   ShieldCheck,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -151,6 +153,38 @@ function ProfileSection({
       <div className="p-4 md:p-5">
         {children}
       </div>
+    </div>
+  );
+}
+
+// Truncated Description with expand/collapse
+const DESCRIPTION_CHAR_LIMIT = 400;
+
+function TruncatedDescription({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const needsTruncation = text.length > DESCRIPTION_CHAR_LIMIT;
+
+  const displayText = !expanded && needsTruncation
+    ? text.slice(0, DESCRIPTION_CHAR_LIMIT).trimEnd() + "…"
+    : text;
+
+  return (
+    <div>
+      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+        {displayText}
+      </p>
+      {needsTruncation && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          {expanded ? (
+            <>Show Less <ChevronUp className="h-4 w-4" /></>
+          ) : (
+            <>Read More <ChevronDown className="h-4 w-4" /></>
+          )}
+        </button>
+      )}
     </div>
   );
 }
@@ -822,9 +856,7 @@ const CenterProfile = () => {
                 iconColor="bg-primary/10 text-primary"
               >
                 {facility.description ? (
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {facility.description}
-                  </p>
+                  <TruncatedDescription text={facility.description} />
                 ) : (
                   <p className="text-muted-foreground leading-relaxed italic">
                     No description provided yet. Contact this facility for more information about their programs and services.
