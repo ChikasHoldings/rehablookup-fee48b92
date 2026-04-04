@@ -434,7 +434,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-success" />
                           {facility.id === selectedFacility?.id && (
                             <Check className="h-4 w-4 text-primary" />
                           )}
