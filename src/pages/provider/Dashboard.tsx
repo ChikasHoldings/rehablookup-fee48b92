@@ -544,19 +544,19 @@ export default function ProviderDashboardPage() {
 
               {/* Urgent Leads Alert */}
               {urgentLeads.length > 0 && (
-                <Card className="border-l-2 border-l-amber-500">
+                <Card className="border-l-2 border-l-warning">
                   <CardContent className="p-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <div className="h-9 w-9 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="h-4 w-4 text-warning" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">
-                          {urgentLeads.length} Need Follow-up
+                          <span className="tabular-nums">{urgentLeads.length}</span> Need Follow-up
                         </p>
                         <p className="text-xs text-muted-foreground">Waiting 24h+</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700" asChild>
+                      <Button size="sm" className="h-7 text-xs bg-warning hover:bg-warning/90 text-warning-foreground" asChild>
                         <Link to="/provider/inquiries?status=new">
                           <Phone className="h-3.5 w-3.5 mr-1" />
                           Call
