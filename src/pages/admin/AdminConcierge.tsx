@@ -304,7 +304,7 @@ export default function AdminConcierge() {
                             <div className="text-sm">{c.user_email}</div>
                             <div className="text-xs text-muted-foreground">{c.user_phone}</div>
                           </td>
-                          <td className="py-3">{c.level_of_care || "—"}</td>
+                          <td className="py-3">{c.level_of_care || "Not specified"}</td>
                           <td className="py-3">
                             {c.desired_location_state || c.preferred_state || "Any"}
                           </td>

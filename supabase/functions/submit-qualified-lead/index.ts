@@ -250,10 +250,10 @@ function getFacilityNotificationEmail(
   const urgencyDisplay = details.urgency === 'immediate' ? '🔴 Immediate' 
     : details.urgency === 'within_week' ? '🟡 Within a week'
     : details.urgency === 'within_month' ? '🟢 Within a month'
-    : '⚪ Flexible';
+    : '⚪ Not specified';
   
   // Format level of care
-  const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'General';
+  const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Not specified';
   
   return `
 <!DOCTYPE html>

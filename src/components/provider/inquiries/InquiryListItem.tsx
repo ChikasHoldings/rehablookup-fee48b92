@@ -84,7 +84,7 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
         {/* Location */}
         <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
           <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-          <span className="truncate">{inquiry.location_city_state || "—"}</span>
+          <span className="truncate">{inquiry.location_city_state || "Location not specified"}</span>
         </div>
 
         {/* Care type */}

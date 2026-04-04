@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
     await supabase.from("admin_notifications").insert({
       type: "international_case",
       title: "New International Placement Case",
-      message: `New placement case from ${clientName} (${clientCountry}). Primary concern: ${intakeData?.primaryConcern || "General"}`,
+      message: `New placement case from ${clientName} (${clientCountry}). Primary concern: ${intakeData?.primaryConcern || "Not specified"}`,
       metadata: {
         case_id: newCase.id,
         client_country: clientCountry,
