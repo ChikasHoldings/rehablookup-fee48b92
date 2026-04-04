@@ -38,6 +38,7 @@ const ResidentialInpatient = lazy(() => import("./pages/treatment-types/Resident
 const OutpatientPrograms = lazy(() => import("./pages/treatment-types/OutpatientPrograms"));
 const HolisticTherapy = lazy(() => import("./pages/treatment-types/HolisticTherapy"));
 const DetoxPrograms = lazy(() => import("./pages/treatment-types/DetoxPrograms"));
+const LuxuryRehab = lazy(() => import("./pages/treatment-types/LuxuryRehab"));
 const StateDetoxPrograms = lazy(() => import("./pages/treatment-types/StateDetoxPrograms"));
 const CityDetoxPrograms = lazy(() => import("./pages/treatment-types/CityDetoxPrograms"));
 const StateInpatientRehab = lazy(() => import("./pages/treatment-types/StateInpatientRehab"));
