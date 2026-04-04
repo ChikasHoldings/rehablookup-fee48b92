@@ -220,10 +220,10 @@ export default function AdminReviews() {
     const userIds = [...new Set(reviewsResult.data?.map(r => r.user_id) || [])];
     const profilesResult = userIds.length > 0
       ? await supabase.from('seeker_profiles').select('user_id, first_name, last_name, city, state, display_name').in('user_id', userIds)
-      : { data: [] };
+      : { data: [] as { user_id: string; first_name: string | null; last_name: string | null; city: string | null; state: string | null; display_name: string | null }[] };
 
-    const profileMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
-    const facilityMap = new Map(facilitiesResult.data?.map(f => [f.id, f.name]) || []);
+    const profileMap = new Map((profilesResult.data || []).map(p => [p.user_id, p] as const));
+    const facilityMap = new Map(facilitiesResult.data?.map(f => [f.id, f.name] as const) || []);
     
     const reviewMap = new Map(reviewsResult.data?.map(r => {
       const profile = profileMap.get(r.user_id);
