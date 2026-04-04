@@ -31,6 +31,7 @@ import {
   insuranceLinks 
 } from "@/components/seo/InternalLinkingSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 // Generate ItemList schema for article listing pages
 function generateArticleListSchema(articles: DBArticle[]) {
@@ -264,6 +265,7 @@ export default function Resources() {
       {/* Hero Section - Compact navy style matching platform pages */}
       <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
+        <MedicalPatternBackground />
           <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
           <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
         </div>

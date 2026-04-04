@@ -27,6 +27,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 const holisticTherapies = [
   {
@@ -160,8 +161,9 @@ const HolisticTherapy = () => {
       />
 
       {/* Hero Section */}
-      <section className="bg-primary py-12 md:py-16">
+      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
+        <MedicalPatternBackground />
           {/* Breadcrumbs */}
           <nav className="mb-5 text-center">
             <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">

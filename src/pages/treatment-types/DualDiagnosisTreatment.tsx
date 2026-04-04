@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 const mentalHealthConditions = [
   {
@@ -174,8 +175,9 @@ const DualDiagnosisTreatment = () => {
       />
 
       {/* Hero Section */}
-      <section className="bg-primary py-12 md:py-16">
+      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
+        <MedicalPatternBackground />
           <nav className="mb-5 text-center">
             <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
               <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>

@@ -43,6 +43,7 @@ const treatmentTypesData = [
 ];
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 // State capital images mapping
 const stateCapitalImages: Record<string, string> = {
@@ -232,6 +233,7 @@ const StatePage = () => {
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
+        <MedicalPatternBackground />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         

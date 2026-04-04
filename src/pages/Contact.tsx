@@ -19,6 +19,7 @@ import {
   Headphones,
   ChevronRight,
 } from "lucide-react";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 const contactMethods = [
   {
@@ -100,6 +101,7 @@ const Contact = () => {
       <section className="bg-primary py-10 px-4 md:py-12 lg:py-14 md:px-6 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
+        <MedicalPatternBackground />
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
         </div>

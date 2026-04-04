@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MapPin, Building2, CheckCircle, Heart, Search, ChevronRight } from "lucide-react";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface NearMeHeroProps {
   title: string;
@@ -38,6 +39,7 @@ export function NearMeHero({
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
       <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
+      <MedicalPatternBackground />
       
       <div className="container relative z-10 py-10 md:py-14 lg:py-16">
         {/* Breadcrumb navigation */}
