@@ -25,6 +25,8 @@ interface UseLeadIntakeFormOptions {
 export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { user, isAuthenticated } = useAuthReady();
+  const hasPrePopulated = useRef(false);
   
   // Parse facility info from URL, but allow overrides from props
   const urlFacilityId = searchParams.get("facility");
