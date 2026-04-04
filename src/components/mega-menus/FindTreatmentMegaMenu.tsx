@@ -50,7 +50,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
   }, [searchQuery, navigate, onNavigate]);
 
   return (
-    <div className="w-[740px] max-w-[92vw]">
+    <div className="w-[min(740px,calc(100vw-2rem))]">
       {/* Premium search bar */}
       <div className="px-5 pt-4 pb-3">
         <form onSubmit={handleSearch} className="relative group/search">
