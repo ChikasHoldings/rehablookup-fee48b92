@@ -250,7 +250,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
     if (!user) return "Unknown";
     if (fullName) return fullName;
     if (user.display_name) return user.display_name;
-    return "Anonymous User";
+    return "Verified User";
   };
 
   const getInitials = () => {
