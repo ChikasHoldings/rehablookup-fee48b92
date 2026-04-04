@@ -321,7 +321,7 @@ export function MarketingLeadProfileModal({
   };
 
   const formatUrgency = (urgency: string | null) => {
-    if (!urgency) return "Not specified";
+    if (!urgency) return "—";
     const map: Record<string, string> = {
       immediate: "Immediate (ASAP)",
       "within-week": "Within a Week",
