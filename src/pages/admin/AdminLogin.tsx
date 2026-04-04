@@ -232,7 +232,7 @@ export default function AdminLogin() {
   // Suspended account view
   if (isSuspended) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
