@@ -97,6 +97,7 @@ const QUESTIONS: Question[] = [
     subtitle: "Don't worry if you're unsure — we can help guide you",
     icon: <Stethoscope className="h-6 w-6" />,
     field: "levelOfCare",
+    required: true,
     options: LEVEL_OF_CARE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
@@ -106,6 +107,7 @@ const QUESTIONS: Question[] = [
     subtitle: "This helps us find facilities that accept your coverage",
     icon: <Shield className="h-6 w-6" />,
     field: "insuranceType",
+    required: true,
     options: INSURANCE_TYPE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
@@ -115,6 +117,7 @@ const QUESTIONS: Question[] = [
     subtitle: "Age-appropriate care makes a difference",
     icon: <Calendar className="h-6 w-6" />,
     field: "ageRange",
+    required: true,
     options: AGE_RANGE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
@@ -124,6 +127,7 @@ const QUESTIONS: Question[] = [
     subtitle: "Some programs are gender-specific",
     icon: <UserCircle className="h-6 w-6" />,
     field: "gender",
+    required: true,
     options: GENDER_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
@@ -133,6 +137,7 @@ const QUESTIONS: Question[] = [
     subtitle: "This helps connect you with the right approach",
     icon: <Heart className="h-6 w-6" />,
     field: "previousTreatment",
+    required: true,
     options: PREVIOUS_TREATMENT_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
@@ -142,6 +147,7 @@ const QUESTIONS: Question[] = [
     subtitle: "The facility will reach out at your preferred time",
     icon: <Clock className="h-6 w-6" />,
     field: "bestTimeToCall",
+    required: true,
     options: BEST_TIME_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {

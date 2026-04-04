@@ -38,6 +38,12 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
   const validate = () => {
     if (isUrgent) return true;
     const newErrors: Record<string, string> = {};
+    if (!formData.levelOfCare) {
+      newErrors.levelOfCare = "Please select a level of care";
+    }
+    if (!formData.insuranceType) {
+      newErrors.insuranceType = "Please select an insurance type";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
