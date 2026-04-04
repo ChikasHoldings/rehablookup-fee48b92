@@ -81,7 +81,7 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
   const showSearch = searchable || options.length > 8;
 
   return (
-    <div ref={ref || dropdownRef} className="relative">
+    <div ref={internalRef} className="relative">
       {label && (
         <label className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
           {icon}
