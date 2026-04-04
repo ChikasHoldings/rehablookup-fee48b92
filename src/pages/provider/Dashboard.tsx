@@ -479,7 +479,7 @@ export default function ProviderDashboardPage() {
                               )}
                             </div>
                             {index === 0 && lead.status === 'new' && (
-                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
+                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-success rounded-full border-2 border-background" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
