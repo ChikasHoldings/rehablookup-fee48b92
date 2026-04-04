@@ -203,10 +203,6 @@ export default function MensRehabNearMe() {
                   </div>
                 ))}
               </div>
-              {/* Scroll indicator for mobile */}
-              <div className="flex justify-center gap-1.5 mt-3 md:hidden">
-                <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
-              </div>
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
