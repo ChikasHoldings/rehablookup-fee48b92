@@ -235,7 +235,6 @@ export default function RehabUSAFromCanada() {
           </div>
         </section>
       </main>
-      <Footer />
-    </div>
+    </Layout>
   );
 }
