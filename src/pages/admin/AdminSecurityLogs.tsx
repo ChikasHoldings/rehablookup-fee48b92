@@ -1336,7 +1336,7 @@ export default function AdminSecurityLogs() {
                               </TableCell>
                               <TableCell>
                                 {isActive ? (
-                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                                  <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/10 border-transparent">
                                     <ShieldOff className="h-3 w-3 mr-1" />
                                     Active
                                   </Badge>
