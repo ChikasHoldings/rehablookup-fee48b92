@@ -820,7 +820,7 @@ const CenterProfile = () => {
                     )
                   }
                 >
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 rounded-xl overflow-hidden">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 rounded-xl overflow-hidden">
                     {galleryImages.slice(0, 8).map((img, idx) => (
                       <button
                         key={idx}
