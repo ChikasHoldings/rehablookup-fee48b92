@@ -171,9 +171,9 @@ export const Footer = memo(function Footer() {
       <div className="container px-4 md:px-6 lg:px-8">
         {/* Desktop Layout */}
         <div className="hidden md:block py-8 lg:py-10">
-          <div className="grid grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-10">
-            {/* Brand Column - Takes more space */}
-            <div className="col-span-2 lg:col-span-4 space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8">
+            {/* Brand Column */}
+            <div className="col-span-2 lg:col-span-3 space-y-4">
               <Link to="/" className="inline-block">
                 <img
                   src={logoDarkBg}
@@ -229,6 +229,9 @@ export const Footer = memo(function Footer() {
             </div>
             <div className="lg:col-span-2">
               <FooterColumn title="Resources" links={resources} />
+            </div>
+            <div className="lg:col-span-1">
+              <FooterColumn title="🌍 International" links={internationalLinks} />
             </div>
             <div className="lg:col-span-2">
               <FooterColumn title="For Providers" links={providerLinks} />
