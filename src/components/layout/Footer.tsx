@@ -341,13 +341,13 @@ export const Footer = memo(function Footer() {
       {/* ── Bottom Bar ─────────────────────────────────────────────── */}
       <div className="border-t border-primary-foreground/[0.06]">
         <div className="container px-5 md:px-6 lg:px-8">
-          <div className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="py-4 flex flex-col items-center text-center gap-3 md:flex-row md:items-center md:justify-between md:text-left">
             {/* Left: Copyright + Legal */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <div className="flex flex-col items-center md:flex-row md:items-center gap-2 md:gap-4">
               <p className="text-xs text-primary-foreground/40">
                 © {currentYear} RehabLookup. All rights reserved. Not a medical provider.
               </p>
-              <nav className="flex items-center gap-3">
+              <nav className="flex flex-wrap items-center justify-center gap-3">
                 {[
                   { to: "/privacy-policy", label: "Privacy Policy" },
                   { to: "/terms-of-service", label: "Terms of Service" },
@@ -373,7 +373,7 @@ export const Footer = memo(function Footer() {
             </div>
 
             {/* Right: Social + Contact */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               <a
                 href="mailto:help@rehablookup.com"
                 className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors hidden sm:inline-flex items-center gap-1"
