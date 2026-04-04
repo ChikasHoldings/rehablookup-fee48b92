@@ -179,6 +179,8 @@ export default function ProviderForgotPassword() {
   }
 
   return (
+    <>
+    <Helmet><title>Forgot Password | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
     <div className="flex min-h-screen flex-col bg-background">
       <Header 
         navLinks={providerNavLinks} 
