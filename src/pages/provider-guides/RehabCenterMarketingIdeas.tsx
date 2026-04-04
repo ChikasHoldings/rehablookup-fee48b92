@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function RehabCenterMarketingIdeas() {
   return (
@@ -6,7 +6,7 @@ export default function RehabCenterMarketingIdeas() {
       title="Rehab Center Marketing Ideas"
       metaTitle="15 Rehab Center Marketing Ideas That Drive Admissions | RehabLookup"
       metaDescription="Creative, actionable marketing ideas for rehab centers and treatment facilities. Build visibility, trust, and admissions with strategies that work."
-      canonical="/provider-seo/rehab-center-marketing-ideas"
+      canonical="/provider-guides/rehab-center-marketing-ideas"
       keywords={["rehab center marketing ideas", "treatment center marketing ideas", "rehab advertising ideas", "creative rehab marketing", "substance abuse treatment marketing"]}
       heroHeadline="15 Rehab Center Marketing Ideas That Actually Drive Admissions"
       heroSubheadline="Move beyond generic advice. These are specific, actionable ideas that treatment centers are using right now to grow census."

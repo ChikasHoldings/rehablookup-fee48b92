@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function RehabMarketingStrategies() {
   return (
@@ -6,7 +6,7 @@ export default function RehabMarketingStrategies() {
       title="Rehab Marketing Strategies"
       metaTitle="Rehab Marketing Strategies That Actually Work in 2026 | RehabLookup"
       metaDescription="Cut through the noise with proven rehab marketing strategies. Learn what works, what doesn't, and how to build a sustainable patient acquisition system."
-      canonical="/provider-seo/rehab-marketing-strategies"
+      canonical="/provider-guides/rehab-marketing-strategies"
       keywords={["rehab marketing strategies", "treatment center marketing", "addiction treatment marketing", "rehab advertising", "behavioral health marketing strategies"]}
       heroHeadline="Rehab Marketing Strategies That Actually Work in 2026"
       heroSubheadline="Stop wasting budget on tactics that don't convert. Here's what the most successful treatment centers are doing differently."

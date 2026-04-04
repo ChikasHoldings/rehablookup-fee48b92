@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ProviderMegaMenu, ProviderMegaMenuMobile } from "@/components/provider-seo/ProviderMegaMenu";
+import { ProviderMegaMenu, ProviderMegaMenuMobile } from "@/components/provider-guides/ProviderMegaMenu";
 
 export interface NavLink {
   href: string;
@@ -182,7 +182,7 @@ export function Header({
                 onMouseEnter={() => setProviderDropdownOpen(true)}
                 className={cn(
                   "flex items-center h-10 gap-1 px-3.5 text-[15px] font-medium transition-colors whitespace-nowrap",
-                  location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider-seo")
+                  location.pathname.startsWith("/for-providers") || location.pathname.startsWith("/provider-guides")
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 )}

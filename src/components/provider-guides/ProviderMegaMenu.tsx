@@ -24,49 +24,49 @@ interface MegaMenuProps {
 
 const seoPages = [
   {
-    href: "/provider-seo/get-more-rehab-patients",
+    href: "/provider-guides/get-more-rehab-patients",
     label: "Get More Patients",
     desc: "Proven strategies to fill beds faster",
     icon: Users,
   },
   {
-    href: "/provider-seo/rehab-admissions-growth",
+    href: "/provider-guides/rehab-admissions-growth",
     label: "Grow Admissions",
     desc: "Build a sustainable admissions pipeline",
     icon: TrendingUp,
   },
   {
-    href: "/provider-seo/rehab-marketing-strategies",
+    href: "/provider-guides/rehab-marketing-strategies",
     label: "Marketing Strategies",
     desc: "What actually works in 2026",
     icon: Megaphone,
   },
   {
-    href: "/provider-seo/addiction-treatment-lead-generation",
+    href: "/provider-guides/addiction-treatment-lead-generation",
     label: "Lead Generation",
     desc: "Quality leads that convert to admissions",
     icon: Target,
   },
   {
-    href: "/provider-seo/increase-rehab-admissions",
+    href: "/provider-guides/increase-rehab-admissions",
     label: "Increase Admissions",
     desc: "Data-driven census growth guide",
     icon: BarChart3,
   },
   {
-    href: "/provider-seo/rehab-center-marketing-ideas",
+    href: "/provider-guides/rehab-center-marketing-ideas",
     label: "Marketing Ideas",
     desc: "15 actionable ideas for treatment centers",
     icon: Lightbulb,
   },
   {
-    href: "/provider-seo/treatment-center-patient-acquisition",
+    href: "/provider-guides/treatment-center-patient-acquisition",
     label: "Patient Acquisition",
     desc: "Build channels that compound",
     icon: Zap,
   },
   {
-    href: "/provider-seo/behavioral-health-lead-generation",
+    href: "/provider-guides/behavioral-health-lead-generation",
     label: "Behavioral Health Leads",
     desc: "Ethical lead gen for BH providers",
     icon: Heart,

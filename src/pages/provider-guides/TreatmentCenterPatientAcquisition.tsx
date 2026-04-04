@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function TreatmentCenterPatientAcquisition() {
   return (
@@ -6,7 +6,7 @@ export default function TreatmentCenterPatientAcquisition() {
       title="Patient Acquisition for Treatment Centers"
       metaTitle="Treatment Center Patient Acquisition: The Complete Guide | RehabLookup"
       metaDescription="Build a sustainable patient acquisition system for your treatment center. Move beyond lead buying and build channels that compound over time."
-      canonical="/provider-seo/treatment-center-patient-acquisition"
+      canonical="/provider-guides/treatment-center-patient-acquisition"
       keywords={["treatment center patient acquisition", "get more patients treatment center", "rehab patient acquisition strategy", "behavioral health patient acquisition"]}
       heroHeadline="The Complete Guide to Treatment Center Patient Acquisition"
       heroSubheadline="Build acquisition channels that compound — not campaigns that drain your budget the moment you stop spending."

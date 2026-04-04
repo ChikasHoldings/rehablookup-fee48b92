@@ -1,4 +1,4 @@
-import { ProviderSEOPageLayout } from "@/components/provider-seo/ProviderSEOPageLayout";
+import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 
 export default function GetMoreRehabPatients() {
   return (
@@ -6,7 +6,7 @@ export default function GetMoreRehabPatients() {
       title="Get More Rehab Patients"
       metaTitle="How to Get More Patients for Your Rehab Center in 2026 | RehabLookup"
       metaDescription="Proven strategies to increase patient volume at your rehab or treatment center. Learn how top facilities fill beds faster with qualified admissions."
-      canonical="/provider-seo/get-more-rehab-patients"
+      canonical="/provider-guides/get-more-rehab-patients"
       keywords={["get more rehab patients", "rehab patient acquisition", "treatment center patients", "fill rehab beds", "increase rehab census"]}
       heroHeadline="How Rehab Centers Can Get More Patients in 2026"
       heroSubheadline="The treatment industry is more competitive than ever. Here's what top-performing facilities do differently to maintain full census."
