@@ -273,9 +273,9 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
   }
 
   const firstName = lead.name.split(" ")[0];
-  const formatUrgency = (u: string | null) => ({ immediate: "Immediate", "within-week": "This Week", "within-month": "This Month", researching: "Researching" }[u || ""] || u || "—");
-  const formatLevel = (l: string | null) => ({ detox: "Detox", residential: "Residential", php: "PHP", iop: "IOP", outpatient: "Outpatient", "not-sure": "Not Sure" }[l || ""] || l || "—");
-  const formatInsurance = (t: string | null) => ({ ppo: "PPO/Private", medicaid: "Medicaid", medicare: "Medicare", "self-pay": "Self-Pay", "not-sure": "Not Sure" }[t || ""] || t || "—");
+  const formatUrgency = (u: string | null) => ({ immediate: "Immediate", "within-week": "This Week", "within-month": "This Month", researching: "Researching" }[u || ""] || u || "Not provided");
+  const formatLevel = (l: string | null) => ({ detox: "Detox", residential: "Residential", php: "PHP", iop: "IOP", outpatient: "Outpatient", "not-sure": "Not Sure" }[l || ""] || l || "Not provided");
+  const formatInsurance = (t: string | null) => ({ ppo: "PPO/Private", medicaid: "Medicaid", medicare: "Medicare", "self-pay": "Self-Pay", "not-sure": "Not Sure" }[t || ""] || t || "Not provided");
 
   return (
     <div className="flex-1 flex flex-col bg-background min-h-0 overflow-hidden">

@@ -994,26 +994,36 @@ export function MarketingLeadProfileModal({
                     <p className="text-xs text-muted-foreground mb-1">Source</p>
                     <p className="font-medium">{lead.utm_source || "direct"}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Medium</p>
-                    <p className="font-medium">{lead.utm_medium || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Campaign</p>
-                    <p className="font-medium">{lead.utm_campaign || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Content</p>
-                    <p className="font-medium">{lead.utm_content || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Term</p>
-                    <p className="font-medium">{lead.utm_term || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Landing Page</p>
-                    <p className="font-medium truncate">{lead.landing_page || "—"}</p>
-                  </div>
+                  {lead.utm_medium && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Medium</p>
+                      <p className="font-medium">{lead.utm_medium}</p>
+                    </div>
+                  )}
+                  {lead.utm_campaign && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Campaign</p>
+                      <p className="font-medium">{lead.utm_campaign}</p>
+                    </div>
+                  )}
+                  {lead.utm_content && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Content</p>
+                      <p className="font-medium">{lead.utm_content}</p>
+                    </div>
+                  )}
+                  {lead.utm_term && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Term</p>
+                      <p className="font-medium">{lead.utm_term}</p>
+                    </div>
+                  )}
+                  {lead.landing_page && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Landing Page</p>
+                      <p className="font-medium truncate">{lead.landing_page}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
