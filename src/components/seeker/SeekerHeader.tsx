@@ -167,6 +167,26 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     }
     if (notification.link) {
       navigate(notification.link);
+      return;
+    }
+    // Route by notification type when no explicit link
+    const metadata = notification.metadata as Record<string, any> | null;
+    if (metadata?.link) {
+      navigate(metadata.link);
+      return;
+    }
+    const inquiryTypes = ["inquiry_update", "inquiry_status", "placement_update", "placement_matched", "placement_confirmed", "introduction_sent"];
+    const facilityTypes = ["facility_update", "facility_approved", "tour_confirmed", "tour_request"];
+    const reviewTypes = ["review_response", "review_helpful"];
+    
+    if (inquiryTypes.includes(notification.type)) {
+      navigate("/account/inquiries");
+    } else if (facilityTypes.includes(notification.type)) {
+      navigate("/account/saved");
+    } else if (reviewTypes.includes(notification.type)) {
+      navigate("/account/reviews");
+    } else {
+      navigate("/account/notifications");
     }
   };
 
