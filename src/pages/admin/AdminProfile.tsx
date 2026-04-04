@@ -680,7 +680,7 @@ export default function AdminProfile() {
             {/* New Leads */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-50 text-green-600">
+                <div className="p-2 rounded-lg bg-success/10 text-success">
                   <FileText className="h-4 w-4" />
                 </div>
                 <div>
