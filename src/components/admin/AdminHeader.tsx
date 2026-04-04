@@ -48,6 +48,14 @@ type Notification = {
   isUnread?: boolean;
 };
 
+// Role display config
+const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
+  super_admin: { label: "Super Admin", color: "bg-amber-500/10 text-amber-600" },
+  manager: { label: "Manager", color: "bg-blue-500/10 text-blue-600" },
+  customer_rep: { label: "Customer Rep", color: "bg-emerald-500/10 text-emerald-600" },
+  advisor: { label: "Placement Advisor", color: "bg-purple-500/10 text-purple-600" },
+};
+
 function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperAdmin = false, hasPermission = () => false }: AdminHeaderProps) {
   const initials = userEmail?.slice(0, 2).toUpperCase() || "AD";
   const navigate = useNavigate();
