@@ -381,11 +381,7 @@ const CityPage = () => {
           {isLoading ? (
             <SearchResultsLoading count={6} />
           ) : cityCenters.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {cityCenters.map(center => (
-                <TreatmentCenterCard key={center.id} center={center} />
-              ))}
-            </div>
+            <FacilityShowcaseGrid facilities={cityCenters as any[]} />
           ) : (
             <div className="rounded-xl border bg-card p-12 text-center">
               <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
