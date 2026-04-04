@@ -61,6 +61,9 @@ const CityTreatmentPage = lazy(() => import("./pages/seo/CityTreatmentPage"));
 const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
 const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
+const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
+const InsuranceStatePage = lazy(() => import("./pages/seo/InsuranceStatePage"));
+const BestInStatePage = lazy(() => import("./pages/seo/BestInStatePage"));
 
 // Provider SEO Pages
 const GetMoreRehabPatients = lazy(() => import("./pages/provider-guides/GetMoreRehabPatients"));
@@ -378,6 +381,20 @@ const AppInner = () => {
             <Route path="/does-insurance-cover-rehab" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             <Route path="/free-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             <Route path="/medicaid-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            
+            {/* Substance-Specific SEO Landing Pages */}
+            <Route path="/cocaine-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/opioid-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/heroin-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/meth-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/prescription-drug-rehab" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/benzodiazepine-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            
+            {/* Insurance + State Cross Pages */}
+            <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
+            
+            {/* Best Rehab Centers in [State] Roundup Pages */}
+            <Route path="/best-rehab-centers-in-:stateSlug" element={<PublicRouteGuard><BestInStatePage /></PublicRouteGuard>} />
             
             {/* SEO City+Treatment Combo Pages - use full path parsing */}
             <Route path="/alcohol-rehab-in-*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />

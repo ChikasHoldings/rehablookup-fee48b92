@@ -14,6 +14,7 @@ interface SEOProps {
   publishedTime?: string;
   modifiedTime?: string;
   locale?: string;
+  hreflang?: { lang: string; href: string }[];
 }
 
 const SITE_NAME = "RehabLookup";
@@ -61,6 +62,7 @@ export function SEO({
   publishedTime,
   modifiedTime,
   locale = "en_US",
+  hreflang,
 }: SEOProps) {
   const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
   
@@ -201,7 +203,10 @@ export function SEO({
       {keywords && keywords.length > 0 && (
         <meta name="keywords" content={keywords.join(", ")} />
       )}
-      <link rel="canonical" href={canonicalUrl} />
+     <link rel="canonical" href={canonicalUrl} />
+     {hreflang && hreflang.map(({ lang, href }) => (
+       <link key={lang} rel="alternate" hrefLang={lang} href={href} />
+     ))}
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (

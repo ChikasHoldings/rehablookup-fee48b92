@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v3.0.0";
+const VERSION = "v4.0.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -186,6 +186,26 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/free-rehab-centers", priority: 0.85, changefreq: "monthly" },
   { path: "/medicaid-rehab-centers", priority: 0.85, changefreq: "monthly" },
 
+  // SUBSTANCE-SPECIFIC LANDING PAGES
+  { path: "/cocaine-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/opioid-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/heroin-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/meth-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/prescription-drug-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/benzodiazepine-addiction-treatment", priority: 0.85, changefreq: "weekly" },
+
+  // BEST REHAB IN STATE ROUNDUP PAGES
+  { path: "/best-rehab-centers-in-california", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-florida", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-texas", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-new-york", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-arizona", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-colorado", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-pennsylvania", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-ohio", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-illinois", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-georgia", priority: 0.85, changefreq: "weekly" },
+
   // RESOURCE ARTICLES (static slugs)
   { path: "/resources/signs-of-addiction", priority: 0.8, changefreq: "monthly" },
   { path: "/resources/how-to-help-loved-one", priority: 0.8, changefreq: "monthly" },
@@ -296,14 +316,29 @@ const TOP_CITIES_FOR_TREATMENT: Record<string, string[]> = {
   "georgia": ["atlanta"],
 };
 
-// City+Treatment combo pages
-const CITY_TREATMENT_COMBOS = [
-  { prefix: "alcohol-rehab-in", cities: ["dallas", "los-angeles", "houston", "miami", "chicago", "phoenix", "atlanta", "denver", "seattle", "boston"] },
-  { prefix: "drug-rehab-in", cities: ["dallas", "los-angeles", "houston", "miami", "chicago", "phoenix", "atlanta", "denver", "seattle", "boston"] },
-  { prefix: "detox-centers-in", cities: ["los-angeles", "houston", "miami", "chicago", "phoenix", "atlanta"] },
-  { prefix: "inpatient-rehab-in", cities: ["los-angeles", "houston", "miami", "chicago", "dallas"] },
-  { prefix: "outpatient-rehab-in", cities: ["los-angeles", "houston", "miami", "chicago", "dallas"] },
-  { prefix: "dual-diagnosis-treatment-in", cities: ["los-angeles", "houston", "miami", "chicago"] },
+// City+Treatment combo pages - all 50 cities × 6 treatment types (generated dynamically)
+const ALL_CITY_SLUGS = [
+  "new-york", "los-angeles", "chicago", "houston", "phoenix", "dallas", "miami", "atlanta",
+  "denver", "seattle", "san-diego", "san-francisco", "boston", "philadelphia", "san-antonio",
+  "austin", "jacksonville", "columbus", "charlotte", "indianapolis", "portland", "nashville",
+  "las-vegas", "memphis", "louisville", "minneapolis", "detroit", "sacramento", "tampa",
+  "salt-lake-city", "baltimore", "milwaukee", "kansas-city", "tucson", "raleigh", "richmond",
+  "new-orleans", "pittsburgh", "oklahoma-city", "honolulu", "albuquerque", "omaha",
+  "virginia-beach", "boise", "spokane", "orlando", "scottsdale", "st-louis", "cleveland", "cincinnati"
+];
+const CITY_TREATMENT_PREFIXES = [
+  "alcohol-rehab-in", "drug-rehab-in", "detox-centers-in",
+  "inpatient-rehab-in", "outpatient-rehab-in", "dual-diagnosis-treatment-in"
+];
+
+// Insurance + State cross pages
+const INSURANCE_SLUGS = [
+  "aetna-rehab-coverage", "bcbs-rehab-coverage", "cigna-rehab-coverage",
+  "unitedhealthcare-rehab-coverage", "humana-rehab-coverage"
+];
+const INSURANCE_STATES = [
+  "california", "florida", "texas", "new-york", "arizona",
+  "colorado", "ohio", "pennsylvania", "illinois"
 ];
 
 function generateStateRoutes(): RouteEntry[] {
@@ -360,10 +395,20 @@ function generateTreatmentGeoRoutes(): RouteEntry[] {
 
 function generateCityTreatmentComboRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
-  for (const combo of CITY_TREATMENT_COMBOS) {
-    for (const city of combo.cities) {
+  for (const prefix of CITY_TREATMENT_PREFIXES) {
+    for (const city of ALL_CITY_SLUGS) {
       routes.push({
-        path: `/${combo.prefix}-${city}`,
+        path: `/${prefix}-${city}`,
+        priority: 0.8,
+        changefreq: "weekly"
+      });
+    }
+  }
+  // Insurance + State cross pages
+  for (const ins of INSURANCE_SLUGS) {
+    for (const state of INSURANCE_STATES) {
+      routes.push({
+        path: `/insurance/${ins}/${state}`,
         priority: 0.8,
         changefreq: "weekly"
       });
