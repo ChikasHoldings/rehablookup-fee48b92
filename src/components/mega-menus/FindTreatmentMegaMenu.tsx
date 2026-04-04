@@ -76,7 +76,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Treatment Types — 2-col with icon + desc */}
         <div className="flex-1 px-5 pb-4 pt-1 border-r border-border/30">
-          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
             <Shield className="h-3 w-3" />
             Treatment Types
           </p>
@@ -92,14 +92,14 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                   <item.icon className="h-3.5 w-3.5 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground group-hover:text-foreground leading-tight">{item.label}</p>
-                  <p className="text-[11px] text-muted-foreground/90 leading-tight">{item.desc}</p>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-foreground leading-tight">{item.label}</p>
+                  <p className="text-xs text-muted-foreground/90 leading-tight">{item.desc}</p>
                 </div>
               </PrefetchLink>
             ))}
           </div>
           <PrefetchLink to="/treatment-types" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 pt-2 text-[11px] font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-primary hover:text-primary/80">
             All treatment types <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
@@ -112,11 +112,11 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles className="h-3.5 w-3.5 text-accent" />
-                    <p className="text-[13px] font-bold text-white leading-tight">Free Concierge Matching</p>
+                    <p className="text-sm font-bold text-white leading-tight">Free Concierge Matching</p>
                   </div>
-                  <p className="text-[11px] text-white/75 leading-snug max-w-[260px]">Our specialists will match you with the right treatment center within 24 hours — completely free.</p>
+                  <p className="text-xs text-white/75 leading-snug max-w-[260px]">Our specialists will match you with the right treatment center within 24 hours — completely free.</p>
                 </div>
-                <div className="h-8 px-4 rounded-lg bg-accent text-accent-foreground text-[11px] font-semibold flex items-center gap-1.5 shrink-0 group-hover:bg-accent/90 transition-colors shadow-md">
+                <div className="h-8 px-4 rounded-lg bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1.5 shrink-0 group-hover:bg-accent/90 transition-colors shadow-md">
                   Get Matched <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </div>
@@ -136,7 +136,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={loc.href}
                 to={loc.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-1.5 rounded-md px-2 py-[6px] text-[13px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[6px] text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <ChevronRight className="h-3 w-3 text-border group-hover:text-accent transition-colors shrink-0" />
                 {loc.label}
@@ -144,7 +144,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
           <PrefetchLink to="/locations" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 pt-1.5 text-[11px] font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-1.5 text-xs font-semibold text-primary hover:text-primary/80">
             All states <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
@@ -157,7 +157,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={page.href}
                 to={page.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[12px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[13px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <Search className="h-3 w-3 text-accent/50 group-hover:text-accent shrink-0" />
                 {page.label}
