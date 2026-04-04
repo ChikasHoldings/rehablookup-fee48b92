@@ -1,105 +1,117 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
-# Last updated: 2026-03-08
-# 
-# This file controls how search engines crawl and index our website.
-# For more info: https://developers.google.com/search/docs/crawling-indexing/robots/intro
+# Last updated: 2026-04-04
 # =============================================================================
 
 # =============================================================================
 # MAJOR SEARCH ENGINES
 # =============================================================================
 
-# Google Search (primary crawler) - No crawl-delay as Google ignores it
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /provider/
+Disallow: /account
+Disallow: /account/
+Disallow: /seeker/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /auth
+Disallow: /provider-login
+Disallow: /provider-signup
+Disallow: /provider-forgot-password
+Disallow: /provider-reset-password
+Disallow: /admin-login
+Disallow: /seeker/signup
+Disallow: /request-help
+Disallow: /placement-help
+Disallow: /my-account
+Disallow: /concierge/intake
+Disallow: /concierge/thank-you
+Disallow: /concierge/create-password
+Disallow: /concierge/dashboard
+Disallow: /lp/
+Disallow: /api/
+Disallow: /functions/
+Disallow: /search-results
+Disallow: /search?
+Disallow: /*?utm_source=
+Disallow: /*?utm_medium=
+Disallow: /*?utm_campaign=
+Disallow: /*?fbclid=
+Disallow: /*?gclid=
+Disallow: /*?msclkid=
+Disallow: /*?_ga=
+Disallow: /*?_gl=
 
-# Google Images - Allow all public images
 User-agent: Googlebot-Image
 Allow: /
-Allow: /og-image.jpg
-Allow: /logo.svg
-Allow: /logo-dark.svg
-Allow: /favicon.svg
-Allow: /insurance-logos/
 
-# Google Video
 User-agent: Googlebot-Video
 Allow: /
 
-# Google News - Allow resources/articles
 User-agent: Googlebot-News
 Allow: /resources
 Allow: /resources/
+Allow: /blog
 
-# Google AdSense
-User-agent: Mediapartners-Google
-Allow: /
-
-# Google AdsBot (landing page quality)
-User-agent: AdsBot-Google
-Allow: /
-Disallow: /admin
-Disallow: /provider
-
-# Google AdsBot Mobile
-User-agent: AdsBot-Google-Mobile
-Allow: /
-Disallow: /admin
-Disallow: /provider
-
-# Bing - No crawl-delay (Bing recommends against it)
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /provider/
+Disallow: /account
+Disallow: /seeker/
+Disallow: /login
+Disallow: /signup
+Disallow: /lp/
+Disallow: /api/
+Disallow: /functions/
+Disallow: /search-results
 
-# Bing Preview
 User-agent: BingPreview
 Allow: /
 
-# Yahoo / Verizon Media
 User-agent: Slurp
 Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+Disallow: /seeker/
 Crawl-delay: 1
 
-# DuckDuckGo
 User-agent: DuckDuckBot
 Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
 
-# Apple Search
 User-agent: Applebot
 Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
 
-# Yandex (Russia)
 User-agent: Yandex
 Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
 Crawl-delay: 1
 
-# Baidu (China)
 User-agent: Baiduspider
 Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
 Crawl-delay: 1
-
-# Sogou (China)
-User-agent: Sogou
-Allow: /
-Crawl-delay: 2
-
-# Naver (Korea)
-User-agent: Yeti
-Allow: /
-Crawl-delay: 1
-
-# Qwant (EU privacy search)
-User-agent: Qwantify
-Allow: /
-
-# Ecosia (green search)
-User-agent: Ecosia
-Allow: /
 
 # =============================================================================
-# SOCIAL MEDIA CRAWLERS - Full access for rich previews
+# SOCIAL MEDIA CRAWLERS
 # =============================================================================
 
 User-agent: Twitterbot
@@ -114,15 +126,6 @@ Allow: /
 User-agent: LinkedInBot
 Allow: /
 
-User-agent: Pinterest
-Allow: /
-
-User-agent: Pinterestbot
-Allow: /
-
-User-agent: WhatsApp
-Allow: /
-
 User-agent: Slackbot
 Allow: /
 
@@ -132,20 +135,113 @@ Allow: /
 User-agent: Discordbot
 Allow: /
 
+User-agent: WhatsApp
+Allow: /
+
 User-agent: TelegramBot
-Allow: /
-
-User-agent: Snapchat
-Allow: /
-
-User-agent: vkShare
 Allow: /
 
 User-agent: Redditbot
 Allow: /
 
 # =============================================================================
-# SEO & ANALYTICS TOOLS
+# AI & LLM CRAWLERS — Full public content access
+# =============================================================================
+
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+User-agent: YouBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+
+User-agent: Bytespider
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Disallow: /account
+Crawl-delay: 5
+
+User-agent: Amazonbot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+Crawl-delay: 5
+
+User-agent: CCBot
+Allow: /
+Crawl-delay: 10
+
+User-agent: ia_archiver
+Allow: /
+
+User-agent: archive.org_bot
+Allow: /
+
+# =============================================================================
+# SEO TOOLS
 # =============================================================================
 
 User-agent: SemrushBot
@@ -171,317 +267,65 @@ Crawl-delay: 3
 User-agent: Screaming Frog SEO Spider
 Allow: /
 
-User-agent: seokicks-robot
-Allow: /
-Crawl-delay: 5
-
-User-agent: sistrix
-Allow: /
-Crawl-delay: 5
-
-User-agent: SiteAuditBot
-Allow: /
-Crawl-delay: 5
-
 User-agent: DataForSeoBot
 Allow: /
 Crawl-delay: 5
 
 # =============================================================================
-# AI & RESEARCH CRAWLERS
-# =============================================================================
-
-# OpenAI GPTBot
-User-agent: GPTBot
-Allow: /
-Disallow: /admin
-Disallow: /provider
-Disallow: /account
-
-# OpenAI ChatGPT User
-User-agent: ChatGPT-User
-Allow: /
-Disallow: /admin
-Disallow: /provider
-Disallow: /account
-
-# Anthropic Claude
-User-agent: anthropic-ai
-Allow: /
-Disallow: /admin
-Disallow: /provider
-Disallow: /account
-
-User-agent: Claude-Web
-Allow: /
-Disallow: /admin
-Disallow: /provider
-Disallow: /account
-
-# Google Bard / Gemini
-User-agent: Google-Extended
-Allow: /
-Disallow: /admin
-Disallow: /provider
-Disallow: /account
-
-# Perplexity AI
-User-agent: PerplexityBot
-Allow: /
-Disallow: /admin
-Disallow: /provider
-Disallow: /account
-
-# Cohere AI
-User-agent: cohere-ai
-Allow: /
-Disallow: /admin
-Disallow: /provider
-Disallow: /account
-
-# Common Crawl (research)
-User-agent: CCBot
-Allow: /
-Crawl-delay: 10
-
-# Internet Archive
-User-agent: ia_archiver
-Allow: /
-
-User-agent: archive.org_bot
-Allow: /
-
-# =============================================================================
-# E-COMMERCE & SHOPPING CRAWLERS
-# =============================================================================
-
-User-agent: Amazonbot
-Allow: /
-Crawl-delay: 5
-
-User-agent: PetalBot
-Allow: /
-Crawl-delay: 5
-
-User-agent: Bytespider
-Allow: /
-Crawl-delay: 5
-
-# =============================================================================
-# DEFAULT RULES FOR ALL OTHER BOTS
+# DEFAULT — All other bots
 # =============================================================================
 
 User-agent: *
 Allow: /
-Crawl-delay: 2
-
-# =============================================================================
-# BLOCKED PATHS - Apply to all user-agents
-# =============================================================================
-
-# Admin panel - strictly private
 Disallow: /admin
 Disallow: /admin/
-
-# Provider dashboard - requires authentication
 Disallow: /provider/
-
-# Authentication pages - no SEO value
+Disallow: /account
+Disallow: /account/
+Disallow: /seeker/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /auth
 Disallow: /provider-login
 Disallow: /provider-signup
 Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
-Disallow: /login
-Disallow: /signup
 Disallow: /seeker/signup
-Disallow: /forgot-password
-Disallow: /reset-password
-Disallow: /auth
-
-# Legacy redirect pages - prevent duplicate content
 Disallow: /request-help
 Disallow: /placement-help
 Disallow: /my-account
-
-# Duplicate treatment routes (301 redirects to canonical)
-Disallow: /treatment-types/drug-addiction$
-Disallow: /treatment-types/dual-diagnosis$
-
-# Short insurance URLs (301 redirects to canonical)
-Disallow: /insurance/aetna$
-Disallow: /insurance/bcbs$
-Disallow: /insurance/cigna$
-Disallow: /insurance/humana$
-Disallow: /insurance/kaiser$
-Disallow: /insurance/medicare$
-Disallow: /insurance/medicaid$
-Disallow: /insurance/united-healthcare$
-
-# Account pages - require authentication
-Disallow: /account
-Disallow: /account/
-Disallow: /seeker/
-
-# Concierge transactional pages
 Disallow: /concierge/intake
 Disallow: /concierge/thank-you
 Disallow: /concierge/create-password
 Disallow: /concierge/dashboard
-
-# Ad landing pages
 Disallow: /lp/
-
-# Internal API and system endpoints
 Disallow: /api/
-Disallow: /.netlify/
-Disallow: /_next/
 Disallow: /functions/
 Disallow: /_vercel/
-
-# Development and config files
-Disallow: /vite.config.*
-Disallow: /tsconfig.*
-Disallow: /node_modules/
-Disallow: /.env
-Disallow: /*.map$
-
-# =============================================================================
-# QUERY PARAMETER BLOCKING - Prevent duplicate content
-# =============================================================================
-
-# UTM tracking parameters
-Disallow: /*?utm_source=*
-Disallow: /*?utm_medium=*
-Disallow: /*?utm_campaign=*
-Disallow: /*?utm_term=*
-Disallow: /*?utm_content=*
-
-# Ad platform click IDs
-Disallow: /*?fbclid=*
-Disallow: /*?gclid=*
-Disallow: /*?msclkid=*
-Disallow: /*?gad_source=*
-Disallow: /*?gbraid=*
-Disallow: /*?wbraid=*
-
-# Analytics parameters
-Disallow: /*?_ga=*
-Disallow: /*?_gl=*
-Disallow: /*?mc_cid=*
-Disallow: /*?mc_eid=*
-
-# Internal tracking
-Disallow: /*?source=*
-Disallow: /*?ref=*
-Disallow: /*?referrer=*
-
-# Search results with dynamic queries
-Disallow: /search-results?location=*
-Disallow: /search-results?*
-Disallow: /search?*
+Disallow: /.netlify/
+Disallow: /search-results
+Disallow: /search?
+Disallow: /*?utm_source=
+Disallow: /*?utm_medium=
+Disallow: /*?utm_campaign=
+Disallow: /*?fbclid=
+Disallow: /*?gclid=
+Disallow: /*?msclkid=
+Disallow: /*?_ga=
+Disallow: /*?_gl=
+Disallow: /*?source=
+Disallow: /*?ref=
+Crawl-delay: 2
 
 # =============================================================================
-# EXPLICITLY ALLOWED PATHS - High priority indexable content
+# SITEMAPS
 # =============================================================================
 
-# Homepage
-Allow: /$
-
-# Core directory pages
-Allow: /rehab-centers$
-Allow: /rehab-centers/
-Allow: /locations$
-Allow: /treatment-types$
-Allow: /treatment-types/
-Allow: /insurance$
-Allow: /insurance/
-Allow: /resources$
-Allow: /resources/
-
-# Facility profile pages
-Allow: /center/
-
-# Near-me landing pages (all variations)
-Allow: /drug-rehab-near-me
-Allow: /alcohol-rehab-near-me
-Allow: /detox-near-me
-Allow: /dual-diagnosis-near-me
-Allow: /inpatient-rehab-near-me
-Allow: /outpatient-near-me
-Allow: /outpatient-rehab-near-me
-Allow: /free-rehab-near-me
-Allow: /luxury-rehab-near-me
-Allow: /womens-rehab-near-me
-Allow: /mens-rehab-near-me
-Allow: /fentanyl-rehab-near-me
-Allow: /sober-living-near-me
-Allow: /teen-rehab-near-me
-Allow: /veterans-rehab-near-me
-Allow: /medicaid-rehab-near-me
-Allow: /court-ordered-rehab-near-me
-Allow: /suboxone-clinic-near-me
-Allow: /methadone-clinic-near-me
-Allow: /dual-diagnosis-rehab-near-me
-Allow: /faith-based-rehab-near-me
-Allow: /holistic-rehab-near-me
-Allow: /lgbtq-rehab-near-me
-Allow: /executive-rehab-near-me
-Allow: /couples-rehab-near-me
-Allow: /cocaine-rehab-near-me
-Allow: /heroin-rehab-near-me
-Allow: /meth-rehab-near-me
-Allow: /prescription-drug-rehab-near-me
-Allow: /mental-health-treatment-near-me
-Allow: /*-near-me$
-Allow: /*-near-me/
-
-# International pages
-Allow: /international$
-Allow: /international/apply$
-Allow: /us-rehab$
-Allow: /us-rehab/
-
-# Marketing pages
-Allow: /for-providers$
-Allow: /concierge$
-Allow: /how-it-works$
-Allow: /about$
-Allow: /contact$
-Allow: /cost-estimator$
-
-# Legal pages
-Allow: /privacy-policy$
-Allow: /terms-of-service$
-
-# Static assets for rich results
-Allow: /og-image.jpg
-Allow: /logo.svg
-Allow: /logo-dark.svg
-Allow: /logo.png
-Allow: /favicon.svg
-Allow: /favicon.ico
-Allow: /apple-touch-icon.png
-
-# Sitemaps
-Allow: /sitemap.xml
-Allow: /sitemap-index.xml
-Allow: /sitemap-facilities.xml
-
-# =============================================================================
-# SITEMAPS - Primary discovery mechanism for search engines
-# =============================================================================
-
-# Canonical sitemap index - contains all child sitemaps
 Sitemap: https://rehablookup.com/sitemap-index.xml
-
-# Direct sitemap references for redundancy
 Sitemap: https://rehablookup.com/sitemap.xml
 Sitemap: https://rehablookup.com/sitemap-facilities.xml
 
-# =============================================================================
-# ADDITIONAL DIRECTIVES
-# =============================================================================
-
-# Canonical host (non-standard but supported by some crawlers)
 Host: https://rehablookup.com
