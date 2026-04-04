@@ -99,7 +99,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
           <PrefetchLink to="/treatment-types" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 pt-2 text-[11px] font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-primary hover:text-primary/80">
             All treatment types <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
