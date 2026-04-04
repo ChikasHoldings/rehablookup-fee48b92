@@ -39,6 +39,7 @@ const resources = [
 const providerLinks = [
   { name: "Why List With Us", path: "/for-providers" },
   { name: "Provider Resources", path: "/provider-resources" },
+  { name: "Growth Guides", path: "/provider-seo/get-more-rehab-patients" },
   { name: "Provider FAQ", path: "/provider-faq" },
   { name: "List Your Facility", path: "/provider-signup", highlight: true },
 ];

@@ -508,6 +508,16 @@ const AppInner = () => {
             <Route path="/provider/faq" element={<ProviderFAQ />} />
             <Route path="/provider/signup" element={<ProviderSignup />} />
             
+            {/* Provider SEO Pages */}
+            <Route path="/provider-seo/get-more-rehab-patients" element={<PublicRouteGuard><GetMoreRehabPatients /></PublicRouteGuard>} />
+            <Route path="/provider-seo/rehab-admissions-growth" element={<PublicRouteGuard><RehabAdmissionsGrowth /></PublicRouteGuard>} />
+            <Route path="/provider-seo/rehab-marketing-strategies" element={<PublicRouteGuard><RehabMarketingStrategies /></PublicRouteGuard>} />
+            <Route path="/provider-seo/addiction-treatment-lead-generation" element={<PublicRouteGuard><AddictionTreatmentLeadGeneration /></PublicRouteGuard>} />
+            <Route path="/provider-seo/increase-rehab-admissions" element={<PublicRouteGuard><IncreaseRehabAdmissions /></PublicRouteGuard>} />
+            <Route path="/provider-seo/rehab-center-marketing-ideas" element={<PublicRouteGuard><RehabCenterMarketingIdeas /></PublicRouteGuard>} />
+            <Route path="/provider-seo/treatment-center-patient-acquisition" element={<PublicRouteGuard><TreatmentCenterPatientAcquisition /></PublicRouteGuard>} />
+            <Route path="/provider-seo/behavioral-health-lead-generation" element={<PublicRouteGuard><BehavioralHealthLeadGeneration /></PublicRouteGuard>} />
+
             {/* Provider Panel Routes */}
             <Route path="/provider" element={<ProviderShell />}>
               <Route index element={<Navigate to="/provider/dashboard" replace />} />
