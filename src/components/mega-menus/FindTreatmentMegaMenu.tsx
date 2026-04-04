@@ -92,8 +92,8 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                   <item.icon className="h-3.5 w-3.5 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground group-hover:text-foreground leading-tight">{item.label}</p>
-                  <p className="text-[11px] text-muted-foreground/90 leading-tight">{item.desc}</p>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-foreground leading-tight">{item.label}</p>
+                  <p className="text-xs text-muted-foreground/90 leading-tight">{item.desc}</p>
                 </div>
               </PrefetchLink>
             ))}
