@@ -266,11 +266,11 @@ export default function AdminLogin() {
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center">
-              <Shield className="h-8 w-8 text-amber-600" />
+            <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-warning/10 flex items-center justify-center">
+              <Shield className="h-8 w-8 text-warning" />
             </div>
             <CardTitle className="text-2xl">Admin Login</CardTitle>
             <CardDescription>
