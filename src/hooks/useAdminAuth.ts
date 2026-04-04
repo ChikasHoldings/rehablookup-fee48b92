@@ -67,10 +67,10 @@ const routePermissionMap: Record<string, string> = {
   "/admin/concierge": "placements",
   "/admin/support": "support",
   "/admin/placement-revenue": "placements",
-  "/admin/credentials": "credentials",
+  "/admin/credentials": "providers",
   "/admin/security-logs": "security_logs",
   "/admin/marketing": "leads",
-  "/admin/blog": "dashboard",
+  "/admin/blog": "providers",
   "/admin/international": "placements",
 };
 
@@ -235,16 +235,23 @@ export function useAdminAuth() {
     let permissionKey = routePermissionMap[pathname];
     
     if (!permissionKey) {
-      for (const [route, perm] of Object.entries(routePermissionMap)) {
-        if (pathname.startsWith(route) && route !== "/admin") {
+      // Match longest prefix first for sub-routes
+      const sortedRoutes = Object.entries(routePermissionMap)
+        .filter(([route]) => route !== "/admin")
+        .sort((a, b) => b[0].length - a[0].length);
+      
+      for (const [route, perm] of sortedRoutes) {
+        if (pathname.startsWith(route)) {
           permissionKey = perm;
           break;
         }
       }
     }
 
-    if (!permissionKey || permissionKey === "dashboard" || permissionKey === "settings") return true;
+    // Dashboard, profile, and notifications are always accessible to any admin
+    if (!permissionKey || permissionKey === "dashboard" || permissionKey === "notifications") return true;
 
+    // Settings is only accessible if the role has settings permission
     return permissions[permissionKey] === true;
   }, [isSuperAdmin, permissions]);
 

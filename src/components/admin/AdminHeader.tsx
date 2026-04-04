@@ -48,6 +48,14 @@ type Notification = {
   isUnread?: boolean;
 };
 
+// Role display config
+const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
+  super_admin: { label: "Super Admin", color: "bg-amber-500/10 text-amber-600" },
+  manager: { label: "Manager", color: "bg-blue-500/10 text-blue-600" },
+  customer_rep: { label: "Customer Rep", color: "bg-emerald-500/10 text-emerald-600" },
+  advisor: { label: "Placement Advisor", color: "bg-purple-500/10 text-purple-600" },
+};
+
 function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperAdmin = false, hasPermission = () => false }: AdminHeaderProps) {
   const initials = userEmail?.slice(0, 2).toUpperCase() || "AD";
   const navigate = useNavigate();
@@ -557,13 +565,15 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
               </ScrollArea>
               {sortedNotifications.length > 0 && (
                 <div className="border-t p-2 flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    className="flex-1 text-sm" 
-                    onClick={() => navigate("/admin/providers?status=pending")}
-                  >
-                    View Pending
-                  </Button>
+                  {(isSuperAdmin || hasPermission("providers")) && (
+                    <Button 
+                      variant="ghost" 
+                      className="flex-1 text-sm" 
+                      onClick={() => navigate("/admin/providers?status=pending")}
+                    >
+                      View Pending
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     className="flex-1 text-sm" 
@@ -601,7 +611,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     {fullName}
                   </span>
                   <span className="text-[11px] text-slate-400 leading-tight">
-                    Administrator
+                    {ROLE_DISPLAY[adminRole || "customer_rep"]?.label || "Administrator"}
                   </span>
                 </div>
               </Button>
@@ -624,8 +634,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     {fullName}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                  <Badge variant="secondary" className="w-fit mt-1.5 text-[10px] h-5 px-2 bg-amber-500/10 text-amber-600 border-0">
-                    Administrator
+                  <Badge variant="secondary" className={`w-fit mt-1.5 text-[10px] h-5 px-2 border-0 ${ROLE_DISPLAY[adminRole || "customer_rep"]?.color || "bg-amber-500/10 text-amber-600"}`}>
+                    {ROLE_DISPLAY[adminRole || "customer_rep"]?.label || "Administrator"}
                   </Badge>
                 </div>
               </div>
@@ -649,12 +659,14 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     )}
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer px-3 py-2.5">
-                    <Settings className="h-4 w-4 text-muted-foreground" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
+                {(isSuperAdmin || hasPermission("settings")) && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer px-3 py-2.5">
+                      <Settings className="h-4 w-4 text-muted-foreground" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </div>
               
               <DropdownMenuSeparator />
@@ -831,10 +843,12 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                 </CommandItem>
               </CommandGroup>
               <CommandGroup heading="Settings & Administration">
-                <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </CommandItem>
+                {(isSuperAdmin || hasPermission("settings")) && (
+                  <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </CommandItem>
+                )}
                 {canViewUsers && (
                   <CommandItem onSelect={() => { navigate("/admin/users"); setSearchOpen(false); }}>
                     <Shield className="h-4 w-4 mr-2" />
