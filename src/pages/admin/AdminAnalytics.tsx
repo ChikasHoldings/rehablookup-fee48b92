@@ -796,7 +796,7 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Filter Bar */}
-      <Card className="border-slate-200 shadow-sm">
+      <Card>
         <CardContent className="pt-5 pb-5">
           <div className="flex flex-wrap gap-3 items-end">
             {/* Date Preset */}
