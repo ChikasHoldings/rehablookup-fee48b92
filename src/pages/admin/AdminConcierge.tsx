@@ -146,6 +146,16 @@ export default function AdminConcierge() {
     enabled: !!selectedCaseId,
   });
 
+  const filteredCases = cases?.filter((c) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      c.user_name?.toLowerCase().includes(q) ||
+      c.user_email?.toLowerCase().includes(q) ||
+      c.user_phone?.includes(q)
+    );
+  });
+
   const handleStatusClick = (status: string) => {
     setStatusFilter(status as CaseStatus);
   };
