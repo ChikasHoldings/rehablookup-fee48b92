@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
@@ -17,14 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Provider dropdown links
-const providerDropdownLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-faq", label: "FAQ" },
-  { href: "/provider-support", label: "Support" },
-];
+import { ProviderMegaMenu, ProviderMegaMenuMobile } from "@/components/provider-seo/ProviderMegaMenu";
 
 export interface NavLink {
   href: string;
