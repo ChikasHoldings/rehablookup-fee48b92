@@ -378,7 +378,7 @@ const CityPage = () => {
                 ))}
               </div>
               <div className="mt-8 text-center">
-                <Link to={`/search-results?state=${stateData.name}&city=${cityData.name}`}>
+                <Link to={`/search-results?location=${encodeURIComponent(cityData.name + ', ' + stateData.name)}`}>
                   <Button variant="outline" size="lg" className="gap-2">
                     View All Facilities
                     <ArrowRight className="h-4 w-4" />
