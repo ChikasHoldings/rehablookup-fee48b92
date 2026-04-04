@@ -137,6 +137,7 @@ const QUESTIONS: Question[] = [
     subtitle: "This helps connect you with the right approach",
     icon: <Heart className="h-6 w-6" />,
     field: "previousTreatment",
+    required: true,
     options: PREVIOUS_TREATMENT_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
