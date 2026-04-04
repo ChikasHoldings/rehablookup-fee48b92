@@ -229,14 +229,13 @@ export default function MarketingLanding() {
         <section className="py-8 sm:py-12 md:py-14 bg-primary/5">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-3 md:mb-4">Ready to find the right treatment?</p>
-            <a 
-              href="#" 
-              onClick={(e) => { e.preventDefault(); scrollToTopSmooth(); }}
+            <button 
+              onClick={() => scrollToTopSmooth()}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2.5 md:py-3 rounded-full font-medium text-sm md:text-base hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg"
             >
               Get Started Now
               <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-            </a>
+            </button>
           </div>
         </section>
 
