@@ -286,7 +286,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("facility_credential_documents")
-        .select("*")
+        .select("id, facility_id, document_type, document_name, document_url, status, uploaded_at, verified_at, verified_by, rejection_reason")
         .eq("facility_id", provider.id)
         .order("uploaded_at", { ascending: false });
       return (data || []) as CredentialDocument[];
