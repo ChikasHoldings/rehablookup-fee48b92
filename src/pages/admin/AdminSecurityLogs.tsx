@@ -795,7 +795,7 @@ export default function AdminSecurityLogs() {
               <Activity className="h-3.5 w-3.5" />
               Total Logs
             </CardDescription>
-            <CardTitle className="text-2xl">{stats.totalLogs}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums">{stats.totalLogs}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
