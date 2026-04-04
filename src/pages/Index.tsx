@@ -711,6 +711,9 @@ const Index = () => {
                   src={whyChooseUsImage} 
                   alt="Healthcare professional consulting with a family"
                   className="w-full aspect-[4/3] object-cover"
+                  width={800}
+                  height={600}
+                  loading="lazy"
                 />
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent" />
