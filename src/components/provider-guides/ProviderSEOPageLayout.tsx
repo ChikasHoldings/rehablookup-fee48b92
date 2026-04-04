@@ -170,17 +170,30 @@ export function ProviderSEOPageLayout({
                     )}
                   </article>
 
-                  {/* Image after first section */}
+                  {/* Image card after first section */}
                   {idx === 0 && (
-                    <div className="my-10 rounded-2xl overflow-hidden border border-border shadow-sm">
-                      <img
-                        src={admissionsDashboard}
-                        alt="Treatment center admissions analytics dashboard"
-                        width={1280}
-                        height={720}
-                        className="w-full h-auto object-cover"
-                        loading="lazy"
-                      />
+                    <div className="my-10 rounded-2xl overflow-hidden border border-border bg-muted/20">
+                      <div className="grid md:grid-cols-5 gap-0">
+                        <div className="md:col-span-3 p-6 md:p-8 flex flex-col justify-center">
+                          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Data-Driven Growth</p>
+                          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+                            Track What Matters
+                          </h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Top-performing facilities monitor admissions KPIs in real time — conversion rates, speed-to-lead, and cost per admission — to make decisions that drive census growth.
+                          </p>
+                        </div>
+                        <div className="md:col-span-2 hidden md:block">
+                          <img
+                            src={admissionsDashboard}
+                            alt="Treatment center admissions analytics dashboard"
+                            width={640}
+                            height={360}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
 
