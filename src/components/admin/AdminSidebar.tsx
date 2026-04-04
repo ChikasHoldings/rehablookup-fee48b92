@@ -58,12 +58,11 @@ const navEntries: NavEntry[] = [
   { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
   { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support", countKey: "supportTickets" },
   { to: "/admin/marketing", icon: Megaphone, label: "Marketing Leads", permission: "leads", countKey: "marketingLeads" },
-  { to: "/admin/blog", icon: FileText, label: "Blog Articles", permission: "dashboard" },
+  { to: "/admin/blog", icon: FileText, label: "Blog Articles", permission: "providers" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews", countKey: "pendingReviews" },
-  // Settings is accessible to all roles - sub-items are permission-gated
-  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "dashboard" },
+  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
   {
     icon: ShieldCheck,
     label: "Administration",
