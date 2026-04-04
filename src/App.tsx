@@ -65,6 +65,10 @@ const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-guides/Reh
 const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-guides/TreatmentCenterPatientAcquisition"));
 const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-guides/BehavioralHealthLeadGeneration"));
 
+// Provider Resource Hub
+const ProviderResourceHub = lazy(() => import("./pages/providers/ProviderResourceHub"));
+const ProviderResourceArticle = lazy(() => import("./pages/providers/ProviderResourceArticle"));
+
 // Concierge Placement (Paid Service) - lazy load
 const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding"));
 const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
