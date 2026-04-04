@@ -154,6 +154,7 @@ const PROVIDER_ALLOWED_PUBLIC_ROUTES = [
   "/provider-support",
   "/provider-faq",
   "/provider-guides",
+  "/providers/resources",
   "/privacy-policy",
   "/terms-of-service",
 ];
