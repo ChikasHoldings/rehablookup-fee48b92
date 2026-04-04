@@ -937,7 +937,7 @@ export function MarketingLeadProfileModal({
                     <Users className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Seeking Help For</h4>
                   </div>
-                  <p className="text-sm">{lead.who_seeking_help || "Not specified"}</p>
+                  <p className="text-sm">{lead.who_seeking_help || "Themselves"}</p>
                 </div>
 
                 <div className="p-4 rounded-lg border bg-card">
