@@ -203,7 +203,10 @@ export function SEO({
       {keywords && keywords.length > 0 && (
         <meta name="keywords" content={keywords.join(", ")} />
       )}
-      <link rel="canonical" href={canonicalUrl} />
+     <link rel="canonical" href={canonicalUrl} />
+     {hreflang && hreflang.map(({ lang, href }) => (
+       <link key={lang} rel="alternate" hrefLang={lang} href={href} />
+     ))}
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (
