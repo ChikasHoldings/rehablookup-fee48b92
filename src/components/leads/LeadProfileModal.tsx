@@ -312,7 +312,7 @@ export function LeadProfileModal({
   const firstName = lead.name.split(" ")[0];
 
   const formatUrgency = (urgency: string | null) => {
-    if (!urgency) return "Not specified";
+    if (!urgency) return "Pending assessment";
     const map: Record<string, string> = {
       immediate: "Immediate (ASAP)",
       "within-week": "Within a Week",
