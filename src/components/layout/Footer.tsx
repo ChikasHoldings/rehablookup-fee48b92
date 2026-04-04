@@ -28,11 +28,20 @@ const treatmentTypes = [
 const resources = [
   { name: "Guides & Articles", path: "/resources" },
   { name: "Insurance Guide", path: "/insurance" },
-  { name: "International Access", path: "/international" },
   { name: "Cost Estimator", path: "/cost-estimator" },
   { name: "How It Works", path: "/how-it-works" },
   { name: "FAQ", path: "/faq" },
   { name: "About Us", path: "/about" },
+];
+
+// International Rehab SEO links
+const internationalLinks = [
+  { name: "International Placement", path: "/international" },
+  { name: "Rehab for UK Patients", path: "/us-rehab/uk-patients" },
+  { name: "Rehab for Canadians", path: "/us-rehab/canadian-patients" },
+  { name: "Travel to USA for Rehab", path: "/travel-to-usa-for-rehab" },
+  { name: "International Admissions", path: "/can-foreigners-go-to-rehab-in-usa" },
+  { name: "Cost of Rehab in USA", path: "/cost-of-rehab-in-usa-for-international-patients" },
 ];
 
 // Company/Provider links
