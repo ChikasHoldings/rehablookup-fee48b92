@@ -157,7 +157,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={page.href}
                 to={page.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[12px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-1.5 rounded-md px-2 py-[5px] text-[13px] font-medium text-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 <Search className="h-3 w-3 text-accent/50 group-hover:text-accent shrink-0" />
                 {page.label}
