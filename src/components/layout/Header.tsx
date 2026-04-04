@@ -296,7 +296,7 @@ export function Header({
                 <button
                   onClick={() => setOpenMegaMenu(openMegaMenu === item.id ? null : item.id)}
                   className={cn(
-                    "flex items-center h-16 gap-1 px-3 text-[14px] font-medium transition-colors whitespace-nowrap border-b-2",
+                    "flex items-center h-16 gap-1 px-3 text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2",
                     openMegaMenu === item.id
                       ? "text-foreground border-accent"
                       : item.isActive(location.pathname)
