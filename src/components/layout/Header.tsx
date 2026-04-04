@@ -82,9 +82,33 @@ export function Header({
   const location = useLocation();
   const navigate = useNavigate();
   // Use unified role system - only show "My Account" for seekers (not admin/provider)
-  const { role, isLoading: roleLoading, isAuthenticated } = useUserRole();
+  const { role, isLoading: roleLoading, isAuthenticated, userId } = useUserRole();
   const isSeekerLoggedIn = isAuthenticated && role === "seeker";
   const { favoritesCount } = useFavorites();
+
+  // Fetch seeker profile for avatar display on public navbar
+  const { data: seekerProfile } = useQuery({
+    queryKey: ['seeker-nav-profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from('seeker_profiles')
+        .select('display_name, first_name, avatar_url')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: isSeekerLoggedIn && !!userId,
+    staleTime: 60000,
+  });
+
+  const seekerDisplayName = seekerProfile?.first_name || seekerProfile?.display_name;
+  const seekerInitials = seekerDisplayName
+    ?.split(" ")
+    .map((n: string) => n.charAt(0))
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   useEffect(() => {
     if (mobileMenuOpen) {
