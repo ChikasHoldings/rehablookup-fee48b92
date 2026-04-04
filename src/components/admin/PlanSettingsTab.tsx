@@ -883,7 +883,7 @@ export function PlanSettingsTab() {
                     <TableRow key={item.promoCodeId}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <Badge variant="outline" className="font-mono bg-success/10 text-success border-success/20">
                             {item.code}
                           </Badge>
                         </div>
