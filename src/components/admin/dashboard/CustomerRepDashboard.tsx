@@ -330,7 +330,7 @@ export function CustomerRepDashboard() {
           <CardTitle className="text-base font-medium">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {reviewStats?.pending && reviewStats.pending > 0 && (
+          {hasPermission("reviews") && reviewStats?.pending && reviewStats.pending > 0 && (
             <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-warning/10" asChild>
               <Link to="/admin/reviews?status=pending">
                 <AlertTriangle className="h-5 w-5 text-warning mr-3" />
@@ -341,33 +341,39 @@ export function CustomerRepDashboard() {
               </Link>
             </Button>
           )}
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-info/10" asChild>
-            <Link to="/admin/seekers">
-              <Users className="h-5 w-5 text-info mr-3" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Manage Users</span>
-                <span className="text-xs text-muted-foreground">View seeker accounts</span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-primary/10" asChild>
-            <Link to="/admin/leads">
-              <Clock className="h-5 w-5 text-primary mr-3" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">View Leads</span>
-                <span className="text-xs text-muted-foreground">Recent inquiries</span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-muted" asChild>
-            <Link to="/admin/providers">
-              <Building2 className="h-5 w-5 text-muted-foreground mr-3" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Browse Providers</span>
-                <span className="text-xs text-muted-foreground">View listings</span>
-              </div>
-            </Link>
-          </Button>
+          {hasPermission("seekers") && (
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-info/10" asChild>
+              <Link to="/admin/seekers">
+                <Users className="h-5 w-5 text-info mr-3" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">Manage Users</span>
+                  <span className="text-xs text-muted-foreground">View seeker accounts</span>
+                </div>
+              </Link>
+            </Button>
+          )}
+          {hasPermission("leads") && (
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-primary/10" asChild>
+              <Link to="/admin/leads">
+                <Clock className="h-5 w-5 text-primary mr-3" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">View Leads</span>
+                  <span className="text-xs text-muted-foreground">Recent inquiries</span>
+                </div>
+              </Link>
+            </Button>
+          )}
+          {hasPermission("providers") && (
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-muted" asChild>
+              <Link to="/admin/providers">
+                <Building2 className="h-5 w-5 text-muted-foreground mr-3" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">Browse Providers</span>
+                  <span className="text-xs text-muted-foreground">View listings</span>
+                </div>
+              </Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

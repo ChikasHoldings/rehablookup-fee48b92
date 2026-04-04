@@ -329,7 +329,7 @@ export function ManagerDashboard() {
           <CardTitle className="text-base font-medium">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {providerStats?.pending && providerStats.pending > 0 && (
+          {hasPermission("providers") && providerStats?.pending && providerStats.pending > 0 && (
             <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-warning/10" asChild>
               <Link to="/admin/providers?status=pending">
                 <AlertCircle className="h-5 w-5 text-warning mr-3" />
@@ -340,33 +340,39 @@ export function ManagerDashboard() {
               </Link>
             </Button>
           )}
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-info/10" asChild>
-            <Link to="/admin/leads">
-              <Users className="h-5 w-5 text-info mr-3" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Manage Leads</span>
-                <span className="text-xs text-muted-foreground">View all inquiries</span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-success/10" asChild>
-            <Link to="/admin/subscriptions">
-              <CreditCard className="h-5 w-5 text-success mr-3" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Subscriptions</span>
-                <span className="text-xs text-muted-foreground">Billing & plans</span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-primary/10" asChild>
-            <Link to="/admin/analytics">
-              <BarChart3 className="h-5 w-5 text-primary mr-3" />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Analytics</span>
-                <span className="text-xs text-muted-foreground">View detailed reports</span>
-              </div>
-            </Link>
-          </Button>
+          {hasPermission("leads") && (
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-info/10" asChild>
+              <Link to="/admin/leads">
+                <Users className="h-5 w-5 text-info mr-3" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">Manage Leads</span>
+                  <span className="text-xs text-muted-foreground">View all inquiries</span>
+                </div>
+              </Link>
+            </Button>
+          )}
+          {hasPermission("subscriptions") && (
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-success/10" asChild>
+              <Link to="/admin/subscriptions">
+                <CreditCard className="h-5 w-5 text-success mr-3" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">Subscriptions</span>
+                  <span className="text-xs text-muted-foreground">Billing & plans</span>
+                </div>
+              </Link>
+            </Button>
+          )}
+          {hasPermission("analytics") && (
+            <Button variant="ghost" className="justify-start h-auto py-3 px-4 hover:bg-primary/10" asChild>
+              <Link to="/admin/analytics">
+                <BarChart3 className="h-5 w-5 text-primary mr-3" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">Analytics</span>
+                  <span className="text-xs text-muted-foreground">View detailed reports</span>
+                </div>
+              </Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>
