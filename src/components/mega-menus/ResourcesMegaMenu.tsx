@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   BookOpen, ArrowRight, Shield, DollarSign, HelpCircle, FileText,
-  Sparkles, Calculator, Heart, Info,
+  Sparkles, Calculator, Heart, Info, ChevronRight,
 } from "lucide-react";
 
 interface MegaMenuProps {
@@ -28,82 +28,74 @@ const tools = [
 
 export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
   return (
-    <div className="w-[620px] max-w-[92vw] p-4">
-      {/* Top: Featured guides as compact cards — 3-col */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {guides.slice(0, 3).map((guide) => (
-          <PrefetchLink
-            key={guide.href}
-            to={guide.href}
-            onClick={onNavigate}
-            className="group rounded-lg border border-border/50 p-3 hover:border-accent/30 hover:shadow-sm transition-all"
-          >
-            <div className="h-7 w-7 rounded-md bg-accent/10 flex items-center justify-center mb-2 group-hover:bg-accent/15 transition-colors">
-              <guide.icon className="h-3.5 w-3.5 text-accent" />
-            </div>
-            <p className="text-[12px] font-semibold text-foreground leading-tight mb-0.5 group-hover:text-primary transition-colors">{guide.label}</p>
-            <p className="text-[10px] text-muted-foreground leading-snug">{guide.desc}</p>
-          </PrefetchLink>
-        ))}
-      </div>
-
-      {/* Bottom: remaining guides + tools + CTA */}
-      <div className="flex gap-4 border-t border-border/40 pt-3">
-        <div className="flex-1">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-1.5">More Guides</p>
-          <div className="space-y-0">
-            {guides.slice(3).map((guide) => (
+    <div className="w-[680px] max-w-[92vw]">
+      <div className="flex">
+        {/* Left: Guides with icon badges */}
+        <div className="flex-1 px-5 py-4 border-r border-border/30">
+          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+            <BookOpen className="h-3 w-3" />
+            Guides & Articles
+          </p>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+            {guides.map((guide) => (
               <PrefetchLink
                 key={guide.href}
                 to={guide.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-2 rounded-md px-1.5 py-1.5 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-2.5 rounded-lg px-2 py-[7px] hover:bg-accent/[0.06] transition-colors"
               >
-                <guide.icon className="h-3.5 w-3.5 text-accent/60 group-hover:text-accent" />
-                {guide.label}
+                <div className="h-7 w-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
+                  <guide.icon className="h-3.5 w-3.5 text-accent" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground group-hover:text-foreground leading-tight">{guide.label}</p>
+                  <p className="text-xs text-muted-foreground/90 leading-tight">{guide.desc}</p>
+                </div>
               </PrefetchLink>
             ))}
           </div>
           <PrefetchLink to="/resources" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-1.5 pt-1.5 text-[11px] font-semibold text-primary hover:text-primary/80">
-            All articles <ArrowRight className="h-3 w-3" />
+            className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-primary hover:text-primary/80">
+            All resources <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
         </div>
 
-        <div className="w-px bg-border/40" />
-
-        <div className="flex-1">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-1.5">Interactive Tools</p>
+        {/* Right: Tools + CTA */}
+        <div className="w-[220px] px-4 py-4">
+          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+            <Calculator className="h-3 w-3 text-accent" />
+            Interactive Tools
+          </p>
           <div className="space-y-0">
             {tools.map((tool) => (
               <PrefetchLink
                 key={tool.href}
                 to={tool.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-muted/40 transition-colors"
+                className="group flex items-center gap-2 rounded-md px-2 py-[7px] hover:bg-muted/40 transition-colors"
               >
-                <tool.icon className="h-3.5 w-3.5 text-accent/60 group-hover:text-accent" />
+                <ChevronRight className="h-3 w-3 text-border group-hover:text-accent transition-colors shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[12px] font-medium text-foreground/90 group-hover:text-foreground">{tool.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{tool.desc}</p>
+                  <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground leading-tight">{tool.label}</p>
+                  <p className="text-xs text-muted-foreground leading-tight">{tool.desc}</p>
                 </div>
               </PrefetchLink>
             ))}
           </div>
-        </div>
 
-        {/* Compact CTA */}
-        <div className="w-[130px] shrink-0">
-          <div className="rounded-lg bg-gradient-to-br from-primary/[0.06] to-accent/[0.06] border border-primary/10 p-3 h-full flex flex-col justify-center">
-            <p className="text-[12px] font-bold text-foreground mb-0.5">Need Help?</p>
-            <p className="text-[10px] text-muted-foreground leading-snug mb-2">
-              Free treatment matching.
-            </p>
-            <Link to="/concierge" onClick={onNavigate}>
-              <Button size="sm" className="w-full h-7 bg-accent text-accent-foreground hover:bg-accent/90 text-[10px] font-semibold gap-1">
-                Get Help <ArrowRight className="h-2.5 w-2.5" />
-              </Button>
-            </Link>
+          {/* CTA */}
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <div className="rounded-lg bg-gradient-to-br from-primary/[0.06] to-accent/[0.06] border border-primary/10 p-3">
+              <p className="text-sm font-bold text-foreground mb-0.5">Need Help?</p>
+              <p className="text-xs text-muted-foreground leading-snug mb-2.5">
+                Free confidential treatment matching.
+              </p>
+              <Link to="/concierge" onClick={onNavigate}>
+                <Button size="sm" className="w-full h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
+                  Get Matched <ArrowRight className="h-3 w-3" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
