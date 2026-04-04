@@ -578,23 +578,23 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Level of Care</p>
-                    <p className="font-medium text-sm">{lead.level_of_care || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.level_of_care || "—"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Insurance</p>
-                    <p className="font-medium text-sm">{lead.insurance_type || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.insurance_type || "—"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Seeking For</p>
-                    <p className="font-medium text-sm">{lead.who_seeking_help || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.who_seeking_help || "—"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Age Range</p>
-                    <p className="font-medium text-sm">{lead.age_range || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.age_range || "—"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Gender</p>
-                    <p className="font-medium text-sm">{lead.gender || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.gender || "—"}</p>
                   </div>
                 </div>
               </div>
@@ -886,7 +886,7 @@ export function MarketingLeadProfileModal({
                     <Stethoscope className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Level of Care</h4>
                   </div>
-                  <p className="text-sm">{lead.level_of_care || "Not specified"}</p>
+                  <p className="text-sm">{lead.level_of_care || "—"}</p>
                 </div>
 
                 <div className="p-4 rounded-lg border bg-card">
@@ -894,7 +894,7 @@ export function MarketingLeadProfileModal({
                     <CreditCard className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Insurance</h4>
                   </div>
-                  <p className="text-sm">{lead.insurance_type || "Not specified"}</p>
+                  <p className="text-sm">{lead.insurance_type || "—"}</p>
                   {lead.insurance_provider && (
                     <p className="text-xs text-muted-foreground mt-1">Provider: {lead.insurance_provider}</p>
                   )}
@@ -937,7 +937,7 @@ export function MarketingLeadProfileModal({
                     <Users className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Seeking Help For</h4>
                   </div>
-                  <p className="text-sm">{lead.who_seeking_help || "Not specified"}</p>
+                  <p className="text-sm">{lead.who_seeking_help || "—"}</p>
                 </div>
 
                 <div className="p-4 rounded-lg border bg-card">
@@ -946,8 +946,8 @@ export function MarketingLeadProfileModal({
                     <h4 className="font-semibold text-sm">Demographics</h4>
                   </div>
                   <div className="text-sm space-y-1">
-                    <p>Age: {lead.age_range || "Not specified"}</p>
-                    <p>Gender: {lead.gender || "Not specified"}</p>
+                    <p>Age: {lead.age_range || "—"}</p>
+                    <p>Gender: {lead.gender || "—"}</p>
                   </div>
                 </div>
 
@@ -956,7 +956,7 @@ export function MarketingLeadProfileModal({
                     <Clock className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Previous Treatment</h4>
                   </div>
-                  <p className="text-sm">{lead.previous_treatment || "Not specified"}</p>
+                  <p className="text-sm">{lead.previous_treatment || "—"}</p>
                 </div>
 
                 <div className="p-4 rounded-lg border bg-card">
@@ -964,7 +964,7 @@ export function MarketingLeadProfileModal({
                     <Briefcase className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-sm">Employment</h4>
                   </div>
-                  <p className="text-sm">{lead.employment_status || "Not specified"}</p>
+                  <p className="text-sm">{lead.employment_status || "—"}</p>
                 </div>
               </div>
             </TabsContent>
