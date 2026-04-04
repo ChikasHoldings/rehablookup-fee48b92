@@ -123,7 +123,7 @@ function QuickFactCard({
   );
 }
 
-// Section Container Component — borderless flowing layout
+// Section Container Component — premium flowing layout
 function ProfileSection({ 
   icon: Icon, 
   title, 
@@ -141,16 +141,16 @@ function ProfileSection({
 }) {
   return (
     <div className={cn("", className)}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
-          <Icon className={cn("h-5 w-5", iconColor.split(' ')[1] || 'text-primary')} />
-          <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/80">
+            <Icon className={cn("h-4 w-4", iconColor.split(' ')[1] || 'text-primary')} />
+          </div>
+          <h2 className="font-display text-lg font-bold tracking-tight text-foreground">{title}</h2>
         </div>
         {action}
       </div>
-      <div>
-        {children}
-      </div>
+      <div>{children}</div>
     </div>
   );
 }
@@ -596,68 +596,59 @@ const CenterProfile = () => {
             </Link>
           )}
 
-          {/* Hero Header Card */}
-          <div className="mb-8 rounded-2xl border border-border/50 bg-card shadow-lg overflow-hidden">
-            {/* Hero Image / Gradient Background */}
-            <div className="relative h-48 md:h-64 overflow-hidden">
+          {/* Hero Header */}
+          <div className="mb-8 rounded-2xl bg-card shadow-lg overflow-hidden border border-border/30">
+            {/* Hero Image */}
+            <div className="relative h-52 md:h-72 overflow-hidden">
               {galleryImages.length > 0 ? (
-                <>
-                  <img 
-                    src={galleryImages[0]} 
-                    alt={facility.name}
-                    className="w-full h-full object-cover"
-                    width={800}
-                    height={400}
-                    loading="eager"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-                </>
+                <img 
+                  src={galleryImages[0]} 
+                  alt={facility.name}
+                  className="w-full h-full object-cover"
+                  width={800}
+                  height={400}
+                  loading="eager"
+                />
               ) : (
-                <>
-                  <img 
-                    src={facilityPlaceholder} 
-                    alt={`${facility.name} facility`}
-                    className="w-full h-full object-cover"
-                    width={800}
-                    height={400}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-                </>
+                <img 
+                  src={facilityPlaceholder} 
+                  alt={`${facility.name} facility`}
+                  className="w-full h-full object-cover"
+                  width={800}
+                  height={400}
+                />
               )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               
-              {/* Badges on hero */}
-              <div className="absolute top-4 left-4 flex items-center gap-2 flex-wrap">
-                {/* Rating badge - prominent on hero */}
+              {/* Status Badges — top left */}
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
                 {ratingData.averageRating && ratingData.reviewCount > 0 && (
-                  <div className="bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <span className="font-bold text-sm text-foreground">{ratingData.averageRating.toFixed(1)}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground font-medium">({ratingData.reviewCount})</span>
+                  <div className="bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md flex items-center gap-1">
+                    <svg className="h-3.5 w-3.5 fill-amber-500" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className="font-bold text-xs text-foreground">{ratingData.averageRating.toFixed(1)}</span>
+                    <span className="text-[10px] text-muted-foreground">({ratingData.reviewCount})</span>
                   </div>
                 )}
                 {hasFeaturedSubscription && (
-                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1.5 px-3 py-1.5 shadow-lg text-xs font-bold uppercase tracking-wide">
-                    <Crown className="h-3.5 w-3.5" />
+                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-[10px] font-bold uppercase tracking-wider">
+                    <Crown className="h-3 w-3" />
                     Featured
                   </Badge>
                 )}
                 {facility.verified && (
-                  <Badge className="bg-emerald-500 text-white border-0 gap-1.5 px-3 py-1.5 shadow-lg text-xs font-bold uppercase tracking-wide">
-                    <ShieldCheck className="h-3.5 w-3.5" />
+                  <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-[10px] font-bold uppercase tracking-wider">
+                    <ShieldCheck className="h-3 w-3" />
                     Verified
                   </Badge>
                 )}
               </div>
               
-              {/* Facility info overlay */}
+              {/* Facility identity overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-                <div className="flex items-end gap-4">
-                  {/* Logo */}
-                  <div className="h-20 w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-xl border-4 border-card bg-card shadow-xl">
+                <div className="flex items-end gap-3.5">
+                  <div className="h-16 w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-xl border-[3px] border-card bg-card shadow-xl">
                     {hasValidLogo ? (
                       <img 
                         src={facility.logo_url!} 
@@ -668,88 +659,74 @@ const CenterProfile = () => {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
-                        <span className="font-display text-2xl md:text-3xl font-bold text-primary">
-                          {initials}
-                        </span>
+                        <span className="font-display text-xl md:text-2xl font-bold text-primary">{initials}</span>
                       </div>
                     )}
                   </div>
-                  
-                  {/* Name and Location */}
-                  <div className="flex-1 min-w-0 pb-1">
-                    <h1 className="speakable-headline font-display text-xl md:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
+                  <div className="flex-1 min-w-0 pb-0.5">
+                    <h1 className="speakable-headline font-display text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
                       {facility.name}
                     </h1>
-                    <div className="speakable-contact flex items-center gap-2 mt-1.5">
-                      <MapPin className="h-4 w-4 text-white/80 shrink-0" />
-                      <span className="text-sm md:text-base text-white/90 font-medium">{facility.city}, {facility.state}</span>
+                    <div className="speakable-contact flex items-center gap-1.5 mt-1">
+                      <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
+                      <span className="text-sm text-white/85 font-medium">{facility.city}, {facility.state}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Stats Bar */}
-            <div className="bg-muted/40 border-t border-border/50 px-4 py-3 md:px-6 md:py-4">
-              <div className="flex items-center gap-3 md:gap-6 overflow-x-auto pb-1 -mb-1">
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Stethoscope className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">{facility.facility_type}</span>
-                </div>
+            {/* Quick Stats — horizontal pills */}
+            <div className="px-4 py-3 md:px-6 md:py-3.5 border-t border-border/30 bg-muted/30">
+              <div className="flex items-center gap-2 md:gap-3 overflow-x-auto pb-0.5 -mb-0.5 scrollbar-hide">
+                <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                  <Stethoscope className="h-3.5 w-3.5 text-primary" />
+                  {facility.facility_type}
+                </span>
                 {yearsInBusiness && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Clock className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">{yearsInBusiness}+ years</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    {yearsInBusiness}+ years
+                  </span>
                 )}
                 {genderLabel && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-violet-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">{genderLabel}</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    {genderLabel}
+                  </span>
                 )}
                 {facility.bed_count && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                      <Bed className="h-4 w-4 text-emerald-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">{facility.bed_count} beds</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Bed className="h-3.5 w-3.5 text-muted-foreground" />
+                    {facility.bed_count} beds
+                  </span>
                 )}
                 {insuranceList.length > 0 && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <Shield className="h-4 w-4 text-amber-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Accepts Insurance</span>
-                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-background rounded-full px-3 py-1.5 border border-border/50">
+                    <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                    Insurance
+                  </span>
                 )}
               </div>
             </div>
 
-            {/* Action Buttons - Responsive for all screens */}
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 border-t border-border/50 px-4 py-4 md:px-6 bg-card">
+            {/* CTA Buttons */}
+            <div className="flex items-stretch gap-2 px-4 py-3 md:px-6 border-t border-border/30 bg-card">
               <Button 
                 size="lg" 
-                className="flex-1 gap-2 h-12 text-base font-semibold shadow-md"
+                className="flex-1 gap-2 h-11 text-sm font-semibold shadow-sm"
                 onClick={() => setRequestModalOpen(true)}
               >
-                <Phone className="h-5 w-5" />
+                <Phone className="h-4 w-4" />
                 Request Call
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                className="flex-1 gap-2 h-12 text-base font-semibold border-2"
+                className="flex-1 gap-2 h-11 text-sm font-semibold"
                 onClick={() => setRequestModalOpen(true)}
               >
-                <MessageSquare className="h-5 w-5" />
+                <MessageSquare className="h-4 w-4" />
                 Request Info
               </Button>
               {showContactDetails && facility.website && (
@@ -758,12 +735,12 @@ const CenterProfile = () => {
                   target="_blank" 
                   rel="noopener noreferrer"
                   onClick={() => trackInteraction("website")}
-                  className="flex-1 sm:flex-none"
+                  className="hidden sm:block"
                 >
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 h-12 border-2">
+                  <Button variant="ghost" size="lg" className="gap-1.5 h-11 text-sm font-medium text-muted-foreground hover:text-foreground">
                     <Globe className="h-4 w-4" />
                     Website
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3 w-3" />
                   </Button>
                 </a>
               )}
@@ -796,31 +773,31 @@ const CenterProfile = () => {
                     )
                   }
                 >
-                  {/* Main Image — clean, no overlays */}
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-4">
+                  {/* Main Image */}
+                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-3">
                     <img 
                       src={galleryImages[activeGalleryIndex]} 
                       alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300"
                       loading="lazy"
                     />
                   </div>
                   
-                  {/* Thumbnails */}
+                  {/* Thumbnails — compact, minimal */}
                   {galleryImages.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto pb-2">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                       {galleryImages.map((img, idx) => (
                         <button
                           key={idx}
                           onClick={() => setActiveGalleryIndex(idx)}
                           className={cn(
-                            "shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all",
+                            "shrink-0 w-16 h-11 rounded-md overflow-hidden transition-all",
                             idx === activeGalleryIndex 
-                              ? "border-primary ring-2 ring-primary/30 shadow-md" 
-                              : "border-border/50 hover:border-primary/50 hover:shadow-sm"
+                              ? "ring-2 ring-primary ring-offset-1 ring-offset-background opacity-100" 
+                              : "opacity-50 hover:opacity-80"
                           )}
                         >
-                          <img src={img} alt={`${facility.name} facility photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                          <img src={img} alt={`${facility.name} photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                         </button>
                       ))}
                     </div>
@@ -925,21 +902,21 @@ const CenterProfile = () => {
                   title="Services & Programs"
                   iconColor="bg-emerald-500/10 text-emerald-600"
                 >
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {(showAllServices ? services : services.slice(0, 8)).map((service) => (
                       <Badge 
                         key={service} 
                         variant="secondary" 
-                        className="px-3 py-1.5 text-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-emerald-500/15 transition-colors font-medium"
+                        className="px-2.5 py-1 text-xs bg-muted hover:bg-muted/80 text-foreground font-medium transition-colors"
                       >
-                        <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                        <CheckCircle className="h-3 w-3 mr-1 text-emerald-600" />
                         {service}
                       </Badge>
                     ))}
                     {services.length > 8 && (
                       <button
                         onClick={() => setShowAllServices(!showAllServices)}
-                        className="px-3 py-1.5 text-sm font-semibold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 rounded-full transition-all cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 rounded-full transition-all cursor-pointer"
                       >
                         {showAllServices ? 'Show less' : `+${services.length - 8} more`}
                       </button>
@@ -976,21 +953,20 @@ const CenterProfile = () => {
                   title="Insurance Accepted"
                   iconColor="bg-amber-500/10 text-amber-600"
                 >
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {(showAllInsurance ? insuranceList : insuranceList.slice(0, 8)).map((ins) => (
                       <Badge 
                         key={ins} 
-                        variant="secondary" 
-                        className="px-3 py-1.5 text-sm bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50 hover:bg-amber-500/15 transition-colors font-medium"
+                        variant="outline" 
+                        className="px-2.5 py-1 text-xs font-medium hover:bg-muted/50 transition-colors"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
                         {ins}
                       </Badge>
                     ))}
                     {insuranceList.length > 8 && (
                       <button
                         onClick={() => setShowAllInsurance(!showAllInsurance)}
-                        className="px-3 py-1.5 text-sm font-semibold text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-full transition-all cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 rounded-full transition-all cursor-pointer"
                       >
                         {showAllInsurance ? 'Show less' : `+${insuranceList.length - 8} more`}
                       </button>
@@ -1026,27 +1002,22 @@ const CenterProfile = () => {
             {/* Right Column - Sticky Sidebar */}
             <div className="hidden lg:block">
               <div className="sticky top-24 space-y-4">
-                {/* Contact CTA Card */}
+                {/* Contact CTA */}
                 <div 
                   ref={contactFormRef}
-                  className="rounded-xl border border-border/50 bg-card p-5 shadow-lg"
+                  className="rounded-2xl bg-card border border-border/40 p-6 shadow-sm"
                 >
-                  <div className="text-center mb-5">
-                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-md mb-3">
-                      <MessageSquare className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                    <h3 className="font-display text-lg font-bold text-foreground mb-1">
-                      Get Help Today
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Take the first step towards recovery
-                    </p>
-                  </div>
+                  <h3 className="font-display text-base font-bold text-foreground mb-1">
+                    Get Help Today
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Take the first step towards recovery
+                  </p>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <Button 
                       size="lg" 
-                      className="w-full gap-2 h-12 text-base font-semibold shadow-md"
+                      className="w-full gap-2 h-11 text-sm font-semibold"
                       onClick={() => setRequestModalOpen(true)}
                     >
                       <Sparkles className="h-4 w-4" />
@@ -1055,65 +1026,57 @@ const CenterProfile = () => {
 
                     {showContactDetails && (
                       <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
-                        <Button variant="outline" size="lg" className="w-full gap-2 h-11 text-sm font-semibold border-2">
-                          <Phone className="h-4 w-4" />
+                        <Button variant="outline" size="lg" className="w-full gap-2 h-10 text-xs font-semibold">
+                          <Phone className="h-3.5 w-3.5" />
                           {formatPhoneNumber(facility.phone)}
                         </Button>
                       </a>
                     )}
                   </div>
 
-                  {/* Trust indicators */}
-                  <div className="mt-5 pt-4 border-t border-border/50 space-y-3">
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 shrink-0">
-                        <Clock className="h-3.5 w-3.5 text-emerald-600" />
-                      </div>
-                      <span><strong className="text-foreground">Quick Response</strong> - Within 24 hours</span>
+                  <div className="mt-4 pt-3 border-t border-border/40 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3 text-emerald-600 shrink-0" />
+                      <span>Quick Response — Within 24 hours</span>
                     </div>
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                        <Shield className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span><strong className="text-foreground">100% Confidential</strong></span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Shield className="h-3 w-3 text-primary shrink-0" />
+                      <span>100% Confidential</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Facility Overview Card */}
-                <div className="rounded-xl border border-border/50 bg-card p-5 shadow-sm">
-                  <h3 className="font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-primary" />
-                    Quick Facts
-                  </h3>
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between py-1.5 text-sm">
+                {/* Quick Facts */}
+                <div className="rounded-2xl bg-card border border-border/40 p-5 shadow-sm">
+                  <h3 className="text-sm font-bold text-foreground mb-3">Quick Facts</h3>
+                  <div className="space-y-0 divide-y divide-border/30">
+                    <div className="flex items-center justify-between py-2 text-xs">
                       <span className="text-muted-foreground">Type</span>
                       <span className="font-medium text-foreground">{facility.facility_type}</span>
                     </div>
                     {genderLabel && (
-                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <div className="flex items-center justify-between py-2 text-xs">
                         <span className="text-muted-foreground">Gender</span>
                         <span className="font-medium text-foreground">{genderLabel}</span>
                       </div>
                     )}
                     {facility.bed_count && (
-                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <div className="flex items-center justify-between py-2 text-xs">
                         <span className="text-muted-foreground">Capacity</span>
                         <span className="font-medium text-foreground">{facility.bed_count} beds</span>
                       </div>
                     )}
                     {facility.year_established && (
-                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <div className="flex items-center justify-between py-2 text-xs">
                         <span className="text-muted-foreground">Established</span>
                         <span className="font-medium text-foreground">{facility.year_established}</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                    <div className="flex items-center justify-between py-2 text-xs">
                       <span className="text-muted-foreground">Programs</span>
                       <span className="font-medium text-foreground">{services.length}</span>
                     </div>
-                    <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                    <div className="flex items-center justify-between py-2 text-xs">
                       <span className="text-muted-foreground">Insurance</span>
                       <span className="font-medium text-foreground">{insuranceList.length} accepted</span>
                     </div>
@@ -1126,36 +1089,29 @@ const CenterProfile = () => {
             </div>
           </div>
 
-          {/* Mobile Sidebar Content - Shows below main content on mobile */}
-          <div className="lg:hidden mt-6 space-y-5">
-            {/* Contact CTA Card - Mobile */}
-            <div className="rounded-xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-5 shadow-lg">
-              <div className="text-center mb-5">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-3">
-                  <MessageSquare className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <h3 className="font-display text-lg font-bold text-foreground mb-1.5">
-                  Request Information
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Take the first step towards recovery.
-                </p>
-              </div>
-
-              <div className="space-y-3">
+          {/* Mobile Bottom Content */}
+          <div className="lg:hidden mt-8 space-y-4">
+            {/* Mobile CTA */}
+            <div className="rounded-2xl bg-card border border-border/40 p-5">
+              <h3 className="font-display text-base font-bold text-foreground mb-1">
+                Request Information
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Take the first step towards recovery.
+              </p>
+              <div className="space-y-2.5">
                 <Button 
                   size="lg" 
-                  className="w-full gap-2 h-12 text-base font-semibold shadow-md"
+                  className="w-full gap-2 h-11 text-sm font-semibold"
                   onClick={() => setRequestModalOpen(true)}
                 >
                   <Sparkles className="h-4 w-4" />
                   Get Started
                 </Button>
-
                 {showContactDetails && (
                   <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
-                    <Button variant="outline" size="lg" className="w-full gap-2 h-11 text-sm font-semibold border-2">
-                      <Phone className="h-4 w-4" />
+                    <Button variant="outline" size="lg" className="w-full gap-2 h-10 text-xs font-semibold">
+                      <Phone className="h-3.5 w-3.5" />
                       {formatPhoneNumber(facility.phone)}
                     </Button>
                   </a>
@@ -1163,47 +1119,43 @@ const CenterProfile = () => {
               </div>
             </div>
 
-            {/* Facility Overview Card - Mobile */}
-            <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-              <h3 className="font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-primary" />
-                Quick Facts
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-2.5 rounded-lg bg-muted/50">
+            {/* Mobile Quick Facts */}
+            <div className="rounded-2xl bg-card border border-border/40 p-5">
+              <h3 className="text-sm font-bold text-foreground mb-3">Quick Facts</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-lg bg-muted/40">
                   <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Type</span>
                   <span className="text-xs font-semibold text-foreground">{facility.facility_type}</span>
                 </div>
                 {genderLabel && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
+                  <div className="p-2.5 rounded-lg bg-muted/40">
                     <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Gender</span>
                     <span className="text-xs font-semibold text-foreground">{genderLabel}</span>
                   </div>
                 )}
                 {facility.bed_count && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
+                  <div className="p-2.5 rounded-lg bg-muted/40">
                     <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Capacity</span>
                     <span className="text-xs font-semibold text-foreground">{facility.bed_count} beds</span>
                   </div>
                 )}
                 {facility.year_established && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
+                  <div className="p-2.5 rounded-lg bg-muted/40">
                     <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Established</span>
                     <span className="text-xs font-semibold text-foreground">{facility.year_established}</span>
                   </div>
                 )}
-                <div className="p-2.5 rounded-lg bg-muted/50">
+                <div className="p-2.5 rounded-lg bg-muted/40">
                   <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Services</span>
                   <span className="text-xs font-semibold text-foreground">{services.length} programs</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-muted/50">
+                <div className="p-2.5 rounded-lg bg-muted/40">
                   <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Insurance</span>
                   <span className="text-xs font-semibold text-foreground">{insuranceList.length} accepted</span>
                 </div>
               </div>
             </div>
 
-            {/* Concierge CTA Card - Mobile */}
             <ConciergeCTACard compact />
           </div>
         </div>
