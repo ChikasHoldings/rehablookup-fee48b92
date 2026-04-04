@@ -24,6 +24,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("GlobalErrorBoundary caught an error:", error, errorInfo);
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
   handleRefresh = () => {
