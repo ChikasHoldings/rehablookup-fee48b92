@@ -521,10 +521,10 @@ export function SubscriptionDetailModal({
                         >
                           <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-full ${
-                              payment.status === "succeeded" ? "bg-green-500/10" : "bg-red-500/10"
+                              payment.status === "succeeded" ? "bg-success/10" : "bg-destructive/10"
                             }`}>
                               <CreditCard className={`h-4 w-4 ${
-                                payment.status === "succeeded" ? "text-green-600" : "text-red-600"
+                                payment.status === "succeeded" ? "text-success" : "text-destructive"
                               }`} />
                             </div>
                             <div>
