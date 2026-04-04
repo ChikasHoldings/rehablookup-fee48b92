@@ -10,9 +10,9 @@
 /api/badge/* https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-badge/:splat 200
 
 # Sitemaps - All routed through sitemap-facilities function (consolidated)
-/sitemap.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=main 200
-/sitemap-index.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=index 200
-/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=facilities 200
+/sitemap.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=main 200!
+/sitemap-index.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=index 200!
+/sitemap-facilities.xml https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=facilities 200!
 
 # Force HTTPS and www normalization (if needed)
 # http://rehablookup.com/* https://rehablookup.com/:splat 301!
