@@ -41,7 +41,7 @@ function formatTimeAgo(dateString: string): string {
 const RecentLeadsCard = forwardRef<HTMLDivElement, RecentLeadsCardProps>(
   function RecentLeadsCard({ recentLeads }, ref) {
     return (
-      <Card ref={ref} className="border shadow-sm lg:col-span-2">
+      <Card ref={ref} className="border shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-medium">Recent Leads</CardTitle>
@@ -68,11 +68,11 @@ const RecentLeadsCard = forwardRef<HTMLDivElement, RecentLeadsCardProps>(
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {lead.email_verified && (
-                      <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
+                      <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30 hidden sm:inline-flex">
                         Verified
                       </Badge>
                     )}
-                    <span className="text-xs text-muted-foreground">{formatTimeAgo(lead.created_at)}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{formatTimeAgo(lead.created_at)}</span>
                   </div>
                 </div>
               ))}
