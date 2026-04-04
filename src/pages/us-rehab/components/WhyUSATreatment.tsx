@@ -38,28 +38,29 @@ export const WhyUSATreatment = () => {
     <section className="py-16 md:py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <span className="text-sm font-semibold uppercase tracking-wide text-primary mb-2 block">Why the USA</span>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
             Why International Clients Choose US Treatment
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            The United States offers unparalleled addiction treatment with privacy, 
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            The United States offers unparalleled addiction treatment with privacy,
             quality, and comprehensive care that attracts clients from around the world.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {benefits.map((benefit, index) => (
-            <div 
+            <div
               key={index}
-              className="p-6 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors"
+              className="group p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-primary/20 hover:shadow-sm transition-all"
             >
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <benefit.icon className="h-6 w-6 text-primary" />
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <benefit.icon className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 {benefit.title}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {benefit.description}
               </p>
             </div>
