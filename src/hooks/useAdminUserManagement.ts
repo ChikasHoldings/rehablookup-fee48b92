@@ -255,7 +255,7 @@ export function useAdminUserManagement() {
       // Get admin profiles with admin_role
       const { data: adminProfiles, error: adminProfilesError } = await supabase
         .from("admin_user_profiles")
-        .select("*")
+        .select("user_id, display_name, first_name, last_name, admin_role, status, avatar_url, created_at, last_login_at, force_password_change, mfa_enabled")
         .in("user_id", adminUserIds);
 
       if (adminProfilesError) {
