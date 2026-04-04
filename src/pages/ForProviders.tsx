@@ -491,6 +491,49 @@ const ForProviders = () => {
           </div>
         </section>
 
+        {/* Provider Growth Guides Internal Linking */}
+        <section className="py-12 sm:py-16 bg-muted/30 border-t border-border">
+          <div className="container px-4 md:px-6 lg:px-8">
+            <div className="text-center mb-8 sm:mb-10">
+              <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">Free Resources</p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">
+                Provider Growth Guides
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
+                Actionable strategies for treatment center owners and admissions directors.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+              {[
+                { href: "/provider-guides/get-more-rehab-patients", title: "Get More Patients", desc: "Fill beds faster with proven strategies" },
+                { href: "/provider-guides/rehab-marketing-strategies", title: "Marketing Strategies", desc: "What actually works in 2026" },
+                { href: "/provider-guides/addiction-treatment-lead-generation", title: "Lead Generation", desc: "Quality leads that convert" },
+                { href: "/provider-guides/increase-rehab-admissions", title: "Increase Admissions", desc: "Data-driven census growth" },
+              ].map((guide) => (
+                <Link
+                  key={guide.href}
+                  to={guide.href}
+                  className="group block rounded-xl border border-border bg-card p-5 hover:border-primary/30 hover:shadow-md transition-all"
+                >
+                  <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors mb-1">
+                    {guide.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">{guide.desc}</p>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                    Read guide <ChevronRight className="h-3 w-3" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <div className="text-center mt-6">
+              <Link to="/providers/resources" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                Browse all provider resources
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Final CTA - Card style, not full-width background */}
         <section className="py-12 sm:py-16 md:py-24 bg-background">
           <div className="container px-4 md:px-6 lg:px-8">

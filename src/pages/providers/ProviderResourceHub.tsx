@@ -193,8 +193,37 @@ export default function ProviderResourceHub() {
             </div>
           </div>
         </section>
+        {/* Cross-link to SEO Guides */}
+        <section className="py-10 border-t border-border bg-muted/20">
+          <div className="container max-w-5xl mx-auto px-4">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-5">
+              Popular Provider Guides
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { href: "/provider-guides/get-more-rehab-patients", label: "Get More Patients" },
+                { href: "/provider-guides/rehab-admissions-growth", label: "Grow Admissions" },
+                { href: "/provider-guides/rehab-marketing-strategies", label: "Marketing Strategies" },
+                { href: "/provider-guides/addiction-treatment-lead-generation", label: "Lead Generation" },
+                { href: "/provider-guides/increase-rehab-admissions", label: "Increase Admissions" },
+                { href: "/provider-guides/rehab-center-marketing-ideas", label: "Marketing Ideas" },
+                { href: "/provider-guides/treatment-center-patient-acquisition", label: "Patient Acquisition" },
+                { href: "/provider-guides/behavioral-health-lead-generation", label: "Behavioral Health Leads" },
+              ].map((guide) => (
+                <Link
+                  key={guide.href}
+                  to={guide.href}
+                  className="group flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 hover:border-primary/30 hover:shadow-sm transition-all"
+                >
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{guide.label}</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary shrink-0 transition-colors" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
 
-        {/* CTA */}
+
         <section className="py-16 bg-primary relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
           <div className="container relative z-10 max-w-3xl mx-auto px-4 text-center">

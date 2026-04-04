@@ -40,6 +40,8 @@ const providerLinks = [
   { name: "Why List With Us", path: "/for-providers" },
   { name: "Resource Hub", path: "/providers/resources" },
   { name: "Growth Guides", path: "/provider-guides/get-more-rehab-patients" },
+  { name: "Marketing Strategies", path: "/provider-guides/rehab-marketing-strategies" },
+  { name: "Lead Generation", path: "/provider-guides/addiction-treatment-lead-generation" },
   { name: "Provider FAQ", path: "/provider-faq" },
   { name: "List Your Facility", path: "/provider-signup", highlight: true },
 ];
