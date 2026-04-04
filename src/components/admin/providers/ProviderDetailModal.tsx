@@ -271,7 +271,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return [];
       const { data } = await supabase
         .from("facility_accreditations")
-        .select("*")
+        .select("id, facility_id, accreditation_type, issuing_authority, verification_number, verified, verified_at, expiry_date, document_url, created_at")
         .eq("facility_id", provider.id)
         .order("created_at", { ascending: true });
       return (data || []) as Accreditation[];
