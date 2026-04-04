@@ -346,10 +346,12 @@ export default function AdminStaff() {
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
             Refresh
           </Button>
-          <Button onClick={() => setCreateDialogOpen(true)} size="sm">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Staff Member
-          </Button>
+          {isSuperAdmin && (
+            <Button onClick={() => setCreateDialogOpen(true)} size="sm">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Staff Member
+            </Button>
+          )}
         </div>
       </div>
 
