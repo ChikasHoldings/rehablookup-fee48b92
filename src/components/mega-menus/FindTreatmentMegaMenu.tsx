@@ -105,7 +105,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
 
           {/* Concierge CTA with Image */}
           <Link to="/concierge" onClick={onNavigate} className="group block mt-2.5">
-            <div className="relative rounded-xl overflow-hidden h-[100px]">
+            <div className="relative rounded-xl overflow-hidden h-[120px]">
               <img src={conciergeImg} alt="Free treatment matching" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/65 to-foreground/20" />
               <div className="relative h-full flex items-center justify-between px-4">
