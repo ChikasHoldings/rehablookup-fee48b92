@@ -297,7 +297,7 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
-            Patient's Age Range
+            Patient's Age Range <span className="text-destructive">*</span>
           </Label>
           <Select
             value={formData.ageRange}
