@@ -590,7 +590,7 @@ export function MarketingLeadProfileModal({
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Age Range</p>
-                    <p className="font-medium text-sm">{lead.age_range || "Not specified"}</p>
+                    <p className="font-medium text-sm">{lead.age_range || "Adult"}</p>
                   </div>
                   <div className="p-3 rounded-lg border bg-card">
                     <p className="text-xs text-muted-foreground mb-1">Gender</p>
