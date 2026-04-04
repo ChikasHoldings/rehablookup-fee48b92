@@ -333,50 +333,48 @@ export function RequestInfoModal({
     }
   }, [open, facility.id, facility.name, prefillData, facilityPlan]);
 
-  // Fetch nearby facilities for success screen
-  const fetchNearbyFacilities = async () => {
-    if (isPro) return; // Don't show competitors for Pro
+  // Fetch nearby facilities when form is submitted (via useEffect, not during render)
+  useEffect(() => {
+    if (!formSubmitted || isPro || nearbyFacilities.length > 0) return;
     
-    setLoadingNearby(true);
-    try {
-      const { data, error } = await supabase
-        .from("facilities")
-        .select(`
-          id,
-          name,
-          city,
-          state,
-          slug,
-          logo_url,
-          featured,
-          facility_type,
-          facility_services (service_name),
-          facility_insurance (insurance_name)
-        `)
-        .eq("status", "approved")
-        .neq("suspended", true)
-        .neq("id", facility.id)
-        .or(`city.eq.${facility.city},state.eq.${facility.state}`)
-        .order("featured", { ascending: false })
-        .limit(10);
+    let cancelled = false;
+    const fetchNearby = async () => {
+      setLoadingNearby(true);
+      try {
+        const { data, error } = await supabase
+          .from("facilities")
+          .select(`
+            id, name, city, state, slug, logo_url, featured, facility_type,
+            facility_services (service_name),
+            facility_insurance (insurance_name)
+          `)
+          .eq("status", "approved")
+          .neq("id", facility.id)
+          .eq("state", facility.state)
+          .order("featured", { ascending: false })
+          .limit(10);
 
-      if (error) throw error;
+        if (cancelled || error) return;
 
-      const sorted = (data || []).sort((a, b) => {
-        if (a.city === facility.city && b.city !== facility.city) return -1;
-        if (b.city === facility.city && a.city !== facility.city) return 1;
-        if (a.featured && !b.featured) return -1;
-        if (b.featured && !a.featured) return 1;
-        return 0;
-      });
+        const sorted = (data || []).sort((a, b) => {
+          if (a.city === facility.city && b.city !== facility.city) return -1;
+          if (b.city === facility.city && a.city !== facility.city) return 1;
+          if (a.featured && !b.featured) return -1;
+          if (b.featured && !a.featured) return 1;
+          return 0;
+        });
 
-      setNearbyFacilities(sorted.slice(0, 3));
-    } catch (err) {
-      console.error("Error fetching nearby facilities:", err);
-    } finally {
-      setLoadingNearby(false);
-    }
-  };
+        setNearbyFacilities(sorted.slice(0, 3));
+      } catch (err) {
+        console.error("Error fetching nearby facilities:", err);
+      } finally {
+        if (!cancelled) setLoadingNearby(false);
+      }
+    };
+    
+    fetchNearby();
+    return () => { cancelled = true; };
+  }, [formSubmitted, isPro, facility.id, facility.city, facility.state]);
 
   const handleNearbyRequest = (nearbyFacility: NearbyFacility) => {
     trackAnalyticsEvent("nearby_facility_click", nearbyFacility.id, {
