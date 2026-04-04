@@ -219,7 +219,7 @@ export default function AdminSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_settings")
-        .select("*");
+        .select("id, setting_key, setting_value, updated_by, updated_at");
       
       if (error) throw error;
       
