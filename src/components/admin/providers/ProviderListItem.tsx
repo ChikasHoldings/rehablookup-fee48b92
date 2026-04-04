@@ -150,7 +150,7 @@ export function ProviderListItem({
               </Badge>
             )}
             {isPlacement && (
-              <Badge variant="outline" className="text-purple-600 border-purple-200 text-xs h-5 px-1.5">
+              <Badge variant="outline" className="text-chart-3 border-chart-3/30 text-xs h-5 px-1.5">
                 <Handshake className="h-3 w-3 mr-0.5" />
                 Placement
               </Badge>
