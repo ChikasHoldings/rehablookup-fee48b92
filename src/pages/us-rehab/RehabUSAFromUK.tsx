@@ -29,12 +29,8 @@ export default function RehabUSAFromUK() {
         ]}
       />
 
-      <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav items={[
-          { label: "US Rehab", href: "/us-rehab" },
-          { label: "UK Patients" },
-        ]} />
-      </div>
+
+
 
       <InternationalPageHero
         flag="🇬🇧"

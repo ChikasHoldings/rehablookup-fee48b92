@@ -38,7 +38,7 @@ export const InternationalPageHero = ({
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       </div>
 
-      <div className="container relative mx-auto px-4 py-16 md:py-24 lg:py-28">
+      <div className="container relative mx-auto px-4 py-10 md:py-14 lg:py-16">
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           {/* Left: Content */}
           <div className="max-w-xl">
