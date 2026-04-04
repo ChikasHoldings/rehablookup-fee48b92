@@ -238,9 +238,9 @@ export default function AdminSeekers() {
     queryKey: ["admin-user-activity-counts"],
     queryFn: async () => {
       const [favoriteCounts, inquiryCounts, reviewCounts] = await Promise.all([
-        supabase.from("user_favorites").select("user_id"),
-        supabase.from("concierge_inquiries").select("user_id").not("user_id", "is", null),
-        supabase.from("facility_reviews").select("user_id"),
+        supabase.from("user_favorites").select("user_id").limit(5000),
+        supabase.from("concierge_inquiries").select("user_id").not("user_id", "is", null).limit(5000),
+        supabase.from("facility_reviews").select("user_id").limit(5000),
       ]);
 
       const counts: Record<string, { favorites: number; inquiries: number; reviews: number }> = {};

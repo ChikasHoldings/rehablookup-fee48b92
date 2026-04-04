@@ -231,7 +231,7 @@ export default function AdminProviders() {
   const { data: leadCounts } = useQuery({
     queryKey: ["admin-provider-lead-counts"],
     queryFn: async () => {
-      const { data } = await supabase.from("leads").select("facility_id");
+      const { data } = await supabase.from("leads").select("facility_id").limit(5000);
       const counts: Record<string, number> = {};
       data?.forEach((lead) => {
         if (lead.facility_id) {
