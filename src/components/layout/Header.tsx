@@ -171,7 +171,7 @@ export function Header({
     if (typeof window === "undefined") {
       return {
         position: "fixed",
-        top: "64px",
+        top: "68px",
         left: `${gutter}px`,
         maxWidth: `calc(100vw - ${gutter * 2}px)`,
       };
