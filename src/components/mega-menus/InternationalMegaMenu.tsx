@@ -4,17 +4,18 @@ import { Button } from "@/components/ui/button";
 import {
   Globe, ArrowRight, MapPin, Star, Shield, Plane, ChevronRight,
 } from "lucide-react";
+import megaMenuImg from "@/assets/mega-menu-international.jpg";
 
 interface MegaMenuProps {
   onNavigate?: () => void;
 }
 
 const countryPages = [
-  { href: "/us-rehab/uk-patients", label: "From UK & Ireland", flag: "🇬🇧" },
-  { href: "/us-rehab/canadian-patients", label: "From Canada", flag: "🇨🇦" },
-  { href: "/us-rehab/european-patients", label: "From Europe", flag: "🇪🇺" },
-  { href: "/us-rehab/uae-middle-east", label: "From UAE & Middle East", flag: "🇦🇪" },
-  { href: "/us-rehab/australian-patients", label: "From Australia", flag: "🇦🇺" },
+  { href: "/us-rehab/uk-patients", label: "From United Kingdom", flag: "🇬🇧", desc: "NHS referrals & visa support" },
+  { href: "/us-rehab/canadian-patients", label: "From Canada", flag: "🇨🇦", desc: "Cross-border treatment options" },
+  { href: "/us-rehab/european-patients", label: "From Europe", flag: "🇪🇺", desc: "ESTA & travel coordination" },
+  { href: "/us-rehab/uae-middle-east", label: "From UAE & Middle East", flag: "🇦🇪", desc: "Culturally sensitive programs" },
+  { href: "/us-rehab/australian-patients", label: "From Australia", flag: "🇦🇺", desc: "Long-stay visa guidance" },
 ];
 
 const programTypes = [
@@ -26,13 +27,13 @@ const programTypes = [
 
 export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
   return (
-    <div className="w-[580px] max-w-[90vw] p-6">
-      <div className="grid grid-cols-[1fr_200px] gap-6">
+    <div className="w-[700px] max-w-[90vw]">
+      <div className="grid grid-cols-[1fr_220px]">
         {/* Left */}
-        <div>
-          <h3 className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] mb-3 flex items-center gap-1.5">
+        <div className="p-5">
+          <h3 className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] mb-3 flex items-center gap-1.5">
             <Globe className="h-3.5 w-3.5 text-accent" />
-            By Country / Region
+            Treatment in America — By Region
           </h3>
           <div className="space-y-0.5 mb-5">
             {countryPages.map((page) => (
@@ -40,45 +41,57 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
                 key={page.href}
                 to={page.href}
                 onClick={onNavigate}
-                className="group flex items-center gap-3 rounded-lg px-2.5 py-2.5 hover:bg-accent/[0.06] transition-all duration-200"
+                className="group flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-accent/[0.06] transition-all duration-200"
               >
-                <span className="text-lg">{page.flag}</span>
-                <span className="text-[13px] font-medium text-foreground group-hover:text-primary transition-colors">{page.label}</span>
-                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary ml-auto transition-colors" />
+                <span className="text-xl leading-none">{page.flag}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">{page.label}</p>
+                  <p className="text-[11px] text-muted-foreground">{page.desc}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
               </PrefetchLink>
             ))}
           </div>
 
-          <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-3">
-            Popular Programs
-          </h3>
-          <div className="grid grid-cols-2 gap-0.5">
-            {programTypes.map((prog) => (
-              <PrefetchLink
-                key={prog.href}
-                to={prog.href}
-                onClick={onNavigate}
-                className="group flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-              >
-                <prog.icon className="h-3.5 w-3.5 text-accent/70 group-hover:text-accent transition-colors" />
-                {prog.label}
-              </PrefetchLink>
-            ))}
+          <div className="border-t border-border/40 pt-4">
+            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-2.5">
+              Popular Programs
+            </h3>
+            <div className="grid grid-cols-2 gap-1">
+              {programTypes.map((prog) => (
+                <PrefetchLink
+                  key={prog.href}
+                  to={prog.href}
+                  onClick={onNavigate}
+                  className="group flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                >
+                  <prog.icon className="h-4 w-4 text-accent/70 group-hover:text-accent transition-colors" />
+                  {prog.label}
+                </PrefetchLink>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Right CTA */}
-        <div className="border-l border-border/60 pl-5 flex flex-col">
-          <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-3">
-            Get Started
-          </h3>
+        {/* Right panel */}
+        <div className="border-l border-border/50 p-4 flex flex-col bg-muted/20 rounded-r-xl">
+          <div className="rounded-xl overflow-hidden mb-4 shadow-sm">
+            <img
+              src={megaMenuImg}
+              alt="US coastline destination"
+              className="w-full h-28 object-cover"
+              loading="lazy"
+              width={220}
+              height={112}
+            />
+          </div>
 
-          <div className="rounded-xl bg-gradient-to-br from-primary/[0.07] to-accent/[0.07] border border-primary/10 p-4 mt-2">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="rounded-xl bg-gradient-to-br from-primary/[0.08] to-accent/[0.08] border border-primary/10 p-4 flex-1 flex flex-col">
+            <div className="flex items-center gap-2 mb-1.5">
               <Plane className="h-4 w-4 text-accent" />
               <p className="text-sm font-bold text-foreground">Apply for Treatment</p>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
+            <p className="text-[11px] text-muted-foreground leading-relaxed mb-3 flex-1">
               Visa guidance, travel coordination, and matched facilities.
             </p>
             <Link to="/international/apply" onClick={onNavigate}>
@@ -92,7 +105,7 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
           <PrefetchLink
             to="/us-rehab"
             onClick={onNavigate}
-            className="flex items-center gap-1.5 mt-4 text-[13px] font-medium text-primary hover:underline justify-center"
+            className="flex items-center gap-1.5 mt-3 text-[12px] font-medium text-primary hover:underline justify-center"
           >
             Browse All Programs
           </PrefetchLink>
