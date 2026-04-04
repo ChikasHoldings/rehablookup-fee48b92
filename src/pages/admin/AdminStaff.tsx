@@ -18,7 +18,6 @@ import {
   CheckCircle,
   XCircle,
   Filter,
-  Calendar,
   Activity,
   Send,
   Shield,
@@ -78,22 +77,44 @@ const ROLE_ICONS: Record<AdminRoleType, React.ElementType> = {
 const STATUS_CONFIG = {
   active: {
     label: "Active",
-    bgColor: "bg-emerald-50",
-    textColor: "text-emerald-700",
-    dotColor: "bg-emerald-500",
+    bgColor: "bg-success/10",
+    textColor: "text-success",
+    dotColor: "bg-success",
   },
   suspended: {
     label: "Suspended",
-    bgColor: "bg-red-50",
-    textColor: "text-red-700",
-    dotColor: "bg-red-500",
+    bgColor: "bg-destructive/10",
+    textColor: "text-destructive",
+    dotColor: "bg-destructive",
   },
   pending_password_reset: {
     label: "Pending Setup",
-    bgColor: "bg-amber-50",
-    textColor: "text-amber-700",
-    dotColor: "bg-amber-500",
+    bgColor: "bg-warning/10",
+    textColor: "text-warning",
+    dotColor: "bg-warning",
   },
+};
+
+// Semantic role color map for consistent theming
+const ROLE_BORDER_COLORS: Record<AdminRoleType, string> = {
+  super_admin: "border-l-warning",
+  manager: "border-l-primary",
+  customer_rep: "border-l-success",
+  advisor: "border-l-accent-foreground",
+};
+
+const ROLE_ICON_BG: Record<AdminRoleType, string> = {
+  super_admin: "bg-warning/10",
+  manager: "bg-primary/10",
+  customer_rep: "bg-success/10",
+  advisor: "bg-accent/20",
+};
+
+const ROLE_ICON_TEXT: Record<AdminRoleType, string> = {
+  super_admin: "text-warning",
+  manager: "text-primary",
+  customer_rep: "text-success",
+  advisor: "text-accent-foreground",
 };
 
 export default function AdminStaff() {
@@ -114,7 +135,6 @@ export default function AdminStaff() {
 
   const safeAdminUsers = adminUsers || [];
   
-  // Stats by role
   const stats = useMemo(() => ({
     total: safeAdminUsers.length,
     superAdmin: safeAdminUsers.filter(u => u?.admin_role === "super_admin").length,
@@ -125,16 +145,16 @@ export default function AdminStaff() {
     suspended: safeAdminUsers.filter(u => u?.status === "suspended").length,
   }), [safeAdminUsers]);
 
-  // Filtered users
   const filteredUsers = useMemo(() => {
     return safeAdminUsers.filter(user => {
       if (!user) return false;
       
-      const matchesSearch = !searchQuery || 
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.display_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = !q || 
+        user.email?.toLowerCase().includes(q) ||
+        user.first_name?.toLowerCase().includes(q) ||
+        user.last_name?.toLowerCase().includes(q) ||
+        user.display_name?.toLowerCase().includes(q);
 
       const matchesRole = filterRole === "all" || user.admin_role === filterRole;
       const matchesStatus = activeTab === "all" || user.status === activeTab;
@@ -164,8 +184,7 @@ export default function AdminStaff() {
         action: confirmAction.action,
         targetUserId: confirmAction.user.user_id,
       });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
     
@@ -186,24 +205,22 @@ export default function AdminStaff() {
       <Card className={cn(
         "group relative overflow-hidden transition-all duration-200 hover:shadow-md border-l-4",
         user.status === "suspended" && "opacity-70",
-        `border-l-${roleConfig.iconColor.replace('text-', '')}`
-      )} style={{ borderLeftColor: `var(--${roleConfig.iconColor.replace('text-', '').replace('-500', '')}-500)` }}>
+        ROLE_BORDER_COLORS[user.admin_role]
+      )}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-4">
-            {/* User Info */}
             <div className="flex items-start gap-4 flex-1 min-w-0">
               <div className="relative">
                 <Avatar className="h-12 w-12 ring-2 ring-background shadow-sm">
                   <AvatarImage src={user.avatar_url || undefined} />
                   <AvatarFallback className={cn(
                     "text-sm font-semibold",
-                    roleConfig.bgColor,
-                    roleConfig.color
+                    ROLE_ICON_BG[user.admin_role],
+                    ROLE_ICON_TEXT[user.admin_role]
                   )}>
                     {getInitials(user)}
                   </AvatarFallback>
                 </Avatar>
-                {/* Status indicator */}
                 <div className={cn(
                   "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background",
                   statusConfig.dotColor
@@ -215,12 +232,11 @@ export default function AdminStaff() {
                   <h3 className="font-semibold text-sm text-foreground truncate">
                     {getUserDisplayName(user)}
                   </h3>
-                  <Badge className={cn(
+                  <Badge variant="outline" className={cn(
                     "text-[10px] font-medium gap-1 px-1.5 py-0",
-                    roleConfig.bgColor,
-                    roleConfig.color,
-                    "border",
-                    roleConfig.borderColor
+                    ROLE_ICON_BG[user.admin_role],
+                    ROLE_ICON_TEXT[user.admin_role],
+                    "border-transparent"
                   )}>
                     <RoleIcon className="h-2.5 w-2.5" />
                     {roleConfig.shortLabel}
@@ -228,14 +244,14 @@ export default function AdminStaff() {
                 </div>
                 
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Mail className="h-3 w-3" />
+                  <Mail className="h-3 w-3 shrink-0" />
                   <span className="truncate">{user.email}</span>
                 </div>
 
                 <div className="flex items-center gap-3 pt-0.5">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground tabular-nums">
                         <Clock className="h-2.5 w-2.5" />
                         {user.last_login_at 
                           ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true })
@@ -252,17 +268,16 @@ export default function AdminStaff() {
                   </Tooltip>
 
                   <Badge variant="outline" className={cn(
-                    "text-[10px] gap-1 px-1.5 py-0",
+                    "text-[10px] gap-1 px-1.5 py-0 border-transparent",
                     statusConfig.bgColor,
-                    statusConfig.textColor,
-                    "border-transparent"
+                    statusConfig.textColor
                   )}>
                     <span className={cn("h-1.5 w-1.5 rounded-full", statusConfig.dotColor)} />
                     {statusConfig.label}
                   </Badge>
 
                   {user.mfa_enabled && (
-                    <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 bg-blue-50 text-blue-700 border-transparent">
+                    <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 bg-primary/10 text-primary border-transparent">
                       <Shield className="h-2.5 w-2.5" />
                       2FA
                     </Badge>
@@ -271,13 +286,13 @@ export default function AdminStaff() {
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions - always visible on mobile, hover on desktop */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-8 w-8 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -290,10 +305,7 @@ export default function AdminStaff() {
                   </DropdownMenuItem>
                 )}
                 {user.status === "pending_password_reset" && isSuperAdmin && (
-                  <DropdownMenuItem 
-                    onClick={() => setConfirmAction({ action: "resend_invitation", user })}
-                    className="text-blue-600 focus:text-blue-600"
-                  >
+                  <DropdownMenuItem onClick={() => setConfirmAction({ action: "resend_invitation", user })}>
                     <Send className="h-4 w-4 mr-2" />
                     Resend Invitation
                   </DropdownMenuItem>
@@ -310,7 +322,7 @@ export default function AdminStaff() {
                     {user.status === "active" ? (
                       <DropdownMenuItem 
                         onClick={() => setConfirmAction({ action: "suspend", user })}
-                        className="text-amber-600 focus:text-amber-600"
+                        className="text-warning focus:text-warning"
                       >
                         <Ban className="h-4 w-4 mr-2" />
                         Suspend User
@@ -318,7 +330,7 @@ export default function AdminStaff() {
                     ) : (
                       <DropdownMenuItem 
                         onClick={() => setConfirmAction({ action: "unsuspend", user })}
-                        className="text-emerald-600 focus:text-emerald-600"
+                        className="text-success focus:text-success"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Reactivate User
@@ -326,7 +338,7 @@ export default function AdminStaff() {
                     )}
                     <DropdownMenuItem 
                       onClick={() => setConfirmAction({ action: "delete", user })}
-                      className="text-red-600 focus:text-red-600"
+                      className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete User
@@ -365,71 +377,71 @@ export default function AdminStaff() {
 
       {/* Role Stats */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
-        <Card className="border-l-4 border-l-slate-400">
+        <Card className="border-l-4 border-l-muted-foreground/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total</p>
-                <p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.total}</p>
+                <p className="text-2xl font-bold tabular-nums">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.total}</p>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-slate-600" />
+              <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                <Users className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-500">
+        <Card className="border-l-4 border-l-warning">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Super Admin</p>
-                <p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.superAdmin}</p>
+                <p className="text-2xl font-bold tabular-nums">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.superAdmin}</p>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <ShieldAlert className="h-5 w-5 text-amber-600" />
+              <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                <ShieldAlert className="h-5 w-5 text-warning" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-primary">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Managers</p>
-                <p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.manager}</p>
+                <p className="text-2xl font-bold tabular-nums">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.manager}</p>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Briefcase className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-emerald-500">
+        <Card className="border-l-4 border-l-success">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Customer Reps</p>
-                <p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.customerRep}</p>
+                <p className="text-2xl font-bold tabular-nums">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.customerRep}</p>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <HeadphonesIcon className="h-5 w-5 text-emerald-600" />
+              <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
+                <HeadphonesIcon className="h-5 w-5 text-success" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
+        <Card className="border-l-4 border-l-accent-foreground">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Advisors</p>
-                <p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.advisor}</p>
+                <p className="text-2xl font-bold tabular-nums">{isLoading ? <Skeleton className="h-8 w-10" /> : stats.advisor}</p>
               </div>
-              <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <Heart className="h-5 w-5 text-purple-600" />
+              <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                <Heart className="h-5 w-5 text-accent-foreground" />
               </div>
             </div>
           </CardContent>
@@ -457,30 +469,10 @@ export default function AdminStaff() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="super_admin">
-                    <div className="flex items-center gap-2">
-                      <ShieldAlert className="h-4 w-4 text-amber-500" />
-                      Super Admin
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="manager">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-blue-500" />
-                      Manager
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="customer_rep">
-                    <div className="flex items-center gap-2">
-                      <HeadphonesIcon className="h-4 w-4 text-emerald-500" />
-                      Customer Rep
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="advisor">
-                    <div className="flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-purple-500" />
-                      Advisor
-                    </div>
-                  </SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="customer_rep">Customer Rep</SelectItem>
+                  <SelectItem value="advisor">Advisor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -488,15 +480,15 @@ export default function AdminStaff() {
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "active" | "suspended")}>
               <TabsList className="h-9">
                 <TabsTrigger value="all" className="text-xs px-3">
-                  All ({stats.total})
+                  All <span className="tabular-nums ml-1">({stats.total})</span>
                 </TabsTrigger>
                 <TabsTrigger value="active" className="text-xs px-3">
                   <Activity className="h-3 w-3 mr-1" />
-                  Active ({stats.active})
+                  Active <span className="tabular-nums ml-1">({stats.active})</span>
                 </TabsTrigger>
                 <TabsTrigger value="suspended" className="text-xs px-3">
                   <XCircle className="h-3 w-3 mr-1" />
-                  Suspended ({stats.suspended})
+                  Suspended <span className="tabular-nums ml-1">({stats.suspended})</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -511,7 +503,7 @@ export default function AdminStaff() {
             <Card key={i}>
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <Skeleton className="h-12 w-12 rounded-full shrink-0" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-48" />
@@ -536,7 +528,7 @@ export default function AdminStaff() {
                   : "Add your first admin staff member to get started"
                 }
               </p>
-              {!searchQuery && filterRole === "all" && (
+              {!searchQuery && filterRole === "all" && isSuperAdmin && (
                 <Button onClick={() => setCreateDialogOpen(true)} className="mt-4" size="sm">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add Staff Member
@@ -615,8 +607,8 @@ export default function AdminStaff() {
               onClick={handleAction}
               disabled={isManaging}
               className={cn(
-                confirmAction?.action === "delete" && "bg-red-600 hover:bg-red-700",
-                confirmAction?.action === "suspend" && "bg-amber-600 hover:bg-amber-700"
+                confirmAction?.action === "delete" && "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
+                confirmAction?.action === "suspend" && "bg-warning hover:bg-warning/90 text-warning-foreground"
               )}
             >
               {isManaging ? "Processing..." : "Confirm"}
