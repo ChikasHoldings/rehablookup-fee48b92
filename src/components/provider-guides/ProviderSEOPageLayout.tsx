@@ -4,6 +4,9 @@ import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ArrowRight, CheckCircle, TrendingUp, Users, Shield, Zap, Building2, Phone, Star, Clock, ChevronRight } from "lucide-react";
+import admissionsDashboard from "@/assets/provider-guides/admissions-dashboard.jpg";
+import admissionsTeam from "@/assets/provider-guides/admissions-team.jpg";
+import treatmentFacility from "@/assets/provider-guides/treatment-facility.jpg";
 
 interface SEOSection {
   heading: string;
@@ -167,32 +170,70 @@ export function ProviderSEOPageLayout({
                     )}
                   </article>
 
-                  {/* Mid-article CTA - after 2nd section */}
+                  {/* Image after first section */}
+                  {idx === 0 && (
+                    <div className="my-10 rounded-2xl overflow-hidden border border-border shadow-sm">
+                      <img
+                        src={admissionsDashboard}
+                        alt="Treatment center admissions analytics dashboard"
+                        width={1280}
+                        height={720}
+                        className="w-full h-auto object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+
+                  {/* Mid-article CTA with image - after 2nd section */}
                   {idx === midCTAIndex - 1 && (
-                    <div className="my-10 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent p-6 md:p-8">
-                      <div className="flex flex-col md:flex-row md:items-center gap-5">
-                        <div className="flex-1">
+                    <div className="my-10 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent overflow-hidden">
+                      <div className="grid md:grid-cols-5 gap-0">
+                        <div className="md:col-span-2 hidden md:block">
+                          <img
+                            src={admissionsTeam}
+                            alt="Admissions team collaborating on patient intake"
+                            width={640}
+                            height={720}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="md:col-span-3 p-6 md:p-8 flex flex-col justify-center">
                           <h3 className="text-lg font-display font-bold text-foreground mb-1.5">
                             Want to put these strategies into action?
                           </h3>
-                          <p className="text-muted-foreground text-sm leading-relaxed">
+                          <p className="text-muted-foreground text-sm leading-relaxed mb-5">
                             List your facility on RehabLookup for free and start receiving verified patient inquiries from families actively seeking treatment.
                           </p>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                          <Link to="/provider-signup">
-                            <Button className="gap-2 h-11 px-6 font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap">
-                              Get Listed Free
-                              <ArrowRight className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Link to="/for-providers">
-                            <Button variant="outline" className="h-11 px-5 whitespace-nowrap">
-                              Learn More
-                            </Button>
-                          </Link>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Link to="/provider-signup">
+                              <Button className="gap-2 h-11 px-6 font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap">
+                                Get Listed Free
+                                <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <Link to="/for-providers">
+                              <Button variant="outline" className="h-11 px-5 whitespace-nowrap">
+                                Learn More
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Image before last section */}
+                  {idx === sections.length - 2 && sections.length > 3 && (
+                    <div className="my-10 rounded-2xl overflow-hidden border border-border shadow-sm">
+                      <img
+                        src={treatmentFacility}
+                        alt="Modern treatment center facility exterior"
+                        width={1280}
+                        height={720}
+                        className="w-full h-auto object-cover"
+                        loading="lazy"
+                      />
                     </div>
                   )}
                 </div>
