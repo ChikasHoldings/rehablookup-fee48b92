@@ -61,13 +61,12 @@ const defaultFAQs: FAQItem[] = [
   }
 ];
 
-export const InternationalFAQ = ({ 
+export const InternationalFAQ = ({
   title = "Frequently Asked Questions",
   subtitle = "Everything you need to know about seeking addiction treatment in the United States as an international patient.",
   faqs = defaultFAQs,
   schemaId = "international-faq"
 }: InternationalFAQProps) => {
-  // Generate FAQ Schema
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -85,33 +84,33 @@ export const InternationalFAQ = ({
   return (
     <section className="py-16 md:py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 text-primary mb-4">
-              <HelpCircle className="h-6 w-6" />
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 text-primary mb-3">
+              <HelpCircle className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wide">FAQ</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
               {title}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base text-muted-foreground leading-relaxed">
               {subtitle}
             </p>
           </div>
 
           {/* FAQ Accordion */}
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
-              <AccordionItem 
-                key={index} 
+              <AccordionItem
+                key={index}
                 value={`item-${index}`}
-                className="bg-muted/30 rounded-lg px-6 border-none"
+                className="bg-muted/20 rounded-xl px-6 border border-border/50"
               >
-                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-primary py-5">
+                <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:text-primary py-4">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
+                <AccordionContent className="text-sm text-muted-foreground pb-4 leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -120,8 +119,7 @@ export const InternationalFAQ = ({
         </div>
       </div>
 
-      {/* FAQ Schema Script */}
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
