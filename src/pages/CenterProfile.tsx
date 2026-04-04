@@ -1089,36 +1089,29 @@ const CenterProfile = () => {
             </div>
           </div>
 
-          {/* Mobile Sidebar Content - Shows below main content on mobile */}
-          <div className="lg:hidden mt-6 space-y-5">
-            {/* Contact CTA Card - Mobile */}
-            <div className="rounded-xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-5 shadow-lg">
-              <div className="text-center mb-5">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-3">
-                  <MessageSquare className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <h3 className="font-display text-lg font-bold text-foreground mb-1.5">
-                  Request Information
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Take the first step towards recovery.
-                </p>
-              </div>
-
-              <div className="space-y-3">
+          {/* Mobile Bottom Content */}
+          <div className="lg:hidden mt-8 space-y-4">
+            {/* Mobile CTA */}
+            <div className="rounded-2xl bg-card border border-border/40 p-5">
+              <h3 className="font-display text-base font-bold text-foreground mb-1">
+                Request Information
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Take the first step towards recovery.
+              </p>
+              <div className="space-y-2.5">
                 <Button 
                   size="lg" 
-                  className="w-full gap-2 h-12 text-base font-semibold shadow-md"
+                  className="w-full gap-2 h-11 text-sm font-semibold"
                   onClick={() => setRequestModalOpen(true)}
                 >
                   <Sparkles className="h-4 w-4" />
                   Get Started
                 </Button>
-
                 {showContactDetails && (
                   <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
-                    <Button variant="outline" size="lg" className="w-full gap-2 h-11 text-sm font-semibold border-2">
-                      <Phone className="h-4 w-4" />
+                    <Button variant="outline" size="lg" className="w-full gap-2 h-10 text-xs font-semibold">
+                      <Phone className="h-3.5 w-3.5" />
                       {formatPhoneNumber(facility.phone)}
                     </Button>
                   </a>
@@ -1126,47 +1119,43 @@ const CenterProfile = () => {
               </div>
             </div>
 
-            {/* Facility Overview Card - Mobile */}
-            <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-              <h3 className="font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-primary" />
-                Quick Facts
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-2.5 rounded-lg bg-muted/50">
+            {/* Mobile Quick Facts */}
+            <div className="rounded-2xl bg-card border border-border/40 p-5">
+              <h3 className="text-sm font-bold text-foreground mb-3">Quick Facts</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-lg bg-muted/40">
                   <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Type</span>
                   <span className="text-xs font-semibold text-foreground">{facility.facility_type}</span>
                 </div>
                 {genderLabel && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
+                  <div className="p-2.5 rounded-lg bg-muted/40">
                     <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Gender</span>
                     <span className="text-xs font-semibold text-foreground">{genderLabel}</span>
                   </div>
                 )}
                 {facility.bed_count && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
+                  <div className="p-2.5 rounded-lg bg-muted/40">
                     <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Capacity</span>
                     <span className="text-xs font-semibold text-foreground">{facility.bed_count} beds</span>
                   </div>
                 )}
                 {facility.year_established && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
+                  <div className="p-2.5 rounded-lg bg-muted/40">
                     <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Established</span>
                     <span className="text-xs font-semibold text-foreground">{facility.year_established}</span>
                   </div>
                 )}
-                <div className="p-2.5 rounded-lg bg-muted/50">
+                <div className="p-2.5 rounded-lg bg-muted/40">
                   <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Services</span>
                   <span className="text-xs font-semibold text-foreground">{services.length} programs</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-muted/50">
+                <div className="p-2.5 rounded-lg bg-muted/40">
                   <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Insurance</span>
                   <span className="text-xs font-semibold text-foreground">{insuranceList.length} accepted</span>
                 </div>
               </div>
             </div>
 
-            {/* Concierge CTA Card - Mobile */}
             <ConciergeCTACard compact />
           </div>
         </div>
