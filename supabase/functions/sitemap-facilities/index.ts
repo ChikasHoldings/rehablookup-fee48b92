@@ -82,26 +82,15 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-support", priority: 0.6, changefreq: "monthly" },
   { path: "/faq", priority: 0.7, changefreq: "monthly" },
 
-  // TREATMENT TYPE PAGES
+  // TREATMENT TYPE PAGES (only routes that exist in App.tsx)
   { path: "/treatment-types/drug-addiction-treatment", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/alcohol-addiction-treatment", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/opioid-addiction-treatment", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/mental-health-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/alcohol-rehabilitation", priority: 0.85, changefreq: "weekly" },
   { path: "/treatment-types/dual-diagnosis-treatment", priority: 0.85, changefreq: "weekly" },
   { path: "/treatment-types/detox-programs", priority: 0.85, changefreq: "weekly" },
   { path: "/treatment-types/outpatient-programs", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/inpatient-programs", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/residential-treatment", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/intensive-outpatient", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/partial-hospitalization", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/sober-living", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/medication-assisted-treatment", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment-types/holistic-therapy", priority: 0.8, changefreq: "weekly" },
-  { path: "/treatment-types/faith-based-treatment", priority: 0.8, changefreq: "weekly" },
-  { path: "/treatment-types/luxury-rehab", priority: 0.8, changefreq: "weekly" },
-  { path: "/treatment-types/executive-rehab", priority: 0.75, changefreq: "weekly" },
-  { path: "/treatment-types/alcohol-rehabilitation", priority: 0.85, changefreq: "weekly" },
   { path: "/treatment-types/residential-inpatient", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/holistic-therapy", priority: 0.8, changefreq: "weekly" },
+  { path: "/treatment-types/luxury-rehab", priority: 0.8, changefreq: "weekly" },
 
   // NEAR-ME PAGES (all defined in App.tsx)
   { path: "/drug-rehab-near-me", priority: 0.95, changefreq: "daily" },
