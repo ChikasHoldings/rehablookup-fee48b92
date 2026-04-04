@@ -641,7 +641,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                                       variant="outline" 
                                       className={cn(
                                         "text-xs",
-                                        (inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded') && "bg-green-50 text-green-700 border-green-200"
+                                        (inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded') && "bg-success/10 text-success border-success/30"
                                       )}
                                     >
                                       {inquiry.payment_status}
