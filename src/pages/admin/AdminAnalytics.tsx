@@ -364,19 +364,20 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       let query = supabase
         .from("leads")
-        .select("*, facilities!facility_id(city, state)")
+        .select("id, facility_id, status, source, created_at, facilities!facility_id(city, state)")
         .gte("created_at", previousDateRange.from.toISOString())
-        .lte("created_at", previousDateRange.to.toISOString());
+        .lte("created_at", previousDateRange.to.toISOString())
+        .limit(5000);
 
       const { data, error } = await query;
       if (error) throw error;
       
       let filtered = data || [];
       if (selectedState !== "all") {
-        filtered = filtered.filter(l => l.facilities?.state === selectedState);
+        filtered = filtered.filter(l => (l.facilities as any)?.state === selectedState);
       }
       if (selectedCity !== "all") {
-        filtered = filtered.filter(l => l.facilities?.city === selectedCity);
+        filtered = filtered.filter(l => (l.facilities as any)?.city === selectedCity);
       }
       
       return filtered;
