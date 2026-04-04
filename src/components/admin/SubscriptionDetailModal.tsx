@@ -397,12 +397,12 @@ export function SubscriptionDetailModal({
                       )}
 
                       {isCanceling && (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-amber-200 bg-amber-50">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-warning/30 bg-warning/5">
                           <div className="flex items-center gap-2 flex-1">
-                            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 shrink-0" />
+                            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-warning shrink-0" />
                             <div>
-                              <p className="font-medium text-amber-900 text-sm sm:text-base">Cancellation Scheduled</p>
-                              <p className="text-xs sm:text-sm text-amber-700">
+                              <p className="font-medium text-foreground text-sm sm:text-base">Cancellation Scheduled</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 Will cancel on {format(new Date(subscription.current_period_end), "MMM d, yyyy")}
                               </p>
                             </div>
