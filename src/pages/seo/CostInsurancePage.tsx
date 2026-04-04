@@ -16,39 +16,18 @@ export default function CostInsurancePage() {
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     if (config.filterKey) {
       const filterLower = config.filterKey.toLowerCase();
-      return allFacilities.filter((f) => f.insuranceAccepted?.some((i) => i.toLowerCase().includes(filterLower)) || f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower))).slice(0, 12);
+      return allFacilities
+        .filter((f) => f.insuranceAccepted?.some((i) => i.toLowerCase().includes(filterLower)) || f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)))
+        .slice(0, 12);
     }
-    return allFacilities.sort((a, b) => (a.featured && !b.featured ? -1 : !a.featured && b.featured ? 1 : 0)).slice(0, 12);
+    return allFacilities
+      .sort((a, b) => (a.featured && !b.featured ? -1 : !a.featured && b.featured ? 1 : 0))
+      .slice(0, 12);
   }, [approvedFacilities, config]);
 
   if (!config) {
     return <Navigate to="/404" replace />;
   }
-
-  // Filter facilities (show relevant ones, e.g. Medicaid-accepting)
-  const facilities = useMemo(() => {
-    const allFacilities = [...treatmentCenters, ...approvedFacilities];
-
-    if (config.filterKey) {
-      const filterLower = config.filterKey.toLowerCase();
-      return allFacilities
-        .filter(
-          (f) =>
-            f.insuranceAccepted?.some((i) => i.toLowerCase().includes(filterLower)) ||
-            f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower))
-        )
-        .slice(0, 12);
-    }
-
-    // For generic cost pages, show featured facilities
-    return allFacilities
-      .sort((a, b) => {
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-        return 0;
-      })
-      .slice(0, 12);
-  }, [approvedFacilities, config.filterKey]);
 
   const structuredData = [
     {

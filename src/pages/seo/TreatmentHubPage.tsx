@@ -17,45 +17,12 @@ export default function TreatmentHubPage() {
     if (!config) return [];
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const filterLower = config.filterKey.toLowerCase();
-    return allFacilities.filter((f) => f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) || f.description?.toLowerCase().includes(filterLower)).sort((a, b) => (a.featured && !b.featured ? -1 : !a.featured && b.featured ? 1 : 0)).slice(0, 12);
+    return allFacilities
+      .filter((f) => f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) || f.description?.toLowerCase().includes(filterLower))
+      .sort((a, b) => (a.featured && !b.featured ? -1 : !a.featured && b.featured ? 1 : 0))
+      .slice(0, 12);
   }, [approvedFacilities, config]);
 
-  const relatedCityLinks = useMemo(() => {
-    if (!matchingTreatment) return [];
-    return topCities.slice(0, 12).map((city) => ({ title: `${matchingTreatment.shortLabel} in ${city.city}`, href: `/${getCityTreatmentSlug(matchingTreatment, city)}` }));
-  }, [matchingTreatment]);
-
-  if (!config) {
-    return <Navigate to="/404" replace />;
-  }
-
-  // Find matching treatment type for city links
-  const matchingTreatment = seoTreatmentTypes.find(
-    (t) => t.filterKey === config.filterKey
-  );
-
-  // Filter facilities by treatment type
-  const facilities = useMemo(() => {
-    const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const filterLower = config.filterKey.toLowerCase();
-
-    const filtered = allFacilities.filter(
-      (f) =>
-        f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
-        f.description?.toLowerCase().includes(filterLower)
-    );
-
-    // Sort: featured/pro first
-    return filtered
-      .sort((a, b) => {
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-        return 0;
-      })
-      .slice(0, 12);
-  }, [approvedFacilities, config.filterKey]);
-
-  // City links for this treatment type
   const relatedCityLinks = useMemo(() => {
     if (!matchingTreatment) return [];
     return topCities.slice(0, 12).map((city) => ({
@@ -63,6 +30,10 @@ export default function TreatmentHubPage() {
       href: `/${getCityTreatmentSlug(matchingTreatment, city)}`,
     }));
   }, [matchingTreatment]);
+
+  if (!config) {
+    return <Navigate to="/404" replace />;
+  }
 
   const structuredData = [
     {
