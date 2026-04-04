@@ -346,7 +346,7 @@ export function LeadProfileModal({
   };
 
   const formatInsurance = (type: string | null) => {
-    if (!type) return "Not specified";
+    if (!type) return "To be verified";
     const map: Record<string, string> = {
       ppo: "PPO / Private Insurance",
       medicaid: "Medicaid",
