@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
@@ -51,45 +51,45 @@ import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case "provider_signup":
-      return <UserPlus className="h-5 w-5 text-blue-500" />;
+      return <UserPlus className="h-5 w-5 text-primary" />;
     case "payment_failed":
     case "payment_delinquent":
     case "placement_payment_failed":
-      return <CreditCard className="h-5 w-5 text-red-500" />;
+      return <CreditCard className="h-5 w-5 text-destructive" />;
     case "subscription_alert":
     case "subscription_change":
-      return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+      return <AlertTriangle className="h-5 w-5 text-warning" />;
     case "new_subscription":
-      return <CreditCard className="h-5 w-5 text-green-500" />;
+      return <CreditCard className="h-5 w-5 text-success" />;
     case "subscription_cancelled":
-      return <CreditCard className="h-5 w-5 text-orange-500" />;
+      return <CreditCard className="h-5 w-5 text-warning" />;
     case "facility_approved":
-      return <Building2 className="h-5 w-5 text-green-500" />;
+      return <Building2 className="h-5 w-5 text-success" />;
     case "new_lead":
-      return <Users className="h-5 w-5 text-purple-500" />;
+      return <Users className="h-5 w-5 text-primary" />;
     case "lead_assigned":
-      return <Users className="h-5 w-5 text-indigo-500" />;
+      return <Users className="h-5 w-5 text-primary" />;
     case "system":
     case "welcome":
-      return <Bell className="h-5 w-5 text-slate-500" />;
+      return <Bell className="h-5 w-5 text-muted-foreground" />;
     case "email":
-      return <Mail className="h-5 w-5 text-cyan-500" />;
+      return <Mail className="h-5 w-5 text-primary" />;
     case "brute_force":
     case "brute_force_alert":
     case "login_alert":
     case "security_event":
     case "security_block":
     case "security_unblock":
-      return <ShieldAlert className="h-5 w-5 text-red-600" />;
+      return <ShieldAlert className="h-5 w-5 text-destructive" />;
     case "churn_alert":
     case "at_risk_provider":
     case "provider_health":
-      return <AlertTriangle className="h-5 w-5 text-orange-500" />;
+      return <AlertTriangle className="h-5 w-5 text-warning" />;
     case "new_review":
     case "review_disputed":
-      return <Eye className="h-5 w-5 text-purple-500" />;
+      return <Eye className="h-5 w-5 text-primary" />;
     case "flagged_image":
-      return <AlertTriangle className="h-5 w-5 text-amber-600" />;
+      return <AlertTriangle className="h-5 w-5 text-warning" />;
     default:
       return <Bell className="h-5 w-5 text-muted-foreground" />;
   }
@@ -98,50 +98,53 @@ const getNotificationIcon = (type: string) => {
 const getNotificationBadge = (type: string) => {
   switch (type) {
     case "provider_signup":
-      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">New Provider</Badge>;
+      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">New Provider</Badge>;
     case "payment_failed":
     case "payment_delinquent":
     case "placement_payment_failed":
       return <Badge variant="destructive">Payment Failed</Badge>;
     case "subscription_alert":
     case "subscription_change":
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Subscription</Badge>;
+      return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Subscription</Badge>;
     case "new_subscription":
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">New Subscription</Badge>;
+      return <Badge variant="outline" className="bg-success/10 text-success border-success/20">New Subscription</Badge>;
     case "subscription_cancelled":
-      return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Cancelled</Badge>;
+      return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Cancelled</Badge>;
     case "facility_approved":
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
+      return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Approved</Badge>;
     case "new_lead":
-      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">New Lead</Badge>;
+      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">New Lead</Badge>;
     case "lead_assigned":
-      return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">Lead Assigned</Badge>;
+      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Lead Assigned</Badge>;
     case "system":
     case "welcome":
       return <Badge variant="secondary">System</Badge>;
     case "email":
-      return <Badge variant="outline" className="bg-cyan-50 text-cyan-700 border-cyan-200">Email</Badge>;
+      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Email</Badge>;
     case "brute_force":
     case "brute_force_alert":
     case "login_alert":
     case "security_event":
     case "security_block":
     case "security_unblock":
-      return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-300">Security</Badge>;
+      return <Badge variant="destructive">Security</Badge>;
     case "churn_alert":
     case "at_risk_provider":
     case "provider_health":
-      return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">At Risk</Badge>;
+      return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">At Risk</Badge>;
     case "new_review":
-      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">New Review</Badge>;
+      return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">New Review</Badge>;
     case "review_disputed":
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Review Dispute</Badge>;
+      return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Review Dispute</Badge>;
     case "flagged_image":
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Flagged Image</Badge>;
+      return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Flagged Image</Badge>;
     default:
       return <Badge variant="secondary">Notification</Badge>;
   }
 };
+
+const PAYMENT_TYPES = ["payment_failed", "payment_delinquent", "placement_payment_failed"];
+const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"];
 
 export default function AdminNotifications() {
   const navigate = useNavigate();
@@ -173,21 +176,19 @@ export default function AdminNotifications() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Combine notifications
-  const allNotifications = [
-    ...globalNotifications.map(n => ({ ...n, source: "global" as const })),
-    ...userNotifications.map(n => ({ ...n, source: "personal" as const })),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-  const totalUnreadCount = globalUnreadCount + userUnreadCount;
   const isLoading = globalLoading || userLoading;
 
-  // Filter notifications
-  const PAYMENT_TYPES = ["payment_failed", "payment_delinquent", "placement_payment_failed"];
-  const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"];
+  // Memoize combined notifications
+  const allNotifications = useMemo(() => [
+    ...globalNotifications.map(n => ({ ...n, source: "global" as const })),
+    ...userNotifications.map(n => ({ ...n, source: "personal" as const })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [globalNotifications, userNotifications]);
 
-  const getFilteredNotifications = () => {
-    let notifications = activeTab === "global" 
+  const totalUnreadCount = globalUnreadCount + userUnreadCount;
+
+  // Memoize filtered notifications
+  const filteredNotifications = useMemo(() => {
+    let notifications = activeTab === "global"
       ? globalNotifications.map(n => ({ ...n, source: "global" as const }))
       : activeTab === "personal"
       ? userNotifications.map(n => ({ ...n, source: "personal" as const }))
@@ -207,19 +208,17 @@ export default function AdminNotifications() {
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      notifications = notifications.filter(n => 
-        n.title.toLowerCase().includes(query) || 
+      notifications = notifications.filter(n =>
+        n.title.toLowerCase().includes(query) ||
         n.message.toLowerCase().includes(query)
       );
     }
 
     return notifications;
-  };
-
-  const filteredNotifications = getFilteredNotifications();
+  }, [activeTab, filter, typeFilter, searchQuery, allNotifications, globalNotifications, userNotifications]);
 
   // Get unique notification types for filter
-  const notificationTypes = Array.from(new Set(allNotifications.map(n => n.type)));
+  const notificationTypes = useMemo(() => Array.from(new Set(allNotifications.map(n => n.type))), [allNotifications]);
 
   const handleMarkAsRead = (id: string, source: "global" | "personal") => {
     if (source === "global") {
@@ -271,16 +270,10 @@ export default function AdminNotifications() {
 
   const getNotificationLink = (notification: typeof allNotifications[0]) => {
     const metadata = notification.metadata as Record<string, any> | null;
-    
-    // Check for explicit link in notification or metadata
-    if ((notification as any).link) {
-      return (notification as any).link;
-    }
-    if (metadata?.link) {
-      return metadata.link;
-    }
-    
-    // Type-based routing
+
+    if ((notification as any).link) return (notification as any).link;
+    if (metadata?.link) return metadata.link;
+
     switch (notification.type) {
       case "provider_signup":
         return "/admin/providers?status=pending";
@@ -319,32 +312,27 @@ export default function AdminNotifications() {
   };
 
   const handleNotificationClick = (notification: typeof allNotifications[0], link: string | null) => {
-    // Mark as read when clicking
     if (!notification.read) {
       handleMarkAsRead(notification.id, notification.source);
     }
-    // Navigate if there's a link
     if (link) {
       navigate(link);
     }
   };
 
-  const paymentIssuesCount = allNotifications.filter((n) => ["payment_failed", "payment_delinquent", "placement_payment_failed"].includes(n.type)).length;
-  const securityAlertsCount = allNotifications.filter((n) => ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"].includes(n.type)).length;
+  const paymentIssuesCount = useMemo(() => allNotifications.filter((n) => PAYMENT_TYPES.includes(n.type)).length, [allNotifications]);
+  const securityAlertsCount = useMemo(() => allNotifications.filter((n) => SECURITY_TYPES.includes(n.type)).length, [allNotifications]);
 
   return (
     <div className="space-y-4">
-      {/* Compact Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-xl font-semibold">Notifications</h1>
+        <h1 className="text-xl font-semibold text-foreground">Notifications</h1>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => {
-              refetchGlobal();
-              refetchUser();
-            }}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { refetchGlobal(); refetchUser(); }}
             disabled={isLoading}
             className="h-8"
           >
@@ -383,7 +371,7 @@ export default function AdminNotifications() {
         </div>
       </div>
 
-      {/* Compact Summary Bar */}
+      {/* Filter Bar */}
       <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg border text-sm overflow-x-auto">
         <Button
           variant={filter === "all" ? "secondary" : "ghost"}
@@ -393,7 +381,7 @@ export default function AdminNotifications() {
         >
           <Bell className="h-3.5 w-3.5 mr-1.5" />
           All
-          <Badge variant="outline" className="ml-1.5 h-5 px-1.5 text-[10px]">{allNotifications.length}</Badge>
+          <Badge variant="outline" className="ml-1.5 h-5 px-1.5 text-[10px] tabular-nums">{allNotifications.length}</Badge>
         </Button>
         <Button
           variant={filter === "unread" ? "secondary" : "ghost"}
@@ -404,7 +392,7 @@ export default function AdminNotifications() {
           <Eye className="h-3.5 w-3.5 mr-1.5" />
           Unread
           {totalUnreadCount > 0 && (
-            <Badge className="ml-1.5 h-5 px-1.5 text-[10px] bg-primary">{totalUnreadCount}</Badge>
+            <Badge className="ml-1.5 h-5 px-1.5 text-[10px] bg-primary tabular-nums">{totalUnreadCount}</Badge>
           )}
         </Button>
         <div className="h-4 w-px bg-border mx-1 shrink-0" />
@@ -417,7 +405,7 @@ export default function AdminNotifications() {
           <CreditCard className="h-3.5 w-3.5 mr-1.5 text-destructive" />
           Payments
           {paymentIssuesCount > 0 && (
-            <Badge variant="destructive" className="ml-1.5 h-5 px-1.5 text-[10px]">{paymentIssuesCount}</Badge>
+            <Badge variant="destructive" className="ml-1.5 h-5 px-1.5 text-[10px] tabular-nums">{paymentIssuesCount}</Badge>
           )}
         </Button>
         <Button
@@ -426,16 +414,15 @@ export default function AdminNotifications() {
           className="h-7 px-3 text-xs font-medium shrink-0"
           onClick={() => setTypeFilter(typeFilter === "security_types" ? "all" : "security_types")}
         >
-          <ShieldAlert className="h-3.5 w-3.5 mr-1.5 text-red-600" />
+          <ShieldAlert className="h-3.5 w-3.5 mr-1.5 text-destructive" />
           Security
           {securityAlertsCount > 0 && (
-            <Badge className="ml-1.5 h-5 px-1.5 text-[10px] bg-red-600">{securityAlertsCount}</Badge>
+            <Badge variant="destructive" className="ml-1.5 h-5 px-1.5 text-[10px] tabular-nums">{securityAlertsCount}</Badge>
           )}
         </Button>
       </div>
 
-
-      {/* Search + Tabs in compact row */}
+      {/* Search + Tabs */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -501,11 +488,11 @@ interface NotificationListProps {
   getNotificationLink: (notification: NotificationListProps["notifications"][0]) => string | null;
 }
 
-function NotificationList({ 
-  notifications, 
-  isLoading, 
-  onMarkAsRead, 
-  onDelete, 
+function NotificationList({
+  notifications,
+  isLoading,
+  onMarkAsRead,
+  onDelete,
   onNotificationClick,
   getNotificationLink,
 }: NotificationListProps) {
@@ -536,7 +523,7 @@ function NotificationList({
       <div className="space-y-3">
         {notifications.map((notification) => {
           const link = getNotificationLink(notification);
-          
+
           return (
             <Card
               key={`${notification.source}-${notification.id}`}
@@ -562,13 +549,13 @@ function NotificationList({
                       {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                     </span>
                   </div>
-                  <h4 className="font-medium text-sm">{notification.title}</h4>
+                  <h4 className="font-medium text-sm text-foreground">{notification.title}</h4>
                   <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-2 tabular-nums">
                     {format(new Date(notification.created_at), "MMM d, yyyy 'at' h:mm a")}
                   </p>
                 </div>
-                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                   {!notification.read && (
                     <Button
                       variant="ghost"

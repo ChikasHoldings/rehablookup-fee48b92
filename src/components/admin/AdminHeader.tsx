@@ -50,10 +50,10 @@ type Notification = {
 
 // Role display config
 const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
-  super_admin: { label: "Super Admin", color: "bg-amber-500/10 text-amber-600" },
-  manager: { label: "Manager", color: "bg-blue-500/10 text-blue-600" },
-  customer_rep: { label: "Customer Rep", color: "bg-emerald-500/10 text-emerald-600" },
-  advisor: { label: "Placement Advisor", color: "bg-purple-500/10 text-purple-600" },
+  super_admin: { label: "Super Admin", color: "bg-warning/10 text-warning" },
+  manager: { label: "Manager", color: "bg-primary/10 text-primary" },
+  customer_rep: { label: "Customer Rep", color: "bg-success/10 text-success" },
+  advisor: { label: "Placement Advisor", color: "bg-accent/50 text-accent-foreground" },
 };
 
 function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperAdmin = false, hasPermission = () => false }: AdminHeaderProps) {
@@ -386,15 +386,15 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "provider":
-        return <Building2 className="h-4 w-4 text-blue-500" />;
+        return <Building2 className="h-4 w-4 text-primary" />;
       case "lead":
-        return <Users className="h-4 w-4 text-amber-500" />;
+        return <Users className="h-4 w-4 text-warning" />;
       case "success":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case "warning":
-        return <CreditCard className="h-4 w-4 text-red-500" />;
+        return <CreditCard className="h-4 w-4 text-destructive" />;
       case "security":
-        return <ShieldAlert className="h-4 w-4 text-red-600" />;
+        return <ShieldAlert className="h-4 w-4 text-destructive" />;
       default:
         return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
@@ -480,7 +480,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
               >
                 <Bell className={`h-5 w-5 transition-transform ${bellAnimating ? "animate-wiggle" : ""}`} />
                 {unreadCount > 0 && (
-                  <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs border-2 border-slate-800 rounded-full ${bellAnimating ? "animate-pulse" : ""}`}>
+                  <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs border-2 border-slate-800 rounded-full tabular-nums ${bellAnimating ? "animate-pulse" : ""}`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
@@ -549,7 +549,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                             </p>
                           </div>
                           {showAsActive && (
-                            <div className="h-2 w-2 rounded-full bg-blue-500 mt-2 shrink-0" />
+                            <div className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" />
                           )}
                         </DropdownMenuItem>
                       );
@@ -557,7 +557,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                   </div>
                 ) : (
                   <div className="py-8 text-center text-muted-foreground">
-                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500/50" />
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-success/50" />
                     <p className="text-sm font-medium">All caught up!</p>
                     <p className="text-xs">No pending actions</p>
                   </div>
