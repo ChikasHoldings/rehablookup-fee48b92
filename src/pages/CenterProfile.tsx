@@ -54,7 +54,6 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { FacilityShowcaseGrid } from "@/components/facility/FacilityShowcaseGrid";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
