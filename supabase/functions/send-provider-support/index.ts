@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0 0 6px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Your Message</p>
-                    <p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                    <p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(message)}</p>
                   </td>
                 </tr>
               </table>

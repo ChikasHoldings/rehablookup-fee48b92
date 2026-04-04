@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
                 <tr>
                   <td style="padding: 16px 20px;">
                     <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Message</p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a; white-space: pre-wrap; line-height: 1.6;">${message}</p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a; white-space: pre-wrap; line-height: 1.6;">${escapeHtml(message)}</p>
                   </td>
                 </tr>
               </table>
