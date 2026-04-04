@@ -244,7 +244,7 @@ export function Header({
               <button
                 onClick={() => setOpenMegaMenu(openMegaMenu === "find-treatment" ? null : "find-treatment")}
                 className={cn(
-                  "flex items-center h-16 gap-1 px-2.5 lg:px-3 text-sm lg:text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2",
+                  "flex items-center h-[68px] gap-1 px-2.5 lg:px-3 text-[14px] lg:text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2",
                   openMegaMenu === "find-treatment"
                     ? "text-foreground border-accent"
                     : megaMenuItems[0].isActive(location.pathname)
