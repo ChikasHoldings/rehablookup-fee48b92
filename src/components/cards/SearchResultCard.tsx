@@ -1,3 +1,4 @@
+import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -202,32 +203,16 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" aria-hidden="true" />
               </>
             ) : (
-              <div className={cn(
-                "flex h-full w-full items-center justify-center min-h-[140px] md:min-h-[180px]",
-                showFeaturedBadge 
-                  ? "bg-gradient-to-br from-amber-100 via-amber-50 to-white"
-                  : "bg-gradient-to-br from-secondary via-background to-secondary"
-              )}>
-                <div className="text-center">
-                  <div className={cn(
-                    "mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-xl shadow-sm",
-                    showFeaturedBadge ? "bg-amber-200/80" : "bg-muted"
-                  )}>
-                    <span className={cn(
-                      "font-display text-xl font-bold",
-                      showFeaturedBadge ? "text-amber-700" : "text-muted-foreground"
-                    )}>
-                      {initials}
-                    </span>
-                  </div>
-                  <span className={cn(
-                    "text-[11px] font-medium",
-                    showFeaturedBadge ? "text-amber-600" : "text-muted-foreground"
-                  )}>
-                    No photo available
-                  </span>
-                </div>
-              </div>
+              <>
+                <img
+                  src={facilityPlaceholder}
+                  alt={`${center.name} treatment facility placeholder image`}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" aria-hidden="true" />
+              </>
             )}
             
             {/* Featured badge */}
