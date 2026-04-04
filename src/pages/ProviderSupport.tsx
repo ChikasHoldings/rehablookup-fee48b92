@@ -297,5 +297,6 @@ export default function ProviderSupport() {
       </main>
       <Footer />
     </div>
+    </>
   );
 }
