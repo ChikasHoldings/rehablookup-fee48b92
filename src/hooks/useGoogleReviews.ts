@@ -30,7 +30,7 @@ export function useGoogleReviews(facilityId: string | undefined) {
       
       const { data, error } = await supabase
         .from("facility_reviews_config")
-        .select("*")
+        .select("id, facility_id, google_place_id, google_place_url, google_rating, google_review_count, show_on_profile, last_updated_at")
         .eq("facility_id", facilityId)
         .maybeSingle();
       
