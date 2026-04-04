@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Globe, Star, Phone, ChevronRight, Plane, FileText, Heart, Sparkles, Users } from "lucide-react";
+import { InternationalPageHero } from "./components";
+import { ArrowRight, CheckCircle, MapPin, Shield, Clock, Star, ChevronRight, Plane, FileText, Heart, Sparkles, Phone } from "lucide-react";
+import heroImage from "@/assets/hero-uk-rehab.jpg";
 
 export default function RehabUSAFromUK() {
   return (
@@ -34,44 +36,16 @@ export default function RehabUSAFromUK() {
         ]} />
       </div>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/[0.03] via-background to-background py-16 md:py-24">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/[0.04] rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-accent/[0.04] rounded-full blur-3xl" />
-        </div>
-        <div className="container relative mx-auto px-4 max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <span className="text-lg">🇬🇧</span>
-            <span>For British & Irish Residents</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 leading-tight tracking-tight">
-            US Rehab for UK Patients
-          </h1>
-          <p className="text-lg md:text-xl text-primary font-semibold mb-3">
-            Skip NHS Waiting Lists. Start Recovery Today.
-          </p>
-          <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Access America's finest treatment centres with immediate admission, world-class clinical care, and complete privacy — thousands of miles from home.
-          </p>
-          <div className="flex flex-wrap justify-center gap-5 mb-10">
-            {["ESTA — No Visa Required", "Immediate Admission", "100% Confidential"].map(t => (
-              <div key={t} className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">{t}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base px-8 py-6">
-              <Link to="/international/apply" className="flex items-center gap-2">Apply for Treatment <ArrowRight className="h-5 w-5" /></Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="text-base px-8 py-6 border-border">
-              <Link to="/concierge" className="flex items-center gap-2"><Phone className="h-4 w-4" /> Speak to an Advisor</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <InternationalPageHero
+        flag="🇬🇧"
+        badge="For British & Irish Residents"
+        title="US Rehab for UK Patients"
+        subtitle="Skip NHS Waiting Lists. Start Recovery Today."
+        description="Access America's finest treatment centres with immediate admission, world-class clinical care, and complete privacy — thousands of miles from home."
+        trustPoints={["ESTA — No Visa Required", "Immediate Admission", "100% Confidential"]}
+        heroImage={heroImage}
+        heroAlt="Luxury oceanfront rehab facility in California for UK patients"
+      />
 
       {/* Why UK Patients Choose US */}
       <section className="py-16 md:py-20 bg-background">
