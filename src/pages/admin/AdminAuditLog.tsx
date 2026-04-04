@@ -514,17 +514,17 @@ export default function AdminAuditLog() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
+        <Card className="border-l-4 border-l-accent-foreground">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Admin Actions</p>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold tabular-nums">
                   {filteredLogs.filter(l => l.target_type === "admin_user" || l.target_type === "profile").length}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-purple-50 flex items-center justify-center">
-                <User className="h-5 w-5 text-purple-500" />
+              <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
+                <User className="h-5 w-5 text-accent-foreground" />
               </div>
             </div>
           </CardContent>
