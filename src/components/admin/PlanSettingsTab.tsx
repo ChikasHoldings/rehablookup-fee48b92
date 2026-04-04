@@ -324,9 +324,9 @@ export function PlanSettingsTab() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             {/* Free Plan */}
-            <div className="rounded-lg border p-4 bg-slate-50/50">
+            <div className="rounded-lg border p-4 bg-muted/50">
               <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">Free</Badge>
+                <Badge variant="outline">Free</Badge>
                 <span className="text-2xl font-bold">Free</span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -337,9 +337,9 @@ export function PlanSettingsTab() {
             </div>
 
             {/* Pro Plan */}
-            <div className="rounded-lg border p-4 bg-amber-50/50 border-amber-200">
+            <div className="rounded-lg border p-4 bg-warning/5 border-warning/20">
               <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Pro</Badge>
+                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Pro</Badge>
                 <span className="text-2xl font-bold">{PLAN_DETAILS.pro.price}<span className="text-sm font-normal">{PLAN_DETAILS.pro.period}</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -690,7 +690,7 @@ export function PlanSettingsTab() {
                             onClick={() => copyToClipboard(promo.code)}
                           >
                             {copiedCode === promo.code ? (
-                              <Check className="h-3 w-3 text-green-600" />
+                              <Check className="h-3 w-3 text-success" />
                             ) : (
                               <Copy className="h-3 w-3" />
                             )}
@@ -711,8 +711,8 @@ export function PlanSettingsTab() {
                         {expiresAt ? (
                           <div className={cn(
                             "flex items-center gap-1.5 text-sm",
-                            isExpired && "text-red-600",
-                            isExpiringSoon && !isExpired && "text-amber-600"
+                            isExpired && "text-destructive",
+                            isExpiringSoon && !isExpired && "text-warning"
                           )}>
                             {isExpired ? (
                               <XCircle className="h-3.5 w-3.5" />
@@ -727,12 +727,12 @@ export function PlanSettingsTab() {
                               {format(new Date(expiresAt), "MMM d, yyyy")}
                             </span>
                             {isExpired && (
-                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-red-50 text-red-600 border-red-200">
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-destructive/10 text-destructive border-destructive/20">
                                 Expired
                               </Badge>
                             )}
                             {isExpiringSoon && !isExpired && (
-                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-amber-50 text-amber-600 border-amber-200">
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-warning/10 text-warning border-warning/20">
                                 Soon
                               </Badge>
                             )}
@@ -752,11 +752,11 @@ export function PlanSettingsTab() {
                       </TableCell>
                       <TableCell>
                         {promo.active ? (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
                             Active
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
+                          <Badge variant="outline" className="bg-muted text-muted-foreground">
                             Inactive
                           </Badge>
                         )}
@@ -770,7 +770,7 @@ export function PlanSettingsTab() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                              className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/10"
                               onClick={() => deactivateMutation.mutate(promo.id)}
                               disabled={deactivateMutation.isPending}
                               title="Deactivate promo code"
@@ -781,7 +781,7 @@ export function PlanSettingsTab() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/5"
                             onClick={() => setDeleteConfirm(coupon?.id || promo.coupon.id)}
                             title="Delete coupon"
                           >
@@ -883,7 +883,7 @@ export function PlanSettingsTab() {
                     <TableRow key={item.promoCodeId}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <Badge variant="outline" className="font-mono bg-success/10 text-success border-success/20">
                             {item.code}
                           </Badge>
                         </div>
@@ -946,7 +946,7 @@ export function PlanSettingsTab() {
             <AlertDialogAction
               onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm)}
               disabled={deleteMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {deleteMutation.isPending ? (
                 <>

@@ -401,18 +401,18 @@ export default function AdminProfile() {
           <p className="text-muted-foreground">Manage your admin account settings and security</p>
         </div>
         <Badge variant="outline" className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
           Live
         </Badge>
       </div>
 
       {/* Account Status Card */}
-      <Card className="border-l-4 border-l-green-500">
+      <Card className="border-l-4 border-l-success">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-2 rounded-full bg-green-100">
-                <Shield className="h-5 w-5 text-green-600" />
+              <div className="p-2 rounded-full bg-success/10">
+                <Shield className="h-5 w-5 text-success" />
               </div>
               <div>
                 <p className="font-medium">Account Status: Active</p>
@@ -423,7 +423,7 @@ export default function AdminProfile() {
                 </p>
               </div>
             </div>
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+            <Badge className="bg-success/10 text-success hover:bg-success/10">
               {profile?.status || "active"}
             </Badge>
           </div>
@@ -459,7 +459,7 @@ export default function AdminProfile() {
               {otherSessions.length > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1.5 text-red-600 hover:text-red-700">
+                    <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
                       <LogOut className="h-4 w-4" />
                       Revoke All Others
                     </Button>
@@ -480,7 +480,7 @@ export default function AdminProfile() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleRevokeAllOtherSessions}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-destructive hover:bg-destructive/90"
                         disabled={isRevokingAll}
                       >
                         {isRevokingAll ? (
@@ -508,10 +508,10 @@ export default function AdminProfile() {
             <div className="space-y-4">
               {/* Current Session */}
               {currentSession && (
-                <div className="border rounded-lg p-4 bg-green-50/50 border-green-200">
+                <div className="border rounded-lg p-4 bg-success/5 border-success/20">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4">
-                      <div className="p-2 rounded-lg bg-green-100 text-green-600">
+                      <div className="p-2 rounded-lg bg-success/10 text-success">
                         {getDeviceIcon(currentSession.device_name, currentSession.browser)}
                       </div>
                       <div className="space-y-1">
@@ -520,7 +520,7 @@ export default function AdminProfile() {
                             {currentSession.browser || "Unknown Browser"}
                             {currentSession.os && ` on ${currentSession.os}`}
                           </p>
-                          <Badge className="bg-green-100 text-green-700 text-xs">Current</Badge>
+                          <Badge className="bg-success/10 text-success text-xs">Current</Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {currentSession.ip_address && (
@@ -591,7 +591,7 @@ export default function AdminProfile() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/5"
                                 disabled={revokingSessionId === session.id}
                               >
                                 {revokingSessionId === session.id ? (
@@ -612,7 +612,7 @@ export default function AdminProfile() {
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleRevokeSession(session.id)}
-                                  className="bg-red-600 hover:bg-red-700"
+                                  className="bg-destructive hover:bg-destructive/90"
                                 >
                                   Revoke Session
                                 </AlertDialogAction>
@@ -661,7 +661,7 @@ export default function AdminProfile() {
             {/* New Providers */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
                   <UserCheck className="h-4 w-4" />
                 </div>
                 <div>
@@ -680,7 +680,7 @@ export default function AdminProfile() {
             {/* New Leads */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-50 text-green-600">
+                <div className="p-2 rounded-lg bg-success/10 text-success">
                   <FileText className="h-4 w-4" />
                 </div>
                 <div>
@@ -699,7 +699,7 @@ export default function AdminProfile() {
             {/* Security Events */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-50 text-red-600">
+                <div className="p-2 rounded-lg bg-destructive/10 text-destructive">
                   <ShieldCheck className="h-4 w-4" />
                 </div>
                 <div>
@@ -718,7 +718,7 @@ export default function AdminProfile() {
             {/* Subscription Changes */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
+                <div className="p-2 rounded-lg bg-accent text-accent-foreground">
                   <CreditCard className="h-4 w-4" />
                 </div>
                 <div>
@@ -737,7 +737,7 @@ export default function AdminProfile() {
             {/* System Alerts */}
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+                <div className="p-2 rounded-lg bg-warning/10 text-warning">
                   <FileWarning className="h-4 w-4" />
                 </div>
                 <div>

@@ -319,7 +319,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                             {STATUS_CONFIG[invoice.status]?.label || invoice.status}
                           </Badge>
                           {invoice.waived && (
-                            <Badge variant="outline" className="text-amber-600 border-amber-300">
+                            <Badge variant="outline" className="text-warning border-warning/30">
                               Waived
                             </Badge>
                           )}
@@ -336,13 +336,13 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                             </span>
                           )}
                           {invoice.paid_at && (
-                            <span className="text-emerald-600">
+                            <span className="text-success">
                               Paid {format(new Date(invoice.paid_at), "MMM d, yyyy")}
                             </span>
                           )}
                         </div>
                         {invoice.discount_percent > 0 && (
-                          <p className="text-xs text-emerald-600">
+                          <p className="text-xs text-success">
                             {invoice.discount_percent}% discount ({invoice.discount_reason || "Pro"})
                           </p>
                         )}
@@ -515,7 +515,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="h-5 w-5 text-warning" />
               Waive Invoice
             </DialogTitle>
             <DialogDescription>
