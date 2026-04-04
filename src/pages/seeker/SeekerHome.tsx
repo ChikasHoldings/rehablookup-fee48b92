@@ -345,13 +345,13 @@ export default function SeekerHome() {
             </Card>
           </div>
 
-          <Card className="mt-8 bg-gradient-to-r from-amber-50 to-amber-100/50 border-amber-200/50">
+          <Card className="mt-8 bg-gradient-to-r from-warning/5 to-warning/10 border-warning/20">
             <CardContent className="p-6 sm:p-8 text-center">
-              <p className="text-amber-700 font-medium mb-2">Need immediate help?</p>
+              <p className="text-warning font-medium mb-2">Need immediate help?</p>
               <h3 className="text-xl font-display font-semibold mb-4 text-foreground">
                 Our support team is available 24/7 to connect you with treatment
               </h3>
-              <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25">
+              <Button asChild size="lg" className="shadow-lg">
                 <Link to="/account/concierge">
                   <Phone className="h-4 w-4 mr-2" />
                   Find Treatment

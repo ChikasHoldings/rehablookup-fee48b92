@@ -430,7 +430,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                           {initials}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-400 border-2 border-primary" />
+                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success border-2 border-primary" />
                     </div>
                     <div className="hidden md:flex flex-col items-start">
                       <span className="text-sm font-semibold text-white leading-tight max-w-[100px] truncate">
