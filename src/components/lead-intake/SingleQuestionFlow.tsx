@@ -147,6 +147,7 @@ const QUESTIONS: Question[] = [
     subtitle: "The facility will reach out at your preferred time",
     icon: <Clock className="h-6 w-6" />,
     field: "bestTimeToCall",
+    required: true,
     options: BEST_TIME_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
