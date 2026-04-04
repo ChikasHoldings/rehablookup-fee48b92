@@ -1099,16 +1099,16 @@ export default function AdminAnalytics() {
         </Card>
 
         {/* Revenue & Subscriptions Card */}
-        <Card className="border-slate-200">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-emerald-50">
-                  <DollarSign className="h-4 w-4 text-emerald-600" />
+                <div className="p-2 rounded-lg bg-success/10">
+                  <DollarSign className="h-4 w-4 text-success" />
                 </div>
                 <CardTitle className="text-sm font-semibold">Revenue & Subscriptions</CardTitle>
               </div>
-              <Badge variant="outline" className={cn("text-xs", kpis.churnRate > 5 ? "border-red-200 text-red-600" : "border-slate-200")}>
+              <Badge variant="outline" className={cn("text-xs tabular-nums", kpis.churnRate > 5 ? "border-destructive/30 text-destructive" : "")}>
                 {kpis.churnRate}% churn
               </Badge>
             </div>
@@ -1121,22 +1121,22 @@ export default function AdminAnalytics() {
                 <div className="flex-1 space-y-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <div className="text-xl font-bold text-emerald-600">${kpis.revenue.toLocaleString()}</div>
+                      <div className="text-xl font-bold text-success tabular-nums">${kpis.revenue.toLocaleString()}</div>
                       <p className="text-xs text-muted-foreground">Revenue</p>
                     </div>
                     <div>
-                      <div className="text-xl font-bold text-purple-600">${kpis.mrr.toLocaleString()}</div>
+                      <div className="text-xl font-bold text-primary tabular-nums">${kpis.mrr.toLocaleString()}</div>
                       <p className="text-xs text-muted-foreground">MRR</p>
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-100">
+                  <div className="pt-2 border-t">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Active</span>
-                      <span className="font-semibold">{kpis.activeSubscriptions}</span>
+                      <span className="font-semibold tabular-nums">{kpis.activeSubscriptions}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">New</span>
-                      <span className="font-semibold text-green-600">+{kpis.newSubscriptions}</span>
+                      <span className="font-semibold text-success tabular-nums">+{kpis.newSubscriptions}</span>
                     </div>
                   </div>
                 </div>
