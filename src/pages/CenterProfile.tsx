@@ -822,9 +822,7 @@ const CenterProfile = () => {
                 iconColor="bg-primary/10 text-primary"
               >
                 {facility.description ? (
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {facility.description}
-                  </p>
+                  <TruncatedDescription text={facility.description} />
                 ) : (
                   <p className="text-muted-foreground leading-relaxed italic">
                     No description provided yet. Contact this facility for more information about their programs and services.
