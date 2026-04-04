@@ -186,7 +186,7 @@ export function ProviderDetailModal({
       if (!provider?.user_id) return [];
       const { data } = await supabase
         .from("facilities")
-        .select("*")
+        .select("id, name, slug, city, state, facility_type, status, verified, featured, suspended, created_at, updated_at, logo_url, phone, email")
         .eq("user_id", provider.user_id)
         .order("created_at", { ascending: false });
       return data as Facility[];
