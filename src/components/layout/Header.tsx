@@ -427,27 +427,12 @@ export function Header({
                             mobileProviderExpanded && "rotate-180"
                           )} />
                         </button>
-                        {/* Provider sub-links - collapsible */}
+                        {/* Provider mega-menu mobile - collapsible */}
                         <div className={cn(
-                          "ml-8 space-y-1 overflow-hidden transition-all duration-300",
-                          mobileProviderExpanded ? "max-h-48 opacity-100 mt-1" : "max-h-0 opacity-0"
+                          "ml-4 overflow-hidden transition-all duration-300",
+                          mobileProviderExpanded ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"
                         )}>
-                          {providerDropdownLinks.map((subLink, subIndex) => (
-                            <PrefetchLink
-                              key={subLink.href}
-                              to={subLink.href}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className={cn(
-                                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
-                                location.pathname === subLink.href
-                                  ? "text-primary"
-                                  : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              <ChevronRight className="h-3.5 w-3.5" />
-                              {subLink.label}
-                            </PrefetchLink>
-                          ))}
+                          <ProviderMegaMenuMobile onNavigate={() => setMobileMenuOpen(false)} />
                         </div>
                       </div>
                     );
