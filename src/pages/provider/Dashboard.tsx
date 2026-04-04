@@ -600,7 +600,7 @@ export default function ProviderDashboardPage() {
 
               {/* Status Banner */}
               {facility?.status !== "approved" && (
-                <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-amber-500' ? "border-l-amber-500" : "border-l-muted-foreground")}>
+                <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-warning' ? "border-l-warning" : "border-l-muted-foreground")}>
                   <CardContent className="p-3.5 flex items-center gap-3">
                     <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", statusConfig.bgClass)}>
                       <StatusIcon className={cn("h-4 w-4", statusConfig.textClass)} />
