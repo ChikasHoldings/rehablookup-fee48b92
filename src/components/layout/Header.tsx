@@ -287,9 +287,17 @@ export function Header({
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
               {isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
-                  <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
-                    <User className="h-4 w-4" />
-                    Account
+                  <Button size="sm" variant="ghost" className="h-9 text-sm gap-2 relative">
+                    <Avatar className="h-6 w-6">
+                      {seekerProfile?.avatar_url ? (
+                        <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                        {seekerInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden lg:inline">{seekerDisplayName || "Account"}</span>
+                    <span className="lg:hidden">Account</span>
                     {favoritesCount > 0 && (
                       <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
