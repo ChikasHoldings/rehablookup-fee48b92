@@ -58,7 +58,7 @@ export default function AdminSupport() {
       // Fetch the specific ticket to open
       supabase
         .from("support_tickets")
-        .select("*")
+        .select("id, sender_name, sender_email, sender_user_id, subject, message, category, priority, status, source, assigned_to, assigned_by, assigned_at, resolved_by, resolved_at, resolution_notes, created_at, updated_at")
         .eq("id", ticketId)
         .single()
         .then(({ data, error }) => {

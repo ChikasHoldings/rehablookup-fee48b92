@@ -83,7 +83,7 @@ export default function PlacementRevenueDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("placement_fee_events")
-        .select("*")
+        .select("id, invoice_id, inquiry_id, facility_id, event_type, amount_cents, actor_id, actor_type, details, created_at")
         .order("created_at", { ascending: false })
         .limit(500);
 
