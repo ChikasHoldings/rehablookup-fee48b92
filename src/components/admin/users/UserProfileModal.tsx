@@ -430,7 +430,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                     variant="outline" 
                     size="sm" 
                     onClick={handleUnban}
-                    className="gap-2 text-green-600 hover:text-green-700"
+                    className="gap-2 text-success hover:text-success"
                   >
                     <ShieldOff className="h-4 w-4" />
                     Unban User
