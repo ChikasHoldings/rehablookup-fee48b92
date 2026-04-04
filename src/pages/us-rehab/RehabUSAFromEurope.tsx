@@ -195,7 +195,6 @@ export default function RehabUSAFromEurope() {
           </div>
         </section>
       </main>
-      <Footer />
-    </div>
+    </Layout>
   );
 }
