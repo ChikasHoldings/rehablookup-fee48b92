@@ -773,7 +773,7 @@ const CenterProfile = () => {
           {/* Main Content Grid */}
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr,380px]">
             {/* Left Column - Main Content */}
-            <div className="space-y-6 lg:space-y-8 min-w-0">
+            <div className="space-y-8 lg:space-y-10 min-w-0 divide-y divide-border/40 [&>*]:pt-8 [&>*:first-child]:pt-0">
               {/* Gallery */}
               {galleryImages.length > 0 && (
                 <ProfileSection 
