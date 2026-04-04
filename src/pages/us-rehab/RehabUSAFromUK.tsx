@@ -33,6 +33,11 @@ export default function RehabUSAFromUK() {
           { name: "US Treatment", url: "/us-rehab" },
           { name: "UK Patients", url: "/us-rehab/uk-patients" },
         ]}
+        hreflang={[
+          { lang: "en-GB", href: "https://rehablookup.com/us-rehab/uk-patients" },
+          { lang: "en-US", href: "https://rehablookup.com/international" },
+          { lang: "x-default", href: "https://rehablookup.com/international" },
+        ]}
       />
 
       <InternationalPageHero

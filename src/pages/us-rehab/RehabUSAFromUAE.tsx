@@ -33,6 +33,12 @@ export default function RehabUSAFromUAE() {
           { name: "US Treatment", url: "/us-rehab" },
           { name: "UAE & Middle East", url: "/us-rehab/uae-middle-east" },
         ]}
+        hreflang={[
+          { lang: "ar-AE", href: "https://rehablookup.com/us-rehab/uae-middle-east" },
+          { lang: "ar", href: "https://rehablookup.com/us-rehab/uae-middle-east" },
+          { lang: "en-US", href: "https://rehablookup.com/international" },
+          { lang: "x-default", href: "https://rehablookup.com/international" },
+        ]}
       />
 
       <InternationalPageHero

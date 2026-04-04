@@ -47,6 +47,14 @@ const InternationalPatients = () => {
           { name: "US Rehab", url: "/us-rehab" },
           { name: "International Patients", url: "/us-rehab/international-patients" },
         ]}
+        hreflang={[
+          { lang: "en-CA", href: "https://rehablookup.com/us-rehab/canadian-patients" },
+          { lang: "en-GB", href: "https://rehablookup.com/us-rehab/uk-patients" },
+          { lang: "en-AU", href: "https://rehablookup.com/us-rehab/australian-patients" },
+          { lang: "ar-AE", href: "https://rehablookup.com/us-rehab/uae-middle-east" },
+          { lang: "de", href: "https://rehablookup.com/us-rehab/european-patients" },
+          { lang: "x-default", href: "https://rehablookup.com/international" },
+        ]}
       />
 
       <InternationalPageHero
