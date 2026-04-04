@@ -482,17 +482,17 @@ export default function AdminAuditLog() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-success">
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Provider Actions</p>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold tabular-nums">
                   {filteredLogs.filter(l => l.target_type === "facility").length}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-green-50 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-green-500" />
+              <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-success" />
               </div>
             </div>
           </CardContent>
