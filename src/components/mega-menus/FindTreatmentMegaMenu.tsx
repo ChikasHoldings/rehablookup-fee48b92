@@ -112,9 +112,9 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles className="h-3.5 w-3.5 text-accent" />
-                    <p className="text-sm font-bold text-white leading-tight">Free Concierge Matching</p>
+                    <p className="text-sm font-bold text-white leading-tight">Concierge Placement Service</p>
                   </div>
-                  <p className="text-xs text-white/75 leading-snug max-w-[260px]">Our specialists will match you with the right treatment center within 24 hours — completely free.</p>
+                  <p className="text-xs text-white/75 leading-snug max-w-[260px]">Our specialists personally match you with a verified treatment center tailored to your needs — typically within 24 hours.</p>
                 </div>
                 <div className="h-8 px-4 rounded-lg bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1.5 shrink-0 group-hover:bg-accent/90 transition-colors shadow-md">
                   Get Matched <ArrowRight className="h-3.5 w-3.5" />
