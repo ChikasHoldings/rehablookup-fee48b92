@@ -527,10 +527,10 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                         : (notification.type === "provider" || notification.type === "lead");
                       
                       return (
-                        <div
+                        <DropdownMenuItem
                           key={notification.id}
                           onClick={() => handleNotificationClick(notification)}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-muted cursor-pointer transition-colors ${
+                          className={`flex items-start gap-3 px-4 py-3 cursor-pointer ${
                             showAsActive ? "bg-muted/50" : ""
                           }`}
                         >
@@ -549,9 +549,9 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                             </p>
                           </div>
                           {showAsActive && (
-                            <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
+                            <div className="h-2 w-2 rounded-full bg-blue-500 mt-2 shrink-0" />
                           )}
-                        </div>
+                        </DropdownMenuItem>
                       );
                     })}
                   </div>
