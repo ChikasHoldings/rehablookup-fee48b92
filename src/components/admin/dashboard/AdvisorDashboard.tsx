@@ -28,7 +28,7 @@ type CaseView = "mine" | "all";
 
 export function AdvisorDashboard() {
   const queryClient = useQueryClient();
-  const { user } = useAdminAuth();
+  const { user, hasPermission } = useAdminAuth();
   const [caseView, setCaseView] = useState<CaseView>("mine");
 
   const advisorId = user?.id;
