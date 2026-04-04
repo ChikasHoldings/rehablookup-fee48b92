@@ -963,17 +963,17 @@ export default function AdminAnalytics() {
       {/* Consolidated KPI Summary Cards */}
       <div className="grid lg:grid-cols-3 gap-4">
         {/* Traffic & Engagement Card */}
-        <Card className="border-slate-200">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-blue-50">
-                  <Users className="h-4 w-4 text-blue-600" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Users className="h-4 w-4 text-primary" />
                 </div>
                 <CardTitle className="text-sm font-semibold">Traffic & Engagement</CardTitle>
               </div>
               {compareMode && kpis.visitorsChange !== null && (
-                <Badge variant={kpis.visitorsChange >= 0 ? "default" : "destructive"} className="text-xs">
+                <Badge variant={kpis.visitorsChange >= 0 ? "default" : "destructive"} className="text-xs tabular-nums">
                   {kpis.visitorsChange >= 0 ? "+" : ""}{kpis.visitorsChange.toFixed(1)}%
                 </Badge>
               )}
@@ -986,15 +986,15 @@ export default function AdminAnalytics() {
               <>
                 <div className="grid grid-cols-3 gap-4 mb-3">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-900">{kpis.visitors.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.visitors.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Visitors</p>
                   </div>
-                  <div className="text-center border-x border-slate-100">
-                    <div className="text-2xl font-bold text-slate-900">{kpis.clicks.toLocaleString()}</div>
+                  <div className="text-center border-x">
+                    <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.clicks.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Clicks</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-amber-600">{kpis.conversionRate}%</div>
+                    <div className="text-2xl font-bold text-warning tabular-nums">{kpis.conversionRate}%</div>
                     <p className="text-xs text-muted-foreground">Conversion</p>
                   </div>
                 </div>
