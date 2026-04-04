@@ -28,6 +28,7 @@ interface ProviderSEOPageProps {
   sections: SEOSection[];
   ctaHeadline?: string;
   ctaSubheadline?: string;
+  images?: [PageImage, PageImage];
 }
 
 const relatedPages = [
