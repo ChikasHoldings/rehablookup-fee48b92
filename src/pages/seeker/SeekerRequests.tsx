@@ -159,7 +159,7 @@ function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick:
             </div>
           </div>
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 tabular-nums">
               <Clock className="h-3 w-3" />
               {formatDate(request.created_at)}
             </span>

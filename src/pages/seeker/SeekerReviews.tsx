@@ -175,7 +175,7 @@ function ReviewCard({
                   key={star}
                   className={`h-4 w-4 ${
                     star <= review.rating
-                      ? "fill-amber-400 text-amber-400"
+                      ? "fill-warning text-warning"
                       : "text-muted-foreground/30"
                   }`}
                 />

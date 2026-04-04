@@ -138,7 +138,7 @@ export default function SeekerNotifications() {
             </div>
             <div>
               <h1 className="text-2xl font-display font-bold">Notifications</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground tabular-nums">
                 {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
               </p>
             </div>
