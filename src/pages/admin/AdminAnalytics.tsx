@@ -263,23 +263,22 @@ export default function AdminAnalytics() {
   const { data: leadsData, isLoading: isLoadingLeads, error: leadsError } = useQuery({
     queryKey: ["admin-analytics-leads", dateRange, selectedState, selectedCity],
     queryFn: async () => {
-      // Fetch all leads including those without facility assignments
       let query = supabase
         .from("leads")
-        .select("*, facilities!facility_id(city, state)")
+        .select("id, facility_id, status, source, created_at, facilities!facility_id(city, state)")
         .gte("created_at", dateRange.from.toISOString())
-        .lte("created_at", dateRange.to.toISOString());
+        .lte("created_at", dateRange.to.toISOString())
+        .limit(5000);
 
       const { data, error } = await query;
       if (error) throw error;
       
-      // Filter by location if specified (only for leads with facilities)
       let filtered = data || [];
       if (selectedState !== "all") {
-        filtered = filtered.filter(l => l.facilities?.state === selectedState);
+        filtered = filtered.filter(l => (l.facilities as any)?.state === selectedState);
       }
       if (selectedCity !== "all") {
-        filtered = filtered.filter(l => l.facilities?.city === selectedCity);
+        filtered = filtered.filter(l => (l.facilities as any)?.city === selectedCity);
       }
       
       return filtered;
