@@ -263,6 +263,20 @@ const SearchResults = () => {
       });
     }
 
+    // Free-text search (from header search bar / seeker home ?q= param)
+    if (queryParam) {
+      const q = queryParam.toLowerCase();
+      results = results.filter((c) => {
+        if (c.name.toLowerCase().includes(q)) return true;
+        if (c.description?.toLowerCase().includes(q)) return true;
+        if (c.city.toLowerCase().includes(q)) return true;
+        if (c.state.toLowerCase().includes(q)) return true;
+        if (c.treatmentTypes.some((t) => t.toLowerCase().includes(q))) return true;
+        if (c.insuranceAccepted.some((i) => i.toLowerCase().includes(q))) return true;
+        return false;
+      });
+    }
+
     // Treatment filter from search form
     if (treatment) {
       results = results.filter((c) =>
