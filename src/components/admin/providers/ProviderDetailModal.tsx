@@ -171,7 +171,7 @@ export function ProviderDetailModal({
       if (!provider?.user_id) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("*")
+        .select("user_id, first_name, last_name, company_name, phone, created_at")
         .eq("user_id", provider.user_id)
         .maybeSingle();
       return data;
