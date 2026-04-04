@@ -831,7 +831,7 @@ export default function AdminSecurityLogs() {
               <Ban className="h-3.5 w-3.5" />
               Blocked Identifiers
             </CardDescription>
-            <CardTitle className="text-2xl text-red-600">{stats.blockedCount}</CardTitle>
+            <CardTitle className="text-2xl tabular-nums text-destructive">{stats.blockedCount}</CardTitle>
           </CardHeader>
         </Card>
       </div>
