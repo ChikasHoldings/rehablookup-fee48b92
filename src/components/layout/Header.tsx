@@ -321,7 +321,7 @@ export function Header({
             {/* "More" dropdown on tablet */}
             <DropdownMenu open={moreDropdownOpen} onOpenChange={setMoreDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="flex lg:hidden items-center h-16 gap-1 px-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground whitespace-nowrap border-b-2 border-transparent">
+                <button className="flex lg:hidden items-center h-[68px] gap-1 px-2.5 text-[14px] font-semibold text-muted-foreground hover:text-foreground whitespace-nowrap border-b-2 border-transparent">
                   More
                   <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", moreDropdownOpen && "rotate-180")} />
                 </button>
