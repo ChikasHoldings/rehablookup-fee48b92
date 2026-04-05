@@ -759,6 +759,7 @@ export default function ProviderSignup() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Helmet><title>List Your Facility | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
       <Header />
 
       <main className="flex-1 py-8 md:py-16">

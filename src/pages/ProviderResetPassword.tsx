@@ -138,6 +138,7 @@ export default function ProviderResetPassword() {
   if (isCheckingSession) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
+        <Helmet><title>Reset Password | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
         <Header 
           navLinks={providerNavLinks} 
           ctaLink="/provider-signup" 
