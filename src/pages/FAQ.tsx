@@ -4,20 +4,14 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import {
   Search, HelpCircle, ArrowRight, Heart, Phone, Lock,
   Stethoscope, DollarSign, Building2, X, Shield, CheckCircle,
-  MessageCircle, Clock,
+  ChevronDown,
 } from "lucide-react";
-import heroImg from "@/assets/images/faq-hero-seeker.jpg";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { cn } from "@/lib/utils";
 
 interface FAQItem { question: string; answer: string; }
 interface FAQCategory { id: string; name: string; icon: React.ElementType; description: string; faqs: FAQItem[]; }
@@ -90,11 +84,74 @@ const faqCategories: FAQCategory[] = [
   },
 ];
 
+// Custom FAQ item with smooth expand/collapse
+function FAQAccordionItem({ faq, isOpen, onToggle }: { faq: FAQItem; isOpen: boolean; onToggle: () => void }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (isOpen && contentRef.current) {
+      setHeight(contentRef.current.scrollHeight);
+    } else {
+      setHeight(0);
+    }
+  }, [isOpen]);
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl border bg-card transition-all duration-200",
+        isOpen
+          ? "border-primary/30 shadow-sm ring-1 ring-primary/10"
+          : "border-border hover:border-primary/20"
+      )}
+    >
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+        aria-expanded={isOpen}
+      >
+        <span className={cn(
+          "text-sm font-semibold leading-snug transition-colors",
+          isOpen ? "text-primary" : "text-foreground"
+        )}>
+          {faq.question}
+        </span>
+        <ChevronDown className={cn(
+          "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+          isOpen && "rotate-180 text-primary"
+        )} />
+      </button>
+      <div
+        className="overflow-hidden transition-[height] duration-200 ease-out"
+        style={{ height }}
+      >
+        <div ref={contentRef}>
+          <div className="px-5 pb-5 pt-0">
+            <div className="h-px bg-border mb-4" />
+            <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const FAQ = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  const searchRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
+
+  const toggleItem = useCallback((key: string) => {
+    setOpenItems(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
 
   const filteredCategories = useMemo(() => {
     const cats = activeCategory
@@ -115,6 +172,22 @@ const FAQ = () => {
   }, [searchQuery, activeCategory]);
 
   const totalResults = filteredCategories.reduce((a, c) => a + c.faqs.length, 0);
+  const totalQuestions = faqCategories.flatMap(c => c.faqs).length;
+
+  // Auto-expand matching results when searching
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const matchingKeys = new Set<string>();
+      filteredCategories.forEach(cat => {
+        cat.faqs.forEach((_, idx) => {
+          matchingKeys.add(`${cat.id}-${idx}`);
+        });
+      });
+      setOpenItems(matchingKeys);
+    } else {
+      setOpenItems(new Set());
+    }
+  }, [searchQuery, filteredCategories]);
 
   const scrollToCategory = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -136,6 +209,22 @@ const FAQ = () => {
     c.faqs.map((f) => ({ question: f.question, answer: f.answer }))
   );
 
+  const handleCategoryClick = (catId: string | null) => {
+    setActiveCategory(catId);
+    setOpenItems(new Set());
+    setSearchQuery("");
+  };
+
+  const expandAll = () => {
+    const all = new Set<string>();
+    filteredCategories.forEach(cat => {
+      cat.faqs.forEach((_, idx) => all.add(`${cat.id}-${idx}`));
+    });
+    setOpenItems(all);
+  };
+
+  const collapseAll = () => setOpenItems(new Set());
+
   return (
     <Layout>
       <SEO
@@ -149,209 +238,187 @@ const FAQ = () => {
         ]}
       />
 
-      {/* Hero — Split Screen */}
-      <section className="relative bg-primary overflow-hidden">
-        <div className="container">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-primary py-10 md:py-12">
         <MedicalPatternBackground />
-          <div className="grid lg:grid-cols-2 gap-0 items-stretch min-h-[320px]">
-            {/* Left: Content */}
-            <div className="flex flex-col justify-center py-12 lg:py-16 lg:pr-12 relative z-10">
-              <nav className="mb-4">
-                <span className="inline-flex items-center gap-2 text-sm">
-                  <Link to="/" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors">Home</Link>
-                  <span className="text-primary-foreground/40">/</span>
-                  <span className="text-primary-foreground font-medium">FAQ</span>
-                </span>
-              </nav>
-              <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/15 rounded-full px-4 py-1.5 mb-5 w-fit">
-                <HelpCircle className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-primary-foreground/90">Frequently Asked Questions</span>
-              </div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-primary-foreground mb-4 leading-tight">
-                Your Questions, Answered
-              </h1>
-              <p className="text-base text-primary-foreground/80 leading-relaxed max-w-lg mb-6">
-                Everything you need to know about finding treatment, understanding your options, insurance coverage, and how RehabLookup helps you take the first step.
-              </p>
+        <div className="container relative z-10">
+          <BreadcrumbNav
+            className="mb-4"
+            variant="dark"
+            items={[
+              { label: "Home", href: "/" },
+              { label: "FAQ" },
+            ]}
+          />
 
-              {/* Search */}
-              <div className="relative max-w-md" ref={searchRef}>
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Input
-                  type="text"
-                  placeholder="Search questions…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-12 rounded-xl border-0 bg-card pl-11 pr-10 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors z-10"
-                    aria-label="Clear search"
-                  >
-                    <X className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-4 text-sm font-medium text-white/90 backdrop-blur-sm">
+              <HelpCircle className="h-4 w-4" />
+              <span>Frequently Asked Questions</span>
             </div>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white mb-3 leading-tight tracking-tight">
+              Your Questions, Answered
+            </h1>
+            <p className="text-base text-white/80 leading-relaxed max-w-lg">
+              Everything you need to know about finding treatment, understanding your options, and how RehabLookup helps.
+            </p>
+          </div>
 
-            {/* Right: Image */}
-            <div className="hidden lg:block relative">
-              <img
-                src={heroImg}
-                alt="Healthcare consultation"
-                className="absolute inset-0 w-full h-full object-cover"
-                width={800}
-                height={600}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
+          {/* Search in hero */}
+          <div className="relative max-w-md mt-6">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+            <Input
+              ref={searchRef}
+              type="text"
+              placeholder="Search questions…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-12 rounded-xl border-0 bg-card pl-11 pr-10 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors z-10"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick stats */}
+          <div className="mt-5 flex items-center gap-6 text-white/70 text-sm">
+            <div className="flex items-center gap-1.5">
+              <HelpCircle className="h-4 w-4" />
+              <span>{totalQuestions} Questions</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Shield className="h-4 w-4" />
+              <span>HIPAA Compliant</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-1.5">
+              <CheckCircle className="h-4 w-4" />
+              <span>Verified Info</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Quick Stats */}
-      <section className="border-b border-border bg-card py-4">
+      {/* Category Pills (horizontal on mobile, replace sidebar) */}
+      <section className="border-b border-border bg-card sticky top-[68px] z-20">
         <div className="container">
-          <div className="flex items-center justify-center gap-8 md:gap-14 text-center">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">{faqCategories.flatMap(c => c.faqs).length}+ Questions</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">HIPAA Compliant</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">24/7 Support</span>
-            </div>
-            <div className="hidden md:flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">Verified Centers</span>
-            </div>
+          <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => handleCategoryClick(null)}
+              className={cn(
+                "shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                !activeCategory
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              )}
+            >
+              All
+              <span className="text-xs opacity-70">({totalQuestions})</span>
+            </button>
+            {faqCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryClick(cat.id)}
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  activeCategory === cat.id
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                )}
+              >
+                <cat.icon className="h-3.5 w-3.5" />
+                {cat.name}
+                <span className="text-xs opacity-70">({cat.faqs.length})</span>
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Main Content — Sidebar + FAQ */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-background to-muted/20">
+      {/* Main Content */}
+      <section className="py-10 md:py-14 bg-gradient-to-b from-background to-muted/20">
         <div className="container">
           {/* Search results indicator */}
           {searchQuery && (
-            <div className="mb-8 flex items-center justify-center gap-3">
+            <div className="mb-6 flex items-center gap-3">
               <div className="flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm">
                 <Search className="h-3.5 w-3.5 text-accent" />
                 <span className="text-muted-foreground">
-                  Found <span className="font-semibold text-foreground">{totalResults}</span> result{totalResults !== 1 ? "s" : ""} for "<span className="font-semibold text-foreground">{searchQuery}</span>"
+                  Found <span className="font-semibold text-foreground tabular-nums">{totalResults}</span> result{totalResults !== 1 ? "s" : ""} for &ldquo;<span className="font-semibold text-foreground">{searchQuery}</span>&rdquo;
                 </span>
               </div>
               <button onClick={() => setSearchQuery("")} className="text-sm text-primary hover:underline">Clear</button>
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-10">
-            {/* Sidebar — Category Nav */}
-            <aside className="lg:w-64 shrink-0">
-              <div className="lg:sticky lg:top-24">
-                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-1">Categories</h3>
-                <nav className="space-y-1">
-                  <button
-                    onClick={() => { setActiveCategory(null); scrollToTopSmooth(); }}
-                    className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-left ${
-                      !activeCategory ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    <HelpCircle className="h-4 w-4 shrink-0" />
-                    All Questions
-                  </button>
-                  {faqCategories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setActiveCategory(activeCategory === cat.id ? null : cat.id);
-                        scrollToTopSmooth();
-                      }}
-                      className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-left ${
-                        activeCategory === cat.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      <cat.icon className="h-4 w-4 shrink-0" />
-                      {cat.name}
-                      <span className="ml-auto text-xs opacity-70">{cat.faqs.length}</span>
-                    </button>
-                  ))}
-                </nav>
-
-                {/* Sidebar CTA */}
-                <div className="mt-8 rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Heart className="h-4 w-4 text-accent" />
-                    <p className="text-sm font-semibold text-foreground">Need Help?</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                    Our specialists can match you with the right treatment center.
-                  </p>
-                  <Link to="/concierge">
-                    <Button size="sm" className="w-full gap-1.5 h-9 text-xs font-semibold">
-                      Find Treatment <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </aside>
-
-            {/* FAQ Content */}
-            <div className="flex-1 min-w-0">
-              {filteredCategories.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                    <Search className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-display text-xl font-bold text-foreground mb-2">No Results Found</h3>
-                  <p className="text-sm text-muted-foreground mb-6">Try different keywords or browse by category.</p>
-                  <Button onClick={() => { setSearchQuery(""); setActiveCategory(null); }} variant="outline" className="gap-2">
-                    View All Questions
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-10">
-                  {filteredCategories.map((category) => (
-                    <div key={category.id} id={category.id} className="scroll-mt-32">
-                      <div className="flex items-center gap-3 mb-5 pb-3 border-b border-border">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                          <category.icon className="h-4.5 w-4.5 text-primary" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-display font-bold text-foreground">{category.name}</h2>
-                          <p className="text-xs text-muted-foreground">{category.description}</p>
-                        </div>
-                      </div>
-
-                      <Accordion type="single" collapsible className="space-y-2">
-                        {category.faqs.map((faq, index) => (
-                          <AccordionItem
-                            key={index}
-                            value={`${category.id}-${index}`}
-                            className="group border border-border rounded-xl bg-card overflow-hidden transition-all hover:border-primary/20 data-[state=open]:border-primary/30 data-[state=open]:shadow-sm"
-                          >
-                            <AccordionTrigger className="text-left py-4 px-5 gap-3 hover:no-underline [&>svg]:shrink-0 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-muted-foreground [&[data-state=open]>svg]:text-primary">
-                              <span className="text-sm font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
-                                {faq.question}
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent className="px-5 pb-5">
-                              <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* Expand/Collapse controls */}
+          {!searchQuery && filteredCategories.length > 0 && (
+            <div className="flex items-center justify-end gap-3 mb-6">
+              <button onClick={expandAll} className="text-xs text-primary hover:underline font-medium">
+                Expand All
+              </button>
+              <span className="text-border">|</span>
+              <button onClick={collapseAll} className="text-xs text-primary hover:underline font-medium">
+                Collapse All
+              </button>
             </div>
+          )}
+
+          <div className="max-w-3xl mx-auto">
+            {filteredCategories.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-display text-xl font-bold text-foreground mb-2">No Results Found</h3>
+                <p className="text-sm text-muted-foreground mb-6">Try different keywords or browse by category.</p>
+                <Button onClick={() => { setSearchQuery(""); setActiveCategory(null); }} variant="outline" className="gap-2">
+                  View All Questions
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-10">
+                {filteredCategories.map((category) => (
+                  <div key={category.id} id={category.id} className="scroll-mt-36">
+                    {/* Category header */}
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                        <category.icon className="h-[18px] w-[18px] text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-lg font-display font-bold text-foreground">{category.name}</h2>
+                        <p className="text-xs text-muted-foreground">{category.description}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                        {category.faqs.length} questions
+                      </span>
+                    </div>
+
+                    <div className="border-t border-border mb-5" />
+
+                    {/* FAQ items */}
+                    <div className="space-y-2.5">
+                      {category.faqs.map((faq, index) => {
+                        const key = `${category.id}-${index}`;
+                        return (
+                          <FAQAccordionItem
+                            key={key}
+                            faq={faq}
+                            isOpen={openItems.has(key)}
+                            onToggle={() => toggleItem(key)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
