@@ -433,7 +433,7 @@ export function Header({
       {/* Mobile Full-Screen Panel */}
       <div 
         className={cn(
-          "fixed inset-0 z-[101] md:hidden transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "fixed inset-0 z-[101] md:hidden transition-transform duration-500",
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
