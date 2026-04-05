@@ -109,6 +109,7 @@ const RehabCenters = () => {
             variant="dark"
             items={[{ label: "Treatment Centers" }]}
           />
+          <div className="mb-6 text-center">
             <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Treatment Centers
             </h1>
