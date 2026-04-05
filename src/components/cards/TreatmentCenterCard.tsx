@@ -206,7 +206,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
           {/* Featured badge overlay */}
           {showFeaturedBadge && (
             <div className="absolute right-2 top-2">
-              <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" aria-label="Featured treatment center">
+              <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide" aria-label="Featured treatment center">
                 <Crown className="h-2.5 w-2.5" aria-hidden="true" />
                 Featured
               </Badge>
@@ -215,7 +215,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
           {/* Pro badge overlay */}
           {showProBadge && (
             <div className="absolute right-2 top-2">
-              <Badge className="gap-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" aria-label="Pro treatment center">
+              <Badge className="gap-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide" aria-label="Pro treatment center">
                 <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
                 Pro
               </Badge>

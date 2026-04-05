@@ -366,7 +366,7 @@ export function LeadProfileModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl h-[90vh] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogContent className="w-[95vw] max-w-3xl h-[90vh] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
           {/* Enhanced Header */}
           <DialogHeader className="p-6 pb-5 border-b bg-gradient-to-r from-muted/50 via-muted/30 to-transparent">
             <div className="flex items-start gap-4">

@@ -174,7 +174,7 @@ const ForProviders = () => {
                     <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                     <span className="text-lg sm:text-xl md:text-2xl font-bold">{stat.value}</span>
                   </div>
-                  <p className="text-[9px] sm:text-xs md:text-xs text-primary-foreground/80 leading-tight">{stat.label}</p>
+                  <p className="text-[10px] sm:text-xs md:text-xs text-primary-foreground/80 leading-tight">{stat.label}</p>
                 </div>
               ))}
             </div>

@@ -251,7 +251,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               {yearsInBusiness && yearsInBusiness > 0 && (
                 <div className="flex items-center gap-1 bg-amber-500/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-md">
                   <Clock className="h-2.5 w-2.5 text-amber-100" aria-hidden="true" />
-                  <span className="text-[9px] font-semibold text-white">{yearsInBusiness}+ yrs</span>
+                  <span className="text-[10px] font-semibold text-white">{yearsInBusiness}+ yrs</span>
                 </div>
               )}
 

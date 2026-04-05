@@ -232,20 +232,29 @@ nav, [data-navbar] {
     top: 0;
   }
 
-  /* Ensure minimum touch target sizes for WCAG */
-  button, 
-  [role="button"],
-  a {
-    min-height: 44px;
-    min-width: 44px;
-  }
+  /* Ensure minimum touch target sizes for WCAG on mobile */
+  @media (max-width: 767px) {
+    button, 
+    [role="button"],
+    a {
+      min-height: 44px;
+    }
 
-  /* Exception for inline links */
-  p a,
-  li a,
-  span a {
-    min-height: auto;
-    min-width: auto;
+    /* Exceptions for inline/compact elements */
+    p a,
+    li a,
+    span a,
+    nav a,
+    .badge a,
+    [class*="Badge"] a,
+    [class*="badge"],
+    button[class*="absolute"],
+    button[class*="rounded-full"][class*="h-"],
+    a[class*="text-xs"],
+    a[class*="text-sm"] {
+      min-height: auto;
+      min-width: auto;
+    }
   }
 }
 
