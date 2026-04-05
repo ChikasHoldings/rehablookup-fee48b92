@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import {
   Select,
   SelectContent,
