@@ -21,7 +21,6 @@ import {
 import step1Image from "@/assets/how-it-works/step-1-search.png";
 import step2Image from "@/assets/how-it-works/step-2-compare.png";
 import step3Image from "@/assets/how-it-works/step-3-connect.png";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const steps = [
@@ -142,7 +141,6 @@ const HowItWorks = () => {
       {/* Hero - Compact navy header matching About page */}
       <section className="bg-primary py-10 px-4 md:py-14 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-        <MedicalPatternBackground />
           <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
           <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
         </div>

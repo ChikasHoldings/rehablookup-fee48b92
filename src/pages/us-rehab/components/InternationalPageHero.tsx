@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface InternationalPageHeroProps {
   flag: string;
@@ -30,7 +29,6 @@ export const InternationalPageHero = ({
 }: InternationalPageHeroProps) => {
   return (
     <section className="relative overflow-hidden bg-primary">
-      <MedicalPatternBackground />
 
       <div className="container relative mx-auto px-4 py-10 md:py-14 lg:py-16">
         {breadcrumbItems && (

@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "react-router-dom";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 interface TreatmentOption {
@@ -166,7 +165,6 @@ const CostEstimator = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-16 md:py-20">
         <div className="container mx-auto px-4">
-        <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
             variant="light"

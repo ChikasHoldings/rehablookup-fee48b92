@@ -19,7 +19,6 @@ import {
   MapPin,
   Building2,
 } from "lucide-react";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const programTypes = [
@@ -110,7 +109,6 @@ const CityInpatientRehab = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
-        <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
             items={[

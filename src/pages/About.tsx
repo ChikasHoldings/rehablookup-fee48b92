@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const values = [
@@ -90,7 +89,6 @@ const About = () => {
       {/* Hero - Compact navy header */}
       <section className="bg-primary py-10 px-4 md:py-14 lg:py-16 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-        <MedicalPatternBackground />
           <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
           <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
         </div>

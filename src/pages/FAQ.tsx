@@ -12,7 +12,6 @@ import {
   ChevronDown, Users, Globe, Home, Clock, Pill, Brain,
   CalendarCheck, BookOpen,
 } from "lucide-react";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { cn } from "@/lib/utils";
 
 interface FAQItem { question: string; answer: string; }
@@ -336,7 +335,6 @@ const FAQ = () => {
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-primary py-10 md:py-12">
-        <MedicalPatternBackground />
         <div className="container relative z-10">
           <BreadcrumbNav
             className="mb-4"

@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/accordion";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const faqs = [
@@ -86,7 +85,6 @@ export default function LuxuryRehab() {
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/85 py-16 md:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
-        <MedicalPatternBackground />
         <div className="container relative z-10 max-w-4xl">
           <BreadcrumbNav
             className="mb-4"

@@ -34,7 +34,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 interface InsuranceProvider {
@@ -412,7 +411,6 @@ export default function Insurance() {
       {/* Hero Section - Matches TreatmentTypes */}
       <section className="relative overflow-hidden bg-primary py-10 md:py-12">
         <div className="container">
-        <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
             items={[

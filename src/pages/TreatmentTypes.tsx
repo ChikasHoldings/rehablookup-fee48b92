@@ -38,7 +38,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 interface TreatmentType {
@@ -281,7 +280,6 @@ const TreatmentTypes = () => {
       {/* Streamlined Hero */}
       <section className="relative overflow-hidden bg-primary py-10 md:py-12">
         <div className="container">
-        <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
             items={[

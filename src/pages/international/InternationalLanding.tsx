@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
@@ -146,7 +145,6 @@ export default function InternationalLanding() {
               decoding="sync"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
-            <MedicalPatternBackground />
 
             <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
               <BreadcrumbNav
