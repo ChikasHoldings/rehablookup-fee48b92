@@ -169,7 +169,7 @@ function NotificationItem({
               <span className="h-2 w-2 rounded-full bg-primary" />
             )}
           </div>
-          <Badge variant="outline" className="text-[10px] shrink-0">
+          <Badge variant="outline" className="text-xs shrink-0">
             {label}
           </Badge>
         </div>

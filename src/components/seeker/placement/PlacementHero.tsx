@@ -60,7 +60,7 @@ export function PlacementHero({ onGetStarted }: PlacementHeroProps) {
           className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap"
         >
           {TRUST_INDICATORS.map((item) => (
-            <div key={item.text} className="flex items-center gap-1 text-[11px] sm:text-sm text-muted-foreground">
+            <div key={item.text} className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
               <item.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
               <span>{item.text}</span>
             </div>
@@ -98,7 +98,7 @@ export function PlacementHero({ onGetStarted }: PlacementHeroProps) {
               <ArrowRight className="h-4 w-4" />
             </Button>
 
-            <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-xs sm:text-xs text-muted-foreground flex items-center gap-1">
               <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-yellow-500 fill-yellow-500" />
               Trusted by hundreds of families
             </p>

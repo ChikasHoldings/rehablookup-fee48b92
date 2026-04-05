@@ -555,7 +555,7 @@ export default function ProviderBillingPage() {
                         <Badge 
                           variant={pkg.bonus === "Popular" ? "default" : "secondary"}
                           className={cn(
-                            "text-[10px] sm:text-xs",
+                            "text-xs sm:text-xs",
                             pkg.bonus === "Popular" && "bg-primary",
                             pkg.bonus === "Best Value" && "bg-emerald-600 text-white border-0"
                           )}
@@ -573,7 +573,7 @@ export default function ProviderBillingPage() {
                 ))}
               </div>
               
-              <p className="text-[10px] sm:text-xs text-center text-muted-foreground pt-1 sm:pt-2">
+              <p className="text-xs sm:text-xs text-center text-muted-foreground pt-1 sm:pt-2">
                 Credits never expire • Secure checkout via Stripe
               </p>
             </div>

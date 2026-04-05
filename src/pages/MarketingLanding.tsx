@@ -125,15 +125,15 @@ export default function MarketingLanding() {
               <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-6 sm:mb-8">
                 <div className="flex items-center gap-1.5 md:gap-2 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 rounded-full shadow-lg">
                   <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-primary flex-shrink-0" />
-                  <span className="text-[10px] sm:text-xs md:text-sm font-medium text-foreground">100% Confidential</span>
+                  <span className="text-xs sm:text-xs md:text-sm font-medium text-foreground">100% Confidential</span>
                 </div>
                 <div className="flex items-center gap-1.5 md:gap-2 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 rounded-full shadow-lg">
                   <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-green-600 flex-shrink-0" />
-                  <span className="text-[10px] sm:text-xs md:text-sm font-medium text-foreground">Free Service</span>
+                  <span className="text-xs sm:text-xs md:text-sm font-medium text-foreground">Free Service</span>
                 </div>
                 <div className="flex items-center gap-1.5 md:gap-2 bg-white/95 backdrop-blur-sm px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 rounded-full shadow-lg">
                   <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
-                  <span className="text-[10px] sm:text-xs md:text-sm font-medium text-foreground">24hr Response</span>
+                  <span className="text-xs sm:text-xs md:text-sm font-medium text-foreground">24hr Response</span>
                 </div>
               </div>
 

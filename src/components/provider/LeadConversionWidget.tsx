@@ -198,7 +198,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
               value={stats.current.conversionRate} 
               className="h-1.5 [&>div]:bg-emerald-500" 
             />
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {stats.current.converted} of {stats.current.total} converted
             </p>
           </div>
@@ -219,7 +219,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
               value={stats.current.contactRate} 
               className="h-1.5 [&>div]:bg-blue-500" 
             />
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {stats.current.contacted} of {stats.current.total} contacted
             </p>
           </div>
@@ -243,12 +243,12 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
           </div>
           {stats.current.avgResponseTimeHours > 0 && stats.current.avgResponseTimeHours <= 24 && (
             <div className="px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-950">
-              <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">Good</span>
+              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Good</span>
             </div>
           )}
           {stats.current.avgResponseTimeHours > 24 && (
             <div className="px-2 py-1 rounded bg-amber-100 dark:bg-amber-950">
-              <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400">Improve</span>
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Improve</span>
             </div>
           )}
         </div>
@@ -257,7 +257,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
         {stats.current.total > 0 && stats.current.contactRate < 80 && (
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
             <Phone className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               <span className="font-medium text-foreground">Tip:</span> Contacting leads within 5 minutes increases conversion rates by up to 400%.
             </p>
           </div>

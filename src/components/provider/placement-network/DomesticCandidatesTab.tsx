@@ -226,7 +226,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
             <div className="flex items-center gap-2.5 px-5 py-3 border-b bg-emerald-500/5">
               <UserCheck className="h-4 w-4 text-emerald-600" />
               <h3 className="text-sm font-semibold text-foreground">Confirmed Admissions</h3>
-              <Badge className="bg-emerald-600 text-white border-emerald-600 text-[11px] h-5 ml-auto">{confirmedPlacements.length}</Badge>
+              <Badge className="bg-emerald-600 text-white border-emerald-600 text-xs h-5 ml-auto">{confirmedPlacements.length}</Badge>
             </div>
             <div className="divide-y">
               {confirmedPlacements.slice(0, 5).map((intro) => (
@@ -234,7 +234,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                   key={`confirmed-${intro.id}`}
                   intro={intro}
                   onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
-                  statusBadge={<Badge className="bg-emerald-600 text-white border-emerald-600 text-[11px]"><CheckCircle className="h-3 w-3 mr-1" />Placed</Badge>}
+                  statusBadge={<Badge className="bg-emerald-600 text-white border-emerald-600 text-xs"><CheckCircle className="h-3 w-3 mr-1" />Placed</Badge>}
                   meta={intro.concierge_inquiries?.placement_confirmed_at ? format(new Date(intro.concierge_inquiries.placement_confirmed_at), "MMM d, yyyy") : undefined}
                 />
               ))}
@@ -248,7 +248,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
             <Users className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Candidates</h3>
             {candidateCount > 0 && (
-              <Badge variant="destructive" className="text-[11px] h-5 ml-auto">{candidateCount} new</Badge>
+              <Badge variant="destructive" className="text-xs h-5 ml-auto">{candidateCount} new</Badge>
             )}
           </div>
 
@@ -267,7 +267,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                   key={`active-${intro.id}`}
                   intro={intro}
                   onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
-                  statusBadge={<Badge className="bg-amber-500 text-white border-amber-500 text-[11px]"><Clock className="h-3 w-3 mr-1" />In Progress</Badge>}
+                  statusBadge={<Badge className="bg-amber-500 text-white border-amber-500 text-xs"><Clock className="h-3 w-3 mr-1" />In Progress</Badge>}
                   meta={intro.provider_responded_at ? `Accepted ${format(new Date(intro.provider_responded_at), "MMM d")}` : undefined}
                 />
               ))}
@@ -276,7 +276,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                   key={`pending-${intro.id}`}
                   intro={intro}
                   onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}
-                  statusBadge={<Badge variant="destructive" className="text-[11px]"><Bell className="h-3 w-3 mr-1" />New</Badge>}
+                  statusBadge={<Badge variant="destructive" className="text-xs"><Bell className="h-3 w-3 mr-1" />New</Badge>}
                   meta={format(new Date(intro.created_at), "MMM d")}
                   showActions
                   onRespond={(response, notes) => respondMutation.mutate({ id: intro.id, response, notes })}
@@ -302,7 +302,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
                   <div key={intro.id} className="flex items-center justify-between px-5 py-3.5 gap-3 hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() => { setSelectedIntro(intro); setModalOpen(true); }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <Badge variant={intro.provider_response === "interested" ? "default" : "secondary"} className="shrink-0 gap-1 text-[11px]">
+                      <Badge variant={intro.provider_response === "interested" ? "default" : "secondary"} className="shrink-0 gap-1 text-xs">
                         {intro.provider_response === "interested" ? <><CheckCircle className="h-3 w-3" /> Accepted</> : <><XCircle className="h-3 w-3" /> Declined</>}
                       </Badge>
                       <span className="text-sm truncate">{intro.concierge_inquiries?.preferred_state || "U.S."} · {intro.concierge_inquiries?.primary_concern || "Treatment"}</span>
@@ -383,8 +383,8 @@ function CandidateRow({ intro, statusBadge, meta, onClick, showActions, onRespon
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right hidden sm:block">
-            <Badge variant="outline" className={cn("text-[11px]", urgencyConf.className)}>{urgencyConf.label}</Badge>
-            {meta && <p className="text-[11px] text-muted-foreground mt-1">{meta}</p>}
+            <Badge variant="outline" className={cn("text-xs", urgencyConf.className)}>{urgencyConf.label}</Badge>
+            {meta && <p className="text-xs text-muted-foreground mt-1">{meta}</p>}
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>

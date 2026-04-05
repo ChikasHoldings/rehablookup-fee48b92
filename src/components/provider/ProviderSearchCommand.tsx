@@ -293,7 +293,7 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                       <Badge
                         variant="outline"
                         className={cn(
-                          "text-[10px] shrink-0",
+                          "text-xs shrink-0",
                           result.metadata?.status === "new" && "bg-green-500/10 text-green-600 border-green-200",
                           result.metadata?.status === "contacted" && "bg-blue-500/10 text-blue-600 border-blue-200",
                           result.metadata?.status === "converted" && "bg-purple-500/10 text-purple-600 border-purple-200"
@@ -346,12 +346,12 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
 
           {/* Footer */}
           <div className="px-3 py-2 bg-muted/30 border-t flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">↑↓</kbd>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">↑↓</kbd>
               <span>Navigate</span>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono ml-2">↵</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono ml-2">↵</kbd>
               <span>Select</span>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono ml-2">Esc</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono ml-2">Esc</kbd>
               <span>Close</span>
             </div>
           </div>

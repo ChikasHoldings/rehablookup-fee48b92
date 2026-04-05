@@ -161,7 +161,7 @@ export function SearchForm({
           {/* Where */}
           <div className="group relative flex-[1.2] border-b border-border/40 transition-colors hover:bg-muted/15 md:border-b-0 md:border-r">
             <div className="p-4 md:px-5 md:py-4">
-              <label className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-primary">
                 {isZipLookupLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : zipcodeData && !isZipcode ? (
@@ -186,7 +186,7 @@ export function SearchForm({
                 autoComplete="off"
               />
               {isZipLookupLoading && (
-                <p className="mt-1 text-[11px] text-muted-foreground animate-pulse">Resolving ZIP code…</p>
+                <p className="mt-1 text-xs text-muted-foreground animate-pulse">Resolving ZIP code…</p>
               )}
             </div>
             
@@ -222,7 +222,7 @@ export function SearchForm({
                       <span className="flex-1 truncate font-medium">
                         {formatLocationSuggestion(suggestion)}
                       </span>
-                      <span className="text-[10px] text-muted-foreground/60 font-semibold uppercase tracking-wider bg-muted/50 px-1.5 py-0.5 rounded">
+                      <span className="text-xs text-muted-foreground/60 font-semibold uppercase tracking-wider bg-muted/50 px-1.5 py-0.5 rounded">
                         {suggestion.type === "state" ? "State" : "City"}
                       </span>
                     </button>

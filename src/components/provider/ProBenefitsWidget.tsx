@@ -54,7 +54,7 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
             </div>
             <CardTitle className="text-sm font-semibold">Your Pro Benefits</CardTitle>
           </div>
-          <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30 text-[10px] font-medium">
+          <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30 text-xs font-medium">
             ACTIVE
           </Badge>
         </div>
@@ -70,7 +70,7 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground">{benefit.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{benefit.description}</p>
+                  <p className="text-xs text-muted-foreground">{benefit.description}</p>
                 </div>
               </div>
             );

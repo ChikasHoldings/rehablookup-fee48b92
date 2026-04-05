@@ -463,7 +463,7 @@ export function RequestInfoModal({
               <div className="flex items-center gap-2 min-w-0">
                 <h3 className="font-medium text-foreground text-sm truncate flex-1 min-w-0 max-w-[220px] sm:max-w-[320px]" title={facility.name}>{facility.name}</h3>
                 {isPro && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] px-1.5 py-0.5 shrink-0">
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs px-1.5 py-0.5 shrink-0">
                     <Crown className="h-2.5 w-2.5 mr-0.5" />
                     Pro
                   </Badge>

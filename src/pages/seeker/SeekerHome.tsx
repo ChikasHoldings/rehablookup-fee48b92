@@ -405,7 +405,7 @@ export default function SeekerHome() {
               <SlidersHorizontal className="h-4 w-4" />
               <span className="text-sm">Filters</span>
               {activeFiltersCount > 0 && (
-                <Badge variant={showFilters ? "secondary" : "default"} className="ml-0.5 h-5 min-w-5 px-1 flex items-center justify-center text-[10px] rounded-full">
+                <Badge variant={showFilters ? "secondary" : "default"} className="ml-0.5 h-5 min-w-5 px-1 flex items-center justify-center text-xs rounded-full">
                   {activeFiltersCount}
                 </Badge>
               )}
@@ -421,7 +421,7 @@ export default function SeekerHome() {
                   Filter & Sort
                 </h3>
                 {activeFiltersCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-[11px] gap-1 px-2">
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs gap-1 px-2">
                     <X className="h-3 w-3" />
                     Clear
                   </Button>
@@ -630,7 +630,7 @@ export default function SeekerHome() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">{favoritesCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Saved</p>
+                    <p className="text-xs text-muted-foreground">Saved</p>
                   </div>
                 </Link>
                 <Link to="/account/requests" className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/50 hover:bg-muted transition-colors shrink-0 snap-start min-w-[140px]">
@@ -639,7 +639,7 @@ export default function SeekerHome() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Inbox</p>
-                    <p className="text-[10px] text-muted-foreground">Track</p>
+                    <p className="text-xs text-muted-foreground">Track</p>
                   </div>
                 </Link>
                 <Link to="/account/reviews" className="flex items-center gap-2 p-2.5 rounded-xl bg-card border border-border/50 hover:bg-muted transition-colors shrink-0 snap-start min-w-[140px]">
@@ -648,7 +648,7 @@ export default function SeekerHome() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Reviews</p>
-                    <p className="text-[10px] text-muted-foreground">View</p>
+                    <p className="text-xs text-muted-foreground">View</p>
                   </div>
                 </Link>
               </div>

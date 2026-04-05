@@ -105,7 +105,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
             return (
               <div key={stage.key} className="px-2 py-2 text-center">
                 <p className={cn("text-base font-bold", stage.textColor)}>{value}</p>
-                <p className="text-[10px] font-medium text-foreground">{stage.label}</p>
+                <p className="text-xs font-medium text-foreground">{stage.label}</p>
                 <p className="text-[9px] text-muted-foreground mb-1.5">{stage.desc}</p>
                 <div className="h-1 bg-muted rounded-full overflow-hidden mx-auto max-w-[80%]">
                   <div className={cn("h-full rounded-full transition-all duration-700", stage.color)} style={{ width: `${pct}%` }} />
@@ -126,7 +126,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
               <span className="text-xs font-semibold text-foreground">Inquiry Trends</span>
             </div>
             {analytics.growthRate !== 0 && (
-              <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0",
+              <Badge variant="outline" className={cn("text-xs px-1.5 py-0",
                 analytics.growthRate > 0 ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : "bg-red-500/10 text-red-600 border-red-200"
               )}>
                 {analytics.growthRate > 0 ? <ArrowUpRight className="h-2.5 w-2.5 mr-0.5" /> : <ArrowDownRight className="h-2.5 w-2.5 mr-0.5" />}
@@ -185,7 +185,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2 justify-center">
                   {analytics.statusBreakdown.map((entry) => (
-                    <Badge key={entry.status} variant="outline" className={cn("text-[10px] px-1.5 py-0", STATUS_BADGES[entry.status] || "")}>
+                    <Badge key={entry.status} variant="outline" className={cn("text-xs px-1.5 py-0", STATUS_BADGES[entry.status] || "")}>
                       {entry.status}: {entry.count}
                     </Badge>
                   ))}
@@ -215,13 +215,13 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-xs text-foreground truncate">{facility.facilityName}</p>
                     <div className="flex items-center gap-1.5 mt-1">
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{facility.totalLeads} total</Badge>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-emerald-200">{facility.convertedLeads} converted</Badge>
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0">{facility.totalLeads} total</Badge>
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-emerald-200">{facility.convertedLeads} converted</Badge>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-base font-bold text-foreground">{facility.thisMonthLeads}</p>
-                    <p className="text-[10px] text-muted-foreground">this period</p>
+                    <p className="text-xs text-muted-foreground">this period</p>
                   </div>
                 </div>
               </div>
@@ -235,7 +235,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="font-semibold text-foreground text-xs">Ready to convert more inquiries?</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">View and unlock pending inquiries to start conversations.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">View and unlock pending inquiries to start conversations.</p>
           </div>
           <Button asChild size="sm" className="shrink-0 h-8 text-xs">
             <Link to="/provider/inquiries">View Inquiries</Link>
@@ -267,7 +267,7 @@ function KPICard({ title, value, icon: Icon, trend, subtitle, color }: {
         <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", c.bg)}>
           <Icon className={cn("h-3 w-3", c.text)} />
         </div>
-        <p className="text-[10px] text-muted-foreground font-medium truncate">{title}</p>
+        <p className="text-xs text-muted-foreground font-medium truncate">{title}</p>
         {trend !== undefined && trend !== 0 && (
           <span className={cn(
             "ml-auto text-[9px] font-semibold flex items-center shrink-0",

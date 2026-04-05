@@ -118,7 +118,7 @@ export default function SeekerSaved() {
           <h1 className="text-lg sm:text-2xl font-display font-bold">Saved Facilities</h1>
         </div>
         {facilities.length > 0 && (
-          <Badge variant="secondary" className="text-[10px] sm:text-xs">
+          <Badge variant="secondary" className="text-xs sm:text-xs">
             {facilities.length}
           </Badge>
         )}

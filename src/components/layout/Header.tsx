@@ -384,7 +384,7 @@ export function Header({
                         {seekerProfile?.avatar_url ? (
                           <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
                         ) : null}
-                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                           {seekerInitials}
                         </AvatarFallback>
                       </Avatar>
@@ -392,7 +392,7 @@ export function Header({
                       <span className="lg:hidden">Account</span>
                     </div>
                     {favoritesCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-xs font-medium rounded-full flex items-center justify-center">
                         {favoritesCount > 9 ? '9+' : favoritesCount}
                       </span>
                     )}
@@ -558,10 +558,10 @@ export function Header({
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{seekerDisplayName || "My Account"}</p>
-                    <p className="text-[11px] text-muted-foreground">View dashboard</p>
+                    <p className="text-xs text-muted-foreground">View dashboard</p>
                   </div>
                   {favoritesCount > 0 && (
-                    <span className="h-6 min-w-[24px] px-1.5 bg-accent text-accent-foreground text-[11px] font-bold rounded-full flex items-center justify-center">
+                    <span className="h-6 min-w-[24px] px-1.5 bg-accent text-accent-foreground text-xs font-bold rounded-full flex items-center justify-center">
                       {favoritesCount > 9 ? '9+' : favoritesCount}
                     </span>
                   )}

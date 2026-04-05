@@ -57,9 +57,9 @@ nav, [data-navbar] {
     --secondary: 220 25% 93%;
     --secondary-foreground: 222 47% 11%;
 
-    /* Muted - refined cool gray */
+    /* Muted - refined cool gray – darkened for WCAG AA contrast */
     --muted: 220 20% 96%;
-    --muted-foreground: 220 15% 45%;
+    --muted-foreground: 220 15% 38%;
 
     /* Footer background - darker for contrast */
     --footer: 220 25% 90%;
@@ -126,7 +126,7 @@ nav, [data-navbar] {
     --secondary-foreground: 0 0% 90%;
 
     --muted: 220 15% 20%;
-    --muted-foreground: 216 10% 60%;
+    --muted-foreground: 216 12% 65%;
 
     --footer: 220 18% 15%;
 

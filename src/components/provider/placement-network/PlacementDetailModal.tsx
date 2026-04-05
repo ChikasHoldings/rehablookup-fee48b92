@@ -273,7 +273,7 @@ export function PlacementDetailModal({
             <div className="min-w-0">
               <DialogTitle className="text-lg font-bold tracking-tight flex items-center gap-2.5">
                 Case #{caseId}
-                <Badge variant="outline" className={cn("text-[11px] font-semibold", statusConf.className)}>
+                <Badge variant="outline" className={cn("text-xs font-semibold", statusConf.className)}>
                   {statusConf.label}
                 </Badge>
               </DialogTitle>
@@ -290,7 +290,7 @@ export function PlacementDetailModal({
                 {inq?.timeline_urgency && (
                   <>
                     <span className="text-muted-foreground/30">·</span>
-                    <Badge variant="outline" className={cn("text-[10px]", urgencyConf.className)}>
+                    <Badge variant="outline" className={cn("text-xs", urgencyConf.className)}>
                       {urgencyConf.label}
                     </Badge>
                   </>
@@ -299,17 +299,17 @@ export function PlacementDetailModal({
             </div>
             <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
               {isPending && (
-                <Badge variant="destructive" className="text-[11px] h-6 gap-1">
+                <Badge variant="destructive" className="text-xs h-6 gap-1">
                   <AlertCircle className="h-3 w-3" /> Action Needed
                 </Badge>
               )}
               {isAccepted && !isPlaced && (
-                <Badge className="bg-amber-500 text-white border-amber-500 text-[11px] h-6 gap-1">
+                <Badge className="bg-amber-500 text-white border-amber-500 text-xs h-6 gap-1">
                   <Hourglass className="h-3 w-3" /> Awaiting
                 </Badge>
               )}
               {isPlaced && (
-                <Badge className="bg-emerald-600 text-white border-emerald-600 text-[11px] h-6 gap-1">
+                <Badge className="bg-emerald-600 text-white border-emerald-600 text-xs h-6 gap-1">
                   <CheckCircle2 className="h-3 w-3" /> Placed
                 </Badge>
               )}
@@ -333,7 +333,7 @@ export function PlacementDetailModal({
               <tab.icon className="h-4 w-4" />
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && (
-                <span className="bg-primary/10 text-primary rounded-full text-[11px] font-bold h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+                <span className="bg-primary/10 text-primary rounded-full text-xs font-bold h-5 min-w-[20px] px-1.5 flex items-center justify-center">
                   {tab.count}
                 </span>
               )}
@@ -353,7 +353,7 @@ export function PlacementDetailModal({
                   {steps.map((s, i) => (
                     <div key={i} className="flex-1">
                       <div className={cn("h-2 rounded-full transition-colors", s.done ? "bg-primary" : "bg-muted")} />
-                      <p className={cn("text-[10px] text-center mt-1.5", s.done ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                      <p className={cn("text-xs text-center mt-1.5", s.done ? "text-foreground font-semibold" : "text-muted-foreground")}>
                         {s.label}
                       </p>
                     </div>
@@ -546,9 +546,9 @@ export function PlacementDetailModal({
                           ? "bg-primary text-primary-foreground rounded-br-md"
                           : "bg-muted rounded-bl-md"
                       )}>
-                        <p className="text-[11px] font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
+                        <p className="text-xs font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
                         <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
-                        <p className="text-[10px] opacity-50 mt-2 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
+                        <p className="text-xs opacity-50 mt-2 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
                       </div>
                     </div>
                   );
@@ -654,7 +654,7 @@ function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label
     <div className="flex items-start gap-2.5 py-2">
       <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] text-muted-foreground uppercase tracking-wider leading-none mb-1">{label}</p>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider leading-none mb-1">{label}</p>
         <p className="text-sm font-medium break-words leading-snug">{value}</p>
       </div>
     </div>

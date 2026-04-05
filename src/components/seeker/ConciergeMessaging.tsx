@@ -306,7 +306,7 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
                         />
                       )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {formatMessageDate(message.created_at)}
                     </p>
                   </div>

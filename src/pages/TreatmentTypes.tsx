@@ -176,7 +176,7 @@ const TreatmentCard = ({ treatment, variant = "default" }: { treatment: Treatmen
               {treatment.title}
             </h3>
             {treatment.tag && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              <Badge variant="secondary" className="text-xs px-1.5 py-0">
                 {treatment.tag}
               </Badge>
             )}
@@ -200,7 +200,7 @@ const TreatmentCard = ({ treatment, variant = "default" }: { treatment: Treatmen
           <IconComponent className="h-5 w-5" />
         </div>
         {treatment.tag && (
-          <Badge variant="outline" className="text-[10px] font-medium">
+          <Badge variant="outline" className="text-xs font-medium">
             {treatment.tag}
           </Badge>
         )}

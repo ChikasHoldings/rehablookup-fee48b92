@@ -88,7 +88,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                 <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
               </div>
               <span className={cn(
-                "text-[10px] font-medium transition-colors",
+                "text-xs font-medium transition-colors",
                 isActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 {item.label}
@@ -115,7 +115,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                 <MoreHorizontal className={cn("h-5 w-5 transition-transform", isMoreActive && "scale-110")} />
               </div>
               <span className={cn(
-                "text-[10px] font-medium transition-colors",
+                "text-xs font-medium transition-colors",
                 isMoreActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 More

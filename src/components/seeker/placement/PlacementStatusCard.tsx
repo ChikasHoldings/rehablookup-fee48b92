@@ -64,7 +64,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
                 <span>Case</span>
-                <span className="font-mono text-[10px] sm:text-xs bg-muted px-1.5 py-0.5 rounded">
+                <span className="font-mono text-xs sm:text-xs bg-muted px-1.5 py-0.5 rounded">
                   #{caseData.id.slice(0, 8).toUpperCase()}
                 </span>
               </div>
@@ -76,7 +76,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
                   <h2 className={cn("text-base sm:text-xl font-semibold truncate", config.color)}>
                     {config.label}
                   </h2>
-                  <p className="text-[11px] sm:text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Submitted {format(new Date(caseData.created_at), "MMM d, yyyy")}
                   </p>
                 </div>
@@ -90,7 +90,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
                 className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-success/10 rounded-full shrink-0"
               >
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-                <span className="text-[10px] sm:text-sm font-medium text-success">
+                <span className="text-xs sm:text-sm font-medium text-success">
                   Complete
                 </span>
               </motion.div>
@@ -130,7 +130,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
                         )}
                       />
                       <span className={cn(
-                        "text-[8px] sm:text-[10px] mt-1 sm:mt-1.5 text-center max-w-[40px] sm:max-w-[50px] leading-tight hidden sm:block",
+                        "text-[8px] sm:text-xs mt-1 sm:mt-1.5 text-center max-w-[40px] sm:max-w-[50px] leading-tight hidden sm:block",
                         isCurrent ? "font-medium text-foreground" : "text-muted-foreground"
                       )}>
                         {stepConfig?.label?.split(' ')[0]}
@@ -186,7 +186,7 @@ function DetailItem({ icon, label, value }: { icon: React.ReactNode; label: stri
     <div className="space-y-0.5">
       <div className="flex items-center gap-1 text-muted-foreground">
         {icon}
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-[9px] sm:text-xs uppercase tracking-wider font-medium">{label}</span>
       </div>
       <p className="text-xs sm:text-sm font-medium capitalize truncate">{value}</p>
     </div>

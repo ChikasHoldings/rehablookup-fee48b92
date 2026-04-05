@@ -32,7 +32,7 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Guides with icon badges */}
         <div className="flex-1 px-5 py-4 border-r border-border/30">
-          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
             <BookOpen className="h-3 w-3" />
             Guides & Articles
           </p>
@@ -62,7 +62,7 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: Tools + CTA */}
         <div className="w-[220px] px-4 py-4">
-          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
             <Calculator className="h-3 w-3 text-accent" />
             Interactive Tools
           </p>
@@ -105,7 +105,7 @@ export function ResourcesMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Guides */}
       <div>
-        <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
           <BookOpen className="h-3.5 w-3.5" />
           Guides & Articles
         </p>
@@ -129,7 +129,7 @@ export function ResourcesMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Interactive Tools */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
           <Calculator className="h-3.5 w-3.5 text-accent" />
           Tools
         </p>

@@ -189,7 +189,7 @@ export function SessionManagementCard({ className, compact = false }: SessionMan
                   <span className="font-medium text-sm text-foreground truncate">
                     {getDeviceLabel(currentSession)}
                   </span>
-                  <Badge variant="default" className="text-[10px] h-5">
+                  <Badge variant="default" className="text-xs h-5">
                     This Device
                   </Badge>
                 </div>
@@ -287,7 +287,7 @@ export function SessionManagementCard({ className, compact = false }: SessionMan
         ) : (
           <div className="text-center py-4 text-muted-foreground border rounded-lg bg-muted/30">
             <p className="text-xs">No other active sessions.</p>
-            <p className="text-[10px] mt-0.5 opacity-75">You're only signed in on this device.</p>
+            <p className="text-xs mt-0.5 opacity-75">You're only signed in on this device.</p>
           </div>
         )}
       </CardContent>

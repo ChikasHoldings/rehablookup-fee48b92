@@ -193,12 +193,12 @@ const TreatmentCenterProfile = () => {
                   {/* Badges */}
                   <div className="flex flex-wrap items-center gap-1.5 mb-2">
                     {center.featured && (
-                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
+                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs sm:text-xs px-1.5 sm:px-2 py-0.5">
                         <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
                         Featured
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
+                    <Badge variant="secondary" className="gap-1 text-xs sm:text-xs px-1.5 sm:px-2 py-0.5">
                       <BadgeCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       Verified
                     </Badge>
@@ -216,7 +216,7 @@ const TreatmentCenterProfile = () => {
                   <div className="mt-2 flex items-center gap-2">
                     <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-accent text-accent" />
                     <span className="text-xs sm:text-sm font-semibold">{center.rating}</span>
-                    <span className="text-[10px] sm:text-xs text-muted-foreground">({center.reviewCount} reviews)</span>
+                    <span className="text-xs sm:text-xs text-muted-foreground">({center.reviewCount} reviews)</span>
                   </div>
                 </div>
               </div>
@@ -406,7 +406,7 @@ const TreatmentCenterProfile = () => {
                     <Clock className="h-3 w-3 text-primary" />
                     <span className="text-xs font-medium text-foreground">Quick Response</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     A specialist will contact you within 24 hours.
                   </p>
                 </div>

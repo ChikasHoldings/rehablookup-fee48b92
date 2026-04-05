@@ -378,7 +378,7 @@ const HolisticTherapy = () => {
             
             {/* Scroll indicator for mobile */}
             <div className="flex justify-center gap-1.5 mt-3 md:hidden">
-              <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
+              <span className="text-xs text-muted-foreground/70">← Swipe →</span>
             </div>
             <div className="mt-8 text-center">
               <Link to="/search-results?type=holistic">
