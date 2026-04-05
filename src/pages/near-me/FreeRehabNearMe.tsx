@@ -43,7 +43,7 @@ export default function FreeRehabNearMe() {
     basePath: "/free-rehab-near-me",
   });
 
-  const locationString = stateData ? stateData.state : "Your Area";
+  
   const faqs = getFreeRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
