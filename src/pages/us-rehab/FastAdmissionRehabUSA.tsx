@@ -1,11 +1,10 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
-import { Clock, Zap, Phone, Shield, CheckCircle, ArrowRight } from "lucide-react";
+import { Clock, Zap, Phone, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const FastAdmissionRehabUSA = () => {
   const faqs = [
