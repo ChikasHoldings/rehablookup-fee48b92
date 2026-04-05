@@ -1,9 +1,8 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
-import { Clock, Heart, Shield, Activity, CheckCircle } from "lucide-react";
+import { Heart, Shield, Activity, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const detoxTypes = [
   { title: "Alcohol Detox", duration: "3–7 days", description: "Medically supervised withdrawal with benzodiazepine protocols, vital sign monitoring, and seizure prevention." },
@@ -49,8 +48,10 @@ const SameDayDetoxUSA = () => {
         subtitle="Walk In Today, Start Healing Today"
         description="Access immediate medical detoxification at accredited U.S. facilities. 24/7 nursing care, FDA-approved protocols, and seamless transition to full treatment."
         trustPoints={["Same-Day Intake", "24/7 Medical Staff", "FDA-Approved Meds", "Detox-to-Rehab Pathway"]}
-        heroImage={heroImg}
-        heroAlt="Same-day medical detox center in the USA"
+        breadcrumbItems={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Same-Day Detox" },
+        ]}
       />
 
       {/* Detox Types */}

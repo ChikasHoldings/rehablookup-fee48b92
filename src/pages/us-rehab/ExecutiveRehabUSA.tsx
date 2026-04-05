@@ -1,7 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { 
+import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
@@ -52,14 +51,16 @@ const ExecutiveRehabUSA = () => {
         ]}
       />
 
-      <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav className="mb-4" items={[
+      <InternationalHero
+        title="Executive Rehab in the United States"
+        subtitle="Recovery Without Career Interruption"
+        description="Addiction treatment designed for business leaders who need to maintain essential work responsibilities. Private offices, flexible scheduling, and world-class clinical care."
+        keywords={["executive rehab", "CEO treatment", "professional rehab", "work during treatment"]}
+        breadcrumbItems={[
           { label: "US Rehab", href: "/us-rehab" },
           { label: "Executive Rehab" },
-        ]} />
-      </div>
-
-      <InternationalHero title="Executive Rehab in the United States" subtitle="Recovery Without Career Interruption" description="Addiction treatment designed for business leaders who need to maintain essential work responsibilities. Private offices, flexible scheduling, and world-class clinical care." keywords={["executive rehab", "CEO treatment", "professional rehab", "work during treatment"]} />
+        ]}
+      />
 
       <section className="py-16 md:py-20 bg-background">
         <div className="container mx-auto px-4">

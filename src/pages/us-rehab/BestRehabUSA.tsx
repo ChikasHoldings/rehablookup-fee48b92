@@ -1,7 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { 
+import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
@@ -65,18 +64,15 @@ const BestRehabUSA = () => {
         ]}
       />
 
-      <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav className="mb-4" items={[
-          { label: "US Rehab", href: "/us-rehab" },
-          { label: "Best Rehab USA" },
-        ]} />
-      </div>
-
       <InternationalHero
         title="Best Rehab Centers in the USA"
         subtitle="America's Top-Rated Addiction Treatment Facilities"
         description="Access the highest-quality addiction treatment programs in the United States. Our curated network includes only accredited, outcome-focused facilities with proven track records of success."
         keywords={["best rehab USA", "top rehab America", "highest rated treatment centers", "best addiction treatment"]}
+        breadcrumbItems={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Best Rehab USA" },
+        ]}
       />
 
       <WhyUSATreatment />

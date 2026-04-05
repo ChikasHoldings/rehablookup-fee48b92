@@ -1,11 +1,10 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
-import { Clock, Zap, Phone, Shield, CheckCircle, ArrowRight } from "lucide-react";
+import { Clock, Zap, Phone, Shield, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const FastAdmissionRehabUSA = () => {
   const faqs = [
@@ -44,8 +43,10 @@ const FastAdmissionRehabUSA = () => {
         subtitle="Same-Day Intake & Expedited Placement"
         description="When you're ready for treatment, every hour counts. Access U.S. facilities with same-day admission, 24/7 intake teams, and rapid medical detox protocols."
         trustPoints={["Same-Day Admission", "24/7 Intake Teams", "Medical Detox Ready", "Bed Reservation"]}
-        heroImage={heroImg}
-        heroAlt="Fast admission to rehab centers in the USA"
+        breadcrumbItems={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Fast Admission" },
+        ]}
       />
 
       {/* Urgency Section */}

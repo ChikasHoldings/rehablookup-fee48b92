@@ -1,7 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { 
+import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
@@ -51,18 +50,15 @@ const LuxuryRehabAmerica = () => {
         ]}
       />
 
-      <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav className="mb-4" items={[
-          { label: "US Rehab", href: "/us-rehab" },
-          { label: "Luxury Rehab America" },
-        ]} />
-      </div>
-
       <InternationalHero
         title="Luxury Rehab in America"
         subtitle="Five-Star Treatment, World-Class Recovery"
         description="Experience addiction treatment in America's most exclusive facilities. Private suites, gourmet dining, spa amenities, and unparalleled clinical care in stunning locations."
         keywords={["luxury rehab USA", "five-star treatment", "premium rehab America", "exclusive addiction treatment"]}
+        breadcrumbItems={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Luxury Rehab America" },
+        ]}
       />
 
       <section className="py-16 md:py-20 bg-background">
