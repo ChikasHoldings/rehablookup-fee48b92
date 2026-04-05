@@ -80,6 +80,19 @@ const About = () => {
         title="About Us - Trusted Rehab Directory | RehabLookup"
         description="RehabLookup connects families with verified addiction treatment centers. Learn our mission, values, and commitment to transparency in recovery."
         canonical="/about"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          "name": "About RehabLookup",
+          "description": "RehabLookup connects families with verified addiction treatment centers.",
+          "url": "https://rehablookup.com/about",
+          "mainEntity": {
+            "@type": "Organization",
+            "name": "RehabLookup",
+            "url": "https://rehablookup.com",
+            "description": "Trusted directory connecting families with verified addiction treatment centers across the United States.",
+          },
+        }}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "About", url: "/about" },
