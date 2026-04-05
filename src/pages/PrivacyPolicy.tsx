@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Link } from "react-router-dom";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { ArrowLeft, Shield, Lock, Eye, UserCheck, FileText, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
