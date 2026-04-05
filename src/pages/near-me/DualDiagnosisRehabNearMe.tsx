@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Brain, Heart, Shield, Stethoscope } from "lucide-react";
@@ -38,48 +37,19 @@ const getDualDiagnosisFAQs = (location?: { state: string }) => [
 
 export default function DualDiagnosisRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/dual-diagnosis-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently on mount
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getDualDiagnosisFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getDualDiagnosisFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Dual Diagnosis Treatment Center",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -100,8 +70,8 @@ export default function DualDiagnosisRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Dual Diagnosis Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Co-Occurring Disorder Treatment`}
-        description={`Find dual diagnosis treatment centers${stateData ? ` in ${stateData.name}` : " near you"}. Integrated care for addiction and mental health including depression, anxiety, PTSD, and bipolar disorder.`}
+        title={`Dual Diagnosis Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Co-Occurring Disorder Treatment`}
+        description={`Find dual diagnosis treatment centers${stateData ? ` in ${stateData.state}` : " near you"}. Integrated care for addiction and mental health including depression, anxiety, PTSD, and bipolar disorder.`}
         canonical={stateSlug ? `/dual-diagnosis-rehab-near-me/${stateSlug}` : "/dual-diagnosis-rehab-near-me"}
         keywords={[
           "dual diagnosis rehab near me",
@@ -113,18 +83,18 @@ export default function DualDiagnosisRehabNearMe() {
           "bipolar and addiction treatment",
           "integrated dual diagnosis",
           ...(stateData ? [
-            `dual diagnosis ${stateData.name}`,
-            `co-occurring treatment ${stateData.abbr}`,
+            `dual diagnosis ${stateData.state}`,
+            `co-occurring treatment ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Dual Diagnosis Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find treatment centers specializing in co-occurring addiction and mental health disorders${stateData ? ` in ${stateData.name}` : " near you"}. Integrated care for lasting recovery.`}
+        title={`Dual Diagnosis Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find treatment centers specializing in co-occurring addiction and mental health disorders${stateData ? ` in ${stateData.state}` : " near you"}. Integrated care for lasting recovery.`}
         treatmentType="Dual Diagnosis Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -168,7 +138,7 @@ export default function DualDiagnosisRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -184,7 +154,7 @@ export default function DualDiagnosisRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Dual Diagnosis Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Dual Diagnosis Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Treatment facilities specializing in co-occurring mental health and addiction disorders.
@@ -208,7 +178,7 @@ export default function DualDiagnosisRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}&service=Dual+Diagnosis` : "?service=Dual+Diagnosis"}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}&service=Dual+Diagnosis` : "?service=Dual+Diagnosis"}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -256,7 +226,7 @@ export default function DualDiagnosisRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Dual Diagnosis Treatment"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

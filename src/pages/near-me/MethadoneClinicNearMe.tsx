@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Pill, Clock, Shield, HeartPulse } from "lucide-react";
@@ -38,48 +37,19 @@ const getMethadoneFAQs = (location?: { state: string }) => [
 
 export default function MethadoneClinicNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/methadone-clinic-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getMethadoneFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getMethadoneFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Methadone Clinic",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -100,8 +70,8 @@ export default function MethadoneClinicNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Methadone Clinic Near Me ${stateData ? `in ${stateData.name}` : ""} | Opioid Treatment Programs`}
-        description={`Find methadone clinics and opioid treatment programs${stateData ? ` in ${stateData.name}` : " near you"}. Daily dosing, medication-assisted treatment, and comprehensive recovery support.`}
+        title={`Methadone Clinic Near Me ${stateData ? `in ${stateData.state}` : ""} | Opioid Treatment Programs`}
+        description={`Find methadone clinics and opioid treatment programs${stateData ? ` in ${stateData.state}` : " near you"}. Daily dosing, medication-assisted treatment, and comprehensive recovery support.`}
         canonical={stateSlug ? `/methadone-clinic-near-me/${stateSlug}` : "/methadone-clinic-near-me"}
         keywords={[
           "methadone clinic near me",
@@ -113,18 +83,18 @@ export default function MethadoneClinicNearMe() {
           "heroin addiction treatment",
           "opioid addiction help",
           ...(stateData ? [
-            `methadone clinic ${stateData.name}`,
-            `opioid treatment ${stateData.abbr}`,
+            `methadone clinic ${stateData.state}`,
+            `opioid treatment ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Methadone Clinic Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find licensed methadone clinics and opioid treatment programs${stateData ? ` in ${stateData.name}` : " near you"}. FDA-approved medication-assisted treatment for opioid addiction.`}
+        title={`Methadone Clinic Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find licensed methadone clinics and opioid treatment programs${stateData ? ` in ${stateData.state}` : " near you"}. FDA-approved medication-assisted treatment for opioid addiction.`}
         treatmentType="Methadone Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -168,7 +138,7 @@ export default function MethadoneClinicNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -184,7 +154,7 @@ export default function MethadoneClinicNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Methadone Clinics {stateData ? `in ${stateData.name}` : "Near You"}
+              Methadone Clinics {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Licensed opioid treatment programs offering methadone maintenance therapy.
@@ -205,7 +175,7 @@ export default function MethadoneClinicNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}&service=MAT` : "?service=MAT"}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}&service=MAT` : "?service=MAT"}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Clinics
                       <ArrowRight className="h-4 w-4" />
@@ -253,7 +223,7 @@ export default function MethadoneClinicNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Methadone Treatment"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

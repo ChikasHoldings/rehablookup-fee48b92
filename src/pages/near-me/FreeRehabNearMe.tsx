@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, DollarSign, Heart, Shield } from "lucide-react";
@@ -38,59 +37,20 @@ const getFreeRehabFAQs = (location?: { state: string }) => [
 
 export default function FreeRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/free-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  // Filter facilities - prioritize those accepting Medicaid/Medicare
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    // Sort by Medicaid/Medicare acceptance
-    return filtered.sort((a, b) => {
-      const aAccepts = a.insuranceAccepted?.some(i => 
-        i.toLowerCase().includes('medicaid') || i.toLowerCase().includes('medicare')
-      ) ? 1 : 0;
-      const bAccepts = b.insuranceAccepted?.some(i => 
-        i.toLowerCase().includes('medicaid') || i.toLowerCase().includes('medicare')
-      ) ? 1 : 0;
-      return bAccepts - aAccepts;
-    });
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently on mount
-    }
-  }, [stateSlug, userLocation]);
-
-  const locationString = stateData ? stateData.name : "Your Area";
-  const faqs = getFreeRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  
+  const faqs = getFreeRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Free Drug Rehabilitation Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -111,8 +71,8 @@ export default function FreeRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Free Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | No-Cost Addiction Treatment`}
-        description={`Find free and low-cost drug and alcohol rehab centers${stateData ? ` in ${stateData.name}` : " near you"}. State-funded programs, Medicaid-covered treatment, sliding scale options. Get help today.`}
+        title={`Free Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | No-Cost Addiction Treatment`}
+        description={`Find free and low-cost drug and alcohol rehab centers${stateData ? ` in ${stateData.state}` : " near you"}. State-funded programs, Medicaid-covered treatment, sliding scale options. Get help today.`}
         canonical={stateSlug ? `/free-rehab-near-me/${stateSlug}` : "/free-rehab-near-me"}
         keywords={[
           "free rehab near me",
@@ -125,9 +85,9 @@ export default function FreeRehabNearMe() {
           "no cost addiction treatment",
           "free detox near me",
           ...(stateData ? [
-            `free rehab ${stateData.name}`,
-            `medicaid rehab ${stateData.abbr}`,
-            `state funded treatment ${stateData.name}`,
+            `free rehab ${stateData.state}`,
+            `medicaid rehab ${stateData.stateAbbr}`,
+            `state funded treatment ${stateData.state}`,
           ] : []),
         ]}
         structuredData={structuredData}
@@ -135,15 +95,15 @@ export default function FreeRehabNearMe() {
           { name: "Home", url: "/" },
           { name: "Treatment Options", url: "/treatment-types" },
           { name: "Free Rehab Near Me", url: "/free-rehab-near-me" },
-          ...(stateData ? [{ name: stateData.name, url: `/free-rehab-near-me/${stateData.slug}` }] : []),
+          ...(stateData ? [{ name: stateData.state, url: `/free-rehab-near-me/${stateData.slug}` }] : []),
         ]}
       />
 
       <NearMeHero
-        title={`Free Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find free and low-cost addiction treatment centers${stateData ? ` in ${stateData.name}` : " near you"}. State-funded programs, Medicaid-covered treatment, and sliding scale options available.`}
+        title={`Free Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find free and low-cost addiction treatment centers${stateData ? ` in ${stateData.state}` : " near you"}. State-funded programs, Medicaid-covered treatment, and sliding scale options available.`}
         treatmentType="Free Addiction Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -188,7 +148,7 @@ export default function FreeRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -205,7 +165,7 @@ export default function FreeRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Free & Low-Cost Treatment Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Free & Low-Cost Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Browse facilities accepting Medicaid, Medicare, and offering sliding scale payment options.
@@ -226,7 +186,7 @@ export default function FreeRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}&insurance=Medicaid` : "?insurance=Medicaid"}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}&insurance=Medicaid` : "?insurance=Medicaid"}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -275,7 +235,7 @@ export default function FreeRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Free Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

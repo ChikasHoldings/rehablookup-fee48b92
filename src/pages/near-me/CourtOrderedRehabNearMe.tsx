@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Scale, FileCheck, Clock, Shield } from "lucide-react";
@@ -38,48 +37,19 @@ const getCourtOrderedRehabFAQs = (location?: { state: string }) => [
 
 export default function CourtOrderedRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/court-ordered-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently on mount
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getCourtOrderedRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getCourtOrderedRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Court-Ordered Drug Rehabilitation Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -100,8 +70,8 @@ export default function CourtOrderedRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Court-Ordered Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Legal Mandated Treatment`}
-        description={`Find court-ordered and court-approved drug rehab centers${stateData ? ` in ${stateData.name}` : " near you"}. DUI programs, drug court treatment, and legal-compliant rehabilitation facilities.`}
+        title={`Court-Ordered Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Legal Mandated Treatment`}
+        description={`Find court-ordered and court-approved drug rehab centers${stateData ? ` in ${stateData.state}` : " near you"}. DUI programs, drug court treatment, and legal-compliant rehabilitation facilities.`}
         canonical={stateSlug ? `/court-ordered-rehab-near-me/${stateSlug}` : "/court-ordered-rehab-near-me"}
         keywords={[
           "court ordered rehab near me",
@@ -113,18 +83,18 @@ export default function CourtOrderedRehabNearMe() {
           "probation rehab",
           "mandated addiction treatment",
           ...(stateData ? [
-            `court ordered rehab ${stateData.name}`,
-            `drug court ${stateData.abbr}`,
+            `court ordered rehab ${stateData.state}`,
+            `drug court ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Court-Ordered Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find court-approved addiction treatment centers${stateData ? ` in ${stateData.name}` : " near you"}. Meet legal requirements with accredited programs that report to the court.`}
+        title={`Court-Ordered Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find court-approved addiction treatment centers${stateData ? ` in ${stateData.state}` : " near you"}. Meet legal requirements with accredited programs that report to the court.`}
         treatmentType="Court-Ordered Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -168,7 +138,7 @@ export default function CourtOrderedRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -184,7 +154,7 @@ export default function CourtOrderedRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Court-Approved Treatment Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Court-Approved Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Browse facilities that accept court-ordered and mandated treatment referrals.
@@ -205,7 +175,7 @@ export default function CourtOrderedRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -253,7 +223,7 @@ export default function CourtOrderedRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Court-Ordered Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -6,7 +5,7 @@ import { NearMeHero } from "@/components/seo/NearMeHero";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Shield, Users, Brain, Dumbbell } from "lucide-react";
@@ -37,52 +36,19 @@ const getMensRehabFAQs = (location?: { state: string }) => [
 
 export default function MensRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/mens-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.sort((a, b) => {
-      const aFeatured = (a as any).isPro || a.featured ? 1 : 0;
-      const bFeatured = (b as any).isPro || b.featured ? 1 : 0;
-      return bFeatured - aFeatured;
-    });
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getMensRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getMensRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Men's Addiction Treatment Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -103,8 +69,8 @@ export default function MensRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Men's Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Gender-Specific Treatment`}
-        description={`Find men's-only drug and alcohol rehab centers${stateData ? ` in ${stateData.name}` : " near you"}. Brotherhood support, veteran programs, and treatment addressing men's unique recovery needs.`}
+        title={`Men's Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Gender-Specific Treatment`}
+        description={`Find men's-only drug and alcohol rehab centers${stateData ? ` in ${stateData.state}` : " near you"}. Brotherhood support, veteran programs, and treatment addressing men's unique recovery needs.`}
         canonical={stateSlug ? `/mens-rehab-near-me/${stateSlug}` : "/mens-rehab-near-me"}
         keywords={[
           "mens rehab near me",
@@ -116,9 +82,9 @@ export default function MensRehabNearMe() {
           "men's drug rehab",
           "male alcohol treatment",
           ...(stateData ? [
-            `mens rehab ${stateData.name}`,
-            `male treatment ${stateData.abbr}`,
-            `men's recovery ${stateData.name}`,
+            `mens rehab ${stateData.state}`,
+            `male treatment ${stateData.stateAbbr}`,
+            `men's recovery ${stateData.state}`,
           ] : []),
         ]}
         structuredData={structuredData}
@@ -126,15 +92,15 @@ export default function MensRehabNearMe() {
           { name: "Home", url: "/" },
           { name: "Treatment Options", url: "/treatment-types" },
           { name: "Men's Rehab", url: "/mens-rehab-near-me" },
-          ...(stateData ? [{ name: stateData.name, url: `/mens-rehab-near-me/${stateData.slug}` }] : []),
+          ...(stateData ? [{ name: stateData.state, url: `/mens-rehab-near-me/${stateData.slug}` }] : []),
         ]}
       />
 
       <NearMeHero
-        title={`Men's Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find men's-only addiction treatment programs${stateData ? ` in ${stateData.name}` : " near you"}. Brotherhood support and therapies designed specifically for men's recovery journey.`}
+        title={`Men's Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find men's-only addiction treatment programs${stateData ? ` in ${stateData.state}` : " near you"}. Brotherhood support and therapies designed specifically for men's recovery journey.`}
         treatmentType="Men's Addiction Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -182,7 +148,7 @@ export default function MensRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Men's Treatment Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Men's Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Evidence-based addiction treatment designed for men's unique recovery needs.
@@ -206,7 +172,7 @@ export default function MensRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -247,7 +213,7 @@ export default function MensRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Men's Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -6,7 +5,7 @@ import { NearMeHero } from "@/components/seo/NearMeHero";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Star, Sparkles, Home, Users } from "lucide-react";
@@ -37,54 +36,19 @@ const getLuxuryRehabFAQs = (location?: { state: string }) => [
 
 export default function LuxuryRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/luxury-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  // Filter facilities - prioritize featured/pro facilities as they tend to be higher-end
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    // Sort by featured status
-    return filtered.sort((a, b) => {
-      const aFeatured = (a as any).isPro || a.featured ? 1 : 0;
-      const bFeatured = (b as any).isPro || b.featured ? 1 : 0;
-      return bFeatured - aFeatured;
-    });
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently on mount
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getLuxuryRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getLuxuryRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Luxury Drug Rehabilitation Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -105,8 +69,8 @@ export default function LuxuryRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Luxury Rehab Centers ${stateData ? `in ${stateData.name}` : "Near Me"} | Executive Treatment`}
-        description={`Find luxury and executive rehab centers${stateData ? ` in ${stateData.name}` : " near you"}. Private rooms, world-class amenities, personalized treatment plans. Premium addiction recovery.`}
+        title={`Luxury Rehab Centers ${stateData ? `in ${stateData.state}` : "Near Me"} | Executive Treatment`}
+        description={`Find luxury and executive rehab centers${stateData ? ` in ${stateData.state}` : " near you"}. Private rooms, world-class amenities, personalized treatment plans. Premium addiction recovery.`}
         canonical={stateSlug ? `/luxury-rehab-near-me/${stateSlug}` : "/luxury-rehab-near-me"}
         keywords={[
           "luxury rehab near me",
@@ -119,9 +83,9 @@ export default function LuxuryRehabNearMe() {
           "celebrity rehab",
           "5 star rehab",
           ...(stateData ? [
-            `luxury rehab ${stateData.name}`,
-            `private rehab ${stateData.abbr}`,
-            `executive treatment ${stateData.name}`,
+            `luxury rehab ${stateData.state}`,
+            `private rehab ${stateData.stateAbbr}`,
+            `executive treatment ${stateData.state}`,
           ] : []),
         ]}
         structuredData={structuredData}
@@ -129,15 +93,15 @@ export default function LuxuryRehabNearMe() {
           { name: "Home", url: "/" },
           { name: "Treatment Options", url: "/treatment-types" },
           { name: "Luxury Rehab", url: "/luxury-rehab-near-me" },
-          ...(stateData ? [{ name: stateData.name, url: `/luxury-rehab-near-me/${stateData.slug}` }] : []),
+          ...(stateData ? [{ name: stateData.state, url: `/luxury-rehab-near-me/${stateData.slug}` }] : []),
         ]}
       />
 
       <NearMeHero
-        title={`Luxury Rehab Centers${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Discover premium addiction treatment facilities${stateData ? ` in ${stateData.name}` : " near you"}. World-class amenities, personalized care, and evidence-based treatment in comfortable settings.`}
+        title={`Luxury Rehab Centers${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Discover premium addiction treatment facilities${stateData ? ` in ${stateData.state}` : " near you"}. World-class amenities, personalized care, and evidence-based treatment in comfortable settings.`}
         treatmentType="Luxury Addiction Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -185,7 +149,7 @@ export default function LuxuryRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Luxury Treatment Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Luxury Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Premium facilities offering upscale addiction treatment with world-class amenities.
@@ -209,7 +173,7 @@ export default function LuxuryRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -250,7 +214,7 @@ export default function LuxuryRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Luxury Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

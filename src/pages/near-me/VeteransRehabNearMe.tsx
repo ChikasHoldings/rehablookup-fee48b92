@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Shield, Heart, Users, Award } from "lucide-react";
@@ -38,48 +37,19 @@ const getVeteransRehabFAQs = (location?: { state: string }) => [
 
 export default function VeteransRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/veterans-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getVeteransRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getVeteransRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Veterans Drug Rehabilitation Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -100,8 +70,8 @@ export default function VeteransRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Veterans Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | VA & Military Addiction Treatment`}
-        description={`Find veteran-focused drug and alcohol rehab centers${stateData ? ` in ${stateData.name}` : " near you"}. VA-covered treatment, PTSD-informed care, TRICARE accepted. Honor their service with quality care.`}
+        title={`Veterans Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | VA & Military Addiction Treatment`}
+        description={`Find veteran-focused drug and alcohol rehab centers${stateData ? ` in ${stateData.state}` : " near you"}. VA-covered treatment, PTSD-informed care, TRICARE accepted. Honor their service with quality care.`}
         canonical={stateSlug ? `/veterans-rehab-near-me/${stateSlug}` : "/veterans-rehab-near-me"}
         keywords={[
           "veterans rehab near me",
@@ -114,18 +84,18 @@ export default function VeteransRehabNearMe() {
           "combat veteran rehab",
           "VA addiction services",
           ...(stateData ? [
-            `veterans rehab ${stateData.name}`,
-            `VA treatment ${stateData.abbr}`,
+            `veterans rehab ${stateData.state}`,
+            `VA treatment ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Veterans Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find specialized addiction treatment for veterans${stateData ? ` in ${stateData.name}` : " near you"}. PTSD-informed care, VA benefits accepted, peer support from fellow veterans.`}
+        title={`Veterans Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find specialized addiction treatment for veterans${stateData ? ` in ${stateData.state}` : " near you"}. PTSD-informed care, VA benefits accepted, peer support from fellow veterans.`}
         treatmentType="Veterans Addiction Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -169,7 +139,7 @@ export default function VeteransRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -185,7 +155,7 @@ export default function VeteransRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Veterans Treatment Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Veterans Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Browse facilities offering specialized treatment for veterans and military personnel.
@@ -209,7 +179,7 @@ export default function VeteransRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -257,7 +227,7 @@ export default function VeteransRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Veterans Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

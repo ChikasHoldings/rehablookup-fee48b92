@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateTreatmentNearMeSchema, generateNearMeSchema } from "@/components/SEO";
@@ -7,8 +6,6 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection, getDrugRehabNearMeFAQs } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin } from "lucide-react";
@@ -18,125 +15,30 @@ import {
   insuranceLinks, 
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
-
-// State coordinates for geolocation matching
-const stateCoordinates: Record<string, { lat: number; lng: number; name: string; abbr: string }> = {
-  "alabama": { lat: 32.806671, lng: -86.791130, name: "Alabama", abbr: "AL" },
-  "alaska": { lat: 61.370716, lng: -152.404419, name: "Alaska", abbr: "AK" },
-  "arizona": { lat: 33.729759, lng: -111.431221, name: "Arizona", abbr: "AZ" },
-  "california": { lat: 36.116203, lng: -119.681564, name: "California", abbr: "CA" },
-  "colorado": { lat: 39.059811, lng: -105.311104, name: "Colorado", abbr: "CO" },
-  "florida": { lat: 27.766279, lng: -81.686783, name: "Florida", abbr: "FL" },
-  "georgia": { lat: 33.040619, lng: -83.643074, name: "Georgia", abbr: "GA" },
-  "illinois": { lat: 40.349457, lng: -88.986137, name: "Illinois", abbr: "IL" },
-  "new-york": { lat: 42.165726, lng: -74.948051, name: "New York", abbr: "NY" },
-  "texas": { lat: 31.054487, lng: -97.563461, name: "Texas", abbr: "TX" },
-  // Add more states as needed
-};
-
-function getClosestState(lat: number, lng: number): { name: string; abbr: string; slug: string } | null {
-  let closest = null;
-  let minDistance = Infinity;
-
-  for (const [slug, coords] of Object.entries(stateCoordinates)) {
-    const distance = Math.sqrt(
-      Math.pow(lat - coords.lat, 2) + Math.pow(lng - coords.lng, 2)
-    );
-    if (distance < minDistance) {
-      minDistance = distance;
-      closest = { name: coords.name, abbr: coords.abbr, slug };
-    }
-  }
-
-  return closest;
-}
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 
 export default function DrugRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/drug-rehab-near-me",
+  });
 
-  // Get state data from URL or geolocation
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  // Filter facilities by state
-  const facilities = useMemo(() => {
-    const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    
-    if (!stateData) return allFacilities.slice(0, 20);
-
-    return allFacilities
-      .filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      )
-      .sort((a, b) => {
-        const aFeatured = (a as any).hasFeaturedSubscription ? 1 : 0;
-        const bFeatured = (b as any).hasFeaturedSubscription ? 1 : 0;
-        if (bFeatured !== aFeatured) return bFeatured - aFeatured;
-        return b.rating - a.rating;
-      });
-  }, [approvedFacilities, stateData]);
-
-  // Auto-detect location on mount if no state in URL
-  useEffect(() => {
-    if (!stateSlug && !userLocation && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const closest = getClosestState(position.coords.latitude, position.coords.longitude);
-          if (closest) setUserLocation(closest);
-        },
-        () => {},
-        { timeout: 10000 }
-      );
-    }
-  }, [stateSlug, userLocation]);
-
-  const locationString = stateData 
-    ? stateData.name
-    : "Your Area";
-
-  const faqs = getDrugRehabNearMeFAQs(stateData ? { state: stateData.name } : undefined);
-
-  const nearbyStates = useMemo(() => {
-    if (!stateData) return [];
-    const currentIndex = statesData.findIndex(s => s.slug === stateData.slug);
-    return statesData
-      .filter((_, i) => Math.abs(i - currentIndex) > 0 && Math.abs(i - currentIndex) <= 3)
-      .slice(0, 4)
-      .map(s => ({
-        name: s.name,
-        slug: `/drug-rehab-near-me/${s.slug}`,
-        facilityCount: treatmentCenters.filter(f => 
-          f.state.toLowerCase() === s.name.toLowerCase() || 
-          f.state.toLowerCase() === s.abbreviation.toLowerCase()
-        ).length,
-      }));
-  }, [stateData]);
+  const faqs = getDrugRehabNearMeFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     ...generateTreatmentNearMeSchema({
       treatmentType: "Drug Rehabilitation",
       treatmentSlug: "drug-rehab",
-      location: stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined,
+      location: stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined,
       facilityCount: facilities.length,
       faqs,
     }),
     generateNearMeSchema({
       serviceType: "Drug Rehabilitation Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -145,8 +47,8 @@ export default function DrugRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Drug Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Find Treatment Centers`}
-        description={`Find drug rehabilitation centers near you${stateData ? ` in ${stateData.name}` : ""}. Compare ${facilities.length}+ verified treatment facilities offering detox, inpatient, and outpatient programs. Free insurance verification.`}
+        title={`Drug Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
+        description={`Find drug rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ verified treatment facilities offering detox, inpatient, and outpatient programs. Free insurance verification.`}
         canonical={stateSlug ? `/drug-rehab-near-me/${stateSlug}` : "/drug-rehab-near-me"}
         keywords={[
           "drug rehab near me",
@@ -154,9 +56,9 @@ export default function DrugRehabNearMe() {
           "addiction treatment near me",
           "substance abuse treatment",
           ...(stateData ? [
-            `drug rehab ${stateData.name}`,
-            `addiction treatment ${stateData.abbr}`,
-            `rehab centers ${stateData.name}`,
+            `drug rehab ${stateData.state}`,
+            `addiction treatment ${stateData.stateAbbr}`,
+            `rehab centers ${stateData.state}`,
           ] : []),
         ]}
         structuredData={structuredData}
@@ -164,21 +66,21 @@ export default function DrugRehabNearMe() {
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },
           { name: "Drug Rehab Near Me", url: "/drug-rehab-near-me" },
-          ...(stateData ? [{ name: stateData.name, url: `/drug-rehab-near-me/${stateData.slug}` }] : []),
+          ...(stateData ? [{ name: stateData.state, url: `/drug-rehab-near-me/${stateData.slug}` }] : []),
         ]}
       />
 
       <NearMeHero
-        title={`Drug Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find verified drug rehabilitation centers${stateData ? ` in ${stateData.name}` : " near you"}. Compare treatment programs, check insurance coverage, and connect with addiction specialists.`}
+        title={`Drug Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find verified drug rehabilitation centers${stateData ? ` in ${stateData.state}` : " near you"}. Compare treatment programs, check insurance coverage, and connect with addiction specialists.`}
         treatmentType="Drug Rehabilitation"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={nearbyStates}
@@ -195,7 +97,7 @@ export default function DrugRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground treatment-intro">
-              Drug Rehabilitation Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Drug Rehabilitation Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Browse {facilities.length}+ verified treatment facilities offering evidence-based addiction care.
@@ -206,7 +108,6 @@ export default function DrugRehabNearMe() {
             <SearchResultsLoading />
           ) : (
             <div className="treatment-listings">
-              {/* Horizontal scroll on mobile, grid on larger screens */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {facilities.slice(0, 12).map((facility) => (
                    <div key={facility.id || facility.name}>
@@ -219,7 +120,7 @@ export default function DrugRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -280,7 +181,7 @@ export default function DrugRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Drug Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

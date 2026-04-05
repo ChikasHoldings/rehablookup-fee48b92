@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -6,7 +5,7 @@ import { NearMeHero } from "@/components/seo/NearMeHero";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, AlertTriangle, Pill, Heart, Clock } from "lucide-react";
@@ -38,58 +37,19 @@ const getFentanylRehabFAQs = (location?: { state: string }) => [
 
 export default function FentanylRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/fentanyl-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  // Filter facilities - prioritize those offering detox and MAT
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    // Prioritize facilities with detox services
-    return filtered.sort((a, b) => {
-      const aHasDetox = a.treatmentTypes?.some(t => 
-        t.toLowerCase().includes('detox')
-      ) ? 1 : 0;
-      const bHasDetox = b.treatmentTypes?.some(t => 
-        t.toLowerCase().includes('detox')
-      ) ? 1 : 0;
-      return bHasDetox - aHasDetox;
-    });
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently on mount
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getFentanylRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getFentanylRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Fentanyl Addiction Treatment Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -110,8 +70,8 @@ export default function FentanylRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Fentanyl Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Opioid Addiction Treatment`}
-        description={`Find fentanyl addiction treatment centers${stateData ? ` in ${stateData.name}` : " near you"}. Medical detox, MAT (Suboxone/Methadone), 24/7 monitoring. Get help for opioid addiction today.`}
+        title={`Fentanyl Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Opioid Addiction Treatment`}
+        description={`Find fentanyl addiction treatment centers${stateData ? ` in ${stateData.state}` : " near you"}. Medical detox, MAT (Suboxone/Methadone), 24/7 monitoring. Get help for opioid addiction today.`}
         canonical={stateSlug ? `/fentanyl-rehab-near-me/${stateSlug}` : "/fentanyl-rehab-near-me"}
         keywords={[
           "fentanyl rehab near me",
@@ -124,9 +84,9 @@ export default function FentanylRehabNearMe() {
           "fentanyl withdrawal treatment",
           "heroin and fentanyl rehab",
           ...(stateData ? [
-            `fentanyl rehab ${stateData.name}`,
-            `opioid treatment ${stateData.abbr}`,
-            `suboxone clinic ${stateData.name}`,
+            `fentanyl rehab ${stateData.state}`,
+            `opioid treatment ${stateData.stateAbbr}`,
+            `suboxone clinic ${stateData.state}`,
           ] : []),
         ]}
         structuredData={structuredData}
@@ -134,15 +94,15 @@ export default function FentanylRehabNearMe() {
           { name: "Home", url: "/" },
           { name: "Treatment Options", url: "/treatment-types" },
           { name: "Fentanyl Rehab", url: "/fentanyl-rehab-near-me" },
-          ...(stateData ? [{ name: stateData.name, url: `/fentanyl-rehab-near-me/${stateData.slug}` }] : []),
+          ...(stateData ? [{ name: stateData.state, url: `/fentanyl-rehab-near-me/${stateData.slug}` }] : []),
         ]}
       />
 
       <NearMeHero
-        title={`Fentanyl Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find specialized fentanyl and opioid addiction treatment${stateData ? ` in ${stateData.name}` : " near you"}. Medical detox, medication-assisted treatment, and evidence-based recovery programs.`}
+        title={`Fentanyl Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find specialized fentanyl and opioid addiction treatment${stateData ? ` in ${stateData.state}` : " near you"}. Medical detox, medication-assisted treatment, and evidence-based recovery programs.`}
         treatmentType="Fentanyl Addiction Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -202,7 +162,7 @@ export default function FentanylRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Fentanyl Treatment Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Fentanyl Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Facilities offering medical detox and MAT for fentanyl and opioid addiction.
@@ -226,7 +186,7 @@ export default function FentanylRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}&treatment=Detox` : "?treatment=Detox"}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}&treatment=Detox` : "?treatment=Detox"}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -267,7 +227,7 @@ export default function FentanylRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Fentanyl Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

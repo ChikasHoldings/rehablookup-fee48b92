@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -6,7 +5,7 @@ import { NearMeHero } from "@/components/seo/NearMeHero";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Home, Users, Calendar, Briefcase } from "lucide-react";
@@ -37,52 +36,19 @@ const getSoberLivingFAQs = (location?: { state: string }) => [
 
 export default function SoberLivingNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/sober-living-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.sort((a, b) => {
-      const aFeatured = (a as any).isPro || a.featured ? 1 : 0;
-      const bFeatured = (b as any).isPro || b.featured ? 1 : 0;
-      return bFeatured - aFeatured;
-    });
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getSoberLivingFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getSoberLivingFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Sober Living Homes",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -103,8 +69,8 @@ export default function SoberLivingNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Sober Living Near Me ${stateData ? `in ${stateData.name}` : ""} | Recovery Housing`}
-        description={`Find sober living homes and recovery housing${stateData ? ` in ${stateData.name}` : " near you"}. Structured, substance-free environments to support your ongoing recovery journey.`}
+        title={`Sober Living Near Me ${stateData ? `in ${stateData.state}` : ""} | Recovery Housing`}
+        description={`Find sober living homes and recovery housing${stateData ? ` in ${stateData.state}` : " near you"}. Structured, substance-free environments to support your ongoing recovery journey.`}
         canonical={stateSlug ? `/sober-living-near-me/${stateSlug}` : "/sober-living-near-me"}
         keywords={[
           "sober living near me",
@@ -116,9 +82,9 @@ export default function SoberLivingNearMe() {
           "oxford house",
           "recovery residence",
           ...(stateData ? [
-            `sober living ${stateData.name}`,
-            `recovery housing ${stateData.abbr}`,
-            `halfway house ${stateData.name}`,
+            `sober living ${stateData.state}`,
+            `recovery housing ${stateData.stateAbbr}`,
+            `halfway house ${stateData.state}`,
           ] : []),
         ]}
         structuredData={structuredData}
@@ -126,15 +92,15 @@ export default function SoberLivingNearMe() {
           { name: "Home", url: "/" },
           { name: "Treatment Options", url: "/treatment-types" },
           { name: "Sober Living", url: "/sober-living-near-me" },
-          ...(stateData ? [{ name: stateData.name, url: `/sober-living-near-me/${stateData.slug}` }] : []),
+          ...(stateData ? [{ name: stateData.state, url: `/sober-living-near-me/${stateData.slug}` }] : []),
         ]}
       />
 
       <NearMeHero
-        title={`Sober Living Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find quality sober living homes and recovery housing${stateData ? ` in ${stateData.name}` : " near you"}. Supportive, substance-free environments for your recovery journey.`}
+        title={`Sober Living Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find quality sober living homes and recovery housing${stateData ? ` in ${stateData.state}` : " near you"}. Supportive, substance-free environments for your recovery journey.`}
         treatmentType="Sober Living Housing"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -182,7 +148,7 @@ export default function SoberLivingNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Sober Living & Recovery Housing {stateData ? `in ${stateData.name}` : "Near You"}
+              Sober Living & Recovery Housing {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Find structured, supportive housing to continue your recovery journey.
@@ -206,7 +172,7 @@ export default function SoberLivingNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Options
                       <ArrowRight className="h-4 w-4" />
@@ -247,7 +213,7 @@ export default function SoberLivingNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Sober Living"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );
