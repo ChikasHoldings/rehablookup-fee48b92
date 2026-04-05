@@ -305,23 +305,17 @@ const HowItWorks = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 px-4 bg-primary md:py-20 md:px-6 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-2xl translate-y-1/2" />
-        </div>
-        
-        <div className="container relative">
+      <section className="py-16 px-4 md:py-20 md:px-6">
+        <div className="container">
           <div className="text-center mb-12">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-5 py-2.5 border border-primary/20">
               <Star className="h-5 w-5 text-accent" />
-              <span className="text-base font-medium text-primary-foreground">Why Choose Us</span>
+              <span className="text-base font-medium text-primary">Why Choose Us</span>
             </div>
-            <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
               The RehabLookup Difference
             </h2>
-            <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed">
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
               We're committed to helping you find the right treatment with transparency and compassion.
             </p>
           </div>
@@ -330,18 +324,18 @@ const HowItWorks = () => {
             {benefits.map((benefit, index) => (
               <div
                 key={benefit.title}
-                className="group rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm animate-fade-in hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
+                className="group rounded-2xl border border-border bg-card p-5 animate-fade-in hover:border-primary/30 hover:shadow-md transition-all duration-300 hover:-translate-y-1"
                 style={{ animationDelay: `${index * 75}ms` }}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/80 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
                     <benefit.icon className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="font-display text-lg font-semibold text-primary-foreground">
+                  <h3 className="font-display text-lg font-semibold text-foreground">
                     {benefit.title}
                   </h3>
                 </div>
-                <p className="text-sm text-primary-foreground/70 leading-relaxed pl-[52px]">
+                <p className="text-sm text-muted-foreground leading-relaxed pl-[52px]">
                   {benefit.description}
                 </p>
               </div>
