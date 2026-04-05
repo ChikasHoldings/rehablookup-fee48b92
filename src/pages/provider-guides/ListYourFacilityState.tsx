@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 import pgGetMorePatients from "@/assets/provider-guides/pg-get-more-patients.jpg";
 import treatmentFacility from "@/assets/provider-guides/treatment-facility.jpg";
@@ -33,7 +33,8 @@ const stateData: Record<string, { name: string; abbr: string }> = {
 };
 
 export default function ListYourFacilityState() {
-  const { stateSlug } = useParams<{ stateSlug: string }>();
+  const location = useLocation();
+  const stateSlug = location.pathname.replace("/list-your-facility-in-", "").replace(/\/$/, "") || undefined;
   const state = stateSlug ? stateData[stateSlug] : null;
 
   if (!state) {
