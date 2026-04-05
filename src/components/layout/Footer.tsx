@@ -256,7 +256,7 @@ export const Footer = memo(function Footer() {
                 <p className="text-[15px] font-bold text-primary-foreground leading-tight">
                   Need Help Finding the Right Treatment?
                 </p>
-                <p className="text-[13px] text-primary-foreground/50 mt-0.5 leading-snug">
+                <p className="text-[13px] text-primary-foreground/70 mt-0.5 leading-snug">
                   Our specialists match you with verified, accredited U.S. facilities — confidentially.
                 </p>
               </div>
@@ -320,7 +320,7 @@ export const Footer = memo(function Footer() {
                 />
               </Link>
               <div className="h-5 w-px bg-primary-foreground/10 hidden lg:block" />
-              <p className="text-sm text-primary-foreground/45 leading-snug max-w-xs">
+              <p className="text-sm text-primary-foreground/70 leading-snug max-w-xs">
                 Find trusted, accredited addiction treatment centers across the United States.
               </p>
             </div>
@@ -328,7 +328,7 @@ export const Footer = memo(function Footer() {
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center justify-center lg:justify-end gap-4">
               {trustBadges.map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-1.5 text-primary-foreground/40">
+                <div key={label} className="flex items-center gap-1.5 text-primary-foreground/70">
                   <Icon className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium tracking-wide">{label}</span>
                 </div>
@@ -344,7 +344,7 @@ export const Footer = memo(function Footer() {
           <div className="py-4 flex flex-col items-center text-center gap-3 md:flex-row md:items-center md:justify-between md:text-left">
             {/* Left: Copyright + Legal */}
             <div className="flex flex-col items-center md:flex-row md:items-center gap-2 md:gap-4">
-              <p className="text-xs text-primary-foreground/40">
+              <p className="text-xs text-primary-foreground/70">
                 © {currentYear} RehabLookup. All rights reserved. Not a medical provider.
               </p>
               <nav className="flex flex-wrap items-center justify-center gap-3">
@@ -356,14 +356,14 @@ export const Footer = memo(function Footer() {
                   <Link
                     key={l.to}
                     to={l.to}
-                    className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
+                    className="text-xs text-primary-foreground/70 hover:text-primary-foreground/90 transition-colors"
                   >
                     {l.label}
                   </Link>
                 ))}
                 <a
                   href="/sitemap.xml"
-                  className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors"
+                  className="text-xs text-primary-foreground/70 hover:text-primary-foreground/90 transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -376,7 +376,7 @@ export const Footer = memo(function Footer() {
             <div className="flex items-center justify-center gap-3">
               <a
                 href="mailto:help@rehablookup.com"
-                className="text-xs text-primary-foreground/40 hover:text-primary-foreground/70 transition-colors hidden sm:inline-flex items-center gap-1"
+                className="text-xs text-primary-foreground/70 hover:text-primary-foreground/90 transition-colors hidden sm:inline-flex items-center gap-1"
               >
                 <Mail className="h-3 w-3" /> help@rehablookup.com
               </a>
