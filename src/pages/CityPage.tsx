@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
