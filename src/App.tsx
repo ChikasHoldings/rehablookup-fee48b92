@@ -91,7 +91,7 @@ const SubstanceAbuseTreatmentMarketing = lazy(() => import("./pages/provider-gui
 const MATClinicMarketing = lazy(() => import("./pages/provider-guides/MATClinicMarketing"));
 const TreatmentCenterWebsiteDesign = lazy(() => import("./pages/provider-guides/TreatmentCenterWebsiteDesign"));
 const RehabComplianceGuide = lazy(() => import("./pages/provider-guides/RehabComplianceGuide"));
-const ListYourFacilityState = lazy(() => import("./pages/provider-guides/ListYourFacilityState"));
+// ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
 const ProviderResourceHub = lazy(() => import("./pages/providers/ProviderResourceHub"));
