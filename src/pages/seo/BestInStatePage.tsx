@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -8,7 +8,8 @@ import { topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPa
 import { insurerConfigs, stateInsuranceConfigs } from "@/data/seoInsuranceStateConfig";
 
 export default function BestInStatePage() {
-  const { stateSlug } = useParams<{ stateSlug: string }>();
+  const location = useLocation();
+  const stateSlug = location.pathname.replace("/best-rehab-centers-in-", "").replace(/\/$/, "") || undefined;
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
   const stateConfig = useMemo(() => {
