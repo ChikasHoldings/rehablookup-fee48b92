@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Phone } from "lucide-react";
 import { motion } from "framer-motion";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface InternationalPageHeroProps {
   flag: string;
@@ -10,8 +12,9 @@ interface InternationalPageHeroProps {
   subtitle: string;
   description: string;
   trustPoints: string[];
-  heroImage: string;
-  heroAlt: string;
+  heroImage?: string;
+  heroAlt?: string;
+  breadcrumbItems?: { label: string; href?: string }[];
 }
 
 export const InternationalPageHero = ({
@@ -23,24 +26,17 @@ export const InternationalPageHero = ({
   trustPoints,
   heroImage,
   heroAlt,
+  breadcrumbItems,
 }: InternationalPageHeroProps) => {
   return (
     <section className="relative overflow-hidden bg-primary">
-      {/* Hero image background */}
-      <div className="absolute inset-0">
-        <img
-          src={heroImage}
-          alt={heroAlt}
-          className="w-full h-full object-cover object-center"
-          width={1280}
-          height={512}
-          fetchPriority="high"
-          loading="eager"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
-      </div>
+      <MedicalPatternBackground />
 
       <div className="container relative mx-auto px-4 py-10 md:py-14 lg:py-16">
+        {breadcrumbItems && (
+          <BreadcrumbNav className="mb-6" variant="dark" items={breadcrumbItems} />
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,7 +60,6 @@ export const InternationalPageHero = ({
             {description}
           </p>
 
-          {/* Trust signals */}
           <div className="flex flex-wrap gap-x-5 gap-y-2 mb-8">
             {trustPoints.map((t) => (
               <div key={t} className="flex items-center gap-2 text-sm">
@@ -74,7 +69,6 @@ export const InternationalPageHero = ({
             ))}
           </div>
 
-          {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               asChild
