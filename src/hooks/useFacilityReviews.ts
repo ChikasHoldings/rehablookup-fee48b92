@@ -54,7 +54,7 @@ export function useFacilityReviews(facilityId: string) {
     // Fetch approved reviews
     const { data: reviewsData, error } = await supabase
       .from('facility_reviews')
-      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, created_at, updated_at')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, created_at, updated_at, reviewer_display_name')
       .eq('facility_id', facilityId)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
@@ -89,15 +89,16 @@ export function useFacilityReviews(facilityId: string) {
       const profile = profileMap.get(review.user_id);
       const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
       const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
-      const displayName = firstName
-        ? firstName + (lastInitial ? ` ${lastInitial}.` : '')
-        : 'Verified User';
+      
+      // Prefer stored reviewer_display_name, then build from profile, fallback to 'Verified User'
+      const displayName = (review as any).reviewer_display_name 
+        || (firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : 'Verified User');
       
       return {
         ...review,
         user_display_name: displayName,
-        reviewer_first_name: firstName || 'V',
-        reviewer_last_initial: lastInitial || 'U',
+        reviewer_first_name: firstName || displayName?.charAt(0) || 'V',
+        reviewer_last_initial: lastInitial || '',
         reviewer_city: profile?.city || null,
         reviewer_state: profile?.state || null,
         has_voted_helpful: votedReviewIds.includes(review.id)
@@ -145,14 +146,35 @@ export function useFacilityReviews(facilityId: string) {
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
+    // Build reviewer display name from seeker profile or auth metadata
+    let reviewerDisplayName: string | null = null;
+    const { data: profile } = await supabase
+      .from('seeker_profiles')
+      .select('first_name, last_name, display_name')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (profile) {
+      const fn = profile.first_name || profile.display_name?.split(' ')[0] || '';
+      const li = profile.last_name?.charAt(0) || profile.display_name?.split(' ')[1]?.charAt(0) || '';
+      if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
+    }
+    if (!reviewerDisplayName) {
+      const meta = user.user_metadata;
+      const fn = meta?.first_name || meta?.full_name?.split(' ')[0] || '';
+      const li = meta?.last_name?.charAt(0) || meta?.full_name?.split(' ')[1]?.charAt(0) || '';
+      if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
+    }
+
     const { data, error } = await supabase
       .from('facility_reviews')
       .insert({
         user_id: user.id,
         facility_id: facilityId,
         rating,
-        review_text: reviewText.trim() || null
-      })
+        review_text: reviewText.trim() || null,
+        reviewer_display_name: reviewerDisplayName
+      } as any)
       .select()
       .single();
 
