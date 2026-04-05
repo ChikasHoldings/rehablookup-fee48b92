@@ -392,6 +392,7 @@ const FAQ = () => {
               <div className="hidden sm:flex items-center gap-1.5">
                 <Shield className="h-4 w-4" />
                 <span>HIPAA Compliant</span>
+              </div>
             </div>
           </div>
         </div>
