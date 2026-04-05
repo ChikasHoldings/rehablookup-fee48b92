@@ -264,7 +264,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                     return (
                       <div key={s.key} className="flex-1 flex flex-col items-center gap-1">
                         <div className={`h-2 w-full rounded-full transition-colors ${done ? "bg-primary" : "bg-muted"}`} />
-                        <span className={`text-[9px] sm:text-xs text-center leading-tight ${done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                        <span className={`text-[10px] sm:text-xs text-center leading-tight ${done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                           {s.label}
                         </span>
                       </div>

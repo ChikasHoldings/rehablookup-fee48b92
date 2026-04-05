@@ -195,7 +195,7 @@ export default function InternationalLanding() {
                       <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                       <span className="text-lg sm:text-xl md:text-2xl font-bold">{stat.value}</span>
                     </div>
-                    <p className="text-[9px] sm:text-xs md:text-xs text-primary-foreground/80">{stat.label}</p>
+                    <p className="text-[10px] sm:text-xs md:text-xs text-primary-foreground/80">{stat.label}</p>
                   </div>
                 ))}
                 <div className="px-1">
@@ -203,7 +203,7 @@ export default function InternationalLanding() {
                     <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                     <span className="text-lg sm:text-xl md:text-2xl font-bold">100%</span>
                   </div>
-                  <p className="text-[9px] sm:text-xs md:text-xs text-primary-foreground/80">Money-Back Guarantee</p>
+                  <p className="text-[10px] sm:text-xs md:text-xs text-primary-foreground/80">Money-Back Guarantee</p>
                 </div>
               </div>
             </div>

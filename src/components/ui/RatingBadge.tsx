@@ -25,7 +25,7 @@ export const RatingBadge = forwardRef<HTMLDivElement, RatingBadgeProps>(
       container: "px-1.5 py-0.5 gap-1",
       star: "h-2.5 w-2.5",
       text: "text-xs",
-      count: "text-[9px]",
+      count: "text-[10px]",
     },
     md: {
       container: "px-2 py-1 gap-1.5",

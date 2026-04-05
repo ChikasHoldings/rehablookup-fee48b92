@@ -130,7 +130,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
                         )}
                       />
                       <span className={cn(
-                        "text-[8px] sm:text-xs mt-1 sm:mt-1.5 text-center max-w-[40px] sm:max-w-[50px] leading-tight hidden sm:block",
+                        "text-[10px] sm:text-xs mt-1 sm:mt-1.5 text-center max-w-[40px] sm:max-w-[50px] leading-tight hidden sm:block",
                         isCurrent ? "font-medium text-foreground" : "text-muted-foreground"
                       )}>
                         {stepConfig?.label?.split(' ')[0]}
@@ -186,7 +186,7 @@ function DetailItem({ icon, label, value }: { icon: React.ReactNode; label: stri
     <div className="space-y-0.5">
       <div className="flex items-center gap-1 text-muted-foreground">
         {icon}
-        <span className="text-[9px] sm:text-xs uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-[10px] sm:text-xs uppercase tracking-wider font-medium">{label}</span>
       </div>
       <p className="text-xs sm:text-sm font-medium capitalize truncate">{value}</p>
     </div>

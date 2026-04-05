@@ -136,7 +136,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                 {yearsInBusiness && yearsInBusiness > 0 && (
                   <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-sm rounded px-1 py-0.5 shadow-sm">
                     <Clock className="h-2 w-2 text-primary" />
-                    <span className="text-[8px] font-semibold text-primary tabular-nums">{yearsInBusiness}+ yrs</span>
+                    <span className="text-[10px] font-semibold text-primary tabular-nums">{yearsInBusiness}+ yrs</span>
                   </div>
                 )}
               </div>
@@ -188,19 +188,19 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
               
               {/* Pro badge (replaces old Featured/Professional badges) */}
               {isPro && (
-                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-warning/10 text-warning border border-warning/20 shadow-sm">
+                <Badge className="gap-0.5 px-1 py-0 text-[10px] font-bold bg-warning/10 text-warning border border-warning/20 shadow-sm">
                   <Sparkles className="h-2 w-2" />
                   Pro
                 </Badge>
               )}
               {facility.verified && (
-                <Badge className="gap-0.5 px-1 py-0 text-[9px] font-bold bg-success/10 text-success border border-success/20 shadow-sm">
+                <Badge className="gap-0.5 px-1 py-0 text-[10px] font-bold bg-success/10 text-success border border-success/20 shadow-sm">
                   <Shield className="h-2 w-2" />
                   Verified
                 </Badge>
               )}
               {facility.facility_type && (
-                <Badge variant="secondary" className="gap-0.5 px-1 py-0 text-[9px] font-semibold border border-border/60 hidden sm:flex">
+                <Badge variant="secondary" className="gap-0.5 px-1 py-0 text-[10px] font-semibold border border-border/60 hidden sm:flex">
                   <Building2 className="h-2 w-2" />
                   <span className="truncate max-w-[80px]">{facility.facility_type}</span>
                 </Badge>
