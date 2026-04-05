@@ -58,7 +58,7 @@ const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
 const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
 
 // SEO Landing Pages - City+Treatment, Comparisons, Treatment Hubs, Cost/Insurance
-const CityTreatmentPage = lazy(() => import("./pages/seo/CityTreatmentPage"));
+// CityTreatmentPage routes handled by SmartCatchAll
 const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
 const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
@@ -430,13 +430,7 @@ const AppInner = () => {
             {/* Best Rehab Centers in [State] Roundup Pages */}
             {/* Best Rehab Centers routes handled by SmartCatchAll below */}
             
-            {/* SEO City+Treatment Combo Pages - use full path parsing */}
-            <Route path="/alcohol-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/drug-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/detox-centers-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/inpatient-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/outpatient-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/dual-diagnosis-treatment-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            {/* SEO City+Treatment Combo Pages - handled by SmartCatchAll */}
             
             {/* Near Me SEO Routes */}
             <Route path="/drug-rehab-near-me" element={<PublicRouteGuard><DrugRehabNearMe /></PublicRouteGuard>} />
@@ -502,15 +496,7 @@ const AppInner = () => {
             <Route path="/affordable-rehab-near-me" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
             <Route path="/affordable-rehab-near-me/:stateSlug" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
             
-            {/* New City+Treatment Combo Routes */}
-            <Route path="/luxury-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/sober-living-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/free-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/faith-based-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/fentanyl-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/veterans-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/womens-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/mens-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            {/* Additional City+Treatment Combo Routes - handled by SmartCatchAll */}
             
             {/* Concierge Placement Routes - /concierge is canonical */}
             <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
