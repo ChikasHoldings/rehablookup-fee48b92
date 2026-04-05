@@ -40,7 +40,7 @@ export function FacilityImageUpload({
   userId,
   facilityId,
   onImagesChange,
-  maxImages = type === "logo" ? 1 : 5,
+  maxImages = type === "logo" ? 1 : 10,
   className,
 }: FacilityImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
