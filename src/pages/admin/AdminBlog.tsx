@@ -360,7 +360,7 @@ export default function AdminBlog() {
                       {article.image_url ? (
                         <img
                           src={article.image_url}
-                          alt=""
+                          alt={`Thumbnail for ${article.title}`}
                           className="w-16 h-10 object-cover rounded flex-shrink-0"
                           loading="lazy"
                         />
