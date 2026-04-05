@@ -160,6 +160,19 @@ const CostEstimator = () => {
         title="Treatment Cost Estimator | Estimate Rehab Costs with Insurance"
         description="Use our free treatment cost estimator to understand potential addiction treatment costs based on your treatment type and insurance coverage."
         canonical="/cost-estimator"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": "Treatment Cost Estimator",
+          "description": "Free tool to estimate addiction treatment costs based on treatment type and insurance coverage.",
+          "url": "https://rehablookup.com/cost-estimator",
+          "applicationCategory": "HealthApplication",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        }}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Cost Estimator", url: "/cost-estimator" },
+        ]}
       />
 
       {/* Hero Section */}
