@@ -244,7 +244,7 @@ const SearchResults = () => {
     
     if (locationForFilter) {
       locationMatch = parseLocationInput(locationForFilter);
-      const locationLower = locationForFilter.toLowerCase();
+      const locationLower = locationForFilter.toLowerCase().trim();
       
       // Filter to include relevant results by location
       results = results.filter((c) => {
@@ -263,16 +263,38 @@ const SearchResults = () => {
       });
     }
 
-    // Free-text search (from header search bar / seeker home ?q= param)
+    // Free-text search with fuzzy/partial matching
     if (queryParam) {
-      const q = queryParam.toLowerCase();
+      const q = queryParam.toLowerCase().trim();
+      // Split query into individual tokens for partial matching
+      const tokens = q.split(/\s+/).filter(t => t.length > 1);
+      
       results = results.filter((c) => {
-        if (c.name.toLowerCase().includes(q)) return true;
-        if (c.description?.toLowerCase().includes(q)) return true;
-        if (c.city.toLowerCase().includes(q)) return true;
-        if (c.state.toLowerCase().includes(q)) return true;
-        if (c.treatmentTypes.some((t) => t.toLowerCase().includes(q))) return true;
-        if (c.insuranceAccepted.some((i) => i.toLowerCase().includes(q))) return true;
+        const nameL = c.name.toLowerCase();
+        const descL = (c.description || "").toLowerCase();
+        const cityL = c.city.toLowerCase();
+        const stateL = c.state.toLowerCase();
+        const treatmentL = c.treatmentTypes.map(t => t.toLowerCase()).join(" ");
+        const insuranceL = c.insuranceAccepted.map(i => i.toLowerCase()).join(" ");
+        const zipL = c.zipCode || "";
+        const haystack = `${nameL} ${descL} ${cityL} ${stateL} ${treatmentL} ${insuranceL} ${zipL}`;
+        
+        // Full query match
+        if (haystack.includes(q)) return true;
+        
+        // All individual tokens must match somewhere (AND logic for multi-word queries)
+        if (tokens.length > 1) {
+          return tokens.every(token => haystack.includes(token));
+        }
+        
+        // Single token: also check partial word starts for typo tolerance
+        if (tokens.length === 1) {
+          const token = tokens[0];
+          // Check word-start matches (e.g. "cal" matches "california", "alc" matches "alcohol")
+          const words = haystack.split(/\s+/);
+          return words.some(w => w.startsWith(token) || w.includes(token));
+        }
+        
         return false;
       });
     }
@@ -450,9 +472,7 @@ const SearchResults = () => {
   };
 
   const clearAllFilters = () => {
-    const newParams = new URLSearchParams();
-    if (sortParam !== "featured") newParams.set("sort", sortParam);
-    setSearchParams(newParams);
+    setSearchParams(new URLSearchParams());
   };
 
   const handleSortChange = (value: SortOption) => {
@@ -497,7 +517,7 @@ const SearchResults = () => {
       />
       
       {/* Sticky Filter Header */}
-      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
+      <div className="sticky top-[68px] z-30 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
         <div className="container max-w-5xl mx-auto">
           {/* Top Row: Back + Results Count + Sort */}
           <div className="flex items-center justify-between gap-4 py-3 border-b border-border/50">
@@ -997,9 +1017,34 @@ const SearchResults = () => {
                 <Search className="h-10 w-10 text-muted-foreground" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
-              <p className="text-muted-foreground text-center max-w-md mb-6">
-                We couldn't find any treatment centers matching your criteria. Try adjusting your filters or search in a different location.
+              <p className="text-muted-foreground text-center max-w-md mb-4">
+                {queryParam 
+                  ? `No treatment centers match "${queryParam}". Try a different search term or browse all centers.`
+                  : location
+                    ? `No centers found near "${location}". Try expanding your search area or browse nationwide.`
+                    : "We couldn't find any treatment centers matching your criteria. Try adjusting your filters."
+                }
               </p>
+
+              {/* Smart Suggestions */}
+              {(queryParam || location) && (
+                <div className="flex flex-wrap justify-center gap-2 mb-6">
+                  <span className="text-xs text-muted-foreground">Try:</span>
+                  {!location && (
+                    <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
+                  )}
+                  {!location && (
+                    <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
+                  )}
+                  {!location && (
+                    <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
+                  )}
+                  {location && !queryParam && (
+                    <button onClick={clearAllFilters} className="text-xs text-primary hover:underline">Search Nationwide</button>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button onClick={clearAllFilters} variant="outline" className="gap-2">
                   <X className="h-4 w-4" />
@@ -1008,6 +1053,12 @@ const SearchResults = () => {
                 <Link to="/rehab-centers">
                   <Button className="gap-2">
                     Browse All Centers
+                  </Button>
+                </Link>
+                <Link to="/concierge">
+                  <Button variant="secondary" className="gap-2">
+                    <Heart className="h-4 w-4" />
+                    Get Personalized Help
                   </Button>
                 </Link>
               </div>
