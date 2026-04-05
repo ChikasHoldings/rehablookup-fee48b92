@@ -387,8 +387,68 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Featured Centers - Premium Grid - Immediately Visible */}
+      {isLoadingFeatured ? (
+        <section className="py-8 md:py-10 lg:py-14 bg-gradient-to-b from-background to-muted/20">
+          <div className="container px-4 md:px-6 lg:px-8">
+            <FeaturedCentersLoading />
+          </div>
+        </section>
+      ) : featuredCenters.length > 0 ? (
+        <section className="py-8 md:py-10 lg:py-14 bg-gradient-to-b from-background to-muted/20">
+          <div className="container px-4 md:px-6 lg:px-8">
+            {/* Section Header */}
+            <div className="mb-5 md:mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 shadow-sm">
+                  <Star className="h-4 w-4 text-accent fill-accent" />
+                </div>
+                <div>
+                  <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
+                    Featured Treatment Centers
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-tight">
+                    Top-rated, verified facilities trusted by families
+                  </p>
+                </div>
+              </div>
+              <Link 
+                to="/rehab-centers" 
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors group"
+              >
+                View All
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+
+            {/* Premium Grid */}
+            <div className="grid gap-4 md:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredCenters.map((center, index) => (
+                <div 
+                  key={center.id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <TreatmentCenterCard center={center} featured />
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile CTA */}
+            <div className="mt-5 text-center sm:hidden">
+              <Link to="/rehab-centers">
+                <Button variant="outline" size="sm" className="gap-2">
+                  View All Centers
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {/* Insurance Coverage Section */}
-      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-background to-muted/30">
+      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-muted/30">
         <div className="container px-4 md:px-6 lg:px-8">
           <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-6 lg:gap-12">
@@ -471,76 +531,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Featured Centers - Horizontal Carousel - Only show when centers available */}
-      {!isLoadingFeatured && featuredCenters.length > 0 && (
-        <section className="py-8 md:py-10 lg:py-14 overflow-hidden">
-          <div className="container px-4 md:px-6 lg:px-8">
-            {/* Section Header - Sleek inline design */}
-            <div className="mb-4 md:mb-5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
-                  <Star className="h-3.5 w-3.5 text-accent fill-accent" />
-                </div>
-                <div>
-                  <h2 className="font-display text-lg md:text-xl font-semibold text-foreground leading-tight">
-                    Featured Centers
-                  </h2>
-                  <p className="text-xs md:text-sm text-muted-foreground leading-tight">
-                    Top-rated facilities
-                  </p>
-                </div>
-              </div>
-              <Link 
-                to="/rehab-centers" 
-                className="inline-flex items-center gap-1 text-xs md:text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
-              >
-                <span className="hidden sm:inline">View all</span>
-                <span className="sm:hidden">All</span>
-                <ArrowRight className="h-3 w-3 md:h-3.5 md:w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
-
-            {/* Carousel */}
-            <div className="relative -mx-4 px-4 md:mx-0 md:px-0">
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                  skipSnaps: false,
-                  dragFree: true,
-                }}
-                className="w-full"
-              >
-                <CarouselContent className="-ml-3 md:-ml-4">
-                  {featuredCenters.map((center, index) => (
-                    <CarouselItem 
-                      key={center.id} 
-                      className="pl-3 md:pl-4 basis-[80%] sm:basis-[45%] lg:basis-[31%] xl:basis-[32%]"
-                    >
-                      <div 
-                        className="animate-fade-in h-full"
-                        style={{ animationDelay: `${index * 40}ms` }}
-                      >
-                        <TreatmentCenterCard center={center} featured />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                
-                {/* Navigation Arrows - Sleek design */}
-                <CarouselPrevious className="hidden md:flex absolute -left-2 lg:-left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-border/50 bg-background/95 backdrop-blur-sm shadow-md hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200" />
-                <CarouselNext className="hidden md:flex absolute -right-2 lg:-right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-border/50 bg-background/95 backdrop-blur-sm shadow-md hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200" />
-              </Carousel>
-              
-              {/* Progress dots for mobile - subtle indicator */}
-              <div className="mt-3 flex items-center justify-center gap-1 md:hidden">
-                <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* How It Works */}
       <section className="py-10 md:py-12 lg:py-20">
