@@ -126,6 +126,25 @@ export default function ConciergeLanding() {
         description="Stop searching alone. Our specialists connect you with treatment programs that fit your needs, insurance, and location. Just $29, one-time. Get placed in 24-48 hours."
         canonical="/concierge"
         keywords={["treatment placement", "rehab concierge", "addiction treatment placement", "personalized rehab help", "find rehab near me"]}
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "name": "RehabLookup Concierge Placement Service",
+            "description": "Personalized treatment placement service connecting individuals with rehab programs matching their needs, insurance, and location.",
+            "url": "https://rehablookup.com/concierge",
+            "provider": { "@type": "Organization", "name": "RehabLookup", "url": "https://rehablookup.com" },
+            "offers": { "@type": "Offer", "price": "29", "priceCurrency": "USD" },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com" },
+              { "@type": "ListItem", "position": 2, "name": "Concierge", "item": "https://rehablookup.com/concierge" },
+            ],
+          },
+        ]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Concierge", url: "/concierge" },
