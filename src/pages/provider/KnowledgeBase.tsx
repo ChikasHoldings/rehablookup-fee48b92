@@ -135,7 +135,7 @@ Write a clear, compassionate description that highlights:
 
 ### 2. High-Quality Images
 - Upload your facility logo
-- Add up to 5 gallery images
+- Add up to 10 gallery images
 - Show living spaces, treatment areas, outdoor spaces
 - Use professional photography when possible
 

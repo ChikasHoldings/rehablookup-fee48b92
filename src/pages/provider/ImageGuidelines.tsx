@@ -38,7 +38,7 @@ const ImageGuidelines = () => {
     { label: "Supported formats", value: "PNG, JPG, JPEG, WebP" },
     { label: "Recommended logo size", value: "512 x 512 pixels (square)" },
     { label: "Recommended gallery size", value: "1200 x 800 pixels minimum" },
-    { label: "Gallery limit", value: "Up to 5 images" },
+    { label: "Gallery limit", value: "Up to 10 images" },
   ];
 
   return (

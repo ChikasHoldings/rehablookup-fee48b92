@@ -1159,9 +1159,6 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Upload up to {galleryLimit} photos. The first image will be your primary gallery photo.
-                        {galleryLimit > 5 && (
-                          <span className="text-primary font-medium"> (Paid plan benefit)</span>
-                        )}
                       </p>
                       <FacilityImageUpload
                         type="gallery"
