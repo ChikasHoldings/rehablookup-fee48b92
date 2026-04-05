@@ -171,7 +171,11 @@ export default function ProviderBillingPage() {
       });
       if (error) throw error;
       if (data?.checkoutUrl) {
-        window.open(data.checkoutUrl, "_blank");
+        try {
+          const url = new URL(data.checkoutUrl);
+          if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid checkout URL");
+          window.open(data.checkoutUrl, "_blank");
+        } catch { toast.error("Invalid checkout URL received."); }
         setShowPurchaseModal(false);
       }
     } catch (err) {
@@ -194,7 +198,11 @@ export default function ProviderBillingPage() {
       });
       if (error) throw error;
       if (data?.checkoutUrl) {
-        window.open(data.checkoutUrl, "_blank");
+        try {
+          const url = new URL(data.checkoutUrl);
+          if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid checkout URL");
+          window.open(data.checkoutUrl, "_blank");
+        } catch { toast.error("Invalid checkout URL received."); }
       } else if (data?.error) {
         toast.error(data.error);
       }
@@ -212,7 +220,11 @@ export default function ProviderBillingPage() {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        try {
+          const url = new URL(data.url);
+          if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid portal URL");
+          window.open(data.url, "_blank");
+        } catch { toast.error("Invalid billing portal URL received."); }
       }
     } catch (err) {
       console.error("Portal error:", err);

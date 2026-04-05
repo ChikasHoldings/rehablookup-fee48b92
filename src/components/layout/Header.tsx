@@ -433,7 +433,7 @@ export function Header({
       {/* Mobile Full-Screen Panel */}
       <div 
         className={cn(
-          "fixed inset-0 z-[101] md:hidden transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "fixed inset-0 z-[101] md:hidden transition-transform duration-500",
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -499,7 +499,7 @@ export function Header({
 
                       {/* Expanded Content */}
                       <div className={cn(
-                        "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                        "overflow-hidden transition-all duration-300",
                         isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
                       )}>
                         <div className="pl-2 pr-1 pt-1 pb-2">

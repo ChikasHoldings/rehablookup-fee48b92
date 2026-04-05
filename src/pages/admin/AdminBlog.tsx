@@ -190,7 +190,7 @@ export default function AdminBlog() {
     // Fetch full article data including content for the editor
     const { data, error } = await supabase
       .from("blog_articles")
-      .select("*")
+      .select("id, title, slug, excerpt, author, author_date, category, category_label, content, status, featured, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords")
       .eq("id", article.id)
       .single();
 
