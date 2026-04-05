@@ -428,7 +428,7 @@ const AppInner = () => {
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
             
             {/* Best Rehab Centers in [State] Roundup Pages */}
-            <Route path="/best-rehab-centers-in-/*" element={<PublicRouteGuard><BestInStatePage /></PublicRouteGuard>} />
+            {/* Best Rehab Centers routes handled by SmartCatchAll below */}
             
             {/* SEO City+Treatment Combo Pages - use full path parsing */}
             <Route path="/alcohol-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
