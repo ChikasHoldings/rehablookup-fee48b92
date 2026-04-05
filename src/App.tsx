@@ -688,7 +688,7 @@ const AppInner = () => {
             <Route path="/provider-guides/mat-clinic-marketing" element={<PublicRouteGuard><MATClinicMarketing /></PublicRouteGuard>} />
             <Route path="/provider-guides/treatment-center-website-design" element={<PublicRouteGuard><TreatmentCenterWebsiteDesign /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-compliance-guide" element={<PublicRouteGuard><RehabComplianceGuide /></PublicRouteGuard>} />
-            <Route path="/list-your-facility-in-/*" element={<PublicRouteGuard><ListYourFacilityState /></PublicRouteGuard>} />
+            {/* List Your Facility routes handled by SmartCatchAll below */}
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
@@ -749,7 +749,7 @@ const AppInner = () => {
             <Route path="/lp/convert" element={<MarketingLanding />} />
             
             {/* 404 */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<SmartCatchAll />} />
           </Routes>
         </Suspense>
               </NavigationProvider>
