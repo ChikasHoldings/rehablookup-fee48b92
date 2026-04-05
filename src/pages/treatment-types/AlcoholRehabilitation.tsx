@@ -231,6 +231,35 @@ const AlcoholRehabilitation = () => {
         </div>
       </section>
 
+      {/* Related Centers - Immediately after trust bar */}
+      {relatedCenters.length > 0 && (
+        <section className="py-10 md:py-14 bg-gradient-to-b from-background to-muted/20">
+          <div className="container">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                  Alcohol Treatment Centers
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Verified facilities offering alcohol rehabilitation
+                </p>
+              </div>
+              <Link to="/rehab-centers">
+                <Button variant="outline" size="sm" className="gap-2">
+                  View All
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid gap-4 md:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedCenters.map((center) => (
+                <TreatmentCenterCard key={center.id} center={center} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Program Types */}
       <section className="section-padding">
         <div className="container">
@@ -320,42 +349,6 @@ const AlcoholRehabilitation = () => {
         </div>
       </section>
 
-      {/* Related Centers - Only show when centers available */}
-      {relatedCenters.length > 0 && (
-        <section className="section-padding">
-          <div className="container">
-            <div className="mb-8 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">
-                  Alcohol Treatment Centers
-                </h2>
-                <p className="mt-1 text-muted-foreground">
-                  Verified facilities offering alcohol rehabilitation
-                </p>
-              </div>
-              <Link to="/rehab-centers">
-                <Button variant="outline" className="gap-2">
-                  View All
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Horizontal scroll on mobile, grid on larger screens */}
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-              {relatedCenters.map((center) => (
-                <div key={center.id} className="flex-shrink-0 w-[300px] md:w-auto snap-center">
-                  <TreatmentCenterCard center={center} />
-                </div>
-              ))}
-            </div>
-            {/* Scroll indicator for mobile */}
-            <div className="flex justify-center gap-1.5 mt-3 md:hidden">
-              <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* FAQ Section */}
       <section className="border-t bg-card section-padding">
