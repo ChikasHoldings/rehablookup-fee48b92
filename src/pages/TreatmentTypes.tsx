@@ -296,6 +296,14 @@ const TreatmentTypes = () => {
         </div>
       </section>
 
+      {/* Featured Centers - Right after hero */}
+      <FeaturedCentersSection 
+        title="Featured Treatment Centers"
+        description="Verified facilities offering these treatment programs"
+        limit={6}
+        className="bg-gradient-to-b from-background to-muted/20"
+      />
+
       {/* Primary Treatment Types */}
       <section className="py-10 md:py-14">
         <div className="container">
@@ -593,13 +601,6 @@ const TreatmentTypes = () => {
         </div>
       </section>
 
-      {/* Featured Centers - SEO Internal Links */}
-      <FeaturedCentersSection 
-        title="Explore Treatment Centers"
-        description="Verified facilities offering these treatment programs"
-        limit={8}
-        className="border-t border-border bg-muted/30"
-      />
 
       {/* SEO Internal Linking */}
       <InternalLinkingSection
