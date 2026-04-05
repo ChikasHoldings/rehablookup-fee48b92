@@ -656,6 +656,9 @@ async function main() {
   // These have more files, run sequentially to avoid filesystem pressure
   await generateCityTreatmentPages();
   await generateInsuranceStatePages();
+  await generateStatePages();
+  await generateCityPages();
+  await generateStateTreatmentPages();
 
   console.log(`[seo-html] Generated ${pagesGenerated} static HTML pages`);
 }
