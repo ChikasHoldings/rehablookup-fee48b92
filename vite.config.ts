@@ -38,14 +38,12 @@ export default defineConfig(({ mode }) => ({
           ],
           // Data fetching chunk
           'vendor-query': ['@tanstack/react-query', '@supabase/supabase-js'],
-          // Charts chunk (only loaded when needed)
-          'vendor-charts': ['recharts'],
-          // Animation chunk (deferred)
-          'vendor-motion': ['framer-motion'],
           // Form handling (loaded on form pages)
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           // Stripe (only loaded when payment modal opens)
           'vendor-stripe': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
+          // NOTE: recharts, framer-motion are NOT in manual chunks
+          // so they naturally code-split and only load with the lazy routes that use them
         },
       },
     },
