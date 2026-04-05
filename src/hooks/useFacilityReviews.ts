@@ -54,7 +54,7 @@ export function useFacilityReviews(facilityId: string) {
     // Fetch approved reviews
     const { data: reviewsData, error } = await supabase
       .from('facility_reviews')
-      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, created_at, updated_at')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, created_at, updated_at, reviewer_display_name')
       .eq('facility_id', facilityId)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
