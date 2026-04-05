@@ -129,18 +129,19 @@ export function useProviderReviews() {
 
       const enrichedReviews: ProviderReview[] = reviewsData.map(review => {
         const profile = profileMap.get(review.user_id);
+        const storedName = (review as any).reviewer_display_name;
         const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
         const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+        const builtName = firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : '';
         
-        const displayName = (review as any).reviewer_display_name
-          || (firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : 'Verified User');
+        const displayName = storedName || builtName || `${firstName || 'Anonymous'}`;
         const facilityInfo = facilityMap.get(review.facility_id);
         
         return {
           ...review,
           disputed: review.disputed || false,
           user_display_name: displayName,
-          reviewer_first_name: firstName || displayName?.charAt(0) || 'V',
+          reviewer_first_name: firstName || displayName.charAt(0),
           reviewer_last_initial: lastInitial || '',
           reviewer_city: profile?.city || null,
           reviewer_state: profile?.state || null,
