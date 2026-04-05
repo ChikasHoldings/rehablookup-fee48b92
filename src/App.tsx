@@ -17,7 +17,7 @@ import { queryClient } from "@/lib/queryClient";
 
 // Eagerly load homepage for instant LCP
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { SmartCatchAll } from "./components/SmartCatchAll";
 
 // Lazy load all other public pages for reduced initial bundle
 const RehabCenters = lazy(() => import("./pages/RehabCenters"));
@@ -64,7 +64,7 @@ const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
 const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
 const InsuranceStatePage = lazy(() => import("./pages/seo/InsuranceStatePage"));
-const BestInStatePage = lazy(() => import("./pages/seo/BestInStatePage"));
+// BestInStatePage moved to SmartCatchAll
 
 // Provider SEO Pages
 const GetMoreRehabPatients = lazy(() => import("./pages/provider-guides/GetMoreRehabPatients"));
@@ -91,7 +91,7 @@ const SubstanceAbuseTreatmentMarketing = lazy(() => import("./pages/provider-gui
 const MATClinicMarketing = lazy(() => import("./pages/provider-guides/MATClinicMarketing"));
 const TreatmentCenterWebsiteDesign = lazy(() => import("./pages/provider-guides/TreatmentCenterWebsiteDesign"));
 const RehabComplianceGuide = lazy(() => import("./pages/provider-guides/RehabComplianceGuide"));
-const ListYourFacilityState = lazy(() => import("./pages/provider-guides/ListYourFacilityState"));
+// ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
 const ProviderResourceHub = lazy(() => import("./pages/providers/ProviderResourceHub"));
@@ -428,7 +428,7 @@ const AppInner = () => {
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
             
             {/* Best Rehab Centers in [State] Roundup Pages */}
-            <Route path="/best-rehab-centers-in-:stateSlug" element={<PublicRouteGuard><BestInStatePage /></PublicRouteGuard>} />
+            {/* Best Rehab Centers routes handled by SmartCatchAll below */}
             
             {/* SEO City+Treatment Combo Pages - use full path parsing */}
             <Route path="/alcohol-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
@@ -688,7 +688,7 @@ const AppInner = () => {
             <Route path="/provider-guides/mat-clinic-marketing" element={<PublicRouteGuard><MATClinicMarketing /></PublicRouteGuard>} />
             <Route path="/provider-guides/treatment-center-website-design" element={<PublicRouteGuard><TreatmentCenterWebsiteDesign /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-compliance-guide" element={<PublicRouteGuard><RehabComplianceGuide /></PublicRouteGuard>} />
-            <Route path="/list-your-facility-in-:stateSlug" element={<PublicRouteGuard><ListYourFacilityState /></PublicRouteGuard>} />
+            {/* List Your Facility routes handled by SmartCatchAll below */}
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
@@ -749,7 +749,7 @@ const AppInner = () => {
             <Route path="/lp/convert" element={<MarketingLanding />} />
             
             {/* 404 */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<SmartCatchAll />} />
           </Routes>
         </Suspense>
               </NavigationProvider>
