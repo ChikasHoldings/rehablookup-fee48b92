@@ -1780,6 +1780,7 @@ export type Database = {
           review_text: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          reviewer_display_name: string | null
           status: string
           updated_at: string
           user_id: string
@@ -1795,6 +1796,7 @@ export type Database = {
           review_text?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          reviewer_display_name?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -1810,6 +1812,7 @@ export type Database = {
           review_text?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          reviewer_display_name?: string | null
           status?: string
           updated_at?: string
           user_id?: string
