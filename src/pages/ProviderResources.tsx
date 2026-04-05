@@ -171,6 +171,14 @@ export default function ProviderResources() {
           <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
           
           <div className="container relative z-10 px-5 md:px-6">
+            <BreadcrumbNav
+              className="mb-4"
+              variant="light"
+              items={[
+                { label: "For Providers", href: "/for-providers" },
+                { label: "Resources" },
+              ]}
+            />
             <div className="text-center max-w-3xl mx-auto">
               <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-accent/10 px-5 md:px-4 py-2.5 md:py-1.5">
                 <Sparkles className="h-5 w-5 md:h-4 md:w-4 text-accent" />
