@@ -531,7 +531,7 @@ const AppInner = () => {
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/blog" element={<Navigate to="/resources" replace />} />
-            <Route path="/blog/:id" element={<Navigate to="/resources/:id" replace />} />
+            <Route path="/blog/:id" element={<BlogRedirect />} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
             {/* Insurance short URLs → redirect to canonical */}
             <Route path="/insurance/aetna" element={<Navigate to="/insurance/aetna-rehab" replace />} />
