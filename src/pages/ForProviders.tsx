@@ -101,7 +101,11 @@ const ForProviders = () => {
 
           {/* Content */}
           <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
-            <div className="mx-auto max-w-3xl text-center">
+            <BreadcrumbNav
+              className="mb-4"
+              variant="dark"
+              items={[{ label: "For Providers" }]}
+            />
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">
                 <Shield className="h-4 w-4 text-accent" />
