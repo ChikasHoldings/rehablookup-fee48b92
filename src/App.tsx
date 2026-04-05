@@ -428,7 +428,7 @@ const AppInner = () => {
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
             
             {/* Best Rehab Centers in [State] Roundup Pages */}
-            <Route path="/best-rehab-centers-in-:stateSlug" element={<PublicRouteGuard><BestInStatePage /></PublicRouteGuard>} />
+            <Route path="/best-rehab-centers-in-/*" element={<PublicRouteGuard><BestInStatePage /></PublicRouteGuard>} />
             
             {/* SEO City+Treatment Combo Pages - use full path parsing */}
             <Route path="/alcohol-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
@@ -688,7 +688,7 @@ const AppInner = () => {
             <Route path="/provider-guides/mat-clinic-marketing" element={<PublicRouteGuard><MATClinicMarketing /></PublicRouteGuard>} />
             <Route path="/provider-guides/treatment-center-website-design" element={<PublicRouteGuard><TreatmentCenterWebsiteDesign /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-compliance-guide" element={<PublicRouteGuard><RehabComplianceGuide /></PublicRouteGuard>} />
-            <Route path="/list-your-facility-in-:stateSlug" element={<PublicRouteGuard><ListYourFacilityState /></PublicRouteGuard>} />
+            <Route path="/list-your-facility-in-/*" element={<PublicRouteGuard><ListYourFacilityState /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
