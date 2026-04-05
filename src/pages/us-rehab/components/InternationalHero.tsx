@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Globe, Clock, Shield, CheckCircle } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface InternationalHeroProps {
   title: string;
@@ -25,7 +24,6 @@ export const InternationalHero = ({
 }: InternationalHeroProps) => {
   return (
     <section className="relative overflow-hidden bg-primary py-10 md:py-14 lg:py-16">
-      <MedicalPatternBackground />
 
       <div className="container relative mx-auto px-4">
         {breadcrumbItems && (

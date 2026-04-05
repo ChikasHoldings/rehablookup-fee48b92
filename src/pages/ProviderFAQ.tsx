@@ -15,7 +15,6 @@ import {
   Sparkles, TrendingUp, Zap,
 } from "lucide-react";
 import heroImg from "@/assets/images/faq-hero-provider.jpg";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 const faqCategories = [
   {
@@ -148,7 +147,6 @@ export default function ProviderFAQ() {
         {/* Hero — Split Screen */}
         <section className="relative bg-primary overflow-hidden">
           <div className="container">
-        <MedicalPatternBackground />
             <div className="grid lg:grid-cols-2 gap-0 items-stretch min-h-[340px]">
               {/* Left */}
               <div className="flex flex-col justify-center py-12 lg:py-16 lg:pr-12 relative z-10">

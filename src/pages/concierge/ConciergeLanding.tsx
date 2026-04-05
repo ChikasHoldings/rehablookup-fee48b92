@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { conciergeFaqs } from "@/data/pageFaqs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -151,7 +150,6 @@ export default function ConciergeLanding() {
               decoding="sync"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
-            <MedicalPatternBackground />
             
             <div className="container relative mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
               <BreadcrumbNav
@@ -400,7 +398,6 @@ export default function ConciergeLanding() {
           <section className="py-12 sm:py-20 md:py-28 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/90" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
-            <MedicalPatternBackground />
             
             <div className="container relative mx-auto px-4">
               <div className="max-w-2xl mx-auto text-center text-primary-foreground">

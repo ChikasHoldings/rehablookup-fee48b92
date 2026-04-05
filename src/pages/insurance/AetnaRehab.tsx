@@ -26,7 +26,6 @@ import {
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
 import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 const coverageDetails = [
   {
@@ -136,7 +135,6 @@ export default function AetnaRehab() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-primary py-10 md:py-14">
         <div className="container">
-        <MedicalPatternBackground />
           <BreadcrumbNav className="mb-4"
             items={[
               { label: "Insurance", href: "/insurance" },

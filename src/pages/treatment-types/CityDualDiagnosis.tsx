@@ -19,7 +19,6 @@ import {
   Building2,
   Sparkles,
 } from "lucide-react";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const treatmentFeatures = [
@@ -118,7 +117,6 @@ const CityDualDiagnosis = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-primary py-12 md:py-16">
         <div className="container">
-        <MedicalPatternBackground />
           <BreadcrumbNav
             className="mb-4"
             items={[
