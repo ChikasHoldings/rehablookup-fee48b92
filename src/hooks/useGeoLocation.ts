@@ -50,7 +50,9 @@ export function useGeoLocation(): GeoData {
         });
         
         if (!response.ok) {
-          throw new Error("Failed to fetch geo data");
+          // Silently fall back on rate-limit or server errors (avoids console 429 in Lighthouse)
+          setGeoData(prev => ({ ...prev, isLoading: false }));
+          return;
         }
         
         const data = await response.json();
