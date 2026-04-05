@@ -192,7 +192,8 @@ export function Header({
 
     const headerRect = headerEl.getBoundingClientRect();
     const triggerRect = triggerEl.getBoundingClientRect();
-    const preferredLeft = triggerRect.left + triggerRect.width / 2 - menuWidth / 2;
+    // Align dropdown left edge to trigger left edge (not centered)
+    const preferredLeft = triggerRect.left;
     const safeLeft = Math.min(
       Math.max(preferredLeft, gutter),
       window.innerWidth - gutter - menuWidth
