@@ -96,6 +96,7 @@ const ForProviders = () => {
           
           {/* Dark overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
+          <MedicalPatternBackground />
 
           {/* Content */}
           <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
