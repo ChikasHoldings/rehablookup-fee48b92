@@ -415,6 +415,8 @@ export function Header({
           </div>
         </div>
       </header>
+      {/* Spacer to prevent content from being hidden behind fixed header */}
+      <div className="h-[68px] w-full" />
 
       {/* Mobile Menu Overlay */}
       <div 
