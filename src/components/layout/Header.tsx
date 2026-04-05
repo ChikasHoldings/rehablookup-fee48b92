@@ -212,7 +212,7 @@ export function Header({
       {openMegaMenu && (
         <div className="fixed inset-0 z-40" onClick={() => setOpenMegaMenu(null)} />
       )}
-      <header className="sticky top-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
+      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
         <div className="container flex h-[68px] items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
@@ -415,6 +415,8 @@ export function Header({
           </div>
         </div>
       </header>
+      {/* Spacer to prevent content from being hidden behind fixed header */}
+      <div className="h-[68px] w-full" />
 
       {/* Mobile Menu Overlay */}
       <div 
