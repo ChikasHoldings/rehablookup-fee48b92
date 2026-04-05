@@ -146,14 +146,35 @@ export function useFacilityReviews(facilityId: string) {
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
+    // Build reviewer display name from seeker profile or auth metadata
+    let reviewerDisplayName: string | null = null;
+    const { data: profile } = await supabase
+      .from('seeker_profiles')
+      .select('first_name, last_name, display_name')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (profile) {
+      const fn = profile.first_name || profile.display_name?.split(' ')[0] || '';
+      const li = profile.last_name?.charAt(0) || profile.display_name?.split(' ')[1]?.charAt(0) || '';
+      if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
+    }
+    if (!reviewerDisplayName) {
+      const meta = user.user_metadata;
+      const fn = meta?.first_name || meta?.full_name?.split(' ')[0] || '';
+      const li = meta?.last_name?.charAt(0) || meta?.full_name?.split(' ')[1]?.charAt(0) || '';
+      if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
+    }
+
     const { data, error } = await supabase
       .from('facility_reviews')
       .insert({
         user_id: user.id,
         facility_id: facilityId,
         rating,
-        review_text: reviewText.trim() || null
-      })
+        review_text: reviewText.trim() || null,
+        reviewer_display_name: reviewerDisplayName
+      } as any)
       .select()
       .single();
 
