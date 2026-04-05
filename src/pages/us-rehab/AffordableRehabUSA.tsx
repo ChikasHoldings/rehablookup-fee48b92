@@ -1,9 +1,8 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
-import { CheckCircle, DollarSign, MapPin, Star } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const affordableTips = [
   { title: "Compare Self-Pay Rates", description: "Many facilities offer 15–30% discounts for self-pay patients. Always ask about cash-pay pricing versus listed rates." },
