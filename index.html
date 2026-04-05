@@ -484,11 +484,11 @@
         gtag('js', new Date());
         gtag('config', 'G-2VB6C1X2MQ');
       }
-      // Load after page becomes interactive
+      // Load well after page becomes interactive to avoid impacting TTI
       if ('requestIdleCallback' in window) {
-        requestIdleCallback(loadGoogleAnalytics, { timeout: 3000 });
+        requestIdleCallback(loadGoogleAnalytics, { timeout: 8000 });
       } else {
-        setTimeout(loadGoogleAnalytics, 2000);
+        setTimeout(loadGoogleAnalytics, 5000);
       }
     </script>
     <!-- Prefetch likely next pages for instant navigation -->
