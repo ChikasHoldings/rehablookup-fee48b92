@@ -45,7 +45,7 @@ import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/componen
 // Clear all provider-related caches from any previous session
 const clearProviderCaches = () => {
   try {
-    console.log("[ProviderSignup] Clearing provider caches...");
+    if (import.meta.env.DEV) console.log("[ProviderSignup] Clearing provider caches...");
     // Clear facilities cache (both global and any user-specific)
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith("provider-facilities-cache")) {
@@ -63,7 +63,7 @@ const clearProviderCaches = () => {
     localStorage.removeItem("rl_cached_uid");
     localStorage.removeItem("rl_cached_auth");
     localStorage.removeItem("rl_cached_ts");
-    console.log("[ProviderSignup] Provider caches cleared");
+    if (import.meta.env.DEV) console.log("[ProviderSignup] Provider caches cleared");
   } catch (e) {
     console.error("[ProviderSignup] Error clearing caches:", e);
   }
@@ -274,23 +274,23 @@ export default function ProviderSignup() {
   const handleSubmit = async () => {
     // Prevent double submissions
     if (isSubmitting) {
-      console.log("[ProviderSignup] Prevented double submission");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Prevented double submission");
       return;
     }
     
     setIsSubmitting(true);
-    console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
+    if (import.meta.env.DEV) console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
 
     try {
       // Check if email is already registered as a seeker
-      console.log("[ProviderSignup] Checking for existing seeker account...");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Checking for existing seeker account...");
       const { data: isSeeker, error: seekerCheckError } = await supabase.rpc('is_email_seeker', { p_email: formData.email });
       
       if (seekerCheckError) {
         console.error("[ProviderSignup] Seeker check error:", seekerCheckError);
         // Non-blocking - continue with signup if check fails
       } else if (isSeeker) {
-        console.log("[ProviderSignup] Email already registered as seeker");
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Email already registered as seeker");
         toast({
           title: "Account Exists",
           description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
@@ -304,7 +304,7 @@ export default function ProviderSignup() {
     clearProviderCaches();
 
       // 1. Create the user account
-      console.log("[ProviderSignup] Creating auth account...");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Creating auth account...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -344,10 +344,10 @@ export default function ProviderSignup() {
       }
 
       const userId = authData.user.id;
-      console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
 
       // 2. Create profile
-      console.log("[ProviderSignup] Creating provider profile...");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Creating provider profile...");
       const { error: profileError } = await supabase.from("profiles").insert({
         user_id: userId,
         first_name: formData.firstName,
@@ -365,11 +365,11 @@ export default function ProviderSignup() {
           variant: "default",
         });
       } else {
-        console.log("[ProviderSignup] Profile created successfully");
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Profile created successfully");
       }
 
       // 3. Create facility
-      console.log("[ProviderSignup] Creating facility...");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Creating facility...");
       const { data: facilityData, error: facilityError } = await supabase
         .from("facilities")
         .insert({
@@ -403,11 +403,11 @@ export default function ProviderSignup() {
       }
 
       const facilityId = facilityData.id;
-      console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
 
       // 4. Insert services (non-blocking)
       if (formData.selectedTreatments.length > 0) {
-        console.log("[ProviderSignup] Inserting services:", formData.selectedTreatments.length);
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting services:", formData.selectedTreatments.length);
         const servicesData = formData.selectedTreatments.map((service) => ({
           facility_id: facilityId,
           service_name: service,
@@ -418,7 +418,7 @@ export default function ProviderSignup() {
 
       // 5. Insert age groups (non-blocking)
       if (formData.ageGroups.length > 0) {
-        console.log("[ProviderSignup] Inserting age groups:", formData.ageGroups.length);
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting age groups:", formData.ageGroups.length);
         const ageGroupsData = formData.ageGroups.map((ageGroup) => ({
           facility_id: facilityId,
           age_group: ageGroup,
@@ -429,7 +429,7 @@ export default function ProviderSignup() {
 
       // 6. Insert insurance (non-blocking)
       if (formData.selectedInsurance.length > 0) {
-        console.log("[ProviderSignup] Inserting insurance:", formData.selectedInsurance.length);
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting insurance:", formData.selectedInsurance.length);
         const insuranceData = formData.selectedInsurance.map((insurance) => ({
           facility_id: facilityId,
           insurance_name: insurance,
@@ -440,7 +440,7 @@ export default function ProviderSignup() {
 
       // 7. Insert credentials (legacy free-text) - non-blocking
       if (formData.licensingInfo || formData.accreditations) {
-        console.log("[ProviderSignup] Inserting credentials...");
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting credentials...");
         const { error: credentialsError } = await supabase.from("facility_credentials").insert({
           facility_id: facilityId,
           licensing_info: formData.licensingInfo,
@@ -451,7 +451,7 @@ export default function ProviderSignup() {
 
       // 7b. Insert structured accreditations (non-blocking)
       if (formData.selectedAccreditations.length > 0) {
-        console.log("[ProviderSignup] Inserting accreditations:", formData.selectedAccreditations.length);
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting accreditations:", formData.selectedAccreditations.length);
         const accreditationsData = formData.selectedAccreditations.map((accreditation) => ({
           facility_id: facilityId,
           accreditation_type: accreditation,
@@ -520,7 +520,7 @@ export default function ProviderSignup() {
 
     // Pre-populate caches with newly created facility data for instant dashboard render
     try {
-      console.log("[ProviderSignup] Pre-populating facility cache...");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Pre-populating facility cache...");
       const facilityDataForCache = {
         id: facilityId,
         name: formData.facilityName,
@@ -553,7 +553,7 @@ export default function ProviderSignup() {
       localStorage.setItem("rl_cached_auth", "true");
       localStorage.setItem("rl_cached_ts", String(Date.now()));
       
-      console.log("[ProviderSignup] Facility cache pre-populated successfully");
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Facility cache pre-populated successfully");
     } catch (cacheError) {
       console.error("[ProviderSignup] Cache pre-population error:", cacheError);
       // Non-blocking - continue even if cache fails
