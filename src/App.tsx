@@ -64,7 +64,7 @@ const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
 const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
 const InsuranceStatePage = lazy(() => import("./pages/seo/InsuranceStatePage"));
-const BestInStatePage = lazy(() => import("./pages/seo/BestInStatePage"));
+// BestInStatePage moved to SmartCatchAll
 
 // Provider SEO Pages
 const GetMoreRehabPatients = lazy(() => import("./pages/provider-guides/GetMoreRehabPatients"));
