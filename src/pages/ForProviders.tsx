@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { forProvidersFaqs } from "@/data/pageFaqs";
 import { Button } from "@/components/ui/button";
