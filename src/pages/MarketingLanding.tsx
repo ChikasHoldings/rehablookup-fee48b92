@@ -155,15 +155,15 @@ export default function MarketingLanding() {
                 <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 text-center">
                   <div className="flex flex-col">
                     <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-primary">5,000+</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Verified Centers</div>
+                    <div className="text-xs sm:text-sm md:text-base text-muted-foreground">Verified Centers</div>
                   </div>
                   <div className="flex flex-col border-x border-border/50">
                     <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-primary">50</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">States Covered</div>
+                    <div className="text-xs sm:text-sm md:text-base text-muted-foreground">States Covered</div>
                   </div>
                   <div className="flex flex-col">
                     <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-primary">24/7</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Support</div>
+                    <div className="text-xs sm:text-sm md:text-base text-muted-foreground">Support</div>
                   </div>
                 </div>
               </div>

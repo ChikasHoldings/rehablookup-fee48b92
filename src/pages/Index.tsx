@@ -369,19 +369,19 @@ const Index = () => {
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
             <div className="flex items-center gap-2 group">
               <CheckCircle className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">Verified Facilities</span>
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
             </div>
             <div className="flex items-center gap-2 group">
               <Users className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">15,000+ Centers</span>
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">15,000+ Centers</span>
             </div>
             <div className="flex items-center gap-2 group">
               <Clock className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">24/7 Help</span>
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">24/7 Help</span>
             </div>
             <div className="flex items-center gap-2 group">
               <Phone className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-[13px] md:text-sm font-medium text-primary-foreground/90">Free Insurance Check</span>
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Free Insurance Check</span>
             </div>
           </div>
         </div>
@@ -573,7 +573,7 @@ const Index = () => {
                   className="group flex items-start gap-3 md:gap-4 rounded-xl border border-border bg-card p-3 md:p-4 transition-all hover:border-primary/30 hover:shadow-sm"
                 >
                   {/* Step number */}
-                  <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] md:text-sm font-bold text-primary-foreground">
+                  <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm md:text-base font-bold text-primary-foreground">
                     {item.step}
                   </div>
                   
@@ -581,7 +581,7 @@ const Index = () => {
                     <h3 className="font-semibold text-foreground text-[15px] md:text-base">
                       {item.title}
                     </h3>
-                    <p className="mt-0.5 text-[13px] md:text-sm text-muted-foreground">
+                    <p className="mt-0.5 text-sm md:text-base text-muted-foreground">
                       {item.description}
                     </p>
                   </div>
@@ -637,7 +637,7 @@ const Index = () => {
                     <h3 className="font-semibold text-[15px] md:text-base text-foreground transition-colors duration-200 group-hover:text-primary">
                       {option.title}
                     </h3>
-                    <p className="mt-0.5 text-[13px] md:text-sm text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
+                    <p className="mt-0.5 text-sm md:text-base text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
                       {option.description}
                     </p>
                   </div>
@@ -679,7 +679,7 @@ const Index = () => {
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2 md:gap-2.5">
                     <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-accent" />
-                    <span className="text-primary-foreground text-[13px] md:text-sm">{item}</span>
+                    <span className="text-primary-foreground text-sm md:text-base">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -721,7 +721,7 @@ const Index = () => {
                         <div className="font-display text-lg md:text-xl font-bold text-accent lg:text-2xl">
                           {stat.value}
                         </div>
-                        <p className="text-xs md:text-xs text-primary-foreground/80 lg:text-sm">{stat.label}</p>
+                        <p className="text-xs md:text-sm text-primary-foreground/80 lg:text-sm">{stat.label}</p>
                       </div>
                     ))}
                   </div>
@@ -779,7 +779,7 @@ const Index = () => {
                       <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
                       <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{step.desc}</p>
                   </div>
                 </div>
               ))}
@@ -817,7 +817,7 @@ const Index = () => {
                 
                 {/* Quote */}
                 <blockquote className="mb-3 md:mb-4">
-                  <p className="text-[13px] md:text-sm text-foreground leading-relaxed line-clamp-4 sm:line-clamp-none">
+                  <p className="text-sm md:text-base text-foreground leading-relaxed line-clamp-4 sm:line-clamp-none">
                     "{testimonial.quote}"
                   </p>
                 </blockquote>
@@ -828,8 +828,8 @@ const Index = () => {
                     {testimonial.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-[13px] md:text-sm font-medium text-foreground">{testimonial.name}</p>
-                    <p className="text-xs md:text-xs text-muted-foreground">{testimonial.location}</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">{testimonial.name}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{testimonial.location}</p>
                   </div>
                 </div>
               </div>
@@ -876,10 +876,10 @@ const Index = () => {
                 <Pill className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
                   Drug Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Addiction treatment centers
                 </p>
               </div>
@@ -893,10 +893,10 @@ const Index = () => {
                 <Activity className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
                   Alcohol Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Alcohol treatment programs
                 </p>
               </div>
@@ -910,10 +910,10 @@ const Index = () => {
                 <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
                   Detox Centers Near Me
                 </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Medical detox facilities
                 </p>
               </div>
@@ -927,10 +927,10 @@ const Index = () => {
                 <Brain className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
                   Dual Diagnosis Near Me
                 </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Mental health + addiction
                 </p>
               </div>
@@ -944,10 +944,10 @@ const Index = () => {
                 <Home className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
                   Inpatient Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Residential treatment
                 </p>
               </div>
@@ -961,10 +961,10 @@ const Index = () => {
                 <Stethoscope className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-[13px] md:text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
                   Outpatient Near Me
                 </h3>
-                <p className="mt-0.5 text-xs md:text-[13px] text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   IOP & PHP programs
                 </p>
               </div>
@@ -1016,7 +1016,7 @@ const Index = () => {
                   {/* Content */}
                   <div className="p-3 md:p-4">
                     {/* Category & Read Time */}
-                    <div className="mb-1.5 md:mb-2 flex items-center gap-2 text-xs md:text-[13px] text-muted-foreground">
+                    <div className="mb-1.5 md:mb-2 flex items-center gap-2 text-sm text-muted-foreground">
                       <span className="font-medium text-primary">{article.category}</span>
                       <span>•</span>
                       <span>{article.readTime}</span>
@@ -1028,7 +1028,7 @@ const Index = () => {
                     </h3>
                     
                     {/* Excerpt */}
-                    <p className="mt-1 md:mt-1.5 text-[13px] md:text-sm text-muted-foreground line-clamp-2">
+                    <p className="mt-1 md:mt-1.5 text-sm md:text-base text-muted-foreground line-clamp-2">
                       {article.excerpt}
                     </p>
                   </div>
@@ -1065,7 +1065,7 @@ const Index = () => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className="text-[13px] md:text-sm text-muted-foreground hover:text-primary transition-colors py-1"
+                  className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors py-1"
                 >
                   {link.name}
                 </Link>
