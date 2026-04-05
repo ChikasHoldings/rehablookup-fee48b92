@@ -464,7 +464,7 @@ export default function ConciergeLanding() {
           {/* Disclaimers */}
           <section className="py-6 sm:py-10 bg-muted/40 border-t">
             <div className="container mx-auto px-4">
-              <div className="max-w-2xl mx-auto text-center text-xs sm:text-sm text-muted-foreground space-y-2 sm:space-y-3">
+              <div className="max-w-2xl mx-auto text-center text-sm text-muted-foreground space-y-2 sm:space-y-3">
                 <p>
                   <strong className="text-foreground/80">Important:</strong> This service provides placement assistance, not medical advice. 
                   Treatment decisions should be made with qualified healthcare professionals.

@@ -440,7 +440,7 @@ export default function InternationalLanding() {
                       <AccordionTrigger className="text-left text-foreground text-sm sm:text-base font-medium hover:no-underline py-3 sm:py-4">
                         {item.question}
                       </AccordionTrigger>
-                      <AccordionContent className="text-xs sm:text-sm text-muted-foreground pb-3 sm:pb-4">
+                      <AccordionContent className="text-sm text-muted-foreground pb-3 sm:pb-4">
                         {item.answer}
                       </AccordionContent>
                     </AccordionItem>
