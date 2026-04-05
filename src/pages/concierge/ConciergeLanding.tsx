@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { conciergeFaqs } from "@/data/pageFaqs";
 import { Card, CardContent } from "@/components/ui/card";
