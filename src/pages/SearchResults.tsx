@@ -1017,9 +1017,34 @@ const SearchResults = () => {
                 <Search className="h-10 w-10 text-muted-foreground" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
-              <p className="text-muted-foreground text-center max-w-md mb-6">
-                We couldn't find any treatment centers matching your criteria. Try adjusting your filters or search in a different location.
+              <p className="text-muted-foreground text-center max-w-md mb-4">
+                {queryParam 
+                  ? `No treatment centers match "${queryParam}". Try a different search term or browse all centers.`
+                  : location
+                    ? `No centers found near "${location}". Try expanding your search area or browse nationwide.`
+                    : "We couldn't find any treatment centers matching your criteria. Try adjusting your filters."
+                }
               </p>
+
+              {/* Smart Suggestions */}
+              {(queryParam || location) && (
+                <div className="flex flex-wrap justify-center gap-2 mb-6">
+                  <span className="text-xs text-muted-foreground">Try:</span>
+                  {!location && (
+                    <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
+                  )}
+                  {!location && (
+                    <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
+                  )}
+                  {!location && (
+                    <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
+                  )}
+                  {location && !queryParam && (
+                    <button onClick={clearAllFilters} className="text-xs text-primary hover:underline">Search Nationwide</button>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button onClick={clearAllFilters} variant="outline" className="gap-2">
                   <X className="h-4 w-4" />
@@ -1028,6 +1053,12 @@ const SearchResults = () => {
                 <Link to="/rehab-centers">
                   <Button className="gap-2">
                     Browse All Centers
+                  </Button>
+                </Link>
+                <Link to="/concierge">
+                  <Button variant="secondary" className="gap-2">
+                    <Heart className="h-4 w-4" />
+                    Get Personalized Help
                   </Button>
                 </Link>
               </div>
