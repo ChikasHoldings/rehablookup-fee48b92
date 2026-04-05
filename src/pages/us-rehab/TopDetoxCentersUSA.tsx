@@ -3,7 +3,6 @@ import { SEO } from "@/components/SEO";
 import { InternationalPageHero, WhyUSATreatment, StateDestinations, CountriesServed, InternationalFAQ, PlacementCTA } from "./components";
 import { CheckCircle, Activity, Shield, Heart } from "lucide-react";
 import { motion } from "framer-motion";
-import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const TopDetoxCentersUSA = () => {
   const faqs = [
