@@ -114,6 +114,16 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/court-ordered-rehab-near-me", priority: 0.85, changefreq: "weekly" },
   { path: "/suboxone-clinic-near-me", priority: 0.85, changefreq: "weekly" },
   { path: "/methadone-clinic-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/holistic-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/christian-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/long-term-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/iop-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/php-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/couples-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/executive-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/rehab-near-me", priority: 0.95, changefreq: "daily" },
+  { path: "/mat-clinic-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/affordable-rehab-near-me", priority: 0.9, changefreq: "weekly" },
 
   // INSURANCE PAGES (only routes that exist in App.tsx)
   { path: "/insurance/aetna-rehab", priority: 0.85, changefreq: "weekly" },
@@ -266,6 +276,16 @@ const NEAR_ME_TYPES_WITH_STATES = [
   "suboxone-clinic-near-me",
   "methadone-clinic-near-me",
   "faith-based-rehab-near-me",
+  "holistic-rehab-near-me",
+  "christian-rehab-near-me",
+  "long-term-rehab-near-me",
+  "iop-near-me",
+  "php-near-me",
+  "couples-rehab-near-me",
+  "executive-rehab-near-me",
+  "rehab-near-me",
+  "mat-clinic-near-me",
+  "affordable-rehab-near-me",
 ];
 
 // Treatment types that have state/city sub-routes
@@ -298,7 +318,7 @@ const TOP_CITIES_FOR_TREATMENT: Record<string, string[]> = {
   "georgia": ["atlanta"],
 };
 
-// City+Treatment combo pages - all 50 cities × 6 treatment types (generated dynamically)
+// City+Treatment combo pages - all 50 cities × 14 treatment types (generated dynamically)
 const ALL_CITY_SLUGS = [
   "new-york", "los-angeles", "chicago", "houston", "phoenix", "dallas", "miami", "atlanta",
   "denver", "seattle", "san-diego", "san-francisco", "boston", "philadelphia", "san-antonio",
@@ -310,7 +330,10 @@ const ALL_CITY_SLUGS = [
 ];
 const CITY_TREATMENT_PREFIXES = [
   "alcohol-rehab-in", "drug-rehab-in", "detox-centers-in",
-  "inpatient-rehab-in", "outpatient-rehab-in", "dual-diagnosis-treatment-in"
+  "inpatient-rehab-in", "outpatient-rehab-in", "dual-diagnosis-treatment-in",
+  "luxury-rehab-in", "sober-living-in", "free-rehab-in",
+  "faith-based-rehab-in", "fentanyl-rehab-in", "veterans-rehab-in",
+  "womens-rehab-in", "mens-rehab-in"
 ];
 
 // Insurance + State cross pages

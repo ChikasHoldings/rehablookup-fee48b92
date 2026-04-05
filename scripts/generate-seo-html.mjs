@@ -86,6 +86,14 @@ const treatmentTypes = [
   { slug: "inpatient-rehab", label: "Inpatient Rehab", shortLabel: "Inpatient", filterKey: "inpatient", description: "Explore residential inpatient rehabilitation programs with round-the-clock care and structured treatment environments." },
   { slug: "outpatient-rehab", label: "Outpatient Rehab", shortLabel: "Outpatient", filterKey: "outpatient", description: "Find flexible outpatient treatment programs including IOP and PHP that allow you to continue daily responsibilities." },
   { slug: "dual-diagnosis-treatment", label: "Dual Diagnosis Treatment", shortLabel: "Dual Diagnosis", filterKey: "dual diagnosis", description: "Discover specialized facilities treating co-occurring mental health and substance use disorders simultaneously." },
+  { slug: "luxury-rehab", label: "Luxury Rehab", shortLabel: "Luxury", filterKey: "luxury", description: "Find premium luxury rehab centers offering private accommodations, gourmet dining, and world-class addiction treatment." },
+  { slug: "sober-living", label: "Sober Living", shortLabel: "Sober Living", filterKey: "sober living", description: "Find structured sober living homes providing safe, substance-free housing and peer support during recovery." },
+  { slug: "free-rehab", label: "Free Rehab", shortLabel: "Free", filterKey: "free", description: "Find free and low-cost rehabilitation programs including state-funded, Medicaid, and nonprofit treatment options." },
+  { slug: "faith-based-rehab", label: "Faith-Based Rehab", shortLabel: "Faith-Based", filterKey: "faith", description: "Find faith-based rehabilitation programs integrating spiritual growth with evidence-based addiction treatment." },
+  { slug: "fentanyl-rehab", label: "Fentanyl Rehab", shortLabel: "Fentanyl", filterKey: "fentanyl", description: "Find specialized fentanyl addiction treatment centers offering medical detox, MAT, and comprehensive recovery." },
+  { slug: "veterans-rehab", label: "Veterans Rehab", shortLabel: "Veterans", filterKey: "veterans", description: "Find veteran-specific rehabilitation centers offering VA-covered addiction treatment and PTSD care." },
+  { slug: "womens-rehab", label: "Women's Rehab", shortLabel: "Women's", filterKey: "women", description: "Find women-only rehabilitation centers with gender-specific treatment programs for women's recovery." },
+  { slug: "mens-rehab", label: "Men's Rehab", shortLabel: "Men's", filterKey: "men", description: "Find men-only rehabilitation centers with gender-specific treatment programs for men's recovery." },
 ];
 
 const treatmentHubs = [
@@ -111,8 +119,10 @@ const nearMePages = [
   { slug: "alcohol-rehab-near-me", title: "Alcohol Rehab Near Me", metaDescription: "Find alcohol rehab centers near you. Compare detox, inpatient & outpatient programs. Insurance verification available." },
   { slug: "detox-near-me", title: "Detox Centers Near Me", metaDescription: "Find medically supervised detox centers near your location. Safe withdrawal management with 24/7 medical support." },
   { slug: "dual-diagnosis-near-me", title: "Dual Diagnosis Treatment Near Me", metaDescription: "Find dual diagnosis treatment centers near you treating addiction and mental health disorders simultaneously." },
+  { slug: "dual-diagnosis-rehab-near-me", title: "Dual Diagnosis Rehab Near Me", metaDescription: "Find dual diagnosis rehab centers near you treating addiction and mental health conditions simultaneously." },
   { slug: "inpatient-rehab-near-me", title: "Inpatient Rehab Near Me", metaDescription: "Find inpatient rehab facilities near you with 24/7 residential care and comprehensive treatment programs." },
   { slug: "outpatient-near-me", title: "Outpatient Rehab Near Me", metaDescription: "Find flexible outpatient rehab programs near you. IOP, PHP, and standard outpatient options available." },
+  { slug: "outpatient-rehab-near-me", title: "Outpatient Rehab Programs Near Me", metaDescription: "Find outpatient rehabilitation programs near you with flexible scheduling and evidence-based treatment." },
   { slug: "free-rehab-near-me", title: "Free Rehab Centers Near Me", metaDescription: "Find free and low-cost rehab centers near you. State-funded, Medicaid, and nonprofit treatment options." },
   { slug: "luxury-rehab-near-me", title: "Luxury Rehab Centers Near Me", metaDescription: "Find luxury rehab centers near you with premium amenities and world-class addiction treatment programs." },
   { slug: "womens-rehab-near-me", title: "Women's Rehab Near Me", metaDescription: "Find women-only rehab centers near you with gender-specific treatment programs and supportive environments." },
@@ -124,6 +134,18 @@ const nearMePages = [
   { slug: "medicaid-rehab-near-me", title: "Medicaid Rehab Near Me", metaDescription: "Find rehab centers near you that accept Medicaid. Comprehensive addiction treatment covered by Medicaid." },
   { slug: "court-ordered-rehab-near-me", title: "Court-Ordered Rehab Near Me", metaDescription: "Find court-ordered rehab programs near you. Meet legal requirements while receiving quality addiction treatment." },
   { slug: "suboxone-clinic-near-me", title: "Suboxone Clinics Near Me", metaDescription: "Find Suboxone clinics near you for opioid addiction treatment. MAT providers accepting new patients." },
+  { slug: "methadone-clinic-near-me", title: "Methadone Clinics Near Me", metaDescription: "Find methadone clinics near you for opioid addiction treatment. Medication-assisted treatment programs." },
+  { slug: "faith-based-rehab-near-me", title: "Faith-Based Rehab Near Me", metaDescription: "Find faith-based rehab centers near you combining spiritual care with evidence-based addiction treatment." },
+  { slug: "holistic-rehab-near-me", title: "Holistic Rehab Near Me", metaDescription: "Find holistic rehab centers near you offering yoga, meditation, acupuncture, and integrative addiction treatment." },
+  { slug: "christian-rehab-near-me", title: "Christian Rehab Near Me", metaDescription: "Find Christian rehab centers near you combining biblical principles with professional addiction treatment." },
+  { slug: "long-term-rehab-near-me", title: "Long-Term Rehab Near Me", metaDescription: "Find long-term rehab programs near you. 60, 90, and 120+ day residential treatment for lasting recovery." },
+  { slug: "iop-near-me", title: "IOP Near Me", metaDescription: "Find intensive outpatient programs (IOP) near you. Flexible 9-20 hour weekly treatment while maintaining daily life." },
+  { slug: "php-near-me", title: "PHP Near Me", metaDescription: "Find partial hospitalization programs (PHP) near you. Structured day treatment 5-7 days per week." },
+  { slug: "couples-rehab-near-me", title: "Couples Rehab Near Me", metaDescription: "Find couples rehab programs near you. Joint addiction treatment with relationship counseling and individual care." },
+  { slug: "executive-rehab-near-me", title: "Executive Rehab Near Me", metaDescription: "Find confidential executive rehab programs near you. Premium treatment for professionals and executives." },
+  { slug: "rehab-near-me", title: "Rehab Near Me", metaDescription: "Find rehab centers near you. Compare verified addiction treatment facilities offering detox, inpatient, and outpatient programs." },
+  { slug: "mat-clinic-near-me", title: "MAT Clinic Near Me", metaDescription: "Find medication-assisted treatment clinics near you. Suboxone, methadone, and Vivitrol programs for opioid recovery." },
+  { slug: "affordable-rehab-near-me", title: "Affordable Rehab Near Me", metaDescription: "Find affordable rehab centers near you. Sliding-scale fees, payment plans, and budget-friendly treatment options." },
 ];
 
 const bestInStates = [
