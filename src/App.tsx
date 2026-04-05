@@ -235,6 +235,11 @@ function LegacyCenterRedirect() {
   return <Navigate to={`/center/${slug}`} replace />;
 }
 
+function BlogRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/resources/${id}`} replace />;
+}
+
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
 // so we don't get noisy "Function components cannot be given refs" warnings.
 //
