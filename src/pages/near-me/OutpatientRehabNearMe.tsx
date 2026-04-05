@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Briefcase, Calendar, Clock, Home } from "lucide-react";
@@ -38,61 +37,19 @@ const getOutpatientFAQs = (location?: { state: string }) => [
 
 export default function OutpatientRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/outpatient-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities.filter(f => 
-      f.facilityType?.toLowerCase().includes('outpatient')
-    );
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    // If no outpatient-specific facilities, show all facilities
-    if (filtered.length === 0) {
-      filtered = approvedFacilities;
-      if (stateData) {
-        filtered = filtered.filter(f => 
-          f.state.toLowerCase() === stateData.name.toLowerCase() ||
-          f.state.toLowerCase() === stateData.abbr.toLowerCase()
-        );
-      }
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getOutpatientFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getOutpatientFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Outpatient Drug Rehabilitation",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -113,8 +70,8 @@ export default function OutpatientRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Outpatient Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | IOP & PHP Programs`}
-        description={`Find outpatient drug and alcohol rehab${stateData ? ` in ${stateData.name}` : " near you"}. IOP, PHP, and flexible treatment programs. Continue working while getting the help you need.`}
+        title={`Outpatient Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | IOP & PHP Programs`}
+        description={`Find outpatient drug and alcohol rehab${stateData ? ` in ${stateData.state}` : " near you"}. IOP, PHP, and flexible treatment programs. Continue working while getting the help you need.`}
         canonical={stateSlug ? `/outpatient-rehab-near-me/${stateSlug}` : "/outpatient-rehab-near-me"}
         keywords={[
           "outpatient rehab near me",
@@ -126,18 +83,18 @@ export default function OutpatientRehabNearMe() {
           "outpatient alcohol treatment",
           "day treatment program",
           ...(stateData ? [
-            `outpatient rehab ${stateData.name}`,
-            `IOP ${stateData.abbr}`,
+            `outpatient rehab ${stateData.state}`,
+            `IOP ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Outpatient Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find flexible outpatient addiction treatment${stateData ? ` in ${stateData.name}` : " near you"}. IOP and PHP programs let you get help while maintaining work and family responsibilities.`}
+        title={`Outpatient Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find flexible outpatient addiction treatment${stateData ? ` in ${stateData.state}` : " near you"}. IOP and PHP programs let you get help while maintaining work and family responsibilities.`}
         treatmentType="Outpatient Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -181,7 +138,7 @@ export default function OutpatientRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -197,7 +154,7 @@ export default function OutpatientRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Outpatient Programs {stateData ? `in ${stateData.name}` : "Near You"}
+              Outpatient Programs {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               IOP, PHP, and flexible outpatient addiction treatment programs.
@@ -221,7 +178,7 @@ export default function OutpatientRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}&type=Outpatient` : "?type=Outpatient"}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}&type=Outpatient` : "?type=Outpatient"}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Programs
                       <ArrowRight className="h-4 w-4" />
@@ -269,7 +226,7 @@ export default function OutpatientRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Outpatient Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

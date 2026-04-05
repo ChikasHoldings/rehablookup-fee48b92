@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateTreatmentNearMeSchema, generateNearMeSchema } from "@/components/SEO";
@@ -7,116 +6,34 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection, getDualDiagnosisNearMeFAQs } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { treatmentCenters } from "@/data/treatmentCenters";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin } from "lucide-react";
 
-const stateCoordinates: Record<string, { lat: number; lng: number; name: string; abbr: string }> = {
-  "california": { lat: 36.116203, lng: -119.681564, name: "California", abbr: "CA" },
-  "florida": { lat: 27.766279, lng: -81.686783, name: "Florida", abbr: "FL" },
-  "new-york": { lat: 42.165726, lng: -74.948051, name: "New York", abbr: "NY" },
-  "texas": { lat: 31.054487, lng: -97.563461, name: "Texas", abbr: "TX" },
-  "arizona": { lat: 33.729759, lng: -111.431221, name: "Arizona", abbr: "AZ" },
-  "colorado": { lat: 39.059811, lng: -105.311104, name: "Colorado", abbr: "CO" },
-};
-
-function getClosestState(lat: number, lng: number): { name: string; abbr: string; slug: string } | null {
-  let closest = null;
-  let minDistance = Infinity;
-
-  for (const [slug, coords] of Object.entries(stateCoordinates)) {
-    const distance = Math.sqrt(
-      Math.pow(lat - coords.lat, 2) + Math.pow(lng - coords.lng, 2)
-    );
-    if (distance < minDistance) {
-      minDistance = distance;
-      closest = { name: coords.name, abbr: coords.abbr, slug };
-    }
-  }
-
-  return closest;
-}
 
 export default function DualDiagnosisNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/dual-diagnosis-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    
-    if (!stateData) return allFacilities.slice(0, 20);
-
-    return allFacilities
-      .filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      )
-      .sort((a, b) => {
-        const aFeatured = (a as any).hasFeaturedSubscription ? 1 : 0;
-        const bFeatured = (b as any).hasFeaturedSubscription ? 1 : 0;
-        if (bFeatured !== aFeatured) return bFeatured - aFeatured;
-        return b.rating - a.rating;
-      });
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const closest = getClosestState(position.coords.latitude, position.coords.longitude);
-          if (closest) setUserLocation(closest);
-        },
-        () => {},
-        { timeout: 10000 }
-      );
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getDualDiagnosisNearMeFAQs(stateData ? { state: stateData.name } : undefined);
-
-  const nearbyStates = useMemo(() => {
-    if (!stateData) return [];
-    const currentIndex = statesData.findIndex(s => s.slug === stateData.slug);
-    return statesData
-      .filter((_, i) => Math.abs(i - currentIndex) > 0 && Math.abs(i - currentIndex) <= 3)
-      .slice(0, 4)
-      .map(s => ({
-        name: s.name,
-        slug: `/dual-diagnosis-near-me/${s.slug}`,
-        facilityCount: treatmentCenters.filter(f => 
-          f.state.toLowerCase() === s.name.toLowerCase()
-        ).length,
-      }));
-  }, [stateData]);
+  const faqs = getDualDiagnosisNearMeFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     ...generateTreatmentNearMeSchema({
       treatmentType: "Dual Diagnosis Treatment",
       treatmentSlug: "dual-diagnosis",
-      location: stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined,
+      location: stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined,
       facilityCount: facilities.length,
       faqs,
     }),
     generateNearMeSchema({
       serviceType: "Dual Diagnosis Treatment Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -125,8 +42,8 @@ export default function DualDiagnosisNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Dual Diagnosis Treatment Near Me ${stateData ? `in ${stateData.name}` : ""} | Co-Occurring Disorders`}
-        description={`Find dual diagnosis treatment centers near you${stateData ? ` in ${stateData.name}` : ""}. Integrated care for addiction and mental health disorders at ${facilities.length}+ verified facilities.`}
+        title={`Dual Diagnosis Treatment Near Me ${stateData ? `in ${stateData.state}` : ""} | Co-Occurring Disorders`}
+        description={`Find dual diagnosis treatment centers near you${stateData ? ` in ${stateData.state}` : ""}. Integrated care for addiction and mental health disorders at ${facilities.length}+ verified facilities.`}
         canonical={stateSlug ? `/dual-diagnosis-near-me/${stateSlug}` : "/dual-diagnosis-near-me"}
         keywords={[
           "dual diagnosis treatment near me",
@@ -134,8 +51,8 @@ export default function DualDiagnosisNearMe() {
           "mental health and addiction treatment",
           "integrated treatment programs",
           ...(stateData ? [
-            `dual diagnosis ${stateData.name}`,
-            `co-occurring disorders ${stateData.abbr}`,
+            `dual diagnosis ${stateData.state}`,
+            `co-occurring disorders ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
@@ -143,21 +60,21 @@ export default function DualDiagnosisNearMe() {
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },
           { name: "Dual Diagnosis Near Me", url: "/dual-diagnosis-near-me" },
-          ...(stateData ? [{ name: stateData.name, url: `/dual-diagnosis-near-me/${stateData.slug}` }] : []),
+          ...(stateData ? [{ name: stateData.state, url: `/dual-diagnosis-near-me/${stateData.slug}` }] : []),
         ]}
       />
 
       <NearMeHero
-        title={`Dual Diagnosis Treatment Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find integrated treatment for addiction and mental health${stateData ? ` in ${stateData.name}` : " near you"}. Expert care for anxiety, depression, PTSD, and substance use disorders.`}
+        title={`Dual Diagnosis Treatment Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find integrated treatment for addiction and mental health${stateData ? ` in ${stateData.state}` : " near you"}. Expert care for anxiety, depression, PTSD, and substance use disorders.`}
         treatmentType="Dual Diagnosis Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={nearbyStates}
@@ -172,7 +89,7 @@ export default function DualDiagnosisNearMe() {
       <section className="py-12 bg-background">
         <div className="container">
           <h2 className="text-2xl font-bold text-foreground mb-2 treatment-intro">
-            Dual Diagnosis Centers {stateData ? `in ${stateData.name}` : "Near You"}
+            Dual Diagnosis Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
             Browse {facilities.length}+ facilities offering integrated mental health and addiction treatment.
@@ -193,7 +110,7 @@ export default function DualDiagnosisNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -241,7 +158,7 @@ export default function DualDiagnosisNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Dual Diagnosis"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, GraduationCap, Users, Heart, Shield } from "lucide-react";
@@ -38,48 +37,19 @@ const getTeenRehabFAQs = (location?: { state: string }) => [
 
 export default function TeenRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/teen-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getTeenRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getTeenRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Teen Drug Rehabilitation Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -100,8 +70,8 @@ export default function TeenRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Teen Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Adolescent Addiction Treatment`}
-        description={`Find teen and adolescent drug rehab centers${stateData ? ` in ${stateData.name}` : " near you"}. Age-appropriate treatment, family therapy, educational support. Help your teen recover today.`}
+        title={`Teen Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Adolescent Addiction Treatment`}
+        description={`Find teen and adolescent drug rehab centers${stateData ? ` in ${stateData.state}` : " near you"}. Age-appropriate treatment, family therapy, educational support. Help your teen recover today.`}
         canonical={stateSlug ? `/teen-rehab-near-me/${stateSlug}` : "/teen-rehab-near-me"}
         keywords={[
           "teen rehab near me",
@@ -113,18 +83,18 @@ export default function TeenRehabNearMe() {
           "teenage alcohol treatment",
           "youth recovery programs",
           ...(stateData ? [
-            `teen rehab ${stateData.name}`,
-            `adolescent treatment ${stateData.abbr}`,
+            `teen rehab ${stateData.state}`,
+            `adolescent treatment ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Teen Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find specialized addiction treatment for teenagers${stateData ? ` in ${stateData.name}` : " near you"}. Age-appropriate programs with family therapy, educational support, and peer groups.`}
+        title={`Teen Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find specialized addiction treatment for teenagers${stateData ? ` in ${stateData.state}` : " near you"}. Age-appropriate programs with family therapy, educational support, and peer groups.`}
         treatmentType="Teen Addiction Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -168,7 +138,7 @@ export default function TeenRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -184,7 +154,7 @@ export default function TeenRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Teen Treatment Centers {stateData ? `in ${stateData.name}` : "Near You"}
+              Teen Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Browse facilities offering specialized adolescent addiction treatment programs.
@@ -208,7 +178,7 @@ export default function TeenRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -256,7 +226,7 @@ export default function TeenRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Teen Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

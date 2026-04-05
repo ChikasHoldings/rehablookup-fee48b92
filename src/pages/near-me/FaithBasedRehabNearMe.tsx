@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Church, Heart, Users, BookOpen } from "lucide-react";
@@ -38,48 +37,19 @@ const getFaithBasedFAQs = (location?: { state: string }) => [
 
 export default function FaithBasedRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/faith-based-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities;
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently on mount
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getFaithBasedFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getFaithBasedFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Faith-Based Drug Rehabilitation",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -100,8 +70,8 @@ export default function FaithBasedRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Faith-Based Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Christian & Spiritual Treatment`}
-        description={`Find faith-based and Christian drug rehab${stateData ? ` in ${stateData.name}` : " near you"}. Spiritual healing combined with evidence-based addiction treatment. Many programs are free or low-cost.`}
+        title={`Faith-Based Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Christian & Spiritual Treatment`}
+        description={`Find faith-based and Christian drug rehab${stateData ? ` in ${stateData.state}` : " near you"}. Spiritual healing combined with evidence-based addiction treatment. Many programs are free or low-cost.`}
         canonical={stateSlug ? `/faith-based-rehab-near-me/${stateSlug}` : "/faith-based-rehab-near-me"}
         keywords={[
           "faith-based rehab near me",
@@ -113,18 +83,18 @@ export default function FaithBasedRehabNearMe() {
           "religious rehab programs",
           "free christian rehab",
           ...(stateData ? [
-            `christian rehab ${stateData.name}`,
-            `faith-based treatment ${stateData.abbr}`,
+            `christian rehab ${stateData.state}`,
+            `faith-based treatment ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Faith-Based Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find Christian and faith-based addiction treatment${stateData ? ` in ${stateData.name}` : " near you"}. Heal through spiritual guidance combined with evidence-based clinical care.`}
+        title={`Faith-Based Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find Christian and faith-based addiction treatment${stateData ? ` in ${stateData.state}` : " near you"}. Heal through spiritual guidance combined with evidence-based clinical care.`}
         treatmentType="Faith-Based Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -168,7 +138,7 @@ export default function FaithBasedRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -184,7 +154,7 @@ export default function FaithBasedRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Faith-Based Programs {stateData ? `in ${stateData.name}` : "Near You"}
+              Faith-Based Programs {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Christian and spiritual addiction treatment programs with faith-centered recovery.
@@ -208,7 +178,7 @@ export default function FaithBasedRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}` : ""}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Programs
                       <ArrowRight className="h-4 w-4" />
@@ -256,7 +226,7 @@ export default function FaithBasedRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Faith-Based Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );

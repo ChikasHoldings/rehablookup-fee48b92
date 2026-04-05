@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
@@ -7,7 +6,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Shield, CheckCircle, DollarSign, FileCheck } from "lucide-react";
@@ -38,53 +37,19 @@ const getMedicaidRehabFAQs = (location?: { state: string }) => [
 
 export default function MedicaidRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
-  const [userLocation, setUserLocation] = useState<{
-    name: string;
-    abbr: string;
-    slug: string;
-  } | null>(null);
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
+    stateSlug,
+    basePath: "/medicaid-rehab-near-me",
+  });
 
-  const stateData = useMemo(() => {
-    if (stateSlug) {
-      const state = statesData.find(s => s.slug === stateSlug);
-      return state ? { name: state.name, abbr: state.abbreviation, slug: state.slug } : null;
-    }
-    return userLocation;
-  }, [stateSlug, userLocation]);
-
-  // Filter facilities that accept Medicaid
-  const facilities = useMemo(() => {
-    let filtered = approvedFacilities.filter(f => 
-      f.insuranceAccepted?.some(i => 
-        i.toLowerCase().includes('medicaid')
-      )
-    );
-    
-    if (stateData) {
-      filtered = filtered.filter(f => 
-        f.state.toLowerCase() === stateData.name.toLowerCase() ||
-        f.state.toLowerCase() === stateData.abbr.toLowerCase()
-      );
-    }
-
-    return filtered.slice(0, 24);
-  }, [approvedFacilities, stateData]);
-
-  useEffect(() => {
-    if (!stateSlug && !userLocation) {
-      // Auto-detect location silently on mount
-    }
-  }, [stateSlug, userLocation]);
-
-  const faqs = getMedicaidRehabFAQs(stateData ? { state: stateData.name } : undefined);
+  const faqs = getMedicaidRehabFAQs(stateData ? { state: stateData.state } : undefined);
 
   const structuredData = [
     generateNearMeSchema({
       serviceType: "Medicaid Drug Rehabilitation Centers",
       location: stateData 
-        ? { state: stateData.name, stateAbbr: stateData.abbr }
+        ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
@@ -105,8 +70,8 @@ export default function MedicaidRehabNearMe() {
   return (
     <Layout>
       <SEO
-        title={`Medicaid Rehab Near Me ${stateData ? `in ${stateData.name}` : ""} | Drug Treatment That Accepts Medicaid`}
-        description={`Find drug and alcohol rehab centers that accept Medicaid${stateData ? ` in ${stateData.name}` : " near you"}. Covered addiction treatment including detox, inpatient, and outpatient programs.`}
+        title={`Medicaid Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Drug Treatment That Accepts Medicaid`}
+        description={`Find drug and alcohol rehab centers that accept Medicaid${stateData ? ` in ${stateData.state}` : " near you"}. Covered addiction treatment including detox, inpatient, and outpatient programs.`}
         canonical={stateSlug ? `/medicaid-rehab-near-me/${stateSlug}` : "/medicaid-rehab-near-me"}
         keywords={[
           "medicaid rehab near me",
@@ -118,18 +83,18 @@ export default function MedicaidRehabNearMe() {
           "medicaid substance abuse",
           "free rehab medicaid",
           ...(stateData ? [
-            `medicaid rehab ${stateData.name}`,
-            `medicaid treatment ${stateData.abbr}`,
+            `medicaid rehab ${stateData.state}`,
+            `medicaid treatment ${stateData.stateAbbr}`,
           ] : []),
         ]}
         structuredData={structuredData}
       />
 
       <NearMeHero
-        title={`Medicaid Rehab Near Me${stateData ? ` in ${stateData.name}` : ""}`}
-        subtitle={`Find addiction treatment centers that accept Medicaid${stateData ? ` in ${stateData.name}` : " near you"}. Quality care covered by your insurance with no out-of-pocket costs.`}
+        title={`Medicaid Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
+        subtitle={`Find addiction treatment centers that accept Medicaid${stateData ? ` in ${stateData.state}` : " near you"}. Quality care covered by your insurance with no out-of-pocket costs.`}
         treatmentType="Medicaid Addiction Treatment"
-        location={stateData ? { state: stateData.name, stateAbbr: stateData.abbr } : undefined}
+        location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
       />
 
@@ -173,7 +138,7 @@ export default function MedicaidRehabNearMe() {
 
       <LocalSignalsSection
         location={stateData 
-          ? { state: stateData.name, stateAbbr: stateData.abbr }
+          ? { state: stateData.state, stateAbbr: stateData.stateAbbr }
           : { state: "United States", stateAbbr: "US" }
         }
         nearbyAreas={[]}
@@ -189,7 +154,7 @@ export default function MedicaidRehabNearMe() {
         <div className="container">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
-              Rehabs Accepting Medicaid {stateData ? `in ${stateData.name}` : "Near You"}
+              Rehabs Accepting Medicaid {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
               Browse treatment centers that accept Medicaid insurance.
@@ -213,7 +178,7 @@ export default function MedicaidRehabNearMe() {
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">
-                  <Link to={`/search-results${stateData ? `?state=${stateData.name}&insurance=Medicaid` : "?insurance=Medicaid"}`}>
+                  <Link to={`/search-results${stateData ? `?state=${stateData.state}&insurance=Medicaid` : "?insurance=Medicaid"}`}>
                     <Button variant="outline" size="lg" className="gap-2">
                       View All {facilities.length} Centers
                       <ArrowRight className="h-4 w-4" />
@@ -261,7 +226,7 @@ export default function MedicaidRehabNearMe() {
       <TreatmentFAQSection
         faqs={faqs}
         treatmentType="Medicaid Rehab"
-        location={stateData ? { state: stateData.name } : undefined}
+        location={stateData ? { state: stateData.state } : undefined}
       />
     </Layout>
   );
