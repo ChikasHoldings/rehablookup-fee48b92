@@ -464,6 +464,36 @@ const AppInner = () => {
             <Route path="/dual-diagnosis-rehab-near-me/:stateSlug" element={<PublicRouteGuard><DualDiagnosisRehabNearMe /></PublicRouteGuard>} />
             <Route path="/faith-based-rehab-near-me" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/faith-based-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/holistic-rehab-near-me" element={<PublicRouteGuard><HolisticRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/holistic-rehab-near-me/:stateSlug" element={<PublicRouteGuard><HolisticRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/christian-rehab-near-me" element={<PublicRouteGuard><ChristianRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/christian-rehab-near-me/:stateSlug" element={<PublicRouteGuard><ChristianRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/long-term-rehab-near-me" element={<PublicRouteGuard><LongTermRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/long-term-rehab-near-me/:stateSlug" element={<PublicRouteGuard><LongTermRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/iop-near-me" element={<PublicRouteGuard><IOPNearMe /></PublicRouteGuard>} />
+            <Route path="/iop-near-me/:stateSlug" element={<PublicRouteGuard><IOPNearMe /></PublicRouteGuard>} />
+            <Route path="/php-near-me" element={<PublicRouteGuard><PHPNearMe /></PublicRouteGuard>} />
+            <Route path="/php-near-me/:stateSlug" element={<PublicRouteGuard><PHPNearMe /></PublicRouteGuard>} />
+            <Route path="/couples-rehab-near-me" element={<PublicRouteGuard><CouplesRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/couples-rehab-near-me/:stateSlug" element={<PublicRouteGuard><CouplesRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/executive-rehab-near-me" element={<PublicRouteGuard><ExecutiveRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/executive-rehab-near-me/:stateSlug" element={<PublicRouteGuard><ExecutiveRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/rehab-near-me" element={<PublicRouteGuard><RehabNearMe /></PublicRouteGuard>} />
+            <Route path="/rehab-near-me/:stateSlug" element={<PublicRouteGuard><RehabNearMe /></PublicRouteGuard>} />
+            <Route path="/mat-clinic-near-me" element={<PublicRouteGuard><MATClinicNearMe /></PublicRouteGuard>} />
+            <Route path="/mat-clinic-near-me/:stateSlug" element={<PublicRouteGuard><MATClinicNearMe /></PublicRouteGuard>} />
+            <Route path="/affordable-rehab-near-me" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/affordable-rehab-near-me/:stateSlug" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
+            
+            {/* New City+Treatment Combo Routes */}
+            <Route path="/luxury-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/sober-living-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/free-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/faith-based-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/fentanyl-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/veterans-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/womens-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/mens-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
             
             {/* Concierge Placement Routes - /concierge is canonical */}
             <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
