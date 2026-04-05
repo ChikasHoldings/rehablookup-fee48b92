@@ -342,7 +342,6 @@ const FAQ = () => {
             className="mb-4"
             variant="dark"
             items={[
-              { label: "Home", href: "/" },
               { label: "FAQ" },
             ]}
           />
