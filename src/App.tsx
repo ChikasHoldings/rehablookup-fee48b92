@@ -75,6 +75,23 @@ const IncreaseRehabAdmissions = lazy(() => import("./pages/provider-guides/Incre
 const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-guides/RehabCenterMarketingIdeas"));
 const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-guides/TreatmentCenterPatientAcquisition"));
 const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-guides/BehavioralHealthLeadGeneration"));
+const RehabCenterSEO = lazy(() => import("./pages/provider-guides/RehabCenterSEO"));
+const DrugRehabAdvertising = lazy(() => import("./pages/provider-guides/DrugRehabAdvertising"));
+const RehabCensusManagement = lazy(() => import("./pages/provider-guides/RehabCensusManagement"));
+const TreatmentCenterReferralSources = lazy(() => import("./pages/provider-guides/TreatmentCenterReferralSources"));
+const HowToOpenRehabCenter = lazy(() => import("./pages/provider-guides/HowToOpenRehabCenter"));
+const RehabInsuranceVerification = lazy(() => import("./pages/provider-guides/RehabInsuranceVerification"));
+const IOPMarketingStrategies = lazy(() => import("./pages/provider-guides/IOPMarketingStrategies"));
+const DetoxCenterMarketing = lazy(() => import("./pages/provider-guides/DetoxCenterMarketing"));
+const SoberLivingMarketing = lazy(() => import("./pages/provider-guides/SoberLivingMarketing"));
+const RehabReputationManagement = lazy(() => import("./pages/provider-guides/RehabReputationManagement"));
+const RehabStaffingGuide = lazy(() => import("./pages/provider-guides/RehabStaffingGuide"));
+const RehabAccreditationGuide = lazy(() => import("./pages/provider-guides/RehabAccreditationGuide"));
+const SubstanceAbuseTreatmentMarketing = lazy(() => import("./pages/provider-guides/SubstanceAbuseTreatmentMarketing"));
+const MATClinicMarketing = lazy(() => import("./pages/provider-guides/MATClinicMarketing"));
+const TreatmentCenterWebsiteDesign = lazy(() => import("./pages/provider-guides/TreatmentCenterWebsiteDesign"));
+const RehabComplianceGuide = lazy(() => import("./pages/provider-guides/RehabComplianceGuide"));
+const ListYourFacilityState = lazy(() => import("./pages/provider-guides/ListYourFacilityState"));
 
 // Provider Resource Hub
 const ProviderResourceHub = lazy(() => import("./pages/providers/ProviderResourceHub"));
@@ -655,6 +672,23 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-center-marketing-ideas" element={<PublicRouteGuard><RehabCenterMarketingIdeas /></PublicRouteGuard>} />
             <Route path="/provider-guides/treatment-center-patient-acquisition" element={<PublicRouteGuard><TreatmentCenterPatientAcquisition /></PublicRouteGuard>} />
             <Route path="/provider-guides/behavioral-health-lead-generation" element={<PublicRouteGuard><BehavioralHealthLeadGeneration /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-seo" element={<PublicRouteGuard><RehabCenterSEO /></PublicRouteGuard>} />
+            <Route path="/provider-guides/drug-rehab-advertising" element={<PublicRouteGuard><DrugRehabAdvertising /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-census-management" element={<PublicRouteGuard><RehabCensusManagement /></PublicRouteGuard>} />
+            <Route path="/provider-guides/treatment-center-referral-sources" element={<PublicRouteGuard><TreatmentCenterReferralSources /></PublicRouteGuard>} />
+            <Route path="/provider-guides/how-to-open-a-rehab-center" element={<PublicRouteGuard><HowToOpenRehabCenter /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-insurance-verification" element={<PublicRouteGuard><RehabInsuranceVerification /></PublicRouteGuard>} />
+            <Route path="/provider-guides/iop-marketing-strategies" element={<PublicRouteGuard><IOPMarketingStrategies /></PublicRouteGuard>} />
+            <Route path="/provider-guides/detox-center-marketing" element={<PublicRouteGuard><DetoxCenterMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/sober-living-marketing" element={<PublicRouteGuard><SoberLivingMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-reputation-management" element={<PublicRouteGuard><RehabReputationManagement /></PublicRouteGuard>} />
+            <Route path="/provider-guides/treatment-center-staffing-guide" element={<PublicRouteGuard><RehabStaffingGuide /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-accreditation-guide" element={<PublicRouteGuard><RehabAccreditationGuide /></PublicRouteGuard>} />
+            <Route path="/provider-guides/substance-abuse-treatment-marketing" element={<PublicRouteGuard><SubstanceAbuseTreatmentMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/mat-clinic-marketing" element={<PublicRouteGuard><MATClinicMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/treatment-center-website-design" element={<PublicRouteGuard><TreatmentCenterWebsiteDesign /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-compliance-guide" element={<PublicRouteGuard><RehabComplianceGuide /></PublicRouteGuard>} />
+            <Route path="/list-your-facility-in-:stateSlug" element={<PublicRouteGuard><ListYourFacilityState /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />

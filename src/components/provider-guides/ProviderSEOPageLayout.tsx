@@ -41,6 +41,22 @@ const relatedPages = [
   { href: "/provider-guides/rehab-center-marketing-ideas", label: "Marketing Ideas", desc: "15 actionable ideas" },
   { href: "/provider-guides/treatment-center-patient-acquisition", label: "Patient Acquisition", desc: "Build channels that compound" },
   { href: "/provider-guides/behavioral-health-lead-generation", label: "Behavioral Health Leads", desc: "Ethical lead gen for BH" },
+  { href: "/provider-guides/rehab-center-seo", label: "Rehab SEO", desc: "Rank higher on Google organically" },
+  { href: "/provider-guides/drug-rehab-advertising", label: "Rehab Advertising", desc: "Ethical advertising strategies" },
+  { href: "/provider-guides/rehab-census-management", label: "Census Management", desc: "Maintain 90%+ occupancy" },
+  { href: "/provider-guides/treatment-center-referral-sources", label: "Referral Sources", desc: "Top 10 referral channels" },
+  { href: "/provider-guides/how-to-open-a-rehab-center", label: "Open a Rehab Center", desc: "Complete startup guide" },
+  { href: "/provider-guides/rehab-insurance-verification", label: "Insurance Verification", desc: "Master the VOB process" },
+  { href: "/provider-guides/iop-marketing-strategies", label: "IOP Marketing", desc: "Fill your outpatient groups" },
+  { href: "/provider-guides/detox-center-marketing", label: "Detox Marketing", desc: "Crisis-point patient acquisition" },
+  { href: "/provider-guides/sober-living-marketing", label: "Sober Living Marketing", desc: "Maintain full occupancy" },
+  { href: "/provider-guides/rehab-reputation-management", label: "Reputation Management", desc: "Build trust with reviews" },
+  { href: "/provider-guides/treatment-center-staffing-guide", label: "Staffing Guide", desc: "Build a winning clinical team" },
+  { href: "/provider-guides/rehab-accreditation-guide", label: "Accreditation Guide", desc: "CARF & Joint Commission" },
+  { href: "/provider-guides/substance-abuse-treatment-marketing", label: "SUD Marketing", desc: "Complete growth playbook" },
+  { href: "/provider-guides/mat-clinic-marketing", label: "MAT Marketing", desc: "Grow your MAT program" },
+  { href: "/provider-guides/treatment-center-website-design", label: "Website Design", desc: "Convert visitors to admissions" },
+  { href: "/provider-guides/rehab-compliance-guide", label: "Compliance Guide", desc: "HIPAA & 42 CFR Part 2" },
 ];
 
 const platformLinks = [
