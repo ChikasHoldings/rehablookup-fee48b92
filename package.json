@@ -7,7 +7,8 @@
     "dev": "vite",
     "generate:sitemaps": "node scripts/generate-sitemaps.mjs",
     "generate:seo-html": "node scripts/generate-seo-html.mjs",
-    "build": "npm run generate:seo-html && npm run generate:sitemaps && vite build",
+    "generate:missing-html": "node scripts/generate-missing-html.mjs",
+    "build": "npm run generate:seo-html && npm run generate:missing-html && npm run generate:sitemaps && vite build",
     "build:dev": "npm run generate:seo-html && npm run generate:sitemaps && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"

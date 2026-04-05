@@ -3,305 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Addiction Treatment Cost Estimator | RehabLookup</title>
-  <meta name="description" content="Estimate the cost of addiction treatment based on program type, duration, and insurance coverage. Understand detox, inpatient, and outpatient rehab costs before you commit.">
-  <meta name="keywords" content="rehab cost, addiction treatment cost, how much does rehab cost, inpatient rehab price, detox cost, outpatient treatment cost, insurance coverage for rehab">
+  <title>Rehab Cost Estimator | RehabLookup</title>
+  <meta name="description" content="Estimate the cost of addiction treatment. Compare pricing for inpatient, outpatient, and detox programs. Check insurance coverage.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://rehablookup.com/cost-estimator">
-  
-  <meta property="og:title" content="Addiction Treatment Cost Estimator | RehabLookup">
-  <meta property="og:description" content="Estimate addiction treatment costs based on program type, duration, and insurance. Understand your options.">
-  <meta property="og:url" content="https://rehablookup.com/cost-estimator">
   <meta property="og:type" content="website">
-  
+  <meta property="og:title" content="Rehab Cost Estimator | RehabLookup">
+  <meta property="og:description" content="Estimate the cost of addiction treatment. Compare pricing for inpatient, outpatient, and detox programs. Check insurance coverage.">
+  <meta property="og:url" content="https://rehablookup.com/cost-estimator">
+  <meta property="og:site_name" content="RehabLookup">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Rehab Cost Estimator | RehabLookup">
+  <meta name="twitter:description" content="Estimate the cost of addiction treatment. Compare pricing for inpatient, outpatient, and detox programs. Check insurance coverage.">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://rehablookup.com/"},{"@type":"ListItem","position":2,"name":"Cost Estimator","item":"https://rehablookup.com/cost-estimator"}]}</script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #1B365D; }
-    a { color: #2563eb; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    
-    .header { background: #1B365D; padding: 16px 24px; }
-    .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-    .logo { color: #fff; font-size: 1.5rem; font-weight: 700; }
-    .nav { display: flex; gap: 24px; }
-    .nav a { color: #fff; opacity: 0.9; }
-    
-    .hero { background: linear-gradient(135deg, #1B365D 0%, #dc2626 100%); color: #fff; padding: 64px 24px; text-align: center; }
-    .hero h1 { font-size: 2.5rem; margin-bottom: 16px; }
-    .hero p { font-size: 1.125rem; max-width: 700px; margin: 0 auto; opacity: 0.95; }
-    
-    .section { padding: 64px 24px; max-width: 1200px; margin: 0 auto; }
-    .section h2 { font-size: 1.75rem; margin-bottom: 32px; text-align: center; }
-    
-    .intro { background: #f8fafc; padding: 48px 24px; }
-    .intro-content { max-width: 800px; margin: 0 auto; }
-    .intro h2 { text-align: left; margin-bottom: 16px; }
-    .intro p { color: #475569; margin-bottom: 16px; }
-    
-    .cost-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
-    .cost-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; }
-    .cost-card h3 { font-size: 1.25rem; margin-bottom: 8px; color: #1B365D; }
-    .cost-card .price { font-size: 1.5rem; font-weight: 700; color: #2563eb; margin-bottom: 12px; }
-    .cost-card .duration { font-size: 0.9rem; color: #64748b; margin-bottom: 16px; }
-    .cost-card p { color: #64748b; font-size: 0.95rem; margin-bottom: 12px; }
-    .cost-card ul { color: #64748b; padding-left: 20px; font-size: 0.9rem; }
-    .cost-card li { margin-bottom: 4px; }
-    
-    .factors { background: #f8fafc; padding: 64px 24px; }
-    .factors-content { max-width: 1000px; margin: 0 auto; }
-    .factors h2 { text-align: center; margin-bottom: 32px; }
-    .factor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
-    .factor { padding: 24px; background: #fff; border-radius: 8px; border-left: 4px solid #2563eb; }
-    .factor h3 { font-size: 1.125rem; margin-bottom: 8px; }
-    .factor p { color: #64748b; font-size: 0.95rem; }
-    
-    .insurance-note { background: #ecfdf5; border: 1px solid #10b981; border-radius: 12px; padding: 32px; margin-top: 48px; }
-    .insurance-note h3 { color: #059669; margin-bottom: 12px; }
-    .insurance-note p { color: #047857; }
-    
-    .cta-section { background: #1B365D; color: #fff; padding: 64px 24px; text-align: center; }
-    .cta-section h2 { margin-bottom: 16px; }
-    .cta-section p { max-width: 600px; margin: 0 auto 24px; opacity: 0.9; }
-    .cta-button { display: inline-block; background: #F97316; color: #fff; padding: 14px 28px; border-radius: 8px; font-weight: 600; }
-    .cta-button:hover { background: #ea580c; text-decoration: none; }
-    
-    .faq { background: #fff; }
-    .faq-list { max-width: 800px; margin: 0 auto; }
-    .faq-item { border-bottom: 1px solid #e2e8f0; padding: 24px 0; }
-    .faq-item h3 { font-size: 1.125rem; margin-bottom: 12px; color: #1B365D; }
-    .faq-item p { color: #64748b; }
-    
-    .footer { background: #0f172a; color: #94a3b8; padding: 48px 24px; }
-    .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; }
-    .footer h4 { color: #fff; margin-bottom: 16px; }
-    .footer ul { list-style: none; }
-    .footer li { margin-bottom: 8px; }
-    .footer a { color: #94a3b8; }
-    .footer-bottom { max-width: 1200px; margin: 32px auto 0; padding-top: 32px; border-top: 1px solid #334155; text-align: center; font-size: 0.875rem; }
-    
-    @media (max-width: 768px) {
-      .hero h1 { font-size: 2rem; }
-      .nav { display: none; }
-    }
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
+    h1{font-size:2rem;color:#1B365D;margin-bottom:12px}
+    h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
+    p{color:#333;margin-bottom:16px}
+    a{color:#2563eb;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .breadcrumbs{font-size:.85rem;color:#666;margin-bottom:20px}
+    .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
+    footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "How much does drug rehab cost without insurance?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Without insurance, addiction treatment costs vary widely: Medical detox ranges from $1,000-$3,000 for 5-7 days. Inpatient/residential treatment costs $10,000-$50,000+ for 30 days, with luxury programs exceeding $100,000/month. Outpatient programs (IOP) cost $3,000-$10,000 for 8-12 weeks. Many facilities offer payment plans and sliding scale fees."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does insurance cover the full cost of rehab?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Insurance typically covers a significant portion but not all costs. Most plans have deductibles ($500-$5,000), copays ($20-$100 per visit), and coinsurance (10-30% of costs). Coverage limits may apply to days in treatment. In-network facilities usually have lower out-of-pocket costs than out-of-network options."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is the average cost of 30-day inpatient rehab?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "The average 30-day inpatient program costs $15,000-$30,000 at standard facilities. Luxury and executive programs range from $50,000-$100,000+. State-funded programs may cost little to nothing for qualifying individuals. With insurance, out-of-pocket costs typically range from $1,000-$10,000 depending on your plan."
-        }
-      }
-    ]
-  }
-  </script>
-  
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": "Addiction Treatment Cost Estimator",
-    "description": "Estimate the cost of addiction treatment based on program type, duration, and insurance coverage.",
-    "url": "https://rehablookup.com/cost-estimator"
-  }
-  </script>
 </head>
 <body>
-  <header class="header">
-    <div class="header-content">
-      <a href="/" class="logo">RehabLookup</a>
-      <nav class="nav">
-        <a href="/rehab-centers">Find Treatment</a>
-        <a href="/insurance">Insurance</a>
-        <a href="/resources">Resources</a>
-        <a href="/for-providers">For Providers</a>
-      </nav>
-    </div>
-  </header>
-  
-  <section class="hero">
-    <h1>Addiction Treatment Cost Estimator</h1>
-    <p>Understand the typical costs of treatment programs before you commit. Get personalized cost estimates based on your insurance and treatment needs.</p>
-  </section>
-  
-  <section class="intro">
-    <div class="intro-content">
-      <h2>Understanding Treatment Costs</h2>
-      <p>The cost of addiction treatment varies significantly based on the type of program, length of stay, amenities, and location. Most importantly, your insurance coverage can dramatically reduce out-of-pocket expenses.</p>
-      <p>Don't let cost concerns delay treatment. Many facilities offer payment plans, and financial assistance options exist for those who qualify. The cost of untreated addiction—in healthcare, lost wages, and quality of life—far exceeds the investment in recovery.</p>
-    </div>
-  </section>
-  
-  <section class="section">
-    <h2>Typical Treatment Costs (Without Insurance)</h2>
-    <div class="cost-grid">
-      <div class="cost-card">
-        <h3>Medical Detox</h3>
-        <div class="price">$1,000 - $3,000</div>
-        <div class="duration">5-10 days typical stay</div>
-        <p>Medically supervised withdrawal management with 24/7 monitoring. Costs depend on substances and medical complexity.</p>
-        <ul>
-          <li>Hospital-based: $1,500-$3,000/day</li>
-          <li>Standalone detox: $500-$1,500/day</li>
-          <li>Includes medications & monitoring</li>
-        </ul>
-      </div>
-      <div class="cost-card">
-        <h3>Inpatient / Residential</h3>
-        <div class="price">$10,000 - $50,000+</div>
-        <div class="duration">30-90 days typical stay</div>
-        <p>24-hour structured care with therapy, housing, and meals. Wide range based on amenities and program quality.</p>
-        <ul>
-          <li>Standard programs: $10,000-$25,000/month</li>
-          <li>Executive/luxury: $50,000-$100,000+/month</li>
-          <li>State-funded options available</li>
-        </ul>
-      </div>
-      <div class="cost-card">
-        <h3>Partial Hospitalization (PHP)</h3>
-        <div class="price">$7,000 - $15,000</div>
-        <div class="duration">4-8 weeks typical duration</div>
-        <p>Intensive day treatment (5-7 hours daily) without overnight stay. Often used as step-down from residential.</p>
-        <ul>
-          <li>$350-$600 per day typical</li>
-          <li>5-7 days per week</li>
-          <li>Housing costs additional</li>
-        </ul>
-      </div>
-      <div class="cost-card">
-        <h3>Intensive Outpatient (IOP)</h3>
-        <div class="price">$3,000 - $10,000</div>
-        <div class="duration">8-12 weeks typical duration</div>
-        <p>Flexible treatment (3-4 hours, 3-5 days/week) allowing work and family responsibilities to continue.</p>
-        <ul>
-          <li>$250-$400 per session typical</li>
-          <li>9-15 hours per week</li>
-          <li>Most insurance-friendly option</li>
-        </ul>
-      </div>
-    </div>
-    
-    <div class="insurance-note">
-      <h3>💡 With Insurance, Costs Drop Significantly</h3>
-      <p>Most people with health insurance pay only 10-30% of these costs out-of-pocket after deductibles and copays. Our free insurance verification service can tell you exactly what your plan covers before you commit to any program.</p>
-    </div>
-  </section>
-  
-  <section class="factors">
-    <div class="factors-content">
-      <h2>Factors That Affect Treatment Cost</h2>
-      <div class="factor-grid">
-        <div class="factor">
-          <h3>Program Type & Intensity</h3>
-          <p>Residential treatment with 24-hour care costs more than outpatient programs. Medical detox adds expense due to clinical monitoring requirements.</p>
-        </div>
-        <div class="factor">
-          <h3>Length of Stay</h3>
-          <p>Longer programs cost more but often have better outcomes. Many facilities offer discounts for extended stays (60-90 days vs. 30 days).</p>
-        </div>
-        <div class="factor">
-          <h3>Location & Amenities</h3>
-          <p>Programs in high-cost areas (California, Florida) and those with luxury amenities (private rooms, spa, gourmet meals) command premium prices.</p>
-        </div>
-        <div class="factor">
-          <h3>Specialized Services</h3>
-          <p>Dual diagnosis treatment, trauma therapy, holistic services, and executive programs typically cost more than standard addiction-only treatment.</p>
-        </div>
-        <div class="factor">
-          <h3>Insurance Coverage</h3>
-          <p>In-network facilities cost less out-of-pocket. Your deductible, copay, and out-of-pocket maximum significantly impact final costs.</p>
-        </div>
-        <div class="factor">
-          <h3>Additional Services</h3>
-          <p>Costs may increase for individual therapy sessions, psychiatric evaluations, medications, lab work, and aftercare planning.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-  
-  <section class="cta-section">
-    <h2>Get Your Personalized Cost Estimate</h2>
-     <p>Our team will verify your insurance benefits and provide accurate out-of-pocket cost estimates for treatment programs that fit your needs.</p>
-    <a href="/concierge" class="cta-button">Get Free Cost Estimate</a>
-  </section>
-  
-  <section class="section faq">
-    <h2>Frequently Asked Questions</h2>
-    <div class="faq-list">
-      <div class="faq-item">
-        <h3>How much does drug rehab cost without insurance?</h3>
-        <p>Without insurance, addiction treatment costs vary widely: Medical detox ranges from $1,000-$3,000 for 5-7 days. Inpatient/residential treatment costs $10,000-$50,000+ for 30 days, with luxury programs exceeding $100,000/month. Outpatient programs (IOP) cost $3,000-$10,000 for 8-12 weeks. Many facilities offer payment plans and sliding scale fees.</p>
-      </div>
-      <div class="faq-item">
-        <h3>Does insurance cover the full cost of rehab?</h3>
-        <p>Insurance typically covers a significant portion but not all costs. Most plans have deductibles ($500-$5,000), copays ($20-$100 per visit), and coinsurance (10-30% of costs). Coverage limits may apply to days in treatment. In-network facilities usually have lower out-of-pocket costs than out-of-network options.</p>
-      </div>
-      <div class="faq-item">
-        <h3>What is the average cost of 30-day inpatient rehab?</h3>
-        <p>The average 30-day inpatient program costs $15,000-$30,000 at standard facilities. Luxury and executive programs range from $50,000-$100,000+. State-funded programs may cost little to nothing for qualifying individuals. With insurance, out-of-pocket costs typically range from $1,000-$10,000 depending on your plan.</p>
-      </div>
-    </div>
-  </section>
-  
-  <footer class="footer">
-    <div class="footer-content">
-      <div>
-        <h4>RehabLookup</h4>
-        <p>Connecting individuals and families with trusted addiction treatment centers.</p>
-      </div>
-      <div>
-        <h4>Insurance</h4>
-        <ul>
-          <li><a href="/insurance">Coverage Guide</a></li>
-          <li><a href="/insurance/aetna-rehab">Aetna</a></li>
-          <li><a href="/insurance/bcbs-treatment">BCBS</a></li>
-          <li><a href="/insurance/medicare-rehab">Medicare</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Resources</h4>
-        <ul>
-          <li><a href="/treatment-types">Treatment Types</a></li>
-          <li><a href="/locations">Find by Location</a></li>
-          <li><a href="/resources">Articles & Guides</a></li>
-          <li><a href="/how-it-works">How It Works</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Company</h4>
-        <ul>
-          <li><a href="/about">About Us</a></li>
-          <li><a href="/contact">Contact</a></li>
-          <li><a href="/privacy-policy">Privacy Policy</a></li>
-          <li><a href="/terms-of-service">Terms of Service</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 RehabLookup. All rights reserved. | SAMHSA Helpline: 1-800-662-4357</p>
-    </div>
-  </footer>
+  <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ul><li><a href="/">Home</a> &rsaquo; </li><li><a href="/cost-estimator">Cost Estimator</a></li></ul></nav>
+  <main>
+    <h1>Rehab Cost Estimator</h1>
+    <p>Estimate the cost of addiction treatment. Compare pricing for inpatient, outpatient, and detox programs. Check insurance coverage.</p>
+    <p style="margin-top:24px"><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/concierge">Get Personalized Help</a> &middot; <a href="/">Home</a></p>
+  </main>
+  <footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a></p></footer>
 </body>
 </html>

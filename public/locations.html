@@ -3,287 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Find Addiction Treatment Centers by Location | RehabLookup</title>
-  <meta name="description" content="Search addiction treatment centers in all 50 states. Find rehab facilities near you in California, Florida, Texas, Arizona, and more. Compare programs, verify insurance, and get help today.">
-  <meta name="keywords" content="rehab near me, addiction treatment by state, drug rehab locations, alcohol treatment centers, find rehab centers, treatment centers by city">
+  <title>Find Rehab Centers by Location | RehabLookup</title>
+  <meta name="description" content="Browse addiction treatment centers by state and city. Find accredited rehab programs near you across all 50 states.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://rehablookup.com/locations">
-  
-  <meta property="og:title" content="Find Addiction Treatment Centers by Location">
-  <meta property="og:description" content="Search addiction treatment centers in all 50 states. Find rehab facilities near you.">
-  <meta property="og:url" content="https://rehablookup.com/locations">
   <meta property="og:type" content="website">
-  
+  <meta property="og:title" content="Find Rehab Centers by Location | RehabLookup">
+  <meta property="og:description" content="Browse addiction treatment centers by state and city. Find accredited rehab programs near you across all 50 states.">
+  <meta property="og:url" content="https://rehablookup.com/locations">
+  <meta property="og:site_name" content="RehabLookup">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Find Rehab Centers by Location | RehabLookup">
+  <meta name="twitter:description" content="Browse addiction treatment centers by state and city. Find accredited rehab programs near you across all 50 states.">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://rehablookup.com/"},{"@type":"ListItem","position":2,"name":"Locations","item":"https://rehablookup.com/locations"}]}</script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #1B365D; }
-    a { color: #2563eb; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    
-    .header { background: #1B365D; padding: 16px 24px; }
-    .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-    .logo { color: #fff; font-size: 1.5rem; font-weight: 700; }
-    .nav { display: flex; gap: 24px; }
-    .nav a { color: #fff; opacity: 0.9; }
-    
-    .hero { background: linear-gradient(135deg, #1B365D 0%, #0ea5e9 100%); color: #fff; padding: 64px 24px; text-align: center; }
-    .hero h1 { font-size: 2.5rem; margin-bottom: 16px; }
-    .hero p { font-size: 1.125rem; max-width: 700px; margin: 0 auto; opacity: 0.95; }
-    
-    .section { padding: 64px 24px; max-width: 1200px; margin: 0 auto; }
-    .section h2 { font-size: 1.75rem; margin-bottom: 32px; }
-    
-    .intro { background: #f8fafc; padding: 48px 24px; }
-    .intro-content { max-width: 800px; margin: 0 auto; }
-    .intro h2 { text-align: left; margin-bottom: 16px; }
-    .intro p { color: #475569; margin-bottom: 16px; }
-    
-    .popular-states { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 48px; }
-    .state-card { background: #fff; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; text-align: center; transition: all 0.2s; }
-    .state-card:hover { border-color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-decoration: none; }
-    .state-card h3 { font-size: 1.125rem; color: #1B365D; margin-bottom: 4px; }
-    .state-card span { font-size: 0.85rem; color: #64748b; }
-    
-    .all-states h2 { text-align: center; }
-    .state-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-    .state-link { padding: 12px 16px; background: #f8fafc; border-radius: 6px; color: #1B365D; font-size: 0.95rem; }
-    .state-link:hover { background: #e2e8f0; text-decoration: none; }
-    
-    .near-me { background: #f8fafc; padding: 64px 24px; }
-    .near-me-content { max-width: 1200px; margin: 0 auto; }
-    .near-me h2 { text-align: center; margin-bottom: 32px; }
-    .near-me-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-    .near-me-link { display: block; padding: 16px 20px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .near-me-link:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-decoration: none; }
-    .near-me-link h3 { font-size: 1rem; color: #1B365D; }
-    
-    .cta-section { background: #1B365D; color: #fff; padding: 64px 24px; text-align: center; }
-    .cta-section h2 { margin-bottom: 16px; }
-    .cta-section p { max-width: 600px; margin: 0 auto 24px; opacity: 0.9; }
-    .cta-button { display: inline-block; background: #F97316; color: #fff; padding: 14px 28px; border-radius: 8px; font-weight: 600; }
-    .cta-button:hover { background: #ea580c; text-decoration: none; }
-    
-    .footer { background: #0f172a; color: #94a3b8; padding: 48px 24px; }
-    .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; }
-    .footer h4 { color: #fff; margin-bottom: 16px; }
-    .footer ul { list-style: none; }
-    .footer li { margin-bottom: 8px; }
-    .footer a { color: #94a3b8; }
-    .footer-bottom { max-width: 1200px; margin: 32px auto 0; padding-top: 32px; border-top: 1px solid #334155; text-align: center; font-size: 0.875rem; }
-    
-    @media (max-width: 768px) {
-      .hero h1 { font-size: 2rem; }
-      .nav { display: none; }
-    }
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
+    h1{font-size:2rem;color:#1B365D;margin-bottom:12px}
+    h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
+    p{color:#333;margin-bottom:16px}
+    a{color:#2563eb;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .breadcrumbs{font-size:.85rem;color:#666;margin-bottom:20px}
+    .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
+    footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "Find Addiction Treatment Centers by Location",
-    "description": "Search addiction treatment centers in all 50 states. Find verified rehab facilities near you.",
-    "url": "https://rehablookup.com/locations",
-    "mainEntity": {
-      "@type": "ItemList",
-      "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "California Treatment Centers", "url": "https://rehablookup.com/locations/california"},
-        {"@type": "ListItem", "position": 2, "name": "Florida Treatment Centers", "url": "https://rehablookup.com/locations/florida"},
-        {"@type": "ListItem", "position": 3, "name": "Texas Treatment Centers", "url": "https://rehablookup.com/locations/texas"},
-        {"@type": "ListItem", "position": 4, "name": "Arizona Treatment Centers", "url": "https://rehablookup.com/locations/arizona"},
-        {"@type": "ListItem", "position": 5, "name": "New York Treatment Centers", "url": "https://rehablookup.com/locations/new-york"}
-      ]
-    }
-  }
-  </script>
 </head>
 <body>
-  <header class="header">
-    <div class="header-content">
-      <a href="/" class="logo">RehabLookup</a>
-      <nav class="nav">
-        <a href="/rehab-centers">Find Treatment</a>
-        <a href="/insurance">Insurance</a>
-        <a href="/resources">Resources</a>
-        <a href="/for-providers">For Providers</a>
-      </nav>
-    </div>
-  </header>
-  
-  <section class="hero">
-    <h1>Find Treatment Centers by Location</h1>
-    <p>Search 15,000+ addiction treatment facilities across all 50 states. Compare programs, read reviews, and verify insurance coverage.</p>
-  </section>
-  
-  <section class="intro">
-    <div class="intro-content">
-      <h2>Treatment Centers Near You</h2>
-      <p>Finding the right treatment center often depends on location preferences. Some people benefit from local treatment to maintain family connections and employment. Others find that traveling for treatment provides the distance needed to focus on recovery without distractions.</p>
-      <p>RehabLookup helps you explore treatment options in your home state or discover programs in destination locations known for quality care.</p>
-    </div>
-  </section>
-  
-  <section class="section">
-    <h2>Popular Treatment Destinations</h2>
-    <div class="popular-states">
-      <a href="/locations/california" class="state-card">
-        <h3>California</h3>
-        <span>1,200+ facilities</span>
-      </a>
-      <a href="/locations/florida" class="state-card">
-        <h3>Florida</h3>
-        <span>900+ facilities</span>
-      </a>
-      <a href="/locations/texas" class="state-card">
-        <h3>Texas</h3>
-        <span>800+ facilities</span>
-      </a>
-      <a href="/locations/arizona" class="state-card">
-        <h3>Arizona</h3>
-        <span>400+ facilities</span>
-      </a>
-      <a href="/locations/new-york" class="state-card">
-        <h3>New York</h3>
-        <span>700+ facilities</span>
-      </a>
-      <a href="/locations/colorado" class="state-card">
-        <h3>Colorado</h3>
-        <span>350+ facilities</span>
-      </a>
-    </div>
-  </section>
-  
-  <section class="section all-states">
-    <h2>Browse All States</h2>
-    <div class="state-list">
-      <a href="/locations/alabama" class="state-link">Alabama</a>
-      <a href="/locations/alaska" class="state-link">Alaska</a>
-      <a href="/locations/arizona" class="state-link">Arizona</a>
-      <a href="/locations/arkansas" class="state-link">Arkansas</a>
-      <a href="/locations/california" class="state-link">California</a>
-      <a href="/locations/colorado" class="state-link">Colorado</a>
-      <a href="/locations/connecticut" class="state-link">Connecticut</a>
-      <a href="/locations/delaware" class="state-link">Delaware</a>
-      <a href="/locations/florida" class="state-link">Florida</a>
-      <a href="/locations/georgia" class="state-link">Georgia</a>
-      <a href="/locations/hawaii" class="state-link">Hawaii</a>
-      <a href="/locations/idaho" class="state-link">Idaho</a>
-      <a href="/locations/illinois" class="state-link">Illinois</a>
-      <a href="/locations/indiana" class="state-link">Indiana</a>
-      <a href="/locations/iowa" class="state-link">Iowa</a>
-      <a href="/locations/kansas" class="state-link">Kansas</a>
-      <a href="/locations/kentucky" class="state-link">Kentucky</a>
-      <a href="/locations/louisiana" class="state-link">Louisiana</a>
-      <a href="/locations/maine" class="state-link">Maine</a>
-      <a href="/locations/maryland" class="state-link">Maryland</a>
-      <a href="/locations/massachusetts" class="state-link">Massachusetts</a>
-      <a href="/locations/michigan" class="state-link">Michigan</a>
-      <a href="/locations/minnesota" class="state-link">Minnesota</a>
-      <a href="/locations/mississippi" class="state-link">Mississippi</a>
-      <a href="/locations/missouri" class="state-link">Missouri</a>
-      <a href="/locations/montana" class="state-link">Montana</a>
-      <a href="/locations/nebraska" class="state-link">Nebraska</a>
-      <a href="/locations/nevada" class="state-link">Nevada</a>
-      <a href="/locations/new-hampshire" class="state-link">New Hampshire</a>
-      <a href="/locations/new-jersey" class="state-link">New Jersey</a>
-      <a href="/locations/new-mexico" class="state-link">New Mexico</a>
-      <a href="/locations/new-york" class="state-link">New York</a>
-      <a href="/locations/north-carolina" class="state-link">North Carolina</a>
-      <a href="/locations/north-dakota" class="state-link">North Dakota</a>
-      <a href="/locations/ohio" class="state-link">Ohio</a>
-      <a href="/locations/oklahoma" class="state-link">Oklahoma</a>
-      <a href="/locations/oregon" class="state-link">Oregon</a>
-      <a href="/locations/pennsylvania" class="state-link">Pennsylvania</a>
-      <a href="/locations/rhode-island" class="state-link">Rhode Island</a>
-      <a href="/locations/south-carolina" class="state-link">South Carolina</a>
-      <a href="/locations/south-dakota" class="state-link">South Dakota</a>
-      <a href="/locations/tennessee" class="state-link">Tennessee</a>
-      <a href="/locations/texas" class="state-link">Texas</a>
-      <a href="/locations/utah" class="state-link">Utah</a>
-      <a href="/locations/vermont" class="state-link">Vermont</a>
-      <a href="/locations/virginia" class="state-link">Virginia</a>
-      <a href="/locations/washington" class="state-link">Washington</a>
-      <a href="/locations/west-virginia" class="state-link">West Virginia</a>
-      <a href="/locations/wisconsin" class="state-link">Wisconsin</a>
-      <a href="/locations/wyoming" class="state-link">Wyoming</a>
-    </div>
-  </section>
-  
-  <section class="near-me">
-    <div class="near-me-content">
-      <h2>Popular "Near Me" Searches</h2>
-      <div class="near-me-grid">
-        <a href="/drug-rehab-near-me" class="near-me-link">
-          <h3>Drug Rehab Near Me</h3>
-        </a>
-        <a href="/alcohol-rehab-near-me" class="near-me-link">
-          <h3>Alcohol Rehab Near Me</h3>
-        </a>
-        <a href="/detox-near-me" class="near-me-link">
-          <h3>Detox Centers Near Me</h3>
-        </a>
-        <a href="/outpatient-rehab-near-me" class="near-me-link">
-          <h3>Outpatient Rehab Near Me</h3>
-        </a>
-        <a href="/suboxone-clinic-near-me" class="near-me-link">
-          <h3>Suboxone Clinics Near Me</h3>
-        </a>
-        <a href="/methadone-clinic-near-me" class="near-me-link">
-          <h3>Methadone Clinics Near Me</h3>
-        </a>
-        <a href="/free-rehab-near-me" class="near-me-link">
-          <h3>Free Rehab Near Me</h3>
-        </a>
-        <a href="/inpatient-rehab-near-me" class="near-me-link">
-          <h3>Inpatient Rehab Near Me</h3>
-        </a>
-      </div>
-    </div>
-  </section>
-  
-  <section class="cta-section">
-    <h2>Need Help Finding the Right Location?</h2>
-    <p>Our placement specialists can help you evaluate treatment options based on your preferences, insurance, and clinical needs.</p>
-    <a href="/concierge" class="cta-button">Get Personalized Help</a>
-  </section>
-  
-  <footer class="footer">
-    <div class="footer-content">
-      <div>
-        <h4>RehabLookup</h4>
-        <p>Connecting individuals and families with trusted addiction treatment centers.</p>
-      </div>
-      <div>
-        <h4>Top States</h4>
-        <ul>
-          <li><a href="/locations/california">California</a></li>
-          <li><a href="/locations/florida">Florida</a></li>
-          <li><a href="/locations/texas">Texas</a></li>
-          <li><a href="/locations/arizona">Arizona</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Resources</h4>
-        <ul>
-          <li><a href="/treatment-types">Treatment Types</a></li>
-          <li><a href="/insurance">Insurance Coverage</a></li>
-          <li><a href="/cost-estimator">Cost Estimator</a></li>
-          <li><a href="/resources">Articles & Guides</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Company</h4>
-        <ul>
-          <li><a href="/about">About Us</a></li>
-          <li><a href="/contact">Contact</a></li>
-          <li><a href="/privacy-policy">Privacy Policy</a></li>
-          <li><a href="/terms-of-service">Terms of Service</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 RehabLookup. All rights reserved. | SAMHSA Helpline: 1-800-662-4357</p>
-    </div>
-  </footer>
+  <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ul><li><a href="/">Home</a> &rsaquo; </li><li><a href="/locations">Locations</a></li></ul></nav>
+  <main>
+    <h1>Find Rehab Centers by Location</h1>
+    <p>Browse addiction treatment centers by state and city. Find accredited rehab programs near you across all 50 states.</p>
+    <p style="margin-top:24px"><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/concierge">Get Personalized Help</a> &middot; <a href="/">Home</a></p>
+  </main>
+  <footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a></p></footer>
 </body>
 </html>
