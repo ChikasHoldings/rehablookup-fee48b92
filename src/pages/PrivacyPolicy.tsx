@@ -17,14 +17,11 @@ const PrivacyPolicy = () => {
       {/* Header */}
       <section className="border-b border-border bg-secondary/30 py-12">
         <div className="container">
-          {/* Breadcrumb */}
-          <nav className="mb-4 text-center sm:text-left">
-            <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap text-muted-foreground">
-              <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-              <span>/</span>
-              <span className="text-foreground font-medium">Privacy Policy</span>
-            </span>
-          </nav>
+          <BreadcrumbNav
+            className="mb-4"
+            variant="light"
+            items={[{ label: "Privacy Policy" }]}
+          />
           <div className="flex items-center gap-3 mb-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Shield className="h-6 w-6 text-primary" aria-hidden="true" />

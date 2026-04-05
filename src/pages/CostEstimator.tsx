@@ -167,6 +167,11 @@ const CostEstimator = () => {
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-16 md:py-20">
         <div className="container mx-auto px-4">
         <MedicalPatternBackground />
+          <BreadcrumbNav
+            className="mb-4"
+            variant="light"
+            items={[{ label: "Cost Estimator" }]}
+          />
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Calculator className="h-4 w-4" />
