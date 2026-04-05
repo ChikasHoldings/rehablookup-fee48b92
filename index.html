@@ -78,9 +78,12 @@
     <!-- Preload critical resources for instant LCP -->
     <link rel="preload" as="image" href="/hero-recovery.webp" fetchpriority="high" type="image/webp" />
     
+    <!-- Preload font files directly to eliminate Google Fonts CSS round-trip -->
+    <link rel="preload" as="font" href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2" type="font/woff2" crossorigin />
+    <link rel="preload" as="font" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" type="font/woff2" crossorigin />
     
-    <!-- Load fonts with display=swap for instant text rendering -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <!-- Load Google Fonts CSS asynchronously (non-render-blocking) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" /></noscript>
     
     <!-- Note: modulepreload hints are added by Vite during build -->
