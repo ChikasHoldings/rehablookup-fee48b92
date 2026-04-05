@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
