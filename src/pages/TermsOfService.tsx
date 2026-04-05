@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Link } from "react-router-dom";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { ArrowLeft } from "lucide-react";
 
 const TermsOfService = () => {
