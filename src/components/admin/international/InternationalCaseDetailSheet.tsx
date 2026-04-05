@@ -906,7 +906,12 @@ function FacilityInvoiceSection({ caseId, invoiceId, feeStatus, feeCents, onActi
                 <Button 
                   size="sm" 
                   variant="outline"
-                  onClick={() => window.open(`https://dashboard.stripe.com/invoices/${invoice.stripe_invoice_id}`, "_blank")}
+                  onClick={() => {
+                    const id = invoice.stripe_invoice_id;
+                    if (id && /^[a-zA-Z0-9_-]+$/.test(id)) {
+                      window.open(`https://dashboard.stripe.com/invoices/${id}`, "_blank");
+                    }
+                  }}
                 >
                   <ExternalLink className="h-3.5 w-3.5 mr-1" />
                   View in Stripe
