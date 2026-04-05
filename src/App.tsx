@@ -496,15 +496,7 @@ const AppInner = () => {
             <Route path="/affordable-rehab-near-me" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
             <Route path="/affordable-rehab-near-me/:stateSlug" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
             
-            {/* New City+Treatment Combo Routes */}
-            <Route path="/luxury-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/sober-living-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/free-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/faith-based-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/fentanyl-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/veterans-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/womens-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/mens-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            {/* Additional City+Treatment Combo Routes - handled by SmartCatchAll */}
             
             {/* Concierge Placement Routes - /concierge is canonical */}
             <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
