@@ -402,6 +402,23 @@ export default function Insurance() {
         title="Rehab Insurance Coverage Guide | RehabLookup"
         description="Learn which insurance plans cover addiction treatment. Understand coverage for detox, inpatient rehab, outpatient programs, and medication-assisted treatment."
         canonical="/insurance"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Rehab Insurance Coverage Guide",
+            "description": "Comprehensive guide to insurance coverage for addiction treatment, including Medicaid, Medicare, Aetna, BCBS, Cigna, and UnitedHealthcare.",
+            "url": "https://rehablookup.com/insurance",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com" },
+              { "@type": "ListItem", "position": 2, "name": "Insurance Coverage", "item": "https://rehablookup.com/insurance" },
+            ],
+          },
+        ]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Insurance Coverage", url: "/insurance" },
