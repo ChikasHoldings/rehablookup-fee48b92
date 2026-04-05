@@ -23,6 +23,8 @@ export const queryClient = new QueryClient({
       // Retry failed requests twice with exponential backoff
       retry: 2,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      // Use previous data as placeholder while refetching
+      placeholderData: (previousData: unknown) => previousData,
       // Network-only mode when offline
       networkMode: "offlineFirst",
     },

@@ -24,12 +24,7 @@ Sentry.init({
 // Initialize performance optimizations
 initPerformanceOptimizations();
 
-// Mark root as loaded to trigger CSS transition
-const root = document.getElementById("root");
-if (root) {
-  root.classList.remove("js-loading");
-  root.classList.add("js-loaded");
-}
+// Root is ready - no opacity transition needed
 
 // Render app
 createRoot(document.getElementById("root")!).render(<App />);
