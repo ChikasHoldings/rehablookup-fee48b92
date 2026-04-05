@@ -177,7 +177,7 @@ Quality images help families visualize your facility and build trust.
 
 1. Navigate to **My Listing > Gallery**
 2. Click "Add Images" or drag and drop
-3. Upload up to 5 images
+3. Upload up to 10 images
 4. Arrange in preferred order
 
 **Tips:**
