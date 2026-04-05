@@ -37,8 +37,8 @@ nav, [data-navbar] {
     --primary-light: 216 50% 95%;
     --primary-glow: 216 55% 35%;
 
-    /* Accent Gold: #C9A227 */
-    --accent: 45 71% 47%;
+    /* Accent Gold: darkened for WCAG AA contrast */
+    --accent: 45 71% 33%;
     --accent-foreground: 0 0% 100%;
     --accent-light: 45 60% 94%;
     --accent-muted: 45 50% 75%;
