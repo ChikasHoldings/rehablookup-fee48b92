@@ -86,6 +86,14 @@ const treatmentTypes = [
   { slug: "inpatient-rehab", label: "Inpatient Rehab", shortLabel: "Inpatient", filterKey: "inpatient", description: "Explore residential inpatient rehabilitation programs with round-the-clock care and structured treatment environments." },
   { slug: "outpatient-rehab", label: "Outpatient Rehab", shortLabel: "Outpatient", filterKey: "outpatient", description: "Find flexible outpatient treatment programs including IOP and PHP that allow you to continue daily responsibilities." },
   { slug: "dual-diagnosis-treatment", label: "Dual Diagnosis Treatment", shortLabel: "Dual Diagnosis", filterKey: "dual diagnosis", description: "Discover specialized facilities treating co-occurring mental health and substance use disorders simultaneously." },
+  { slug: "luxury-rehab", label: "Luxury Rehab", shortLabel: "Luxury", filterKey: "luxury", description: "Find premium luxury rehab centers offering private accommodations, gourmet dining, and world-class addiction treatment." },
+  { slug: "sober-living", label: "Sober Living", shortLabel: "Sober Living", filterKey: "sober living", description: "Find structured sober living homes providing safe, substance-free housing and peer support during recovery." },
+  { slug: "free-rehab", label: "Free Rehab", shortLabel: "Free", filterKey: "free", description: "Find free and low-cost rehabilitation programs including state-funded, Medicaid, and nonprofit treatment options." },
+  { slug: "faith-based-rehab", label: "Faith-Based Rehab", shortLabel: "Faith-Based", filterKey: "faith", description: "Find faith-based rehabilitation programs integrating spiritual growth with evidence-based addiction treatment." },
+  { slug: "fentanyl-rehab", label: "Fentanyl Rehab", shortLabel: "Fentanyl", filterKey: "fentanyl", description: "Find specialized fentanyl addiction treatment centers offering medical detox, MAT, and comprehensive recovery." },
+  { slug: "veterans-rehab", label: "Veterans Rehab", shortLabel: "Veterans", filterKey: "veterans", description: "Find veteran-specific rehabilitation centers offering VA-covered addiction treatment and PTSD care." },
+  { slug: "womens-rehab", label: "Women's Rehab", shortLabel: "Women's", filterKey: "women", description: "Find women-only rehabilitation centers with gender-specific treatment programs for women's recovery." },
+  { slug: "mens-rehab", label: "Men's Rehab", shortLabel: "Men's", filterKey: "men", description: "Find men-only rehabilitation centers with gender-specific treatment programs for men's recovery." },
 ];
 
 const treatmentHubs = [
