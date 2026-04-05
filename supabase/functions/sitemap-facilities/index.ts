@@ -114,6 +114,16 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/court-ordered-rehab-near-me", priority: 0.85, changefreq: "weekly" },
   { path: "/suboxone-clinic-near-me", priority: 0.85, changefreq: "weekly" },
   { path: "/methadone-clinic-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/holistic-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/christian-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/long-term-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/iop-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/php-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/couples-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/executive-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/rehab-near-me", priority: 0.95, changefreq: "daily" },
+  { path: "/mat-clinic-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/affordable-rehab-near-me", priority: 0.9, changefreq: "weekly" },
 
   // INSURANCE PAGES (only routes that exist in App.tsx)
   { path: "/insurance/aetna-rehab", priority: 0.85, changefreq: "weekly" },
