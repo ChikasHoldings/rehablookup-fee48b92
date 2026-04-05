@@ -103,7 +103,11 @@ const RehabCenters = () => {
       <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/95 to-primary/85 py-10 md:py-14">
         <MedicalPatternBackground />
         <div className="container relative z-10">
-          <div className="mb-6 text-center">
+          <BreadcrumbNav
+            className="mb-4"
+            variant="dark"
+            items={[{ label: "Treatment Centers" }]}
+          />
             <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Treatment Centers
             </h1>
