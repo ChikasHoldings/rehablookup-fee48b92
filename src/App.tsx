@@ -235,6 +235,11 @@ function LegacyCenterRedirect() {
   return <Navigate to={`/center/${slug}`} replace />;
 }
 
+function BlogRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/resources/${id}`} replace />;
+}
+
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
 // so we don't get noisy "Function components cannot be given refs" warnings.
 //
@@ -530,6 +535,8 @@ const AppInner = () => {
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
+            <Route path="/blog" element={<Navigate to="/resources" replace />} />
+            <Route path="/blog/:id" element={<BlogRedirect />} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
             {/* Insurance short URLs → redirect to canonical */}
             <Route path="/insurance/aetna" element={<Navigate to="/insurance/aetna-rehab" replace />} />
