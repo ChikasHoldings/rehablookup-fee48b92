@@ -244,7 +244,7 @@ const SearchResults = () => {
     
     if (locationForFilter) {
       locationMatch = parseLocationInput(locationForFilter);
-      const locationLower = locationForFilter.toLowerCase();
+      const locationLower = locationForFilter.toLowerCase().trim();
       
       // Filter to include relevant results by location
       results = results.filter((c) => {
@@ -263,16 +263,38 @@ const SearchResults = () => {
       });
     }
 
-    // Free-text search (from header search bar / seeker home ?q= param)
+    // Free-text search with fuzzy/partial matching
     if (queryParam) {
-      const q = queryParam.toLowerCase();
+      const q = queryParam.toLowerCase().trim();
+      // Split query into individual tokens for partial matching
+      const tokens = q.split(/\s+/).filter(t => t.length > 1);
+      
       results = results.filter((c) => {
-        if (c.name.toLowerCase().includes(q)) return true;
-        if (c.description?.toLowerCase().includes(q)) return true;
-        if (c.city.toLowerCase().includes(q)) return true;
-        if (c.state.toLowerCase().includes(q)) return true;
-        if (c.treatmentTypes.some((t) => t.toLowerCase().includes(q))) return true;
-        if (c.insuranceAccepted.some((i) => i.toLowerCase().includes(q))) return true;
+        const nameL = c.name.toLowerCase();
+        const descL = (c.description || "").toLowerCase();
+        const cityL = c.city.toLowerCase();
+        const stateL = c.state.toLowerCase();
+        const treatmentL = c.treatmentTypes.map(t => t.toLowerCase()).join(" ");
+        const insuranceL = c.insuranceAccepted.map(i => i.toLowerCase()).join(" ");
+        const zipL = c.zipCode || "";
+        const haystack = `${nameL} ${descL} ${cityL} ${stateL} ${treatmentL} ${insuranceL} ${zipL}`;
+        
+        // Full query match
+        if (haystack.includes(q)) return true;
+        
+        // All individual tokens must match somewhere (AND logic for multi-word queries)
+        if (tokens.length > 1) {
+          return tokens.every(token => haystack.includes(token));
+        }
+        
+        // Single token: also check partial word starts for typo tolerance
+        if (tokens.length === 1) {
+          const token = tokens[0];
+          // Check word-start matches (e.g. "cal" matches "california", "alc" matches "alcohol")
+          const words = haystack.split(/\s+/);
+          return words.some(w => w.startsWith(token) || w.includes(token));
+        }
+        
         return false;
       });
     }
@@ -450,9 +472,7 @@ const SearchResults = () => {
   };
 
   const clearAllFilters = () => {
-    const newParams = new URLSearchParams();
-    if (sortParam !== "featured") newParams.set("sort", sortParam);
-    setSearchParams(newParams);
+    setSearchParams(new URLSearchParams());
   };
 
   const handleSortChange = (value: SortOption) => {
@@ -497,7 +517,7 @@ const SearchResults = () => {
       />
       
       {/* Sticky Filter Header */}
-      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
+      <div className="sticky top-[68px] z-30 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
         <div className="container max-w-5xl mx-auto">
           {/* Top Row: Back + Results Count + Sort */}
           <div className="flex items-center justify-between gap-4 py-3 border-b border-border/50">
