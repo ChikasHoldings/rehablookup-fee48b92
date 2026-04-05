@@ -212,10 +212,10 @@ const FastAdmissionRehabUSA = lazy(() => import("./pages/us-rehab/FastAdmissionR
 const SameDayDetoxUSA = lazy(() => import("./pages/us-rehab/SameDayDetoxUSA"));
 const TopDetoxCentersUSA = lazy(() => import("./pages/us-rehab/TopDetoxCentersUSA"));
 
-// Panel shells - eagerly loaded for instant rendering
-import { ProviderShell } from "./components/provider/ProviderShell";
-import { AdminShell } from "./components/admin/AdminShell";
-import { SeekerShell } from "./components/seeker/SeekerShell";
+// Panel shells - lazy loaded to reduce initial bundle size
+const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
+const AdminShell = lazy(() => import("./components/admin/AdminShell").then(m => ({ default: m.AdminShell })));
+const SeekerShell = lazy(() => import("./components/seeker/SeekerShell").then(m => ({ default: m.SeekerShell })));
 
 // Provider Panel pages - lazy load (shell handles Suspense)
 const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
