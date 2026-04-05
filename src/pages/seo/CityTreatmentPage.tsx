@@ -31,6 +31,18 @@ export default function CityTreatmentPage() {
     const stateLower = city.state.toLowerCase();
     const filterLower = treatment.filterKey.toLowerCase();
 
+    const sortByRank = (arr: typeof allFacilities) =>
+      [...arr].sort((a, b) => {
+        const aPro = (a as any).isPro ? 1 : 0;
+        const bPro = (b as any).isPro ? 1 : 0;
+        if (bPro !== aPro) return bPro - aPro;
+        if ((a.featured ? 1 : 0) !== (b.featured ? 1 : 0)) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+        const aScore = (a as any).calculatedRankingScore || 0;
+        const bScore = (b as any).calculatedRankingScore || 0;
+        if (bScore !== aScore) return bScore - aScore;
+        return a.name.localeCompare(b.name);
+      });
+
     let filtered = allFacilities.filter((f) => {
       const cityMatch = f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower;
       const typeMatch =
@@ -55,7 +67,7 @@ export default function CityTreatmentPage() {
       );
     }
 
-    return filtered.slice(0, 12);
+    return sortByRank(filtered).slice(0, 12);
   }, [approvedFacilities, city, treatment]);
 
   const faqs = useMemo(() => {

@@ -19,7 +19,16 @@ export default function TreatmentHubPage() {
     const filterLower = config.filterKey.toLowerCase();
     return allFacilities
       .filter((f) => f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) || f.description?.toLowerCase().includes(filterLower))
-      .sort((a, b) => (a.featured && !b.featured ? -1 : !a.featured && b.featured ? 1 : 0))
+      .sort((a, b) => {
+        const aPro = (a as any).isPro ? 1 : 0;
+        const bPro = (b as any).isPro ? 1 : 0;
+        if (bPro !== aPro) return bPro - aPro;
+        if ((a.featured ? 1 : 0) !== (b.featured ? 1 : 0)) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+        const aScore = (a as any).calculatedRankingScore || 0;
+        const bScore = (b as any).calculatedRankingScore || 0;
+        if (bScore !== aScore) return bScore - aScore;
+        return a.name.localeCompare(b.name);
+      })
       .slice(0, 12);
   }, [approvedFacilities, config]);
 
