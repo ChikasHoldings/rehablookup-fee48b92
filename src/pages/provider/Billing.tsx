@@ -171,7 +171,11 @@ export default function ProviderBillingPage() {
       });
       if (error) throw error;
       if (data?.checkoutUrl) {
-        window.open(data.checkoutUrl, "_blank");
+        try {
+          const url = new URL(data.checkoutUrl);
+          if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid checkout URL");
+          window.open(data.checkoutUrl, "_blank");
+        } catch { toast.error("Invalid checkout URL received."); }
         setShowPurchaseModal(false);
       }
     } catch (err) {
