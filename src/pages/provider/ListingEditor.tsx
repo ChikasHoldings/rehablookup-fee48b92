@@ -205,8 +205,8 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const currentFacilityId = propFacilityId || selectedFacility?.id;
   const { data: proStatus } = useProStatus(currentFacilityId);
   
-  // Get gallery limit based on Pro status (Pro gets 10, Basic gets 5)
-  const galleryLimit = proStatus?.isPro ? 10 : 5;
+  // All providers can upload up to 10 gallery images
+  const galleryLimit = 10;
 
   // Reset state when facility changes
   useEffect(() => {
