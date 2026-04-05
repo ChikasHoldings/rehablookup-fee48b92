@@ -1,113 +1,96 @@
 
 
-# Plan: SEO Expansion — Substance Pages, City Expansion, Insurance+State Pages, Hreflang & Best-in-State Roundups
+# Full Platform Audit & Hardening Plan
 
-## What We're Building
+## Summary of Findings
 
-Based on the audit recommendations, we'll implement 5 major SEO expansions plus a sitemap update. All pages use the proven `SEOLandingTemplate` pattern with rich content, FAQ schema, and internal linking.
-
----
-
-## Phase 1: Substance-Specific Landing Pages (6 pages)
-
-**New pages under `/substance/`:**
-- `/cocaine-addiction-treatment`
-- `/opioid-addiction-treatment`
-- `/heroin-addiction-treatment`
-- `/meth-addiction-treatment`
-- `/prescription-drug-rehab`
-- `/benzodiazepine-addiction-treatment`
-
-**Implementation:**
-- Add `SubstanceConfig` type to `src/data/seoPageConfig.ts` with content, FAQs, symptoms, treatment approaches
-- Create `src/pages/seo/SubstanceTreatmentPage.tsx` — a single dynamic page component using `SEOLandingTemplate`
-- Each page includes: detailed intro (200+ words), 3-4 content sections (signs/symptoms, treatment approaches, recovery timeline, insurance), FAQ schema (5+ questions), facility listings filtered by substance keyword, internal links to city combos and insurance pages
-- Register 6 routes in `App.tsx`
+After a deep audit of the codebase — routing, components, shells, hooks, edge functions, security, and UI — the platform is in strong production shape. Below are the issues found, categorized by severity, with targeted fixes.
 
 ---
 
-## Phase 2: Expand City+Treatment Combos to 50 Cities (150 new combos)
+## Critical Issues (Security/Functionality)
 
-**Add 25 new cities** to `topCities` in `seoPageConfig.ts`:
-Nashville ✓ (exists), San Diego ✓, Portland ✓, Minneapolis, Detroit, San Antonio ✓, Sacramento, Tampa, Charlotte ✓, Salt Lake City, Baltimore, Milwaukee, Kansas City, Tucson, Raleigh, Richmond, New Orleans, Pittsburgh, Oklahoma City, Honolulu, Albuquerque, Omaha, Virginia Beach, Boise, Spokane
+### 1. Unvalidated Checkout URLs (Open Redirect Risk)
+**Files:** `src/pages/provider/Credits.tsx`, `src/pages/provider/Billing.tsx`
+- `window.open(data.checkoutUrl, "_blank")` and `window.open(data.url, "_blank")` are called without validating the URL origin
+- The concierge/international intake flows correctly validate against `checkout.stripe.com` / `billing.stripe.com`, but Credits.tsx and Billing.tsx do not
+- **Fix:** Add Stripe origin validation before all `window.open` calls in these files, matching the pattern already used in `ConciergeIntake.tsx`
 
-**Implementation:**
-- Extend `topCities` array from 25 → 50 cities with proper state/nearby data
-- No new components needed — `CityTreatmentPage.tsx` already handles all combos dynamically
-- This adds 25 cities × 6 treatment types = **150 new pages** automatically
+### 2. Stripe Dashboard URL Exposed to Admin UI
+**File:** `src/components/admin/international/InternationalCaseDetailSheet.tsx`
+- `window.open(https://dashboard.stripe.com/invoices/...)` — opens Stripe dashboard directly
+- Per memory, external links should be validated. This is admin-only so lower risk, but should validate the invoice ID format to prevent injection
+- **Fix:** Validate `stripe_invoice_id` is alphanumeric before constructing URL
 
----
-
-## Phase 3: Insurance + State Cross Pages (45 pages)
-
-**Pattern:** `/insurance/{provider}-rehab-coverage/{state}`
-
-**Top 5 insurers × Top 9 states:**
-- Insurers: Aetna, BCBS, Cigna, UnitedHealthcare, Humana
-- States: California, Florida, Texas, New York, Arizona, Colorado, Ohio, Pennsylvania, Illinois
-
-**Implementation:**
-- Add `InsuranceStateConfig` to `seoPageConfig.ts` with state-specific content (Medicaid expansion status, average costs, state regulations)
-- Create `src/pages/seo/InsuranceStatePage.tsx` using `SEOLandingTemplate`
-- Content includes: state insurance laws, provider network details, cost breakdowns, how to verify coverage, FAQ schema
-- Register wildcard routes in `App.tsx`: `/insurance/:provider-rehab-coverage/:state`
+### 3. `select("*")` in Admin Queries  
+**Files:** `src/pages/admin/AdminConcierge.tsx`, `src/pages/admin/AdminBlog.tsx`
+- Per platform standards, all queries should use explicit column selection
+- **Fix:** Replace `select("*")` with explicit column lists
 
 ---
 
-## Phase 4: "Best Rehab Centers in [State]" Roundup Pages (10 pages)
+## Medium Issues (UX/Functionality)
 
-**States:** California, Florida, Texas, New York, Arizona, Colorado, Pennsylvania, Ohio, Illinois, Georgia
+### 4. Route Path Warnings (Console Noise)
+**File:** `src/App.tsx` (lines 407-412)
+- Routes like `/detox-centers-in-*` trigger React Router warnings about `*` not following `/`
+- **Fix:** Change to `/detox-centers-in/*` (add `/` before `*`) for all 6 affected routes
 
-**Implementation:**
-- Create `src/pages/seo/BestInStatePage.tsx`
-- Dynamic facility listings from database filtered by state
-- Content sections: state overview, treatment landscape, insurance options, how to choose
-- ItemList schema markup for rankings
-- Cross-links to city pages within the state, insurance pages, and treatment type pages
-- Register routes: `/best-rehab-centers-in-:state`
+### 5. Credits Page — Orphaned but Accessible
+**File:** `src/pages/provider/Credits.tsx`
+- This page exists but the route `/provider/credits` redirects to `/provider/billing?purchase_credits=true`
+- The file still contains its own checkout logic without URL validation
+- **Fix:** Either delete the orphaned file or ensure it's truly unreachable. Since the route redirects, the file is dead code — remove it
 
----
-
-## Phase 5: Hreflang Tags for International Pages
-
-**Implementation:**
-- Extend `SEO.tsx` props to accept `hreflang` entries: `{ lang: string; href: string }[]`
-- Add `<link rel="alternate" hreflang="..." href="..." />` tags in Helmet
-- Apply to all international pages:
-  - `/us-rehab/canadian-patients` → `hreflang="en-CA"`
-  - `/us-rehab/uk-patients` → `hreflang="en-GB"`
-  - `/us-rehab/australian-patients` → `hreflang="en-AU"`
-  - `/us-rehab/european-patients` → `hreflang="en-EU"` (and de, fr, etc.)
-  - `/us-rehab/uae-patients` → `hreflang="ar-AE"`
-- Each page gets `x-default` pointing to `/international`
+### 6. Tailwind Ambiguous Class Warning
+- `ease-[cubic-bezier(0.32,0.72,0,1)]` is flagged as ambiguous
+- **Fix:** Escape brackets per Tailwind docs: `ease-[cubic-bezier(0.32,0.72,0,1)]` → use CSS variable or direct style
 
 ---
 
-## Phase 6: Sitemap Update
+## Low Issues (Polish/Hardening)
 
-**Update `supabase/functions/sitemap-facilities/index.ts`:**
-- Add all 6 substance treatment pages (priority 0.85)
-- Add 150 new city+treatment combo URLs from expanded cities
-- Add 45 insurance+state cross pages (priority 0.8)
-- Add 10 best-in-state roundup pages (priority 0.85)
-- Bump version to v4.0.0
+### 7. Console.log Statements in Production Code
+**File:** `src/pages/ProviderSignup.tsx` — ~20+ console.log statements for debugging
+- These should use a conditional dev-only logger or be removed for production cleanliness
+- **Fix:** Wrap in `import.meta.env.DEV` guard or remove
+
+### 8. GlobalErrorBoundary — process.env Check
+**File:** `src/components/GlobalErrorBoundary.tsx` (line 69)
+- Uses `process.env.NODE_ENV` which works in Vite but is non-standard — should use `import.meta.env.DEV`
+- **Fix:** Replace with `import.meta.env.DEV`
 
 ---
 
-## Files to Create/Modify
+## Verified — No Issues Found
 
-| Action | File | Purpose |
-|--------|------|---------|
-| Modify | `src/data/seoPageConfig.ts` | Add substance configs, 25 new cities, insurance-state configs, best-in-state configs |
-| Create | `src/pages/seo/SubstanceTreatmentPage.tsx` | Substance-specific landing pages |
-| Create | `src/pages/seo/InsuranceStatePage.tsx` | Insurance + state cross pages |
-| Create | `src/pages/seo/BestInStatePage.tsx` | Best rehab in state roundups |
-| Modify | `src/App.tsx` | Register ~15 new route patterns |
-| Modify | `src/components/SEO.tsx` | Add hreflang support |
-| Modify | 5 international page files | Add hreflang props |
-| Modify | `supabase/functions/sitemap-facilities/index.ts` | Add all new URLs |
-| Modify | `src/components/seo/InternalLinkingSection.tsx` | Add substance and best-in-state link groups |
+- **Routing:** All 200+ routes are properly wired with correct components, guards, redirects, and lazy loading
+- **Auth shells:** Provider, Seeker, and Admin shells all have proper role-based redirects, auth guards, and error boundaries
+- **No TODO/FIXME/HACK comments** in the codebase
+- **No "Coming Soon"** labels or placeholder content
+- **No empty catch blocks** — all error handlers log and display user feedback
+- **No dead buttons** — all CTAs are wired to actions
+- **Stripe URL validation** is correctly implemented in ConciergeIntake, InternationalApplication, and AddListingCard
+- **RLS policies** are in place across all sensitive tables
+- **Edge functions** (100+) all use proper CORS, Deno.serve(), and versioning
+- **SEO components** (breadcrumbs, SEO head, JSON-LD) are consistently applied
+- **Error boundaries** exist at Global, Admin, Provider, and Lead Form levels
+- **Session management** with cross-tab sync is implemented
+- **Double-click guards** (isPending/isSubmitting) are present on all form submissions
+- **Rate limiting** is implemented for login, lead submission, and verification flows
 
-## Estimated New Pages: **~220+ pages**
-## Estimated Additional Monthly Traffic: **8,000–15,000 visits** at maturity
+---
+
+## Implementation Order
+
+1. Fix unvalidated checkout URLs in Credits.tsx and Billing.tsx (security)
+2. Fix `select("*")` queries in admin pages (security standard)
+3. Fix React Router wildcard path warnings (console cleanliness)
+4. Remove orphaned Credits.tsx file (dead code)
+5. Fix `process.env.NODE_ENV` → `import.meta.env.DEV` (correctness)
+6. Validate Stripe invoice ID format in admin sheet (injection prevention)
+7. Guard console.log statements in ProviderSignup (production hygiene)
+8. Fix Tailwind ambiguous class warning (build cleanliness)
+
+**Estimated scope:** 8 targeted fixes across ~8 files. No architectural changes needed — the platform is production-ready with these hardening patches.
 
