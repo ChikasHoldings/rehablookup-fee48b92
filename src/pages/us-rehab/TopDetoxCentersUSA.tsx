@@ -41,8 +41,10 @@ const TopDetoxCentersUSA = () => {
         subtitle="America's Most Trusted Medical Detox Facilities"
         description="Access the nation's best medical detoxification programs. Accredited, physician-led, and equipped with the latest FDA-approved protocols for safe withdrawal management."
         trustPoints={["Accredited Programs", "Board-Certified MDs", "24/7 Nursing Care", "Proven Outcomes"]}
-        heroImage={heroImg}
-        heroAlt="Top-rated medical detox center in America"
+        breadcrumbItems={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Top Detox Centers" },
+        ]}
       />
 
       {/* What Makes Them Top */}

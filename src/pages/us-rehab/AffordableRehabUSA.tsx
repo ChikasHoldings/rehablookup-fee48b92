@@ -48,8 +48,10 @@ const AffordableRehabUSA = () => {
         subtitle="Quality Addiction Treatment Without the Premium Price Tag"
         description="World-class clinical care doesn't have to cost a fortune. Discover accredited U.S. programs that deliver exceptional outcomes at competitive prices."
         trustPoints={["Accredited Programs", "Self-Pay Discounts", "Value Locations", "Quality Assured"]}
-        heroImage={heroImg}
-        heroAlt="Affordable rehab centers in the United States"
+        breadcrumbItems={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Affordable Rehab" },
+        ]}
       />
 
       {/* Value Tips */}

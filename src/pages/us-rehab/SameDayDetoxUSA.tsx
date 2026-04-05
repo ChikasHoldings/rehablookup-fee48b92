@@ -48,8 +48,10 @@ const SameDayDetoxUSA = () => {
         subtitle="Walk In Today, Start Healing Today"
         description="Access immediate medical detoxification at accredited U.S. facilities. 24/7 nursing care, FDA-approved protocols, and seamless transition to full treatment."
         trustPoints={["Same-Day Intake", "24/7 Medical Staff", "FDA-Approved Meds", "Detox-to-Rehab Pathway"]}
-        heroImage={heroImg}
-        heroAlt="Same-day medical detox center in the USA"
+        breadcrumbItems={[
+          { label: "US Rehab", href: "/us-rehab" },
+          { label: "Same-Day Detox" },
+        ]}
       />
 
       {/* Detox Types */}
