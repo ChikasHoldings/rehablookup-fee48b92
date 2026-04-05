@@ -170,36 +170,41 @@ export default function ProviderResourceArticle() {
         </section>
 
         {/* Bottom CTA */}
-        <section className="py-14 bg-primary relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-3xl mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-5">
-              <Zap className="h-4 w-4 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/80">Take Action Now</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-primary-foreground mb-3">
-              Ready to Grow Your Admissions?
-            </h2>
-            <p className="text-primary-foreground/80 mb-8 max-w-lg mx-auto">
-              Join 500+ treatment centers receiving verified patient inquiries through RehabLookup.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
-              <Link to="/provider-signup">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg">
-                  List Your Facility Free
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/provider-support">
-                <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
-                  <Phone className="h-4 w-4" />
-                  Talk to Our Team
-                </Button>
-              </Link>
-            </div>
-            <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-primary-foreground/60">
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> No credit card</span>
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> 5-minute setup</span>
+        <section className="py-14">
+          <div className="container max-w-4xl mx-auto px-4">
+            <div className="relative rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 p-10 md:p-14 text-center overflow-hidden">
+              <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-accent/5 rounded-full blur-3xl" />
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-5">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">Take Action Now</span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
+                  Ready to Grow Your Admissions?
+                </h2>
+                <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
+                  Join 500+ treatment centers receiving verified patient inquiries through RehabLookup.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
+                  <Link to="/provider-signup">
+                    <Button size="lg" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg">
+                      List Your Facility Free
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link to="/provider-support">
+                    <Button size="lg" variant="outline" className="gap-2 text-base h-13">
+                      <Phone className="h-4 w-4" />
+                      Talk to Our Team
+                    </Button>
+                  </Link>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> No credit card</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> 5-minute setup</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>

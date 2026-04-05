@@ -379,35 +379,35 @@ const About = () => {
       </section>
 
       {/* CTA - Compact navy section */}
-      <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/4 w-48 h-48 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
-        </div>
-        
-        <div className="container relative">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 max-w-4xl mx-auto">
-            <div className="text-center md:text-left">
-              <h2 className="font-display text-xl font-bold text-primary-foreground md:text-2xl mb-2">
-                Ready to Find Treatment?
-              </h2>
-              <p className="text-primary-foreground/80 text-sm md:text-base">
-                Search our directory or speak with a specialist today.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <Link to="/rehab-centers">
-                <Button variant="hero-light" size="default" className="gap-2 font-semibold hover:scale-105 transition-all duration-200">
-                  Find Treatment
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/concierge">
-                <Button variant="ghost" size="default" className="text-primary-foreground hover:bg-white/10 gap-2 font-semibold">
-                  <Heart className="h-4 w-4" />
-                  Concierge Service
-                </Button>
-              </Link>
+      <section className="py-10 px-4 md:py-12 md:px-6">
+        <div className="container">
+          <div className="relative rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 p-8 md:p-10 overflow-hidden max-w-4xl mx-auto">
+            <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-accent/5 rounded-full blur-3xl" />
+            
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="text-center md:text-left">
+                <h2 className="font-display text-xl font-bold text-foreground md:text-2xl mb-2">
+                  Ready to Find Treatment?
+                </h2>
+                <p className="text-muted-foreground text-sm md:text-base">
+                  Search our directory or speak with a specialist today.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <Link to="/rehab-centers">
+                  <Button size="default" className="gap-2 font-semibold hover:scale-105 transition-all duration-200">
+                    Find Treatment
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/concierge">
+                  <Button variant="outline" size="default" className="gap-2 font-semibold">
+                    <Heart className="h-4 w-4" />
+                    Concierge Service
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
