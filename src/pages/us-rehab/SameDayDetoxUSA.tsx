@@ -1,9 +1,8 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
-import { Clock, Heart, Shield, Activity, CheckCircle } from "lucide-react";
+import { Heart, Shield, Activity, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const detoxTypes = [
   { title: "Alcohol Detox", duration: "3–7 days", description: "Medically supervised withdrawal with benzodiazepine protocols, vital sign monitoring, and seizure prevention." },
