@@ -276,6 +276,16 @@ const NEAR_ME_TYPES_WITH_STATES = [
   "suboxone-clinic-near-me",
   "methadone-clinic-near-me",
   "faith-based-rehab-near-me",
+  "holistic-rehab-near-me",
+  "christian-rehab-near-me",
+  "long-term-rehab-near-me",
+  "iop-near-me",
+  "php-near-me",
+  "couples-rehab-near-me",
+  "executive-rehab-near-me",
+  "rehab-near-me",
+  "mat-clinic-near-me",
+  "affordable-rehab-near-me",
 ];
 
 // Treatment types that have state/city sub-routes
@@ -308,7 +318,7 @@ const TOP_CITIES_FOR_TREATMENT: Record<string, string[]> = {
   "georgia": ["atlanta"],
 };
 
-// City+Treatment combo pages - all 50 cities × 6 treatment types (generated dynamically)
+// City+Treatment combo pages - all 50 cities × 14 treatment types (generated dynamically)
 const ALL_CITY_SLUGS = [
   "new-york", "los-angeles", "chicago", "houston", "phoenix", "dallas", "miami", "atlanta",
   "denver", "seattle", "san-diego", "san-francisco", "boston", "philadelphia", "san-antonio",
@@ -320,7 +330,10 @@ const ALL_CITY_SLUGS = [
 ];
 const CITY_TREATMENT_PREFIXES = [
   "alcohol-rehab-in", "drug-rehab-in", "detox-centers-in",
-  "inpatient-rehab-in", "outpatient-rehab-in", "dual-diagnosis-treatment-in"
+  "inpatient-rehab-in", "outpatient-rehab-in", "dual-diagnosis-treatment-in",
+  "luxury-rehab-in", "sober-living-in", "free-rehab-in",
+  "faith-based-rehab-in", "fentanyl-rehab-in", "veterans-rehab-in",
+  "womens-rehab-in", "mens-rehab-in"
 ];
 
 // Insurance + State cross pages
