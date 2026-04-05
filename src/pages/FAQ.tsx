@@ -346,7 +346,7 @@ const FAQ = () => {
               { label: "FAQ" },
             ]}
           />
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-4 text-sm font-medium text-white/90 backdrop-blur-sm">
               <HelpCircle className="h-4 w-4" />
               <span>Frequently Asked Questions</span>
@@ -354,45 +354,45 @@ const FAQ = () => {
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white mb-3 leading-tight tracking-tight">
               Your Questions, Answered
             </h1>
-            <p className="text-base text-white/80 leading-relaxed max-w-lg">
+            <p className="text-base text-white/80 leading-relaxed max-w-lg mx-auto">
               Comprehensive answers about treatment, insurance, privacy, recovery, and how RehabLookup helps you find the right care.
             </p>
-          </div>
 
-          {/* Search */}
-          <div className="relative max-w-md mt-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-            <Input
-              ref={searchRef}
-              type="text"
-              placeholder="Search all questions…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-12 rounded-xl border-0 bg-card pl-11 pr-10 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors z-10"
-                aria-label="Clear search"
-              >
-                <X className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            )}
-          </div>
+            {/* Search */}
+            <div className="relative max-w-md mx-auto mt-6">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+              <Input
+                ref={searchRef}
+                type="text"
+                placeholder="Search all questions…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-12 rounded-xl border-0 bg-card pl-11 pr-10 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors z-10"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              )}
+            </div>
 
-          <div className="mt-5 flex items-center gap-6 text-white/70 text-sm">
-            <div className="flex items-center gap-1.5">
-              <BookOpen className="h-4 w-4" />
-              <span>{faqCategories.length} Topics</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <HelpCircle className="h-4 w-4" />
-              <span className="tabular-nums">{totalQuestions} Questions</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1.5">
-              <Shield className="h-4 w-4" />
-              <span>HIPAA Compliant</span>
+            <div className="mt-5 flex items-center justify-center gap-6 text-white/70 text-sm">
+              <div className="flex items-center gap-1.5">
+                <BookOpen className="h-4 w-4" />
+                <span>{faqCategories.length} Topics</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <HelpCircle className="h-4 w-4" />
+                <span className="tabular-nums">{totalQuestions} Questions</span>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5">
+                <Shield className="h-4 w-4" />
+                <span>HIPAA Compliant</span>
+              </div>
             </div>
           </div>
         </div>
