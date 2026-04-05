@@ -13,6 +13,10 @@ const PrivacyPolicy = () => {
         description="Read RehabLookup's privacy policy. Learn how we collect, use, and protect your personal and health information with HIPAA and GDPR compliance."
         canonical="/privacy-policy"
         keywords={["privacy policy", "HIPAA compliance", "GDPR", "health data protection", "addiction treatment privacy"]}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Privacy Policy", url: "/privacy-policy" },
+        ]}
       />
       {/* Header */}
       <section className="border-b border-border bg-secondary/30 py-12">

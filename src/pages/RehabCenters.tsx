@@ -94,6 +94,23 @@ const RehabCenters = () => {
         title="Find Rehab Centers Near You"
         description="Search and compare verified addiction treatment centers. Filter by location, treatment type, and insurance. Find the right rehab facility for your recovery journey."
         canonical="/rehab-centers"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Find Rehab Centers Near You",
+            "description": "Search and compare verified addiction treatment centers across the United States.",
+            "url": "https://rehablookup.com/rehab-centers",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com" },
+              { "@type": "ListItem", "position": 2, "name": "Find Rehab", "item": "https://rehablookup.com/rehab-centers" },
+            ],
+          },
+        ]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Find Rehab", url: "/rehab-centers" },

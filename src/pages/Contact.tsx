@@ -91,6 +91,23 @@ const Contact = () => {
         title="Contact RehabLookup - 24/7 Treatment Help"
         description="Contact our specialists for help finding addiction treatment. Get confidential assistance locating the right rehab center for you or a loved one."
         canonical="/contact"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          "name": "Contact RehabLookup",
+          "description": "Contact our specialists for help finding addiction treatment.",
+          "url": "https://rehablookup.com/contact",
+          "mainEntity": {
+            "@type": "Organization",
+            "name": "RehabLookup",
+            "url": "https://rehablookup.com",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer service",
+              "availableLanguage": "English",
+            },
+          },
+        }}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Contact", url: "/contact" },
