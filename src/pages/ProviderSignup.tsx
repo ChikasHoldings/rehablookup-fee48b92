@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -758,6 +759,7 @@ export default function ProviderSignup() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Helmet><title>List Your Facility | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
       <Header />
 
       <main className="flex-1 py-8 md:py-16">
