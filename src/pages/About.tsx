@@ -15,7 +15,9 @@ import {
   Lightbulb,
   Clock,
   ChevronRight,
+  Phone,
 } from "lucide-react";
+import supportSpecialistImg from "@/assets/support-specialist.png";
 import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -378,36 +380,51 @@ const About = () => {
         </div>
       </section>
 
-      {/* CTA - Compact navy section */}
-      <section className="py-10 px-4 md:py-12 md:px-6">
+      {/* CTA Banner */}
+      <section className="border-t border-border bg-card py-10 md:py-12">
         <div className="container">
-          <div className="relative rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 p-8 md:p-10 overflow-hidden max-w-4xl mx-auto">
-            <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-accent/5 rounded-full blur-3xl" />
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 md:flex-row rounded-xl border border-border bg-gradient-to-r from-primary/5 to-primary/10 p-5 md:p-6">
+            <div className="relative shrink-0">
+              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 p-0.5 ring-1 ring-primary/10">
+                <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-b from-background to-secondary/50">
+                  <img 
+                    src={supportSpecialistImg} 
+                    alt="Support specialist ready to help" 
+                    className="w-full h-full object-cover object-top scale-110"
+                  />
+                </div>
+              </div>
+              <div className="absolute bottom-0 right-0 flex items-center gap-1 rounded-full bg-card px-2 py-0.5 shadow-sm border border-border">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-medium text-foreground">Online</span>
+              </div>
+            </div>
             
-            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div className="text-center md:text-left">
-                <h2 className="font-display text-xl font-bold text-foreground md:text-2xl mb-2">
-                  Ready to Find Treatment?
-                </h2>
-                <p className="text-muted-foreground text-sm md:text-base">
-                  Search our directory or speak with a specialist today.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <Link to="/rehab-centers">
-                  <Button size="default" className="gap-2 font-semibold hover:scale-105 transition-all duration-200">
-                    Find Treatment
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/concierge">
-                  <Button variant="outline" size="default" className="gap-2 font-semibold">
-                    <Heart className="h-4 w-4" />
-                    Concierge Service
-                  </Button>
-                </Link>
-              </div>
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="mb-1 font-display text-base font-bold text-foreground md:text-lg">
+                Ready to Find Treatment?
+              </h2>
+              <p className="text-muted-foreground text-sm max-w-md">
+                Search our directory or speak with a specialist today.
+              </p>
+            </div>
+            
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              <Link to="/concierge">
+                <Button size="sm" className="w-full gap-2 sm:w-auto">
+                  <Heart className="h-4 w-4" />
+                  Find Treatment
+                </Button>
+              </Link>
+              <Link to="/contact">
+                <Button size="sm" variant="outline" className="w-full gap-2 sm:w-auto">
+                  <Phone className="h-4 w-4" />
+                  Contact Us
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
