@@ -430,13 +430,7 @@ const AppInner = () => {
             {/* Best Rehab Centers in [State] Roundup Pages */}
             {/* Best Rehab Centers routes handled by SmartCatchAll below */}
             
-            {/* SEO City+Treatment Combo Pages - use full path parsing */}
-            <Route path="/alcohol-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/drug-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/detox-centers-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/inpatient-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/outpatient-rehab-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/dual-diagnosis-treatment-in-/*" element={<PublicRouteGuard><CityTreatmentPage /></PublicRouteGuard>} />
+            {/* SEO City+Treatment Combo Pages - handled by SmartCatchAll */}
             
             {/* Near Me SEO Routes */}
             <Route path="/drug-rehab-near-me" element={<PublicRouteGuard><DrugRehabNearMe /></PublicRouteGuard>} />
