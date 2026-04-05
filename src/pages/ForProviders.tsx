@@ -106,6 +106,7 @@ const ForProviders = () => {
               variant="dark"
               items={[{ label: "For Providers" }]}
             />
+            <div className="mx-auto max-w-3xl text-center">
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">
                 <Shield className="h-4 w-4 text-accent" />
