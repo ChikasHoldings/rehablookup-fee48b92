@@ -679,6 +679,7 @@ const ArticleDetail = () => {
                   </Button>
                 </Link>
               </div>
+              </div>
             </aside>
           </div>
         </div>
