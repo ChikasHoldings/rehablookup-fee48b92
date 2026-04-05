@@ -43,28 +43,17 @@ export function NearMeHero({
       <MedicalPatternBackground />
       
       <div className="container relative z-10 py-10 md:py-14 lg:py-16">
-        {/* Breadcrumb navigation */}
-        <nav className="mb-5" aria-label="Breadcrumb">
-          <ol className="flex flex-row items-center gap-1.5 flex-nowrap text-sm">
-            <li className="inline-flex items-center shrink-0">
-              <Link to="/" className="text-white/60 hover:text-white transition-colors">Home</Link>
-            </li>
-            <li className="inline-flex items-center shrink-0">
-              <ChevronRight className="h-3 w-3 text-white/30 mx-0.5" />
-              <Link to="/treatment-types" className="text-white/60 hover:text-white transition-colors">Treatment</Link>
-            </li>
-            <li className="inline-flex items-center shrink-0">
-              <ChevronRight className="h-3 w-3 text-white/30 mx-0.5" />
-              <span className="text-white/90 font-medium speakable-headline">{treatmentType}</span>
-            </li>
-            {location?.state && (
-              <li className="inline-flex items-center shrink-0">
-                <ChevronRight className="h-3 w-3 text-white/30 mx-0.5" />
-                <span className="text-white/90 font-medium">{locationString}</span>
-              </li>
-            )}
-          </ol>
-        </nav>
+        <BreadcrumbNav
+          className="mb-5"
+          variant="dark"
+          items={[
+            { label: "Treatment", href: "/treatment-types" },
+            ...(location?.state
+              ? [{ label: treatmentType, href: "#" }, { label: locationString }]
+              : [{ label: treatmentType }]
+            ),
+          ]}
+        />
 
         <div className="max-w-3xl">
           {/* Location badge */}

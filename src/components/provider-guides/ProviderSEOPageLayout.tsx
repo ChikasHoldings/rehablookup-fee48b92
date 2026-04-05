@@ -102,8 +102,16 @@ export function ProviderSEOPageLayout({
         <section className="relative bg-primary py-16 md:py-24 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent" />
-          <div className="container relative z-10 max-w-4xl mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
+          <div className="container relative z-10 max-w-4xl mx-auto px-4">
+            <BreadcrumbNav
+              className="mb-6 text-left"
+              variant="dark"
+              items={[
+                { label: "For Providers", href: "/for-providers" },
+                { label: title },
+              ]}
+            />
+            <div className="text-center">
               <Building2 className="h-4 w-4 text-primary-foreground/80" />
               <span className="text-sm font-medium text-primary-foreground/90">Provider Growth Guide</span>
             </div>
