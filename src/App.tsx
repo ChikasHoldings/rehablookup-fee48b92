@@ -58,7 +58,7 @@ const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
 const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
 
 // SEO Landing Pages - City+Treatment, Comparisons, Treatment Hubs, Cost/Insurance
-const CityTreatmentPage = lazy(() => import("./pages/seo/CityTreatmentPage"));
+// CityTreatmentPage routes handled by SmartCatchAll
 const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
 const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
