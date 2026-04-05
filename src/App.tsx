@@ -152,6 +152,16 @@ const MethadoneClinicNearMe = lazy(() => import("./pages/near-me/MethadoneClinic
 const OutpatientRehabNearMe = lazy(() => import("./pages/near-me/OutpatientRehabNearMe"));
 const DualDiagnosisRehabNearMe = lazy(() => import("./pages/near-me/DualDiagnosisRehabNearMe"));
 const FaithBasedRehabNearMe = lazy(() => import("./pages/near-me/FaithBasedRehabNearMe"));
+const HolisticRehabNearMe = lazy(() => import("./pages/near-me/HolisticRehabNearMe"));
+const ChristianRehabNearMe = lazy(() => import("./pages/near-me/ChristianRehabNearMe"));
+const LongTermRehabNearMe = lazy(() => import("./pages/near-me/LongTermRehabNearMe"));
+const IOPNearMe = lazy(() => import("./pages/near-me/IOPNearMe"));
+const PHPNearMe = lazy(() => import("./pages/near-me/PHPNearMe"));
+const CouplesRehabNearMe = lazy(() => import("./pages/near-me/CouplesRehabNearMe"));
+const ExecutiveRehabNearMe = lazy(() => import("./pages/near-me/ExecutiveRehabNearMe"));
+const RehabNearMe = lazy(() => import("./pages/near-me/RehabNearMe"));
+const MATClinicNearMe = lazy(() => import("./pages/near-me/MATClinicNearMe"));
+const AffordableRehabNearMe = lazy(() => import("./pages/near-me/AffordableRehabNearMe"));
 
 // US Rehab International SEO Pages - lazy load
 const USRehabHub = lazy(() => import("./pages/us-rehab/USRehabHub"));
