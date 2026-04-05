@@ -185,7 +185,7 @@ const Locations = () => {
                 className="group relative flex items-center gap-3 rounded-xl border bg-background p-4 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
               >
                 {index < 3 && (
-                  <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground shadow-sm">
+                  <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground shadow-sm">
                     #{index + 1}
                   </div>
                 )}

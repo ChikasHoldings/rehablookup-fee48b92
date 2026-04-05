@@ -26,7 +26,7 @@ export function InquiriesStatsHeader({ total, locked, unlocked, contacted, respo
         >
           <div className="flex items-center justify-center gap-1.5 mb-1">
             <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${color}`} />
-            <span className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {label}
             </span>
           </div>

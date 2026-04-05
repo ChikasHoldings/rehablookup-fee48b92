@@ -67,16 +67,16 @@ function MetricCard({
             <Icon className={cn("h-4 w-4 sm:h-[18px] sm:w-[18px]", iconColor)} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+            <p className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
             {isLoading ? (
               <Skeleton className="h-5 sm:h-6 w-10 sm:w-12 mt-0.5" />
             ) : (
               <p className="text-lg sm:text-xl font-bold text-foreground leading-tight tabular-nums">{value}</p>
             )}
-            {subtitle && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
+            {subtitle && <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
           </div>
           {action && (
-            <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-2.5 text-[10px] sm:text-xs hidden sm:flex" asChild>
+            <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-2.5 text-xs sm:text-xs hidden sm:flex" asChild>
               <Link to={action.href}>
                 {action.label}
                 <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 ml-0.5" />
@@ -361,7 +361,7 @@ export default function ProviderDashboardPage() {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span>{facility.name}</span>
                         {facility.status === "approved" && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success bg-success/10 px-1.5 py-0.5 rounded">
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-success bg-success/10 px-1.5 py-0.5 rounded">
                             <span className="h-1.5 w-1.5 rounded-full bg-success" />
                             Live
                           </span>
@@ -487,7 +487,7 @@ export default function ProviderDashboardPage() {
                               <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
                               <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
                               {!isUnlocked && (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded">
+                                <span className="inline-flex items-center gap-0.5 text-xs font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded">
                                   <Lock className="h-2.5 w-2.5" />
                                   Locked
                                 </span>

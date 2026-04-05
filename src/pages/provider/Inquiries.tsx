@@ -341,7 +341,7 @@ export default function ProviderInquiriesPage() {
 
             {/* Results count */}
             {!isLoading && (
-              <span className="text-[10px] sm:text-xs text-muted-foreground ml-auto whitespace-nowrap">
+              <span className="text-xs sm:text-xs text-muted-foreground ml-auto whitespace-nowrap">
                 {filteredInquiries.length === inquiries.length
                   ? `${inquiries.length} total`
                   : `${filteredInquiries.length} of ${inquiries.length}`

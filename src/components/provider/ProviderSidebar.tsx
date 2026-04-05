@@ -145,7 +145,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
           {proStatus?.isPro ? (
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-3 w-3 text-amber-500" />
-              <span className="text-[11px] text-amber-600 font-medium">
+              <span className="text-xs text-amber-600 font-medium">
                 Pro Active • {proStatus.unlockDiscountPercent}% off unlocks
               </span>
             </div>
@@ -153,7 +153,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             <a 
               href="/provider/billing?tab=pro"
               onClick={(e) => handleNavClick(e, "/provider/billing?tab=pro")}
-              className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               <Sparkles className="h-3 w-3" />
               <span>Upgrade to Pro for 20% off</span>

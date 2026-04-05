@@ -24,7 +24,7 @@ export function GoogleReviewsBadge({
     sm: {
       stars: "h-3 w-3",
       rating: "text-sm",
-      count: "text-[10px]",
+      count: "text-xs",
       container: "gap-1.5 px-2 py-1",
     },
     md: {
@@ -130,7 +130,7 @@ export const GoogleReviewsCompactBadge = forwardRef<HTMLDivElement, GoogleReview
         ref={ref}
         variant="secondary"
         className={cn(
-          "gap-1 px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 border-0 rounded-md",
+          "gap-1 px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 border-0 rounded-md",
           className
         )}
       >

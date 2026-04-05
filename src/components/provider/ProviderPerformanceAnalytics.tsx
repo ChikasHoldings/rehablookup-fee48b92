@@ -156,7 +156,7 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
                       <td className="text-right px-4 py-3.5 text-muted-foreground">{listing.views}</td>
                       <td className="text-right px-4 py-3.5 text-muted-foreground">{listing.leads}</td>
                       <td className="text-right px-4 py-3.5">
-                        <Badge variant="outline" className="text-[11px] px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-200">
                           {listing.converted}
                         </Badge>
                       </td>
@@ -192,7 +192,7 @@ function PerfCard({ title, value, icon: Icon, color }: {
         <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", c.bg)}>
           <Icon className={cn("h-3 w-3", c.text)} />
         </div>
-        <p className="text-[10px] text-muted-foreground font-medium truncate">{title}</p>
+        <p className="text-xs text-muted-foreground font-medium truncate">{title}</p>
       </div>
       <p className="text-base font-bold text-foreground leading-none">{typeof value === "number" ? value.toLocaleString() : value}</p>
     </div>
@@ -203,7 +203,7 @@ function LegendItem({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1">
       <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: color }} />
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }

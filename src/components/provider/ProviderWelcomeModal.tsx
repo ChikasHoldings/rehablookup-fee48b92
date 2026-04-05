@@ -117,7 +117,7 @@ export function ProviderWelcomeModal({
 
           {/* Quick Actions */}
           <div className="space-y-2">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               While you wait
             </p>
             <div className="space-y-2">

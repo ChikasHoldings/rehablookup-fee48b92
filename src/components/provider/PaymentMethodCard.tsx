@@ -200,7 +200,7 @@ export function PaymentMethodCard({ onManagePayment, portalLoading }: PaymentMet
         <div className="flex items-center gap-4">
           {/* Card visual */}
           <div className={`h-14 w-24 rounded-lg border-2 flex flex-col items-start justify-between p-2 ${brandColor}`}>
-            <span className="text-[10px] font-medium uppercase tracking-wide opacity-70">
+            <span className="text-xs font-medium uppercase tracking-wide opacity-70">
               {getBrandName(card!.brand)}
             </span>
             <span className="text-sm font-mono font-semibold">

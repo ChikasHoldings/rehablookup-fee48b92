@@ -77,21 +77,21 @@ function RequestCardSkeleton() {
 function getStatusBadge(status: string) {
   switch (status) {
     case "new":
-      return <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Pending Review</Badge>;
+      return <Badge className="bg-primary/10 text-primary border-0 text-xs">Pending Review</Badge>;
     case "contacted":
-      return <Badge className="bg-success/10 text-success border-0 text-[10px]">Facility Responded</Badge>;
+      return <Badge className="bg-success/10 text-success border-0 text-xs">Facility Responded</Badge>;
     case "in_progress":
-      return <Badge className="bg-warning/10 text-warning border-0 text-[10px]">In Progress</Badge>;
+      return <Badge className="bg-warning/10 text-warning border-0 text-xs">In Progress</Badge>;
     case "scheduled":
-      return <Badge className="bg-accent/10 text-accent-foreground border-0 text-[10px]">Scheduled</Badge>;
+      return <Badge className="bg-accent/10 text-accent-foreground border-0 text-xs">Scheduled</Badge>;
     case "admitted":
-      return <Badge className="bg-success/10 text-success border-0 text-[10px]">Admitted</Badge>;
+      return <Badge className="bg-success/10 text-success border-0 text-xs">Admitted</Badge>;
     case "closed":
-      return <Badge className="bg-muted text-muted-foreground border-0 text-[10px]">Closed</Badge>;
+      return <Badge className="bg-muted text-muted-foreground border-0 text-xs">Closed</Badge>;
     case "expired":
-      return <Badge className="bg-muted text-muted-foreground/70 border-0 text-[10px]">Expired</Badge>;
+      return <Badge className="bg-muted text-muted-foreground/70 border-0 text-xs">Expired</Badge>;
     default:
-      return <Badge variant="secondary" className="text-[10px]">Submitted</Badge>;
+      return <Badge variant="secondary" className="text-xs">Submitted</Badge>;
   }
 }
 
@@ -164,10 +164,10 @@ function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick:
               {formatDate(request.created_at)}
             </span>
             {request.urgency && (
-              <Badge variant="outline" className="text-[10px] py-0">{getUrgencyLabel(request.urgency)}</Badge>
+              <Badge variant="outline" className="text-xs py-0">{getUrgencyLabel(request.urgency)}</Badge>
             )}
             {hasProviderResponse && (
-              <Badge className="bg-success/10 text-success border-0 text-[10px] gap-1">
+              <Badge className="bg-success/10 text-success border-0 text-xs gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-success inline-block" />
                 Response Available
               </Badge>
@@ -369,7 +369,7 @@ export default function SeekerRequests() {
             </div>
           </div>
           {requests.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">
+            <Badge variant="secondary" className="text-xs sm:text-xs shrink-0">
               {requests.length}
             </Badge>
           )}

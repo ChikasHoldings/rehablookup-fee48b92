@@ -43,7 +43,7 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Guides */}
         <div className="flex-1 p-5">
-          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-3 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-3 flex items-center gap-1.5">
             <Sparkles className="h-3 w-3" />
             Growth Guides
           </p>
@@ -101,7 +101,7 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
               {benefits.map((b) => (
                 <div key={b} className="flex items-center gap-1.5">
                   <CheckCircle className="h-3 w-3 text-accent shrink-0" />
-                  <span className="text-[11px] text-muted-foreground">{b}</span>
+                  <span className="text-xs text-muted-foreground">{b}</span>
                 </div>
               ))}
             </div>
@@ -122,7 +122,7 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Quick Links */}
       <div>
-        <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
           <Building2 className="h-3.5 w-3.5" />
           For Providers
         </p>
@@ -139,7 +139,7 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Growth Guides */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
           Growth Guides
         </p>
@@ -151,7 +151,7 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
             </div>
             <div className="min-w-0">
               <p className="text-[15px] font-medium text-foreground/80 leading-tight">{page.label}</p>
-              <p className="text-[11px] text-muted-foreground/70 leading-tight mt-0.5">{page.desc}</p>
+              <p className="text-xs text-muted-foreground/70 leading-tight mt-0.5">{page.desc}</p>
             </div>
           </PrefetchLink>
         ))}
@@ -170,7 +170,7 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground leading-tight">List Your Facility</p>
-              <p className="text-[11px] text-muted-foreground leading-tight">Free listing • Verified leads</p>
+              <p className="text-xs text-muted-foreground leading-tight">Free listing • Verified leads</p>
             </div>
             <ArrowRight className="h-4 w-4 text-accent shrink-0" />
           </div>

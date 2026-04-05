@@ -218,7 +218,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
             {/* Featured badge */}
             {showFeaturedBadge && (
               <div className="absolute left-3 top-3 z-10">
-                <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" aria-label="Featured treatment center">
+                <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider" aria-label="Featured treatment center">
                   <Crown className="h-3 w-3" aria-hidden="true" />
                   Featured
                 </Badge>
@@ -234,7 +234,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 <Badge 
                   variant="outline"
                   className={cn(
-                    "gap-1.5 px-2.5 py-1 text-[10px] font-bold shadow-md backdrop-blur-sm border",
+                    "gap-1.5 px-2.5 py-1 text-xs font-bold shadow-md backdrop-blur-sm border",
                     proximityConfig.bgClassName,
                     proximityConfig.className
                   )}
@@ -364,19 +364,19 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               />
             )}
             {center.verified && (
-              <Badge className="gap-1.5 px-2.5 py-1 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 rounded-md shadow-sm" role="listitem">
+              <Badge className="gap-1.5 px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 rounded-md shadow-sm" role="listitem">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 Verified Provider
               </Badge>
             )}
             {hasInsurance && (
-              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0 rounded-md" role="listitem">
+              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 border-0 rounded-md" role="listitem">
                 <CreditCard className="h-3 w-3" aria-hidden="true" />
                 {insuranceCount} Insurance Plans
               </Badge>
             )}
             {center.facilityType && (
-              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-700 border-0 rounded-md" role="listitem">
+              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700 border-0 rounded-md" role="listitem">
                 <Building2 className="h-3 w-3" aria-hidden="true" />
                 {center.facilityType}
               </Badge>
@@ -395,7 +395,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 key={type} 
                 variant="outline" 
                 className={cn(
-                  "text-[10px] font-medium px-2 py-0.5 rounded-md",
+                  "text-xs font-medium px-2 py-0.5 rounded-md",
                   showFeaturedBadge 
                     ? "border-amber-200 text-amber-700 bg-amber-50/50"
                     : "border-border text-muted-foreground bg-secondary/30"
@@ -405,7 +405,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               </Badge>
             ))}
             {center.treatmentTypes.length > 4 && (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 +{center.treatmentTypes.length - 4} more
               </span>
             )}

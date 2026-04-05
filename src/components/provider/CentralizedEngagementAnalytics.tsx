@@ -99,7 +99,7 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
             {analytics.facilityBreakdown.map((facility) => (
               <div key={facility.facilityId} className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors">
                 <p className="font-medium text-xs text-foreground truncate mb-2">{facility.facilityName}</p>
-                <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                <div className="grid grid-cols-3 gap-1.5 text-xs">
                   <div className="flex items-center gap-1">
                     <Eye className="h-3 w-3 text-primary" />
                     <span className="text-muted-foreground">{facility.listingViews}</span>
@@ -197,7 +197,7 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
               </div>
               <div>
                 <p className="font-semibold text-foreground text-xs">Upgrade to Pro for Direct Contact</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Enable families to call you directly and visit your website</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Enable families to call you directly and visit your website</p>
               </div>
             </div>
             <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 h-8 text-xs">
@@ -230,7 +230,7 @@ function KPICard({ title, value, total, icon: Icon, trend, color }: {
         <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", c.bg)}>
           <Icon className={cn("h-3 w-3", c.text)} />
         </div>
-        <p className="text-[10px] text-muted-foreground font-medium truncate">{title}</p>
+        <p className="text-xs text-muted-foreground font-medium truncate">{title}</p>
         {trend !== undefined && trend !== 0 && (
           <span className={cn(
             "ml-auto text-[9px] font-semibold flex items-center shrink-0",
@@ -251,8 +251,8 @@ function ConversionCell({ label, value, desc }: { label: string; value: string; 
   return (
     <div className="p-3 text-center">
       <p className="text-lg font-bold text-foreground">{value}</p>
-      <p className="text-[11px] font-medium text-foreground mt-0.5">{label}</p>
-      <p className="text-[10px] text-muted-foreground">{desc}</p>
+      <p className="text-xs font-medium text-foreground mt-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground">{desc}</p>
     </div>
   );
 }
@@ -261,7 +261,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1">
       <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }

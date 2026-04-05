@@ -423,7 +423,7 @@ export default function AddLocationPage() {
                   <div className="space-y-2">
                     <Label htmlFor="city" className="flex items-center gap-2">
                       City *
-                      {hasAutoFilled && <span className="text-[10px] text-green-600 font-normal">(auto-detected)</span>}
+                      {hasAutoFilled && <span className="text-xs text-green-600 font-normal">(auto-detected)</span>}
                     </Label>
                     <Input
                       id="city"
@@ -443,7 +443,7 @@ export default function AddLocationPage() {
                   <div className="space-y-2">
                     <Label htmlFor="state" className="flex items-center gap-2">
                       State *
-                      {hasAutoFilled && <span className="text-[10px] text-green-600 font-normal">(auto-detected)</span>}
+                      {hasAutoFilled && <span className="text-xs text-green-600 font-normal">(auto-detected)</span>}
                     </Label>
                     <Select
                       value={formData.state}

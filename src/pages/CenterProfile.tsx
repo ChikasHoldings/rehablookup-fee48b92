@@ -121,7 +121,7 @@ function QuickFactCard({
         <Icon className={cn("h-4 w-4", iconColor)} />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
         <p className="text-sm font-semibold text-foreground truncate">{value}</p>
       </div>
     </div>
@@ -671,17 +671,17 @@ const CenterProfile = () => {
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     <span className="font-bold text-xs text-foreground">{ratingData.averageRating.toFixed(1)}</span>
-                    <span className="text-[10px] text-muted-foreground">({ratingData.reviewCount})</span>
+                    <span className="text-xs text-muted-foreground">({ratingData.reviewCount})</span>
                   </div>
                 )}
                 {hasFeaturedSubscription && (
-                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-[10px] font-bold uppercase tracking-wider">
+                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
                     <Crown className="h-3 w-3" />
                     Featured
                   </Badge>
                 )}
                 {facility.verified && (
-                  <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-[10px] font-bold uppercase tracking-wider">
+                  <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
                     <ShieldCheck className="h-3 w-3" />
                     Verified
                   </Badge>
@@ -1188,33 +1188,33 @@ const CenterProfile = () => {
               <h3 className="text-sm font-bold text-foreground mb-3">Quick Facts</h3>
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-2.5 rounded-lg bg-muted/40">
-                  <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Type</span>
+                  <span className="text-xs text-muted-foreground block uppercase tracking-wide">Type</span>
                   <span className="text-xs font-semibold text-foreground">{facility.facility_type}</span>
                 </div>
                 {genderLabel && (
                   <div className="p-2.5 rounded-lg bg-muted/40">
-                    <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Gender</span>
+                    <span className="text-xs text-muted-foreground block uppercase tracking-wide">Gender</span>
                     <span className="text-xs font-semibold text-foreground">{genderLabel}</span>
                   </div>
                 )}
                 {facility.bed_count && (
                   <div className="p-2.5 rounded-lg bg-muted/40">
-                    <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Capacity</span>
+                    <span className="text-xs text-muted-foreground block uppercase tracking-wide">Capacity</span>
                     <span className="text-xs font-semibold text-foreground">{facility.bed_count} beds</span>
                   </div>
                 )}
                 {facility.year_established && (
                   <div className="p-2.5 rounded-lg bg-muted/40">
-                    <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Established</span>
+                    <span className="text-xs text-muted-foreground block uppercase tracking-wide">Established</span>
                     <span className="text-xs font-semibold text-foreground">{facility.year_established}</span>
                   </div>
                 )}
                 <div className="p-2.5 rounded-lg bg-muted/40">
-                  <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Services</span>
+                  <span className="text-xs text-muted-foreground block uppercase tracking-wide">Services</span>
                   <span className="text-xs font-semibold text-foreground">{services.length} programs</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-muted/40">
-                  <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Insurance</span>
+                  <span className="text-xs text-muted-foreground block uppercase tracking-wide">Insurance</span>
                   <span className="text-xs font-semibold text-foreground">{insuranceList.length} accepted</span>
                 </div>
               </div>

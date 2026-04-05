@@ -161,7 +161,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
             <Globe className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Candidates</h3>
             {pendingMatches.length > 0 && (
-              <Badge variant="destructive" className="text-[11px] h-5 ml-auto">{pendingMatches.length} new</Badge>
+              <Badge variant="destructive" className="text-xs h-5 ml-auto">{pendingMatches.length} new</Badge>
             )}
           </div>
 
@@ -196,7 +196,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
                 {respondedMatches.map((match) => (
                   <div key={match.id} className="flex items-center justify-between px-5 py-3.5 gap-3 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Badge variant={match.status === "accepted" ? "default" : "secondary"} className="shrink-0 gap-1 text-[11px]">
+                      <Badge variant={match.status === "accepted" ? "default" : "secondary"} className="shrink-0 gap-1 text-xs">
                         {match.status === "accepted" ? <><CheckCircle className="h-3 w-3" /> Accepted</> : <><XCircle className="h-3 w-3" /> Declined</>}
                       </Badge>
                       <span className="text-sm truncate">
@@ -322,11 +322,11 @@ function CandidateRow({ match, onRespond }: { match: InternationalMatch; onRespo
           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
             <span className="font-semibold text-foreground text-sm">{match.international_placement_cases?.client_country}</span>
             {match.international_placement_cases?.priority === "vip" && (
-              <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 text-[10px] px-1.5 py-0">
+              <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 text-xs px-1.5 py-0">
                 <Sparkles className="h-2.5 w-2.5 mr-0.5" /> VIP
               </Badge>
             )}
-            <Badge variant="destructive" className="text-[11px]"><Bell className="h-3 w-3 mr-1" />New</Badge>
+            <Badge variant="destructive" className="text-xs"><Bell className="h-3 w-3 mr-1" />New</Badge>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{(intakeData.primary_concern as string) || "Substance Use"}</span>
@@ -336,8 +336,8 @@ function CandidateRow({ match, onRespond }: { match: InternationalMatch; onRespo
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right hidden sm:block">
-            <Badge variant="outline" className={cn("text-[11px]", urgencyConf.className)}>{urgencyConf.label}</Badge>
-            <p className="text-[11px] text-muted-foreground mt-1">{format(new Date(match.invited_at), "MMM d")}</p>
+            <Badge variant="outline" className={cn("text-xs", urgencyConf.className)}>{urgencyConf.label}</Badge>
+            <p className="text-xs text-muted-foreground mt-1">{format(new Date(match.invited_at), "MMM d")}</p>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
@@ -360,5 +360,5 @@ function DetailRow({ icon: Icon, label, value, capitalize: cap, children }: {
 
 function UrgencyBadge({ urgency }: { urgency?: string }) {
   const conf = URGENCY_CONFIG[urgency || ""] || URGENCY_CONFIG.flexible;
-  return <Badge variant="outline" className={cn("text-[11px]", conf.className)}>{conf.label}</Badge>;
+  return <Badge variant="outline" className={cn("text-xs", conf.className)}>{conf.label}</Badge>;
 }

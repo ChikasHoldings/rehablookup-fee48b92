@@ -255,19 +255,19 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
                 />
               )}
               {center.verified && (
-                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0" role="listitem">
+                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 border-0" role="listitem">
                   <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                   <span>Verified</span>
                 </Badge>
               )}
               {yearsInBusiness && yearsInBusiness > 0 && (
-                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 border-0" role="listitem">
+                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 border-0" role="listitem">
                   <Clock className="h-3 w-3" aria-hidden="true" />
                   <span>{yearsInBusiness}+ Years in business</span>
                 </Badge>
               )}
               {hasInsurance && (
-                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0" role="listitem">
+                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 border-0" role="listitem">
                   <CreditCard className="h-3 w-3" aria-hidden="true" />
                   <span>Accepts Insurance</span>
                 </Badge>
@@ -353,7 +353,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
         {/* Top badge */}
         {showFeaturedBadge && (
           <div className="absolute right-3 top-3">
-            <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" aria-label="Featured treatment center">
+            <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider" aria-label="Featured treatment center">
               <Crown className="h-3 w-3" aria-hidden="true" />
               Featured
             </Badge>
@@ -361,7 +361,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
         )}
         {showProBadge && (
           <div className="absolute right-3 top-3">
-            <Badge className="gap-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" aria-label="Pro treatment center">
+            <Badge className="gap-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 shadow-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider" aria-label="Pro treatment center">
               <Sparkles className="h-3 w-3" aria-hidden="true" />
               Pro
             </Badge>
@@ -430,19 +430,19 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
             />
           )}
           {center.verified && (
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full" role="listitem">
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full" role="listitem">
               <ShieldCheck className="h-3 w-3" aria-hidden="true" />
               <span>Verified</span>
             </Badge>
           )}
           {yearsInBusiness && yearsInBusiness > 0 && (
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 border-0 rounded-full" role="listitem">
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 border-0 rounded-full" role="listitem">
               <Clock className="h-3 w-3" aria-hidden="true" />
               <span>{yearsInBusiness}+ Years in business</span>
             </Badge>
           )}
           {hasInsurance && (
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0 rounded-full" role="listitem">
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 border-0 rounded-full" role="listitem">
               <CreditCard className="h-3 w-3" aria-hidden="true" />
               <span>Accepts Insurance</span>
             </Badge>
@@ -456,7 +456,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
               key={type} 
               variant="outline" 
               className={cn(
-                "text-[10px] font-medium px-2 py-0.5 rounded-full",
+                "text-xs font-medium px-2 py-0.5 rounded-full",
                 showFeaturedBadge 
                   ? "border-amber-200 text-amber-700"
                   : "border-border text-muted-foreground"
@@ -468,7 +468,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
           {center.treatmentTypes.length > 4 && (
             <Badge 
               variant="outline" 
-              className="text-[10px] px-2 py-0.5 text-muted-foreground/70 border-dashed rounded-full"
+              className="text-xs px-2 py-0.5 text-muted-foreground/70 border-dashed rounded-full"
             >
               +{center.treatmentTypes.length - 4}
             </Badge>

@@ -24,14 +24,14 @@ export const RatingBadge = forwardRef<HTMLDivElement, RatingBadgeProps>(
     sm: {
       container: "px-1.5 py-0.5 gap-1",
       star: "h-2.5 w-2.5",
-      text: "text-[10px]",
+      text: "text-xs",
       count: "text-[9px]",
     },
     md: {
       container: "px-2 py-1 gap-1.5",
       star: "h-3.5 w-3.5",
       text: "text-xs",
-      count: "text-[10px]",
+      count: "text-xs",
     },
     lg: {
       container: "px-2.5 py-1.5 gap-2",

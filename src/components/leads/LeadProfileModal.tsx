@@ -453,7 +453,7 @@ export function LeadProfileModal({
                   <Activity className="h-4 w-4" />
                   Notes
                   {notes.length > 0 && (
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    <Badge variant="secondary" className="h-5 px-1.5 text-xs">
                       {notes.length}
                     </Badge>
                   )}
@@ -465,7 +465,7 @@ export function LeadProfileModal({
                   <Mail className="h-4 w-4" />
                   Emails
                   {emails.length > 0 && (
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    <Badge variant="secondary" className="h-5 px-1.5 text-xs">
                       {emails.length}
                     </Badge>
                   )}
@@ -559,12 +559,12 @@ export function LeadProfileModal({
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-foreground truncate">{lead.email}</p>
                             {lead.email_verified ? (
-                              <Badge className="gap-1 text-[10px] px-1.5 py-0 h-5 bg-green-100 text-green-700 border-green-200">
+                              <Badge className="gap-1 text-xs px-1.5 py-0 h-5 bg-green-100 text-green-700 border-green-200">
                                 <ShieldCheck className="h-3 w-3" />
                                 Verified
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="gap-1 text-[10px] px-1.5 py-0 h-5">
+                              <Badge variant="outline" className="gap-1 text-xs px-1.5 py-0 h-5">
                                 <ShieldX className="h-3 w-3" />
                               </Badge>
                             )}

@@ -161,7 +161,7 @@ export function IntroductionCard({
               <h3 className="text-sm font-semibold text-foreground">{caseId}</h3>
               <Badge
                 variant={inquiry?.timeline_urgency === "immediate" ? "destructive" : "secondary"}
-                className="text-[10px] h-5"
+                className="text-xs h-5"
               >
                 <Clock className="h-3 w-3 mr-0.5" />
                 {urgencyLabel(inquiry?.timeline_urgency)}
@@ -171,7 +171,7 @@ export function IntroductionCard({
               {firstName} · {format(new Date(introduction.created_at), "MMM d 'at' h:mm a")}
             </p>
           </div>
-          <Badge variant="outline" className="border-amber-300 text-amber-600 dark:text-amber-400 text-[10px] shrink-0">
+          <Badge variant="outline" className="border-amber-300 text-amber-600 dark:text-amber-400 text-xs shrink-0">
             Awaiting Response
           </Badge>
         </div>
@@ -183,7 +183,7 @@ export function IntroductionCard({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
             {detailItems.map((item, i) => (
               <div key={i} className="min-w-0">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1">
                   {item.icon} {item.label}
                 </span>
                 <p className="text-sm font-medium text-foreground truncate mt-0.5">{item.value}</p>
@@ -209,7 +209,7 @@ export function IntroductionCard({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
                   {extendedItems.map((item, i) => (
                     <div key={i} className={cn("min-w-0", item.label === "Co-Occurring" && "col-span-2 sm:col-span-3")}>
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{item.label}</span>
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">{item.label}</span>
                       <p className="text-sm font-medium text-foreground mt-0.5">{item.value}</p>
                     </div>
                   ))}

@@ -456,7 +456,7 @@ const Index = () => {
               <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
                 <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary">
+                  <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">
                     Insurance Verification
                   </span>
                 </div>
@@ -609,7 +609,7 @@ const Index = () => {
         <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className="mb-6 md:mb-8 lg:mb-10 text-center">
-            <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
+            <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
             <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
               Treatment Programs
             </h2>
@@ -662,7 +662,7 @@ const Index = () => {
           <div className="grid items-center gap-6 md:gap-8 md:grid-cols-2 lg:gap-12">
             {/* Content */}
             <div className="order-2 md:order-1">
-              <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
+              <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
               <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-primary-foreground lg:text-3xl">
                 Trusted by Families Across America
               </h2>
@@ -721,7 +721,7 @@ const Index = () => {
                         <div className="font-display text-lg md:text-xl font-bold text-accent lg:text-2xl">
                           {stat.value}
                         </div>
-                        <p className="text-[10px] md:text-xs text-primary-foreground/80 lg:text-sm">{stat.label}</p>
+                        <p className="text-xs md:text-xs text-primary-foreground/80 lg:text-sm">{stat.label}</p>
                       </div>
                     ))}
                   </div>
@@ -829,7 +829,7 @@ const Index = () => {
                   </div>
                   <div>
                     <p className="text-[13px] md:text-sm font-medium text-foreground">{testimonial.name}</p>
-                    <p className="text-[10px] md:text-xs text-muted-foreground">{testimonial.location}</p>
+                    <p className="text-xs md:text-xs text-muted-foreground">{testimonial.location}</p>
                   </div>
                 </div>
               </div>
@@ -854,7 +854,7 @@ const Index = () => {
           <div className="mb-6 md:mb-8 lg:mb-10 text-center">
             <div className="mb-1.5 md:mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
               <Navigation className="h-3.5 w-3.5 text-primary" />
-              <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-primary">
+              <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">
                 Near You
               </span>
             </div>

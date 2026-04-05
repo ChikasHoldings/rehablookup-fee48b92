@@ -182,7 +182,7 @@ function ReviewCard({
               ))}
             </div>
             {review.facility_type && (
-              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold">
+              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold">
                 <Building2 className="h-3 w-3" />
                 {review.facility_type}
               </Badge>
@@ -420,11 +420,11 @@ export default function SeekerReviews() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-success/10 text-success border-0 text-[10px]">Published</Badge>;
+        return <Badge className="bg-success/10 text-success border-0 text-xs">Published</Badge>;
       case 'pending':
-        return <Badge className="bg-warning/10 text-warning border-0 text-[10px]">Pending Review</Badge>;
+        return <Badge className="bg-warning/10 text-warning border-0 text-xs">Pending Review</Badge>;
       case 'rejected':
-        return <Badge className="bg-destructive/10 text-destructive border-0 text-[10px]">Rejected</Badge>;
+        return <Badge className="bg-destructive/10 text-destructive border-0 text-xs">Rejected</Badge>;
       default:
         return null;
     }

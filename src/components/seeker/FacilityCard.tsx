@@ -154,7 +154,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                      <span className="font-display text-[10px] font-bold text-primary">
+                      <span className="font-display text-xs font-bold text-primary">
                         {initials}
                       </span>
                     </div>
@@ -174,7 +174,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
                     {facility.name}
                   </h3>
                 </Link>
-                <div className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs sm:text-xs text-muted-foreground">
                   <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 text-primary" />
                   <span className="font-medium truncate">{facility.city}, {facility.state}</span>
                 </div>
@@ -209,7 +209,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
 
             {/* Description */}
             {facility.description && (
-              <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 flex-1">
+              <p className="text-xs sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 flex-1">
                 {facility.description}
               </p>
             )}
@@ -217,7 +217,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
             {/* Action */}
             <div className="mt-auto">
               <Link to={facilityLink}>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1 text-[11px] sm:text-xs h-7 sm:h-8 group/btn">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1 text-xs sm:text-xs h-7 sm:h-8 group/btn">
                   View Details
                   <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transition-transform group-hover/btn:translate-x-0.5" />
                 </Button>

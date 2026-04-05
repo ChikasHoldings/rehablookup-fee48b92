@@ -510,9 +510,9 @@ export default function ProviderPlacementNetworkPage() {
                                 <p className="text-xs font-medium">
                                   {p.placement_confirmed_at && format(new Date(p.placement_confirmed_at), "MMM d, yyyy")}
                                 </p>
-                                <p className="text-[10px] text-muted-foreground uppercase">Placed</p>
+                                <p className="text-xs text-muted-foreground uppercase">Placed</p>
                               </div>
-                              <Badge variant="outline" className="border-primary/30 text-primary text-[10px] shrink-0">Admitted</Badge>
+                              <Badge variant="outline" className="border-primary/30 text-primary text-xs shrink-0">Admitted</Badge>
                             </div>
                           </div>
                         </CardContent>
@@ -695,11 +695,11 @@ export default function ProviderPlacementNetworkPage() {
                                   {pm.type === "ach" ? <Landmark className="h-4 w-4 text-muted-foreground shrink-0" /> : <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />}
                                   <div className="min-w-0">
                                     <p className="text-sm font-medium truncate">{pm.type === "ach" ? pm.bank_name || "Bank" : "Card"} •••• {pm.last_four}</p>
-                                    <p className="text-[10px] text-muted-foreground">Added {format(new Date(pm.created_at), "MMM d, yyyy")}</p>
+                                    <p className="text-xs text-muted-foreground">Added {format(new Date(pm.created_at), "MMM d, yyyy")}</p>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                  {pm.is_default && <Badge variant="secondary" className="text-[10px] px-1.5">Default</Badge>}
+                                  {pm.is_default && <Badge variant="secondary" className="text-xs px-1.5">Default</Badge>}
                                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeletePaymentConfirm({ id: pm.id, isOpen: true })} disabled={deletePaymentMethodMutation.isPending}>
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
@@ -730,7 +730,7 @@ export default function ProviderPlacementNetworkPage() {
                               <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg gap-2 bg-muted/20">
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
-                                  <p className="text-[10px] text-muted-foreground">{format(new Date(inv.created_at), "MMM d, yyyy")}</p>
+                                  <p className="text-xs text-muted-foreground">{format(new Date(inv.created_at), "MMM d, yyyy")}</p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize text-xs">{inv.status}</Badge>

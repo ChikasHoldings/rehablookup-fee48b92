@@ -71,7 +71,7 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
             <Badge 
               variant="outline" 
               className={cn(
-                "text-[10px] px-1.5 py-0",
+                "text-xs px-1.5 py-0",
                 inquiry.urgency === 'Urgent' && "border-red-300 text-red-600 dark:border-red-800 dark:text-red-400",
                 inquiry.urgency === 'This week' && "border-amber-300 text-amber-600 dark:border-amber-800 dark:text-amber-400"
               )}
@@ -107,7 +107,7 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
         </div>
 
         {/* Time */}
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(inquiry.created_at), { addSuffix: true })}
         </p>
       </div>

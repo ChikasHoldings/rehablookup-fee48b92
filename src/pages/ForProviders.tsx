@@ -174,7 +174,7 @@ const ForProviders = () => {
                     <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                     <span className="text-lg sm:text-xl md:text-2xl font-bold">{stat.value}</span>
                   </div>
-                  <p className="text-[9px] sm:text-[10px] md:text-xs text-primary-foreground/80 leading-tight">{stat.label}</p>
+                  <p className="text-[9px] sm:text-xs md:text-xs text-primary-foreground/80 leading-tight">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -261,7 +261,7 @@ const ForProviders = () => {
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-medium text-xs sm:text-sm text-foreground">{item.title}</h3>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate sm:whitespace-normal">{item.desc}</p>
+                        <p className="text-xs sm:text-xs text-muted-foreground truncate sm:whitespace-normal">{item.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -279,7 +279,7 @@ const ForProviders = () => {
                       <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500/60" />
                     </div>
                     <div className="flex-1 mx-2 sm:mx-4">
-                      <div className="bg-background/80 rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+                      <div className="bg-background/80 rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-xs text-muted-foreground flex items-center gap-1.5 sm:gap-2">
                         <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500/80 shrink-0" />
                         <span className="truncate">rehablookup.com/provider/dashboard</span>
                       </div>
@@ -367,7 +367,7 @@ const ForProviders = () => {
                   <feature.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
                   <div>
                     <h4 className="font-medium text-foreground text-xs sm:text-sm">{feature.title}</h4>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">{feature.desc}</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground">{feature.desc}</p>
                   </div>
                 </div>
               ))}
@@ -438,7 +438,7 @@ const ForProviders = () => {
                       />
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground text-xs sm:text-sm truncate">{testimonial.author}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{testimonial.role}</p>
+                        <p className="text-xs sm:text-xs text-muted-foreground truncate">{testimonial.role}</p>
                       </div>
                     </div>
                     <div className="text-right shrink-0">

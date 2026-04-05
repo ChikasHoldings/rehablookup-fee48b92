@@ -217,7 +217,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-destructive text-[9px] sm:text-[10px] font-bold text-white ring-2 ring-primary">
+                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-destructive text-[9px] sm:text-xs font-bold text-white ring-2 ring-primary">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -265,7 +265,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                         <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                           {notification.message}
                         </span>
-                        <span className="text-[11px] text-muted-foreground/60 mt-1 block">
+                        <span className="text-xs text-muted-foreground/60 mt-1 block">
                           {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                         </span>
                       </div>
@@ -355,7 +355,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                     <span className={cn("text-xs font-semibold", planConfig.textColor)}>
                       {planConfig.label} Plan
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {!isPro ? 'Upgrade available' : 'Active subscription'}
                     </span>
                   </div>
@@ -372,7 +372,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                     <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Locations</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                     {facilities.length}/{locationLimit}
                   </span>
                 </div>
@@ -429,7 +429,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                           )}>
                             {facility.name}
                           </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
+                          <p className="text-xs text-muted-foreground truncate">
                             {facility.city}, {facility.state}
                           </p>
                         </div>
@@ -463,7 +463,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm text-foreground/80">{facility.name}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">Pending review</p>
+                          <p className="text-xs text-muted-foreground truncate">Pending review</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className="h-1.5 w-1.5 rounded-full bg-warning" />
