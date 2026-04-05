@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, CheckCircle, Heart, Search, ChevronRight } from "lucide-react";
+import { MapPin, Building2, CheckCircle, Heart, Search } from "lucide-react";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 
 interface NearMeHeroProps {
