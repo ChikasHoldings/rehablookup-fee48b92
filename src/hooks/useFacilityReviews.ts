@@ -87,17 +87,18 @@ export function useFacilityReviews(facilityId: string) {
 
     const enrichedReviews: FacilityReview[] = (reviewsData || []).map(review => {
       const profile = profileMap.get(review.user_id);
+      const storedName = (review as any).reviewer_display_name;
       const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
       const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+      const builtName = firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : '';
       
-      // Prefer stored reviewer_display_name, then build from profile, fallback to 'Verified User'
-      const displayName = (review as any).reviewer_display_name 
-        || (firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : 'Verified User');
+      // Priority: stored reviewer_display_name → built from profile (name is required at signup)
+      const displayName = storedName || builtName || `${firstName || 'Anonymous'}`;
       
       return {
         ...review,
         user_display_name: displayName,
-        reviewer_first_name: firstName || displayName?.charAt(0) || 'V',
+        reviewer_first_name: firstName || displayName.charAt(0),
         reviewer_last_initial: lastInitial || '',
         reviewer_city: profile?.city || null,
         reviewer_state: profile?.state || null,
@@ -146,8 +147,10 @@ export function useFacilityReviews(facilityId: string) {
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
-    // Build reviewer display name from seeker profile or auth metadata
+    // Resolve reviewer display name — required, not optional
     let reviewerDisplayName: string | null = null;
+    
+    // 1. Try seeker_profiles (primary source — name is required at signup)
     const { data: profile } = await supabase
       .from('seeker_profiles')
       .select('first_name, last_name, display_name')
@@ -159,11 +162,18 @@ export function useFacilityReviews(facilityId: string) {
       const li = profile.last_name?.charAt(0) || profile.display_name?.split(' ')[1]?.charAt(0) || '';
       if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
     }
+    
+    // 2. Fallback to auth user_metadata (covers edge cases)
     if (!reviewerDisplayName) {
       const meta = user.user_metadata;
       const fn = meta?.first_name || meta?.full_name?.split(' ')[0] || '';
       const li = meta?.last_name?.charAt(0) || meta?.full_name?.split(' ')[1]?.charAt(0) || '';
       if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
+    }
+
+    // Block submission if name cannot be resolved
+    if (!reviewerDisplayName) {
+      return { error: new Error('Unable to resolve your name. Please update your profile before leaving a review.') };
     }
 
     const { data, error } = await supabase
