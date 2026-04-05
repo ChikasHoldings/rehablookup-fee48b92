@@ -51,14 +51,16 @@ const PrivateRehabAmerica = () => {
         ]}
       />
 
-      <div className="container mx-auto px-4 pt-4">
-        <BreadcrumbNav className="mb-4" items={[
+      <InternationalHero
+        title="Private Rehab in America"
+        subtitle="Maximum Confidentiality, Complete Discretion"
+        description="Protect your reputation while healing. America's most private addiction treatment facilities offer anonymous intake, secluded locations, and comprehensive privacy protocols."
+        keywords={["private rehab", "confidential treatment", "anonymous rehab", "discrete recovery"]}
+        breadcrumbItems={[
           { label: "US Rehab", href: "/us-rehab" },
           { label: "Private Rehab America" },
-        ]} />
-      </div>
-
-      <InternationalHero title="Private Rehab in America" subtitle="Maximum Confidentiality, Complete Discretion" description="Protect your reputation while healing. America's most private addiction treatment facilities offer anonymous intake, secluded locations, and comprehensive privacy protocols." keywords={["private rehab", "confidential treatment", "anonymous rehab", "discrete recovery"]} />
+        ]}
+      />
 
       <section className="py-16 md:py-20 bg-background">
         <div className="container mx-auto px-4">
