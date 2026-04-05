@@ -122,42 +122,42 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Quick Links */}
       <div>
-        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1 flex items-center gap-1.5">
-          <Building2 className="h-3 w-3" />
+        <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+          <Building2 className="h-3.5 w-3.5" />
           For Providers
         </p>
         {quickLinks.map((link) => (
           <PrefetchLink key={link.href} to={link.href} onClick={onNavigate}
-            className="group flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-accent/[0.06] transition-colors">
-            <div className="h-7 w-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
-              <link.icon className="h-3.5 w-3.5 text-accent" />
+            className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-accent/[0.06] active:bg-accent/[0.1] transition-colors">
+            <div className="h-9 w-9 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
+              <link.icon className="h-4 w-4 text-accent" />
             </div>
-            <p className="text-sm font-medium text-foreground leading-tight">{link.label}</p>
+            <p className="text-[15px] font-medium text-foreground leading-tight">{link.label}</p>
           </PrefetchLink>
         ))}
       </div>
 
       {/* Growth Guides */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1 flex items-center gap-1.5">
-          <Sparkles className="h-3 w-3 text-accent" />
+        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-accent" />
           Growth Guides
         </p>
         {seoPages.slice(0, 4).map((page) => (
           <PrefetchLink key={page.href} to={page.href} onClick={onNavigate}
-            className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-accent/[0.06] transition-colors">
-            <div className="h-6 w-6 rounded bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
-              <page.icon className="h-3 w-3 text-accent" />
+            className="group flex items-center gap-3 rounded-lg px-2.5 py-2.5 hover:bg-accent/[0.06] active:bg-accent/[0.1] transition-colors">
+            <div className="h-8 w-8 rounded bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
+              <page.icon className="h-3.5 w-3.5 text-accent" />
             </div>
             <div className="min-w-0">
-              <p className="text-[13px] font-medium text-foreground/80 leading-tight">{page.label}</p>
-              <p className="text-[10px] text-muted-foreground/70 leading-tight">{page.desc}</p>
+              <p className="text-[15px] font-medium text-foreground/80 leading-tight">{page.label}</p>
+              <p className="text-[11px] text-muted-foreground/70 leading-tight mt-0.5">{page.desc}</p>
             </div>
           </PrefetchLink>
         ))}
         <PrefetchLink to="/providers/resources" onClick={onNavigate}
-          className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-accent font-semibold">
-          All resources <ArrowRight className="h-3 w-3" />
+          className="flex items-center gap-1.5 px-2.5 py-2 text-sm text-accent font-semibold">
+          All resources <ArrowRight className="h-3.5 w-3.5" />
         </PrefetchLink>
       </div>
 
