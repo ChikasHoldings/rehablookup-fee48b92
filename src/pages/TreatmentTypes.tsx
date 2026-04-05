@@ -615,28 +615,32 @@ const TreatmentTypes = () => {
       />
 
       {/* CTA */}
-      <section className="border-t border-border bg-primary py-10 md:py-12">
-        <div className="container">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl">
-              Need Help Choosing?
-            </h2>
-            <p className="mb-6 text-primary-foreground/80 text-sm">
-              Our specialists can help you find the right treatment program. Free and confidential.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/concierge">
-                <Button size="lg" variant="secondary" className="gap-2 font-semibold">
-                  <Heart className="h-4 w-4" />
-                  Find Treatment
-                </Button>
-              </Link>
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="outline" className="gap-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                  Browse Centers
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+      <section className="py-10 md:py-12">
+        <div className="container max-w-4xl mx-auto px-4">
+          <div className="relative rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 p-10 md:p-14 text-center overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-accent/5 rounded-full blur-3xl" />
+            <div className="relative z-10">
+              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
+                Need Help Choosing?
+              </h2>
+              <p className="mb-6 text-muted-foreground text-sm">
+                Our specialists can help you find the right treatment program. Free and confidential.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link to="/concierge">
+                  <Button size="lg" className="gap-2 font-semibold">
+                    <Heart className="h-4 w-4" />
+                    Find Treatment
+                  </Button>
+                </Link>
+                <Link to="/rehab-centers">
+                  <Button size="lg" variant="outline" className="gap-2">
+                    Browse Centers
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
