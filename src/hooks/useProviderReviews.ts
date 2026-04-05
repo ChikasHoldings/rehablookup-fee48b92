@@ -89,7 +89,7 @@ export function useProviderReviews() {
       const [reviewsResult, responsesResult, disputesResult] = await Promise.all([
         supabase
           .from('facility_reviews')
-          .select('id, user_id, facility_id, rating, review_text, status, helpful_count, disputed, created_at, updated_at')
+          .select('id, user_id, facility_id, rating, review_text, status, helpful_count, disputed, created_at, updated_at, reviewer_display_name')
           .in('facility_id', facilityIds)
           .eq('status', 'approved')
           .order('created_at', { ascending: false })
