@@ -113,29 +113,31 @@ export function ProviderSEOPageLayout({
               ]}
             />
             <div className="text-center">
-              <Building2 className="h-4 w-4 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/90">Provider Growth Guide</span>
+              <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
+                <Building2 className="h-4 w-4 text-primary-foreground/80" />
+                <span className="text-sm font-medium text-primary-foreground/90">Provider Growth Guide</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6">
+                {heroHeadline}
+              </h1>
+              <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">
+                {heroSubheadline}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link to="/provider-signup">
+                  <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg hover:shadow-xl transition-all">
+                    List Your Facility — It's Free
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/for-providers">
+                  <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
+                    See How It Works
+                  </Button>
+                </Link>
+              </div>
+              <p className="text-sm text-primary-foreground/50 mt-4">No credit card required • Setup in under 5 minutes</p>
             </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6">
-              {heroHeadline}
-            </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">
-              {heroSubheadline}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/provider-signup">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg hover:shadow-xl transition-all">
-                  List Your Facility — It's Free
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/for-providers">
-                <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
-                  See How It Works
-                </Button>
-              </Link>
-            </div>
-            <p className="text-sm text-primary-foreground/50 mt-4">No credit card required • Setup in under 5 minutes</p>
           </div>
         </section>
 
