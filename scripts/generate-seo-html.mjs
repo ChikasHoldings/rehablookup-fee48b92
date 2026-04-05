@@ -468,6 +468,126 @@ async function generateCostAndComparisonPages() {
   }
 }
 
+// --- State Directory Pages (/rehab-centers/{state}) ---
+async function generateStatePages() {
+  for (const state of usStates) {
+    const slug = stateToSlug(state);
+    const title = `Rehab Centers in ${state}`;
+    const citiesInState = topCities.filter((c) => c.state === state);
+    const cityLinks = citiesInState.length
+      ? `<h2>Cities in ${state}</h2><ul style="columns:2;list-style:disc;padding-left:20px">${citiesInState.map((c) => `<li><a href="/rehab-centers/${slug}/${c.slug}">${c.city}</a></li>`).join("")}</ul>`
+      : "";
+    const html = generatePage({
+      urlPath: `/rehab-centers/${slug}`,
+      title,
+      metaTitle: `Rehab Centers in ${state} — Find Addiction Treatment | RehabLookup`,
+      metaDescription: `Find accredited rehab centers in ${state}. Compare inpatient, outpatient, and detox programs. Verify insurance coverage and start recovery today.`,
+      h1: title,
+      content: `<p>Browse verified addiction treatment facilities in ${state}. RehabLookup lists accredited rehab centers offering detox, inpatient, outpatient, and dual diagnosis programs across the state.</p>
+        <h2>Treatment Options in ${state}</h2>
+        <p>${state} offers a range of substance abuse treatment programs including medical detox, residential inpatient, intensive outpatient (IOP), partial hospitalization (PHP), and medication-assisted treatment (MAT).</p>
+        <h2>Insurance Coverage</h2>
+        <p>Most major insurance providers cover addiction treatment in ${state} under the Mental Health Parity and Addiction Equity Act. Use our free verification tool to check your benefits.</p>
+        ${cityLinks}`,
+      breadcrumbs: [
+        { name: "Home", url: "/" },
+        { name: "Locations", url: "/locations" },
+        { name: state, url: `/rehab-centers/${slug}` },
+      ],
+      structuredData: [{
+        "@context": "https://schema.org",
+        "@type": "MedicalWebPage",
+        name: title,
+        description: `Addiction treatment centers in ${state}`,
+        url: `${BASE_URL}/rehab-centers/${slug}`,
+      }],
+      relatedLinks: treatmentTypes.map((tt) => ({ title: `${tt.label} in ${state}`, href: `/treatment-types/${tt.slug}/${slug}` })),
+    });
+    await writePage(path.join(publicDir, "rehab-centers", `${slug}.html`), html);
+  }
+}
+
+// --- City Directory Pages (/rehab-centers/{state}/{city}) ---
+async function generateCityPages() {
+  for (const city of topCities) {
+    const stateSlug = stateToSlug(city.state);
+    const title = `Rehab Centers in ${city.city}, ${city.stateAbbr}`;
+    const html = generatePage({
+      urlPath: `/rehab-centers/${stateSlug}/${city.slug}`,
+      title,
+      metaTitle: `Rehab Centers in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`,
+      metaDescription: `Find accredited rehab centers in ${city.city}, ${city.stateAbbr}. Compare treatment programs, verify insurance, and start recovery today.`,
+      h1: title,
+      content: `<p>Search verified addiction treatment facilities in ${city.city}, ${city.state}. Compare inpatient, outpatient, detox, and specialty programs in the ${city.city} metropolitan area.</p>
+        <h2>Treatment Programs in ${city.city}</h2>
+        <p>${city.city} offers diverse addiction treatment options including medical detox, residential inpatient, intensive outpatient programs (IOP), partial hospitalization (PHP), dual diagnosis treatment, and medication-assisted treatment (MAT).</p>
+        <h2>Insurance & Payment</h2>
+        <p>Most rehab centers in ${city.city} accept major insurance plans. Verify your coverage with our free insurance check tool to find in-network facilities near you.</p>
+        <h2>Getting Help in ${city.city}</h2>
+        <p>If you or a loved one needs help with addiction in ${city.city}, our concierge team can match you with accredited programs based on your needs, insurance, and preferences.</p>`,
+      breadcrumbs: [
+        { name: "Home", url: "/" },
+        { name: "Locations", url: "/locations" },
+        { name: city.state, url: `/rehab-centers/${stateSlug}` },
+        { name: city.city, url: `/rehab-centers/${stateSlug}/${city.slug}` },
+      ],
+      structuredData: [{
+        "@context": "https://schema.org",
+        "@type": "MedicalWebPage",
+        name: title,
+        description: `Addiction treatment centers in ${city.city}, ${city.stateAbbr}`,
+        url: `${BASE_URL}/rehab-centers/${stateSlug}/${city.slug}`,
+      }],
+      relatedLinks: treatmentTypes.map((tt) => ({ title: `${tt.label} in ${city.city}`, href: `/${tt.slug}-in-${city.slug}` })),
+    });
+    await writePage(path.join(publicDir, "rehab-centers", stateSlug, `${city.slug}.html`), html);
+  }
+}
+
+// --- State Treatment Pages (/treatment-types/{type}/{state}) ---
+async function generateStateTreatmentPages() {
+  const treatmentRoutes = [
+    { routePrefix: "drug-addiction", label: "Drug Addiction Treatment" },
+    { routePrefix: "alcohol-rehabilitation", label: "Alcohol Rehabilitation" },
+    { routePrefix: "detox-programs", label: "Detox Programs" },
+    { routePrefix: "residential-inpatient", label: "Residential Inpatient Rehab" },
+    { routePrefix: "outpatient-programs", label: "Outpatient Programs" },
+    { routePrefix: "dual-diagnosis-treatment", label: "Dual Diagnosis Treatment" },
+  ];
+  for (const tt of treatmentRoutes) {
+    for (const state of usStates) {
+      const slug = stateToSlug(state);
+      const title = `${tt.label} in ${state}`;
+      const html = generatePage({
+        urlPath: `/treatment-types/${tt.routePrefix}/${slug}`,
+        title,
+        metaTitle: `${tt.label} in ${state} — Find Programs | RehabLookup`,
+        metaDescription: `Find ${tt.label.toLowerCase()} centers in ${state}. Compare accredited facilities, verify insurance, and start recovery today.`,
+        h1: title,
+        content: `<p>Search accredited ${tt.label.toLowerCase()} programs in ${state}. RehabLookup provides verified facility listings with detailed program information.</p>
+          <h2>${tt.label} Options in ${state}</h2>
+          <p>${state} offers a range of ${tt.label.toLowerCase()} programs with varying levels of care, program lengths, and specializations to meet individual needs.</p>
+          <h2>Insurance Coverage</h2>
+          <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${state}. Use our free insurance verification tool to check your benefits and find in-network facilities.</p>`,
+        breadcrumbs: [
+          { name: "Home", url: "/" },
+          { name: "Treatment Types", url: "/treatment-types" },
+          { name: tt.label, url: `/treatment-types/${tt.routePrefix}` },
+          { name: state, url: `/treatment-types/${tt.routePrefix}/${slug}` },
+        ],
+        structuredData: [{
+          "@context": "https://schema.org",
+          "@type": "MedicalWebPage",
+          name: title,
+          description: `${tt.label} in ${state}`,
+          url: `${BASE_URL}/treatment-types/${tt.routePrefix}/${slug}`,
+        }],
+      });
+      await writePage(path.join(publicDir, "treatment-types", tt.routePrefix, `${slug}.html`), html);
+    }
+  }
+}
+
 // --- Insurance State Cross-Pages ---
 async function generateInsuranceStatePages() {
   for (const ins of insurers) {
@@ -536,6 +656,9 @@ async function main() {
   // These have more files, run sequentially to avoid filesystem pressure
   await generateCityTreatmentPages();
   await generateInsuranceStatePages();
+  await generateStatePages();
+  await generateCityPages();
+  await generateStateTreatmentPages();
 
   console.log(`[seo-html] Generated ${pagesGenerated} static HTML pages`);
 }
