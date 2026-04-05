@@ -66,7 +66,7 @@ export default function RehabUSAFromAustralia() {
                   <s.icon className="h-3.5 w-3.5 text-accent shrink-0" />
                   <span className="text-xl font-bold">{s.value}</span>
                 </div>
-                <p className="text-[10px] md:text-xs text-primary-foreground/80">{s.label}</p>
+                <p className="text-xs md:text-xs text-primary-foreground/80">{s.label}</p>
               </div>
             ))}
           </div>

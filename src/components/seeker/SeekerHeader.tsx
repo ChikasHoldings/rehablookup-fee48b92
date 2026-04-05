@@ -338,7 +338,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white ring-2 ring-primary">
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-white ring-2 ring-primary">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
@@ -386,7 +386,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                           <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                             {notification.message}
                           </span>
-                          <span className="text-[11px] text-muted-foreground/60 mt-1 block">
+                          <span className="text-xs text-muted-foreground/60 mt-1 block">
                             {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                           </span>
                         </div>
@@ -436,7 +436,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                       <span className="text-sm font-semibold text-white leading-tight max-w-[100px] truncate">
                         {userName || "User"}
                       </span>
-                      <span className="text-[10px] text-white/60 leading-tight">My Account</span>
+                      <span className="text-xs text-white/60 leading-tight">My Account</span>
                     </div>
                   </div>
                 </Button>

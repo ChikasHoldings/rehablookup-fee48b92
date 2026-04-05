@@ -431,13 +431,13 @@ export default function SeekerFacilityProfile() {
                         size="sm" 
                       />
                       {facility.featured && (
-                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-warning/10 text-warning border-warning/20">
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-warning/10 text-warning border-warning/20">
                           <Sparkles className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Featured
                         </Badge>
                       )}
                       {facility.verified && (
-                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-success/10 text-success border-success/20">
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-success/10 text-success border-success/20">
                           <Shield className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Verified
                         </Badge>
@@ -472,25 +472,25 @@ export default function SeekerFacilityProfile() {
                   {facility.facility_type && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
                       <Building2 className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{facility.facility_type}</span>
+                      <span className="text-xs sm:text-xs font-medium text-foreground whitespace-nowrap">{facility.facility_type}</span>
                     </div>
                   )}
                   {yearsInBusiness && yearsInBusiness > 0 && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
                       <Clock className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{yearsInBusiness}+ years</span>
+                      <span className="text-xs sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{yearsInBusiness}+ years</span>
                     </div>
                   )}
                   {genderLabel && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
                       <Users className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{genderLabel}</span>
+                      <span className="text-xs sm:text-xs font-medium text-foreground whitespace-nowrap">{genderLabel}</span>
                     </div>
                   )}
                   {facility.bed_count && (
                     <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
                       <Bed className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{facility.bed_count} beds</span>
+                      <span className="text-xs sm:text-xs font-medium text-foreground whitespace-nowrap tabular-nums">{facility.bed_count} beds</span>
                     </div>
                   )}
                 </div>
@@ -531,7 +531,7 @@ export default function SeekerFacilityProfile() {
                     <Stethoscope className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-emerald-600" />
                   </div>
                   <h2 className="font-semibold text-sm sm:text-base text-foreground">Treatment Services</h2>
-                  <span className="ml-auto text-[10px] sm:text-xs text-muted-foreground">{services.length} services</span>
+                  <span className="ml-auto text-xs sm:text-xs text-muted-foreground">{services.length} services</span>
                 </div>
                 <div className="p-4 sm:p-5">
                   <div className="grid gap-1.5 sm:gap-2 sm:grid-cols-2">
@@ -574,7 +574,7 @@ export default function SeekerFacilityProfile() {
                       <Badge 
                         key={ins} 
                         variant="secondary" 
-                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs bg-blue-50/80 text-blue-700 border border-blue-100"
+                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs sm:text-xs bg-blue-50/80 text-blue-700 border border-blue-100"
                       >
                         {ins}
                       </Badge>
@@ -610,7 +610,7 @@ export default function SeekerFacilityProfile() {
                         <Badge 
                           key={group} 
                           variant="secondary" 
-                          className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs bg-purple-50/80 text-purple-700 border border-purple-100"
+                          className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs sm:text-xs bg-purple-50/80 text-purple-700 border border-purple-100"
                         >
                           {group}
                         </Badge>
@@ -634,7 +634,7 @@ export default function SeekerFacilityProfile() {
                         <Badge 
                           key={acc.accreditation_type} 
                           variant="secondary" 
-                          className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs bg-amber-50/80 text-amber-700 border border-amber-100"
+                          className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs sm:text-xs bg-amber-50/80 text-amber-700 border border-amber-100"
                         >
                           {acc.accreditation_type}
                         </Badge>

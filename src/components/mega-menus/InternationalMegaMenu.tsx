@@ -41,7 +41,7 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Country pages */}
         <div className="flex-1 px-5 py-4 border-r border-border/30">
-          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
             <Globe className="h-3 w-3" />
             International Patients
           </p>
@@ -62,7 +62,7 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
 
           {/* Programs as pills */}
           <div className="mt-3 pt-3 border-t border-border/30">
-            <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2">
+            <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2">
               Popular Programs
             </p>
             <div className="flex flex-wrap gap-1.5 px-1">
@@ -83,7 +83,7 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: US Destinations + CTA */}
         <div className="w-[240px] px-4 py-4">
-          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-accent" />
             Top US Destinations
           </p>
@@ -134,7 +134,7 @@ export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Countries */}
       <div>
-        <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
           <Globe className="h-3.5 w-3.5" />
           International Patients
         </p>
@@ -150,7 +150,7 @@ export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Popular Programs */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-2">
+        <p className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-2">
           Popular Programs
         </p>
         <div className="flex flex-wrap gap-2 px-1">

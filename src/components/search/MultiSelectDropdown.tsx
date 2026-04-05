@@ -126,7 +126,7 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
   return (
     <div ref={internalRef} className="relative">
       {label && (
-        <label className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
+        <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-primary">
           {icon}
           {label}
         </label>
@@ -147,7 +147,7 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
         <span className="flex-1 truncate">{getDisplayText()}</span>
         <div className="flex items-center gap-1">
           {selected.length > 0 && (
-            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1">
+            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold px-1">
               {selected.length}
             </span>
           )}
@@ -196,7 +196,7 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
               {selected.map((item) => (
                 <span
                   key={item}
-                  className="inline-flex items-center gap-1 rounded-md bg-primary/10 pl-2 pr-1 py-0.5 text-[11px] font-semibold text-primary"
+                  className="inline-flex items-center gap-1 rounded-md bg-primary/10 pl-2 pr-1 py-0.5 text-xs font-semibold text-primary"
                 >
                   {item}
                   <button
@@ -264,11 +264,11 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
           {/* Footer */}
           {selected.length > 0 && (
             <div className="border-t border-border/30 px-2 py-1.5 flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground/60 pl-1">{selected.length} selected</span>
+              <span className="text-xs text-muted-foreground/60 pl-1">{selected.length} selected</span>
               <button
                 type="button"
                 onClick={clearAll}
-                className="rounded-md px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                className="rounded-md px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 Clear all
               </button>

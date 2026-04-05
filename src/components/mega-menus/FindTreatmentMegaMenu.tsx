@@ -76,7 +76,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Treatment Types — 2-col with icon + desc */}
         <div className="flex-1 px-5 pb-4 pt-1 border-r border-border/30">
-          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
             <Shield className="h-3 w-3" />
             Treatment Types
           </p>
@@ -126,7 +126,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: Locations + Near Me */}
         <div className="w-[235px] px-4 pb-4 pt-1">
-          <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-accent" />
             Popular Locations
           </p>
@@ -149,7 +149,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
           </PrefetchLink>
 
           <div className="border-t border-border/30 pt-2.5 mt-2">
-            <p className="text-[11px] font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">
+            <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">
               Near Me
             </p>
             {nearMePages.map((page) => (
@@ -201,7 +201,7 @@ export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Treatment Types */}
       <div>
-        <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
           <Shield className="h-3.5 w-3.5" />
           Treatment Types
         </p>
@@ -225,7 +225,7 @@ export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Popular Locations */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
+        <p className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
           <MapPin className="h-3.5 w-3.5 text-accent" />
           Popular States
         </p>
@@ -242,7 +242,7 @@ export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Near Me */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">Near Me</p>
+        <p className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">Near Me</p>
         <div className="grid grid-cols-2 gap-0.5">
           {nearMePages.map((page) => (
             <PrefetchLink key={page.href} to={page.href} onClick={onNavigate}

@@ -419,7 +419,7 @@ export function InquiryDetailModal({ open, onOpenChange, leadId, userEmail }: In
                 </div>
 
                 {/* Inquiry ID Footer */}
-                <p className="text-[10px] text-muted-foreground text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   Inquiry ID: {lead.id.slice(0, 8)}
                 </p>
               </>
