@@ -584,7 +584,8 @@ const ArticleDetail = () => {
             </article>
 
             {/* Sidebar */}
-            <aside className="lg:w-80 flex-shrink-0 space-y-6">
+            <aside className="lg:w-80 flex-shrink-0">
+              <div className="lg:sticky lg:top-24 space-y-6">
               {/* Topic Hub Links - Dynamic based on article topic */}
               {primaryTopic && (
                 <TopicHubLinks
@@ -677,6 +678,7 @@ const ArticleDetail = () => {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
+              </div>
               </div>
             </aside>
           </div>
