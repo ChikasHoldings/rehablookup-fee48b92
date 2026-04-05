@@ -247,6 +247,12 @@ nav, [data-navbar] {
     min-height: auto;
     min-width: auto;
   }
+
+  /* Global minimum font size for legibility (WCAG AA) */
+  /* Enforce 12px minimum on all text except badge counters and icon-only elements */
+  body * {
+    font-size: max(var(--tw-fs, 1em), 0.75rem);
+  }
 }
 
 @layer utilities {
