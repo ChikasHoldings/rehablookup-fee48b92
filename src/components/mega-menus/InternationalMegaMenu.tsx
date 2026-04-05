@@ -134,34 +134,34 @@ export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Countries */}
       <div>
-        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1 flex items-center gap-1.5">
-          <Globe className="h-3 w-3" />
+        <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+          <Globe className="h-3.5 w-3.5" />
           International Patients
         </p>
         {countryPages.map((page) => (
           <PrefetchLink key={page.href} to={page.href} onClick={onNavigate}
-            className="group flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-accent/[0.06] transition-colors">
-            <span className="text-base leading-none w-6 text-center">{page.flag}</span>
-            <p className="text-sm font-medium text-foreground leading-tight">{page.label}</p>
-            <ChevronRight className="h-3 w-3 text-border group-hover:text-accent shrink-0 ml-auto" />
+            className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-accent/[0.06] active:bg-accent/[0.1] transition-colors">
+            <span className="text-lg leading-none w-7 text-center">{page.flag}</span>
+            <p className="text-[15px] font-medium text-foreground leading-tight">{page.label}</p>
+            <ChevronRight className="h-3.5 w-3.5 text-border group-hover:text-accent shrink-0 ml-auto" />
           </PrefetchLink>
         ))}
       </div>
 
       {/* Popular Programs */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">
+        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-2">
           Popular Programs
         </p>
-        <div className="flex flex-wrap gap-1.5 px-1">
+        <div className="flex flex-wrap gap-2 px-1">
           {programTypes.map((prog) => (
             <PrefetchLink
               key={prog.href}
               to={prog.href}
               onClick={onNavigate}
-              className="group inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs font-medium text-foreground/80 hover:text-foreground hover:border-accent/30 hover:bg-accent/[0.04] transition-all"
+              className="group inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3.5 py-2 text-sm font-medium text-foreground/80 hover:text-foreground hover:border-accent/30 hover:bg-accent/[0.04] active:bg-accent/[0.08] transition-all"
             >
-              <prog.icon className="h-3 w-3 text-accent" />
+              <prog.icon className="h-3.5 w-3.5 text-accent" />
               {prog.label}
             </PrefetchLink>
           ))}
@@ -171,9 +171,9 @@ export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
       {/* CTA */}
       <div className="border-t border-border/30 pt-2 mx-2">
         <PrefetchLink to="/international/apply" onClick={onNavigate}
-          className="flex items-center gap-2 px-1 py-1.5 text-xs text-accent font-semibold">
-          <Plane className="h-3.5 w-3.5" />
-          Apply for Treatment <ArrowRight className="h-3 w-3" />
+          className="flex items-center gap-2 px-1 py-2 text-sm text-accent font-semibold">
+          <Plane className="h-4 w-4" />
+          Apply for Treatment <ArrowRight className="h-3.5 w-3.5" />
         </PrefetchLink>
       </div>
     </div>
