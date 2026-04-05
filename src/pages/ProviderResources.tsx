@@ -4,6 +4,7 @@ import { AnimatedCard } from "@/components/ui/animated-card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import {
   Accordion,
   AccordionContent,
