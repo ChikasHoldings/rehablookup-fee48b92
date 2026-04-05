@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
@@ -102,31 +103,41 @@ export function ProviderSEOPageLayout({
         <section className="relative bg-primary py-16 md:py-24 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent" />
-          <div className="container relative z-10 max-w-4xl mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
-              <Building2 className="h-4 w-4 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/90">Provider Growth Guide</span>
+          <div className="container relative z-10 max-w-4xl mx-auto px-4">
+            <BreadcrumbNav
+              className="mb-6 text-left"
+              variant="dark"
+              items={[
+                { label: "For Providers", href: "/for-providers" },
+                { label: title },
+              ]}
+            />
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
+                <Building2 className="h-4 w-4 text-primary-foreground/80" />
+                <span className="text-sm font-medium text-primary-foreground/90">Provider Growth Guide</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6">
+                {heroHeadline}
+              </h1>
+              <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">
+                {heroSubheadline}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link to="/provider-signup">
+                  <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg hover:shadow-xl transition-all">
+                    List Your Facility — It's Free
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/for-providers">
+                  <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
+                    See How It Works
+                  </Button>
+                </Link>
+              </div>
+              <p className="text-sm text-primary-foreground/50 mt-4">No credit card required • Setup in under 5 minutes</p>
             </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6">
-              {heroHeadline}
-            </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">
-              {heroSubheadline}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/provider-signup">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg hover:shadow-xl transition-all">
-                  List Your Facility — It's Free
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/for-providers">
-                <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
-                  See How It Works
-                </Button>
-              </Link>
-            </div>
-            <p className="text-sm text-primary-foreground/50 mt-4">No credit card required • Setup in under 5 minutes</p>
           </div>
         </section>
 

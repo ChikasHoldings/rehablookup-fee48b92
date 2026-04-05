@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -151,15 +152,14 @@ export default function ProviderFAQ() {
             <div className="grid lg:grid-cols-2 gap-0 items-stretch min-h-[340px]">
               {/* Left */}
               <div className="flex flex-col justify-center py-12 lg:py-16 lg:pr-12 relative z-10">
-                <nav className="mb-4">
-                  <span className="inline-flex items-center gap-2 text-sm">
-                    <Link to="/" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors">Home</Link>
-                    <span className="text-primary-foreground/40">/</span>
-                    <Link to="/for-providers" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors">Providers</Link>
-                    <span className="text-primary-foreground/40">/</span>
-                    <span className="text-primary-foreground font-medium">FAQ</span>
-                  </span>
-                </nav>
+                <BreadcrumbNav
+                  className="mb-4"
+                  variant="dark"
+                  items={[
+                    { label: "For Providers", href: "/for-providers" },
+                    { label: "FAQ" },
+                  ]}
+                />
                 <div className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 rounded-full px-4 py-1.5 mb-5 w-fit">
                   <Building2 className="h-4 w-4 text-accent" />
                   <span className="text-sm font-medium text-primary-foreground">For Treatment Centers</span>

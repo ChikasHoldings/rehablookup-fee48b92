@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -103,6 +104,11 @@ const RehabCenters = () => {
       <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/95 to-primary/85 py-10 md:py-14">
         <MedicalPatternBackground />
         <div className="container relative z-10">
+          <BreadcrumbNav
+            className="mb-4"
+            variant="dark"
+            items={[{ label: "Treatment Centers" }]}
+          />
           <div className="mb-6 text-center">
             <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Treatment Centers

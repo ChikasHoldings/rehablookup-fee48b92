@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { forProvidersFaqs } from "@/data/pageFaqs";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,11 @@ const ForProviders = () => {
 
           {/* Content */}
           <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
+            <BreadcrumbNav
+              className="mb-4"
+              variant="dark"
+              items={[{ label: "For Providers" }]}
+            />
             <div className="mx-auto max-w-3xl text-center">
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">

@@ -5,6 +5,7 @@ import { conciergeFaqs } from "@/data/pageFaqs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
@@ -153,6 +154,11 @@ export default function ConciergeLanding() {
             <MedicalPatternBackground />
             
             <div className="container relative mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
+              <BreadcrumbNav
+                className="mb-4"
+                variant="dark"
+                items={[{ label: "Concierge" }]}
+              />
               <div className="max-w-3xl mx-auto text-center">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
+import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Header as PublicHeader } from "@/components/layout/Header";
@@ -148,6 +149,11 @@ export default function InternationalLanding() {
             <MedicalPatternBackground />
 
             <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
+              <BreadcrumbNav
+                className="mb-4"
+                variant="dark"
+                items={[{ label: "International Patients" }]}
+              />
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
