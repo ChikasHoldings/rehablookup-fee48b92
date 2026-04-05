@@ -219,7 +219,7 @@ export default function ConciergeLanding() {
                       <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                       <span className="text-lg sm:text-xl md:text-2xl font-bold">{stat.value}</span>
                     </div>
-                    <p className="text-[10px] sm:text-xs md:text-xs text-primary-foreground/80">{stat.label}</p>
+                    <p className="text-xs sm:text-sm text-primary-foreground/80">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -263,7 +263,7 @@ export default function ConciergeLanding() {
                           <step.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                         </div>
                         <h3 className="font-semibold text-sm sm:text-base text-foreground mb-1 sm:mb-2">{step.title}</h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground">{step.description}</p>
+                        <p className="text-sm text-muted-foreground">{step.description}</p>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -278,7 +278,7 @@ export default function ConciergeLanding() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <p className="text-xs text-muted-foreground mt-3">Takes only 5 minutes</p>
+                <p className="text-sm text-muted-foreground mt-3">Takes only 5 minutes</p>
               </div>
             </div>
           </section>
@@ -314,7 +314,7 @@ export default function ConciergeLanding() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1 sm:mb-2">{benefit.title}</h3>
-                              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+                              <p className="text-muted-foreground text-sm leading-relaxed">
                                 {benefit.description}
                               </p>
                             </div>
@@ -374,7 +374,7 @@ export default function ConciergeLanding() {
                             </div>
                             <div>
                               <p className="font-medium text-xs sm:text-sm text-foreground">{testimonial.author}</p>
-                              <p className="text-xs text-muted-foreground">{testimonial.location}</p>
+                              <p className="text-sm text-muted-foreground">{testimonial.location}</p>
                             </div>
                           </div>
                         </CardContent>
@@ -403,7 +403,7 @@ export default function ConciergeLanding() {
                       <AccordionTrigger className="text-left text-foreground text-sm sm:text-base font-medium hover:no-underline py-3 sm:py-4">
                         {item.question}
                       </AccordionTrigger>
-                      <AccordionContent className="text-xs sm:text-sm text-muted-foreground pb-3 sm:pb-4">
+                      <AccordionContent className="text-sm text-muted-foreground pb-3 sm:pb-4">
                         {item.answer}
                       </AccordionContent>
                     </AccordionItem>

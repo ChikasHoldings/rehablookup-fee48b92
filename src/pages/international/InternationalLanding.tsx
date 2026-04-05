@@ -195,7 +195,7 @@ export default function InternationalLanding() {
                       <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                       <span className="text-lg sm:text-xl md:text-2xl font-bold">{stat.value}</span>
                     </div>
-                    <p className="text-[10px] sm:text-xs md:text-xs text-primary-foreground/80">{stat.label}</p>
+                    <p className="text-xs sm:text-sm text-primary-foreground/80">{stat.label}</p>
                   </div>
                 ))}
                 <div className="px-1">
@@ -203,7 +203,7 @@ export default function InternationalLanding() {
                     <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                     <span className="text-lg sm:text-xl md:text-2xl font-bold">100%</span>
                   </div>
-                  <p className="text-[10px] sm:text-xs md:text-xs text-primary-foreground/80">Money-Back Guarantee</p>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80">Money-Back Guarantee</p>
                 </div>
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function InternationalLanding() {
                       <item.icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     </div>
                     <h3 className="font-semibold text-foreground mb-1.5 md:mb-2 text-sm md:text-base">{item.title}</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{item.description}</p>
                   </motion.div>
                 ))}
               </div>
@@ -385,7 +385,7 @@ export default function InternationalLanding() {
                         </div>
                       </div>
                       <h3 className="font-semibold text-foreground mb-1 md:mb-2 text-sm md:text-base">{step.title}</h3>
-                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{step.description}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -416,7 +416,7 @@ export default function InternationalLanding() {
                       <feature.icon className="h-5 w-5 md:h-7 md:w-7 text-primary" />
                     </div>
                     <h3 className="font-semibold text-foreground mb-1 md:mb-2 text-sm md:text-base">{feature.title}</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{feature.description}</p>
                   </motion.div>
                 ))}
               </div>
