@@ -17,7 +17,7 @@ import { queryClient } from "@/lib/queryClient";
 
 // Eagerly load homepage for instant LCP
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { SmartCatchAll } from "./components/SmartCatchAll";
 
 // Lazy load all other public pages for reduced initial bundle
 const RehabCenters = lazy(() => import("./pages/RehabCenters"));
