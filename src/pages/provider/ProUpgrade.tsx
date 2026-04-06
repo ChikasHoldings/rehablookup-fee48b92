@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  Sparkles,
   Percent,
   Star,
   TrendingUp,
@@ -15,8 +16,7 @@ import {
   Crown,
   Zap,
   BarChart3,
-  Sparkles,
-  X,
+  Globe,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,53 +31,69 @@ const HERO_BENEFITS = [
   {
     icon: Percent,
     title: "20% Off All Unlocks",
-    description: "Save on every lead unlock — inquiries and placements alike.",
+    description: "Save on every lead unlock — whether it's a direct inquiry or a concierge placement. Savings add up fast.",
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-500/10",
   },
   {
     icon: Star,
     title: "Featured Placement",
-    description: "Prominent display on homepage, state & city pages.",
+    description: "Your facility is prominently displayed on the homepage, state pages, and city pages for maximum visibility.",
+    color: "text-amber-600",
+    bgColor: "bg-amber-500/10",
   },
   {
     icon: TrendingUp,
     title: "Priority Search Ranking",
-    description: "+50 boost so families find you first.",
+    description: "Get a +50 boost in search results so families find you first when searching for treatment options.",
+    color: "text-blue-600",
+    bgColor: "bg-blue-500/10",
   },
   {
     icon: Building2,
-    title: "Up to 5 Listings",
-    description: "List multiple locations under one membership.",
+    title: "Up to 5 Facility Listings",
+    description: "Expand your reach by listing multiple locations under a single Pro membership — free members get only 1.",
+    color: "text-violet-600",
+    bgColor: "bg-violet-500/10",
   },
   {
     icon: Award,
-    title: "Pro Badge",
-    description: "Trusted badge on your profile for credibility.",
+    title: "Pro Badge on Profile",
+    description: "A trusted Pro badge is displayed on your facility profile, building credibility with families seeking care.",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
   },
   {
     icon: Mail,
-    title: "Review Tools",
-    description: "Request reviews & import Google ratings.",
+    title: "Review Requests & Google Import",
+    description: "Send review request emails to clients and import your Google Reviews rating directly onto your profile.",
+    color: "text-rose-600",
+    bgColor: "bg-rose-500/10",
   },
   {
     icon: Search,
-    title: "Enhanced SEO",
-    description: "Priority indexing and enriched metadata.",
+    title: "Enhanced SEO Visibility",
+    description: "Pro listings receive priority indexing and enhanced metadata for better organic search performance.",
+    color: "text-teal-600",
+    bgColor: "bg-teal-500/10",
   },
   {
     icon: Shield,
-    title: "Trust Signals",
-    description: "Verified accreditations and trust badges.",
+    title: "Verified Trust Signals",
+    description: "Display verified accreditations and trust badges that help families feel confident choosing your facility.",
+    color: "text-orange-600",
+    bgColor: "bg-orange-500/10",
   },
 ];
 
 const COMPARISON_ITEMS = [
   { feature: "Facility Listings", free: "1", pro: "Up to 5" },
-  { feature: "Lead Unlock Discount", free: "—", pro: "20% off" },
-  { feature: "Search Ranking", free: "Standard", pro: "Priority" },
-  { feature: "Homepage Featured", free: false, pro: true },
-  { feature: "Pro Badge", free: false, pro: true },
-  { feature: "Google Reviews Import", free: false, pro: true },
-  { feature: "Review Requests", free: false, pro: true },
+  { feature: "Lead Unlock Discount", free: "None", pro: "20% off all unlocks" },
+  { feature: "Search Ranking", free: "Standard", pro: "Priority (+50 boost)" },
+  { feature: "Homepage Featured", free: "No", pro: "Yes" },
+  { feature: "Pro Badge", free: "No", pro: "Yes" },
+  { feature: "Google Reviews Import", free: "No", pro: "Yes" },
+  { feature: "Review Requests", free: "No", pro: "Yes" },
   { feature: "Profile Analytics", free: "Basic", pro: "Advanced" },
   { feature: "Support Priority", free: "Standard", pro: "Priority" },
 ];
@@ -120,26 +136,10 @@ export default function ProUpgradePage() {
     }
   };
 
-  const UpgradeButton = ({ label = "Upgrade to Pro", icon: Icon = Sparkles }: { label?: string; icon?: typeof Sparkles }) => (
-    <Button
-      size="lg"
-      onClick={handleUpgrade}
-      disabled={upgradeLoading || !facilityId}
-      className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg shadow-amber-500/20 px-8 h-12 text-base font-semibold transition-all duration-200 hover:shadow-xl hover:shadow-amber-500/25 active:scale-[0.98]"
-    >
-      {upgradeLoading ? (
-        <Loader2 className="h-5 w-5 animate-spin mr-2" />
-      ) : (
-        <Icon className="h-5 w-5 mr-2" />
-      )}
-      {label}
-    </Button>
-  );
-
   return (
     <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
-      <div className="max-w-3xl mx-auto space-y-10">
-        {/* Back */}
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Back Button */}
         <Button
           variant="ghost"
           size="sm"
@@ -150,119 +150,96 @@ export default function ProUpgradePage() {
           Back
         </Button>
 
-        {/* ── Hero ── */}
-        <Card className="border-amber-500/20 overflow-hidden relative">
-          {/* Decorative gradient orb */}
-          <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-16 -left-16 w-40 h-40 rounded-full bg-amber-500/8 blur-2xl pointer-events-none" />
-
-          <CardContent className="relative py-10 px-6 sm:px-10 text-center space-y-5">
-            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/25 mx-auto">
-              <Crown className="h-7 w-7 text-white" />
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-                RehabLookup <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">Pro</span>
-              </h1>
-              <p className="text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">
-                More visibility. Lower costs. Higher admissions. Everything you need to grow.
-              </p>
-            </div>
-
-            {/* Price */}
-            <div className="flex items-baseline justify-center gap-1.5">
-              <span className="text-4xl font-bold text-foreground tracking-tight">$399</span>
-              <span className="text-muted-foreground text-sm font-medium">/month</span>
-            </div>
-
-            {isPro ? (
-              <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-sm px-5 py-2">
-                <CheckCircle className="h-4 w-4 mr-1.5" />
-                You're a Pro Member
-              </Badge>
-            ) : (
-              <div className="space-y-2 pt-1">
-                <UpgradeButton />
-                <p className="text-xs text-muted-foreground">Cancel anytime · Secure payment via Stripe</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ── Benefits Grid ── */}
-        <div className="space-y-5">
-          <div className="text-center space-y-1">
-            <h2 className="text-lg font-semibold text-foreground">Everything Included</h2>
-            <p className="text-sm text-muted-foreground">All the tools to maximize your facility's reach</p>
+        {/* Hero Section */}
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg mx-auto">
+            <Crown className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">
+            RehabLookup <span className="text-amber-600">Pro</span>
+          </h1>
+          <p className="text-muted-foreground max-w-xl mx-auto text-sm md:text-base">
+            Get more visibility, save on every lead, and grow your admissions with our premium provider membership.
+          </p>
+          
+          {/* Price Tag */}
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <span className="text-3xl md:text-4xl font-bold text-foreground">$399</span>
+            <span className="text-muted-foreground text-sm">/month</span>
           </div>
 
-          <div className="grid gap-2.5 sm:grid-cols-2">
+          {isPro ? (
+            <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-sm px-4 py-1.5">
+              <CheckCircle className="h-4 w-4 mr-1.5" />
+              You're a Pro Member
+            </Badge>
+          ) : (
+            <Button
+              size="lg"
+              onClick={handleUpgrade}
+              disabled={upgradeLoading || !facilityId}
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg px-8 h-12 text-base"
+            >
+              {upgradeLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              ) : (
+                <Sparkles className="h-5 w-5 mr-2" />
+              )}
+              Upgrade to Pro
+            </Button>
+          )}
+        </div>
+
+        {/* Benefits Grid */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-center">Everything You Get with Pro</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
             {HERO_BENEFITS.map((benefit) => {
               const Icon = benefit.icon;
               return (
-                <div
-                  key={benefit.title}
-                  className="flex items-start gap-3 rounded-xl border border-border/50 bg-card p-3.5 transition-colors hover:border-amber-500/20 hover:bg-amber-500/[0.02]"
-                >
-                  <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Icon className="h-4.5 w-4.5 text-amber-600" />
-                  </div>
-                  <div className="min-w-0 pt-0.5">
-                    <p className="font-medium text-sm text-foreground leading-tight">{benefit.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{benefit.description}</p>
-                  </div>
-                </div>
+                <Card key={benefit.title} className="border-border/60 hover:border-border transition-colors">
+                  <CardContent className="p-4 flex gap-3">
+                    <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", benefit.bgColor)}>
+                      <Icon className={cn("h-5 w-5", benefit.color)} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-foreground">{benefit.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{benefit.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
         </div>
 
-        {/* ── Comparison Table ── */}
-        <div className="space-y-5">
-          <div className="text-center space-y-1">
-            <h2 className="text-lg font-semibold text-foreground">Free vs Pro</h2>
-            <p className="text-sm text-muted-foreground">See what you're missing</p>
-          </div>
-
-          <Card className="overflow-hidden border-border/60">
+        {/* Comparison Table */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-center">Free vs Pro</h2>
+          <Card className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border/60 bg-muted/30">
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">Feature</th>
-                    <th className="text-center py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider w-24">Free</th>
-                    <th className="text-center py-3 px-4 w-32">
-                      <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs font-semibold">
-                        <Crown className="h-3 w-3 mr-1" /> PRO
-                      </Badge>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Feature</th>
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground w-28">Free</th>
+                    <th className="text-center py-3 px-4 font-medium w-36">
+                      <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
+                        <Crown className="h-3.5 w-3.5" /> Pro
+                      </span>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {COMPARISON_ITEMS.map((item, i) => (
-                    <tr key={item.feature} className="border-b border-border/40 last:border-0 hover:bg-muted/20 transition-colors">
-                      <td className="py-3 px-4 font-medium text-foreground text-sm">{item.feature}</td>
-                      <td className="py-3 px-4 text-center">
-                        {typeof item.free === "boolean" ? (
-                          item.free ? (
-                            <CheckCircle className="h-4 w-4 text-emerald-600 mx-auto" />
-                          ) : (
-                            <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />
-                          )
+                    <tr key={item.feature} className={cn("border-b last:border-0", i % 2 === 0 && "bg-muted/20")}>
+                      <td className="py-2.5 px-4 font-medium text-foreground">{item.feature}</td>
+                      <td className="py-2.5 px-4 text-center text-muted-foreground">{item.free}</td>
+                      <td className="py-2.5 px-4 text-center font-medium text-foreground">
+                        {item.pro === "Yes" ? (
+                          <CheckCircle className="h-4 w-4 text-emerald-600 mx-auto" />
                         ) : (
-                          <span className="text-muted-foreground text-sm">{item.free}</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {typeof item.pro === "boolean" ? (
-                          item.pro ? (
-                            <CheckCircle className="h-4 w-4 text-emerald-600 mx-auto" />
-                          ) : (
-                            <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />
-                          )
-                        ) : (
-                          <span className="font-medium text-foreground text-sm">{item.pro}</span>
+                          item.pro
                         )}
                       </td>
                     </tr>
@@ -273,39 +250,39 @@ export default function ProUpgradePage() {
           </Card>
         </div>
 
-        {/* ── ROI Card ── */}
-        <Card className="border-border/60 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary/5 blur-2xl pointer-events-none" />
-          <CardContent className="relative p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
-            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-              <BarChart3 className="h-7 w-7 text-primary" />
+        {/* ROI Section */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+          <CardContent className="p-6 text-center space-y-3">
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 mx-auto">
+              <BarChart3 className="h-6 w-6 text-primary" />
             </div>
-            <div className="text-center sm:text-left">
-              <h3 className="font-semibold text-base text-foreground mb-1">Pro Pays for Itself</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                With 20% savings on every unlock and featured placement driving more families to your listing, 
-                most Pro members see ROI within the first month.
-              </p>
-            </div>
+            <h3 className="font-semibold text-lg">Quick ROI</h3>
+            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+              With 20% off every unlock, Pro pays for itself with just a few additional admissions per month. 
+              Plus, featured placement means more families see your facility first.
+            </p>
           </CardContent>
         </Card>
 
-        {/* ── Bottom CTA ── */}
+        {/* Bottom CTA */}
         {!isPro && (
-          <Card className="border-amber-500/20 rounded-2xl overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-amber-600/10 pointer-events-none" />
-            <CardContent className="relative py-8 px-6 text-center space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Ready to Grow?</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                Join hundreds of top facilities using Pro to increase admissions and reduce costs.
-              </p>
-              <UpgradeButton label="Start Your Pro Membership" icon={Zap} />
-              <p className="text-xs text-muted-foreground">Billed monthly · Cancel anytime · No contracts</p>
-            </CardContent>
-          </Card>
+          <div className="text-center pb-4 space-y-3">
+            <Button
+              size="lg"
+              onClick={handleUpgrade}
+              disabled={upgradeLoading || !facilityId}
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-lg px-8 h-12 text-base"
+            >
+              {upgradeLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              ) : (
+                <Zap className="h-5 w-5 mr-2" />
+              )}
+              Start Your Pro Membership
+            </Button>
+            <p className="text-xs text-muted-foreground">Cancel anytime · Billed monthly · Secure payment via Stripe</p>
+          </div>
         )}
-
-        <div className="h-4" />
       </div>
     </div>
   );
