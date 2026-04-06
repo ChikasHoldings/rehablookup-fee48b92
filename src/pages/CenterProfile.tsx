@@ -671,39 +671,27 @@ const CenterProfile = () => {
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               
-              {/* Status Badges — top left */}
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+              {/* Status Badges — top left (max 3 to avoid crowding) */}
+              <div className="absolute top-3 left-3 flex items-center gap-1.5">
                 {ratingData.averageRating && ratingData.reviewCount > 0 && (
-                  <div className="bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md flex items-center gap-1">
-                    <svg className="h-3.5 w-3.5 fill-amber-500" viewBox="0 0 20 20">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-md flex items-center gap-1">
+                    <svg className="h-3 w-3 fill-amber-500" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                    <span className="font-bold text-xs text-foreground">{ratingData.averageRating.toFixed(1)}</span>
-                    <span className="text-xs text-muted-foreground">({ratingData.reviewCount})</span>
+                    <span className="font-bold text-[11px] text-foreground tabular-nums">{ratingData.averageRating.toFixed(1)}</span>
+                    <span className="text-[11px] text-muted-foreground">({ratingData.reviewCount})</span>
                   </div>
                 )}
                 {hasFeaturedSubscription && (
-                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
+                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2 py-0.5 shadow-md text-[11px] font-bold uppercase tracking-wider">
                     <Crown className="h-3 w-3" />
                     Featured
                   </Badge>
                 )}
                 {facility.verified && (
-                  <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
+                  <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2 py-0.5 shadow-md text-[11px] font-bold uppercase tracking-wider">
                     <ShieldCheck className="h-3 w-3" />
                     Verified
-                  </Badge>
-                )}
-                {facility.concierge_network_opted_in && (
-                  <Badge className="bg-sky-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
-                    <Handshake className="h-3 w-3" />
-                    Accepts Placements
-                  </Badge>
-                )}
-                {facility.accepts_international_patients && (
-                  <Badge className="bg-violet-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
-                    <GlobeIcon className="h-3 w-3" />
-                    International
                   </Badge>
                 )}
               </div>
