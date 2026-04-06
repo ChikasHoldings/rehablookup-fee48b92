@@ -10,7 +10,7 @@ interface StatsHeaderProps {
 
 export function InquiriesStatsHeader({ total, locked, unlocked, contacted, responded }: StatsHeaderProps) {
   const stats = [
-    { label: "Total", value: total, icon: Users, color: "text-foreground" },
+    { label: "Total Leads", value: total, icon: Users, color: "text-foreground" },
     { label: "Locked", value: locked, icon: Lock, color: "text-muted-foreground" },
     { label: "Unlocked", value: unlocked, icon: Unlock, color: "text-amber-600 dark:text-amber-400" },
     { label: "Contacted", value: contacted, icon: PhoneCall, color: "text-blue-600 dark:text-blue-400" },
