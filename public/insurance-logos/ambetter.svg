@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none">
-  <rect x="5" y="10" width="20" height="20" rx="10" fill="#6CBE45"/>
-  <path d="M15 16v8M11 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
-  <text x="30" y="25" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#2D6E2E">Ambetter</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <circle cx="22" cy="25" r="16" fill="#6CBE45"/>
+  <path d="M16 25l4 5 8-10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="46" y="31" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#2D6E2E">Ambetter</text>
 </svg>
