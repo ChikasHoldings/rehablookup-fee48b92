@@ -318,7 +318,7 @@ export function FacilityImageUpload({
         <div
           className={cn(
             "border-2 border-dashed border-border rounded-lg transition-colors hover:border-primary/50 hover:bg-muted/50",
-            type === "logo" && currentImages.length === 0 ? "w-32 h-32" : "p-6"
+            type === "logo" && currentImages.length === 0 ? "w-32 h-32" : "p-6 min-h-[120px]"
           )}
         >
           <label className="flex flex-col items-center justify-center cursor-pointer h-full gap-2">
