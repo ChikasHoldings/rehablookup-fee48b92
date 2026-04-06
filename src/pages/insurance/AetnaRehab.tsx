@@ -320,6 +320,14 @@ export default function AetnaRehab() {
         </div>
       </section>
 
+      {/* Featured Centers accepting Aetna */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting Aetna"
+        description="Verified facilities that work with Aetna insurance"
+        limit={8}
+        className="border-t border-border"
+      />
+
       {/* FAQs */}
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">
@@ -367,14 +375,6 @@ export default function AetnaRehab() {
           </div>
         </div>
       </section>
-
-      {/* Featured Centers accepting Aetna */}
-      <FeaturedCentersSection 
-        title="Treatment Centers Accepting Aetna"
-        description="Verified facilities that work with Aetna insurance"
-        limit={8}
-        className="border-t border-border"
-      />
 
       {/* SEO Internal Linking */}
       <InternalLinkingSection
