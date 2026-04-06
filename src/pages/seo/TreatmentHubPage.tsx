@@ -47,29 +47,12 @@ export default function TreatmentHubPage() {
   const structuredData = [
     {
       "@context": "https://schema.org",
-      "@type": "MedicalWebPage",
-      name: config.title,
-      description: config.metaDescription,
-      url: `https://rehablookup.com/${config.slug}`,
-      about: { "@type": "MedicalCondition", name: "Substance Use Disorder" },
-    },
-    {
-      "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: config.faqs.map((faq) => ({
         "@type": "Question",
         name: faq.question,
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: "https://rehablookup.com" },
-        { "@type": "ListItem", position: 2, name: "Treatment Types", item: "https://rehablookup.com/treatment-types" },
-        { "@type": "ListItem", position: 3, name: config.title, item: `https://rehablookup.com/${config.slug}` },
-      ],
     },
   ];
 
