@@ -1044,12 +1044,9 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             )}
           </div>
           {facility.slug && (
-            <Button variant="outline" size="sm" asChild className="gap-1.5 hidden sm:flex">
-              <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
-                <Eye className="h-3.5 w-3.5" />
-                Preview
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => setPreviewOpen(true)}>
+              <Eye className="h-3.5 w-3.5" />
+              Preview
             </Button>
           )}
           <Button onClick={handleSave} disabled={isSaving || isAutoSaving || !hasChanges} size="sm" className="gap-1.5">
