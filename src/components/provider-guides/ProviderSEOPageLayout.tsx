@@ -57,6 +57,16 @@ const relatedPages = [
   { href: "/provider-guides/mat-clinic-marketing", label: "MAT Marketing", desc: "Grow your MAT program" },
   { href: "/provider-guides/treatment-center-website-design", label: "Website Design", desc: "Convert visitors to admissions" },
   { href: "/provider-guides/rehab-compliance-guide", label: "Compliance Guide", desc: "HIPAA & 42 CFR Part 2" },
+  { href: "/provider-guides/rehab-google-business-profile", label: "Google Business Profile", desc: "Dominate local search" },
+  { href: "/provider-guides/rehab-patient-retention", label: "Patient Retention", desc: "Reduce AMA rates" },
+  { href: "/provider-guides/rehab-email-marketing", label: "Email Marketing", desc: "Nurture leads to admissions" },
+  { href: "/provider-guides/telehealth-addiction-treatment", label: "Telehealth Programs", desc: "Launch virtual IOP & MAT" },
+  { href: "/provider-guides/rehab-social-media-marketing", label: "Social Media Marketing", desc: "Build trust on social" },
+  { href: "/provider-guides/dual-diagnosis-treatment-marketing", label: "Dual Diagnosis Marketing", desc: "Co-occurring disorder growth" },
+  { href: "/provider-guides/rehab-admissions-team-training", label: "Admissions Training", desc: "Convert more calls" },
+  { href: "/provider-guides/rehab-pay-per-click-advertising", label: "PPC Advertising", desc: "Reduce cost per admission" },
+  { href: "/provider-guides/rehab-content-marketing", label: "Content Marketing", desc: "Drive organic admissions" },
+  { href: "/provider-guides/rehab-interventionist-partnerships", label: "Interventionist Partnerships", desc: "High-value referral network" },
 ];
 
 const platformLinks = [

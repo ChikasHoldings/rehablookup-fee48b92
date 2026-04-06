@@ -699,6 +699,16 @@ const AppInner = () => {
             <Route path="/provider-guides/mat-clinic-marketing" element={<PublicRouteGuard><MATClinicMarketing /></PublicRouteGuard>} />
             <Route path="/provider-guides/treatment-center-website-design" element={<PublicRouteGuard><TreatmentCenterWebsiteDesign /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-compliance-guide" element={<PublicRouteGuard><RehabComplianceGuide /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-google-business-profile" element={<PublicRouteGuard><RehabGoogleBusinessProfile /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-patient-retention" element={<PublicRouteGuard><RehabPatientRetention /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-email-marketing" element={<PublicRouteGuard><RehabEmailMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/telehealth-addiction-treatment" element={<PublicRouteGuard><TelehealthAddictionTreatment /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-social-media-marketing" element={<PublicRouteGuard><RehabSocialMediaMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/dual-diagnosis-treatment-marketing" element={<PublicRouteGuard><DualDiagnosisTreatmentMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-admissions-team-training" element={<PublicRouteGuard><RehabAdmissionsTeamTraining /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-pay-per-click-advertising" element={<PublicRouteGuard><RehabPayPerClickAdvertising /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-content-marketing" element={<PublicRouteGuard><RehabContentMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-interventionist-partnerships" element={<PublicRouteGuard><RehabInterventionistPartnerships /></PublicRouteGuard>} />
             {/* List Your Facility routes handled by SmartCatchAll below */}
 
             {/* Provider Resource Hub */}
