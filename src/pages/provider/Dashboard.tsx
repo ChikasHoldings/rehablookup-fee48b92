@@ -370,11 +370,9 @@ export default function ProviderDashboardPage() {
                   
                   {facility && profileUrl && (
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" asChild>
-                        <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setPreviewOpen(true)}>
                           <Eye className="h-3.5 w-3.5" />
                           Preview
-                        </a>
                       </Button>
                       <Button size="sm" className="h-8 text-xs gap-1.5" asChild>
                         <Link to="/provider/listings">
