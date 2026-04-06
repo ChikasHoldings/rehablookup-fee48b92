@@ -169,17 +169,14 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60 * 2,
   });
 
-  // Fetch total leads count for facility
+  // Fetch total leads count via secure DB function (bypasses RLS unlock restriction for accurate counts)
   const { data: totalLeadsCount = 0 } = useQuery({
     queryKey: ["total-leads-count", facilityId],
     queryFn: async (): Promise<number> => {
       if (!facilityId) return 0;
-      const { count, error } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("facility_id", facilityId);
+      const { data, error } = await supabase.rpc("get_facility_leads_count", { p_facility_id: facilityId });
       if (error) throw error;
-      return count || 0;
+      return Number(data?.[0]?.total_count) || 0;
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
