@@ -65,6 +65,7 @@ import {
   ListingFormField,
   StaffManagementSection
 } from "@/components/provider/listing";
+import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 
 interface Facility {
   id: string;
@@ -189,6 +190,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const [showSaved, setShowSaved] = useState(false);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<EditorTab>(() => {
     const saved = localStorage.getItem('provider-listing-active-tab');
     return (saved as EditorTab) || "photos";
@@ -1044,12 +1046,9 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             )}
           </div>
           {facility.slug && (
-            <Button variant="outline" size="sm" asChild className="gap-1.5 hidden sm:flex">
-              <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
-                <Eye className="h-3.5 w-3.5" />
-                Preview
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => setPreviewOpen(true)}>
+              <Eye className="h-3.5 w-3.5" />
+              Preview
             </Button>
           )}
           <Button onClick={handleSave} disabled={isSaving || isAutoSaving || !hasChanges} size="sm" className="gap-1.5">
@@ -1422,6 +1421,16 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       {/* Floating Save Bar */}
       <ListingFloatingSaveBar hasChanges={hasChanges} isSaving={isSaving} isAutoSaving={isAutoSaving} onSave={handleSave} />
+
+      {/* Preview Modal */}
+      {facility?.slug && (
+        <ListingPreviewModal
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          facilityName={facility.name}
+          facilitySlug={facility.slug}
+        />
+      )}
     </div>
   );
 }

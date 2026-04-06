@@ -38,6 +38,7 @@ import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget
 import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
+import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -121,6 +122,7 @@ export default function ProviderDashboardPage() {
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [profilePromptDismissedFields, setProfilePromptDismissedFields] = useState<string | null>(() => {
     if (!facilityId) return null;
     return localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
@@ -369,11 +371,9 @@ export default function ProviderDashboardPage() {
                   
                   {facility && profileUrl && (
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" asChild>
-                        <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setPreviewOpen(true)}>
                           <Eye className="h-3.5 w-3.5" />
                           Preview
-                        </a>
                       </Button>
                       <Button size="sm" className="h-8 text-xs gap-1.5" asChild>
                         <Link to="/provider/listings">
@@ -745,6 +745,16 @@ export default function ProviderDashboardPage() {
           onOpenChange={setDrawerOpen}
         />
       </div>
+
+      {/* Preview Modal */}
+      {facility?.slug && (
+        <ListingPreviewModal
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          facilityName={facility.name}
+          facilitySlug={facility.slug}
+        />
+      )}
     </div>
   );
 }
