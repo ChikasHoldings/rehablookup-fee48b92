@@ -160,17 +160,23 @@ export default function ProviderBillingPage() {
     }
   }, [searchParams, setSearchParams, refetchCredits, refetchProStatus]);
 
+  const purchaseDebounceRef = useRef(false);
+
   const handlePurchase = async (amountCents: number) => {
     if (!facilityId) {
       toast.error("No facility selected");
       return;
     }
+    if (purchaseDebounceRef.current) return;
+    purchaseDebounceRef.current = true;
+
     setPurchaseLoading(amountCents);
     try {
       const { data, error } = await supabase.functions.invoke("purchase-credits", {
         body: { amountCents, facilityId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       if (data?.checkoutUrl) {
         try {
           const url = new URL(data.checkoutUrl);
@@ -179,11 +185,13 @@ export default function ProviderBillingPage() {
         } catch { toast.error("Invalid checkout URL received."); }
         setShowPurchaseModal(false);
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to start checkout.";
       console.error("Purchase error:", err);
-      toast.error("Failed to start checkout. Please try again.");
+      toast.error(message);
     } finally {
       setPurchaseLoading(null);
+      setTimeout(() => { purchaseDebounceRef.current = false; }, 2000);
     }
   };
 
