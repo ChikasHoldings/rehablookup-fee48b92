@@ -46,8 +46,9 @@ export function useFacilityBadges(facilityId: string | undefined) {
           .eq("facility_id", facilityId)
           .eq("status", "active")
           .maybeSingle(),
+        // Use leads_provider_view for accurate count (RLS on leads blocks non-unlocked)
         supabase
-          .from("leads")
+          .from("leads_provider_view")
           .select("id", { count: "exact", head: true })
           .eq("facility_id", facilityId),
       ]);

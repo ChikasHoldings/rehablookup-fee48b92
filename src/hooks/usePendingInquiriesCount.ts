@@ -4,10 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Hook to track pending (new/uncontacted) inquiries count across all provider facilities.
- * Updates in realtime when:
- * - New leads arrive
- * - Lead status changes (contacted, qualified, etc.)
- * - Leads are unlocked
+ * Uses a security definer function to bypass the RLS unlock restriction on the leads table,
+ * ensuring accurate counts of ALL new leads (not just unlocked ones).
  */
 export function usePendingInquiriesCount() {
   const queryClient = useQueryClient();
@@ -18,7 +16,7 @@ export function usePendingInquiriesCount() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return { count: 0, facilityIds: [] };
 
-      // Get all facility IDs for this provider
+      // Get facility IDs for realtime subscriptions
       const { data: facilities, error: facilitiesError } = await supabase
         .from("facilities")
         .select("id")
@@ -30,19 +28,17 @@ export function usePendingInquiriesCount() {
 
       const facilityIds = facilities.map(f => f.id);
 
-      // Count leads with status "new" across all facilities
-      const { count, error } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .in("facility_id", facilityIds)
-        .eq("status", "new");
+      // Use security definer function for accurate count (bypasses RLS unlock restriction)
+      const { data: count, error } = await supabase.rpc("get_pending_leads_count", {
+        p_user_id: session.user.id,
+      });
 
       if (error) {
         console.error("[usePendingInquiriesCount] Error counting leads:", error);
         return { count: 0, facilityIds };
       }
 
-      return { count: count || 0, facilityIds };
+      return { count: Number(count) || 0, facilityIds };
     },
     staleTime: 1000 * 30, // 30 seconds
     gcTime: 1000 * 60 * 5, // 5 minutes
@@ -54,11 +50,9 @@ export function usePendingInquiriesCount() {
     const facilityIds = query.data?.facilityIds || [];
     if (facilityIds.length === 0) return;
 
-    // Create channels for each facility to track lead changes
     const channels: ReturnType<typeof supabase.channel>[] = [];
 
     facilityIds.forEach((facilityId, index) => {
-      // Subscribe to leads table changes
       const leadsChannel = supabase
         .channel(`pending-inquiries-leads-${facilityId}-${index}`)
         .on(
@@ -72,7 +66,6 @@ export function usePendingInquiriesCount() {
           (payload) => {
             console.log("[usePendingInquiriesCount] Lead change detected:", payload.eventType);
             queryClient.invalidateQueries({ queryKey: ["pending-inquiries-count"] });
-            // Also invalidate related queries
             queryClient.invalidateQueries({ queryKey: ["new-inquiries-count"] });
             queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
           }
@@ -81,7 +74,6 @@ export function usePendingInquiriesCount() {
 
       channels.push(leadsChannel);
 
-      // Subscribe to lead_unlocks table changes
       const unlocksChannel = supabase
         .channel(`pending-inquiries-unlocks-${facilityId}-${index}`)
         .on(
