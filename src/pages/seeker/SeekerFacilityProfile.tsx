@@ -36,6 +36,8 @@ import {
   Sparkles,
   CalendarDays,
   Award,
+  Handshake,
+  GlobeIcon,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
@@ -69,6 +71,8 @@ interface FacilityData {
   status: string;
   user_id: string;
   updated_at: string;
+  concierge_network_opted_in: boolean | null;
+  accepts_international_patients: boolean | null;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
