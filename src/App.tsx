@@ -232,6 +232,7 @@ const ProviderKnowledgeBasePage = lazy(() => import("./pages/provider/KnowledgeB
 const ProviderImageGuidelines = lazy(() => import("./pages/provider/ImageGuidelines"));
 const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
 const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
+const ProviderProUpgradePage = lazy(() => import("./pages/provider/ProUpgrade"));
 const ProviderPlacementNetworkPage = lazy(() => import("./pages/provider/PlacementNetwork"));
 
 // Admin Panel pages - lazy load (shell handles Suspense)
@@ -691,7 +692,7 @@ const AppInner = () => {
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
               <Route path="credits" element={<Navigate to="/provider/billing?purchase_credits=true" replace />} />
-              <Route path="pro-upgrade" element={<Navigate to="/provider/billing?tab=pro" replace />} />
+              <Route path="pro-upgrade" element={<ProviderProUpgradePage />} />
               <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
