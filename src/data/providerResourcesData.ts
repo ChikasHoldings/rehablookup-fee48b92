@@ -14,6 +14,7 @@ export interface ResourceArticle {
   readTime: string;
   category: string;
   featured?: boolean;
+  publishedDate?: string;
 }
 
 export interface ResourceCategory {
@@ -100,6 +101,14 @@ export const resourceCategories: ResourceCategory[] = [
         readTime: "9 min",
         category: "marketing",
       },
+      {
+        slug: "rehab-reputation-management-online-reviews",
+        title: "Reputation Management for Rehab Centers: How to Get More 5-Star Reviews",
+        description: "Online reviews drive 68% of treatment decisions. Build a systematic review strategy that earns trust and boosts rankings.",
+        readTime: "9 min",
+        category: "marketing",
+        publishedDate: "2026-04-06",
+      },
     ],
   },
   {
@@ -130,6 +139,14 @@ export const resourceCategories: ResourceCategory[] = [
         description: "Industry benchmarks for cost-per-admission by channel, market, and facility type. Know if you're overpaying.",
         readTime: "8 min",
         category: "revenue",
+      },
+      {
+        slug: "insurance-verification-speed-up-admissions",
+        title: "Insurance Verification: How to Speed Up Admissions and Reduce Denials",
+        description: "Slow VOB kills 30% of admissions. Streamline insurance verification to admit patients within hours, not days.",
+        readTime: "10 min",
+        category: "revenue",
+        publishedDate: "2026-04-06",
       },
     ],
   },
@@ -176,6 +193,14 @@ export const resourceCategories: ResourceCategory[] = [
         readTime: "10 min",
         category: "operations",
       },
+      {
+        slug: "after-hours-admissions-capture-weekend-leads",
+        title: "After-Hours Admissions: How to Capture Weekend and Night Leads",
+        description: "42% of treatment inquiries come outside business hours. Facilities without after-hours intake lose nearly half their leads.",
+        readTime: "8 min",
+        category: "operations",
+        publishedDate: "2026-04-06",
+      },
     ],
   },
   {
@@ -206,6 +231,14 @@ export const resourceCategories: ResourceCategory[] = [
         description: "Market size, growth projections, and competitive dynamics. Essential reading for facility owners making strategic decisions.",
         readTime: "12 min",
         category: "industry",
+      },
+      {
+        slug: "fentanyl-crisis-treatment-center-response",
+        title: "The Fentanyl Crisis: How Treatment Centers Should Respond in 2026",
+        description: "Fentanyl now drives 70% of overdose deaths. Adapt your clinical programming and marketing to meet surging demand.",
+        readTime: "11 min",
+        category: "industry",
+        publishedDate: "2026-04-06",
       },
     ],
   },
