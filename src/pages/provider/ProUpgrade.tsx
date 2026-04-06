@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Sparkles,
   Percent,
@@ -92,11 +92,54 @@ const COMPARISON_ITEMS = [
 
 export default function ProUpgradePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
-  const { data: proStatus } = useProStatus(facilityId ?? undefined);
+  const { data: proStatus, refetch: refetchProStatus } = useProStatus(facilityId ?? undefined);
   const isPro = proStatus?.isPro ?? false;
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCountRef = useRef(0);
+
+  // Post-checkout polling to catch delayed webhook processing
+  const startPostCheckoutPolling = useCallback(() => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollCountRef.current = 0;
+    pollingRef.current = setInterval(() => {
+      pollCountRef.current++;
+      refetchProStatus();
+      if (pollCountRef.current >= 10) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    }, 3000);
+  }, [refetchProStatus]);
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  // Handle success/cancel URL params from Stripe checkout
+  useEffect(() => {
+    const proSuccess = searchParams.get("pro_success");
+    const proCanceled = searchParams.get("pro_canceled");
+
+    if (proSuccess === "true") {
+      toast.success("🎉 Welcome to Pro! Your benefits are now active.", { duration: 6000 });
+      refetchProStatus();
+      startPostCheckoutPolling();
+      searchParams.delete("pro_success");
+      setSearchParams(searchParams, { replace: true });
+    }
+
+    if (proCanceled === "true") {
+      toast.info("Pro upgrade was cancelled. You can upgrade anytime.");
+      searchParams.delete("pro_canceled");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, refetchProStatus, startPostCheckoutPolling]);
 
   const handleUpgrade = async () => {
     if (!facilityId) {

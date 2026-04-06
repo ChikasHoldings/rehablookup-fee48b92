@@ -3,8 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 // Version tracking for deployment verification
-const VERSION = "1.0.2";
-const DEPLOYED_AT = "2026-01-31T00:00:00Z";
+const VERSION = "1.1.0";
+const DEPLOYED_AT = "2026-04-06T00:00:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -570,12 +570,59 @@ Deno.serve(async (req) => {
           } else {
             logStep("Pro subscription activated", { facilityId, currentPeriodEnd });
 
+            // ACTIVATE PRO BENEFITS ON FACILITY
+            // 1. Set featured = true for homepage/search placement
+            // 2. Add +50 ranking boost to calculated_ranking_score
+            const { data: currentFacility } = await supabaseAdmin
+              .from("facilities")
+              .select("calculated_ranking_score")
+              .eq("id", facilityId)
+              .maybeSingle();
+
+            const currentScore = currentFacility?.calculated_ranking_score ?? 0;
+            const { error: facilityUpdateError } = await supabaseAdmin
+              .from("facilities")
+              .update({
+                featured: true,
+                calculated_ranking_score: currentScore + 50,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", facilityId);
+
+            if (facilityUpdateError) {
+              logStep("Error activating facility Pro benefits", { error: facilityUpdateError.message });
+            } else {
+              logStep("Facility Pro benefits activated (featured + ranking boost)", { facilityId });
+            }
+
+            // Also activate featured on ALL other facilities owned by this provider
+            const { data: otherFacilities } = await supabaseAdmin
+              .from("facilities")
+              .select("id, calculated_ranking_score")
+              .eq("user_id", userId)
+              .neq("id", facilityId);
+
+            if (otherFacilities && otherFacilities.length > 0) {
+              for (const f of otherFacilities) {
+                const fScore = f.calculated_ranking_score ?? 0;
+                await supabaseAdmin
+                  .from("facilities")
+                  .update({
+                    featured: true,
+                    calculated_ranking_score: fScore + 50,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", f.id);
+              }
+              logStep("Pro benefits applied to all provider facilities", { count: otherFacilities.length });
+            }
+
             await supabaseAdmin.from("provider_notifications").insert({
               user_id: userId,
               facility_id: facilityId,
               type: "subscription_active",
               title: "Pro Subscription Activated!",
-              message: "You now have 20% off all lead unlocks, featured placement, and can list up to 5 facilities.",
+              message: "You now have 20% off all lead unlocks, featured placement, priority search ranking, and can list up to 5 facilities.",
               metadata: { subscription_id: subscriptionId },
             });
           }
@@ -994,6 +1041,28 @@ Deno.serve(async (req) => {
                 updated_at: new Date().toISOString() 
               })
               .eq("stripe_subscription_id", subscription.id);
+
+            // DEACTIVATE PRO BENEFITS: remove featured flag and ranking boost from ALL provider facilities
+            const providerId = profiles[0].user_id;
+            const { data: allFacilities } = await supabaseAdmin
+              .from("facilities")
+              .select("id, calculated_ranking_score")
+              .eq("user_id", providerId);
+
+            if (allFacilities) {
+              for (const f of allFacilities) {
+                const currentScore = f.calculated_ranking_score ?? 0;
+                await supabaseAdmin
+                  .from("facilities")
+                  .update({
+                    featured: false,
+                    calculated_ranking_score: Math.max(0, currentScore - 50),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", f.id);
+              }
+              logStep("Pro benefits removed from all provider facilities", { count: allFacilities.length });
+            }
 
             // Record event
             await supabaseAdmin.from("subscription_events").insert({
