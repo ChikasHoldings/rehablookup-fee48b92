@@ -47,10 +47,10 @@ import { lazy, Suspense } from "react";
 const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 
 const CREDIT_PACKAGES = [
-  { amountCents: 10000, label: "$100", bonus: null },
-  { amountCents: 25000, label: "$250", bonus: null },
-  { amountCents: 50000, label: "$500", bonus: "Best Value" },
-  { amountCents: 100000, label: "$1,000", bonus: "Popular" },
+  { amountCents: 10000, label: "$100", credits: 100, bonus: null, perLead: "~2-3 leads" },
+  { amountCents: 25000, label: "$250", credits: 250, bonus: null, perLead: "~5-6 leads" },
+  { amountCents: 50000, label: "$500", credits: 500, bonus: "Best Value", perLead: "~10-13 leads" },
+  { amountCents: 100000, label: "$1,000", credits: 1000, bonus: "Most Popular", perLead: "~20-25 leads" },
 ];
 
 const PRO_BENEFITS = [
@@ -160,17 +160,23 @@ export default function ProviderBillingPage() {
     }
   }, [searchParams, setSearchParams, refetchCredits, refetchProStatus]);
 
+  const purchaseDebounceRef = useRef(false);
+
   const handlePurchase = async (amountCents: number) => {
     if (!facilityId) {
       toast.error("No facility selected");
       return;
     }
+    if (purchaseDebounceRef.current) return;
+    purchaseDebounceRef.current = true;
+
     setPurchaseLoading(amountCents);
     try {
       const { data, error } = await supabase.functions.invoke("purchase-credits", {
         body: { amountCents, facilityId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       if (data?.checkoutUrl) {
         try {
           const url = new URL(data.checkoutUrl);
@@ -179,11 +185,13 @@ export default function ProviderBillingPage() {
         } catch { toast.error("Invalid checkout URL received."); }
         setShowPurchaseModal(false);
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to start checkout.";
       console.error("Purchase error:", err);
-      toast.error("Failed to start checkout. Please try again.");
+      toast.error(message);
     } finally {
       setPurchaseLoading(null);
+      setTimeout(() => { purchaseDebounceRef.current = false; }, 2000);
     }
   };
 
@@ -481,78 +489,103 @@ export default function ProviderBillingPage() {
         </Card>
 
         {/* Purchase Credits Modal */}
-        <Dialog open={showPurchaseModal} onOpenChange={setShowPurchaseModal}>
+        <Dialog open={showPurchaseModal} onOpenChange={(open) => {
+          if (!purchaseLoading) setShowPurchaseModal(open);
+        }}>
           <DialogContent className="w-[95vw] sm:max-w-lg p-0 overflow-hidden">
-            {/* Header with balance */}
-            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 sm:p-6 border-b">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-primary/15 flex items-center justify-center">
-                  <Wallet className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
+            {/* Header */}
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-primary/15 flex items-center justify-center">
+                    <Wallet className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm text-muted-foreground font-medium">Current Balance</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">{balanceFormatted}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground font-medium">Current Balance</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-foreground">{balanceFormatted}</p>
-                </div>
+                {proStatus?.isPro && (
+                  <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Pro 20% off
+                  </Badge>
+                )}
               </div>
             </div>
             
             {/* Package Selection */}
-            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
+            <div className="p-5 sm:p-6 space-y-4">
               <div>
-                <h3 className="font-semibold text-base sm:text-lg mb-0.5 sm:mb-1">Add Credits</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">Select a package to add credits to your account</p>
+                <h3 className="font-semibold text-base sm:text-lg">Add Credits</h3>
+                <p className="text-sm text-muted-foreground">Select a package — credits are used to unlock lead contact info</p>
               </div>
               
-              <div className="grid gap-2 sm:gap-3">
-                {CREDIT_PACKAGES.map((pkg) => (
-                  <button
-                    key={pkg.amountCents}
-                    onClick={() => handlePurchase(pkg.amountCents)}
-                    disabled={purchaseLoading !== null}
-                    className={cn(
-                      "flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all text-left",
-                      "hover:border-primary/50 hover:bg-primary/5",
-                      "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                      purchaseLoading === pkg.amountCents && "border-primary bg-primary/5"
-                    )}
-                  >
-                    <div className="flex items-center gap-2.5 sm:gap-3">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-md sm:rounded-lg bg-muted flex items-center justify-center">
-                        <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm sm:text-base text-foreground">{pkg.label}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          {pkg.amountCents / 100} credits
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      {pkg.bonus && (
-                        <Badge 
-                          variant={pkg.bonus === "Popular" ? "default" : "secondary"}
-                          className={cn(
-                            "text-xs sm:text-xs",
-                            pkg.bonus === "Popular" && "bg-primary",
-                            pkg.bonus === "Best Value" && "bg-emerald-600 text-white border-0"
-                          )}
-                        >
-                          {pkg.bonus}
-                        </Badge>
+              <div className="grid gap-2.5">
+                {CREDIT_PACKAGES.map((pkg) => {
+                  const isLoading = purchaseLoading === pkg.amountCents;
+                  const isDisabled = purchaseLoading !== null;
+                  return (
+                    <button
+                      key={pkg.amountCents}
+                      onClick={() => handlePurchase(pkg.amountCents)}
+                      disabled={isDisabled}
+                      className={cn(
+                        "flex items-center justify-between p-3.5 sm:p-4 rounded-xl border-2 transition-all text-left group",
+                        "hover:border-primary/50 hover:bg-primary/5 hover:shadow-sm",
+                        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                        "disabled:opacity-60 disabled:cursor-not-allowed",
+                        isLoading && "border-primary bg-primary/5 shadow-sm",
+                        pkg.bonus === "Most Popular" && !isDisabled && "border-primary/30 bg-primary/[0.03]"
                       )}
-                      {purchaseLoading === pkg.amountCents ? (
-                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm",
+                          pkg.bonus === "Most Popular" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                        )}>
+                          {pkg.label}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm sm:text-base text-foreground">{pkg.credits} credits</p>
+                          <p className="text-xs text-muted-foreground">{pkg.perLead}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {pkg.bonus && (
+                          <Badge 
+                            variant="secondary"
+                            className={cn(
+                              "text-xs whitespace-nowrap",
+                              pkg.bonus === "Most Popular" && "bg-primary text-primary-foreground",
+                              pkg.bonus === "Best Value" && "bg-emerald-600 text-white border-0"
+                            )}
+                          >
+                            {pkg.bonus}
+                          </Badge>
+                        )}
+                        {isLoading ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
               
-              <p className="text-xs sm:text-xs text-center text-muted-foreground pt-1 sm:pt-2">
-                Credits never expire • Secure checkout via Stripe
-              </p>
+              {/* Trust signals */}
+              <div className="flex items-center justify-center gap-4 pt-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Credits never expire
+                </span>
+                <span className="flex items-center gap-1">
+                  <CreditCard className="h-3.5 w-3.5" />
+                  Secure via Stripe
+                </span>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

@@ -1,7 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.0.2";
+const VERSION = "1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,6 +104,33 @@ Deno.serve(async (req) => {
     }
 
     logStep(requestId, "User authenticated", { userId: user.id });
+
+    // Rate limit: max 5 purchase attempts per 15 minutes per user
+    const { data: rateCheck } = await supabaseClient.rpc("check_rate_limit", {
+      p_identifier: `purchase:${user.id}`,
+      p_action_type: "credit_purchase",
+      p_max_attempts: 5,
+      p_window_minutes: 15,
+    });
+
+    if (rateCheck?.is_limited) {
+      logStep(requestId, "Rate limited", { retryAfter: rateCheck.retry_after_seconds });
+      return new Response(JSON.stringify({
+        error: "Too many purchase attempts. Please wait a few minutes.",
+        requestId,
+        _version: VERSION,
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Log the attempt
+    await supabaseClient.rpc("log_rate_limit_event", {
+      p_identifier: `purchase:${user.id}`,
+      p_action_type: "credit_purchase",
+      p_success: false,
+    });
 
     // Parse and validate request body
     let body: { amountCents?: number; facilityId?: string };
@@ -258,6 +285,13 @@ Deno.serve(async (req) => {
       });
 
       logStep(requestId, "Checkout session created", { sessionId: session.id });
+
+      // Mark rate limit attempt as successful
+      await supabaseClient.rpc("log_rate_limit_event", {
+        p_identifier: `purchase:${user.id}`,
+        p_action_type: "credit_purchase",
+        p_success: true,
+      });
     } catch (checkoutError) {
       const errorMessage = checkoutError instanceof Error ? checkoutError.message : "Unknown checkout error";
       logStep(requestId, "ERROR - Checkout session creation failed", { error: errorMessage });
