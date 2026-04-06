@@ -189,15 +189,15 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const [showSaved, setShowSaved] = useState(false);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem('provider-listing-expanded-sections');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
+  const [activeTab, setActiveTab] = useState<EditorTab>(() => {
+    const saved = localStorage.getItem('provider-listing-active-tab');
+    return (saved as EditorTab) || "photos";
   });
 
-  // Persist expanded sections to localStorage
+  // Persist active tab to localStorage
   useEffect(() => {
-    localStorage.setItem('provider-listing-expanded-sections', JSON.stringify([...expandedSections]));
-  }, [expandedSections]);
+    localStorage.setItem('provider-listing-active-tab', activeTab);
+  }, [activeTab]);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const prevFacilityIdRef = useRef<string | null>(null);
   const { toast } = useToast();
