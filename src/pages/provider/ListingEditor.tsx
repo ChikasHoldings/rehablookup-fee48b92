@@ -920,124 +920,57 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(section)) {
-        newSet.delete(section);
-      } else {
-        newSet.add(section);
-      }
-      return newSet;
-    });
-  };
-
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "approved":
-        return { 
-          label: "Live", 
-          description: "Your listing is visible to families searching for treatment",
-          icon: CheckCircle, 
-          variant: "default" as const,
-          className: "bg-green-500/10 text-green-700 border-green-200"
-        };
+        return { label: "Live", icon: CheckCircle, className: "bg-green-500/10 text-green-700 border-green-200" };
       case "pending":
-        return { 
-          label: "Under Review", 
-          description: "Our team is reviewing your listing. This usually takes 24-48 hours.",
-          icon: Clock, 
-          variant: "secondary" as const,
-          className: "bg-amber-500/10 text-amber-700 border-amber-200"
-        };
+        return { label: "Under Review", icon: Clock, className: "bg-amber-500/10 text-amber-700 border-amber-200" };
       default:
-        return { 
-          label: "Draft", 
-          description: "Complete all required fields and submit for review",
-          icon: AlertCircle, 
-          variant: "outline" as const,
-          className: "bg-muted text-muted-foreground border-border"
-        };
+        return { label: "Draft", icon: AlertCircle, className: "bg-muted text-muted-foreground border-border" };
     }
   };
 
-  // Loading state - skeleton matching final layout to prevent shift
+  // Loading skeleton
   if (isLoading || (facilityData && !facility)) {
     return (
-      <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-6xl mx-auto space-y-6 pb-8">
-          {/* Header skeleton */}
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-2">
-              <div className="h-8 w-48 rounded-lg bg-muted animate-pulse" />
-              <div className="h-4 w-72 rounded bg-muted animate-pulse" />
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
-              <div className="h-9 w-[100px] rounded-md bg-muted animate-pulse" />
-            </div>
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        <div className="h-14 rounded-xl bg-muted animate-pulse" />
+        <div className="flex gap-4">
+          <div className="hidden md:block w-48 shrink-0 space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-9 rounded-lg bg-muted animate-pulse" />
+            ))}
           </div>
-          {/* Grid skeleton */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="rounded-lg border border-border/60 bg-card p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-10 w-10 rounded-xl bg-muted animate-pulse" />
-                    <div className="space-y-1.5 flex-1">
-                      <div className="h-4 w-32 rounded bg-muted animate-pulse" />
-                      <div className="h-3 w-48 rounded bg-muted animate-pulse" />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-10 rounded-md bg-muted animate-pulse" />
-                    <div className="h-10 rounded-md bg-muted animate-pulse" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-4 order-1 lg:order-2">
-              <div className="rounded-lg border border-border/60 bg-card p-6">
-                <div className="h-4 w-36 rounded bg-muted animate-pulse mb-3" />
-                <div className="h-3 w-full rounded bg-muted animate-pulse" />
-                <div className="h-8 w-full rounded-full bg-muted animate-pulse mt-4" />
-              </div>
-            </div>
+          <div className="flex-1 space-y-4">
+            <div className="h-48 rounded-xl bg-muted animate-pulse" />
+            <div className="h-32 rounded-xl bg-muted animate-pulse" />
           </div>
         </div>
       </div>
     );
   }
 
-  // No listing state
   if (!isLoading && !facilityData && !facility) {
     return (
-      <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-md mx-auto text-center py-20">
-          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <Building2 className="h-8 w-8 text-primary" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
-          <p className="mt-2 text-muted-foreground">
-            Create your facility listing to start receiving leads from families.
-          </p>
-          <Button asChild className="mt-6" size="lg">
-            <Link to="/provider-signup">Create Your Listing</Link>
-          </Button>
+      <div className="max-w-md mx-auto text-center py-20 px-4">
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+          <Building2 className="h-8 w-8 text-primary" />
         </div>
+        <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
+        <p className="mt-2 text-muted-foreground">Create your facility listing to start receiving leads from families.</p>
+        <Button asChild className="mt-6" size="lg">
+          <Link to="/provider-signup">Create Your Listing</Link>
+        </Button>
       </div>
     );
   }
 
   if (!facility) {
     return (
-      <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
-            <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
-          </div>
-        </div>
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        <div className="h-14 rounded-xl bg-muted animate-pulse" />
+        <div className="h-48 rounded-xl bg-muted animate-pulse" />
       </div>
     );
   }
@@ -1046,957 +979,449 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const StatusIcon = statusConfig.icon;
   const descriptionLength = facility.description?.length || 0;
 
+  // Check which tabs have completion
+  const tabCompletion: Record<string, boolean> = {
+    photos: !!(facility.logo_url || (facility.gallery_urls?.length || 0) > 0),
+    basic: !!(facility.name && facility.facility_type && facility.description),
+    location: !!(facility.address && facility.city && facility.state && facility.zip_code),
+    contact: !!facility.phone,
+    program: !!(facility.gender_served || facility.bed_count),
+    services: services.length > 0,
+    insurance: insurance.length > 0,
+    ageGroups: ageGroups.length > 0,
+    trust: !!facility.year_established,
+    staff: false, // handled by StaffManagementSection
+  };
+
   return (
-    <div className="p-4 md:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto space-y-6 pb-28 lg:pb-24">
-        {/* Header */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="font-display text-2xl font-bold text-foreground">My Listing</h1>
-              <Badge className={cn("gap-1.5", statusConfig.className)}>
-                <StatusIcon className="h-3.5 w-3.5" />
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 pb-28 lg:pb-8">
+      {/* ── Top Bar ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          {facility.logo_url ? (
+            <img src={facility.logo_url} alt="" className="h-10 w-10 rounded-xl object-cover border border-border shrink-0" />
+          ) : (
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-display text-lg font-bold text-foreground truncate">{facility.name}</h1>
+              <Badge className={cn("gap-1 text-xs shrink-0", statusConfig.className)}>
+                <StatusIcon className="h-3 w-3" />
                 {statusConfig.label}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground max-w-lg">
-              {statusConfig.description}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Save status indicators */}
-            <div className="flex items-center gap-2 text-xs">
-              {isAutoSaving && (
-                <span className="text-muted-foreground flex items-center gap-1.5 animate-pulse">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Saving...
-                </span>
-              )}
-              {showSaved && !isAutoSaving && !hasChanges && (
-                <span className="text-green-600 flex items-center gap-1.5">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  All changes saved
-                </span>
-              )}
-              {hasChanges && !isAutoSaving && (
-                <span className="text-amber-600 flex items-center gap-1.5">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Unsaved changes
-                </span>
-              )}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <span>{profileCompletion.percentage}% complete</span>
+              <span>·</span>
+              <span>{facility.city}, {facility.state}</span>
             </div>
-            
-            {facility.slug && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                asChild
-                className="gap-2"
-              >
-                <a 
-                  href={`/center/${facility.slug}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  <Eye className="h-4 w-4" />
-                  <span className="hidden sm:inline">View Public Profile</span>
-                  <span className="sm:hidden">Preview</span>
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            )}
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving || isAutoSaving || !hasChanges} 
-              size="sm"
-              className="gap-2 min-w-[100px]"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save
-                </>
-              )}
-            </Button>
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column - Main Forms */}
-          <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
-            {/* Logo & Photos */}
-            <Collapsible open={expandedSections.has("photos")} onOpenChange={() => toggleSection("photos")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-purple-500/5 to-transparent cursor-pointer hover:bg-purple-500/10 transition-colors">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Save indicator */}
+          <div className="text-xs min-w-[80px] text-right">
+            {isAutoSaving && (
+              <span className="text-muted-foreground flex items-center gap-1 justify-end animate-pulse">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Saving
+              </span>
+            )}
+            {showSaved && !isAutoSaving && !hasChanges && (
+              <span className="text-green-600 flex items-center gap-1 justify-end">
+                <CheckCircle className="h-3 w-3" />
+                Saved
+              </span>
+            )}
+            {hasChanges && !isAutoSaving && (
+              <span className="text-amber-600 flex items-center gap-1 justify-end">
+                <AlertCircle className="h-3 w-3" />
+                Unsaved
+              </span>
+            )}
+          </div>
+          {facility.slug && (
+            <Button variant="outline" size="sm" asChild className="gap-1.5 hidden sm:flex">
+              <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
+                <Eye className="h-3.5 w-3.5" />
+                Preview
+                <ArrowUpRight className="h-3 w-3" />
+              </a>
+            </Button>
+          )}
+          <Button onClick={handleSave} disabled={isSaving || isAutoSaving || !hasChanges} size="sm" className="gap-1.5">
+            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Save
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Profile Progress Bar ── */}
+      {profileCompletion.percentage < 100 && (
+        <div className="mb-6 p-4 rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Profile Strength</span>
+            </div>
+            <span className="text-sm font-bold text-primary">{profileCompletion.percentage}%</span>
+          </div>
+          <Progress value={profileCompletion.percentage} className="h-2" />
+          <div className="flex flex-wrap gap-2 mt-3">
+            {profileCompletion.items.filter(i => !i.completed).map(item => (
+              <span key={item.key} className="text-xs px-2 py-1 rounded-full border border-dashed border-border text-muted-foreground">
+                {item.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile Tab Scroll ── */}
+      <div className="md:hidden mb-4 -mx-3 px-3 overflow-x-auto scrollbar-none">
+        <div className="flex gap-1 min-w-max pb-2">
+          {EDITOR_TABS.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            const isComplete = tabCompletion[tab.id];
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+                {isComplete && !isActive && (
+                  <CircleCheck className="h-3 w-3 text-green-600" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Desktop Layout: Sidebar Tabs + Content ── */}
+      <div className="flex gap-6">
+        {/* Desktop sidebar nav */}
+        <nav className="hidden md:flex flex-col w-44 shrink-0 space-y-0.5 sticky top-6 self-start">
+          {EDITOR_TABS.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            const isComplete = tabCompletion[tab.id];
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
+                <span className="truncate flex-1">{tab.label}</span>
+                {isComplete && (
+                  <CircleCheck className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-green-600")} />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Content area – fixed min height prevents shift */}
+        <div className="flex-1 min-w-0 min-h-[500px]">
+          <Card className="border-border/60 shadow-sm">
+            <CardContent className="p-4 sm:p-6">
+              {/* ═══ PHOTOS TAB ═══ */}
+              {activeTab === "photos" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground mb-1">Logo & Photos</h2>
+                    <p className="text-sm text-muted-foreground">Showcase your facility with professional images</p>
+                  </div>
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={ImageIcon}
-                        iconColor="bg-purple-500/10 text-purple-600"
-                        title="Logo & Photos"
-                        description="Showcase your facility with professional images"
-                        badge={
-                          (facility.logo_url || (facility.gallery_urls?.length || 0) > 0) && (
-                            <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-700 border-green-200">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Added
-                            </Badge>
-                          )
-                        }
-                      />
-                      {expandedSections.has("photos") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
+                      <Label className="text-sm font-medium">Facility Logo</Label>
+                      {facility.logo_url && <Badge variant="outline" className="text-xs text-green-600 border-green-200">Uploaded</Badge>}
                     </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-6 pt-2">
-                    {/* Logo Upload */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">Facility Logo</Label>
-                        {facility.logo_url && (
-                          <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                            Uploaded
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Your logo appears on search results and your public profile. Use a square image for best results.
-                      </p>
-                      <FacilityImageUpload
-                        type="logo"
-                        currentImages={facility.logo_url ? [facility.logo_url] : []}
-                        userId={facility.user_id}
-                        facilityId={facility.id}
-                        onImagesChange={handleLogoChange}
-                      />
-                    </div>
-
-                    <Separator className="my-4" />
-
-                    {/* Gallery Upload */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">Facility Gallery</Label>
-                        <Badge variant="outline" className="text-xs">
-                          {facility.gallery_urls?.length || 0} / {galleryLimit} photos
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Upload up to {galleryLimit} photos. The first image will be your primary gallery photo.
-                      </p>
-                      <FacilityImageUpload
-                        type="gallery"
-                        currentImages={facility.gallery_urls || []}
-                        userId={facility.user_id}
-                        facilityId={facility.id}
-                        onImagesChange={handleGalleryChange}
-                        maxImages={galleryLimit}
-                      />
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Basic Information */}
-            <Collapsible open={expandedSections.has("basic")} onOpenChange={() => toggleSection("basic")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent cursor-pointer hover:bg-primary/10 transition-colors">
+                    <p className="text-xs text-muted-foreground">Square image recommended. Appears on search results.</p>
+                    <FacilityImageUpload type="logo" currentImages={facility.logo_url ? [facility.logo_url] : []} userId={facility.user_id} facilityId={facility.id} onImagesChange={handleLogoChange} />
+                  </div>
+                  <Separator />
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={Building2}
-                        iconColor="bg-primary/10 text-primary"
-                        title="Basic Information"
-                        description="Essential details about your facility"
-                      />
-                      {expandedSections.has("basic") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
+                      <Label className="text-sm font-medium">Gallery</Label>
+                      <Badge variant="outline" className="text-xs">{facility.gallery_urls?.length || 0} / {galleryLimit}</Badge>
                     </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-5 pt-2">
-                    <FormField 
-                      label="Facility Name" 
-                      required 
-                      error={fieldErrors.name}
-                      touched={touchedFields.has("name")}
-                    >
-                      <Input
-                        id="name"
-                        value={facility.name}
-                        onChange={(e) => updateField("name", e.target.value)}
-                        onBlur={(e) => handleFieldBlur("name", e.target.value)}
-                        className={cn(
-                          "h-11",
-                          fieldErrors.name && touchedFields.has("name") && "border-destructive focus-visible:ring-destructive"
-                        )}
-                        placeholder="Enter your facility name"
-                      />
+                    <p className="text-xs text-muted-foreground">Upload up to {galleryLimit} photos. First image is primary.</p>
+                    <FacilityImageUpload type="gallery" currentImages={facility.gallery_urls || []} userId={facility.user_id} facilityId={facility.id} onImagesChange={handleGalleryChange} maxImages={galleryLimit} />
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ BASIC INFO TAB ═══ */}
+              {activeTab === "basic" && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground mb-1">Basic Information</h2>
+                    <p className="text-sm text-muted-foreground">Essential details about your facility</p>
+                  </div>
+                  <FormField label="Facility Name" required error={fieldErrors.name} touched={touchedFields.has("name")}>
+                    <Input value={facility.name} onChange={(e) => updateField("name", e.target.value)} onBlur={(e) => handleFieldBlur("name", e.target.value)} className={cn("h-11", fieldErrors.name && touchedFields.has("name") && "border-destructive")} placeholder="Enter your facility name" />
+                  </FormField>
+                  <FormField label="Facility Type" required error={fieldErrors.facility_type} touched={touchedFields.has("facility_type")}>
+                    <Select value={facility.facility_type} onValueChange={(v) => { updateField("facility_type", v); handleFieldBlur("facility_type", v); }}>
+                      <SelectTrigger className={cn("h-11", fieldErrors.facility_type && touchedFields.has("facility_type") && "border-destructive")}><SelectValue placeholder="Select type" /></SelectTrigger>
+                      <SelectContent className="bg-card">{FACILITY_TYPE_VALUES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </FormField>
+                  <FormField label="Description" hint="Displayed on your public profile.">
+                    <div className="relative">
+                      <Textarea value={facility.description || ""} onChange={(e) => { if (e.target.value.length <= DESCRIPTION_MAX_LENGTH) updateField("description", e.target.value); }} rows={5} placeholder="Describe your facility..." className="resize-none text-sm pr-16" />
+                      <span className={cn("absolute bottom-2 right-3 text-xs", descriptionLength > DESCRIPTION_MAX_LENGTH * 0.9 ? "text-amber-600" : "text-muted-foreground")}>{descriptionLength}/{DESCRIPTION_MAX_LENGTH}</span>
+                    </div>
+                  </FormField>
+                </div>
+              )}
+
+              {/* ═══ LOCATION TAB ═══ */}
+              {activeTab === "location" && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground mb-1">Location</h2>
+                    <p className="text-sm text-muted-foreground">Where families can find you</p>
+                  </div>
+                  <FormField label="Street Address" required error={fieldErrors.address} touched={touchedFields.has("address")}>
+                    <Input value={facility.address} onChange={(e) => updateField("address", e.target.value)} onBlur={(e) => handleFieldBlur("address", e.target.value)} className={cn("h-11", fieldErrors.address && touchedFields.has("address") && "border-destructive")} placeholder="123 Main Street" />
+                  </FormField>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <FormField label="City" required error={fieldErrors.city} touched={touchedFields.has("city")}>
+                      <Input value={facility.city} onChange={(e) => updateField("city", e.target.value)} onBlur={(e) => handleFieldBlur("city", e.target.value)} className={cn("h-11", fieldErrors.city && touchedFields.has("city") && "border-destructive")} placeholder="City" />
                     </FormField>
-                    
-                    <FormField 
-                      label="Facility Type" 
-                      required
-                      error={fieldErrors.facility_type}
-                      touched={touchedFields.has("facility_type")}
-                    >
-                      <Select
-                        value={facility.facility_type}
-                        onValueChange={(value) => {
-                          updateField("facility_type", value);
-                          handleFieldBlur("facility_type", value);
-                        }}
-                      >
-                        <SelectTrigger className={cn(
-                          "h-11",
-                          fieldErrors.facility_type && touchedFields.has("facility_type") && "border-destructive focus-visible:ring-destructive"
-                        )}>
-                          <SelectValue placeholder="Select facility type" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card">
-                          {FACILITY_TYPE_VALUES.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
+                    <FormField label="State" required error={fieldErrors.state} touched={touchedFields.has("state")}>
+                      <Select value={facility.state} onValueChange={(v) => { updateField("state", v); handleFieldBlur("state", v); }}>
+                        <SelectTrigger className={cn("h-11", fieldErrors.state && touchedFields.has("state") && "border-destructive")}><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent className="bg-card max-h-[200px]">{US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                       </Select>
                     </FormField>
+                    <FormField label="ZIP Code" required error={fieldErrors.zip_code} touched={touchedFields.has("zip_code")}>
+                      <Input value={facility.zip_code} onChange={(e) => updateField("zip_code", e.target.value)} onBlur={(e) => handleFieldBlur("zip_code", e.target.value)} className={cn("h-11", fieldErrors.zip_code && touchedFields.has("zip_code") && "border-destructive")} placeholder="12345" />
+                    </FormField>
+                  </div>
+                </div>
+              )}
 
-                    <FormField 
-                      label="Description"
-                      hint="This will be displayed prominently on your public profile."
-                    >
+              {/* ═══ CONTACT TAB ═══ */}
+              {activeTab === "contact" && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground mb-1">Contact Information</h2>
+                    <p className="text-sm text-muted-foreground">How families can reach you</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField label="Phone Number" required error={fieldErrors.phone} touched={touchedFields.has("phone")}>
                       <div className="relative">
-                        <Textarea
-                          id="description"
-                          value={facility.description || ""}
-                          onChange={(e) => {
-                            if (e.target.value.length <= DESCRIPTION_MAX_LENGTH) {
-                              updateField("description", e.target.value);
-                            }
-                          }}
-                          rows={5}
-                          placeholder="Describe your facility, treatment approach, and what makes you unique..."
-                          className="resize-none text-sm pr-16"
-                        />
-                        <span className={cn(
-                          "absolute bottom-2 right-3 text-xs",
-                          descriptionLength > DESCRIPTION_MAX_LENGTH * 0.9 ? "text-amber-600" : "text-muted-foreground"
-                        )}>
-                          {descriptionLength}/{DESCRIPTION_MAX_LENGTH}
-                        </span>
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input value={facility.phone} onChange={(e) => updateField("phone", e.target.value)} onBlur={(e) => handleFieldBlur("phone", e.target.value)} className={cn("h-11 pl-10", fieldErrors.phone && touchedFields.has("phone") && "border-destructive")} placeholder="(555) 123-4567" />
                       </div>
                     </FormField>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Location */}
-            <Collapsible open={expandedSections.has("location")} onOpenChange={() => toggleSection("location")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-blue-500/5 to-transparent cursor-pointer hover:bg-blue-500/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={MapPin}
-                        iconColor="bg-blue-500/10 text-blue-600"
-                        title="Location"
-                        description="Where families can find you"
-                      />
-                      {expandedSections.has("location") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-5 pt-2">
-                    <FormField 
-                      label="Street Address" 
-                      required
-                      error={fieldErrors.address}
-                      touched={touchedFields.has("address")}
-                    >
-                      <Input
-                        id="address"
-                        value={facility.address}
-                        onChange={(e) => updateField("address", e.target.value)}
-                        onBlur={(e) => handleFieldBlur("address", e.target.value)}
-                        className={cn(
-                          "h-11",
-                          fieldErrors.address && touchedFields.has("address") && "border-destructive focus-visible:ring-destructive"
-                        )}
-                        placeholder="123 Main Street"
-                      />
-                    </FormField>
-
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <FormField 
-                        label="City" 
-                        required
-                        error={fieldErrors.city}
-                        touched={touchedFields.has("city")}
-                      >
-                        <Input
-                          id="city"
-                          value={facility.city}
-                          onChange={(e) => updateField("city", e.target.value)}
-                          onBlur={(e) => handleFieldBlur("city", e.target.value)}
-                          className={cn(
-                            "h-11",
-                            fieldErrors.city && touchedFields.has("city") && "border-destructive focus-visible:ring-destructive"
-                          )}
-                          placeholder="City"
-                        />
-                      </FormField>
-                      
-                      <FormField 
-                        label="State" 
-                        required
-                        error={fieldErrors.state}
-                        touched={touchedFields.has("state")}
-                      >
-                        <Select
-                          value={facility.state}
-                          onValueChange={(value) => {
-                            updateField("state", value);
-                            handleFieldBlur("state", value);
-                          }}
-                        >
-                          <SelectTrigger className={cn(
-                            "h-11",
-                            fieldErrors.state && touchedFields.has("state") && "border-destructive focus-visible:ring-destructive"
-                          )}>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card max-h-[200px]">
-                            {US_STATES.map((state) => (
-                              <SelectItem key={state} value={state}>
-                                {state}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormField>
-                      
-                      <FormField 
-                        label="ZIP Code" 
-                        required
-                        error={fieldErrors.zip_code}
-                        touched={touchedFields.has("zip_code")}
-                      >
-                        <Input
-                          id="zip"
-                          value={facility.zip_code}
-                          onChange={(e) => updateField("zip_code", e.target.value)}
-                          onBlur={(e) => handleFieldBlur("zip_code", e.target.value)}
-                          className={cn(
-                            "h-11",
-                            fieldErrors.zip_code && touchedFields.has("zip_code") && "border-destructive focus-visible:ring-destructive"
-                          )}
-                          placeholder="12345"
-                        />
-                      </FormField>
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Contact Information */}
-            <Collapsible open={expandedSections.has("contact")} onOpenChange={() => toggleSection("contact")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-green-500/5 to-transparent cursor-pointer hover:bg-green-500/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={Phone}
-                        iconColor="bg-green-500/10 text-green-600"
-                        title="Contact Information"
-                        description="How families can reach you"
-                      />
-                      {expandedSections.has("contact") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-5 pt-2">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <FormField 
-                        label="Phone Number" 
-                        required
-                        error={fieldErrors.phone}
-                        touched={touchedFields.has("phone")}
-                      >
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="phone"
-                            value={facility.phone}
-                            onChange={(e) => updateField("phone", e.target.value)}
-                            onBlur={(e) => handleFieldBlur("phone", e.target.value)}
-                            className={cn(
-                              "h-11 pl-10",
-                              fieldErrors.phone && touchedFields.has("phone") && "border-destructive focus-visible:ring-destructive"
-                            )}
-                            placeholder="(555) 123-4567"
-                          />
-                        </div>
-                      </FormField>
-                      
-                      <FormField 
-                        label="Email Address"
-                        error={fieldErrors.email}
-                        touched={touchedFields.has("email")}
-                      >
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            type="email"
-                            value={facility.email || ""}
-                            onChange={(e) => updateField("email", e.target.value)}
-                            onBlur={(e) => handleFieldBlur("email", e.target.value)}
-                            className={cn(
-                              "h-11 pl-10",
-                              fieldErrors.email && touchedFields.has("email") && "border-destructive focus-visible:ring-destructive"
-                            )}
-                            placeholder="contact@facility.com"
-                          />
-                        </div>
-                      </FormField>
-                    </div>
-
-                    <FormField 
-                      label="Website"
-                      error={fieldErrors.website}
-                      touched={touchedFields.has("website")}
-                      hint="Include the full URL starting with https://"
-                    >
+                    <FormField label="Email Address" error={fieldErrors.email} touched={touchedFields.has("email")}>
                       <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="website"
-                          type="url"
-                          value={facility.website || ""}
-                          onChange={(e) => updateField("website", e.target.value)}
-                          onBlur={(e) => handleFieldBlur("website", e.target.value)}
-                          className={cn(
-                            "h-11 pl-10",
-                            fieldErrors.website && touchedFields.has("website") && "border-destructive focus-visible:ring-destructive"
-                          )}
-                          placeholder="https://www.yourfacility.com"
-                        />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input type="email" value={facility.email || ""} onChange={(e) => updateField("email", e.target.value)} onBlur={(e) => handleFieldBlur("email", e.target.value)} className={cn("h-11 pl-10", fieldErrors.email && touchedFields.has("email") && "border-destructive")} placeholder="contact@facility.com" />
                       </div>
                     </FormField>
-                    
-                    {/* Reply Email Section */}
-                    <div className="p-4 rounded-xl border bg-muted/30 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label className="text-sm font-medium">Reply Email</Label>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-[250px]">
-                                <p className="text-xs">
-                                  This is the email address where lead replies will be sent. If left blank, your account email will be used.
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        {(!facility.reply_email || 
-                          facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim() ||
-                          facility.reply_email_verified) && (
-                          <Badge variant="outline" className="gap-1 text-green-700 border-green-200 bg-green-500/10 text-xs">
-                            <ShieldCheck className="h-3 w-3" />
-                            Verified
-                          </Badge>
-                        )}
+                  </div>
+                  <FormField label="Website" error={fieldErrors.website} touched={touchedFields.has("website")} hint="Include full URL starting with https://">
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input type="url" value={facility.website || ""} onChange={(e) => updateField("website", e.target.value)} onBlur={(e) => handleFieldBlur("website", e.target.value)} className={cn("h-11 pl-10", fieldErrors.website && touchedFields.has("website") && "border-destructive")} placeholder="https://www.yourfacility.com" />
+                    </div>
+                  </FormField>
+
+                  {/* Reply Email */}
+                  <div className="p-4 rounded-xl border bg-muted/30 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium">Reply Email</Label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild><Info className="h-4 w-4 text-muted-foreground cursor-help" /></TooltipTrigger>
+                            <TooltipContent className="max-w-[250px]"><p className="text-xs">This is where lead replies will be sent. If blank, your account email is used.</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
-                      
-                      {!facility.reply_email && profileEmail && (
-                        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                          <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                          <p className="text-xs text-muted-foreground">
-                            Using your account email: <span className="font-medium text-foreground">{profileEmail}</span>
-                          </p>
-                        </div>
+                      {(!facility.reply_email || facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim() || facility.reply_email_verified) && (
+                        <Badge variant="outline" className="gap-1 text-green-700 border-green-200 bg-green-500/10 text-xs"><ShieldCheck className="h-3 w-3" />Verified</Badge>
                       )}
-                      
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="reply_email"
-                            type="email"
-                            value={facility.reply_email || ""}
-                            onChange={(e) => {
-                              updateField("reply_email", e.target.value);
-                              if (e.target.value !== facilityData?.reply_email) {
-                                setCodeSent(false);
-                                setVerificationCode("");
-                                setVerificationError(null);
-                              }
-                            }}
-                            onBlur={(e) => handleFieldBlur("reply_email", e.target.value)}
-                            className={cn(
-                              "h-11 pl-10",
-                              fieldErrors.reply_email && touchedFields.has("reply_email") && "border-destructive focus-visible:ring-destructive"
-                            )}
-                            placeholder={profileEmail || "replies@facility.com"}
-                          />
-                        </div>
-                        {needsReplyEmailVerification && !fieldErrors.reply_email && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleSendVerificationCode}
-                            disabled={isSendingCode}
-                            className="h-11 gap-2"
-                          >
-                            {isSendingCode ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Sending...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="h-4 w-4" />
-                                {codeSent ? "Resend" : "Verify"}
-                              </>
-                            )}
+                    </div>
+                    {!facility.reply_email && profileEmail && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                        <p className="text-xs text-muted-foreground">Using your account email: <span className="font-medium text-foreground">{profileEmail}</span></p>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input type="email" value={facility.reply_email || ""} onChange={(e) => { updateField("reply_email", e.target.value); if (e.target.value !== facilityData?.reply_email) { setCodeSent(false); setVerificationCode(""); setVerificationError(null); } }} onBlur={(e) => handleFieldBlur("reply_email", e.target.value)} className={cn("h-11 pl-10", fieldErrors.reply_email && touchedFields.has("reply_email") && "border-destructive")} placeholder={profileEmail || "replies@facility.com"} />
+                      </div>
+                      {needsReplyEmailVerification && !fieldErrors.reply_email && (
+                        <Button type="button" variant="outline" onClick={handleSendVerificationCode} disabled={isSendingCode} className="h-11 gap-2">
+                          {isSendingCode ? <><Loader2 className="h-4 w-4 animate-spin" />Sending...</> : <><Send className="h-4 w-4" />{codeSent ? "Resend" : "Verify"}</>}
+                        </Button>
+                      )}
+                    </div>
+                    {fieldErrors.reply_email && touchedFields.has("reply_email") && (
+                      <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" />{fieldErrors.reply_email}</p>
+                    )}
+                    {codeSent && needsReplyEmailVerification && (
+                      <div className="space-y-3 pt-3 border-t">
+                        <Label className="text-sm font-medium">Enter verification code</Label>
+                        <div className="flex gap-2">
+                          <Input type="text" inputMode="numeric" maxLength={6} value={verificationCode} onChange={(e) => { setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setVerificationError(null); }} placeholder="000000" className="h-11 text-center font-mono text-lg tracking-widest max-w-[140px]" />
+                          <Button type="button" onClick={handleVerifyCode} disabled={isVerifying || verificationCode.length !== 6} className="h-11 gap-2">
+                            {isVerifying ? <><Loader2 className="h-4 w-4 animate-spin" />Verifying...</> : <><CheckCircle className="h-4 w-4" />Verify</>}
                           </Button>
-                        )}
-                      </div>
-
-                      {fieldErrors.reply_email && touchedFields.has("reply_email") && (
-                        <p className="text-xs text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {fieldErrors.reply_email}
-                        </p>
-                      )}
-
-                      {codeSent && needsReplyEmailVerification && (
-                        <div className="space-y-3 pt-3 border-t">
-                          <Label className="text-sm font-medium">Enter verification code</Label>
-                          <div className="flex gap-2">
-                            <Input
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={6}
-                              value={verificationCode}
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                                setVerificationCode(value);
-                                setVerificationError(null);
-                              }}
-                              placeholder="000000"
-                              className="h-11 text-center font-mono text-lg tracking-widest max-w-[140px]"
-                            />
-                            <Button
-                              type="button"
-                              onClick={handleVerifyCode}
-                              disabled={isVerifying || verificationCode.length !== 6}
-                              className="h-11 gap-2"
-                            >
-                              {isVerifying ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Verifying...
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle className="h-4 w-4" />
-                                  Verify
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                          {verificationError && (
-                            <p className="text-xs text-destructive">{verificationError}</p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            Code sent to {facility.reply_email}. Check your inbox and spam folder.
-                          </p>
                         </div>
-                      )}
-
-                      <p className="text-xs text-muted-foreground">
-                        {!facility.reply_email 
-                          ? "Leave blank to use your account email for lead replies."
-                          : facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim()
-                            ? "Using your account email for lead replies."
-                            : facility.reply_email_verified 
-                              ? "Lead replies will be sent to this verified custom email."
-                              : "Verify this email to receive lead replies here."}
-                      </p>
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Program Details */}
-            <Collapsible open={expandedSections.has("program")} onOpenChange={() => toggleSection("program")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-indigo-500/5 to-transparent cursor-pointer hover:bg-indigo-500/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={Users}
-                        iconColor="bg-indigo-500/10 text-indigo-600"
-                        title="Program Details"
-                        description="Treatment capacity and demographics"
-                      />
-                      {expandedSections.has("program") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="pt-2">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <FormField label="Gender Served">
-                        <Select
-                          value={facility.gender_served || "all"}
-                          onValueChange={(value) => updateField("gender_served", value)}
-                        >
-                          <SelectTrigger className="h-11">
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card">
-                            {GENDER_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormField>
-                      
-                      <FormField 
-                        label="Bed Count / Capacity"
-                        hint="How many clients can you serve at once?"
-                      >
-                        <div className="relative">
-                          <Bed className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="beds"
-                            value={facility.bed_count || ""}
-                            onChange={(e) => updateField("bed_count", e.target.value)}
-                            placeholder="e.g., 24"
-                            className="h-11 pl-10"
-                          />
-                        </div>
-                      </FormField>
-                    </div>
-
-                    {/* International Patients Toggle */}
-                    <div className="mt-4 p-4 rounded-lg border bg-muted/30">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-sm font-medium flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-primary" />
-                            Accept International Patients
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            Enable this if your facility accepts patients from outside the United States
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={facility.accepts_international_patients || false}
-                          onClick={() => updateField("accepts_international_patients", !facility.accepts_international_patients)}
-                          className={cn(
-                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                            facility.accepts_international_patients ? "bg-primary" : "bg-muted-foreground/30"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
-                              facility.accepts_international_patients ? "translate-x-6" : "translate-x-1"
-                            )}
-                          />
-                        </button>
-                      </div>
-                      {facility.accepts_international_patients && (
-                        <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10">
-                          <p className="text-xs text-primary">
-                            Your facility will be visible to international clients seeking treatment in the US through our placement service.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Services Offered */}
-            <Collapsible open={expandedSections.has("services")} onOpenChange={() => toggleSection("services")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-teal-500/5 to-transparent cursor-pointer hover:bg-teal-500/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={Stethoscope}
-                        iconColor="bg-teal-500/10 text-teal-600"
-                        title="Services Offered"
-                        description="Treatment programs and therapies available"
-                        badge={
-                          services.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {services.length} service{services.length !== 1 ? "s" : ""}
-                            </Badge>
-                          )
-                        }
-                      />
-                      {expandedSections.has("services") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-4 pt-2">
-                    {services.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {services.map((service) => (
-                          <TagChip
-                            key={service.id}
-                            label={service.service_name}
-                            onRemove={() => handleRemoveService(service.id)}
-                            variant="service"
-                          />
-                        ))}
+                        {verificationError && <p className="text-xs text-destructive">{verificationError}</p>}
+                        <p className="text-xs text-muted-foreground">Code sent to {facility.reply_email}. Check inbox and spam.</p>
                       </div>
                     )}
+                    <p className="text-xs text-muted-foreground">
+                      {!facility.reply_email ? "Leave blank to use your account email." : facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim() ? "Using your account email." : facility.reply_email_verified ? "Lead replies go to this verified email." : "Verify this email to receive replies here."}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-                    <MultiSelectDropdown
-                      options={[...TREATMENT_SERVICES]}
-                      selected={services.map(s => s.service_name)}
-                      onChange={handleServicesChange}
-                      placeholder="Select services to add..."
-                    />
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Insurance Accepted */}
-            <Collapsible open={expandedSections.has("insurance")} onOpenChange={() => toggleSection("insurance")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-amber-500/5 to-transparent cursor-pointer hover:bg-amber-500/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={CreditCard}
-                        iconColor="bg-amber-500/10 text-amber-600"
-                        title="Insurance Accepted"
-                        description="Payment options and insurance providers"
-                        badge={
-                          insurance.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {insurance.length} provider{insurance.length !== 1 ? "s" : ""}
-                            </Badge>
-                          )
-                        }
-                      />
-                      {expandedSections.has("insurance") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-4 pt-2">
-                    {insurance.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {insurance.map((ins) => (
-                          <TagChip
-                            key={ins.id}
-                            label={ins.insurance_name}
-                            onRemove={() => handleRemoveInsurance(ins.id)}
-                            variant="insurance"
-                          />
-                        ))}
+              {/* ═══ PROGRAM TAB ═══ */}
+              {activeTab === "program" && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground mb-1">Program Details</h2>
+                    <p className="text-sm text-muted-foreground">Treatment capacity and demographics</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField label="Gender Served">
+                      <Select value={facility.gender_served || "all"} onValueChange={(v) => updateField("gender_served", v)}>
+                        <SelectTrigger className="h-11"><SelectValue placeholder="Select gender" /></SelectTrigger>
+                        <SelectContent className="bg-card">{GENDER_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </FormField>
+                    <FormField label="Bed Count / Capacity" hint="How many clients can you serve at once?">
+                      <div className="relative">
+                        <Bed className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input value={facility.bed_count || ""} onChange={(e) => updateField("bed_count", e.target.value)} placeholder="e.g., 24" className="h-11 pl-10" />
                       </div>
-                    )}
-
-                    <MultiSelectDropdown
-                      options={[...INSURANCE_PROVIDERS]}
-                      selected={insurance.map(i => i.insurance_name)}
-                      onChange={handleInsuranceChange}
-                      placeholder="Select insurance providers to add..."
-                    />
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Age Groups Served */}
-            <Collapsible open={expandedSections.has("ageGroups")} onOpenChange={() => toggleSection("ageGroups")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-violet-500/5 to-transparent cursor-pointer hover:bg-violet-500/10 transition-colors">
+                    </FormField>
+                  </div>
+                  <div className="p-4 rounded-lg border bg-muted/30">
                     <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={Users}
-                        iconColor="bg-violet-500/10 text-violet-600"
-                        title="Age Groups Served"
-                        description="Specify which age demographics you treat"
-                        badge={
-                          ageGroups.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {ageGroups.length} group{ageGroups.length !== 1 ? "s" : ""}
-                            </Badge>
-                          )
-                        }
-                      />
-                      {expandedSections.has("ageGroups") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-4 pt-2">
-                    {ageGroups.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {ageGroups.map((ag) => (
-                          <TagChip
-                            key={ag.id}
-                            label={ag.age_group}
-                            onRemove={() => handleRemoveAgeGroup(ag.id)}
-                            variant="default"
-                          />
-                        ))}
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Accept International Patients</Label>
+                        <p className="text-xs text-muted-foreground">Enable if you accept patients from outside the US</p>
                       </div>
-                    )}
-
-                    <MultiSelectDropdown
-                      options={[...AGE_GROUPS]}
-                      selected={ageGroups.map(ag => ag.age_group)}
-                      onChange={handleAgeGroupsChange}
-                      placeholder="Select age groups to add..."
-                    />
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
-            {/* Trust & Credentials */}
-            <Collapsible open={expandedSections.has("trust")} onOpenChange={() => toggleSection("trust")}>
-              <Card className="border-border/60 shadow-sm">
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-4 bg-gradient-to-r from-emerald-500/5 to-transparent cursor-pointer hover:bg-emerald-500/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <SectionHeader
-                        icon={ShieldCheck}
-                        iconColor="bg-emerald-500/10 text-emerald-600"
-                        title="Trust & Credentials"
-                        description="Accreditations and certifications to build trust"
-                      />
-                      {expandedSections.has("trust") ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
+                      <button type="button" role="switch" aria-checked={facility.accepts_international_patients || false} onClick={() => updateField("accepts_international_patients", !facility.accepts_international_patients)} className={cn("relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", facility.accepts_international_patients ? "bg-primary" : "bg-muted-foreground/30")}>
+                        <span className={cn("inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform", facility.accepts_international_patients ? "translate-x-6" : "translate-x-1")} />
+                      </button>
                     </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="pt-2">
-                    <ProviderTrustForm
-                      facilityId={facility.id}
-                      userId={facility.user_id}
-                      yearEstablished={facility.year_established}
-                      onYearChange={(year) => updateField("year_established", year)}
-                      isEmbedded
-                    />
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
+                    {facility.accepts_international_patients && (
+                      <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your facility will be visible to international clients.</p></div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-            {/* Our Team / Staff */}
-            <StaffManagementSection
-              facilityId={facility.id}
-              isExpanded={expandedSections.has("staff")}
-              onToggle={() => toggleSection("staff")}
-            />
-          </div>
+              {/* ═══ SERVICES TAB ═══ */}
+              {activeTab === "services" && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground mb-1">Services Offered</h2>
+                      <p className="text-sm text-muted-foreground">Treatment programs and therapies</p>
+                    </div>
+                    {services.length > 0 && <Badge variant="secondary" className="text-xs">{services.length} service{services.length !== 1 ? "s" : ""}</Badge>}
+                  </div>
+                  {services.length > 0 && (
+                    <div className="flex flex-wrap gap-2">{services.map(s => <TagChip key={s.id} label={s.service_name} onRemove={() => handleRemoveService(s.id)} variant="service" />)}</div>
+                  )}
+                  <MultiSelectDropdown options={[...TREATMENT_SERVICES]} selected={services.map(s => s.service_name)} onChange={handleServicesChange} placeholder="Select services to add..." />
+                </div>
+              )}
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-4 order-1 lg:order-2 lg:sticky lg:top-6 lg:self-start">
-            {/* Profile Completion Card */}
-            <ListingProfileCompletion
-              percentage={profileCompletion.percentage}
-              items={profileCompletion.items}
-            />
+              {/* ═══ INSURANCE TAB ═══ */}
+              {activeTab === "insurance" && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground mb-1">Insurance Accepted</h2>
+                      <p className="text-sm text-muted-foreground">Payment options and insurance providers</p>
+                    </div>
+                    {insurance.length > 0 && <Badge variant="secondary" className="text-xs">{insurance.length} provider{insurance.length !== 1 ? "s" : ""}</Badge>}
+                  </div>
+                  {insurance.length > 0 && (
+                    <div className="flex flex-wrap gap-2">{insurance.map(ins => <TagChip key={ins.id} label={ins.insurance_name} onRemove={() => handleRemoveInsurance(ins.id)} variant="insurance" />)}</div>
+                  )}
+                  <MultiSelectDropdown options={[...INSURANCE_PROVIDERS]} selected={insurance.map(i => i.insurance_name)} onChange={handleInsuranceChange} placeholder="Select insurance providers to add..." />
+                </div>
+              )}
 
-            {/* Status Card */}
-            <ListingStatusCard
-              status={facility.status}
-              facilityType={facility.facility_type}
-              city={facility.city}
-              state={facility.state}
-              slug={facility.slug}
-            />
+              {/* ═══ AGE GROUPS TAB ═══ */}
+              {activeTab === "ageGroups" && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground mb-1">Age Groups Served</h2>
+                      <p className="text-sm text-muted-foreground">Specify which age demographics you treat</p>
+                    </div>
+                    {ageGroups.length > 0 && <Badge variant="secondary" className="text-xs">{ageGroups.length} group{ageGroups.length !== 1 ? "s" : ""}</Badge>}
+                  </div>
+                  {ageGroups.length > 0 && (
+                    <div className="flex flex-wrap gap-2">{ageGroups.map(ag => <TagChip key={ag.id} label={ag.age_group} onRemove={() => handleRemoveAgeGroup(ag.id)} variant="default" />)}</div>
+                  )}
+                  <MultiSelectDropdown options={[...AGE_GROUPS]} selected={ageGroups.map(ag => ag.age_group)} onChange={handleAgeGroupsChange} placeholder="Select age groups to add..." />
+                </div>
+              )}
 
-            {/* Tips Card */}
-            <ListingTipsCard />
-          </div>
+              {/* ═══ TRUST TAB ═══ */}
+              {activeTab === "trust" && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground mb-1">Trust & Credentials</h2>
+                    <p className="text-sm text-muted-foreground">Accreditations and certifications</p>
+                  </div>
+                  <ProviderTrustForm facilityId={facility.id} userId={facility.user_id} yearEstablished={facility.year_established} onYearChange={(year) => updateField("year_established", year)} isEmbedded />
+                </div>
+              )}
+
+              {/* ═══ STAFF TAB ═══ */}
+              {activeTab === "staff" && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground mb-1">Our Team</h2>
+                    <p className="text-sm text-muted-foreground">Add staff and team members to your profile</p>
+                  </div>
+                  <StaffManagementSection facilityId={facility.id} isExpanded={true} onToggle={() => {}} />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Floating Save Bar */}
-        <ListingFloatingSaveBar
-          hasChanges={hasChanges}
-          isSaving={isSaving}
-          isAutoSaving={isAutoSaving}
-          onSave={handleSave}
-        />
       </div>
+
+      {/* Floating Save Bar */}
+      <ListingFloatingSaveBar hasChanges={hasChanges} isSaving={isSaving} isAutoSaving={isAutoSaving} onSave={handleSave} />
     </div>
   );
 }
