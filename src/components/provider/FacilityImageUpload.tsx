@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,13 @@ export function FacilityImageUpload({
   const [uploadProgress, setUploadProgress] = useState("");
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [showQualityWarning, setShowQualityWarning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const openFilePicker = useCallback(() => {
+    if (isUploading) return;
+    fileInputRef.current?.click();
+  }, [isUploading]);
 
   const uploadFile = async (file: File): Promise<string | null> => {
     // Validate file
@@ -321,15 +327,25 @@ export function FacilityImageUpload({
             type === "logo" && currentImages.length === 0 ? "w-32 h-32" : "p-6 min-h-[120px]"
           )}
         >
-          <label className="flex flex-col items-center justify-center cursor-pointer h-full gap-2">
-            <input
-              type="file"
-              accept={ACCEPTED_TYPES.join(",")}
-              multiple={type === "gallery"}
-              onChange={handleFileSelect}
-              disabled={isUploading}
-              className="sr-only"
-            />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_TYPES.join(",")}
+            multiple={type === "gallery"}
+            onChange={handleFileSelect}
+            disabled={isUploading}
+            className="hidden"
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            onClick={openFilePicker}
+            onMouseDown={(e) => e.preventDefault()}
+            disabled={isUploading}
+            aria-label={type === "logo" ? "Upload facility logo" : "Add gallery images"}
+            className="flex h-full w-full flex-col items-center justify-center gap-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed"
+          >
             {isUploading ? (
               <>
                 <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
@@ -352,7 +368,7 @@ export function FacilityImageUpload({
                 </span>
               </>
             )}
-          </label>
+          </button>
         </div>
       )}
 
