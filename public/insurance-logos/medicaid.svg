@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none">
-  <rect x="5" y="8" width="24" height="24" rx="4" fill="#00539B"/>
-  <path d="M12 20h10M17 15v10" stroke="white" stroke-width="2" stroke-linecap="round"/>
-  <text x="35" y="24" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#00539B">Medicaid</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <rect x="4" y="8" width="34" height="34" rx="6" fill="#00539B"/>
+  <path d="M14 25h14M21 18v14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="46" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#00539B">Medicaid</text>
 </svg>

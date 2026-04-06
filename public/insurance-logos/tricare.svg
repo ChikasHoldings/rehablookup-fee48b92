@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none">
-  <path d="M8 20l9-10 9 10-9 10-9-10z" fill="#003366"/>
-  <path d="M17 12v16" stroke="#C5A30D" stroke-width="2"/>
-  <text x="32" y="24" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#003366">TRICARE</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <path d="M12 25l10-13 10 13-10 13-10-13z" fill="#003366"/>
+  <path d="M22 14v22" stroke="#C5A30D" stroke-width="2.5"/>
+  <path d="M14 25h16" stroke="#C5A30D" stroke-width="1.5"/>
+  <text x="40" y="31" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#003366">TRICARE</text>
 </svg>

@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none">
-  <circle cx="15" cy="20" r="11" fill="#00205B"/>
-  <path d="M10 22c2-4 5-8 5-8s3 4 5 8" stroke="#E31837" stroke-width="2" stroke-linecap="round"/>
-  <text x="32" y="25" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#00205B">Molina</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <circle cx="22" cy="25" r="16" fill="#00205B"/>
+  <path d="M14 28c3-6 8-12 8-12s5 6 8 12" stroke="#E31837" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="22" cy="19" r="3" fill="white"/>
+  <text x="46" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#00205B">Molina Healthcare</text>
 </svg>

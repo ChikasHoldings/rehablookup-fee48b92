@@ -460,11 +460,11 @@ const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
     )}>
       <div className="flex items-start gap-4">
         {provider.logo ? (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-background border border-border p-2">
+          <div className="flex h-16 w-20 shrink-0 items-center justify-center">
             <img 
               src={provider.logo} 
               alt={provider.name} 
-              className="h-10 w-10 object-contain"
+              className="h-14 w-20 object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 e.currentTarget.parentElement?.classList.add('hidden');

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none">
-  <path d="M10 10h5v20h-5V10zm8 8h5v12h-5V18zm8-4h5v16h-5V14z" fill="#67B346"/>
-  <text x="38" y="28" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#67B346">Humana</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <path d="M10 35V18h5v17h-5zm8 0V14h5v21h-5zm8 0V22h5v13h-5zm8 0V10h5v25h-5z" fill="#67B346"/>
+  <text x="48" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#67B346">Humana</text>
 </svg>
