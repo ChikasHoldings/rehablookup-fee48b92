@@ -3,8 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 // Version tracking for deployment verification
-const VERSION = "1.0.2";
-const DEPLOYED_AT = "2026-01-31T00:00:00Z";
+const VERSION = "1.1.0";
+const DEPLOYED_AT = "2026-04-06T00:00:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
