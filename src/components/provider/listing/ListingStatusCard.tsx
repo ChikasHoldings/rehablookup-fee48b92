@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { CheckCircle, Clock, AlertCircle, HelpCircle, Eye, ExternalLink } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, HelpCircle, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ interface ListingStatusCardProps {
   city: string;
   state: string;
   slug: string | null;
+  onPreview?: () => void;
 }
 
 const getStatusConfig = (status: string) => {
@@ -51,7 +52,8 @@ export function ListingStatusCard({
   facilityType,
   city,
   state,
-  slug
+  slug,
+  onPreview
 }: ListingStatusCardProps) {
   const statusConfig = getStatusConfig(status);
   const StatusIcon = statusConfig.icon;
@@ -102,23 +104,17 @@ export function ListingStatusCard({
           </div>
         </div>
 
-        {slug && (
+        {slug && onPreview && (
           <>
             <Separator />
             <Button
               variant="outline"
               size="sm"
               className="w-full gap-2 text-xs"
-              asChild
+              onClick={onPreview}
             >
-              <a
-                href={`/center/${slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                View Public Profile
-              </a>
+              <Eye className="h-3.5 w-3.5" />
+              Preview Listing
             </Button>
           </>
         )}

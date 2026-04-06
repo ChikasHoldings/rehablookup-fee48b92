@@ -1,4 +1,4 @@
-import { Save, Eye, ArrowUpRight, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Save, Eye, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ interface ListingHeaderProps {
   isAutoSaving: boolean;
   showSaved: boolean;
   onSave: () => void;
+  onPreview?: () => void;
 }
 
 export function ListingHeader({
@@ -26,7 +27,8 @@ export function ListingHeader({
   isSaving,
   isAutoSaving,
   showSaved,
-  onSave
+  onSave,
+  onPreview
 }: ListingHeaderProps) {
   const statusDescriptions: Record<string, string> = {
     approved: "Your listing is live and visible to families searching for treatment",
@@ -74,22 +76,15 @@ export function ListingHeader({
           )}
         </div>
 
-        {facilitySlug && (
+        {facilitySlug && onPreview && (
           <Button
             variant="outline"
             size="sm"
-            asChild
             className="gap-2"
+            onClick={onPreview}
           >
-            <a
-              href={`/center/${facilitySlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Eye className="h-4 w-4" />
-              <span className="hidden sm:inline">Preview</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </a>
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline">Preview</span>
           </Button>
         )}
 
