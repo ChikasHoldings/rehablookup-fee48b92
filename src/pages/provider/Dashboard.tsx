@@ -696,7 +696,7 @@ export default function ProviderDashboardPage() {
                       <p className="text-xs text-muted-foreground">20% off unlocks + featured placement</p>
                     </div>
                     <Button size="sm" className="h-7 text-xs bg-accent hover:bg-accent/90" asChild>
-                      <Link to="/provider/billing?tab=pro">
+                      <Link to="/provider/pro-upgrade">
                         Upgrade
                       </Link>
                     </Button>

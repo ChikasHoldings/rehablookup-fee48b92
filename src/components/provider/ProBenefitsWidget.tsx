@@ -83,7 +83,7 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
             className="w-full h-7 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-500/10 justify-between"
             asChild
           >
-            <Link to="/provider/billing?tab=pro">
+            <Link to="/provider/pro-upgrade">
               Manage Subscription
               <ChevronRight className="h-3.5 w-3.5" />
             </Link>

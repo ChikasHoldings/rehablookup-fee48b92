@@ -151,8 +151,8 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             </div>
           ) : (
             <a 
-              href="/provider/billing?tab=pro"
-              onClick={(e) => handleNavClick(e, "/provider/billing?tab=pro")}
+              href="/provider/pro-upgrade"
+              onClick={(e) => handleNavClick(e, "/provider/pro-upgrade")}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               <Sparkles className="h-3 w-3" />
