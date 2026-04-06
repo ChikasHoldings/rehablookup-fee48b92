@@ -247,7 +247,6 @@ export const topCities: CityConfig[] = [
   { slug: "anchorage", city: "Anchorage", state: "Alaska", stateAbbr: "AK", stateSlug: "alaska", nearbyCities: ["seattle", "portland", "honolulu", "vancouver-wa"] },
   { slug: "columbia-md", city: "Columbia", state: "Maryland", stateAbbr: "MD", stateSlug: "maryland", nearbyCities: ["baltimore", "richmond", "philadelphia", "virginia-beach"] },
   { slug: "silver-spring", city: "Silver Spring", state: "Maryland", stateAbbr: "MD", stateSlug: "maryland", nearbyCities: ["baltimore", "alexandria", "richmond", "philadelphia"] },
-] = [
   { slug: "new-york", city: "New York", state: "New York", stateAbbr: "NY", stateSlug: "new-york", nearbyCities: ["newark", "jersey-city", "brooklyn", "yonkers"] },
   { slug: "los-angeles", city: "Los Angeles", state: "California", stateAbbr: "CA", stateSlug: "california", nearbyCities: ["santa-monica", "pasadena", "long-beach", "burbank"] },
   { slug: "chicago", city: "Chicago", state: "Illinois", stateAbbr: "IL", stateSlug: "illinois", nearbyCities: ["evanston", "aurora", "naperville", "joliet"] },
