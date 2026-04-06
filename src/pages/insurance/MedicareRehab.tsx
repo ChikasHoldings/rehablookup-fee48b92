@@ -325,6 +325,14 @@ export default function MedicareRehab() {
         </div>
       </section>
 
+      {/* Featured Centers accepting Medicare */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting Medicare"
+        description="Verified facilities that participate in Medicare"
+        limit={8}
+        className="border-t border-border"
+      />
+
       {/* FAQs */}
       <section className="py-10 md:py-14">
         <div className="container">

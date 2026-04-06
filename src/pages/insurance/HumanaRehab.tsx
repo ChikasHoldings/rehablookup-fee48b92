@@ -270,6 +270,14 @@ export default function HumanaRehab() {
         </div>
       </section>
 
+      {/* Featured Centers accepting Humana */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting Humana"
+        description="Verified facilities that work with Humana insurance"
+        limit={8}
+        className="border-t border-border"
+      />
+
       {/* FAQs */}
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">

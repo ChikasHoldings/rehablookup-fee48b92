@@ -297,6 +297,14 @@ export default function AnthemRehab() {
         </div>
       </section>
 
+      {/* Featured Centers accepting Anthem */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting Anthem"
+        description="Verified facilities that work with Anthem Blue Cross Blue Shield"
+        limit={8}
+        className="border-t border-border"
+      />
+
       {/* FAQs */}
       <section className="py-10 md:py-14">
         <div className="container">

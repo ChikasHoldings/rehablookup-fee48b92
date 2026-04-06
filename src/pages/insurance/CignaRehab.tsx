@@ -270,6 +270,14 @@ export default function CignaRehab() {
         </div>
       </section>
 
+      {/* Featured Centers accepting Cigna */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting Cigna"
+        description="Verified facilities that work with Cigna insurance"
+        limit={8}
+        className="border-t border-border"
+      />
+
       {/* FAQs */}
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">

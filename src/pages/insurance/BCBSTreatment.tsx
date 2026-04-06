@@ -309,6 +309,14 @@ export default function BCBSTreatment() {
         </div>
       </section>
 
+      {/* Featured Centers accepting BCBS */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting BCBS"
+        description="Verified facilities that work with Blue Cross Blue Shield insurance"
+        limit={8}
+        className="border-t border-border"
+      />
+
       {/* FAQs */}
       <section className="py-10 md:py-14">
         <div className="container">

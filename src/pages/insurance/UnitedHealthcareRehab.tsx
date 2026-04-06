@@ -270,6 +270,14 @@ export default function UnitedHealthcareRehab() {
         </div>
       </section>
 
+      {/* Featured Centers accepting UHC */}
+      <FeaturedCentersSection 
+        title="Treatment Centers Accepting United Healthcare"
+        description="Verified facilities that work with UHC insurance"
+        limit={8}
+        className="border-t border-border"
+      />
+
       {/* FAQs */}
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">
