@@ -16,58 +16,32 @@ export function useLeadAccess(leadId?: string, facilityId?: string) {
       if (!leadId || !facilityId) return null;
 
       try {
-        // First check if this is the original facility
-        const { data: lead, error: leadError } = await supabase
-          .from("leads")
-          .select("facility_id, original_facility_id, redistribution_status")
-          .eq("id", leadId)
-          .maybeSingle();
+        // Use security definer function to check access (works for both locked and unlocked leads)
+        const { data: result, error: rpcError } = await supabase.rpc("check_lead_access", {
+          p_lead_id: leadId,
+          p_facility_id: facilityId,
+        });
 
-        if (leadError) {
-          console.error("[useLeadAccess] Error fetching lead:", leadError);
+        if (rpcError) {
+          console.error("[useLeadAccess] RPC error:", rpcError);
           return null;
         }
 
-        if (!lead) return null;
-
-        // If this is the original facility (via facility_id), they have access
-        if (lead.facility_id === facilityId) {
+        if (!result || result.length === 0) {
           return {
-            hasAccess: true,
-            isOriginal: true,
+            hasAccess: false,
+            isOriginal: false,
             isRedistributed: false,
-            redistributionStatus: lead.redistribution_status,
           };
         }
 
-        // Check lead_distributions for redistributed access
-        const { data: distribution, error: distError } = await supabase
-          .from("lead_distributions")
-          .select("id, is_original, distributed_at")
-          .eq("lead_id", leadId)
-          .eq("facility_id", facilityId)
-          .maybeSingle();
-
-        if (distError) {
-          console.error("[useLeadAccess] Error fetching distribution:", distError);
-          return null;
-        }
-
-        if (distribution) {
-          return {
-            hasAccess: true,
-            isOriginal: distribution.is_original,
-            isRedistributed: !distribution.is_original,
-            distributedAt: distribution.distributed_at,
-            redistributionStatus: lead.redistribution_status,
-          };
-        }
-
+        const row = result[0];
         return {
-          hasAccess: false,
-          isOriginal: false,
-          isRedistributed: false,
-          redistributionStatus: lead.redistribution_status,
+          hasAccess: row.has_access,
+          isOriginal: row.is_original,
+          isRedistributed: row.is_redistributed,
+          distributedAt: row.distributed_at,
+          redistributionStatus: row.redistribution_status,
         };
       } catch (err) {
         console.error("[useLeadAccess] Unexpected error:", err);

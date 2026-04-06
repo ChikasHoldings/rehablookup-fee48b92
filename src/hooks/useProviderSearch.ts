@@ -40,8 +40,10 @@ export function useProviderSearch(query: string, facilityId?: string) {
     queryFn: async () => {
       if (!facilityId) return [];
       
+      // Use leads_provider_view instead of leads table directly
+      // (RLS on leads requires unlock, which would hide new leads from search)
       const { data, error } = await supabase
-        .from("leads")
+        .from("leads_provider_view")
         .select("id, name, email, phone, status, created_at, message, location_city_state")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })

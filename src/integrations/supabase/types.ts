@@ -5409,6 +5409,16 @@ export type Database = {
         Args: { p_lead_id: string; p_user_id: string }
         Returns: boolean
       }
+      check_lead_access: {
+        Args: { p_facility_id: string; p_lead_id: string }
+        Returns: {
+          distributed_at: string
+          has_access: boolean
+          is_original: boolean
+          is_redistributed: boolean
+          redistribution_status: string
+        }[]
+      }
       check_rate_limit: {
         Args: {
           p_action_type?: string
@@ -5485,6 +5495,7 @@ export type Database = {
           zip_code: string
         }[]
       }
+      get_pending_leads_count: { Args: { p_user_id: string }; Returns: number }
       get_pro_discount: { Args: { p_facility_id: string }; Returns: number }
       get_provider_credit_balance: {
         Args: { p_provider_id: string }
@@ -5535,6 +5546,19 @@ export type Database = {
           phone: string
           source: string
           user_id: string
+        }[]
+      }
+      get_seeker_submitted_leads: {
+        Args: never
+        Returns: {
+          created_at: string
+          facility_id: string
+          id: string
+          preferred_contact: string
+          provider_responded_at: string
+          provider_response_status: string
+          status: string
+          urgency: string
         }[]
       }
       get_unlocked_lead_data: {

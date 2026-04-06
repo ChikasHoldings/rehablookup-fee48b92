@@ -246,13 +246,9 @@ export default function SeekerRequests() {
     if (!normalizedEmail) return [];
 
     try {
-      const { data: leadsData, error: leadsError } = await supabase
-        .from("leads")
-        .select("id, facility_id, created_at, status, urgency, preferred_contact, provider_responded_at, provider_response_status")
-        .eq("email", normalizedEmail)
-        .not("facility_id", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(200);
+      // Use security definer function to fetch seeker's own leads
+      // (RLS on leads table has no seeker SELECT policy, so direct queries return empty)
+      const { data: leadsData, error: leadsError } = await supabase.rpc("get_seeker_submitted_leads");
 
       if (leadsError) throw leadsError;
       if (!leadsData || leadsData.length === 0) return [];
