@@ -609,6 +609,13 @@ const AppInner = () => {
             <Route path="/insurance/medicare-rehab" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
             <Route path="/insurance/medicaid-rehab" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
             <Route path="/insurance/anthem-rehab" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/tricare-rehab" element={<PublicRouteGuard><TricareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/molina-rehab" element={<PublicRouteGuard><MolinaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/magellan-rehab" element={<PublicRouteGuard><MagellanRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/wellcare-rehab" element={<PublicRouteGuard><WellCareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/ambetter-rehab" element={<PublicRouteGuard><AmbetterRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/oscar-rehab" element={<PublicRouteGuard><OscarRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/highmark-rehab" element={<PublicRouteGuard><HighmarkRehab /></PublicRouteGuard>} />
             <Route path="/cost-estimator" element={<PublicRouteGuard><CostEstimator /></PublicRouteGuard>} />
             <Route path="/faq" element={<PublicRouteGuard><FAQ /></PublicRouteGuard>} />
             <Route path="/about" element={<PublicRouteGuard><About /></PublicRouteGuard>} />
