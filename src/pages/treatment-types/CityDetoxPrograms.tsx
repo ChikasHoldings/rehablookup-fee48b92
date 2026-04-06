@@ -84,16 +84,6 @@ const CityDetoxPrograms = () => {
         "procedureType": "https://schema.org/TherapeuticProcedure"
       }
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com/" },
-        { "@type": "ListItem", "position": 2, "name": "Detox Programs", "item": "https://rehablookup.com/treatment-types/detox-programs" },
-        { "@type": "ListItem", "position": 3, "name": `${stateName}`, "item": `https://rehablookup.com/treatment-types/detox-programs/${stateSlug}` },
-        { "@type": "ListItem", "position": 4, "name": `${cityName}`, "item": `https://rehablookup.com/treatment-types/detox-programs/${stateSlug}/${citySlug}` },
-      ]
-    }
   ];
 
   return (
