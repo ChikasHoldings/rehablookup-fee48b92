@@ -745,6 +745,16 @@ export default function ProviderDashboardPage() {
           onOpenChange={setDrawerOpen}
         />
       </div>
+
+      {/* Preview Modal */}
+      {facility?.slug && (
+        <ListingPreviewModal
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          facilityName={facility.name}
+          facilitySlug={facility.slug}
+        />
+      )}
     </div>
   );
 }
