@@ -128,7 +128,7 @@ export function ReviewForm({
             Sign in to leave a review for {facilityName}
           </p>
           <Button asChild>
-            <Link to="/auth">Sign In to Review</Link>
+            <Link to="/login">Sign In to Review</Link>
           </Button>
         </CardContent>
       </Card>

@@ -644,9 +644,9 @@ export default function SeekerSignup() {
                 
                 <p className="text-xs text-muted-foreground text-center mt-4">
                   By creating an account, you agree to our{' '}
-                  <Link to="/terms" className="underline hover:text-foreground">Terms</Link>
+                  <Link to="/terms-of-service" className="underline hover:text-foreground">Terms</Link>
                   {' '}and{' '}
-                  <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
+                  <Link to="/privacy-policy" className="underline hover:text-foreground">Privacy Policy</Link>
                 </p>
                 
                 {/* Divider */}
