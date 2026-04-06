@@ -705,4 +705,36 @@ export const resourceArticleContent: Record<string, ArticleContent> = {
       "Directory listings and SEO are accessible tools that level the playing field against PE-backed competitors",
     ],
   },
+  "email-marketing-treatment-centers": {
+    keywords: ["rehab email marketing", "treatment center email campaigns", "rehab lead nurturing", "HIPAA compliant email"],
+    sections: [
+      { heading: "Why Email Is Underused in Addiction Treatment", content: "80% of treatment inquiries don't convert on the first contact. Email nurturing keeps your facility top-of-mind during the critical 2-4 week decision period, converting 25-40% more leads into admissions.", bullets: ["80% of inquiries need multiple touchpoints before committing", "Email has a 36:1 ROI — $36 for every $1 spent", "Automated sequences work 24/7 without additional staff time"] },
+      { heading: "The 7-Email Inquiry Nurture Sequence", content: "Day 0: Welcome + overview. Day 1: Insurance guide. Day 3: Treatment approach + stories. Day 5: Family resources. Day 7: What to expect on day one. Day 10: Testimonial. Day 14: Personal follow-up.", bullets: ["Immediate welcome email with facility overview", "Insurance verification guide removes the #1 barrier", "Personal admissions follow-up closes the sequence"] },
+    ],
+    keyTakeaways: ["Email nurturing converts 25-40% more leads", "Use HIPAA-compliant platforms with BAA agreements", "Implement a structured 14-day follow-up sequence", "Alumni email programs generate 30% of new referrals"],
+  },
+  "google-business-profile-rehab-optimization": {
+    keywords: ["rehab Google Business Profile", "treatment center Google Maps", "rehab local SEO", "GBP optimization rehab"],
+    sections: [
+      { heading: "Why GBP Is Your Most Valuable Digital Asset", content: "When someone searches 'rehab near me,' Google shows the Map Pack — three local businesses from GBP data. Facilities in the Map Pack receive 5x more clicks than organic results.", bullets: ["46% of Google searches have local intent", "Complete GBP profiles get 7x more clicks", "GBP is 100% free — highest-ROI channel available"] },
+      { heading: "Reviews: The Growth Engine", content: "Treatment centers with 50+ reviews and 4.5+ stars receive 3x more inquiries. Implement systematic review collection at discharge and 30-day follow-up.", bullets: ["Aim for 50+ reviews with 4.5+ star average", "Respond to every review within 24 hours", "Never buy fake reviews — Google penalizes this"] },
+    ],
+    keyTakeaways: ["Complete profiles get 7x more clicks", "Reviews are the #1 trust signal for families", "Post weekly Google Posts for freshness signals", "Photos increase engagement by 42%"],
+  },
+  "patient-retention-reduce-ama-rates": {
+    keywords: ["rehab patient retention", "reduce AMA rates", "treatment center patient engagement", "rehab completion rates"],
+    sections: [
+      { heading: "The True Cost of AMA Discharges", content: "Each AMA discharge costs $15,000-$50,000 in lost revenue. The average residential center loses 30-40% of patients to AMA. Reducing AMA by 10% can add $500K+ annually for a 30-bed facility.", bullets: ["Average AMA rate: 30-40% nationally", "Each AMA costs $15K-$50K in lost revenue", "Patients completing treatment have 2.5x higher sobriety rates"] },
+      { heading: "The First 72 Hours", content: "Most AMA discharges happen within 7 days. Assign a peer mentor on day one, ensure clinical contact within 4 hours, and allow a comfort call to family within 24 hours.", bullets: ["Assign peer support within the first hour", "Clinical team contact within 4 hours of admission", "Motivational interview within 48 hours to solidify commitment"] },
+    ],
+    keyTakeaways: ["First 72 hours are the critical retention window", "Family engagement reduces AMA by 40%", "Therapeutic alliance is the strongest predictor of completion", "Discharge planning should start on day one"],
+  },
+  "admissions-team-training-convert-calls": {
+    keywords: ["rehab admissions training", "treatment center phone conversion", "intake coordinator training", "convert rehab calls"],
+    sections: [
+      { heading: "The Admissions Gap", content: "The average center converts only 15-20% of calls. Top performers hit 35-45%. Every 5% improvement equals $200K-$500K additional annual revenue. The #1 reason families don't admit: the call felt impersonal.", bullets: ["Average conversion: 15-20%, top performers: 35-45%", "78% of admissions go to the facility that responds first", "5% conversion improvement = $200K-$500K more revenue"] },
+      { heading: "The Empathy-First Framework", content: "Spend the first 3-5 minutes listening. Acknowledge courage. Use the loved one's name. Only after connection should you transition to assessment and logistics.", bullets: ["First 3-5 minutes: listen and validate", "Use the caller's loved one's first name throughout", "Mirror emotional tone — don't be clinically detached during a crisis"] },
+    ],
+    keyTakeaways: ["Speed to lead: 5-minute response standard", "Empathy-first call framework converts 2x better", "Structured 14-day follow-up recovers 50% of lost leads", "Train on the top 5 objections with empathetic responses"],
+  },
 };

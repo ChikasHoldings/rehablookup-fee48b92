@@ -91,6 +91,16 @@ const SubstanceAbuseTreatmentMarketing = lazy(() => import("./pages/provider-gui
 const MATClinicMarketing = lazy(() => import("./pages/provider-guides/MATClinicMarketing"));
 const TreatmentCenterWebsiteDesign = lazy(() => import("./pages/provider-guides/TreatmentCenterWebsiteDesign"));
 const RehabComplianceGuide = lazy(() => import("./pages/provider-guides/RehabComplianceGuide"));
+const RehabGoogleBusinessProfile = lazy(() => import("./pages/provider-guides/RehabGoogleBusinessProfile"));
+const RehabPatientRetention = lazy(() => import("./pages/provider-guides/RehabPatientRetention"));
+const RehabEmailMarketing = lazy(() => import("./pages/provider-guides/RehabEmailMarketing"));
+const TelehealthAddictionTreatment = lazy(() => import("./pages/provider-guides/TelehealthAddictionTreatment"));
+const RehabSocialMediaMarketing = lazy(() => import("./pages/provider-guides/RehabSocialMediaMarketing"));
+const DualDiagnosisTreatmentMarketing = lazy(() => import("./pages/provider-guides/DualDiagnosisTreatmentMarketing"));
+const RehabAdmissionsTeamTraining = lazy(() => import("./pages/provider-guides/RehabAdmissionsTeamTraining"));
+const RehabPayPerClickAdvertising = lazy(() => import("./pages/provider-guides/RehabPayPerClickAdvertising"));
+const RehabContentMarketing = lazy(() => import("./pages/provider-guides/RehabContentMarketing"));
+const RehabInterventionistPartnerships = lazy(() => import("./pages/provider-guides/RehabInterventionistPartnerships"));
 // ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
@@ -689,6 +699,16 @@ const AppInner = () => {
             <Route path="/provider-guides/mat-clinic-marketing" element={<PublicRouteGuard><MATClinicMarketing /></PublicRouteGuard>} />
             <Route path="/provider-guides/treatment-center-website-design" element={<PublicRouteGuard><TreatmentCenterWebsiteDesign /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-compliance-guide" element={<PublicRouteGuard><RehabComplianceGuide /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-google-business-profile" element={<PublicRouteGuard><RehabGoogleBusinessProfile /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-patient-retention" element={<PublicRouteGuard><RehabPatientRetention /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-email-marketing" element={<PublicRouteGuard><RehabEmailMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/telehealth-addiction-treatment" element={<PublicRouteGuard><TelehealthAddictionTreatment /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-social-media-marketing" element={<PublicRouteGuard><RehabSocialMediaMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/dual-diagnosis-treatment-marketing" element={<PublicRouteGuard><DualDiagnosisTreatmentMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-admissions-team-training" element={<PublicRouteGuard><RehabAdmissionsTeamTraining /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-pay-per-click-advertising" element={<PublicRouteGuard><RehabPayPerClickAdvertising /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-content-marketing" element={<PublicRouteGuard><RehabContentMarketing /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-interventionist-partnerships" element={<PublicRouteGuard><RehabInterventionistPartnerships /></PublicRouteGuard>} />
             {/* List Your Facility routes handled by SmartCatchAll below */}
 
             {/* Provider Resource Hub */}
