@@ -195,28 +195,28 @@ export default function ProUpgradePage() {
 
         {/* Benefits Grid */}
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
             What's Included
           </h2>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {HERO_BENEFITS.map((benefit) => {
               const Icon = benefit.icon;
               return (
                 <div
                   key={benefit.title}
-                  className="flex items-start gap-3 p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors"
+                  className="flex items-start gap-3 p-3.5 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Icon className="h-4 w-4 text-amber-600" />
+                  <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon className="h-[18px] w-[18px] text-amber-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm text-foreground">{benefit.title}</p>
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-medium shrink-0">
+                      <p className="font-semibold text-[15px] text-foreground">{benefit.title}</p>
+                      <Badge variant="secondary" className="text-[11px] px-1.5 py-0 h-[18px] font-medium shrink-0">
                         {benefit.highlight}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{benefit.description}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{benefit.description}</p>
                   </div>
                 </div>
               );
@@ -226,7 +226,7 @@ export default function ProUpgradePage() {
 
         {/* Comparison Table */}
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
             Free vs Pro
           </h2>
           <Card className="overflow-hidden border-border/60">
@@ -234,10 +234,10 @@ export default function ProUpgradePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40">
-                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground text-xs">Feature</th>
-                    <th className="text-center py-2.5 px-4 font-medium text-muted-foreground text-xs w-24">Free</th>
+                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground text-sm">Feature</th>
+                    <th className="text-center py-2.5 px-4 font-medium text-muted-foreground text-sm w-24">Free</th>
                     <th className="text-center py-2.5 px-4 w-28">
-                      <span className="inline-flex items-center gap-1 text-amber-700 font-semibold text-xs">
+                      <span className="inline-flex items-center gap-1 text-amber-700 font-semibold text-sm">
                         <Crown className="h-3 w-3" /> Pro
                       </span>
                     </th>
@@ -246,13 +246,13 @@ export default function ProUpgradePage() {
                 <tbody>
                   {COMPARISON_ITEMS.map((item, i) => (
                     <tr key={item.feature} className={cn("border-b last:border-0", i % 2 === 0 && "bg-muted/15")}>
-                      <td className="py-2 px-4 text-xs font-medium text-foreground">{item.feature}</td>
-                      <td className="py-2 px-4 text-center text-xs text-muted-foreground">
+                      <td className="py-2.5 px-4 text-sm font-medium text-foreground">{item.feature}</td>
+                      <td className="py-2.5 px-4 text-center text-sm text-muted-foreground">
                         {typeof item.free === "boolean" ? (
                           item.free ? <CheckCircle className="h-3.5 w-3.5 text-emerald-600 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
                         ) : item.free}
                       </td>
-                      <td className="py-2 px-4 text-center text-xs font-medium text-foreground">
+                      <td className="py-2.5 px-4 text-center text-sm font-medium text-foreground">
                         {typeof item.pro === "boolean" ? (
                           item.pro ? <CheckCircle className="h-3.5 w-3.5 text-emerald-600 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
                         ) : item.pro}
@@ -270,8 +270,8 @@ export default function ProUpgradePage() {
           <Card className="border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-amber-600/10">
             <CardContent className="p-5 flex flex-col sm:flex-row items-center gap-4">
               <div className="flex-1 min-w-0 text-center sm:text-left">
-                <p className="font-semibold text-sm">Pro pays for itself quickly</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="font-semibold text-base">Pro pays for itself quickly</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
                   With 20% off every unlock, just a few extra admissions cover your membership.
                 </p>
               </div>
