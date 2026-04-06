@@ -341,6 +341,8 @@ const CenterProfile = () => {
           status,
           user_id,
           updated_at,
+          concierge_network_opted_in,
+          accepts_international_patients,
           facility_services (service_name),
           facility_insurance (insurance_name),
           facility_age_groups (age_group),
