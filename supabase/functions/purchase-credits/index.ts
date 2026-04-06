@@ -285,6 +285,13 @@ Deno.serve(async (req) => {
       });
 
       logStep(requestId, "Checkout session created", { sessionId: session.id });
+
+      // Mark rate limit attempt as successful
+      await supabaseClient.rpc("log_rate_limit_event", {
+        p_identifier: `purchase:${user.id}`,
+        p_action_type: "credit_purchase",
+        p_success: true,
+      });
     } catch (checkoutError) {
       const errorMessage = checkoutError instanceof Error ? checkoutError.message : "Unknown checkout error";
       logStep(requestId, "ERROR - Checkout session creation failed", { error: errorMessage });
