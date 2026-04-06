@@ -121,6 +121,20 @@ export const statesData: StateData[] = [
       { name: "Visalia", slug: "visalia", population: 141384, description: "Visalia offers treatment in the Tulare County region.", metaDescription: "Addiction treatment in Visalia, CA. Browse rehab centers." },
       { name: "Pasadena", slug: "pasadena-ca", population: 138699, description: "Pasadena provides upscale treatment in the San Gabriel Valley.", metaDescription: "Rehab centers in Pasadena, CA. Find quality addiction treatment." },
       { name: "Clovis", slug: "clovis", population: 120124, description: "Clovis offers treatment near Fresno in the Central Valley.", metaDescription: "Drug rehab in Clovis, CA. Find addiction treatment near Fresno." },
+    
+      { name: "Garden Grove", slug: "garden-grove", population: 172646, description: "Garden Grove provides accessible addiction treatment options in Orange County.", metaDescription: "Drug and alcohol rehab centers in Garden Grove. Find verified addiction treatment facilities near you." },
+      { name: "Oceanside", slug: "oceanside", population: 176218, description: "Oceanside offers recovery programs in a coastal San Diego County setting.", metaDescription: "Drug and alcohol rehab centers in Oceanside. Find verified addiction treatment facilities near you." },
+      { name: "Hayward", slug: "hayward", population: 162954, description: "Hayward provides substance abuse treatment options in the East Bay area.", metaDescription: "Drug and alcohol rehab centers in Hayward. Find verified addiction treatment facilities near you." },
+      { name: "Sunnyvale", slug: "sunnyvale", population: 155805, description: "Sunnyvale offers addiction recovery resources in the heart of Silicon Valley.", metaDescription: "Drug and alcohol rehab centers in Sunnyvale. Find verified addiction treatment facilities near you." },
+      { name: "Pomona", slug: "pomona", population: 151713, description: "Pomona provides diverse addiction treatment options in the Inland Empire.", metaDescription: "Drug and alcohol rehab centers in Pomona. Find verified addiction treatment facilities near you." },
+      { name: "Escondido", slug: "escondido", population: 151625, description: "Escondido offers rehab programs in a supportive north San Diego County community.", metaDescription: "Drug and alcohol rehab centers in Escondido. Find verified addiction treatment facilities near you." },
+      { name: "Salinas", slug: "salinas", population: 163542, description: "Salinas provides substance abuse treatment serving the Monterey Bay region.", metaDescription: "Drug and alcohol rehab centers in Salinas. Find verified addiction treatment facilities near you." },
+      { name: "Roseville", slug: "roseville", population: 147773, description: "Roseville offers quality addiction treatment in the greater Sacramento area.", metaDescription: "Drug and alcohol rehab centers in Roseville. Find verified addiction treatment facilities near you." },
+      { name: "Torrance", slug: "torrance", population: 144791, description: "Torrance provides rehab services in the South Bay area of Los Angeles.", metaDescription: "Drug and alcohol rehab centers in Torrance. Find verified addiction treatment facilities near you." },
+      { name: "Fullerton", slug: "fullerton", population: 139640, description: "Fullerton offers addiction treatment programs in northern Orange County.", metaDescription: "Drug and alcohol rehab centers in Fullerton. Find verified addiction treatment facilities near you." },
+      { name: "Lancaster", slug: "lancaster-ca", population: 173516, description: "Lancaster provides substance abuse treatment in the Antelope Valley region.", metaDescription: "Drug and alcohol rehab centers in Lancaster. Find verified addiction treatment facilities near you." },
+      { name: "Palmdale", slug: "palmdale", population: 169450, description: "Palmdale offers recovery programs serving the northern Los Angeles County area.", metaDescription: "Drug and alcohol rehab centers in Palmdale. Find verified addiction treatment facilities near you." },
+      { name: "Victorville", slug: "victorville", population: 134810, description: "Victorville provides addiction treatment resources in the High Desert region.", metaDescription: "Drug and alcohol rehab centers in Victorville. Find verified addiction treatment facilities near you." },
     ],
   },
   {
@@ -169,6 +183,8 @@ export const statesData: StateData[] = [
       { name: "Newark", slug: "newark", population: 33673, description: "Newark provides treatment near the University of Delaware.", metaDescription: "Addiction treatment in Newark, DE. Browse rehab facilities." },
       { name: "Middletown", slug: "middletown", population: 22350, description: "Middletown offers accessible treatment in New Castle County.", metaDescription: "Drug rehab in Middletown, DE. Find addiction treatment centers." },
       { name: "Bear", slug: "bear", population: 21017, description: "Bear provides convenient treatment in northern Delaware.", metaDescription: "Rehab centers in Bear, DE. Find drug treatment near you." },
+    
+      { name: "Wilmington", slug: "wilmington-de", population: 70851, description: "Wilmington is Delaware's largest city with comprehensive addiction treatment resources.", metaDescription: "Drug and alcohol rehab centers in Wilmington. Find verified addiction treatment facilities near you." },
     ],
   },
   {
@@ -203,6 +219,8 @@ export const statesData: StateData[] = [
       { name: "Ocala", slug: "ocala", population: 63591, description: "Ocala provides affordable treatment in central Florida.", metaDescription: "Drug rehab in Ocala, FL. Find addiction treatment near you." },
       { name: "Palm Bay", slug: "palm-bay", population: 119760, description: "Palm Bay offers treatment on the Space Coast.", metaDescription: "Addiction treatment in Palm Bay, FL. Browse rehab centers." },
       { name: "Kissimmee", slug: "kissimmee", population: 79226, description: "Kissimmee provides treatment in the greater Orlando area.", metaDescription: "Rehab centers in Kissimmee, FL. Find drug treatment near Orlando." },
+    
+      { name: "Coral Springs", slug: "coral-springs", population: 134394, description: "Coral Springs offers addiction treatment programs in the Broward County area.", metaDescription: "Drug and alcohol rehab centers in Coral Springs. Find verified addiction treatment facilities near you." },
     ],
   },
   {
@@ -348,6 +366,8 @@ export const statesData: StateData[] = [
       { name: "Bangor", slug: "bangor", population: 31903, description: "Bangor offers treatment in northern Maine.", metaDescription: "Addiction treatment in Bangor, ME. Browse rehab facilities." },
       { name: "South Portland", slug: "south-portland", population: 26498, description: "South Portland offers accessible southern Maine treatment.", metaDescription: "Drug rehab in South Portland, ME. Find addiction treatment." },
       { name: "Auburn", slug: "auburn", population: 24061, description: "Auburn provides treatment in the Lewiston-Auburn area.", metaDescription: "Rehab centers in Auburn, ME. Find drug treatment near you." },
+    
+      { name: "Portland", slug: "portland-me", population: 68408, description: "Portland is Maine's largest city offering diverse substance abuse treatment options.", metaDescription: "Drug and alcohol rehab centers in Portland. Find verified addiction treatment facilities near you." },
     ],
   },
   {
@@ -490,6 +510,8 @@ export const statesData: StateData[] = [
       { name: "Concord", slug: "concord", population: 43976, description: "Concord provides treatment as the state capital.", metaDescription: "Drug rehab in Concord, NH. Find addiction treatment." },
       { name: "Derry", slug: "derry", population: 34317, description: "Derry offers accessible treatment in Rockingham County.", metaDescription: "Rehab centers in Derry, NH. Find drug treatment near you." },
       { name: "Dover", slug: "dover", population: 32741, description: "Dover provides treatment on the Seacoast.", metaDescription: "Addiction treatment in Dover, NH. Browse rehab facilities." },
+    
+      { name: "Manchester", slug: "manchester-nh", population: 115644, description: "Manchester is New Hampshire's largest city with expanding addiction treatment services.", metaDescription: "Drug and alcohol rehab centers in Manchester. Find verified addiction treatment facilities near you." },
     ],
   },
   {
@@ -734,6 +756,9 @@ export const statesData: StateData[] = [
       { name: "Waco", slug: "waco", population: 142382, description: "Waco offers treatment in central Texas.", metaDescription: "Addiction treatment in Waco, TX. Browse rehab centers." },
       { name: "Tyler", slug: "tyler", population: 107405, description: "Tyler provides treatment in East Texas.", metaDescription: "Drug rehab in Tyler, TX. Find addiction treatment facilities." },
       { name: "Abilene", slug: "abilene", population: 125182, description: "Abilene offers treatment in West Texas.", metaDescription: "Addiction treatment in Abilene, TX. Browse rehab facilities." },
+    
+      { name: "Sugar Land", slug: "sugar-land", population: 111026, description: "Sugar Land offers addiction treatment in the greater Houston metropolitan area.", metaDescription: "Drug and alcohol rehab centers in Sugar Land. Find verified addiction treatment facilities near you." },
+      { name: "Odessa", slug: "odessa", population: 114428, description: "Odessa provides substance abuse treatment serving the Permian Basin region.", metaDescription: "Drug and alcohol rehab centers in Odessa. Find verified addiction treatment facilities near you." },
     ],
   },
   {
@@ -763,6 +788,8 @@ export const statesData: StateData[] = [
       { name: "Rutland", slug: "rutland", population: 15807, description: "Rutland offers treatment in central Vermont.", metaDescription: "Drug rehab in Rutland, VT. Find addiction treatment." },
       { name: "Barre", slug: "barre", population: 8491, description: "Barre provides treatment in central Vermont.", metaDescription: "Rehab centers in Barre, VT. Find drug treatment." },
       { name: "Montpelier", slug: "montpelier", population: 8074, description: "Montpelier offers treatment as the state capital.", metaDescription: "Addiction treatment in Montpelier, VT. Browse rehab facilities." },
+    
+      { name: "Burlington", slug: "burlington-vt", population: 44743, description: "Burlington is Vermont's largest city offering personalized addiction recovery programs.", metaDescription: "Drug and alcohol rehab centers in Burlington. Find verified addiction treatment facilities near you." },
     ],
   },
   {
@@ -815,6 +842,8 @@ export const statesData: StateData[] = [
       { name: "Morgantown", slug: "morgantown", population: 30955, description: "Morgantown offers treatment near WVU.", metaDescription: "Drug rehab in Morgantown, WV. Find addiction treatment." },
       { name: "Parkersburg", slug: "parkersburg", population: 29018, description: "Parkersburg provides treatment in the Mid-Ohio Valley.", metaDescription: "Rehab centers in Parkersburg, WV. Find drug treatment." },
       { name: "Wheeling", slug: "wheeling", population: 27062, description: "Wheeling offers treatment in the Northern Panhandle.", metaDescription: "Addiction treatment in Wheeling, WV. Browse rehab facilities." },
+    
+      { name: "Charleston", slug: "charleston-wv", population: 47215, description: "Charleston is West Virginia's capital city with growing addiction treatment resources.", metaDescription: "Drug and alcohol rehab centers in Charleston. Find verified addiction treatment facilities near you." },
     ],
   },
   {
