@@ -47,10 +47,10 @@ import { lazy, Suspense } from "react";
 const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 
 const CREDIT_PACKAGES = [
-  { amountCents: 10000, label: "$100", bonus: null },
-  { amountCents: 25000, label: "$250", bonus: null },
-  { amountCents: 50000, label: "$500", bonus: "Best Value" },
-  { amountCents: 100000, label: "$1,000", bonus: "Popular" },
+  { amountCents: 10000, label: "$100", credits: 100, bonus: null, perLead: "~2-3 leads" },
+  { amountCents: 25000, label: "$250", credits: 250, bonus: null, perLead: "~5-6 leads" },
+  { amountCents: 50000, label: "$500", credits: 500, bonus: "Best Value", perLead: "~10-13 leads" },
+  { amountCents: 100000, label: "$1,000", credits: 1000, bonus: "Most Popular", perLead: "~20-25 leads" },
 ];
 
 const PRO_BENEFITS = [
