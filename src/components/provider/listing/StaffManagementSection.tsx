@@ -175,7 +175,7 @@ export function StaffManagementSection({
                       <AlertDescription className="text-sm text-muted-foreground">
                         You've reached the maximum of {staffLimit} team members.
                         {!isPro && (
-                          <Link to="/provider/billing?tab=pro" className="text-primary hover:underline ml-1">
+                          <Link to="/provider/pro-upgrade" className="text-primary hover:underline ml-1">
                             Upgrade to Pro for up to 10 members.
                           </Link>
                         )}

@@ -201,7 +201,7 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
               </div>
             </div>
             <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 h-8 text-xs">
-              <Link to="/provider/billing?tab=pro"><Star className="h-3 w-3 mr-1" /> Upgrade to Pro</Link>
+              <Link to="/provider/pro-upgrade"><Star className="h-3 w-3 mr-1" /> Upgrade to Pro</Link>
             </Button>
           </div>
         </div>

@@ -165,7 +165,7 @@ export default function ProviderReviews() {
               ? "hover:border-primary/50 hover:shadow-sm" 
               : "opacity-75 hover:opacity-90"
           )}
-          onClick={() => isPro ? setRequestReviewOpen(true) : navigate('/provider/billing?tab=pro')}
+          onClick={() => isPro ? setRequestReviewOpen(true) : navigate('/provider/pro-upgrade')}
         >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -214,7 +214,7 @@ export default function ProviderReviews() {
               ? "hover:border-primary/50 hover:shadow-sm" 
               : "opacity-75 hover:opacity-90"
           )}
-          onClick={() => isPro ? setGoogleReviewsOpen(true) : navigate('/provider/billing?tab=pro')}
+          onClick={() => isPro ? setGoogleReviewsOpen(true) : navigate('/provider/pro-upgrade')}
         >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -270,7 +270,7 @@ export default function ProviderReviews() {
             <Button 
               size="sm" 
               className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs h-7"
-              onClick={() => navigate('/provider/billing?tab=pro')}
+              onClick={() => navigate('/provider/pro-upgrade')}
             >
               Upgrade
             </Button>
