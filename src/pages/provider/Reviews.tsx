@@ -37,6 +37,10 @@ import { RequestReviewSection } from '@/components/provider/reviews/RequestRevie
 import { GoogleReviewsImportSection } from '@/components/provider/reviews/GoogleReviewsImportSection';
 
 export default function ProviderReviews() {
+  const navigate = useNavigate();
+  const { data: proStatus } = useProStatus();
+  const isPro = proStatus?.isPro ?? false;
+
   const { 
     reviews, 
     facilities,
