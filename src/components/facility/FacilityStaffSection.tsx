@@ -1,5 +1,4 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Users2, Mail, Phone } from "lucide-react";
 import { usePublicFacilityStaff } from "@/hooks/useFacilityStaff";
 import { cn } from "@/lib/utils";
@@ -11,26 +10,19 @@ interface FacilityStaffSectionProps {
 export function FacilityStaffSection({ facilityId }: FacilityStaffSectionProps) {
   const { data: staff = [], isLoading } = usePublicFacilityStaff(facilityId);
 
-  // Don't render if no staff or loading
   if (isLoading || staff.length === 0) {
     return null;
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) =>
+    name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
     <section className="space-y-5">
       {/* Section Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500/15 to-purple-500/10 ring-1 ring-indigo-500/20">
-          <Users2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="p-2.5 rounded-xl bg-primary/10 ring-1 ring-primary/15">
+          <Users2 className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Our Team</h2>
@@ -39,95 +31,67 @@ export function FacilityStaffSection({ facilityId }: FacilityStaffSectionProps) 
       </div>
 
       {/* Staff Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {staff.map((member, index) => (
-          <Card 
-            key={member.id} 
-            className={cn(
-              "group relative overflow-hidden border-border/60",
-              "bg-gradient-to-b from-card to-muted/30",
-              "hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20",
-              "transition-all duration-300 ease-out"
-            )}
-            style={{ animationDelay: `${index * 50}ms` }}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+        {staff.map((member) => (
+          <div
+            key={member.id}
+            className="group flex flex-col items-center text-center rounded-2xl bg-card border border-border/50 p-4 md:p-5 hover:border-primary/25 hover:shadow-md transition-all duration-200"
           >
-            {/* Decorative accent line */}
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            <CardContent className="p-5">
-              <div className="flex flex-col items-center text-center">
-                {/* Avatar with hover effect */}
-                <div className="relative mb-4">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <Avatar className={cn(
-                    "h-24 w-24 ring-2 ring-border/50",
-                    "group-hover:ring-primary/30 group-hover:scale-105",
-                    "transition-all duration-300 ease-out"
-                  )}>
-                    <AvatarImage 
-                      src={member.photo_url} 
-                      alt={member.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-gradient-to-br from-muted to-muted/80 text-muted-foreground text-xl font-medium">
-                      {getInitials(member.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
+            {/* Photo */}
+            <Avatar className={cn(
+              "h-20 w-20 md:h-24 md:w-24 ring-[3px] ring-background shadow-lg",
+              "group-hover:ring-primary/20 transition-all duration-200"
+            )}>
+              <AvatarImage
+                src={member.photo_url}
+                alt={member.name}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-muted text-muted-foreground text-lg md:text-xl font-semibold">
+                {getInitials(member.name)}
+              </AvatarFallback>
+            </Avatar>
 
-                {/* Name */}
-                <h3 className="font-semibold text-base line-clamp-1 text-foreground">
-                  {member.name}
-                </h3>
+            {/* Info */}
+            <h3 className="mt-3 font-semibold text-sm md:text-base leading-tight line-clamp-1 text-foreground">
+              {member.name}
+            </h3>
+            <span className="mt-0.5 text-xs md:text-sm font-medium text-primary/80 line-clamp-1">
+              {member.job_title}
+            </span>
 
-                {/* Job Title */}
-                <p className="text-sm text-primary/80 font-medium mt-0.5 line-clamp-1">
-                  {member.job_title}
-                </p>
+            {member.bio && (
+              <p className="mt-2 text-[11px] md:text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                {member.bio}
+              </p>
+            )}
 
-                {/* Bio */}
-                {member.bio && (
-                  <p className="text-xs text-muted-foreground mt-3 line-clamp-3 leading-relaxed">
-                    {member.bio}
-                  </p>
+            {/* Contact icons */}
+            {(member.email || member.phone) && (
+              <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-border/40 w-full justify-center">
+                {member.email && (
+                  <a
+                    href={`mailto:${member.email}`}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    title={`Email ${member.name}`}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    <span className="sr-only">Email {member.name}</span>
+                  </a>
                 )}
-
-                {/* Contact Info */}
-                {(member.email || member.phone) && (
-                  <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-border/50 w-full">
-                    {member.email && (
-                      <a
-                        href={`mailto:${member.email}`}
-                        className={cn(
-                          "p-2 rounded-lg bg-muted/50 text-muted-foreground",
-                          "hover:bg-primary/10 hover:text-primary",
-                          "transition-colors duration-200"
-                        )}
-                        title={`Email ${member.name}`}
-                      >
-                        <Mail className="h-4 w-4" />
-                        <span className="sr-only">Email {member.name}</span>
-                      </a>
-                    )}
-                    {member.phone && (
-                      <a
-                        href={`tel:${member.phone}`}
-                        className={cn(
-                          "p-2 rounded-lg bg-muted/50 text-muted-foreground",
-                          "hover:bg-primary/10 hover:text-primary",
-                          "transition-colors duration-200"
-                        )}
-                        title={`Call ${member.name}`}
-                      >
-                        <Phone className="h-4 w-4" />
-                        <span className="sr-only">Call {member.name}</span>
-                      </a>
-                    )}
-                  </div>
+                {member.phone && (
+                  <a
+                    href={`tel:${member.phone}`}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    title={`Call ${member.name}`}
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    <span className="sr-only">Call {member.name}</span>
+                  </a>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         ))}
       </div>
     </section>
