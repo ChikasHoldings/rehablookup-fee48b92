@@ -14,7 +14,7 @@ const costTiers = [
 const CostOfRehabUSA = () => {
   const schemaData = {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
+    "@type": "WebPage",
     name: "Cost of Rehab in USA for International Patients",
     description: "Comprehensive guide to addiction treatment costs in the United States for international patients. Pricing tiers, payment options, and financial planning.",
   };

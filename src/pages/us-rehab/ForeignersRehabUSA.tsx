@@ -16,7 +16,7 @@ const eligibilityPoints = [
 const ForeignersRehabUSA = () => {
   const schemaData = {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
+    "@type": "WebPage",
     name: "Can Foreigners Go to Rehab in the USA?",
     description: "Yes. Complete guide for international patients seeking addiction treatment in the United States. Visa requirements, eligibility, and admission process.",
   };

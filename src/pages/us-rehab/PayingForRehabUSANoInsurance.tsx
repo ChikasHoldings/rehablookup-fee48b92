@@ -30,7 +30,7 @@ const PayingForRehabUSANoInsurance = () => {
         keywords={["paying for rehab in USA without insurance", "self pay rehab USA", "rehab cost no insurance", "international patient rehab payment", "rehab financing USA"]}
         structuredData={{
           "@context": "https://schema.org",
-          "@type": "FAQPage",
+          "@type": "WebPage",
           name: "Paying for Rehab in USA Without Insurance",
         }}
         breadcrumbs={[
