@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,12 +21,15 @@ import {
   Building2,
   Mail,
   Star,
-  ArrowRight
+  ArrowRight,
+  Lock,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useReviewRequests } from '@/hooks/useReviewRequests';
 import { useGoogleReviews } from '@/hooks/useGoogleReviews';
+import { useProStatus } from '@/hooks/useProStatus';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
