@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Cookie, X, Shield } from "lucide-react";
+import { Shield, Settings2 } from "lucide-react";
 
 const COOKIE_CONSENT_KEY = "rehablookup_cookie_consent";
 const COOKIE_CONSENT_VERSION = "1.0";
@@ -18,7 +18,7 @@ export function CookieConsentBanner() {
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
-    necessary: true, // Always required
+    necessary: true,
     analytics: false,
     marketing: false,
     version: COOKIE_CONSENT_VERSION,
@@ -35,43 +35,28 @@ export function CookieConsentBanner() {
     pathname.startsWith("/account/");
 
   useEffect(() => {
-    // Check if user has already consented
     const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
     if (savedConsent) {
       try {
         const parsed = JSON.parse(savedConsent) as CookiePreferences;
-        // Show banner again if version changed
         if (parsed.version !== COOKIE_CONSENT_VERSION) {
           setIsVisible(true);
         } else {
-          // Apply saved preferences
           applyPreferences(parsed);
         }
       } catch {
         setIsVisible(true);
       }
     } else {
-      // Delay showing banner slightly for better UX
-      const timer = setTimeout(() => setIsVisible(true), 1500);
+      const timer = setTimeout(() => setIsVisible(true), 2000);
       return () => clearTimeout(timer);
     }
   }, []);
 
   const applyPreferences = (prefs: CookiePreferences) => {
-    // Enable/disable Google Analytics based on preferences
-    if (prefs.analytics && window.gtag) {
-      window.gtag("consent", "update", {
-        analytics_storage: "granted",
-      });
-    } else if (window.gtag) {
-      window.gtag("consent", "update", {
-        analytics_storage: "denied",
-      });
-    }
-
-    // Marketing cookies
     if (window.gtag) {
       window.gtag("consent", "update", {
+        analytics_storage: prefs.analytics ? "granted" : "denied",
         ad_storage: prefs.marketing ? "granted" : "denied",
         ad_user_data: prefs.marketing ? "granted" : "denied",
         ad_personalization: prefs.marketing ? "granted" : "denied",
@@ -80,174 +65,101 @@ export function CookieConsentBanner() {
   };
 
   const saveConsent = (prefs: CookiePreferences) => {
-    const consentData = {
-      ...prefs,
-      timestamp: new Date().toISOString(),
-    };
+    const consentData = { ...prefs, timestamp: new Date().toISOString() };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentData));
     applyPreferences(consentData);
     setIsVisible(false);
   };
 
-  const acceptAll = () => {
-    saveConsent({
-      necessary: true,
-      analytics: true,
-      marketing: true,
-      version: COOKIE_CONSENT_VERSION,
-      timestamp: "",
-    });
-  };
+  const acceptAll = () =>
+    saveConsent({ necessary: true, analytics: true, marketing: true, version: COOKIE_CONSENT_VERSION, timestamp: "" });
 
-  const acceptSelected = () => {
-    saveConsent(preferences);
-  };
-
-  const rejectNonEssential = () => {
-    saveConsent({
-      necessary: true,
-      analytics: false,
-      marketing: false,
-      version: COOKIE_CONSENT_VERSION,
-      timestamp: "",
-    });
-  };
+  const rejectNonEssential = () =>
+    saveConsent({ necessary: true, analytics: false, marketing: false, version: COOKIE_CONSENT_VERSION, timestamp: "" });
 
   if (!isVisible || isAppShellRoute) return null;
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6"
+      className="fixed bottom-4 left-4 right-4 z-50 sm:left-auto sm:right-4 sm:max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300"
       role="dialog"
       aria-label="Cookie consent"
-      aria-describedby="cookie-description"
     >
-      <div className="mx-auto max-w-4xl rounded-xl border border-border bg-background shadow-2xl">
-        <div className="p-4 md:p-6">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Cookie className="h-5 w-5 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground">
-                  Your Privacy Matters
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  <Shield className="inline h-3 w-3 mr-1" aria-hidden="true" />
-                  HIPAA-compliant &amp; GDPR-ready
-                </p>
-              </div>
+      <div className="rounded-lg border border-border bg-background/95 backdrop-blur-sm shadow-lg">
+        {/* Compact main view */}
+        {!showDetails ? (
+          <div className="p-3.5">
+            <div className="flex items-start gap-2.5 mb-3">
+              <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" aria-hidden="true" />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                We use cookies to improve your experience. Your health data is never sold.{" "}
+                <Link to="/privacy-policy" className="text-primary hover:underline font-medium">
+                  Privacy Policy
+                </Link>
+              </p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={rejectNonEssential}
-              aria-label="Reject non-essential cookies and close"
-              className="shrink-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Description */}
-          <p id="cookie-description" className="text-sm text-muted-foreground mb-4">
-            We understand that seeking addiction treatment information is sensitive. We use cookies 
-            to improve your experience and provide personalized support. Your health information is 
-            never sold or shared with advertisers.{" "}
-            <Link to="/privacy-policy" className="text-primary hover:underline font-medium">
-              Read our Privacy Policy
-            </Link>
-          </p>
-
-          {/* Detailed preferences */}
-          {showDetails && (
-            <div className="mb-4 space-y-3 rounded-lg bg-muted/50 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Essential Cookies</p>
-                  <p className="text-xs text-muted-foreground">
-                    Required for the website to function properly
-                  </p>
-                </div>
-                <div className="rounded bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                  Always Active
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Analytics Cookies</p>
-                  <p className="text-xs text-muted-foreground">
-                    Help us understand how visitors use our site
-                  </p>
-                </div>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    checked={preferences.analytics}
-                    onChange={(e) =>
-                      setPreferences({ ...preferences, analytics: e.target.checked })
-                    }
-                    className="peer sr-only"
-                  />
-                  <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/20 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-background after:transition-all peer-checked:after:translate-x-full" />
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Marketing Cookies</p>
-                  <p className="text-xs text-muted-foreground">
-                    Used to deliver relevant content and ads
-                  </p>
-                </div>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    checked={preferences.marketing}
-                    onChange={(e) =>
-                      setPreferences({ ...preferences, marketing: e.target.checked })
-                    }
-                    className="peer sr-only"
-                  />
-                  <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/20 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-background after:transition-all peer-checked:after:translate-x-full" />
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDetails(!showDetails)}
-              className="text-muted-foreground"
-            >
-              {showDetails ? "Hide Details" : "Customize Preferences"}
-            </Button>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={rejectNonEssential}
+            <div className="flex items-center justify-between gap-2">
+              <button
+                onClick={() => setShowDetails(true)}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Essential Only
-              </Button>
-              {showDetails ? (
-                <Button size="sm" onClick={acceptSelected}>
-                  Save Preferences
+                <Settings2 className="h-3 w-3" />
+                Manage
+              </button>
+              <div className="flex gap-1.5">
+                <Button variant="ghost" size="sm" onClick={rejectNonEssential} className="h-7 px-2.5 text-xs">
+                  Decline
                 </Button>
-              ) : (
-                <Button size="sm" onClick={acceptAll}>
-                  Accept All
+                <Button size="sm" onClick={acceptAll} className="h-7 px-3 text-xs">
+                  Accept
                 </Button>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Expanded preferences */
+          <div className="p-3.5">
+            <p className="text-xs font-medium text-foreground mb-2.5">Cookie Preferences</p>
+            <div className="space-y-2 mb-3">
+              {[
+                { label: "Essential", desc: "Required for site to work", locked: true, checked: true },
+                { label: "Analytics", desc: "Help us improve", locked: false, checked: preferences.analytics, key: "analytics" as const },
+                { label: "Marketing", desc: "Relevant content & ads", locked: false, checked: preferences.marketing, key: "marketing" as const },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between py-1">
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{item.label}</p>
+                    <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                  </div>
+                  {item.locked ? (
+                    <span className="text-[10px] font-medium text-primary bg-primary/10 rounded px-1.5 py-0.5">On</span>
+                  ) : (
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={(e) => setPreferences({ ...preferences, [item.key!]: e.target.checked })}
+                        className="peer sr-only"
+                      />
+                      <div className="h-5 w-9 rounded-full bg-muted peer-checked:bg-primary after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-background after:transition-all peer-checked:after:translate-x-4" />
+                    </label>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back
+              </button>
+              <Button size="sm" onClick={() => saveConsent(preferences)} className="h-7 px-3 text-xs">
+                Save
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
