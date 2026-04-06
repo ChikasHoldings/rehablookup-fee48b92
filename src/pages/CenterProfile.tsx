@@ -694,6 +694,18 @@ const CenterProfile = () => {
                     Verified
                   </Badge>
                 )}
+                {facility.concierge_network_opted_in && (
+                  <Badge className="bg-sky-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
+                    <Handshake className="h-3 w-3" />
+                    Accepts Placements
+                  </Badge>
+                )}
+                {facility.accepts_international_patients && (
+                  <Badge className="bg-violet-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
+                    <GlobeIcon className="h-3 w-3" />
+                    International
+                  </Badge>
+                )}
               </div>
               
               {/* Facility identity overlay */}
