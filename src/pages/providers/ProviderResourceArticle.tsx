@@ -53,6 +53,8 @@ export default function ProviderResourceArticle() {
           "@type": "Article",
           headline: article.title,
           description: article.description,
+          ...(article.publishedDate && { datePublished: article.publishedDate }),
+          ...(article.publishedDate && { dateModified: article.publishedDate }),
           publisher: {
             "@type": "Organization",
             name: "RehabLookup",
@@ -92,6 +94,11 @@ export default function ProviderResourceArticle() {
                 <Clock className="h-3 w-3" />
                 {article.readTime} read
               </span>
+              {article.publishedDate && (
+                <span className="text-xs text-primary-foreground/50">
+                  {new Date(article.publishedDate + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                </span>
+              )}
             </div>
             <h1 className="text-2xl md:text-4xl font-display font-bold text-primary-foreground leading-tight">
               {article.title}
