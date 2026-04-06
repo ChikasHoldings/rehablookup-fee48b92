@@ -48,7 +48,8 @@ export interface CostPageConfig {
 // ============================================================
 // TOP 25 CITIES
 // ============================================================
-export const topCities: CityConfig[  { slug: "fresno", city: "Fresno", state: "California", stateAbbr: "CA", stateSlug: "california", nearbyCities: ["modesto", "visalia", "sacramento", "bakersfield"] },
+export const topCities: CityConfig[] = [
+  { slug: "fresno", city: "Fresno", state: "California", stateAbbr: "CA", stateSlug: "california", nearbyCities: ["modesto", "visalia", "sacramento", "bakersfield"] },
   { slug: "bakersfield", city: "Bakersfield", state: "California", stateAbbr: "CA", stateSlug: "california", nearbyCities: ["fresno", "visalia", "los-angeles", "oxnard"] },
   { slug: "anaheim", city: "Anaheim", state: "California", stateAbbr: "CA", stateSlug: "california", nearbyCities: ["los-angeles", "santa-ana", "irvine", "riverside"] },
   { slug: "santa-ana", city: "Santa Ana", state: "California", stateAbbr: "CA", stateSlug: "california", nearbyCities: ["anaheim", "irvine", "los-angeles", "riverside"] },
