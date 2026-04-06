@@ -186,32 +186,8 @@ export default function ProviderBillingPage() {
     }
   };
 
-  const handleUpgrade = async () => {
-    if (!facilityId) {
-      toast.error("No facility selected");
-      return;
-    }
-    setUpgradeLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("subscribe-pro", {
-        body: { facilityId },
-      });
-      if (error) throw error;
-      if (data?.checkoutUrl) {
-        try {
-          const url = new URL(data.checkoutUrl);
-          if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid checkout URL");
-          window.open(data.checkoutUrl, "_blank");
-        } catch { toast.error("Invalid checkout URL received."); }
-      } else if (data?.error) {
-        toast.error(data.error);
-      }
-    } catch (err) {
-      console.error("Upgrade error:", err);
-      toast.error("Failed to start upgrade. Please try again.");
-    } finally {
-      setUpgradeLoading(false);
-    }
+  const handleUpgrade = () => {
+    navigate("/provider/pro-upgrade");
   };
 
   const handleManageSubscription = async () => {
