@@ -4,6 +4,7 @@ import { SEO, generateFAQSchema, generateLocalBusinessAggregateSchema } from "@/
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
 import {
   Shield,
   CheckCircle,
