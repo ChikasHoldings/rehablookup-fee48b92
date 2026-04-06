@@ -156,11 +156,25 @@ const validateField = (field: string, value: string | null): string | null => {
   }
 };
 
-// Use components from imports with local aliases
-const SectionHeader = ListingSectionHeader;
+// Local aliases
 const TagChip = ListingTagChip;
-const EmptyTagsState = ListingEmptyTagsState;
 const FormField = ListingFormField;
+
+// Tab definitions for the new design
+const EDITOR_TABS = [
+  { id: "photos", label: "Media", icon: ImageIcon },
+  { id: "basic", label: "Details", icon: Building2 },
+  { id: "location", label: "Location", icon: MapPin },
+  { id: "contact", label: "Contact", icon: Phone },
+  { id: "program", label: "Program", icon: Users },
+  { id: "services", label: "Services", icon: Stethoscope },
+  { id: "insurance", label: "Insurance", icon: CreditCard },
+  { id: "ageGroups", label: "Age Groups", icon: Users },
+  { id: "trust", label: "Credentials", icon: ShieldCheck },
+  { id: "staff", label: "Team", icon: Users2 },
+] as const;
+
+type EditorTab = typeof EDITOR_TABS[number]["id"];
 
 interface ListingEditorProps {
   facilityId?: string;
