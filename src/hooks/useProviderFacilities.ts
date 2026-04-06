@@ -105,7 +105,7 @@ export function useProviderFacilities() {
 
       return facilities;
     },
-    enabled: !isAuthLoading,
+    enabled: !isAuthLoading && isAuthenticated && !!user?.id,
     placeholderData: () => cachedFacilities,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 60,

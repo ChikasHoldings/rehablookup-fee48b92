@@ -5439,6 +5439,13 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["admin_role_type"]
       }
+      get_facility_leads_count: {
+        Args: { p_facility_id: string }
+        Returns: {
+          monthly_qualified_count: number
+          total_count: number
+        }[]
+      }
       get_owner_facility_data: {
         Args: { p_user_id: string }
         Returns: {
