@@ -80,16 +80,6 @@ const StateOutpatientPrograms = () => {
         "procedureType": "https://schema.org/TherapeuticProcedure"
       }
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com/" },
-        { "@type": "ListItem", "position": 2, "name": "Treatment Types", "item": "https://rehablookup.com/treatment-types" },
-        { "@type": "ListItem", "position": 3, "name": "Outpatient Programs", "item": "https://rehablookup.com/treatment-types/outpatient-programs" },
-        { "@type": "ListItem", "position": 4, "name": `${stateName}`, "item": `https://rehablookup.com/treatment-types/outpatient-programs/${stateSlug}` },
-      ]
-    }
   ];
 
   return (

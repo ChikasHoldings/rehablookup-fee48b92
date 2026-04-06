@@ -519,14 +519,6 @@ export default function Insurance() {
             "description": "Comprehensive guide to insurance coverage for addiction treatment, including Medicaid, Medicare, Aetna, BCBS, Cigna, and UnitedHealthcare.",
             "url": "https://rehablookup.com/insurance",
           },
-          {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com" },
-              { "@type": "ListItem", "position": 2, "name": "Insurance Coverage", "item": "https://rehablookup.com/insurance" },
-            ],
-          },
         ]}
         breadcrumbs={[
           { name: "Home", url: "/" },

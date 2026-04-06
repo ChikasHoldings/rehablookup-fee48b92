@@ -136,14 +136,6 @@ export default function ConciergeLanding() {
             "provider": { "@type": "Organization", "name": "RehabLookup", "url": "https://rehablookup.com" },
             "offers": { "@type": "Offer", "price": "29", "priceCurrency": "USD" },
           },
-          {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com" },
-              { "@type": "ListItem", "position": 2, "name": "Concierge", "item": "https://rehablookup.com/concierge" },
-            ],
-          },
         ]}
         breadcrumbs={[
           { name: "Home", url: "/" },
