@@ -22,19 +22,17 @@ import {
   ShieldCheck,
   Send,
   Info,
-  ChevronDown,
-  ChevronUp,
   Save,
   Eye,
   ArrowUpRight,
   Sparkles,
-  TrendingUp,
   X,
   CircleCheck,
-  CircleDashed
+  CircleDashed,
+  Users2
 } from "lucide-react";
 import { MultiSelectDropdown } from "@/components/search/MultiSelectDropdown";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,11 +53,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
@@ -67,12 +60,7 @@ import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 import { useProStatus } from "@/hooks/useProStatus";
 import { cn } from "@/lib/utils";
 import {
-  ListingSectionHeader,
   ListingTagChip,
-  ListingEmptyTagsState,
-  ListingProfileCompletion,
-  ListingStatusCard,
-  ListingTipsCard,
   ListingFloatingSaveBar,
   ListingFormField,
   StaffManagementSection
