@@ -758,6 +758,18 @@ const CenterProfile = () => {
                     Insurance
                   </span>
                 )}
+                {facility.concierge_network_opted_in && (
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 dark:text-sky-400 bg-sky-500/10 rounded-full px-3 py-1.5 border border-sky-200 dark:border-sky-800">
+                    <Handshake className="h-3.5 w-3.5" />
+                    Accepts Placements
+                  </span>
+                )}
+                {facility.accepts_international_patients && (
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-400 bg-violet-500/10 rounded-full px-3 py-1.5 border border-violet-200 dark:border-violet-800">
+                    <GlobeIcon className="h-3.5 w-3.5" />
+                    International
+                  </span>
+                )}
               </div>
             </div>
 
