@@ -246,8 +246,8 @@ export default function ProUpgradePage() {
                 <tbody>
                   {COMPARISON_ITEMS.map((item, i) => (
                     <tr key={item.feature} className={cn("border-b last:border-0", i % 2 === 0 && "bg-muted/15")}>
-                      <td className="py-2 px-4 text-xs font-medium text-foreground">{item.feature}</td>
-                      <td className="py-2 px-4 text-center text-xs text-muted-foreground">
+                      <td className="py-2.5 px-4 text-sm font-medium text-foreground">{item.feature}</td>
+                      <td className="py-2.5 px-4 text-center text-sm text-muted-foreground">
                         {typeof item.free === "boolean" ? (
                           item.free ? <CheckCircle className="h-3.5 w-3.5 text-emerald-600 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
                         ) : item.free}
