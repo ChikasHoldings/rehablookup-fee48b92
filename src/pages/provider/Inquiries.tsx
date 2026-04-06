@@ -274,10 +274,10 @@ export default function ProviderInquiriesPage() {
             )}
             <div className="min-w-0">
               <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-                {isMobile && mobileView === 'detail' ? 'Inquiry Details' : 'Inquiries'}
+                {isMobile && mobileView === 'detail' ? 'Lead Details' : 'Leads'}
               </h1>
               <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
-                Manage and respond to treatment inquiries
+                Manage and respond to your leads
               </p>
             </div>
           </div>
