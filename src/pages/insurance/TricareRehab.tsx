@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
+import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import {
   Shield,
   CheckCircle,
@@ -163,6 +165,13 @@ export default function TricareRehab() {
         </div>
       </section>
 
+      <StateLinksSection
+        title="TRICARE Rehab Coverage by State"
+        subtitle="Find TRICARE-accepting treatment centers in your state"
+        basePath="/insurance/tricare-rehab"
+        buttonPrefix="TRICARE in"
+      />
+
       <section className="py-10 md:py-14">
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
@@ -175,6 +184,17 @@ export default function TricareRehab() {
           </div>
         </div>
       </section>
+
+      <InternalLinkingSection
+        title="Explore More Resources"
+        description="Learn about treatment options and find care near you"
+        variant="grid"
+        groups={[
+          { title: "Treatment Programs", links: treatmentTypeLinks.slice(0, 5) },
+          { title: "Find Treatment Near You", links: nearMeLinks.slice(0, 5) },
+          { title: "Recovery Guides", links: resourceLinks.slice(0, 5) },
+        ]}
+      />
 
       <section className="border-t border-border bg-muted/30 py-8">
         <div className="container">
