@@ -61,6 +61,7 @@ const PRO_BENEFITS = [
 ];
 
 export default function ProviderBillingPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
