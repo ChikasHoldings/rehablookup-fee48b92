@@ -121,6 +121,7 @@ export default function ProviderDashboardPage() {
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [profilePromptDismissedFields, setProfilePromptDismissedFields] = useState<string | null>(() => {
     if (!facilityId) return null;
     return localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
