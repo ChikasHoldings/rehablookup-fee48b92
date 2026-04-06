@@ -189,6 +189,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const [showSaved, setShowSaved] = useState(false);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<EditorTab>(() => {
     const saved = localStorage.getItem('provider-listing-active-tab');
     return (saved as EditorTab) || "photos";
