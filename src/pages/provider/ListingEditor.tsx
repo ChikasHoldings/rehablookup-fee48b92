@@ -959,14 +959,48 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   };
 
-  // Loading state
+  // Loading state - skeleton matching final layout to prevent shift
   if (isLoading || (facilityData && !facility)) {
     return (
       <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
-            <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
+        <div className="max-w-6xl mx-auto space-y-6 pb-8">
+          {/* Header skeleton */}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2">
+              <div className="h-8 w-48 rounded-lg bg-muted animate-pulse" />
+              <div className="h-4 w-72 rounded bg-muted animate-pulse" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
+              <div className="h-9 w-[100px] rounded-md bg-muted animate-pulse" />
+            </div>
+          </div>
+          {/* Grid skeleton */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="rounded-lg border border-border/60 bg-card p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 rounded-xl bg-muted animate-pulse" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+                      <div className="h-3 w-48 rounded bg-muted animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-10 rounded-md bg-muted animate-pulse" />
+                    <div className="h-10 rounded-md bg-muted animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-4 order-1 lg:order-2">
+              <div className="rounded-lg border border-border/60 bg-card p-6">
+                <div className="h-4 w-36 rounded bg-muted animate-pulse mb-3" />
+                <div className="h-3 w-full rounded bg-muted animate-pulse" />
+                <div className="h-8 w-full rounded-full bg-muted animate-pulse mt-4" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
