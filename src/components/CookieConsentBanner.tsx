@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Cookie, X, Shield } from "lucide-react";
 
@@ -24,6 +24,15 @@ export function CookieConsentBanner() {
     version: COOKIE_CONSENT_VERSION,
     timestamp: "",
   });
+  const { pathname } = useLocation();
+
+  const isAppShellRoute =
+    pathname === "/provider" ||
+    pathname.startsWith("/provider/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/account" ||
+    pathname.startsWith("/account/");
 
   useEffect(() => {
     // Check if user has already consented
@@ -104,7 +113,7 @@ export function CookieConsentBanner() {
     });
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || isAppShellRoute) return null;
 
   return (
     <div
