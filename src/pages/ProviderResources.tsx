@@ -437,13 +437,13 @@ export default function ProviderResources() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Link to="/provider-support">
-                    <Button size="default" className="gap-2 font-semibold">
+                    <Button size="lg" className="gap-2 font-semibold px-6">
                       Contact Support
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                   <Link to="/login">
-                    <Button variant="outline" size="default">
+                    <Button variant="outline" size="lg" className="px-6">
                       Sign In
                     </Button>
                   </Link>
