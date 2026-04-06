@@ -36,6 +36,8 @@ import {
   Sparkles,
   CalendarDays,
   Award,
+  Handshake,
+  GlobeIcon,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
@@ -69,6 +71,8 @@ interface FacilityData {
   status: string;
   user_id: string;
   updated_at: string;
+  concierge_network_opted_in: boolean | null;
+  accepts_international_patients: boolean | null;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
@@ -221,7 +225,7 @@ export default function SeekerFacilityProfile() {
 
       // Fetch facility by slug using direct REST call
       const facilityRes = await fetch(
-        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,phone,email,website,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at`,
+        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,phone,email,website,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at,concierge_network_opted_in,accepts_international_patients`,
         { headers: { ...headers, "Accept": "application/vnd.pgrst.object+json" } }
       );
 
@@ -440,6 +444,18 @@ export default function SeekerFacilityProfile() {
                         <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-success/10 text-success border-success/20">
                           <Shield className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Verified
+                        </Badge>
+                      )}
+                      {facility.concierge_network_opted_in && (
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-sky-500/10 text-sky-600 border-sky-500/20">
+                          <Handshake className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
+                          Accepts Placements
+                        </Badge>
+                      )}
+                      {facility.accepts_international_patients && (
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-violet-500/10 text-violet-600 border-violet-500/20">
+                          <GlobeIcon className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
+                          International
                         </Badge>
                       )}
                     </div>

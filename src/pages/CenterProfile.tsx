@@ -38,6 +38,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Handshake,
+  GlobeIcon,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -81,6 +83,8 @@ interface FacilityData {
   status: string;
   user_id: string;
   updated_at: string;
+  concierge_network_opted_in: boolean | null;
+  accepts_international_patients: boolean | null;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
@@ -337,6 +341,8 @@ const CenterProfile = () => {
           status,
           user_id,
           updated_at,
+          concierge_network_opted_in,
+          accepts_international_patients,
           facility_services (service_name),
           facility_insurance (insurance_name),
           facility_age_groups (age_group),
@@ -375,6 +381,8 @@ const CenterProfile = () => {
             status,
             user_id,
             updated_at,
+            concierge_network_opted_in,
+            accepts_international_patients,
             facility_services (service_name),
             facility_insurance (insurance_name),
             facility_age_groups (age_group),
@@ -684,6 +692,18 @@ const CenterProfile = () => {
                   <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
                     <ShieldCheck className="h-3 w-3" />
                     Verified
+                  </Badge>
+                )}
+                {facility.concierge_network_opted_in && (
+                  <Badge className="bg-sky-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
+                    <Handshake className="h-3 w-3" />
+                    Accepts Placements
+                  </Badge>
+                )}
+                {facility.accepts_international_patients && (
+                  <Badge className="bg-violet-500/90 text-white border-0 gap-1 px-2.5 py-1 shadow-md text-xs font-bold uppercase tracking-wider">
+                    <GlobeIcon className="h-3 w-3" />
+                    International
                   </Badge>
                 )}
               </div>
