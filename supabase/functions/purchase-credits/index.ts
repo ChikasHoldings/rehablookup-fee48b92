@@ -105,6 +105,33 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "User authenticated", { userId: user.id });
 
+    // Rate limit: max 5 purchase attempts per 15 minutes per user
+    const { data: rateCheck } = await supabaseClient.rpc("check_rate_limit", {
+      p_identifier: `purchase:${user.id}`,
+      p_action_type: "credit_purchase",
+      p_max_attempts: 5,
+      p_window_minutes: 15,
+    });
+
+    if (rateCheck?.is_limited) {
+      logStep(requestId, "Rate limited", { retryAfter: rateCheck.retry_after_seconds });
+      return new Response(JSON.stringify({
+        error: "Too many purchase attempts. Please wait a few minutes.",
+        requestId,
+        _version: VERSION,
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Log the attempt
+    await supabaseClient.rpc("log_rate_limit_event", {
+      p_identifier: `purchase:${user.id}`,
+      p_action_type: "credit_purchase",
+      p_success: false,
+    });
+
     // Parse and validate request body
     let body: { amountCents?: number; facilityId?: string };
     try {
