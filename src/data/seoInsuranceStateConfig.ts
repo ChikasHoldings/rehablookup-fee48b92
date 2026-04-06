@@ -27,6 +27,13 @@ export const insurerConfigs: InsurerConfig[] = [
   { slug: "medicare-rehab", name: "Medicare", mainPagePath: "medicare-rehab" },
   { slug: "medicaid-rehab", name: "Medicaid", mainPagePath: "medicaid-rehab" },
   { slug: "anthem-rehab", name: "Anthem", mainPagePath: "anthem-rehab" },
+  { slug: "tricare-rehab", name: "TRICARE", mainPagePath: "tricare-rehab" },
+  { slug: "molina-rehab", name: "Molina Healthcare", mainPagePath: "molina-rehab" },
+  { slug: "magellan-rehab", name: "Magellan Health", mainPagePath: "magellan-rehab" },
+  { slug: "wellcare-rehab", name: "WellCare", mainPagePath: "wellcare-rehab" },
+  { slug: "ambetter-rehab", name: "Ambetter", mainPagePath: "ambetter-rehab" },
+  { slug: "oscar-rehab", name: "Oscar Health", mainPagePath: "oscar-rehab" },
+  { slug: "highmark-rehab", name: "Highmark", mainPagePath: "highmark-rehab" },
 ];
 
 export const stateInsuranceConfigs: StateInsuranceConfig[] = [

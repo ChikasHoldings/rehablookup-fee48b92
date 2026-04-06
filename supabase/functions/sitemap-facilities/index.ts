@@ -135,6 +135,13 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/insurance/medicare-rehab", priority: 0.85, changefreq: "weekly" },
   { path: "/insurance/medicaid-rehab", priority: 0.85, changefreq: "weekly" },
   { path: "/insurance/anthem-rehab", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/tricare-rehab", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/molina-rehab", priority: 0.75, changefreq: "weekly" },
+  { path: "/insurance/magellan-rehab", priority: 0.75, changefreq: "weekly" },
+  { path: "/insurance/wellcare-rehab", priority: 0.75, changefreq: "weekly" },
+  { path: "/insurance/ambetter-rehab", priority: 0.75, changefreq: "weekly" },
+  { path: "/insurance/oscar-rehab", priority: 0.75, changefreq: "weekly" },
+  { path: "/insurance/highmark-rehab", priority: 0.75, changefreq: "weekly" },
 
   // INTERNATIONAL SEO PAGES
   { path: "/us-rehab", priority: 0.8, changefreq: "weekly" },
@@ -406,7 +413,9 @@ const CITY_TREATMENT_PREFIXES = [
 const INSURANCE_SLUGS = [
   "aetna-rehab", "bcbs-treatment", "cigna-rehab",
   "united-healthcare-rehab", "humana-rehab", "kaiser-rehab",
-  "medicare-rehab", "medicaid-rehab", "anthem-rehab"
+  "medicare-rehab", "medicaid-rehab", "anthem-rehab",
+  "tricare-rehab", "molina-rehab", "magellan-rehab",
+  "wellcare-rehab", "ambetter-rehab", "oscar-rehab", "highmark-rehab"
 ];
 const INSURANCE_STATES = [
   "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut",
