@@ -446,6 +446,18 @@ export default function SeekerFacilityProfile() {
                           Verified
                         </Badge>
                       )}
+                      {facility.concierge_network_opted_in && (
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-sky-500/10 text-sky-600 border-sky-500/20">
+                          <Handshake className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
+                          Accepts Placements
+                        </Badge>
+                      )}
+                      {facility.accepts_international_patients && (
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-violet-500/10 text-violet-600 border-violet-500/20">
+                          <GlobeIcon className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
+                          International
+                        </Badge>
+                      )}
                     </div>
                   </div>
               </div>
