@@ -65,6 +65,7 @@ import {
   ListingFormField,
   StaffManagementSection
 } from "@/components/provider/listing";
+import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 
 interface Facility {
   id: string;
@@ -1420,6 +1421,16 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       {/* Floating Save Bar */}
       <ListingFloatingSaveBar hasChanges={hasChanges} isSaving={isSaving} isAutoSaving={isAutoSaving} onSave={handleSave} />
+
+      {/* Preview Modal */}
+      {facility?.slug && (
+        <ListingPreviewModal
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          facilityName={facility.name}
+          facilitySlug={facility.slug}
+        />
+      )}
     </div>
   );
 }
