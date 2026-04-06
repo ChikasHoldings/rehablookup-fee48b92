@@ -171,32 +171,24 @@ export function useProviderData(facilityId?: string) {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        const [viewsResult, totalLeadsResult, monthlyLeadsResult] = await Promise.all([
+        const [viewsResult, leadsCountResult] = await Promise.all([
           // Views count for last 30 days
           supabase
             .from("facility_views")
             .select("view_count")
             .eq("facility_id", facilityData.id)
             .gte("view_date", thirtyDaysAgo.toISOString().split('T')[0]),
-          // Total leads count
-          supabase
-            .from("leads")
-            .select("*", { count: "exact", head: true })
-            .eq("facility_id", facilityData.id),
-          // Monthly qualified leads count
-          supabase
-            .from("leads")
-            .select("*", { count: "exact", head: true })
-            .eq("facility_id", facilityData.id)
-            .eq("qualified", true)
-            .gte("created_at", startOfMonth.toISOString()),
+          // Accurate leads count via security definer function (bypasses RLS unlock restriction)
+          supabase.rpc("get_facility_leads_count", { p_facility_id: facilityData.id }),
         ]);
 
         if (viewsResult.data) {
           viewsCount = viewsResult.data.reduce((sum, row) => sum + row.view_count, 0);
         }
-        leadsCount = totalLeadsResult.count || 0;
-        monthlyLeadsCount = monthlyLeadsResult.count || 0;
+        if (leadsCountResult.data && leadsCountResult.data.length > 0) {
+          leadsCount = Number(leadsCountResult.data[0].total_count) || 0;
+          monthlyLeadsCount = Number(leadsCountResult.data[0].monthly_qualified_count) || 0;
+        }
       }
 
       const result: ProviderData = {
