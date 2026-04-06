@@ -82,7 +82,7 @@ export default function ResetPassword() {
         <SEO title="Invalid Link | Reset Password" description="This password reset link is invalid or has expired." noindex={true} />
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
           <div className="p-4">
-            <Link to="/auth" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/login" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
               Back to Sign In
             </Link>
@@ -101,7 +101,7 @@ export default function ResetPassword() {
               </CardHeader>
               <CardContent>
                 <Button asChild className="w-full" size="lg">
-                  <Link to="/auth">Back to Sign In</Link>
+                  <Link to="/login">Back to Sign In</Link>
                 </Button>
               </CardContent>
             </Card>

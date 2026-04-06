@@ -44,7 +44,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
     prefetchRoute(path);
   }, []);
 
-  const isMoreActive = ["/account/settings", "/account/saved", "/account/reviews", "/account/notifications", "/account/notification-preferences", "/account/help", "/account/international", "/auth"].some(
+  const isMoreActive = ["/account/settings", "/account/saved", "/account/reviews", "/account/notifications", "/account/notification-preferences", "/account/help", "/account/international", "/login"].some(
     path => location.pathname.startsWith(path)
   );
 

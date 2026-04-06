@@ -128,7 +128,7 @@ const PORTAL_CONFIG = {
     homeRoute: "/account",
     // Seekers can access public website + /account routes
     allowedPrefixes: ["/", "/account"],
-    loginRoute: "/auth",
+    loginRoute: "/login",
   },
 } as const;
 
@@ -137,10 +137,9 @@ const PUBLIC_AUTH_ROUTES = [
   "/login",
   "/forgot-password",
   "/provider-signup",
-  "/provider-forgot-password",
+  "/provider/forgot-password",
   "/provider-reset-password",
   "/admin/login",
-  "/auth",
   "/signup",
   "/seeker/signup",
   "/seeker/reset-password",

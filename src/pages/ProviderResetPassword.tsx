@@ -179,7 +179,7 @@ export default function ProviderResetPassword() {
               </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <Link to="/provider-forgot-password" className="block">
+              <Link to="/provider/forgot-password" className="block">
                 <Button className="w-full h-10 text-sm font-semibold">
                   Request New Link
                 </Button>

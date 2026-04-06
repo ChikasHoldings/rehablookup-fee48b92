@@ -499,7 +499,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
               asChild 
               className="h-9 sm:h-10 px-3 sm:px-4 bg-white text-primary hover:bg-white/90 font-semibold text-sm rounded-lg shadow-md transition-all duration-200 active:scale-[0.98]"
             >
-              <Link to="/auth" className="flex items-center gap-1.5">
+              <Link to="/login" className="flex items-center gap-1.5">
                 <LogIn className="h-4 w-4" />
                 <span className="hidden xs:inline">Sign In</span>
               </Link>

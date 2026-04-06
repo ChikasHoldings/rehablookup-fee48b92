@@ -75,7 +75,7 @@ export const StateDestinations = ({
           {topStates.map((state) => (
             <Link
               key={state.slug}
-              to={`/us-rehab/${state.slug}`}
+              to={`/rehab-centers/${state.slug}`}
               className="group block p-6 bg-background rounded-xl border border-border/50 hover:border-primary/20 hover:shadow-md transition-all"
             >
               <div className="flex items-center gap-3 mb-3">

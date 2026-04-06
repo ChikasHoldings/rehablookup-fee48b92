@@ -367,7 +367,7 @@ export default function ConciergeCreatePassword() {
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 <p>
                   Already have an account?{" "}
-                  <Link to="/auth" className="text-primary hover:underline">
+                  <Link to="/login" className="text-primary hover:underline">
                     Sign in
                   </Link>
                 </p>

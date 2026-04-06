@@ -23,7 +23,7 @@ const PROVIDER_ALLOWED_ROUTES = [
   "/providers/resources",
   "/login",
   "/provider-signup",
-  "/provider-forgot-password",
+  "/provider/forgot-password",
   "/provider-reset-password",
 ];
 
