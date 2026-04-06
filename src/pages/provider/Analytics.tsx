@@ -88,7 +88,7 @@ export default function ProviderAnalyticsPage() {
 
   return (
     <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      <div className="max-w-6xl mx-auto space-y-5">
+      <div className="max-w-5xl mx-auto space-y-5">
 
         {/* ── Page Header ── */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
