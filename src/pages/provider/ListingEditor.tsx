@@ -1046,7 +1046,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
   return (
     <div className="p-4 md:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto space-y-6 pb-8">
+      <div className="max-w-6xl mx-auto space-y-6 pb-28 lg:pb-24">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">

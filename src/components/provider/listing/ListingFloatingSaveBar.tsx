@@ -16,11 +16,13 @@ export function ListingFloatingSaveBar({
   onSave
 }: ListingFloatingSaveBarProps) {
   return (
-    <div className="sticky bottom-4 flex justify-center pt-4 z-10 pointer-events-none">
-      <div className={cn(
-        "flex items-center gap-4 px-5 py-3 rounded-2xl bg-card/95 backdrop-blur-md border shadow-xl transition-all duration-300 pointer-events-auto",
-        hasChanges ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
-      )}>
+    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 lg:bottom-6">
+      <div
+        className={cn(
+          "pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-4 rounded-2xl border bg-card/95 px-5 py-3 shadow-xl backdrop-blur-md transition-all duration-300",
+          hasChanges ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-8 opacity-0"
+        )}
+      >
         <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
         <span className="text-sm font-medium text-foreground">
           You have unsaved changes
