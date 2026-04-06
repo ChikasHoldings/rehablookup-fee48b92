@@ -1042,6 +1042,28 @@ Deno.serve(async (req) => {
               })
               .eq("stripe_subscription_id", subscription.id);
 
+            // DEACTIVATE PRO BENEFITS: remove featured flag and ranking boost from ALL provider facilities
+            const providerId = profiles[0].user_id;
+            const { data: allFacilities } = await supabaseAdmin
+              .from("facilities")
+              .select("id, calculated_ranking_score")
+              .eq("user_id", providerId);
+
+            if (allFacilities) {
+              for (const f of allFacilities) {
+                const currentScore = f.calculated_ranking_score ?? 0;
+                await supabaseAdmin
+                  .from("facilities")
+                  .update({
+                    featured: false,
+                    calculated_ranking_score: Math.max(0, currentScore - 50),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", f.id);
+              }
+              logStep("Pro benefits removed from all provider facilities", { count: allFacilities.length });
+            }
+
             // Record event
             await supabaseAdmin.from("subscription_events").insert({
               event_type: "subscription_cancelled",

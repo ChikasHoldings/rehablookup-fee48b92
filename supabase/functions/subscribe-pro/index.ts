@@ -240,8 +240,8 @@ Deno.serve(async (req) => {
           price: PRO_PRICE_ID,
           quantity: 1,
         }],
-        success_url: `${origin}/provider/billing?pro_success=true`,
-        cancel_url: `${origin}/provider/billing?pro_canceled=true`,
+        success_url: `${origin}/provider/pro-upgrade?pro_success=true`,
+        cancel_url: `${origin}/provider/pro-upgrade?pro_canceled=true`,
         metadata: {
           type: "pro_subscription",
           facility_id: facilityId,
