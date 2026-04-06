@@ -121,6 +121,13 @@ const KaiserRehab = lazy(() => import("./pages/insurance/KaiserRehab"));
 const MedicareRehab = lazy(() => import("./pages/insurance/MedicareRehab"));
 const MedicaidRehab = lazy(() => import("./pages/insurance/MedicaidRehab"));
 const AnthemRehab = lazy(() => import("./pages/insurance/AnthemRehab"));
+const TricareRehab = lazy(() => import("./pages/insurance/TricareRehab"));
+const MolinaRehab = lazy(() => import("./pages/insurance/MolinaRehab"));
+const MagellanRehab = lazy(() => import("./pages/insurance/MagellanRehab"));
+const WellCareRehab = lazy(() => import("./pages/insurance/WellCareRehab"));
+const AmbetterRehab = lazy(() => import("./pages/insurance/AmbetterRehab"));
+const OscarRehab = lazy(() => import("./pages/insurance/OscarRehab"));
+const HighmarkRehab = lazy(() => import("./pages/insurance/HighmarkRehab"));
 const CostEstimator = lazy(() => import("./pages/CostEstimator"));
 const ArticleDetail = lazy(() => import("./pages/ArticleDetail"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -602,6 +609,13 @@ const AppInner = () => {
             <Route path="/insurance/medicare-rehab" element={<PublicRouteGuard><MedicareRehab /></PublicRouteGuard>} />
             <Route path="/insurance/medicaid-rehab" element={<PublicRouteGuard><MedicaidRehab /></PublicRouteGuard>} />
             <Route path="/insurance/anthem-rehab" element={<PublicRouteGuard><AnthemRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/tricare-rehab" element={<PublicRouteGuard><TricareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/molina-rehab" element={<PublicRouteGuard><MolinaRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/magellan-rehab" element={<PublicRouteGuard><MagellanRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/wellcare-rehab" element={<PublicRouteGuard><WellCareRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/ambetter-rehab" element={<PublicRouteGuard><AmbetterRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/oscar-rehab" element={<PublicRouteGuard><OscarRehab /></PublicRouteGuard>} />
+            <Route path="/insurance/highmark-rehab" element={<PublicRouteGuard><HighmarkRehab /></PublicRouteGuard>} />
             <Route path="/cost-estimator" element={<PublicRouteGuard><CostEstimator /></PublicRouteGuard>} />
             <Route path="/faq" element={<PublicRouteGuard><FAQ /></PublicRouteGuard>} />
             <Route path="/about" element={<PublicRouteGuard><About /></PublicRouteGuard>} />

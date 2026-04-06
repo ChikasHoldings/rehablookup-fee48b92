@@ -102,6 +102,48 @@ const majorInsurers: InsuranceProvider[] = [
     type: "private",
     detailsUrl: "/insurance/anthem-rehab",
   },
+  {
+    name: "Molina Healthcare",
+    description: "Medicaid & Marketplace managed care insurer",
+    coverageNotes: "Behavioral health coverage through Medicaid and ACA plans in 19+ states",
+    type: "private",
+    detailsUrl: "/insurance/molina-rehab",
+  },
+  {
+    name: "Magellan Health",
+    description: "Largest behavioral health managed care company",
+    coverageNotes: "Manages substance abuse benefits for millions through employer and government plans",
+    type: "private",
+    detailsUrl: "/insurance/magellan-rehab",
+  },
+  {
+    name: "WellCare",
+    description: "Medicaid and Medicare managed care insurer",
+    coverageNotes: "Behavioral health coverage through Medicaid and Medicare Advantage plans",
+    type: "private",
+    detailsUrl: "/insurance/wellcare-rehab",
+  },
+  {
+    name: "Ambetter",
+    description: "ACA Marketplace insurer by Centene in 29+ states",
+    coverageNotes: "Substance use disorder treatment as ACA essential health benefit",
+    type: "private",
+    detailsUrl: "/insurance/ambetter-rehab",
+  },
+  {
+    name: "Oscar Health",
+    description: "Tech-forward ACA Marketplace insurer",
+    coverageNotes: "ACA-compliant behavioral health benefits with dedicated care team",
+    type: "private",
+    detailsUrl: "/insurance/oscar-rehab",
+  },
+  {
+    name: "Highmark BCBS",
+    description: "4th largest Blue Cross Blue Shield insurer",
+    coverageNotes: "Comprehensive behavioral health coverage in PA, DE, WV, and western NY",
+    type: "private",
+    detailsUrl: "/insurance/highmark-rehab",
+  },
 ];
 
 const governmentPrograms: InsuranceProvider[] = [
@@ -127,6 +169,7 @@ const governmentPrograms: InsuranceProvider[] = [
     description: "Health care program for military and families",
     coverageNotes: "Comprehensive addiction treatment benefits for service members",
     type: "government",
+    detailsUrl: "/insurance/tricare-rehab",
   },
 ];
 
