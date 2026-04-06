@@ -159,14 +159,27 @@ export default function ProviderReviews() {
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Request Reviews Trigger Card */}
         <Card 
-          className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
-          onClick={() => setRequestReviewOpen(true)}
+          className={cn(
+            "cursor-pointer transition-all group",
+            isPro 
+              ? "hover:border-primary/50 hover:shadow-sm" 
+              : "opacity-75 hover:opacity-90"
+          )}
+          onClick={() => isPro ? setRequestReviewOpen(true) : navigate('/provider/billing?tab=pro')}
         >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+                <div className={cn(
+                  "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 relative",
+                  isPro ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
                   <Mail className="h-5 w-5" />
+                  {!isPro && (
+                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center">
+                      <Lock className="h-2.5 w-2.5 text-white" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <CardTitle className="text-base font-semibold">Request Reviews</CardTitle>
@@ -176,9 +189,15 @@ export default function ProviderReviews() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {requestStats.sent > 0 && (
+                {isPro && requestStats.sent > 0 && (
                   <Badge variant="secondary" className="text-xs">
                     {requestStats.sent} sent
+                  </Badge>
+                )}
+                {!isPro && (
+                  <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs font-medium">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    PRO
                   </Badge>
                 )}
                 <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -189,14 +208,27 @@ export default function ProviderReviews() {
 
         {/* Import Google Reviews Trigger Card */}
         <Card 
-          className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
-          onClick={() => setGoogleReviewsOpen(true)}
+          className={cn(
+            "cursor-pointer transition-all group",
+            isPro 
+              ? "hover:border-primary/50 hover:shadow-sm" 
+              : "opacity-75 hover:opacity-90"
+          )}
+          onClick={() => isPro ? setGoogleReviewsOpen(true) : navigate('/provider/billing?tab=pro')}
         >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
+                <div className={cn(
+                  "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 relative",
+                  isPro ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground"
+                )}>
                   <Star className="h-5 w-5" />
+                  {!isPro && (
+                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center">
+                      <Lock className="h-2.5 w-2.5 text-white" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <CardTitle className="text-base font-semibold">Import Google Reviews</CardTitle>
@@ -206,10 +238,16 @@ export default function ProviderReviews() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {reviewsConfig?.google_rating && (
+                {isPro && reviewsConfig?.google_rating && (
                   <Badge variant="secondary" className="text-xs gap-1">
                     <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                     {reviewsConfig.google_rating.toFixed(1)}
+                  </Badge>
+                )}
+                {!isPro && (
+                  <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs font-medium">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    PRO
                   </Badge>
                 )}
                 <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -218,6 +256,27 @@ export default function ProviderReviews() {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Pro Upgrade Banner */}
+      {!isPro && (
+        <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-amber-600/10">
+          <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+              <p className="text-sm text-muted-foreground truncate">
+                Upgrade to Pro to unlock Google Reviews Import & Review Requests
+              </p>
+            </div>
+            <Button 
+              size="sm" 
+              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs h-7"
+              onClick={() => navigate('/provider/billing?tab=pro')}
+            >
+              Upgrade
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <ReviewStatsCards stats={filteredStats} />
