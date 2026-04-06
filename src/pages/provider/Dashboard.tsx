@@ -38,6 +38,7 @@ import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget
 import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
+import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 
 // Compact Metric Card
 function MetricCard({ 
