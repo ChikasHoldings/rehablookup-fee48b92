@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none">
+  <circle cx="15" cy="20" r="11" fill="#FF5A00"/>
+  <circle cx="15" cy="20" r="6" fill="white"/>
+  <text x="32" y="25" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FF5A00">Oscar</text>
+</svg>

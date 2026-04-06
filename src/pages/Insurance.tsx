@@ -104,6 +104,7 @@ const majorInsurers: InsuranceProvider[] = [
   },
   {
     name: "Molina Healthcare",
+    logo: "/insurance-logos/molina.svg",
     description: "Medicaid & Marketplace managed care insurer",
     coverageNotes: "Behavioral health coverage through Medicaid and ACA plans in 19+ states",
     type: "private",
@@ -111,6 +112,7 @@ const majorInsurers: InsuranceProvider[] = [
   },
   {
     name: "Magellan Health",
+    logo: "/insurance-logos/magellan.svg",
     description: "Largest behavioral health managed care company",
     coverageNotes: "Manages substance abuse benefits for millions through employer and government plans",
     type: "private",
@@ -118,6 +120,7 @@ const majorInsurers: InsuranceProvider[] = [
   },
   {
     name: "WellCare",
+    logo: "/insurance-logos/wellcare.svg",
     description: "Medicaid and Medicare managed care insurer",
     coverageNotes: "Behavioral health coverage through Medicaid and Medicare Advantage plans",
     type: "private",
@@ -125,6 +128,7 @@ const majorInsurers: InsuranceProvider[] = [
   },
   {
     name: "Ambetter",
+    logo: "/insurance-logos/ambetter.svg",
     description: "ACA Marketplace insurer by Centene in 29+ states",
     coverageNotes: "Substance use disorder treatment as ACA essential health benefit",
     type: "private",
@@ -132,6 +136,7 @@ const majorInsurers: InsuranceProvider[] = [
   },
   {
     name: "Oscar Health",
+    logo: "/insurance-logos/oscar.svg",
     description: "Tech-forward ACA Marketplace insurer",
     coverageNotes: "ACA-compliant behavioral health benefits with dedicated care team",
     type: "private",
@@ -139,6 +144,7 @@ const majorInsurers: InsuranceProvider[] = [
   },
   {
     name: "Highmark BCBS",
+    logo: "/insurance-logos/highmark.svg",
     description: "4th largest Blue Cross Blue Shield insurer",
     coverageNotes: "Comprehensive behavioral health coverage in PA, DE, WV, and western NY",
     type: "private",
