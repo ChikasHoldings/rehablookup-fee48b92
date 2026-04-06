@@ -107,37 +107,12 @@ export default function CityTreatmentPage() {
   const structuredData = [
     {
       "@context": "https://schema.org",
-      "@type": "MedicalWebPage",
-      name: pageTitle,
-      description: `Find ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare accredited facilities, verify insurance coverage, and start treatment today.`,
-      url: `https://rehablookup.com/${slug}`,
-      about: { "@type": "MedicalCondition", name: "Substance Use Disorder" },
-      audience: {
-        "@type": "PeopleAudience",
-        geographicArea: {
-          "@type": "City",
-          name: city.city,
-          containedInPlace: { "@type": "State", name: city.state },
-        },
-      },
-    },
-    {
-      "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: faqs.map((faq) => ({
         "@type": "Question",
         name: faq.question,
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: "https://rehablookup.com" },
-        { "@type": "ListItem", position: 2, name: treatment.pluralLabel, item: `https://rehablookup.com/${treatment.slug}-centers` },
-        { "@type": "ListItem", position: 3, name: `${city.city}, ${city.stateAbbr}`, item: `https://rehablookup.com/${slug}` },
-      ],
     },
   ];
 

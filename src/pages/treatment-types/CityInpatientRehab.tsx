@@ -79,16 +79,6 @@ const CityInpatientRehab = () => {
         "procedureType": "https://schema.org/TherapeuticProcedure"
       }
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rehablookup.com/" },
-        { "@type": "ListItem", "position": 2, "name": "Residential Inpatient", "item": "https://rehablookup.com/treatment-types/residential-inpatient" },
-        { "@type": "ListItem", "position": 3, "name": `${stateName}`, "item": `https://rehablookup.com/treatment-types/residential-inpatient/${stateSlug}` },
-        { "@type": "ListItem", "position": 4, "name": `${cityName}`, "item": `https://rehablookup.com/treatment-types/residential-inpatient/${stateSlug}/${citySlug}` },
-      ]
-    }
   ];
 
   return (
