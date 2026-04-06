@@ -187,14 +187,14 @@ export default function ProviderResourceArticle() {
                   Join 500+ treatment centers receiving verified patient inquiries through RehabLookup.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
-                  <Link to="/provider-signup">
-                    <Button size="lg" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg">
+                  <Link to="/provider-signup" className="w-full sm:w-auto">
+                    <Button size="xl" className="w-full sm:w-auto min-w-[220px] gap-2.5 text-base font-semibold px-8 h-14 shadow-lg">
                       List Your Facility Free
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
-                  <Link to="/provider-support">
-                    <Button size="lg" variant="outline" className="gap-2 text-base h-13">
+                  <Link to="/provider-support" className="w-full sm:w-auto">
+                    <Button size="xl" variant="outline" className="w-full sm:w-auto min-w-[220px] gap-2.5 text-base font-semibold px-8 h-14">
                       <Phone className="h-4 w-4" />
                       Talk to Our Team
                     </Button>
