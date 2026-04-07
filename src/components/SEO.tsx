@@ -1123,7 +1123,7 @@ export function generateSearchResultsSchema(params: {
           "@type": "ListItem",
           position: index + 1,
           item: {
-            "@type": ["MedicalBusiness", "LocalBusiness"],
+            "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
             name: facility.name,
             address: {
               "@type": "PostalAddress",
