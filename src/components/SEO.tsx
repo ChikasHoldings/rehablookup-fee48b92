@@ -332,7 +332,7 @@ export function generateLocalBusinessSchema(facility: {
   
   return {
     "@context": "https://schema.org",
-    "@type": ["MedicalBusiness", "LocalBusiness", "HealthAndBeautyBusiness"],
+    "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
     "@id": facilityUrl,
     url: facilityUrl,
     name: facility.name,
