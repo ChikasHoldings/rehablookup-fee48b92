@@ -169,19 +169,7 @@ export default function SeekerSearch() {
     
     // Filter by location — keep exact, city, state, and nearby matches
     if (locationInput && locationMatch) {
-      const locationLower = locationInput.toLowerCase();
-      results = results.filter(f => {
-        if (locationMatch.zipcode && f.zipCode === locationMatch.zipcode) return true;
-        if (f.city.toLowerCase().includes(locationLower)) return true;
-        if (f.state.toLowerCase().includes(locationLower)) return true;
-        if (locationMatch.stateAbbr) {
-          const fAbbr = getStateAbbr(f.state);
-          if (fAbbr?.toUpperCase() === locationMatch.stateAbbr!.toUpperCase()) return true;
-          if (fAbbr && locationMatch.nearbyStates.includes(fAbbr.toUpperCase())) return true;
-        }
-        if (f.zipCode?.includes(locationInput)) return true;
-        return false;
-      });
+      results = results.filter(f => facilityMatchesLocation(f, locationMatch));
     }
     
     // Filter by treatment type
