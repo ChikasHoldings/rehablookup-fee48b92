@@ -230,7 +230,7 @@ export default function ProviderResourceHub() {
           testimonials={providerTestimonials.slice(0, 3)}
           title="What Treatment Centers Say"
           subtitle="Hear from providers who grew their census with RehabLookup"
-          columns={3}
+          
         />
 
         <section className="py-16">

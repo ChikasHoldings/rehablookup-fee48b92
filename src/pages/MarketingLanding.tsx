@@ -214,7 +214,7 @@ export default function MarketingLanding() {
           testimonials={seekerTestimonials.slice(0, 3)}
           title="Families Who Found Help"
           subtitle="Real stories from people who used RehabLookup to find treatment"
-          columns={3}
+          
         />
 
         {/* CTA Section */}
