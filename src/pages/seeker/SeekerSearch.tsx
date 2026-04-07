@@ -37,7 +37,7 @@ import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/componen
 import { 
   parseLocationInput, 
   getProximityTier,
-  getStateAbbr,
+  facilityMatchesLocation,
   PROXIMITY_TIER_ORDER,
 } from "@/lib/proximitySearch";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
