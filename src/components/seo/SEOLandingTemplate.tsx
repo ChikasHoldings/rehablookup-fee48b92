@@ -206,10 +206,40 @@ export function SEOLandingTemplate({
 
       {/* Intro Content */}
       {introContent && (
-        <section className="py-12 bg-background">
+        <section className="py-10 md:py-12 bg-background">
           <div className="container max-w-4xl">
             <div className="prose prose-lg max-w-none text-muted-foreground">
-              <p className="text-base leading-relaxed">{introContent}</p>
+              <p className="text-base md:text-lg leading-relaxed">{introContent}</p>
+            </div>
+            {/* Quick action cards for engagement */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+              <Link to="/concierge" className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all group">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Phone className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Free Consultation</p>
+                  <p className="text-xs text-muted-foreground">Speak with an advisor</p>
+                </div>
+              </Link>
+              <Link to="/insurance" className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all group">
+                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                  <Shield className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Verify Insurance</p>
+                  <p className="text-xs text-muted-foreground">Check your coverage</p>
+                </div>
+              </Link>
+              <Link to="/rehab-centers" className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all group">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Search className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Search Directory</p>
+                  <p className="text-xs text-muted-foreground">Browse all centers</p>
+                </div>
+              </Link>
             </div>
           </div>
         </section>
@@ -311,13 +341,23 @@ export function SEOLandingTemplate({
           ) : (
             <div className="text-center py-12 rounded-2xl border bg-card max-w-2xl mx-auto">
               <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No Facilities Found</h3>
-              <p className="text-muted-foreground mb-6">
-                We're expanding our network. Request a personalized match from our concierge team.
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Treatment Centers Coming Soon
+              </h3>
+              <p className="text-muted-foreground mb-2">
+                We're actively partnering with accredited facilities in this area. In the meantime, our concierge team can match you with nearby verified programs.
               </p>
-              <Button asChild variant="default">
-                <Link to="/concierge">Get Matched Now</Link>
-              </Button>
+              <p className="text-sm text-muted-foreground mb-6">
+                Over 16,000 treatment centers are available nationwide through our network.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button asChild variant="default">
+                  <Link to="/concierge">Get Matched Now</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/rehab-centers">Browse Nationwide</Link>
+                </Button>
+              </div>
             </div>
           )}
 

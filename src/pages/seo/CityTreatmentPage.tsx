@@ -103,6 +103,7 @@ export default function CityTreatmentPage() {
   }
 
   const pageTitle = `${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr}`;
+  const populationText = city.population ? ` With a population of approximately ${Number(city.population).toLocaleString()}, ${city.city}` : ` ${city.city}`;
 
   const structuredData = [
     {
@@ -113,6 +114,27 @@ export default function CityTreatmentPage() {
         name: faq.question,
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalWebPage",
+      name: pageTitle,
+      description: `Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}.`,
+      url: `https://rehablookup.com/${slug}`,
+      about: {
+        "@type": "MedicalCondition",
+        name: "Substance Use Disorder",
+      },
+      audience: {
+        "@type": "PeopleAudience",
+        geographicArea: {
+          "@type": "City",
+          name: city.city,
+          containedInPlace: { "@type": "State", name: city.state },
+        },
+      },
+      specialty: "Addiction Medicine",
+      lastReviewed: new Date().toISOString().split("T")[0],
     },
   ];
 
@@ -132,7 +154,7 @@ export default function CityTreatmentPage() {
       heroSubtitle={treatment.description}
       heroLocation={`${city.city}, ${city.state}`}
       heroBadge="Verified & Accredited"
-      introContent={`Looking for ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}? RehabLookup connects you with verified, accredited treatment facilities in the ${city.city} area. Every listed center is checked for proper licensing, qualified clinical staff, and evidence-based treatment approaches. Whether you need immediate placement or want to compare programs, our directory makes finding the right ${treatment.label.toLowerCase()} simple and confidential.`}
+      introContent={`Looking for ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}? RehabLookup connects you with verified, accredited treatment facilities in the ${city.city} area.${populationText} has a range of addiction treatment resources available for individuals and families seeking help. Every listed center is checked for proper licensing, qualified clinical staff, and evidence-based treatment approaches. Whether you need immediate placement or want to compare programs, our directory makes finding the right ${treatment.label.toLowerCase()} simple and confidential.`}
       facilities={facilities}
       isLoading={isLoading}
       facilityCount={facilities.length}
