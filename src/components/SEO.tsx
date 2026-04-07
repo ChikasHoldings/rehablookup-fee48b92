@@ -75,10 +75,10 @@ export function SEO({
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
   const truncatedDescription = description.length > 160 ? description.slice(0, 157) + "..." : description;
 
-  // Base organization schema with enhanced details
+  // Base organization schema with comprehensive trust signals
   const organizationSchema = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "MedicalBusiness"],
     "@id": `${SITE_URL}/#organization`,
     name: SITE_NAME,
     legalName: "RehabLookup, Inc.",
@@ -91,35 +91,85 @@ export function SEO({
     },
     image: `${SITE_URL}/og-image.jpg`,
     description: "RehabLookup helps individuals and families find verified drug and alcohol treatment centers across the United States.",
-    foundingDate: "2026",
+    foundingDate: "2024",
+    foundingLocation: {
+      "@type": "Place",
+      name: "United States",
+    },
     slogan: "Find the Right Path to Recovery",
+    areaServed: {
+      "@type": "Country",
+      name: "United States",
+      sameAs: "https://en.wikipedia.org/wiki/United_States",
+    },
+    serviceType: [
+      "Addiction Treatment Directory",
+      "Rehabilitation Center Referral",
+      "Treatment Placement Concierge",
+      "Insurance Verification",
+    ],
     knowsAbout: [
       "Addiction Treatment",
-      "Drug Rehabilitation", 
+      "Drug Rehabilitation",
       "Alcohol Recovery",
       "Mental Health Services",
       "Detox Programs",
       "Dual Diagnosis Treatment",
+      "Medication-Assisted Treatment",
+      "Behavioral Health",
     ],
-    contactPoint: {
-      "@type": "ContactPoint",
-      email: "Support@rehablookup.com",
-      contactType: "customer service",
-      availableLanguage: ["English", "Spanish"],
-      areaServed: "US",
-      hoursAvailable: {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        opens: "00:00",
-        closes: "23:59",
+    hasCredential: [
+      {
+        "@type": "EducationalOccupationalCredential",
+        credentialCategory: "HIPAA Compliance",
+        name: "HIPAA Compliant Platform",
       },
-    },
+      {
+        "@type": "EducationalOccupationalCredential",
+        credentialCategory: "LegitScript Certification",
+        name: "LegitScript Verified",
+      },
+    ],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        email: "Support@rehablookup.com",
+        contactType: "customer service",
+        availableLanguage: ["English", "Spanish"],
+        areaServed: "US",
+        hoursAvailable: {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          opens: "00:00",
+          closes: "23:59",
+        },
+      },
+      {
+        "@type": "ContactPoint",
+        email: "Support@rehablookup.com",
+        contactType: "sales",
+        availableLanguage: ["English"],
+        areaServed: "US",
+      },
+    ],
+    publishingPrinciples: `${SITE_URL}/editorial-policy`,
+    ethicsPolicy: `${SITE_URL}/editorial-policy`,
+    correctionsPolicy: `${SITE_URL}/editorial-policy#corrections`,
+    diversityPolicy: `${SITE_URL}/about`,
+    ownershipFundingInfo: `${SITE_URL}/about`,
+    actionableFeedbackPolicy: `${SITE_URL}/contact`,
     sameAs: [
       "https://facebook.com/rehablookup",
       "https://twitter.com/rehablookup",
+      "https://x.com/rehablookup",
       "https://linkedin.com/company/rehablookup",
       "https://instagram.com/rehablookup",
     ],
+    numberOfEmployees: {
+      "@type": "QuantitativeValue",
+      minValue: 10,
+      maxValue: 50,
+    },
   };
 
   // Breadcrumb schema

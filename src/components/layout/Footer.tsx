@@ -351,6 +351,8 @@ export const Footer = memo(function Footer() {
                 {[
                   { to: "/privacy-policy", label: "Privacy Policy" },
                   { to: "/terms-of-service", label: "Terms of Service" },
+                  { to: "/editorial-policy", label: "Editorial Policy" },
+                  { to: "/medical-disclaimer", label: "Medical Disclaimer" },
                   { to: "/contact", label: "Contact" },
                 ].map((l) => (
                   <Link
