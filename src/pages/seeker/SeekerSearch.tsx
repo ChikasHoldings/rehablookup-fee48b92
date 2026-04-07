@@ -203,26 +203,25 @@ export default function SeekerSearch() {
       });
     }
     
-    // Sort: proximity first (if location), then Pro, then alphabetical
+    // Sort: proximity first (if location), then Pro, then rating, then stable by ID
     results.sort((a, b) => {
       if (locationMatch) {
-        const getProx = (f: typeof a) => {
-          if (locationMatch.zipcode && f.zipCode === locationMatch.zipcode) return 0;
-          if (locationMatch.city && f.city.toLowerCase() === locationMatch.city.toLowerCase()) return 1;
-          const abbr = getStateAbbr(f.state);
-          if (locationMatch.stateAbbr && abbr?.toUpperCase() === locationMatch.stateAbbr.toUpperCase()) return 2;
-          if (abbr && locationMatch.nearbyStates.includes(abbr.toUpperCase())) return 3;
-          return 4;
-        };
-        const proxA = getProx(a);
-        const proxB = getProx(b);
+        const { tier: tierA } = getProximityTier(a, locationMatch);
+        const { tier: tierB } = getProximityTier(b, locationMatch);
+        const proxA = PROXIMITY_TIER_ORDER[tierA];
+        const proxB = PROXIMITY_TIER_ORDER[tierB];
         if (proxA !== proxB) return proxA - proxB;
       }
       // Within same proximity tier, Pro first
       const proA = getPlanPriority(a as any);
       const proB = getPlanPriority(b as any);
       if (proA !== proB) return proA - proB;
-      return a.name.localeCompare(b.name);
+      // Then by rating
+      const rA = (a as any).googleRating || 0;
+      const rB = (b as any).googleRating || 0;
+      if (rA !== rB) return rB - rA;
+      // Stable tiebreaker
+      return a.id.localeCompare(b.id);
     });
     
     return results;
