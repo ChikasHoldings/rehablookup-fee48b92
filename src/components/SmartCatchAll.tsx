@@ -4,6 +4,7 @@ import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 
 const BestInStatePage = lazy(() => import("@/pages/seo/BestInStatePage"));
 const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYourFacilityState"));
+const ForProvidersState = lazy(() => import("@/pages/provider-guides/ForProvidersState"));
 const CityTreatmentPage = lazy(() => import("@/pages/seo/CityTreatmentPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
@@ -53,6 +54,17 @@ export function SmartCatchAll() {
       <PublicRouteGuard>
         <Suspense fallback={null}>
           <ListYourFacilityState />
+        </Suspense>
+      </PublicRouteGuard>
+    );
+  }
+
+  // For Providers in [State]
+  if (pathname.startsWith("/for-providers-in-")) {
+    return (
+      <PublicRouteGuard>
+        <Suspense fallback={null}>
+          <ForProvidersState />
         </Suspense>
       </PublicRouteGuard>
     );

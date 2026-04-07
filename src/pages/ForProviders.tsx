@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ProviderStickyCTA } from "@/components/provider-guides/ProviderStickyCTA";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { forProvidersFaqs } from "@/data/pageFaqs";
@@ -640,7 +641,40 @@ const ForProviders = () => {
           </div>
         </section>
         <PageFAQ faqs={forProvidersFaqs} className="border-t border-border bg-muted/30" />
+
+        {/* Browse by State */}
+        <section className="py-12 sm:py-16 bg-background border-t border-border">
+          <div className="container px-4 md:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">By State</p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">
+                List Your Facility by State
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+                Find state-specific information about listing your treatment center on RehabLookup.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-w-5xl mx-auto">
+              {[
+                "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia",
+                "Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
+                "Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey",
+                "New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina",
+                "South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming",
+              ].map((s) => (
+                <Link
+                  key={s}
+                  to={`/for-providers-in-${s.toLowerCase().replace(/\s+/g, "-")}`}
+                  className="text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-md px-3 py-2 transition-colors text-center"
+                >
+                  {s}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
+      <ProviderStickyCTA />
       <Footer />
     </div>
   );

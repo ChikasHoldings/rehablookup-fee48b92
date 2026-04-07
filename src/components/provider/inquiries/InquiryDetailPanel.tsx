@@ -2,8 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   MapPin, Phone, Mail, MessageSquare, User, Building2,
-  PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2
+  PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2, FileText
 } from "lucide-react";
+import { ResponseTemplatesDrawer } from "@/components/provider/inquiries/ResponseTemplatesDrawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -182,6 +183,17 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
                 </div>
               </div>
             </div>
+            {/* Response Templates */}
+            <ResponseTemplatesDrawer
+              leadName={displayName}
+              facilityName={inquiry.facility_name}
+              trigger={
+                <Button variant="outline" size="sm" className="w-full gap-1.5 mt-2">
+                  <FileText className="h-3.5 w-3.5" />
+                  Use Response Template
+                </Button>
+              }
+            />
           </div>
         )}
 
