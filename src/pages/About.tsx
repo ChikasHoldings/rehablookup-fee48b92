@@ -316,6 +316,69 @@ const About = () => {
         </div>
       </section>
 
+      {/* Leadership Team */}
+      <section className="section-padding-lg bg-muted/20">
+        <div className="container">
+          <div className="text-center mb-12">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2.5">
+              <Shield className="h-5 w-5 text-accent" />
+              <span className="text-base font-medium text-accent">Leadership</span>
+            </div>
+            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl mb-4">
+              Meet Our Leadership Team
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Our leadership brings decades of experience in healthcare, technology, and behavioral health.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
+            {[
+              {
+                name: "Marcus Johnson",
+                title: "Founder & CEO",
+                image: ceoPortrait,
+                bio: "Former healthcare executive with 15+ years in addiction treatment operations. Founded RehabLookup after witnessing families struggle to find quality treatment information.",
+                credentials: "MBA, Healthcare Administration",
+              },
+              {
+                name: "Dr. Sarah Mitchell",
+                title: "Medical Director & Content Advisor",
+                image: medicalDirectorPortrait,
+                bio: "Board-certified psychiatrist specializing in addiction medicine. Oversees all clinical content accuracy and facility verification standards.",
+                credentials: "MD, Board Certified Psychiatrist, ASAM Fellow",
+              },
+              {
+                name: "David Reyes",
+                title: "Chief Technology Officer",
+                image: ctoPortrait,
+                bio: "Health tech veteran who previously built HIPAA-compliant platforms for major hospital systems. Leads platform security, privacy, and data integrity.",
+                credentials: "MS Computer Science, CISSP",
+              },
+            ].map((leader) => (
+              <div key={leader.name} className="group rounded-2xl bg-card border border-border/50 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div className="aspect-square overflow-hidden">
+                  <img
+                    src={leader.image}
+                    alt={`${leader.name} - ${leader.title} at RehabLookup`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    width={512}
+                    height={512}
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="font-display text-lg font-bold text-foreground">{leader.name}</h3>
+                  <p className="text-sm font-medium text-accent mb-2">{leader.title}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{leader.bio}</p>
+                  <p className="text-xs text-muted-foreground/70 italic">{leader.credentials}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Our Values */}
       <section className="section-padding-lg bg-muted/30">
         <div className="container">
