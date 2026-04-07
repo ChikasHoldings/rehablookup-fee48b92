@@ -270,27 +270,17 @@ const SearchResults = () => {
     // Build location match from explicit location or effective fallback
     let locationMatch: LocationMatch | null = null;
     const locationForFilter = location; // Only filter by explicit location
-    const locationForSort = effectiveLocation; // Sort by effective (includes profile fallback)
+    const locationForSort = effectiveLocation; // Sort by effective (includes profile/geo fallback)
     
     if (locationForFilter) {
       locationMatch = parseLocationInput(locationForFilter);
-      const locationLower = locationForFilter.toLowerCase().trim();
+      // Enrich with ZIP resolution data for better city/state matching
+      if (resolvedZipData) {
+        locationMatch = enrichLocationMatchWithZip(locationMatch, resolvedZipData);
+      }
       
       // Filter to include relevant results by location
-      results = results.filter((c) => {
-        if (locationMatch?.zipcode && c.zipCode === locationMatch.zipcode) return true;
-        if (c.city.toLowerCase().includes(locationLower)) return true;
-        if (c.state.toLowerCase().includes(locationLower)) return true;
-        if (locationMatch?.stateAbbr && 
-            (c.state.toLowerCase() === locationMatch.stateAbbr.toLowerCase() ||
-             c.state.toLowerCase() === (locationMatch.state?.toLowerCase() || ''))) return true;
-        if (locationMatch?.nearbyStates.length) {
-          const cStateAbbr = getStateAbbr(c.state);
-          if (cStateAbbr && locationMatch.nearbyStates.includes(cStateAbbr.toUpperCase())) return true;
-        }
-        if (c.zipCode.includes(locationForFilter)) return true;
-        return false;
-      });
+      results = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
     }
 
     // Free-text search with fuzzy/partial matching
@@ -307,7 +297,8 @@ const SearchResults = () => {
         const treatmentL = c.treatmentTypes.map(t => t.toLowerCase()).join(" ");
         const insuranceL = c.insuranceAccepted.map(i => i.toLowerCase()).join(" ");
         const zipL = c.zipCode || "";
-        const haystack = `${nameL} ${descL} ${cityL} ${stateL} ${treatmentL} ${insuranceL} ${zipL}`;
+        const facilityTypeL = (c.facilityType || "").toLowerCase();
+        const haystack = `${nameL} ${descL} ${cityL} ${stateL} ${treatmentL} ${insuranceL} ${zipL} ${facilityTypeL}`;
         
         // Full query match
         if (haystack.includes(q)) return true;
@@ -320,7 +311,6 @@ const SearchResults = () => {
         // Single token: also check partial word starts for typo tolerance
         if (tokens.length === 1) {
           const token = tokens[0];
-          // Check word-start matches (e.g. "cal" matches "california", "alc" matches "alcohol")
           const words = haystack.split(/\s+/);
           return words.some(w => w.startsWith(token) || w.includes(token));
         }
@@ -385,20 +375,22 @@ const SearchResults = () => {
       });
     }
 
-    // Amenity filters
+    // Amenity filters — match against description + treatment types + facility type
     if (selectedAmenities.length > 0) {
       results = results.filter((center) => {
         const description = (center.description || "").toLowerCase();
+        const allTypes = center.treatmentTypes.map(t => t.toLowerCase()).join(" ");
+        const combined = `${description} ${allTypes}`;
         return selectedAmenities.some(amenity => {
           switch (amenity) {
             case "private-rooms":
-              return description.includes("private") || description.includes("room");
+              return combined.includes("private") && (combined.includes("room") || combined.includes("suite"));
             case "gym":
-              return description.includes("gym") || description.includes("fitness");
+              return combined.includes("gym") || combined.includes("fitness") || combined.includes("exercise");
             case "pool":
-              return description.includes("pool") || description.includes("swim");
+              return combined.includes("pool") || combined.includes("aqua") || combined.includes("swimming");
             case "meditation":
-              return description.includes("meditation") || description.includes("yoga") || description.includes("holistic");
+              return combined.includes("meditation") || combined.includes("yoga") || combined.includes("mindfulness") || combined.includes("holistic");
             default:
               return false;
           }
@@ -416,24 +408,27 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Proximity scoring function
+    // Build proximity scoring using the enriched location match
     const getProximityScore = (center: { city: string; state: string; zipCode?: string }): number => {
       const sortLoc = locationForSort || locationForFilter;
       if (!sortLoc) return 4; // No location = all equal
-      const match = locationMatch || parseLocationInput(sortLoc);
       
-      if (match.zipcode && center.zipCode === match.zipcode) return 0;
-      if (match.city && center.city.toLowerCase() === match.city.toLowerCase()) return 1;
-      const centerAbbr = getStateAbbr(center.state);
-      if (match.stateAbbr && centerAbbr?.toUpperCase() === match.stateAbbr.toUpperCase()) return 2;
-      if (centerAbbr && match.nearbyStates.includes(centerAbbr.toUpperCase())) return 3;
-      return 4;
+      let match = locationMatch;
+      if (!match) {
+        match = parseLocationInput(sortLoc);
+        // Also enrich sort-only location with geo data
+        if (resolvedZipData) {
+          match = enrichLocationMatchWithZip(match, resolvedZipData);
+        }
+      }
+      
+      const { tier } = getProximityTier(center, match);
+      return PROXIMITY_TIER_ORDER[tier];
     };
 
-    // Sort results
+    // Sort results with stable tiebreakers
     results.sort((a, b) => {
       if (sortParam === "proximity") {
-        // Primary: proximity tier
         const proxA = getProximityScore(a);
         const proxB = getProximityScore(b);
         if (proxA !== proxB) return proxA - proxB;
@@ -441,11 +436,15 @@ const SearchResults = () => {
         const proA = getPlanPriority(a as any);
         const proB = getPlanPriority(b as any);
         if (proA !== proB) return proA - proB;
-        return a.name.localeCompare(b.name);
+        // Tertiary: rating
+        const rA = (a as any).googleRating || 0;
+        const rB = (b as any).googleRating || 0;
+        if (rA !== rB) return rB - rA;
+        // Final: stable by ID
+        return a.id.localeCompare(b.id);
       }
 
       if (sortParam === "featured") {
-        // If location context exists, respect proximity tiers
         if (locationForSort) {
           const proxA = getProximityScore(a);
           const proxB = getProximityScore(b);
@@ -454,7 +453,7 @@ const SearchResults = () => {
         const proA = getPlanPriority(a as any);
         const proB = getPlanPriority(b as any);
         if (proA !== proB) return proA - proB;
-        return a.name.localeCompare(b.name);
+        return a.id.localeCompare(b.id);
       }
 
       // For other sorts, Pro first then secondary
@@ -463,17 +462,40 @@ const SearchResults = () => {
       if (proA !== proB) return proA - proB;
 
       switch (sortParam) {
-        case "rating-high": return ((b as any).googleRating || 0) - ((a as any).googleRating || 0);
-        case "rating-low": return ((a as any).googleRating || 0) - ((b as any).googleRating || 0);
-        case "reviews": return ((b as any).googleReviewCount || 0) - ((a as any).googleReviewCount || 0);
+        case "rating-high": {
+          const diff = ((b as any).googleRating || 0) - ((a as any).googleRating || 0);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
+        case "rating-low": {
+          const diff = ((a as any).googleRating || 0) - ((b as any).googleRating || 0);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
+        case "reviews": {
+          const diff = ((b as any).googleReviewCount || 0) - ((a as any).googleReviewCount || 0);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
         case "name-asc": return a.name.localeCompare(b.name);
         case "name-desc": return b.name.localeCompare(a.name);
         default: return 0;
       }
     });
 
+    // Attach proximity tier to each result for badge display
+    const sortLoc = locationForSort || locationForFilter;
+    if (sortLoc) {
+      let match = locationMatch || parseLocationInput(sortLoc);
+      if (resolvedZipData) {
+        match = enrichLocationMatchWithZip(match, resolvedZipData);
+      }
+      results.forEach((r: any) => {
+        const { tier, reason } = getProximityTier(r, match!);
+        r._proximityTier = tier;
+        r._proximityReason = reason;
+      });
+    }
+
     return results;
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData]);
 
   const hasFilters = location || treatment || insurance || type || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
