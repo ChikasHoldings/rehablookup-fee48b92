@@ -142,6 +142,10 @@ const SearchResults = () => {
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
   const geo = useGeoLocation();
+  const { lookup: lookupZipcode } = useZipcodeLookup();
+  
+  // Resolved ZIP data for enriching location match
+  const [resolvedZipData, setResolvedZipData] = useState<{ city: string; state: string; stateAbbr: string } | null>(null);
 
   // Get seeker profile location for proximity when no explicit location is searched
   const { data: seekerProfile } = useQuery({
@@ -159,13 +163,35 @@ const SearchResults = () => {
     staleTime: 1000 * 60 * 10,
   });
 
+  // Resolve ZIP codes to city/state for better proximity matching
+  useEffect(() => {
+    const parsed = parseLocationInput(location);
+    if (parsed.isZipcode && parsed.zipcode) {
+      lookupZipcode(parsed.zipcode).then((result) => {
+        if (result) {
+          setResolvedZipData(result);
+        }
+      });
+    } else {
+      setResolvedZipData(null);
+    }
+  }, [location, lookupZipcode]);
+
   // Determine effective location for proximity sorting
+  // Priority: explicit location → seeker profile → geo-IP
   const effectiveLocation = useMemo(() => {
     if (location) return location;
-    // Use seeker profile state as fallback for proximity
+    if (seekerProfile?.city && seekerProfile?.state) {
+      return `${seekerProfile.city}, ${seekerProfile.state}`;
+    }
     if (seekerProfile?.state) return seekerProfile.state;
+    // Geo-IP fallback
+    if (!geo.isLoading && geo.regionCode && geo.isUS) {
+      if (geo.city) return `${geo.city}, ${geo.regionCode}`;
+      return geo.region || "";
+    }
     return "";
-  }, [location, seekerProfile]);
+  }, [location, seekerProfile, geo.isLoading, geo.city, geo.regionCode, geo.region, geo.isUS]);
 
   const allCenters = approvedFacilities;
 
