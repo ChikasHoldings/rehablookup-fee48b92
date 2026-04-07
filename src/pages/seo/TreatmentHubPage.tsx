@@ -54,6 +54,19 @@ export default function TreatmentHubPage() {
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
     },
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalWebPage",
+      name: config.title,
+      description: config.metaDescription,
+      url: `https://rehablookup.com/${config.slug}`,
+      about: {
+        "@type": "MedicalCondition",
+        name: "Substance Use Disorder",
+      },
+      specialty: "Addiction Medicine",
+      lastReviewed: new Date().toISOString().split("T")[0],
+    },
   ];
 
   return (
