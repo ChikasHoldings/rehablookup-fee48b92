@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
                         </table>
                         
                         <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                          If you have any questions or believe this flag was made in error, please contact our support team at <a href="mailto:help@rehablookup.com" style="color: #1B365D;">help@rehablookup.com</a>.
+                          If you have any questions or believe this flag was made in error, please contact our support team at <a href="mailto:Support@rehablookup.com" style="color: #1B365D;">Support@rehablookup.com</a>.
                         </p>
                       </td>
                     </tr>

@@ -968,7 +968,7 @@ Deno.serve(async (req) => {
           try {
             await resend.emails.send({
               from: "RehabLookup <no-reply@rehablookup.com>",
-              to: ["help@rehablookup.com"],
+              to: ["Support@rehablookup.com"],
               subject: `🎉 New Subscription - ${facilityName}`,
               html: `
                 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -1111,7 +1111,7 @@ Deno.serve(async (req) => {
               try {
                 await resend.emails.send({
                   from: "RehabLookup <no-reply@rehablookup.com>",
-                  to: ["help@rehablookup.com"],
+                  to: ["Support@rehablookup.com"],
                   subject: `⚠️ Subscription Cancelled - ${facilities[0].name}`,
                   html: `
                     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">

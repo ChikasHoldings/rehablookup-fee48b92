@@ -526,7 +526,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 <tr>
                   <td align="center">
                     <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #94a3b8;">
-                      Sent on behalf of ${facility.name}. To stop receiving emails, email <a href="mailto:help@rehablookup.com" style="color: #93c5fd; text-decoration: none;">help@rehablookup.com</a>
+                      Sent on behalf of ${facility.name}. To stop receiving emails, email <a href="mailto:Support@rehablookup.com" style="color: #93c5fd; text-decoration: none;">Support@rehablookup.com</a>
                     </p>
                   </td>
                 </tr>

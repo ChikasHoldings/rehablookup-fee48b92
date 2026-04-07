@@ -185,7 +185,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
     const emailResponse = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
-      to: ["help@rehablookup.com"],
+      to: ["Support@rehablookup.com"],
       subject: `[${subjectLabel}] Contact from ${name}`,
       html: emailHtml,
       reply_to: email,

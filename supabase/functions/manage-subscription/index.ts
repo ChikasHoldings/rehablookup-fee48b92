@@ -82,7 +82,7 @@ const sendSubscriptionNotificationEmail = async (
           
           <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 24px;">
             If you have any questions, please don't hesitate to contact our support team at 
-            <a href="mailto:help@rehablookup.com" style="color: #1e3a5f;">help@rehablookup.com</a>.
+            <a href="mailto:Support@rehablookup.com" style="color: #1e3a5f;">Support@rehablookup.com</a>.
           </p>
           
           <div style="border-top: 1px solid #e5e7eb; margin-top: 32px; padding-top: 24px;">

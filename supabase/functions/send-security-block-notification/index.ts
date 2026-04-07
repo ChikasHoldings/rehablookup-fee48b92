@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       try {
         await resend.emails.send({
           from: "RehabLookup Security <no-reply@rehablookup.com>",
-          to: ["help@rehablookup.com"],
+          to: ["Support@rehablookup.com"],
           subject: `🔓 Security: ${typeLabel} Unblocked - ${identifier}`,
           html: `
             <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
       try {
         await resend.emails.send({
           from: "RehabLookup Security <no-reply@rehablookup.com>",
-          to: ["help@rehablookup.com"],
+          to: ["Support@rehablookup.com"],
           subject: `🔒 Security: ${typeLabel} Blocked - ${identifier}`,
           html: `
             <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

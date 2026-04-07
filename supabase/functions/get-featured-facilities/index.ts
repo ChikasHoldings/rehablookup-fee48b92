@@ -58,7 +58,7 @@ const defaultNotificationSettings: NotificationSettings = {
   notify_on_featured: true,
   notify_on_unfeatured: false,
   notification_timing: "immediate",
-  admin_email_recipients: ["help@rehablookup.com"],
+  admin_email_recipients: ["Support@rehablookup.com"],
 };
 
 // Send featured notification email

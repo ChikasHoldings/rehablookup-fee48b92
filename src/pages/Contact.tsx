@@ -25,9 +25,9 @@ const contactMethods = [
   {
     icon: Mail,
     title: "Email Support",
-    value: "help@rehablookup.com",
+    value: "Support@rehablookup.com",
     description: "Response within 1-2 business days",
-    href: "mailto:help@rehablookup.com",
+    href: "mailto:Support@rehablookup.com",
     gradient: "from-blue-500 to-cyan-500",
   },
   {

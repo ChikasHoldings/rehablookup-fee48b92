@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
               </table>
               
               <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
-                If you did not expect this account or have questions, please contact your system administrator immediately at <a href="mailto:help@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">help@rehablookup.com</a>.
+                If you did not expect this account or have questions, please contact your system administrator immediately at <a href="mailto:Support@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">Support@rehablookup.com</a>.
               </p>
             </td>
           </tr>
