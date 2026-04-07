@@ -332,6 +332,16 @@ const SafeBrowserRouter = React.forwardRef<HTMLDivElement, BrowserRouterProps>(
 SafeBrowserRouter.displayName = "SafeBrowserRouter";
 
 
+function DualDiagnosisStateRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}`} replace />;
+}
+
+function DetoxStateRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;
+}
+
 const AppInner = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
@@ -530,9 +540,9 @@ const AppInner = () => {
             
             {/* Legacy /treatment/ redirects to /treatment-types/ */}
             <Route path="/treatment/dual-diagnosis" element={<Navigate to="/treatment-types/dual-diagnosis-treatment" replace />} />
-            <Route path="/treatment/dual-diagnosis/:stateSlug" element={<Navigate to="/treatment-types/dual-diagnosis-treatment" replace />} />
+            <Route path="/treatment/dual-diagnosis/:stateSlug" element={<DualDiagnosisStateRedirect />} />
             <Route path="/treatment/detox" element={<Navigate to="/treatment-types/detox-programs" replace />} />
-            <Route path="/treatment/detox/:stateSlug" element={<Navigate to="/treatment-types/detox-programs" replace />} />
+            <Route path="/treatment/detox/:stateSlug" element={<DetoxStateRedirect />} />
 
             {/* International Placement Routes */}
             <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
