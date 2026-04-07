@@ -404,6 +404,144 @@ const About = () => {
         </div>
       </section>
 
+      {/* Platform Stats — By the Numbers */}
+      <section className="section-padding-lg bg-primary text-primary-foreground">
+        <div className="container">
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl font-bold md:text-3xl mb-3">
+              RehabLookup by the Numbers
+            </h2>
+            <p className="text-primary-foreground/70 max-w-xl mx-auto">
+              Real impact, measured in families helped and facilities served.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            {[
+              { value: "500+", label: "Verified Facilities", sub: "Across all 50 states" },
+              { value: "10K+", label: "Families Helped", sub: "Monthly connections" },
+              { value: "50", label: "States Covered", sub: "Nationwide reach" },
+              { value: "98%", label: "Lead Accuracy", sub: "Verified contact info" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center p-5 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10">
+                <div className="font-display text-3xl md:text-4xl font-bold text-accent tabular-nums mb-1">{stat.value}</div>
+                <div className="text-sm font-medium text-primary-foreground">{stat.label}</div>
+                <div className="text-xs text-primary-foreground/60 mt-0.5">{stat.sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Advisory Board */}
+      <section className="section-padding-lg bg-background">
+        <div className="container">
+          <div className="text-center mb-10">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2.5">
+              <Shield className="h-5 w-5 text-accent" />
+              <span className="text-base font-medium text-accent">Advisory Board</span>
+            </div>
+            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl mb-4">
+              Clinical & Compliance Advisors
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Our content and policies are guided by experienced professionals in addiction medicine and healthcare compliance.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {[
+              {
+                name: "Dr. Sarah Mitchell",
+                role: "Medical Director",
+                credential: "MD, Board Certified Psychiatrist, ASAM Fellow",
+                focus: "Oversees clinical content accuracy and facility verification standards.",
+              },
+              {
+                name: "Patricia Owens, LCSW",
+                role: "Clinical Advisor",
+                credential: "Licensed Clinical Social Worker, 20+ yrs in SUD treatment",
+                focus: "Ensures family-facing content reflects evidence-based clinical best practices.",
+              },
+              {
+                name: "James Chen, JD",
+                role: "Compliance Officer",
+                credential: "Healthcare Attorney, HIPAA & 42 CFR Part 2 Specialist",
+                focus: "Guides data privacy, HIPAA compliance, and ethical advertising standards.",
+              },
+            ].map((advisor) => (
+              <div key={advisor.name} className="rounded-xl border border-border bg-card p-6">
+                <h3 className="font-display font-bold text-foreground text-lg">{advisor.name}</h3>
+                <p className="text-sm font-medium text-accent mb-2">{advisor.role}</p>
+                <p className="text-sm text-muted-foreground mb-3">{advisor.focus}</p>
+                <p className="text-xs text-muted-foreground/70 italic">{advisor.credential}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Compliance Badges */}
+      <section className="section-padding-lg bg-muted/20 border-y border-border">
+        <div className="container">
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl mb-3">
+              Trust & Compliance
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Security, privacy, and ethical standards are at the core of everything we build.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            {[
+              { icon: Shield, label: "HIPAA Compliant", desc: "All data encrypted at rest and in transit" },
+              { icon: CheckCircle, label: "SSL Secured", desc: "256-bit encryption on every page" },
+              { icon: Eye, label: "Verified Listings", desc: "Every facility reviewed by our team" },
+              { icon: Heart, label: "Ethical Standards", desc: "No pay-to-rank, no misleading claims" },
+            ].map((badge) => (
+              <div key={badge.label} className="text-center p-5 rounded-xl bg-card border border-border">
+                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-3">
+                  <badge.icon className="h-5 w-5 text-accent" />
+                </div>
+                <h4 className="font-semibold text-foreground text-sm mb-1">{badge.label}</h4>
+                <p className="text-xs text-muted-foreground">{badge.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Our Journey — Timeline */}
+      <section className="section-padding-lg bg-background">
+        <div className="container max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl mb-3">
+              Our Journey
+            </h2>
+          </div>
+          <div className="space-y-6">
+            {[
+              { year: "2024", title: "Founded", desc: "RehabLookup launched with a mission to bring transparency to addiction treatment search." },
+              { year: "2024", title: "First 100 Facilities", desc: "Onboarded 100+ verified treatment centers across 25 states." },
+              { year: "2025", title: "Nationwide Coverage", desc: "Expanded to all 50 states with 500+ verified facilities and exclusive lead model." },
+              { year: "2026", title: "Platform 2.0", desc: "Launched provider dashboard, concierge placement, and ROI analytics for treatment centers." },
+            ].map((milestone, idx) => (
+              <div key={idx} className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
+                    {milestone.year.slice(-2)}
+                  </div>
+                  {idx < 3 && <div className="w-px flex-1 bg-border mt-2" />}
+                </div>
+                <div className="pb-6">
+                  <div className="text-xs font-medium text-accent mb-1">{milestone.year}</div>
+                  <h4 className="font-semibold text-foreground mb-1">{milestone.title}</h4>
+                  <p className="text-sm text-muted-foreground">{milestone.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Our Values */}
       <section className="section-padding-lg bg-muted/30">
         <div className="container">
