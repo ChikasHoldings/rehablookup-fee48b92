@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Shield, Clock, CheckCircle2, Star, Heart, Sparkles, ArrowRight } from "lucide-react";
+import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
+import { seekerTestimonials } from "@/data/testimonials";
 import { LeadIntakeForm } from "@/components/lead-intake";
 import { LeadIntakeFormData } from "@/components/lead-intake/types";
 import { MarketingLeadSuccess } from "@/components/marketing/MarketingLeadSuccess";
@@ -207,23 +209,13 @@ export default function MarketingLanding() {
           </div>
         </section>
 
-        {/* Testimonial */}
-        <section className="py-10 sm:py-14 md:py-16 lg:py-20 bg-gradient-to-b from-background to-muted/20">
-          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-xl md:max-w-2xl">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-7 md:p-8 shadow-lg border border-border/30 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
-              <div className="flex justify-center mb-3 md:mb-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-yellow-400 fill-yellow-400" />
-                ))}
-              </div>
-              <blockquote className="text-sm sm:text-base md:text-lg text-muted-foreground italic mb-3 md:mb-4 leading-relaxed">
-                "RehabLookup made finding treatment so much easier. I was connected with several great options and got a callback within hours."
-              </blockquote>
-              <p className="font-medium text-foreground text-sm md:text-base">— Sarah M., California</p>
-            </div>
-          </div>
-        </section>
+        {/* Testimonials */}
+        <TestimonialsSection
+          testimonials={seekerTestimonials.slice(0, 3)}
+          title="Families Who Found Help"
+          subtitle="Real stories from people who used RehabLookup to find treatment"
+          columns={3}
+        />
 
         {/* CTA Section */}
         <section className="py-8 sm:py-12 md:py-14 bg-primary/5">
