@@ -108,7 +108,7 @@ const ForProviders = () => {
               {/* Trust indicator */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6 animate-fade-in">
                 <Shield className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-white/90">Trusted by 500+ Treatment Centers Nationwide</span>
+                <span className="text-sm font-medium text-white/90">Trusted by 1,000+ Treatment Centers Nationwide</span>
               </div>
 
               {/* Headline */}
@@ -165,7 +165,7 @@ const ForProviders = () => {
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 text-center max-w-4xl mx-auto">
               {[
                 { value: "10K+", label: "Families Helped Monthly", icon: Users },
-                { value: "500+", label: "Verified Partners", icon: Building2 },
+                { value: "1,000+", label: "Verified Partners", icon: Building2 },
                 { value: "50", label: "States Covered", icon: Globe },
                 { value: "40%", label: "Avg. Admission Increase", icon: TrendingUp },
               ].map((stat) => (
@@ -616,7 +616,7 @@ const ForProviders = () => {
               <div className="bg-card border border-border rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-12 text-center shadow-lg">
                 <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-primary/10 px-3 sm:px-4 py-1.5 sm:py-2 mb-4 sm:mb-6">
                   <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                  <span className="text-xs sm:text-sm font-medium text-primary">Join 500+ Treatment Centers</span>
+                  <span className="text-xs sm:text-sm font-medium text-primary">Join 1,000+ Treatment Centers</span>
                 </div>
                 
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">

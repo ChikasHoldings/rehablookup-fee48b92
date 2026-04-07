@@ -61,7 +61,7 @@ export default function RehabUSAFromEurope() {
               { icon: Globe, value: "30+", label: "EU Countries" },
               { icon: Shield, value: "100%", label: "HIPAA Protected" },
               { icon: Clock, value: "24hr", label: "Admission Speed" },
-              { icon: Building2, value: "200+", label: "US Facilities" },
+              { icon: Building2, value: "1,000+", label: "US Facilities" },
             ].map((s) => (
               <div key={s.label} className="px-1">
                 <div className="flex items-center justify-center gap-1.5 mb-0.5">

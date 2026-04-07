@@ -417,7 +417,7 @@ const About = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             {[
-              { value: "500+", label: "Verified Facilities", sub: "Across all 50 states" },
+              { value: "1,000+", label: "Verified Facilities", sub: "Across all 50 states" },
               { value: "10K+", label: "Families Helped", sub: "Monthly connections" },
               { value: "50", label: "States Covered", sub: "Nationwide reach" },
               { value: "98%", label: "Lead Accuracy", sub: "Verified contact info" },

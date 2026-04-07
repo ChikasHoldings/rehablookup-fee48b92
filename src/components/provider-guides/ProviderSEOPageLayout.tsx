@@ -380,7 +380,7 @@ export function ProviderSEOPageLayout({
           <div className="container relative z-10 max-w-3xl mx-auto px-4 text-center">
             <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
               <Zap className="h-4 w-4 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/80">Join 500+ Treatment Facilities</span>
+              <span className="text-sm font-medium text-primary-foreground/80">Join 1,000+ Treatment Facilities</span>
             </div>
             <h2 className="text-2xl md:text-4xl font-display font-bold text-primary-foreground mb-4">
               {ctaHeadline}
