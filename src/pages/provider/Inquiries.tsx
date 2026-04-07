@@ -283,10 +283,6 @@ export default function ProviderInquiriesPage() {
           </div>
         </div>
 
-        {/* Stats - show on list view */}
-        {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
-          <InquiriesStatsHeader {...stats} />
-        )}
       </div>
 
       {/* Exclusive Leads Banner */}
@@ -306,7 +302,7 @@ export default function ProviderInquiriesPage() {
               </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Clock className="h-3 w-3" />
-                Each lead is sent only to your facility for 24 hours before redistribution
+                Each lead is sent only to your facility for 24 hours before redistribution if you don't contact the leads
               </p>
             </div>
           </div>
