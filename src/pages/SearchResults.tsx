@@ -1082,22 +1082,37 @@ const SearchResults = () => {
                 }
               </p>
 
-              {/* Smart Suggestions */}
-              {(queryParam || location) && (
+              {/* Smart Suggestions — nearby states when location search yields nothing */}
+              {location && (() => {
+                const parsed = parseLocationInput(location);
+                const nearbyAbbrs = parsed.stateAbbr ? getNearbyStates(parsed.stateAbbr) : [];
+                return nearbyAbbrs.length > 0 ? (
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    <span className="text-xs text-muted-foreground">Try nearby states:</span>
+                    {nearbyAbbrs.slice(0, 4).map(abbr => (
+                      <Link 
+                        key={abbr} 
+                        to={`/search-results?location=${abbr}`} 
+                        className="text-xs text-primary hover:underline font-medium"
+                      >
+                        {abbr}
+                      </Link>
+                    ))}
+                    <button onClick={clearAllFilters} className="text-xs text-primary hover:underline ml-2">
+                      or Search Nationwide
+                    </button>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Generic suggestions when no location */}
+              {!location && (queryParam || activeFiltersCount > 0) && (
                 <div className="flex flex-wrap justify-center gap-2 mb-6">
-                  <span className="text-xs text-muted-foreground">Try:</span>
-                  {!location && (
-                    <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
-                  )}
-                  {!location && (
-                    <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
-                  )}
-                  {!location && (
-                    <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
-                  )}
-                  {location && !queryParam && (
-                    <button onClick={clearAllFilters} className="text-xs text-primary hover:underline">Search Nationwide</button>
-                  )}
+                  <span className="text-xs text-muted-foreground">Popular areas:</span>
+                  <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
+                  <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
+                  <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
+                  <Link to="/search-results?location=New+York" className="text-xs text-primary hover:underline">New York</Link>
                 </div>
               )}
 
