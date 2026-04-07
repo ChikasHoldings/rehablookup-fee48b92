@@ -109,7 +109,7 @@ export default function UnitedHealthcareRehab() {
           { name: "Insurance", url: "/insurance" },
           { name: "United Healthcare Rehab", url: "/insurance/united-healthcare-rehab" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
 

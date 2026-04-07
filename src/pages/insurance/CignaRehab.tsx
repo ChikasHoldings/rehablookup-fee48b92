@@ -109,7 +109,7 @@ export default function CignaRehab() {
           { name: "Insurance", url: "/insurance" },
           { name: "Cigna Rehab Coverage", url: "/insurance/cigna-rehab" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
 

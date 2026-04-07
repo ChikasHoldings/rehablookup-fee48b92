@@ -127,7 +127,7 @@ export default function AetnaRehab() {
           { name: "Insurance", url: "/insurance" },
           { name: "Aetna Rehab Coverage", url: "/insurance/aetna-rehab" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
 

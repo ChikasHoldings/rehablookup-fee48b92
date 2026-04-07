@@ -157,7 +157,7 @@ const HolisticTherapy = () => {
           { name: "Treatment Types", url: "/treatment-types" },
           { name: "Holistic Therapy", url: "/treatment-types/holistic-therapy" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
       {/* Hero Section */}

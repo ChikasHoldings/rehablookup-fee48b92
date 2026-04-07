@@ -119,7 +119,7 @@ export default function BCBSTreatment() {
           { name: "Insurance", url: "/insurance" },
           { name: "BCBS Treatment Coverage", url: "/insurance/bcbs-treatment" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
 

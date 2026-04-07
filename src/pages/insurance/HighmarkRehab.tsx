@@ -35,7 +35,7 @@ export default function HighmarkRehab() {
   const faqSchema = generateFAQSchema(faqs);
   return (
     <Layout>
-      <SEO title="Highmark BCBS Rehab Coverage | Addiction Treatment Insurance" description="Find addiction treatment centers that accept Highmark Blue Cross Blue Shield. Learn about Highmark's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/highmark-rehab" keywords={["Highmark BCBS rehab coverage", "Highmark addiction treatment", "Highmark Blue Cross Blue Shield rehab", "Highmark behavioral health", "rehab that takes Highmark"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Highmark Rehab Coverage", url: "/insurance/highmark-rehab" }]} structuredData={faqSchema} />
+      <SEO title="Highmark BCBS Rehab Coverage | Addiction Treatment Insurance" description="Find addiction treatment centers that accept Highmark Blue Cross Blue Shield. Learn about Highmark's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/highmark-rehab" keywords={["Highmark BCBS rehab coverage", "Highmark addiction treatment", "Highmark Blue Cross Blue Shield rehab", "Highmark behavioral health", "rehab that takes Highmark"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Highmark Rehab Coverage", url: "/insurance/highmark-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />
 
       <section className="relative overflow-hidden bg-primary py-10 md:py-14">
         <div className="container">

@@ -67,7 +67,7 @@ export default function ComparisonPage() {
         title={config.metaTitle}
         description={config.metaDescription}
         canonical={`https://rehablookup.com/${config.slug}`}
-        structuredData={structuredData}
+        structuredData={[structuredData, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },

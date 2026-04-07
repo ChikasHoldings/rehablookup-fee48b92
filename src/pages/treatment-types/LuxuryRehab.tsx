@@ -74,7 +74,7 @@ export default function LuxuryRehab() {
         title="Luxury Rehab Centers — Premium Addiction Treatment | RehabLookup"
         description="Explore luxury rehab centers offering private suites, gourmet nutrition, spa services, and world-class clinical care. Find premium addiction treatment programs."
         canonical="/treatment-types/luxury-rehab"
-        structuredData={generateFAQSchema(faqs)}
+        structuredData={[generateFAQSchema(faqs), { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },

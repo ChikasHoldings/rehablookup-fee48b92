@@ -35,7 +35,7 @@ export default function AmbetterRehab() {
   const faqSchema = generateFAQSchema(faqs);
   return (
     <Layout>
-      <SEO title="Ambetter Rehab Coverage | ACA Marketplace Addiction Treatment" description="Find addiction treatment centers that accept Ambetter insurance. Learn about Ambetter's ACA Marketplace coverage for detox, rehab, and outpatient programs." canonical="/insurance/ambetter-rehab" keywords={["Ambetter rehab coverage", "Ambetter addiction treatment", "Ambetter drug rehab", "Ambetter Marketplace rehab", "rehab that takes Ambetter", "Centene addiction treatment"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Ambetter Rehab Coverage", url: "/insurance/ambetter-rehab" }]} structuredData={faqSchema} />
+      <SEO title="Ambetter Rehab Coverage | ACA Marketplace Addiction Treatment" description="Find addiction treatment centers that accept Ambetter insurance. Learn about Ambetter's ACA Marketplace coverage for detox, rehab, and outpatient programs." canonical="/insurance/ambetter-rehab" keywords={["Ambetter rehab coverage", "Ambetter addiction treatment", "Ambetter drug rehab", "Ambetter Marketplace rehab", "rehab that takes Ambetter", "Centene addiction treatment"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Ambetter Rehab Coverage", url: "/insurance/ambetter-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />
 
       <section className="relative overflow-hidden bg-primary py-10 md:py-14">
         <div className="container">
