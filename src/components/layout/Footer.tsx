@@ -105,6 +105,8 @@ const companyLinks: FooterLink[] = [
   { name: "Contact Us", path: "/contact" },
   { name: "Treatment Placement", path: "/concierge" },
   { name: "Blog", path: "/blog" },
+  { name: "Editorial Policy", path: "/editorial-policy" },
+  { name: "Medical Disclaimer", path: "/medical-disclaimer" },
 ];
 
 const allSections: FooterSection[] = [
@@ -351,6 +353,8 @@ export const Footer = memo(function Footer() {
                 {[
                   { to: "/privacy-policy", label: "Privacy Policy" },
                   { to: "/terms-of-service", label: "Terms of Service" },
+                  { to: "/editorial-policy", label: "Editorial Policy" },
+                  { to: "/medical-disclaimer", label: "Medical Disclaimer" },
                   { to: "/contact", label: "Contact" },
                 ].map((l) => (
                   <Link

@@ -1,0 +1,6 @@
+Contact: mailto:Security@rehablookup.com
+Expires: 2027-04-07T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://rehablookup.com/.well-known/security.txt
+Policy: https://rehablookup.com/privacy-policy
+Hiring: https://rehablookup.com/contact

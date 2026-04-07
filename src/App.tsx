@@ -145,6 +145,8 @@ const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const EditorialPolicy = lazy(() => import("./pages/EditorialPolicy"));
+const MedicalDisclaimer = lazy(() => import("./pages/MedicalDisclaimer"));
 const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Login = lazy(() => import("./pages/Login"));
@@ -642,6 +644,8 @@ const AppInner = () => {
             <Route path="/contact" element={<PublicRouteGuard><Contact /></PublicRouteGuard>} />
             <Route path="/privacy-policy" element={<PublicRouteGuard><PrivacyPolicy /></PublicRouteGuard>} />
             <Route path="/terms-of-service" element={<PublicRouteGuard><TermsOfService /></PublicRouteGuard>} />
+            <Route path="/editorial-policy" element={<PublicRouteGuard><EditorialPolicy /></PublicRouteGuard>} />
+            <Route path="/medical-disclaimer" element={<PublicRouteGuard><MedicalDisclaimer /></PublicRouteGuard>} />
             
             {/* Seeker Authentication */}
             <Route path="/login" element={<Login />} />
