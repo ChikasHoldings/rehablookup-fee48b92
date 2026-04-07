@@ -362,8 +362,8 @@ const PrivacyPolicy = () => {
                   </li>
                   <li>
                     <strong className="text-foreground">General Support:</strong>{" "}
-                    <a href="mailto:help@rehablookup.com" className="text-primary hover:underline">
-                      help@rehablookup.com
+                    <a href="mailto:Support@rehablookup.com" className="text-primary hover:underline">
+                      Support@rehablookup.com
                     </a>
                   </li>
                 </ul>

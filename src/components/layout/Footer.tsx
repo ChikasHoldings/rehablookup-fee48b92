@@ -375,10 +375,10 @@ export const Footer = memo(function Footer() {
             {/* Right: Social + Contact */}
             <div className="flex items-center justify-center gap-3">
               <a
-                href="mailto:help@rehablookup.com"
+                href="mailto:Support@rehablookup.com"
                 className="text-xs text-primary-foreground/70 hover:text-primary-foreground/90 transition-colors hidden sm:inline-flex items-center gap-1"
               >
-                <Mail className="h-3 w-3" /> help@rehablookup.com
+                <Mail className="h-3 w-3" /> Support@rehablookup.com
               </a>
               <div className="h-3.5 w-px bg-primary-foreground/10 hidden sm:block" />
               <div className="flex items-center gap-1">

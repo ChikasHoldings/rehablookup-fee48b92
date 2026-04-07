@@ -103,7 +103,7 @@ export function SEO({
     ],
     contactPoint: {
       "@type": "ContactPoint",
-      email: "help@rehablookup.com",
+      email: "Support@rehablookup.com",
       contactType: "customer service",
       availableLanguage: ["English", "Spanish"],
       areaServed: "US",

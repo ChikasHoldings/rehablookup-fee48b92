@@ -99,7 +99,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
               </table>
               
               <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #6b7280; line-height: 1.6;">
-                If you have any questions about your request or need assistance, our support team is here to help at <a href="mailto:help@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">help@rehablookup.com</a>.
+                If you have any questions about your request or need assistance, our support team is here to help at <a href="mailto:Support@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">Support@rehablookup.com</a>.
               </p>
               
               <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.6;">
@@ -152,7 +152,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
                         </td>
                         <td style="color: #64748b;">|</td>
                         <td style="padding: 0 12px;">
-                          <a href="mailto:help@rehablookup.com" style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Contact Us</a>
+                          <a href="mailto:Support@rehablookup.com" style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Contact Us</a>
                         </td>
                       </tr>
                     </table>

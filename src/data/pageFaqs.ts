@@ -75,7 +75,7 @@ export const aboutFaqs: FAQItem[] = [
   { question: "Who created RehabLookup?", answer: "RehabLookup was created to address the difficulty people face in finding legitimate, verified addiction treatment. Our team combines technology with healthcare expertise to connect seekers with quality facilities." },
   { question: "Is RehabLookup affiliated with any treatment centers?", answer: "No. RehabLookup is an independent platform. We are not owned by or affiliated with any specific treatment center, ensuring unbiased results for every user." },
   { question: "How does RehabLookup make money?", answer: "RehabLookup offers premium listing features and placement services for treatment providers. Searchers always have free, unbiased access to the full directory." },
-  { question: "How can I provide feedback or report an issue?", answer: "You can reach us through our contact page or email help@rehablookup.com. We take all feedback seriously and investigate any reports about listed facilities." },
+  { question: "How can I provide feedback or report an issue?", answer: "You can reach us through our contact page or email Support@rehablookup.com. We take all feedback seriously and investigate any reports about listed facilities." },
 ];
 
 // ─── Cost Estimator ───────────────────────────────────────────────────────────
