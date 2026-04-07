@@ -58,15 +58,18 @@ export const nearbyStates: Record<string, string[]> = {
 
 // Get state abbreviation from full name
 export function getStateAbbr(stateName: string): string | null {
+  if (!stateName) return null;
+  const trimmed = stateName.trim();
   const state = usStatesWithAbbr.find(
-    (s) => s.name.toLowerCase() === stateName.toLowerCase() ||
-           s.abbr.toLowerCase() === stateName.toLowerCase()
+    (s) => s.name.toLowerCase() === trimmed.toLowerCase() ||
+           s.abbr.toLowerCase() === trimmed.toLowerCase()
   );
   return state?.abbr || null;
 }
 
 // Get full state name from abbreviation
 export function getStateName(stateAbbr: string): string | null {
+  if (!stateAbbr) return null;
   const state = usStatesWithAbbr.find(
     (s) => s.abbr.toLowerCase() === stateAbbr.toLowerCase()
   );
@@ -75,6 +78,7 @@ export function getStateName(stateAbbr: string): string | null {
 
 // Get nearby states for a given state
 export function getNearbyStates(stateAbbr: string): string[] {
+  if (!stateAbbr) return [];
   const abbr = stateAbbr.toUpperCase();
   return nearbyStates[abbr] || [];
 }
@@ -86,16 +90,31 @@ export interface LocationMatch {
   stateAbbr: string | null;
   nearbyStates: string[];
   isZipcode: boolean;
+  resolvedCity?: string | null; // Resolved from ZIP lookup
+  resolvedState?: string | null; // Resolved from ZIP lookup
+  resolvedStateAbbr?: string | null;
 }
 
 // Parse location input to extract components
 export function parseLocationInput(input: string): LocationMatch {
   const trimmed = input.trim();
   
-  // Check if it's a zipcode (5 digits)
-  if (/^\d{5}$/.test(trimmed)) {
+  if (!trimmed) {
     return {
-      zipcode: trimmed,
+      zipcode: null,
+      city: null,
+      state: null,
+      stateAbbr: null,
+      nearbyStates: [],
+      isZipcode: false,
+    };
+  }
+  
+  // Check if it's a zipcode (5 digits, possibly with +4)
+  const zipMatch = trimmed.match(/^(\d{5})(?:-\d{4})?$/);
+  if (zipMatch) {
+    return {
+      zipcode: zipMatch[1],
       city: null,
       state: null,
       stateAbbr: null,
@@ -151,7 +170,52 @@ export function parseLocationInput(input: string): LocationMatch {
   };
 }
 
+/**
+ * Enhance a LocationMatch with resolved ZIP data
+ */
+export function enrichLocationMatchWithZip(
+  match: LocationMatch,
+  zipData: { city: string; state: string; stateAbbr: string } | null
+): LocationMatch {
+  if (!zipData || !match.isZipcode) return match;
+  
+  return {
+    ...match,
+    city: zipData.city,
+    state: zipData.state,
+    stateAbbr: zipData.stateAbbr,
+    nearbyStates: getNearbyStates(zipData.stateAbbr),
+    resolvedCity: zipData.city,
+    resolvedState: zipData.state,
+    resolvedStateAbbr: zipData.stateAbbr,
+  };
+}
+
 export type ProximityTier = "exact" | "city" | "state" | "nearby" | "nationwide";
+
+export const PROXIMITY_TIER_ORDER: Record<ProximityTier, number> = {
+  exact: 0,
+  city: 1,
+  state: 2,
+  nearby: 3,
+  nationwide: 4,
+};
+
+export const PROXIMITY_TIER_LABELS: Record<ProximityTier, string> = {
+  exact: "Exact Match",
+  city: "Same City",
+  state: "Same State",
+  nearby: "Nearby State",
+  nationwide: "Nationwide",
+};
+
+export const PROXIMITY_TIER_COLORS: Record<ProximityTier, string> = {
+  exact: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  city: "bg-blue-100 text-blue-700 border-blue-200",
+  state: "bg-purple-100 text-purple-700 border-purple-200",
+  nearby: "bg-amber-100 text-amber-700 border-amber-200",
+  nationwide: "bg-muted text-muted-foreground border-border",
+};
 
 export interface ProximityResult<T> {
   item: T;
@@ -159,61 +223,64 @@ export interface ProximityResult<T> {
   matchReason: string;
 }
 
+/**
+ * Get the proximity tier for a facility relative to a location match.
+ * Handles both full state names and abbreviations.
+ */
+export function getProximityTier(
+  facility: { city: string; state: string; zipCode?: string },
+  locationMatch: LocationMatch
+): { tier: ProximityTier; reason: string } {
+  const facilityStateAbbr = getStateAbbr(facility.state);
+  
+  // Tier 0: Exact zipcode match
+  if (locationMatch.zipcode && facility.zipCode === locationMatch.zipcode) {
+    return { tier: "exact", reason: `ZIP ${locationMatch.zipcode}` };
+  }
+  
+  // Tier 1: Same city + state
+  if (locationMatch.city) {
+    const cityMatch = facility.city.toLowerCase() === locationMatch.city.toLowerCase();
+    // If we have a state, require it to match too
+    if (cityMatch) {
+      if (locationMatch.stateAbbr) {
+        if (facilityStateAbbr?.toUpperCase() === locationMatch.stateAbbr.toUpperCase()) {
+          return { tier: "city", reason: `In ${facility.city}, ${facility.state}` };
+        }
+      } else {
+        // No state specified — city match alone is sufficient
+        return { tier: "city", reason: `In ${facility.city}` };
+      }
+    }
+  }
+  
+  // Tier 2: Same state
+  if (locationMatch.stateAbbr && facilityStateAbbr) {
+    if (facilityStateAbbr.toUpperCase() === locationMatch.stateAbbr.toUpperCase()) {
+      return { tier: "state", reason: `In ${facility.state}` };
+    }
+  }
+  
+  // Tier 3: Nearby state
+  if (facilityStateAbbr && locationMatch.nearbyStates.includes(facilityStateAbbr.toUpperCase())) {
+    return { tier: "nearby", reason: `Near: ${facility.state}` };
+  }
+  
+  // Tier 4: Nationwide
+  return { tier: "nationwide", reason: "Nationwide" };
+}
+
 // Sort results by proximity tier
 export function sortByProximity<T extends { city: string; state: string; zipCode?: string }>(
   items: T[],
   locationMatch: LocationMatch
 ): ProximityResult<T>[] {
-  const results: ProximityResult<T>[] = [];
+  const results: ProximityResult<T>[] = items.map((item) => {
+    const { tier, reason } = getProximityTier(item, locationMatch);
+    return { item, tier, matchReason: reason };
+  });
   
-  for (const item of items) {
-    const itemStateAbbr = getStateAbbr(item.state);
-    let tier: ProximityTier = "nationwide";
-    let matchReason = "Nationwide";
-    
-    // Tier 1: Exact zipcode match
-    if (locationMatch.zipcode && item.zipCode === locationMatch.zipcode) {
-      tier = "exact";
-      matchReason = `Exact ZIP: ${locationMatch.zipcode}`;
-    }
-    // Tier 2: Same city (case-insensitive)
-    else if (
-      locationMatch.city &&
-      item.city.toLowerCase() === locationMatch.city.toLowerCase()
-    ) {
-      tier = "city";
-      matchReason = `In ${item.city}`;
-    }
-    // Tier 3: Same state
-    else if (
-      locationMatch.stateAbbr &&
-      itemStateAbbr?.toUpperCase() === locationMatch.stateAbbr.toUpperCase()
-    ) {
-      tier = "state";
-      matchReason = `In ${item.state}`;
-    }
-    // Tier 4: Nearby state
-    else if (
-      itemStateAbbr &&
-      locationMatch.nearbyStates.includes(itemStateAbbr.toUpperCase())
-    ) {
-      tier = "nearby";
-      matchReason = `Nearby: ${item.state}`;
-    }
-    
-    results.push({ item, tier, matchReason });
-  }
-  
-  // Sort by tier priority
-  const tierOrder: Record<ProximityTier, number> = {
-    exact: 0,
-    city: 1,
-    state: 2,
-    nearby: 3,
-    nationwide: 4,
-  };
-  
-  return results.sort((a, b) => tierOrder[a.tier] - tierOrder[b.tier]);
+  return results.sort((a, b) => PROXIMITY_TIER_ORDER[a.tier] - PROXIMITY_TIER_ORDER[b.tier]);
 }
 
 // Filter results based on location with proximity fallback
@@ -222,7 +289,6 @@ export function filterByLocationWithProximity<T extends { city: string; state: s
   location: string
 ): { results: ProximityResult<T>[]; locationMatch: LocationMatch } {
   if (!location.trim()) {
-    // No location filter - return all as nationwide
     return {
       results: items.map((item) => ({
         item,
@@ -244,4 +310,23 @@ export function filterByLocationWithProximity<T extends { city: string; state: s
   const proximityResults = sortByProximity(items, locationMatch);
   
   return { results: proximityResults, locationMatch };
+}
+
+/**
+ * Normalize a location string for consistent comparison
+ */
+export function normalizeLocation(input: string): string {
+  return input.trim().replace(/\s+/g, " ").replace(/,\s*/g, ", ");
+}
+
+/**
+ * Check if a facility matches a location filter (inclusive, with proximity fallback).
+ * Returns true for ZIP/City/State/Nearby matches; false only for nationwide.
+ */
+export function facilityMatchesLocation(
+  facility: { city: string; state: string; zipCode?: string },
+  locationMatch: LocationMatch
+): boolean {
+  const { tier } = getProximityTier(facility, locationMatch);
+  return tier !== "nationwide";
 }
