@@ -967,7 +967,7 @@ const SearchResults = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  {location && (
+                  {(location || effectiveLocation) && (
                     <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
                         <MapPin className="h-2.5 w-2.5" /> Exact
