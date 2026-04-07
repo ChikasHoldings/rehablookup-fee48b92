@@ -332,6 +332,16 @@ const SafeBrowserRouter = React.forwardRef<HTMLDivElement, BrowserRouterProps>(
 SafeBrowserRouter.displayName = "SafeBrowserRouter";
 
 
+function DualDiagnosisStateRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}`} replace />;
+}
+
+function DetoxStateRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;
+}
+
 const AppInner = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
