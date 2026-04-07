@@ -951,14 +951,18 @@ const SearchResults = () => {
               {/* Results Summary */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground tabular-nums">
                     Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
                     <span className="font-medium text-foreground">{filteredCenters.length}</span> results
                   </p>
-                  {location && (
+                  {(location || effectiveLocation) && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <Compass className="h-3 w-3 text-primary" />
-                      Results sorted by proximity to <span className="font-medium text-foreground">{location}</span>
+                      {location ? (
+                        <>Results sorted by proximity to <span className="font-medium text-foreground">{resolvedZipData ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr} (${location})` : location}</span></>
+                      ) : (
+                        <>Sorted by proximity to <span className="font-medium text-foreground">{effectiveLocation}</span> <span className="text-muted-foreground/70">(auto-detected)</span></>
+                      )}
                     </p>
                   )}
                 </div>
