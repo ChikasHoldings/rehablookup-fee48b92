@@ -772,9 +772,9 @@ const Index = () => {
 
       {/* Testimonials */}
       <TestimonialsSection
-        testimonials={homepageTestimonials}
-        title="What Families & Providers Say"
-        subtitle="Real experiences from families who found treatment and providers who trust our platform"
+        testimonials={seekerTestimonials}
+        title="Real Stories from Families We've Helped"
+        subtitle="Hear from people who found the right treatment through RehabLookup"
       />
 
       {/* International Patients CTA */}
