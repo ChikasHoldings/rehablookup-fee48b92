@@ -1,5 +1,5 @@
-import { formatDistanceToNow } from "date-fns";
-import { MapPin, Lock, Unlock, Phone, MessageSquare } from "lucide-react";
+import { formatDistanceToNow, differenceInHours } from "date-fns";
+import { MapPin, Lock, Unlock, Phone, MessageSquare, ShieldCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
@@ -18,6 +18,7 @@ interface InquiryListItemProps {
     provider_response_status: string | null;
     created_at: string;
     message: string | null;
+    source: string | null;
   };
   isUnlocked: boolean;
   isSelected: boolean;
@@ -25,6 +26,10 @@ interface InquiryListItemProps {
 }
 
 export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: InquiryListItemProps) {
+  const isRedistributed = inquiry.source === "redistributed" || inquiry.source === "rerouted";
+  const hoursOld = differenceInHours(new Date(), new Date(inquiry.created_at));
+  const isExclusive = !isRedistributed && hoursOld < 24;
+
   const getStatusIndicator = () => {
     if (!isUnlocked) return { color: "bg-muted-foreground/40", label: "Locked" };
     
@@ -62,6 +67,17 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
         {/* Header row */}
         <div className="flex items-center gap-2 flex-wrap">
           <InquiryTypeBadge type={inquiry.inquiry_type} size="sm" />
+          {isExclusive ? (
+            <Badge variant="outline" className="text-xs px-1.5 py-0 border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400 gap-1">
+              <ShieldCheck className="h-3 w-3" />
+              Exclusive
+            </Badge>
+          ) : isRedistributed ? (
+            <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400 gap-1">
+              <Users className="h-3 w-3" />
+              Shared
+            </Badge>
+          ) : null}
           {isUnlocked ? (
             <Unlock className="h-3.5 w-3.5 text-emerald-600" />
           ) : (
