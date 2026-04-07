@@ -348,6 +348,26 @@ export default function ProviderFAQ() {
           </div>
         </section>
 
+        {/* ROI Calculator Banner */}
+        <section className="py-8 bg-background border-t border-border">
+          <div className="container">
+            <Link to="/provider-roi-calculator" className="group block mx-auto max-w-3xl">
+              <div className="flex items-center justify-between gap-4 p-5 md:p-6 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Compare Your Lead Costs</h3>
+                    <p className="text-sm text-muted-foreground">Use our ROI Calculator to see how RehabLookup compares to Google Ads & Rehabs.com</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-5 w-5 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+          </div>
+        </section>
+
         {/* Bottom CTA */}
         <section className="py-10 bg-muted/30">
           <div className="container">

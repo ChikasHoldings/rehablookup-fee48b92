@@ -103,6 +103,12 @@ export default function ProviderAnalyticsPage() {
               </p>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <a href="/provider-roi-calculator" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
+              <BarChart3 className="h-3.5 w-3.5" />
+              ROI Calculator
+            </a>
+          </div>
 
           {/* Filters Row */}
           <div className="flex items-center gap-2 flex-wrap">
