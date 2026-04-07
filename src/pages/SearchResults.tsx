@@ -46,9 +46,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { 
   parseLocationInput, 
-  sortByProximity, 
+  enrichLocationMatchWithZip,
+  getProximityTier,
   getStateAbbr,
   getNearbyStates,
+  normalizeLocation,
+  facilityMatchesLocation,
+  PROXIMITY_TIER_ORDER,
   type ProximityTier, 
   type ProximityResult,
   type LocationMatch 
