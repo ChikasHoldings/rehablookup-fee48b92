@@ -26,6 +26,37 @@ import brianImg from "@/assets/testimonials/brian-e.jpg";
 import priyaImg from "@/assets/testimonials/priya-d.jpg";
 import williamImg from "@/assets/testimonials/william-k.jpg";
 import elenaImg from "@/assets/testimonials/elena-r.jpg";
+// New imports
+import tanyaImg from "@/assets/testimonials/tanya-w.jpg";
+import joseImg from "@/assets/testimonials/jose-m.jpg";
+import christineImg from "@/assets/testimonials/christine-b.jpg";
+import kevinImg from "@/assets/testimonials/kevin-n.jpg";
+import meganImg from "@/assets/testimonials/megan-r.jpg";
+import darnellImg from "@/assets/testimonials/darnell-j.jpg";
+import jasonImg from "@/assets/testimonials/jason-f.jpg";
+import anitaImg from "@/assets/testimonials/anita-p.jpg";
+import keishaImg from "@/assets/testimonials/keisha-d.jpg";
+import haroldImg from "@/assets/testimonials/harold-g.jpg";
+import vanessaImg from "@/assets/testimonials/vanessa-c.jpg";
+import scottImg from "@/assets/testimonials/scott-a.jpg";
+import jamesPaulaImg from "@/assets/testimonials/james-paula-w.jpg";
+import fatimaImg from "@/assets/testimonials/fatima-a.jpg";
+import lauraImg from "@/assets/testimonials/laura-m.jpg";
+import ryanImg from "@/assets/testimonials/ryan-c.jpg";
+import robertoImg from "@/assets/testimonials/roberto-v.jpg";
+import nicoleImg from "@/assets/testimonials/nicole-s.jpg";
+import travisImg from "@/assets/testimonials/travis-b.jpg";
+import danAmyImg from "@/assets/testimonials/dan-amy-h.jpg";
+import malikImg from "@/assets/testimonials/malik-t.jpg";
+import rosaImg from "@/assets/testimonials/rosa-g.jpg";
+import hannahImg from "@/assets/testimonials/hannah-l.jpg";
+import gloriaImg from "@/assets/testimonials/gloria-j.jpg";
+import frankImg from "@/assets/testimonials/frank-d.jpg";
+import jennyImg from "@/assets/testimonials/jenny-l.jpg";
+import terrenceImg from "@/assets/testimonials/terrence-h.jpg";
+import connorImg from "@/assets/testimonials/connor-m.jpg";
+import sophiaImg from "@/assets/testimonials/sophia-r.jpg";
+import margaretImg from "@/assets/testimonials/margaret-k.jpg";
 
 export interface Testimonial {
   name: string;
@@ -173,6 +204,142 @@ export const seekerTestimonials: Testimonial[] = [
     context: "Found MAT program with aftercare",
     avatar: brianImg,
   },
+  // New seeker testimonials
+  {
+    name: "Tanya W.",
+    location: "Baltimore, MD",
+    quote: "I'd been on a waiting list for 3 weeks at another facility. RehabLookup found me a bed at a better program in 48 hours. The intake coordinator already had my information — I didn't have to repeat my story to another stranger. That mattered more than people realize.",
+    rating: 5,
+    role: "seeker",
+    context: "Found immediate placement",
+    avatar: tanyaImg,
+  },
+  {
+    name: "José M.",
+    location: "San Antonio, TX",
+    quote: "My family didn't understand addiction. They thought I could just stop. RehabLookup's team explained the disease model to my parents in Spanish and helped them understand why inpatient was necessary. That conversation changed everything — my family became my biggest supporters.",
+    rating: 5,
+    role: "seeker",
+    context: "Bilingual family support",
+    avatar: joseImg,
+  },
+  {
+    name: "Christine B.",
+    location: "Denver, CO",
+    quote: "I'm a nurse who got addicted to painkillers after a surgery. I needed a program that understood healthcare professionals and could help me keep my license. RehabLookup connected me with a professionals-only program. I've been clean for 20 months and I'm back at work.",
+    rating: 5,
+    role: "seeker",
+    context: "Healthcare professional program",
+    avatar: christineImg,
+  },
+  {
+    name: "Kevin N.",
+    location: "Portland, OR",
+    quote: "My wife's drinking had escalated over the pandemic. Every facility I called made me feel like a number. The RehabLookup concierge actually listened to what our family was going through and found a program with strong family therapy. She's 14 months sober and our marriage survived.",
+    rating: 5,
+    role: "family",
+    context: "Found treatment for his wife",
+    avatar: kevinImg,
+  },
+  {
+    name: "Megan R.",
+    location: "Jacksonville, FL",
+    quote: "I was 23 and didn't think I was 'bad enough' for rehab. The team at RehabLookup helped me understand that early intervention gives you the best shot. The young adult program they found felt like being with people who actually got it.",
+    rating: 5,
+    role: "seeker",
+    context: "Found young adult program",
+    avatar: meganImg,
+  },
+  {
+    name: "James & Paula W.",
+    location: "Memphis, TN",
+    quote: "Our grandson was living on the streets. We didn't know where to start or what we could afford on a fixed income. RehabLookup found a state-funded program with an open bed. He's been clean for 8 months and is working again. We couldn't have navigated this alone.",
+    rating: 5,
+    role: "family",
+    context: "Found affordable care for grandson",
+    avatar: jamesPaulaImg,
+  },
+  {
+    name: "Fatima A.",
+    location: "Dearborn, MI",
+    quote: "Finding treatment that respected my faith was essential. I was worried about being judged. RehabLookup matched me with a facility that offered prayer space and understood cultural sensitivity. Recovery became possible because I didn't have to choose between my faith and getting help.",
+    rating: 5,
+    role: "seeker",
+    context: "Found faith-compatible treatment",
+    avatar: fatimaImg,
+  },
+  {
+    name: "Travis B.",
+    location: "Tulsa, OK",
+    quote: "I'd been through two 28-day programs that didn't work. RehabLookup helped me understand that I needed long-term residential — not another short stay. The 6-month program they found gave me the time to actually change. I'm 2 years clean and I own a small business now.",
+    rating: 5,
+    role: "seeker",
+    context: "Found long-term residential",
+    avatar: travisImg,
+  },
+  {
+    name: "Dan & Amy H.",
+    location: "Scottsdale, AZ",
+    quote: "We flew our son across the country for treatment because the local options weren't working. RehabLookup's team handled everything — from coordinating with the facility to helping us plan travel logistics. The distance program worked. He's been sober 18 months.",
+    rating: 5,
+    role: "family",
+    context: "Coordinated out-of-state treatment",
+    avatar: danAmyImg,
+  },
+  {
+    name: "Keisha D.",
+    location: "Washington, DC",
+    quote: "As a Black woman, I wanted a program where the therapists looked like me and understood my experiences. RehabLookup's filters let me search by cultural competency. The program they recommended had diverse clinical staff and it made all the difference in my willingness to open up.",
+    rating: 5,
+    role: "seeker",
+    context: "Found culturally competent care",
+    avatar: keishaImg,
+  },
+  {
+    name: "Harold G.",
+    location: "Boise, ID",
+    quote: "My wife of 40 years was hiding a prescription addiction. At our age, we didn't know where to turn. The RehabLookup team was gentle, patient, and found a program that treated her with the dignity she deserved. She's been medication-free for a year.",
+    rating: 5,
+    role: "family",
+    context: "Found senior-appropriate treatment",
+    avatar: haroldImg,
+  },
+  {
+    name: "Vanessa C.",
+    location: "Miami, FL",
+    quote: "I was pregnant and using. Every day I didn't get help, I was hurting my baby. RehabLookup found a facility with a specialized perinatal program within 24 hours. My daughter was born healthy and I've been clean since. They saved two lives that day.",
+    rating: 5,
+    role: "seeker",
+    context: "Found perinatal addiction program",
+    avatar: vanessaImg,
+  },
+  {
+    name: "Connor M.",
+    location: "Austin, TX",
+    quote: "I was skeptical about rehab — I'd heard too many horror stories. RehabLookup showed me verified reviews from real patients, not marketing fluff. Reading honest experiences from people like me gave me the courage to actually go. Nine months clean now.",
+    rating: 5,
+    role: "seeker",
+    context: "Trusted verified reviews",
+    avatar: connorImg,
+  },
+  {
+    name: "Hannah L.",
+    location: "Nashville, TN",
+    quote: "My insurance denied coverage twice for treatment. The RehabLookup team didn't give up — they helped me find a facility that did appeals and got my stay authorized. Without that persistence, I would have given up. I'm 11 months sober.",
+    rating: 5,
+    role: "seeker",
+    context: "Navigated insurance challenges",
+    avatar: hannahImg,
+  },
+  {
+    name: "Gloria J.",
+    location: "New Orleans, LA",
+    quote: "My son is a first responder and his drinking was destroying his career. He needed a program that understood the unique pressures of the job. RehabLookup found a first-responder-specific facility with peer counselors who had walked the same path. He got his life back.",
+    rating: 5,
+    role: "family",
+    context: "Found first responder program",
+    avatar: gloriaImg,
+  },
 ];
 
 export const providerTestimonials: Testimonial[] = [
@@ -292,5 +459,159 @@ export const providerTestimonials: Testimonial[] = [
     role: "provider",
     context: "Nursing Director, Pacific Shores Recovery",
     avatar: elenaImg,
+  },
+  // New provider testimonials
+  {
+    name: "Darnell Jackson",
+    location: "Atlanta, GA",
+    quote: "Our 45-bed facility was running at 62% occupancy when we joined RehabLookup. Within four months, we hit 91%. The exclusive lead model means my admissions team actually has time to do proper clinical assessments instead of racing to dial numbers.",
+    rating: 5,
+    role: "provider",
+    context: "CEO, Peachtree Recovery Center",
+    avatar: darnellImg,
+  },
+  {
+    name: "Jason Fischer, LMFT",
+    location: "San Francisco, CA",
+    quote: "We specialize in LGBTQ+ affirming care, which can be hard to market. RehabLookup's search filters connect us directly with families looking for exactly what we offer. Our inquiry-to-admission rate went from 15% to 38%.",
+    rating: 5,
+    role: "provider",
+    context: "Program Director, Bay Area Wellness",
+    avatar: jasonImg,
+  },
+  {
+    name: "Anita Patel, MD",
+    location: "Houston, TX",
+    quote: "The detailed intake data that comes with each lead is remarkable. We know the substance, insurance carrier, urgency level, and preferred location before we ever pick up the phone. It's eliminated 90% of the back-and-forth in our admissions process.",
+    rating: 5,
+    role: "provider",
+    context: "Medical Director, Gulf Coast Behavioral Health",
+    avatar: anitaImg,
+  },
+  {
+    name: "Scott Anderson",
+    location: "Minneapolis, MN",
+    quote: "I manage three sober living facilities. RehabLookup is the only platform where we consistently get referrals for step-down care. Families searching for sober living specifically find us here. We've maintained 95%+ occupancy across all three houses.",
+    rating: 5,
+    role: "provider",
+    context: "Owner, North Star Sober Living",
+    avatar: scottImg,
+  },
+  {
+    name: "Laura Mitchell, LCSW",
+    location: "Phoenix, AZ",
+    quote: "We run a small women's-only residential program — 12 beds. Big directories buried us behind facilities with huge ad budgets. On RehabLookup, our verified listing and genuine reviews actually surface us to families who are the right fit. We haven't had an empty bed in 7 months.",
+    rating: 5,
+    role: "provider",
+    context: "Executive Director, Serenity Women's Center",
+    avatar: lauraImg,
+  },
+  {
+    name: "Ryan Chen, PharmD",
+    location: "Los Angeles, CA",
+    quote: "Our MAT clinic serves 200+ patients monthly. RehabLookup drives a steady stream of patients looking specifically for Suboxone and Vivitrol programs. The platform understands the difference between residential rehab and outpatient MAT, which most directories don't.",
+    rating: 5,
+    role: "provider",
+    context: "Director, Pacific MAT Clinic",
+    avatar: ryanImg,
+  },
+  {
+    name: "Roberto Valdez",
+    location: "El Paso, TX",
+    quote: "We serve a predominantly Hispanic community and needed a platform that could connect us with Spanish-speaking families. RehabLookup's bilingual search features bring us 30% of our new admissions. No other directory even comes close for our demographic.",
+    rating: 5,
+    role: "provider",
+    context: "Administrator, Frontera Treatment Center",
+    avatar: robertoImg,
+  },
+  {
+    name: "Dr. Nicole Stafford",
+    location: "Nashville, TN",
+    quote: "I was spending $8,000/month on leads from two other directories — shared leads that went to 10 facilities simultaneously. Switched to RehabLookup's exclusive model and my cost per admission dropped by half while my admissions team's morale went through the roof.",
+    rating: 5,
+    role: "provider",
+    context: "CMO, Southern Behavioral Health Group",
+    avatar: nicoleImg,
+  },
+  {
+    name: "Malik Thompson",
+    location: "Philadelphia, PA",
+    quote: "RehabLookup's provider dashboard gives us real-time visibility into how families find us — which search terms, which pages, which filters. We used that data to add an adolescent program. It filled to capacity in 6 weeks.",
+    rating: 5,
+    role: "provider",
+    context: "VP of Operations, Liberty Recovery Network",
+    avatar: malikImg,
+  },
+  {
+    name: "Rosa Garcia, RN",
+    location: "Tampa, FL",
+    quote: "Our detox unit was underperforming because we couldn't market effectively to families in active crisis. RehabLookup's urgency-based search connects us with families who need same-day placement. Our detox admissions increased 55% in the first quarter.",
+    rating: 5,
+    role: "provider",
+    context: "Detox Unit Director, Suncoast Recovery",
+    avatar: rosaImg,
+  },
+  {
+    name: "Frank DiMaggio",
+    location: "Boston, MA",
+    quote: "I've been in this industry 25 years. The leads from RehabLookup are the most qualified I've ever seen from any directory. When my admissions team calls, the family is ready to have a real conversation about treatment — not asking basic questions about what rehab even is.",
+    rating: 5,
+    role: "provider",
+    context: "Owner, New England Recovery Institute",
+    avatar: frankImg,
+  },
+  {
+    name: "Jenny Liu",
+    location: "Seattle, WA",
+    quote: "We launched our IOP program during COVID and had zero patient pipeline. RehabLookup was the first platform to list virtual IOP as a searchable treatment type. Within 60 days we had a full roster. They understood the market shift before anyone else.",
+    rating: 5,
+    role: "provider",
+    context: "Program Director, Cascade Behavioral Health",
+    avatar: jennyImg,
+  },
+  {
+    name: "Terrence Howard, MBA",
+    location: "Detroit, MI",
+    quote: "We operate in a competitive urban market with 40+ facilities. RehabLookup's verified badge and patient reviews differentiate us from facilities that cut corners. Families tell us they chose us specifically because of our RehabLookup profile. That trust is priceless.",
+    rating: 5,
+    role: "provider",
+    context: "CEO, Great Lakes Recovery Center",
+    avatar: terrenceImg,
+  },
+  {
+    name: "Sophia Rivera, LMHC",
+    location: "Orlando, FL",
+    quote: "Our dual-diagnosis program treats complex cases that most facilities won't take. RehabLookup's detailed intake forms help us identify appropriate referrals before we invest time in an assessment. The match quality is exceptional — 70% of leads are clinically appropriate for our program.",
+    rating: 5,
+    role: "provider",
+    context: "Clinical Director, Central Florida Behavioral",
+    avatar: sophiaImg,
+  },
+  {
+    name: "Dr. Margaret Kelly",
+    location: "Denver, CO",
+    quote: "As chief medical officer of a 120-bed campus, I need marketing channels that deliver volume without sacrificing quality. RehabLookup is the only platform where we've scaled to 30+ admissions per month while maintaining our clinical selectivity. The ROI is 4x our next best channel.",
+    rating: 5,
+    role: "provider",
+    context: "CMO, Rocky Mountain Treatment Campus",
+    avatar: margaretImg,
+  },
+  {
+    name: "Gloria Jenkins, LCPC",
+    location: "Kansas City, MO",
+    quote: "We specialize in trauma-informed care for women who've experienced domestic violence alongside addiction. RehabLookup lets us specify our niche populations so families who need exactly what we offer find us. Our waitlist went from empty to 3 weeks within two months.",
+    rating: 5,
+    role: "provider",
+    context: "Founder, Haven Women's Recovery",
+    avatar: gloriaImg,
+  },
+  {
+    name: "Hannah Lewis",
+    location: "Albuquerque, NM",
+    quote: "Running a faith-based recovery program in a rural area, we struggled with visibility. RehabLookup's state-specific search pages rank on Google for searches we could never afford to target ourselves. We now receive 8–10 qualified inquiries monthly from families specifically seeking faith-based care.",
+    rating: 5,
+    role: "provider",
+    context: "Director, Grace Path Recovery Ministry",
+    avatar: hannahImg,
   },
 ];

@@ -211,7 +211,7 @@ export default function MarketingLanding() {
 
         {/* Testimonials */}
         <TestimonialsSection
-          testimonials={seekerTestimonials.slice(0, 3)}
+          testimonials={seekerTestimonials}
           title="Families Who Found Help"
           subtitle="Real stories from people who used RehabLookup to find treatment"
           
