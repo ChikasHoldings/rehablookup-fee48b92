@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import { InternationalCTA } from "@/components/home/InternationalCTA";
 import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
-import { homepageTestimonials } from "@/data/testimonials";
+import { seekerTestimonials } from "@/data/testimonials";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
@@ -772,9 +772,9 @@ const Index = () => {
 
       {/* Testimonials */}
       <TestimonialsSection
-        testimonials={homepageTestimonials}
-        title="What Families & Providers Say"
-        subtitle="Real experiences from families who found treatment and providers who trust our platform"
+        testimonials={seekerTestimonials}
+        title="Real Stories from Families We've Helped"
+        subtitle="Hear from people who found the right treatment through RehabLookup"
       />
 
       {/* International Patients CTA */}
