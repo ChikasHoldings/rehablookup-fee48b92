@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
+import { providerTestimonials } from "@/data/testimonials";
 import {
   Building2,
   Users,
@@ -37,9 +39,6 @@ import providerHero from "@/assets/provider-hero.jpg";
 import providerTeam from "@/assets/provider-team.jpg";
 import providerFacility from "@/assets/provider-facility.jpg";
 import providerDashboardScreenshot from "@/assets/provider-dashboard-screenshot.png";
-import testimonialSarah from "@/assets/testimonials/testimonial-sarah.jpg";
-import testimonialMichael from "@/assets/testimonials/testimonial-michael.jpg";
-import testimonialJennifer from "@/assets/testimonials/testimonial-jennifer.jpg";
 
 const ForProviders = () => {
   return (
