@@ -392,81 +392,12 @@ const ForProviders = () => {
           </div>
         </section>
 
-        {/* Testimonials */}
-        <section className="py-12 sm:py-16 md:py-24 bg-muted/30 border-y border-border">
-          <div className="container px-4 md:px-6 lg:px-8">
-            <div className="text-center mb-10 sm:mb-14">
-              <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Success Stories</p>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
-                Trusted by Leading Treatment Centers
-              </h2>
-              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                <div className="flex items-center gap-0.5 sm:gap-1">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <span>4.9/5 from 500+ reviews</span>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-              {[
-                {
-                  quote: "RehabLookup transformed our admissions. We saw a 40% increase in qualified inquiries within three months.",
-                  author: "Dr. Sarah Mitchell",
-                  role: "Clinical Director",
-                  facility: "Sunrise Recovery Center",
-                  avatar: testimonialSarah,
-                  metric: "+40%",
-                },
-                {
-                  quote: "The quality of families we connect with is exceptional. They arrive informed and ready to begin treatment.",
-                  author: "Michael Torres",
-                  role: "Admissions Director",
-                  facility: "New Horizons Treatment",
-                  avatar: testimonialMichael,
-                  metric: "95%",
-                },
-                {
-                  quote: "Our admissions team loves how easy it is to manage inquiries. Best decision we made for our marketing.",
-                  author: "Jennifer Adams",
-                  role: "Marketing Manager",
-                  facility: "Coastal Wellness Center",
-                  avatar: testimonialJennifer,
-                  metric: "2x Growth",
-                },
-              ].map((testimonial) => (
-                <div key={testimonial.author} className="bg-card border border-border rounded-xl p-4 sm:p-6">
-                  <div className="flex items-center gap-0.5 sm:gap-1 mb-3 sm:mb-4">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <blockquote className="text-sm sm:text-base text-foreground mb-4 sm:mb-6 leading-relaxed">
-                    "{testimonial.quote}"
-                  </blockquote>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <img 
-                        src={testimonial.avatar} 
-                        alt={testimonial.author}
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-semibold text-foreground text-xs sm:text-sm truncate">{testimonial.author}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{testimonial.role}</p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-bold text-primary text-sm sm:text-base">{testimonial.metric}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Testimonials — Auto-scrolling carousel */}
+        <TestimonialsSection
+          testimonials={providerTestimonials}
+          title="Trusted by Leading Treatment Centers"
+          subtitle="Real results from facilities growing their census with RehabLookup"
+        />
 
         {/* Why RehabLookup — Competitive Advantages */}
         <section className="py-12 sm:py-16 md:py-24 bg-background">
