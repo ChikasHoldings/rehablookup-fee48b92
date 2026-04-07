@@ -332,7 +332,7 @@ export function generateLocalBusinessSchema(facility: {
   
   return {
     "@context": "https://schema.org",
-    "@type": ["MedicalBusiness", "LocalBusiness", "HealthAndBeautyBusiness"],
+    "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
     "@id": facilityUrl,
     url: facilityUrl,
     name: facility.name,
@@ -1123,7 +1123,7 @@ export function generateSearchResultsSchema(params: {
           "@type": "ListItem",
           position: index + 1,
           item: {
-            "@type": ["MedicalBusiness", "LocalBusiness"],
+            "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
             name: facility.name,
             address: {
               "@type": "PostalAddress",
