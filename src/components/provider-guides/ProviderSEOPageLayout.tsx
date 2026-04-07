@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ArrowRight, CheckCircle, TrendingUp, Users, Shield, Zap, Building2, Phone, Star, Clock, ChevronRight } from "lucide-react";
+import { ProviderStickyCTA } from "@/components/provider-guides/ProviderStickyCTA";
 
 interface PageImage {
   src: string;
@@ -451,6 +452,7 @@ export function ProviderSEOPageLayout({
         </section>
       </main>
 
+      <ProviderStickyCTA />
       <Footer />
     </div>
   );
