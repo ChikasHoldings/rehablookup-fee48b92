@@ -114,7 +114,7 @@ export default function AnthemRehab() {
           { name: "Insurance", url: "/insurance" },
           { name: "Anthem Rehab Coverage", url: "/insurance/anthem-rehab" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
 

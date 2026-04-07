@@ -60,7 +60,7 @@ export default function TricareRehab() {
           { name: "Insurance", url: "/insurance" },
           { name: "TRICARE Rehab Coverage", url: "/insurance/tricare-rehab" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
       <section className="relative overflow-hidden bg-primary py-10 md:py-14">

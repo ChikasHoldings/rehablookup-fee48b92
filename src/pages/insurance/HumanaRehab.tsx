@@ -109,7 +109,7 @@ export default function HumanaRehab() {
           { name: "Insurance", url: "/insurance" },
           { name: "Humana Rehab Coverage", url: "/insurance/humana-rehab" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
 

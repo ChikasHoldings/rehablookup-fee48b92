@@ -35,7 +35,7 @@ export default function MagellanRehab() {
   const faqSchema = generateFAQSchema(faqs);
   return (
     <Layout>
-      <SEO title="Magellan Health Rehab Coverage | Behavioral Health Treatment" description="Find addiction treatment centers that accept Magellan Health. Learn about Magellan's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/magellan-rehab" keywords={["Magellan Health rehab coverage", "Magellan addiction treatment", "Magellan behavioral health", "Magellan drug rehab", "rehab that takes Magellan"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Magellan Rehab Coverage", url: "/insurance/magellan-rehab" }]} structuredData={faqSchema} />
+      <SEO title="Magellan Health Rehab Coverage | Behavioral Health Treatment" description="Find addiction treatment centers that accept Magellan Health. Learn about Magellan's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/magellan-rehab" keywords={["Magellan Health rehab coverage", "Magellan addiction treatment", "Magellan behavioral health", "Magellan drug rehab", "rehab that takes Magellan"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Magellan Rehab Coverage", url: "/insurance/magellan-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />
 
       <section className="relative overflow-hidden bg-primary py-10 md:py-14">
         <div className="container">

@@ -35,7 +35,7 @@ export default function WellCareRehab() {
   const faqSchema = generateFAQSchema(faqs);
   return (
     <Layout>
-      <SEO title="WellCare Rehab Coverage | Addiction Treatment Insurance" description="Find addiction treatment centers that accept WellCare insurance. Learn about WellCare's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/wellcare-rehab" keywords={["WellCare rehab coverage", "WellCare addiction treatment", "WellCare drug rehab", "WellCare behavioral health", "rehab that takes WellCare"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "WellCare Rehab Coverage", url: "/insurance/wellcare-rehab" }]} structuredData={faqSchema} />
+      <SEO title="WellCare Rehab Coverage | Addiction Treatment Insurance" description="Find addiction treatment centers that accept WellCare insurance. Learn about WellCare's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/wellcare-rehab" keywords={["WellCare rehab coverage", "WellCare addiction treatment", "WellCare drug rehab", "WellCare behavioral health", "rehab that takes WellCare"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "WellCare Rehab Coverage", url: "/insurance/wellcare-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />
 
       <section className="relative overflow-hidden bg-primary py-10 md:py-14">
         <div className="container">

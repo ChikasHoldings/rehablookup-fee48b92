@@ -137,7 +137,7 @@ export default function MedicareRehab() {
           { name: "Insurance", url: "/insurance" },
           { name: "Medicare Rehab Coverage", url: "/insurance/medicare-rehab" },
         ]}
-        structuredData={faqSchema}
+        structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
 

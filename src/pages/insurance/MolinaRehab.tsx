@@ -35,7 +35,7 @@ export default function MolinaRehab() {
   const faqSchema = generateFAQSchema(faqs);
   return (
     <Layout>
-      <SEO title="Molina Healthcare Rehab Coverage | Addiction Treatment" description="Find addiction treatment centers that accept Molina Healthcare. Learn about Molina's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/molina-rehab" keywords={["Molina rehab coverage", "Molina Healthcare addiction treatment", "Molina drug rehab", "Molina behavioral health", "rehab that takes Molina"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Molina Rehab Coverage", url: "/insurance/molina-rehab" }]} structuredData={faqSchema} />
+      <SEO title="Molina Healthcare Rehab Coverage | Addiction Treatment" description="Find addiction treatment centers that accept Molina Healthcare. Learn about Molina's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/molina-rehab" keywords={["Molina rehab coverage", "Molina Healthcare addiction treatment", "Molina drug rehab", "Molina behavioral health", "rehab that takes Molina"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Molina Rehab Coverage", url: "/insurance/molina-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />
 
       <section className="relative overflow-hidden bg-primary py-10 md:py-14">
         <div className="container">
