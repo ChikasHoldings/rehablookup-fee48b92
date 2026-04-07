@@ -679,6 +679,7 @@ const AppInner = () => {
             <Route path="/for-providers" element={<PublicRouteGuard><ForProviders /></PublicRouteGuard>} />
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
             <Route path="/provider-signup" element={<ProviderSignup />} />
+            <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
             <Route path="/provider-faq" element={<ProviderFAQ />} />
             <Route path="/provider-support" element={<ProviderSupport />} />
