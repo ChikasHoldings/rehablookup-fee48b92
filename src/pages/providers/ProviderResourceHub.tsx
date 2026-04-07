@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
+import { providerTestimonials } from "@/data/testimonials";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
