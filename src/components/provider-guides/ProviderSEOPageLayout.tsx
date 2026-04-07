@@ -121,6 +121,9 @@ export function ProviderSEOPageLayout({
   // Insert a mid-article CTA after the 2nd section
   const midCTAIndex = Math.min(2, sections.length);
 
+  // Contextually relevant guides (not all 30+)
+  const relatedGuides = getRelatedGuides(canonical, keywords);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
