@@ -372,6 +372,24 @@ const ForProviders = () => {
                 </div>
               ))}
             </div>
+
+            {/* ROI Calculator CTA */}
+            <div className="mt-8 sm:mt-10 max-w-5xl mx-auto">
+              <Link to="/provider-roi-calculator" className="group block">
+                <div className="flex items-center justify-between gap-4 p-4 sm:p-5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm sm:text-base text-foreground">See Your ROI — Compare Lead Costs</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Calculate your cost-per-admission vs Google Ads, Rehabs.com & more</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-primary shrink-0 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            </div>
           </div>
         </section>
 
