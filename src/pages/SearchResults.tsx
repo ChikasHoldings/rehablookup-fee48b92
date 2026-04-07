@@ -46,9 +46,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { 
   parseLocationInput, 
-  sortByProximity, 
+  enrichLocationMatchWithZip,
+  getProximityTier,
   getStateAbbr,
   getNearbyStates,
+  normalizeLocation,
+  facilityMatchesLocation,
+  PROXIMITY_TIER_ORDER,
   type ProximityTier, 
   type ProximityResult,
   type LocationMatch 
@@ -142,6 +146,10 @@ const SearchResults = () => {
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
   const geo = useGeoLocation();
+  const { lookup: lookupZipcode } = useZipcodeLookup();
+  
+  // Resolved ZIP data for enriching location match
+  const [resolvedZipData, setResolvedZipData] = useState<{ city: string; state: string; stateAbbr: string } | null>(null);
 
   // Get seeker profile location for proximity when no explicit location is searched
   const { data: seekerProfile } = useQuery({
@@ -159,13 +167,35 @@ const SearchResults = () => {
     staleTime: 1000 * 60 * 10,
   });
 
+  // Resolve ZIP codes to city/state for better proximity matching
+  useEffect(() => {
+    const parsed = parseLocationInput(location);
+    if (parsed.isZipcode && parsed.zipcode) {
+      lookupZipcode(parsed.zipcode).then((result) => {
+        if (result) {
+          setResolvedZipData(result);
+        }
+      });
+    } else {
+      setResolvedZipData(null);
+    }
+  }, [location, lookupZipcode]);
+
   // Determine effective location for proximity sorting
+  // Priority: explicit location → seeker profile → geo-IP
   const effectiveLocation = useMemo(() => {
     if (location) return location;
-    // Use seeker profile state as fallback for proximity
+    if (seekerProfile?.city && seekerProfile?.state) {
+      return `${seekerProfile.city}, ${seekerProfile.state}`;
+    }
     if (seekerProfile?.state) return seekerProfile.state;
+    // Geo-IP fallback
+    if (!geo.isLoading && geo.regionCode && geo.isUS) {
+      if (geo.city) return `${geo.city}, ${geo.regionCode}`;
+      return geo.region || "";
+    }
     return "";
-  }, [location, seekerProfile]);
+  }, [location, seekerProfile, geo.isLoading, geo.city, geo.regionCode, geo.region, geo.isUS]);
 
   const allCenters = approvedFacilities;
 
@@ -240,27 +270,17 @@ const SearchResults = () => {
     // Build location match from explicit location or effective fallback
     let locationMatch: LocationMatch | null = null;
     const locationForFilter = location; // Only filter by explicit location
-    const locationForSort = effectiveLocation; // Sort by effective (includes profile fallback)
+    const locationForSort = effectiveLocation; // Sort by effective (includes profile/geo fallback)
     
     if (locationForFilter) {
       locationMatch = parseLocationInput(locationForFilter);
-      const locationLower = locationForFilter.toLowerCase().trim();
+      // Enrich with ZIP resolution data for better city/state matching
+      if (resolvedZipData) {
+        locationMatch = enrichLocationMatchWithZip(locationMatch, resolvedZipData);
+      }
       
       // Filter to include relevant results by location
-      results = results.filter((c) => {
-        if (locationMatch?.zipcode && c.zipCode === locationMatch.zipcode) return true;
-        if (c.city.toLowerCase().includes(locationLower)) return true;
-        if (c.state.toLowerCase().includes(locationLower)) return true;
-        if (locationMatch?.stateAbbr && 
-            (c.state.toLowerCase() === locationMatch.stateAbbr.toLowerCase() ||
-             c.state.toLowerCase() === (locationMatch.state?.toLowerCase() || ''))) return true;
-        if (locationMatch?.nearbyStates.length) {
-          const cStateAbbr = getStateAbbr(c.state);
-          if (cStateAbbr && locationMatch.nearbyStates.includes(cStateAbbr.toUpperCase())) return true;
-        }
-        if (c.zipCode.includes(locationForFilter)) return true;
-        return false;
-      });
+      results = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
     }
 
     // Free-text search with fuzzy/partial matching
@@ -277,7 +297,8 @@ const SearchResults = () => {
         const treatmentL = c.treatmentTypes.map(t => t.toLowerCase()).join(" ");
         const insuranceL = c.insuranceAccepted.map(i => i.toLowerCase()).join(" ");
         const zipL = c.zipCode || "";
-        const haystack = `${nameL} ${descL} ${cityL} ${stateL} ${treatmentL} ${insuranceL} ${zipL}`;
+        const facilityTypeL = (c.facilityType || "").toLowerCase();
+        const haystack = `${nameL} ${descL} ${cityL} ${stateL} ${treatmentL} ${insuranceL} ${zipL} ${facilityTypeL}`;
         
         // Full query match
         if (haystack.includes(q)) return true;
@@ -290,7 +311,6 @@ const SearchResults = () => {
         // Single token: also check partial word starts for typo tolerance
         if (tokens.length === 1) {
           const token = tokens[0];
-          // Check word-start matches (e.g. "cal" matches "california", "alc" matches "alcohol")
           const words = haystack.split(/\s+/);
           return words.some(w => w.startsWith(token) || w.includes(token));
         }
@@ -355,20 +375,22 @@ const SearchResults = () => {
       });
     }
 
-    // Amenity filters
+    // Amenity filters — match against description + treatment types + facility type
     if (selectedAmenities.length > 0) {
       results = results.filter((center) => {
         const description = (center.description || "").toLowerCase();
+        const allTypes = center.treatmentTypes.map(t => t.toLowerCase()).join(" ");
+        const combined = `${description} ${allTypes}`;
         return selectedAmenities.some(amenity => {
           switch (amenity) {
             case "private-rooms":
-              return description.includes("private") || description.includes("room");
+              return combined.includes("private") && (combined.includes("room") || combined.includes("suite"));
             case "gym":
-              return description.includes("gym") || description.includes("fitness");
+              return combined.includes("gym") || combined.includes("fitness") || combined.includes("exercise");
             case "pool":
-              return description.includes("pool") || description.includes("swim");
+              return combined.includes("pool") || combined.includes("aqua") || combined.includes("swimming");
             case "meditation":
-              return description.includes("meditation") || description.includes("yoga") || description.includes("holistic");
+              return combined.includes("meditation") || combined.includes("yoga") || combined.includes("mindfulness") || combined.includes("holistic");
             default:
               return false;
           }
@@ -386,24 +408,27 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Proximity scoring function
+    // Build proximity scoring using the enriched location match
     const getProximityScore = (center: { city: string; state: string; zipCode?: string }): number => {
       const sortLoc = locationForSort || locationForFilter;
       if (!sortLoc) return 4; // No location = all equal
-      const match = locationMatch || parseLocationInput(sortLoc);
       
-      if (match.zipcode && center.zipCode === match.zipcode) return 0;
-      if (match.city && center.city.toLowerCase() === match.city.toLowerCase()) return 1;
-      const centerAbbr = getStateAbbr(center.state);
-      if (match.stateAbbr && centerAbbr?.toUpperCase() === match.stateAbbr.toUpperCase()) return 2;
-      if (centerAbbr && match.nearbyStates.includes(centerAbbr.toUpperCase())) return 3;
-      return 4;
+      let match = locationMatch;
+      if (!match) {
+        match = parseLocationInput(sortLoc);
+        // Also enrich sort-only location with geo data
+        if (resolvedZipData) {
+          match = enrichLocationMatchWithZip(match, resolvedZipData);
+        }
+      }
+      
+      const { tier } = getProximityTier(center, match);
+      return PROXIMITY_TIER_ORDER[tier];
     };
 
-    // Sort results
+    // Sort results with stable tiebreakers
     results.sort((a, b) => {
       if (sortParam === "proximity") {
-        // Primary: proximity tier
         const proxA = getProximityScore(a);
         const proxB = getProximityScore(b);
         if (proxA !== proxB) return proxA - proxB;
@@ -411,11 +436,15 @@ const SearchResults = () => {
         const proA = getPlanPriority(a as any);
         const proB = getPlanPriority(b as any);
         if (proA !== proB) return proA - proB;
-        return a.name.localeCompare(b.name);
+        // Tertiary: rating
+        const rA = (a as any).googleRating || 0;
+        const rB = (b as any).googleRating || 0;
+        if (rA !== rB) return rB - rA;
+        // Final: stable by ID
+        return a.id.localeCompare(b.id);
       }
 
       if (sortParam === "featured") {
-        // If location context exists, respect proximity tiers
         if (locationForSort) {
           const proxA = getProximityScore(a);
           const proxB = getProximityScore(b);
@@ -424,7 +453,7 @@ const SearchResults = () => {
         const proA = getPlanPriority(a as any);
         const proB = getPlanPriority(b as any);
         if (proA !== proB) return proA - proB;
-        return a.name.localeCompare(b.name);
+        return a.id.localeCompare(b.id);
       }
 
       // For other sorts, Pro first then secondary
@@ -433,17 +462,40 @@ const SearchResults = () => {
       if (proA !== proB) return proA - proB;
 
       switch (sortParam) {
-        case "rating-high": return ((b as any).googleRating || 0) - ((a as any).googleRating || 0);
-        case "rating-low": return ((a as any).googleRating || 0) - ((b as any).googleRating || 0);
-        case "reviews": return ((b as any).googleReviewCount || 0) - ((a as any).googleReviewCount || 0);
+        case "rating-high": {
+          const diff = ((b as any).googleRating || 0) - ((a as any).googleRating || 0);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
+        case "rating-low": {
+          const diff = ((a as any).googleRating || 0) - ((b as any).googleRating || 0);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
+        case "reviews": {
+          const diff = ((b as any).googleReviewCount || 0) - ((a as any).googleReviewCount || 0);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
         case "name-asc": return a.name.localeCompare(b.name);
         case "name-desc": return b.name.localeCompare(a.name);
         default: return 0;
       }
     });
 
+    // Attach proximity tier to each result for badge display
+    const sortLoc = locationForSort || locationForFilter;
+    if (sortLoc) {
+      let match = locationMatch || parseLocationInput(sortLoc);
+      if (resolvedZipData) {
+        match = enrichLocationMatchWithZip(match, resolvedZipData);
+      }
+      results.forEach((r: any) => {
+        const { tier, reason } = getProximityTier(r, match!);
+        r._proximityTier = tier;
+        r._proximityReason = reason;
+      });
+    }
+
     return results;
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData]);
 
   const hasFilters = location || treatment || insurance || type || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
@@ -899,19 +951,23 @@ const SearchResults = () => {
               {/* Results Summary */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground tabular-nums">
                     Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
                     <span className="font-medium text-foreground">{filteredCenters.length}</span> results
                   </p>
-                  {location && (
+                  {(location || effectiveLocation) && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <Compass className="h-3 w-3 text-primary" />
-                      Results sorted by proximity to <span className="font-medium text-foreground">{location}</span>
+                      {location ? (
+                        <>Results sorted by proximity to <span className="font-medium text-foreground">{resolvedZipData ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr} (${location})` : location}</span></>
+                      ) : (
+                        <>Sorted by proximity to <span className="font-medium text-foreground">{effectiveLocation}</span> <span className="text-muted-foreground/70">(auto-detected)</span></>
+                      )}
                     </p>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  {location && (
+                  {(location || effectiveLocation) && (
                     <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
                         <MapPin className="h-2.5 w-2.5" /> Exact
@@ -1026,22 +1082,37 @@ const SearchResults = () => {
                 }
               </p>
 
-              {/* Smart Suggestions */}
-              {(queryParam || location) && (
+              {/* Smart Suggestions — nearby states when location search yields nothing */}
+              {location && (() => {
+                const parsed = parseLocationInput(location);
+                const nearbyAbbrs = parsed.stateAbbr ? getNearbyStates(parsed.stateAbbr) : [];
+                return nearbyAbbrs.length > 0 ? (
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    <span className="text-xs text-muted-foreground">Try nearby states:</span>
+                    {nearbyAbbrs.slice(0, 4).map(abbr => (
+                      <Link 
+                        key={abbr} 
+                        to={`/search-results?location=${abbr}`} 
+                        className="text-xs text-primary hover:underline font-medium"
+                      >
+                        {abbr}
+                      </Link>
+                    ))}
+                    <button onClick={clearAllFilters} className="text-xs text-primary hover:underline ml-2">
+                      or Search Nationwide
+                    </button>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Generic suggestions when no location */}
+              {!location && (queryParam || activeFiltersCount > 0) && (
                 <div className="flex flex-wrap justify-center gap-2 mb-6">
-                  <span className="text-xs text-muted-foreground">Try:</span>
-                  {!location && (
-                    <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
-                  )}
-                  {!location && (
-                    <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
-                  )}
-                  {!location && (
-                    <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
-                  )}
-                  {location && !queryParam && (
-                    <button onClick={clearAllFilters} className="text-xs text-primary hover:underline">Search Nationwide</button>
-                  )}
+                  <span className="text-xs text-muted-foreground">Popular areas:</span>
+                  <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
+                  <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
+                  <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
+                  <Link to="/search-results?location=New+York" className="text-xs text-primary hover:underline">New York</Link>
                 </div>
               )}
 

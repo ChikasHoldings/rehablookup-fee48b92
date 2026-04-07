@@ -36,8 +36,9 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { 
   parseLocationInput, 
-  sortByProximity,
-  getStateAbbr,
+  getProximityTier,
+  facilityMatchesLocation,
+  PROXIMITY_TIER_ORDER,
 } from "@/lib/proximitySearch";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { cn } from "@/lib/utils";
@@ -168,19 +169,7 @@ export default function SeekerSearch() {
     
     // Filter by location — keep exact, city, state, and nearby matches
     if (locationInput && locationMatch) {
-      const locationLower = locationInput.toLowerCase();
-      results = results.filter(f => {
-        if (locationMatch.zipcode && f.zipCode === locationMatch.zipcode) return true;
-        if (f.city.toLowerCase().includes(locationLower)) return true;
-        if (f.state.toLowerCase().includes(locationLower)) return true;
-        if (locationMatch.stateAbbr) {
-          const fAbbr = getStateAbbr(f.state);
-          if (fAbbr?.toUpperCase() === locationMatch.stateAbbr!.toUpperCase()) return true;
-          if (fAbbr && locationMatch.nearbyStates.includes(fAbbr.toUpperCase())) return true;
-        }
-        if (f.zipCode?.includes(locationInput)) return true;
-        return false;
-      });
+      results = results.filter(f => facilityMatchesLocation(f, locationMatch));
     }
     
     // Filter by treatment type
@@ -202,26 +191,25 @@ export default function SeekerSearch() {
       });
     }
     
-    // Sort: proximity first (if location), then Pro, then alphabetical
+    // Sort: proximity first (if location), then Pro, then rating, then stable by ID
     results.sort((a, b) => {
       if (locationMatch) {
-        const getProx = (f: typeof a) => {
-          if (locationMatch.zipcode && f.zipCode === locationMatch.zipcode) return 0;
-          if (locationMatch.city && f.city.toLowerCase() === locationMatch.city.toLowerCase()) return 1;
-          const abbr = getStateAbbr(f.state);
-          if (locationMatch.stateAbbr && abbr?.toUpperCase() === locationMatch.stateAbbr.toUpperCase()) return 2;
-          if (abbr && locationMatch.nearbyStates.includes(abbr.toUpperCase())) return 3;
-          return 4;
-        };
-        const proxA = getProx(a);
-        const proxB = getProx(b);
+        const { tier: tierA } = getProximityTier(a, locationMatch);
+        const { tier: tierB } = getProximityTier(b, locationMatch);
+        const proxA = PROXIMITY_TIER_ORDER[tierA];
+        const proxB = PROXIMITY_TIER_ORDER[tierB];
         if (proxA !== proxB) return proxA - proxB;
       }
       // Within same proximity tier, Pro first
       const proA = getPlanPriority(a as any);
       const proB = getPlanPriority(b as any);
       if (proA !== proB) return proA - proB;
-      return a.name.localeCompare(b.name);
+      // Then by rating
+      const rA = (a as any).googleRating || 0;
+      const rB = (b as any).googleRating || 0;
+      if (rA !== rB) return rB - rA;
+      // Stable tiebreaker
+      return a.id.localeCompare(b.id);
     });
     
     return results;
