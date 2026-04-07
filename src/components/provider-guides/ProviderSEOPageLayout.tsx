@@ -33,44 +33,68 @@ interface ProviderSEOPageProps {
 }
 
 const relatedPages = [
-  { href: "/provider-guides/get-more-rehab-patients", label: "Get More Patients", desc: "Fill beds faster with proven strategies" },
-  { href: "/provider-guides/rehab-admissions-growth", label: "Grow Admissions", desc: "Build a sustainable admissions pipeline" },
-  { href: "/provider-guides/rehab-marketing-strategies", label: "Marketing Strategies", desc: "What actually works in 2026" },
-  { href: "/provider-guides/addiction-treatment-lead-generation", label: "Lead Generation", desc: "Quality leads that convert" },
-  { href: "/provider-guides/increase-rehab-admissions", label: "Increase Admissions", desc: "Data-driven census growth" },
-  { href: "/provider-guides/rehab-center-marketing-ideas", label: "Marketing Ideas", desc: "15 actionable ideas" },
-  { href: "/provider-guides/treatment-center-patient-acquisition", label: "Patient Acquisition", desc: "Build channels that compound" },
-  { href: "/provider-guides/behavioral-health-lead-generation", label: "Behavioral Health Leads", desc: "Ethical lead gen for BH" },
-  { href: "/provider-guides/rehab-center-seo", label: "Rehab SEO", desc: "Rank higher on Google organically" },
-  { href: "/provider-guides/drug-rehab-advertising", label: "Rehab Advertising", desc: "Ethical advertising strategies" },
-  { href: "/provider-guides/rehab-census-management", label: "Census Management", desc: "Maintain 90%+ occupancy" },
-  { href: "/provider-guides/treatment-center-referral-sources", label: "Referral Sources", desc: "Top 10 referral channels" },
-  { href: "/provider-guides/how-to-open-a-rehab-center", label: "Open a Rehab Center", desc: "Complete startup guide" },
-  { href: "/provider-guides/rehab-insurance-verification", label: "Insurance Verification", desc: "Master the VOB process" },
-  { href: "/provider-guides/iop-marketing-strategies", label: "IOP Marketing", desc: "Fill your outpatient groups" },
-  { href: "/provider-guides/detox-center-marketing", label: "Detox Marketing", desc: "Crisis-point patient acquisition" },
-  { href: "/provider-guides/sober-living-marketing", label: "Sober Living Marketing", desc: "Maintain full occupancy" },
-  { href: "/provider-guides/rehab-reputation-management", label: "Reputation Management", desc: "Build trust with reviews" },
-  { href: "/provider-guides/treatment-center-staffing-guide", label: "Staffing Guide", desc: "Build a winning clinical team" },
-  { href: "/provider-guides/rehab-accreditation-guide", label: "Accreditation Guide", desc: "CARF & Joint Commission" },
-  { href: "/provider-guides/substance-abuse-treatment-marketing", label: "SUD Marketing", desc: "Complete growth playbook" },
-  { href: "/provider-guides/mat-clinic-marketing", label: "MAT Marketing", desc: "Grow your MAT program" },
-  { href: "/provider-guides/treatment-center-website-design", label: "Website Design", desc: "Convert visitors to admissions" },
-  { href: "/provider-guides/rehab-compliance-guide", label: "Compliance Guide", desc: "HIPAA & 42 CFR Part 2" },
-  { href: "/provider-guides/rehab-google-business-profile", label: "Google Business Profile", desc: "Dominate local search" },
-  { href: "/provider-guides/rehab-patient-retention", label: "Patient Retention", desc: "Reduce AMA rates" },
-  { href: "/provider-guides/rehab-email-marketing", label: "Email Marketing", desc: "Nurture leads to admissions" },
-  { href: "/provider-guides/telehealth-addiction-treatment", label: "Telehealth Programs", desc: "Launch virtual IOP & MAT" },
-  { href: "/provider-guides/rehab-social-media-marketing", label: "Social Media Marketing", desc: "Build trust on social" },
-  { href: "/provider-guides/dual-diagnosis-treatment-marketing", label: "Dual Diagnosis Marketing", desc: "Co-occurring disorder growth" },
-  { href: "/provider-guides/rehab-admissions-team-training", label: "Admissions Training", desc: "Convert more calls" },
-  { href: "/provider-guides/rehab-pay-per-click-advertising", label: "PPC Advertising", desc: "Reduce cost per admission" },
-  { href: "/provider-guides/rehab-content-marketing", label: "Content Marketing", desc: "Drive organic admissions" },
-  { href: "/provider-guides/rehab-interventionist-partnerships", label: "Interventionist Partnerships", desc: "High-value referral network" },
-  { href: "/provider-guides/best-rehab-listing-platforms", label: "Listing Platforms 2026", desc: "Compare top directories" },
-  { href: "/provider-guides/exclusive-vs-shared-leads", label: "Exclusive vs Shared Leads", desc: "Lead model comparison" },
-  { href: "/provider-guides/how-to-choose-a-rehab-directory", label: "Choose a Directory", desc: "Evaluation framework" },
+  { href: "/provider-guides/get-more-rehab-patients", label: "Get More Patients", desc: "Fill beds faster with proven strategies", tags: ["admissions", "growth", "patients"] },
+  { href: "/provider-guides/rehab-admissions-growth", label: "Grow Admissions", desc: "Build a sustainable admissions pipeline", tags: ["admissions", "growth", "pipeline"] },
+  { href: "/provider-guides/rehab-marketing-strategies", label: "Marketing Strategies", desc: "What actually works in 2026", tags: ["marketing", "strategy", "growth"] },
+  { href: "/provider-guides/addiction-treatment-lead-generation", label: "Lead Generation", desc: "Quality leads that convert", tags: ["leads", "admissions", "growth"] },
+  { href: "/provider-guides/increase-rehab-admissions", label: "Increase Admissions", desc: "Data-driven census growth", tags: ["admissions", "census", "growth"] },
+  { href: "/provider-guides/rehab-center-marketing-ideas", label: "Marketing Ideas", desc: "15 actionable ideas", tags: ["marketing", "ideas", "strategy"] },
+  { href: "/provider-guides/treatment-center-patient-acquisition", label: "Patient Acquisition", desc: "Build channels that compound", tags: ["patients", "admissions", "channels"] },
+  { href: "/provider-guides/behavioral-health-lead-generation", label: "Behavioral Health Leads", desc: "Ethical lead gen for BH", tags: ["leads", "behavioral", "ethics"] },
+  { href: "/provider-guides/rehab-center-seo", label: "Rehab SEO", desc: "Rank higher on Google organically", tags: ["seo", "marketing", "digital"] },
+  { href: "/provider-guides/drug-rehab-advertising", label: "Rehab Advertising", desc: "Ethical advertising strategies", tags: ["advertising", "marketing", "ethics"] },
+  { href: "/provider-guides/rehab-census-management", label: "Census Management", desc: "Maintain 90%+ occupancy", tags: ["census", "operations", "admissions"] },
+  { href: "/provider-guides/treatment-center-referral-sources", label: "Referral Sources", desc: "Top 10 referral channels", tags: ["referrals", "channels", "growth"] },
+  { href: "/provider-guides/how-to-open-a-rehab-center", label: "Open a Rehab Center", desc: "Complete startup guide", tags: ["startup", "operations", "compliance"] },
+  { href: "/provider-guides/rehab-insurance-verification", label: "Insurance Verification", desc: "Master the VOB process", tags: ["insurance", "admissions", "operations"] },
+  { href: "/provider-guides/iop-marketing-strategies", label: "IOP Marketing", desc: "Fill your outpatient groups", tags: ["iop", "marketing", "outpatient"] },
+  { href: "/provider-guides/detox-center-marketing", label: "Detox Marketing", desc: "Crisis-point patient acquisition", tags: ["detox", "marketing", "patients"] },
+  { href: "/provider-guides/sober-living-marketing", label: "Sober Living Marketing", desc: "Maintain full occupancy", tags: ["sober-living", "marketing", "census"] },
+  { href: "/provider-guides/rehab-reputation-management", label: "Reputation Management", desc: "Build trust with reviews", tags: ["reputation", "reviews", "trust"] },
+  { href: "/provider-guides/treatment-center-staffing-guide", label: "Staffing Guide", desc: "Build a winning clinical team", tags: ["staffing", "operations", "clinical"] },
+  { href: "/provider-guides/rehab-accreditation-guide", label: "Accreditation Guide", desc: "CARF & Joint Commission", tags: ["accreditation", "compliance", "operations"] },
+  { href: "/provider-guides/substance-abuse-treatment-marketing", label: "SUD Marketing", desc: "Complete growth playbook", tags: ["marketing", "strategy", "growth"] },
+  { href: "/provider-guides/mat-clinic-marketing", label: "MAT Marketing", desc: "Grow your MAT program", tags: ["mat", "marketing", "clinical"] },
+  { href: "/provider-guides/treatment-center-website-design", label: "Website Design", desc: "Convert visitors to admissions", tags: ["website", "digital", "marketing"] },
+  { href: "/provider-guides/rehab-compliance-guide", label: "Compliance Guide", desc: "HIPAA & 42 CFR Part 2", tags: ["compliance", "operations", "legal"] },
+  { href: "/provider-guides/rehab-google-business-profile", label: "Google Business Profile", desc: "Dominate local search", tags: ["seo", "digital", "marketing"] },
+  { href: "/provider-guides/rehab-patient-retention", label: "Patient Retention", desc: "Reduce AMA rates", tags: ["retention", "clinical", "operations"] },
+  { href: "/provider-guides/rehab-email-marketing", label: "Email Marketing", desc: "Nurture leads to admissions", tags: ["email", "marketing", "leads"] },
+  { href: "/provider-guides/telehealth-addiction-treatment", label: "Telehealth Programs", desc: "Launch virtual IOP & MAT", tags: ["telehealth", "clinical", "iop"] },
+  { href: "/provider-guides/rehab-social-media-marketing", label: "Social Media Marketing", desc: "Build trust on social", tags: ["social", "marketing", "digital"] },
+  { href: "/provider-guides/dual-diagnosis-treatment-marketing", label: "Dual Diagnosis Marketing", desc: "Co-occurring disorder growth", tags: ["dual-diagnosis", "marketing", "clinical"] },
+  { href: "/provider-guides/rehab-admissions-team-training", label: "Admissions Training", desc: "Convert more calls", tags: ["admissions", "training", "operations"] },
+  { href: "/provider-guides/rehab-pay-per-click-advertising", label: "PPC Advertising", desc: "Reduce cost per admission", tags: ["ppc", "advertising", "digital"] },
+  { href: "/provider-guides/rehab-content-marketing", label: "Content Marketing", desc: "Drive organic admissions", tags: ["content", "marketing", "seo"] },
+  { href: "/provider-guides/rehab-interventionist-partnerships", label: "Interventionist Partnerships", desc: "High-value referral network", tags: ["referrals", "partnerships", "growth"] },
+  { href: "/provider-guides/best-rehab-listing-platforms", label: "Listing Platforms 2026", desc: "Compare top directories", tags: ["directories", "leads", "strategy"] },
+  { href: "/provider-guides/exclusive-vs-shared-leads", label: "Exclusive vs Shared Leads", desc: "Lead model comparison", tags: ["leads", "strategy", "admissions"] },
+  { href: "/provider-guides/how-to-choose-a-rehab-directory", label: "Choose a Directory", desc: "Evaluation framework", tags: ["directories", "strategy", "leads"] },
 ];
+
+/**
+ * Returns the most relevant related guides for a given page,
+ * scored by shared tags. Avoids showing every single guide.
+ */
+function getRelatedGuides(currentCanonical: string, keywords: string[], maxResults = 5) {
+  const currentPage = relatedPages.find(p => p.href === currentCanonical);
+  const currentTags = currentPage?.tags || [];
+  
+  // Build a set of relevance tags from the page's own tags + keyword hints
+  const relevanceTerms = new Set([
+    ...currentTags,
+    ...keywords.flatMap(k => k.toLowerCase().split(/[\s-]+/)),
+  ]);
+
+  return relatedPages
+    .filter(p => p.href !== currentCanonical)
+    .map(page => {
+      const score = page.tags.reduce((acc, tag) => acc + (relevanceTerms.has(tag) ? 1 : 0), 0);
+      return { ...page, score };
+    })
+    .sort((a, b) => b.score - a.score || Math.random() - 0.5)
+    .slice(0, maxResults);
+}
 
 const platformLinks = [
   { href: "/for-providers", label: "Why List With Us" },
