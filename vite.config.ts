@@ -49,10 +49,12 @@ export default defineConfig(({ mode }) => ({
     },
     // Increase chunk size warning limit
     chunkSizeWarningLimit: 500,
-    // Enable source maps for production debugging
-    sourcemap: true,
+    // Disable source maps in production for smaller bundles & faster load
+    sourcemap: false,
     // CSS code splitting for smaller initial CSS
     cssCodeSplit: true,
+    // Enable CSS minification
+    cssMinify: true,
   },
   // Optimize deps for faster cold starts
   optimizeDeps: {

@@ -37,6 +37,7 @@ export default function CostInsurancePage() {
       description: config.metaDescription,
       url: `https://rehablookup.com/${config.slug}`,
       publisher: { "@type": "Organization", name: "RehabLookup", url: "https://rehablookup.com" },
+      dateModified: new Date().toISOString().split("T")[0],
     },
     {
       "@context": "https://schema.org",
@@ -46,6 +47,15 @@ export default function CostInsurancePage() {
         name: faq.question,
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalWebPage",
+      name: config.title,
+      description: config.metaDescription,
+      url: `https://rehablookup.com/${config.slug}`,
+      specialty: "Addiction Medicine",
+      lastReviewed: new Date().toISOString().split("T")[0],
     },
   ];
 
