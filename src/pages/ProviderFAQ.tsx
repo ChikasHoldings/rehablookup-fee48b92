@@ -14,7 +14,6 @@ import {
   BarChart3, Settings, MessageSquare, Search, X, CheckCircle,
   Sparkles, TrendingUp, Zap,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import heroImg from "@/assets/images/faq-hero-provider.jpg";
 
 const faqCategories = [
