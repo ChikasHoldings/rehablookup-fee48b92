@@ -63,7 +63,7 @@ const InternationalPatients = () => {
         title="US Rehab for International Patients"
         subtitle="World-Class Treatment, Global Accessibility"
         description="We specialise in helping international clients access America's finest addiction treatment facilities. From visa guidance to airport pickup, we handle every detail."
-        trustPoints={["200+ Vetted Facilities", "24-Hour Response", "100% Confidential"]}
+        trustPoints={["1,000+ Vetted Facilities", "24-Hour Response", "100% Confidential"]}
         heroImage={heroImage}
         heroAlt="Panoramic view of luxury US rehab destinations for international patients"
       />
@@ -74,7 +74,7 @@ const InternationalPatients = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center max-w-4xl mx-auto">
             {[
               { icon: Globe, value: "50+", label: "Countries Served" },
-              { icon: Building2, value: "200+", label: "US Facilities" },
+              { icon: Building2, value: "1,000+", label: "US Facilities" },
               { icon: Clock, value: "24hr", label: "Response Time" },
               { icon: Shield, value: "98%", label: "Placement Success" },
             ].map((s) => (

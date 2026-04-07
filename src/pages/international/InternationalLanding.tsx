@@ -113,7 +113,7 @@ const FAQ_ITEMS = [
 
 const TRUST_STATS = [
   { value: "50+", label: "Countries Served", icon: Globe },
-  { value: "200+", label: "US Facilities", icon: Building2 },
+  { value: "1,000+", label: "US Facilities", icon: Building2 },
   { value: "24hr", label: "Response Time", icon: Clock },
 ];
 

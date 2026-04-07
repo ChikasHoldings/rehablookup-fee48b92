@@ -37,7 +37,7 @@ const USRehabHub = () => {
     <Layout>
       <SEO
         title="US Rehab for International Patients | Best Addiction Treatment in America"
-        description="Find world-class addiction treatment in the United States. Luxury rehab centers, executive programs, and confidential care for international patients. 200+ vetted facilities."
+        description="Find world-class addiction treatment in the United States. Luxury rehab centers, executive programs, and confidential care for international patients. 1,000+ vetted facilities."
         canonical="/us-rehab"
         keywords={["rehab in USA", "American rehab for foreigners", "luxury rehab California", "best rehab USA", "US addiction treatment international", "private rehab America", "treatment centers USA"]}
         structuredData={schemaData}

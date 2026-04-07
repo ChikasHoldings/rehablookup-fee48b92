@@ -17,7 +17,7 @@ interface PlacementHeroProps {
 const TRUST_INDICATORS = [
   { icon: Shield, text: "HIPAA Compliant" },
   { icon: Clock, text: "24hr Response" },
-  { icon: Users, text: "100+ Facilities" },
+  { icon: Users, text: "1,000+ Facilities" },
 ];
 
 const FEATURES = [

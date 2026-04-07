@@ -370,7 +370,7 @@ export default function ProviderResources() {
                     
                     <div className="mt-6 pt-5 border-t border-border">
                       <p className="text-sm text-muted-foreground">
-                        Join 500+ treatment centers using featured listings
+                        Join 1,000+ treatment centers using featured listings
                       </p>
                     </div>
                   </div>

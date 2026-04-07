@@ -51,7 +51,7 @@ export const InternationalHero = ({
           <div className="flex flex-wrap justify-center gap-5 md:gap-8 mb-10">
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="h-4 w-4 text-accent" />
-              <span className="text-white/85">200+ Vetted Facilities</span>
+              <span className="text-white/85">1,000+ Vetted Facilities</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-accent" />

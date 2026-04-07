@@ -35,7 +35,7 @@ import conciergeHero from "@/assets/concierge-hero.jpg";
 
 const STATS = [
   { value: "500+", label: "Families Helped", icon: Users },
-  { value: "100+", label: "Partner Facilities", icon: Building2 },
+  { value: "1,000+", label: "Partner Facilities", icon: Building2 },
   { value: "24hr", label: "Avg Response Time", icon: Clock },
   { value: "4.9", label: "Client Rating", icon: Star },
 ];

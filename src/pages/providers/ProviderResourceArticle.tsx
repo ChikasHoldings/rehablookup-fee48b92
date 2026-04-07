@@ -191,7 +191,7 @@ export default function ProviderResourceArticle() {
                   Ready to Grow Your Admissions?
                 </h2>
                 <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-                  Join 500+ treatment centers receiving verified patient inquiries through RehabLookup.
+                  Join 1,000+ treatment centers receiving verified patient inquiries through RehabLookup.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
                   <Link to="/provider-signup" className="w-full sm:w-auto">
