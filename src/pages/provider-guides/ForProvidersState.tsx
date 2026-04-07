@@ -132,7 +132,7 @@ export default function ForProvidersState() {
                 {state.searches}+ families search for addiction treatment in {state.name} every month. Get your facility in front of them — for free.
               </p>
               <Link to="/provider-signup">
-                <Button size="lg" variant="secondary" className="gap-2 h-13 px-8 text-base font-semibold shadow-lg">
+                <Button size="lg" variant="secondary" className="gap-2 h-14 px-10 text-base font-semibold shadow-lg">
                   List Your Facility Free
                   <ArrowRight className="h-5 w-5" />
                 </Button>
