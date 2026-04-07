@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Users, Search, X, ChevronLeft } from "lucide-react";
+import { Users, Search, X, ChevronLeft, ShieldCheck, Clock, Star } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -288,6 +288,30 @@ export default function ProviderInquiriesPage() {
           <InquiriesStatsHeader {...stats} />
         )}
       </div>
+
+      {/* Exclusive Leads Banner */}
+      {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
+        <div className="flex-shrink-0 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 border-b bg-primary/5">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/10 flex-shrink-0">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground">Your leads are exclusive</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
+                  <Star className="h-3 w-3" />
+                  Exclusive
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                <Clock className="h-3 w-3" />
+                Each lead is sent only to your facility for 24 hours before redistribution
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       {(!isMobile || mobileView === 'list') && (
