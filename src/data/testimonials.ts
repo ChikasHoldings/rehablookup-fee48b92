@@ -14,6 +14,18 @@ import patriciaImg from "@/assets/testimonials/patricia-reeves.jpg";
 import stevenImg from "@/assets/testimonials/steven-park.jpg";
 import karenImg from "@/assets/testimonials/karen-mitchell.jpg";
 import carlosImg from "@/assets/testimonials/carlos-martinez.jpg";
+import deniseImg from "@/assets/testimonials/denise-w.jpg";
+import diegoImg from "@/assets/testimonials/diego-s.jpg";
+import lisaImg from "@/assets/testimonials/lisa-h.jpg";
+import richardImg from "@/assets/testimonials/richard-p.jpg";
+import graceImg from "@/assets/testimonials/grace-c.jpg";
+import markSusanImg from "@/assets/testimonials/mark-susan.jpg";
+import andreImg from "@/assets/testimonials/andre-j.jpg";
+import catherineImg from "@/assets/testimonials/catherine-b.jpg";
+import brianImg from "@/assets/testimonials/brian-e.jpg";
+import priyaImg from "@/assets/testimonials/priya-d.jpg";
+import williamImg from "@/assets/testimonials/william-k.jpg";
+import elenaImg from "@/assets/testimonials/elena-r.jpg";
 
 export interface Testimonial {
   name: string;
@@ -98,6 +110,69 @@ export const seekerTestimonials: Testimonial[] = [
     context: "Found women-only program",
     avatar: ashleyImg,
   },
+  {
+    name: "Denise W.",
+    location: "Detroit, MI",
+    quote: "My brother had been struggling for years and every facility we called felt like a sales pitch. RehabLookup was different — they listened, understood his needs, and matched him with a faith-based program that changed his life. He just celebrated 2 years of sobriety.",
+    rating: 5,
+    role: "family",
+    context: "Found faith-based program for brother",
+    avatar: deniseImg,
+  },
+  {
+    name: "Diego S.",
+    location: "Los Angeles, CA",
+    quote: "I needed a Spanish-speaking therapist and a program that understood my culture. RehabLookup's search filters made it easy to find exactly what I was looking for. I'm 10 months sober and finally feel like myself again.",
+    rating: 5,
+    role: "seeker",
+    context: "Found culturally appropriate care",
+    avatar: diegoImg,
+  },
+  {
+    name: "Lisa H.",
+    location: "Minneapolis, MN",
+    quote: "After my daughter's overdose scare, we needed help immediately — not in two weeks. The concierge team got her into a detox facility within 6 hours. That speed saved her life. She's now thriving in a sober living home.",
+    rating: 5,
+    role: "family",
+    context: "Emergency detox placement for daughter",
+    avatar: lisaImg,
+  },
+  {
+    name: "Richard P.",
+    location: "Philadelphia, PA",
+    quote: "At 62, I thought I was too old for rehab. RehabLookup found me a program specifically for older adults dealing with prescription medication dependency. The staff understood my situation without judgment. I wish I'd done this years ago.",
+    rating: 5,
+    role: "seeker",
+    context: "Found age-appropriate treatment",
+    avatar: richardImg,
+  },
+  {
+    name: "Grace C.",
+    location: "Seattle, WA",
+    quote: "I was a functioning professional hiding my addiction for years. RehabLookup connected me with an executive treatment program that let me maintain some work responsibilities while getting the intensive help I needed. Nobody at my company ever knew.",
+    rating: 5,
+    role: "seeker",
+    context: "Found executive treatment program",
+    avatar: graceImg,
+  },
+  {
+    name: "Mark & Susan D.",
+    location: "Columbus, OH",
+    quote: "We spent $40,000 on a facility we found through Google that was completely wrong for our son. With RehabLookup, the concierge team matched him with the right level of care from the start. He completed the program and is now mentoring others in recovery.",
+    rating: 5,
+    role: "family",
+    context: "Found right-fit program after prior failure",
+    avatar: markSusanImg,
+  },
+  {
+    name: "Brian E.",
+    location: "Boston, MA",
+    quote: "Fentanyl nearly killed me twice. I needed a facility with medication-assisted treatment that wouldn't just detox me and send me home. RehabLookup found a program with Suboxone support and long-term aftercare planning. I'm 16 months clean — the longest I've ever been.",
+    rating: 5,
+    role: "seeker",
+    context: "Found MAT program with aftercare",
+    avatar: brianImg,
+  },
 ];
 
 export const providerTestimonials: Testimonial[] = [
@@ -172,5 +247,50 @@ export const providerTestimonials: Testimonial[] = [
     role: "provider",
     context: "Administrator, Alamo Behavioral Health",
     avatar: carlosImg,
+  },
+  {
+    name: "Andre Jackson, MBA",
+    location: "Charlotte, NC",
+    quote: "Before RehabLookup, we spent $15,000/month on Google Ads with inconsistent results. Now we get a steady pipeline of qualified leads for a fraction of the cost. Our cost per admission dropped by 60%.",
+    rating: 5,
+    role: "provider",
+    context: "VP of Growth, Carolina Recovery Network",
+    avatar: andreImg,
+  },
+  {
+    name: "Catherine Brennan",
+    location: "Chicago, IL",
+    quote: "The international placement feature opened an entirely new revenue stream for us. We've admitted 8 international clients in the last quarter alone — families who found us exclusively through RehabLookup.",
+    rating: 5,
+    role: "provider",
+    context: "CEO, Lakeshore Treatment Center",
+    avatar: catherineImg,
+  },
+  {
+    name: "Dr. Priya Desai",
+    location: "Dallas, TX",
+    quote: "As a physician running a medication-assisted treatment program, credibility is everything. RehabLookup's accreditation verification gives families confidence that our clinical standards are real, not just marketing claims.",
+    rating: 5,
+    role: "provider",
+    context: "Medical Director, Horizon MAT Clinic",
+    avatar: priyaImg,
+  },
+  {
+    name: "William Keane",
+    location: "Raleigh, NC",
+    quote: "We opened a new facility and needed to fill beds fast. Within 90 days on RehabLookup, we had 22 new admissions directly from the platform. No other channel came close to that ROI.",
+    rating: 5,
+    role: "provider",
+    context: "Founder, Triangle Behavioral Health",
+    avatar: williamImg,
+  },
+  {
+    name: "Elena Rodriguez, RN",
+    location: "San Diego, CA",
+    quote: "The concierge team does incredible pre-screening. By the time a family contacts us, they already understand our program, insurance compatibility, and what to expect. It saves our admissions staff hours every week.",
+    rating: 5,
+    role: "provider",
+    context: "Nursing Director, Pacific Shores Recovery",
+    avatar: elenaImg,
   },
 ];
