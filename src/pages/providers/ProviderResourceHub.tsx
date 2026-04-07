@@ -227,7 +227,7 @@ export default function ProviderResourceHub() {
 
         {/* Provider Testimonials */}
         <TestimonialsSection
-          testimonials={providerTestimonials.slice(0, 3)}
+          testimonials={providerTestimonials}
           title="What Treatment Centers Say"
           subtitle="Hear from providers who grew their census with RehabLookup"
           
