@@ -3,6 +3,7 @@ import { BarChart3, CalendarIcon, X, ChevronDown, Building2 } from "lucide-react
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
 import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
+import { ROICalculatorWidget } from "@/components/provider/ROICalculatorWidget";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Button } from "@/components/ui/button";
