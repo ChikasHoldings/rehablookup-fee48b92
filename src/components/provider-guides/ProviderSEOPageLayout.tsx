@@ -409,65 +409,42 @@ export function ProviderSEOPageLayout({
           </div>
         </section>
 
-        {/* Rich Internal Linking Section */}
+        {/* Related Guides — Curated, Not Spammy */}
         <section className="py-12 border-t border-border bg-muted/20">
-          <div className="container max-w-5xl mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-10">
-              {/* Related Guides */}
-              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                  More Provider Guides
-                </h3>
-                <div className="space-y-1.5">
-                  {relatedPages
-                    .filter((p) => p.href !== canonical)
-                    .map((page) => (
-                      <Link
-                        key={page.href}
-                        to={page.href}
-                        className="group flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-muted/60 transition-colors"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{page.label}</p>
-                          <p className="text-xs text-muted-foreground">{page.desc}</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary shrink-0 transition-colors" />
-                      </Link>
-                    ))}
-                </div>
-              </div>
-
-              {/* Platform Links */}
-              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                  Explore RehabLookup
-                </h3>
-                <div className="space-y-1.5 mb-6">
-                  {platformLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      to={link.href}
-                      className="group flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-muted/60 transition-colors"
-                    >
-                      <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary shrink-0 transition-colors" />
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Mini CTA card */}
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
-                  <p className="font-semibold text-foreground text-sm mb-1">Ready to get started?</p>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Create your free listing and start connecting with families seeking treatment.
-                  </p>
-                  <Link to="/provider-signup">
-                    <Button size="sm" className="gap-1.5 h-9 w-full font-semibold">
-                      List Your Facility
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
+          <div className="container max-w-4xl mx-auto px-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
+              Related Guides
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {relatedGuides.map((page) => (
+                <Link
+                  key={page.href}
+                  to={page.href}
+                  className="group flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3.5 hover:border-primary/30 hover:shadow-sm transition-all"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{page.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{page.desc}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0 ml-3 transition-colors" />
+                </Link>
+              ))}
+            </div>
+            <div className="flex items-center justify-between mt-6 pt-5 border-t border-border">
+              <Link to="/providers/resources" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                Browse all provider guides
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <div className="flex gap-3">
+                {platformLinks.slice(0, 3).map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
                   </Link>
-                </div>
+                ))}
               </div>
             </div>
           </div>
