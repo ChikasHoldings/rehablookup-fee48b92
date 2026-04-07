@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
+import { providerTestimonials } from "@/data/testimonials";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -223,6 +225,13 @@ export default function ProviderResourceHub() {
           </div>
         </section>
 
+        {/* Provider Testimonials */}
+        <TestimonialsSection
+          testimonials={providerTestimonials.slice(0, 3)}
+          title="What Treatment Centers Say"
+          subtitle="Hear from providers who grew their census with RehabLookup"
+          columns={3}
+        />
 
         <section className="py-16">
           <div className="container max-w-4xl mx-auto px-4">

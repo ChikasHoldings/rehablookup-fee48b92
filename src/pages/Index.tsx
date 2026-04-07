@@ -13,6 +13,8 @@ import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSke
 import { supabase } from "@/integrations/supabase/client";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import { InternationalCTA } from "@/components/home/InternationalCTA";
+import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
+import { homepageTestimonials } from "@/data/testimonials";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
@@ -77,26 +79,6 @@ const blogArticles = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Sarah M.",
-    location: "California",
-    quote: "RehabLookup helped me find the perfect treatment center for my son. The process was easy and the support team was incredibly compassionate.",
-    rating: 5,
-  },
-  {
-    name: "Michael T.",
-    location: "Texas",
-    quote: "After struggling to find help for years, I finally found a facility that changed my life. Forever grateful for this resource.",
-    rating: 5,
-  },
-  {
-    name: "Jennifer K.",
-    location: "Florida",
-    quote: "The verified reviews and transparent information made all the difference. We knew exactly what to expect before making our decision.",
-    rating: 5,
-  },
-];
 
 const treatmentOptions = [
   {
@@ -789,61 +771,11 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-10 md:py-12 lg:py-20 bg-muted/30 border-y border-border/50">
-        <div className="container px-4 md:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="mb-6 md:mb-8 text-center">
-            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
-              What Families Say
-            </h2>
-            <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground">
-              Real experiences from people we've helped
-            </p>
-          </div>
-
-          {/* Testimonials - Horizontal scroll on mobile, grid on larger screens */}
-          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-3 md:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-            {testimonials.map((testimonial) => (
-              <div
-                key={testimonial.name}
-                className="flex-shrink-0 w-[280px] sm:w-auto snap-center rounded-xl border border-border bg-card p-4 md:p-5 transition-transform hover:scale-[1.02]"
-              >
-                {/* Rating */}
-                <div className="mb-2 md:mb-3 flex gap-0.5">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="h-3.5 w-3.5 md:h-4 md:w-4 fill-accent text-accent" />
-                  ))}
-                </div>
-                
-                {/* Quote */}
-                <blockquote className="mb-3 md:mb-4">
-                  <p className="text-sm md:text-base text-foreground leading-relaxed line-clamp-4 sm:line-clamp-none">
-                    "{testimonial.quote}"
-                  </p>
-                </blockquote>
-                
-                {/* Author */}
-                <div className="flex items-center gap-2.5 md:gap-3 pt-3 border-t border-border">
-                  <div className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full bg-primary/10 text-xs md:text-sm font-semibold text-primary">
-                    {testimonial.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm md:text-base font-medium text-foreground">{testimonial.name}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">{testimonial.location}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Scroll indicator for mobile */}
-          <div className="flex justify-center gap-1.5 mt-3 sm:hidden">
-            {testimonials.map((_, i) => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/30" />
-            ))}
-          </div>
-        </div>
-      </section>
+      <TestimonialsSection
+        testimonials={homepageTestimonials}
+        title="What Families & Providers Say"
+        subtitle="Real experiences from families who found treatment and providers who trust our platform"
+      />
 
       {/* International Patients CTA */}
       <InternationalCTA />
