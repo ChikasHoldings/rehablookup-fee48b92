@@ -1,13 +1,30 @@
+import sarahImg from "@/assets/testimonials/sarah-m.jpg";
+import michaelImg from "@/assets/testimonials/michael-t.jpg";
+import jenniferImg from "@/assets/testimonials/jennifer-k.jpg";
+import davidImg from "@/assets/testimonials/david-r.jpg";
+import mariaImg from "@/assets/testimonials/maria-l.jpg";
+import robertLindaImg from "@/assets/testimonials/robert-linda.jpg";
+import thomasImg from "@/assets/testimonials/thomas-w.jpg";
+import ashleyImg from "@/assets/testimonials/ashley-b.jpg";
+import amandaImg from "@/assets/testimonials/amanda-foster.jpg";
+import jamesImg from "@/assets/testimonials/james-whitfield.jpg";
+import rachelImg from "@/assets/testimonials/rachel-nguyen.jpg";
+import marcusImg from "@/assets/testimonials/marcus-johnson.jpg";
+import patriciaImg from "@/assets/testimonials/patricia-reeves.jpg";
+import stevenImg from "@/assets/testimonials/steven-park.jpg";
+import karenImg from "@/assets/testimonials/karen-mitchell.jpg";
+import carlosImg from "@/assets/testimonials/carlos-martinez.jpg";
+
 export interface Testimonial {
   name: string;
   location: string;
   quote: string;
   rating: number;
   role: "seeker" | "family" | "provider";
-  context?: string; // e.g. "Found treatment for son" or "Listed facility"
+  context?: string;
+  avatar: string;
 }
 
-// Seeker & Family testimonials
 export const seekerTestimonials: Testimonial[] = [
   {
     name: "Sarah M.",
@@ -16,6 +33,7 @@ export const seekerTestimonials: Testimonial[] = [
     rating: 5,
     role: "family",
     context: "Found treatment for her son",
+    avatar: sarahImg,
   },
   {
     name: "Michael T.",
@@ -24,6 +42,7 @@ export const seekerTestimonials: Testimonial[] = [
     rating: 5,
     role: "seeker",
     context: "Found dual-diagnosis treatment",
+    avatar: michaelImg,
   },
   {
     name: "Jennifer K.",
@@ -32,6 +51,7 @@ export const seekerTestimonials: Testimonial[] = [
     rating: 5,
     role: "family",
     context: "Found treatment for her husband",
+    avatar: jenniferImg,
   },
   {
     name: "David R.",
@@ -40,6 +60,7 @@ export const seekerTestimonials: Testimonial[] = [
     rating: 5,
     role: "seeker",
     context: "Found outpatient program",
+    avatar: davidImg,
   },
   {
     name: "Maria L.",
@@ -48,6 +69,7 @@ export const seekerTestimonials: Testimonial[] = [
     rating: 5,
     role: "seeker",
     context: "Found IOP with flexibility",
+    avatar: mariaImg,
   },
   {
     name: "Robert & Linda C.",
@@ -56,10 +78,28 @@ export const seekerTestimonials: Testimonial[] = [
     rating: 5,
     role: "family",
     context: "Emergency placement for daughter",
+    avatar: robertLindaImg,
+  },
+  {
+    name: "Thomas W.",
+    location: "Nashville, TN",
+    quote: "As a veteran, I needed a program that understood PTSD and substance abuse together. RehabLookup found me a VA-connected facility with specialized trauma care. Best decision I ever made.",
+    rating: 5,
+    role: "seeker",
+    context: "Veteran, found PTSD-focused treatment",
+    avatar: thomasImg,
+  },
+  {
+    name: "Ashley B.",
+    location: "Charlotte, NC",
+    quote: "I was terrified of going to rehab. The team at RehabLookup answered all my questions honestly, helped me understand what detox would be like, and found a women-only program where I felt safe.",
+    rating: 5,
+    role: "seeker",
+    context: "Found women-only program",
+    avatar: ashleyImg,
   },
 ];
 
-// Provider testimonials
 export const providerTestimonials: Testimonial[] = [
   {
     name: "Dr. Amanda Foster",
@@ -68,6 +108,7 @@ export const providerTestimonials: Testimonial[] = [
     rating: 5,
     role: "provider",
     context: "Clinical Director, Desert Bloom Recovery",
+    avatar: amandaImg,
   },
   {
     name: "James Whitfield",
@@ -76,6 +117,7 @@ export const providerTestimonials: Testimonial[] = [
     rating: 5,
     role: "provider",
     context: "CEO, Pacific Coast Treatment Center",
+    avatar: jamesImg,
   },
   {
     name: "Rachel Nguyen",
@@ -84,6 +126,7 @@ export const providerTestimonials: Testimonial[] = [
     rating: 5,
     role: "provider",
     context: "Admissions Director, Hope Springs Recovery",
+    avatar: rachelImg,
   },
   {
     name: "Marcus Johnson, LCSW",
@@ -92,6 +135,7 @@ export const providerTestimonials: Testimonial[] = [
     rating: 5,
     role: "provider",
     context: "Founder, Mountain View Wellness Center",
+    avatar: marcusImg,
   },
   {
     name: "Patricia Reeves",
@@ -100,6 +144,7 @@ export const providerTestimonials: Testimonial[] = [
     rating: 5,
     role: "provider",
     context: "Operations Manager, Lone Star Recovery",
+    avatar: patriciaImg,
   },
   {
     name: "Dr. Steven Park",
@@ -108,15 +153,24 @@ export const providerTestimonials: Testimonial[] = [
     rating: 5,
     role: "provider",
     context: "Medical Director, Coastal Healing Institute",
+    avatar: stevenImg,
   },
-];
-
-// Combined testimonials for homepage (mix of both)
-export const homepageTestimonials: Testimonial[] = [
-  seekerTestimonials[0], // Sarah M. - family
-  providerTestimonials[0], // Dr. Amanda Foster - provider
-  seekerTestimonials[1], // Michael T. - seeker
-  seekerTestimonials[2], // Jennifer K. - family
-  providerTestimonials[1], // James Whitfield - provider
-  seekerTestimonials[3], // David R. - seeker
+  {
+    name: "Karen Mitchell, NP",
+    location: "Portland, OR",
+    quote: "We went from struggling to fill beds to having a waitlist within 6 months of joining RehabLookup. The platform connected us with families we never would have reached through traditional marketing.",
+    rating: 5,
+    role: "provider",
+    context: "Director, Evergreen Recovery Center",
+    avatar: karenImg,
+  },
+  {
+    name: "Carlos Martinez",
+    location: "San Antonio, TX",
+    quote: "The Pro subscription paid for itself in the first week. Priority placement and the analytics tools helped us understand our market and grow admissions by 40% year-over-year.",
+    rating: 5,
+    role: "provider",
+    context: "Administrator, Alamo Behavioral Health",
+    avatar: carlosImg,
+  },
 ];
