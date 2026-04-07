@@ -225,8 +225,15 @@ export default function ProviderResourceHub() {
           </div>
         </section>
 
+        {/* Provider Testimonials */}
+        <TestimonialsSection
+          testimonials={providerTestimonials.slice(0, 3)}
+          title="What Treatment Centers Say"
+          subtitle="Hear from providers who grew their census with RehabLookup"
+          columns={3}
+        />
 
-        <section className="py-16">
+
           <div className="container max-w-4xl mx-auto px-4">
             <div className="relative rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 p-10 md:p-14 text-center overflow-hidden">
               <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
