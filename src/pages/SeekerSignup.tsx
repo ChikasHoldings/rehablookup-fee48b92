@@ -391,6 +391,7 @@ export default function SeekerSignup() {
       <SEO 
         title="Create Account | RehabLookup"
         description="Create an account to save your favorite treatment centers and manage your recovery journey."
+        noindex={true}
       />
       
       <div className="min-h-screen flex flex-col bg-background">
