@@ -469,6 +469,124 @@ const ForProviders = () => {
           </div>
         </section>
 
+        {/* Why RehabLookup — Competitive Advantages */}
+        <section className="py-12 sm:py-16 md:py-24 bg-background">
+          <div className="container px-4 md:px-6 lg:px-8">
+            <div className="text-center mb-10 sm:mb-14 max-w-3xl mx-auto">
+              <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">The RehabLookup Difference</p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
+                Why Treatment Centers Choose RehabLookup
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed px-2">
+                Most directories sell the same lead to multiple facilities. We built a fundamentally different model — one that respects your time, your budget, and the families you serve.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+              {/* Exclusive Leads */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="relative bg-card border border-border rounded-xl p-6 sm:p-8"
+              >
+                <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 mb-5">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-bold text-foreground text-base sm:text-lg mb-2">Exclusive Leads, Not Shared</h3>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  Every inquiry goes to your facility alone for 24 hours. No racing against 8 other centers to make first contact. Your admissions team gets time to prepare a personalized, clinical response.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "24-hour exclusivity window per lead",
+                    "Detailed intake data included upfront",
+                    "3–5x higher conversion than shared leads",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              {/* Transparent Pricing */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="relative bg-card border border-border rounded-xl p-6 sm:p-8"
+              >
+                <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 mb-5">
+                  <Eye className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-bold text-foreground text-base sm:text-lg mb-2">Transparent, Predictable Pricing</h3>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  No setup fees, no hidden charges, no long-term contracts. You see exactly what each lead costs before you commit. Free basic listing included — upgrade only when you see results.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "Free listing with full facility profile",
+                    "No contracts or cancellation penalties",
+                    "Clear per-lead pricing, no surprises",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              {/* ROI Advantage */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative bg-card border border-border rounded-xl p-6 sm:p-8"
+              >
+                <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 mb-5">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-bold text-foreground text-base sm:text-lg mb-2">Lower Cost Per Admission</h3>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  Facilities using exclusive-lead directories report 40–60% lower cost-per-admission compared to pay-per-click or shared-lead platforms. Higher quality leads mean fewer wasted calls.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "60% less admissions team workload",
+                    "Real-time analytics to track ROI",
+                    "Families arrive informed and ready",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            </div>
+
+            {/* Bottom CTA strip */}
+            <div className="mt-10 sm:mt-12 text-center">
+              <Link to="/provider-roi-calculator">
+                <Button variant="outline" className="gap-2 h-11 px-6 text-sm font-semibold">
+                  <BarChart3 className="h-4 w-4" />
+                  Compare Your ROI — Free Calculator
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ Section */}
         <section className="py-12 sm:py-16 md:py-24 bg-background">
           <div className="container px-4 md:px-6 lg:px-8">
