@@ -102,6 +102,9 @@ const RehabAdmissionsTeamTraining = lazy(() => import("./pages/provider-guides/R
 const RehabPayPerClickAdvertising = lazy(() => import("./pages/provider-guides/RehabPayPerClickAdvertising"));
 const RehabContentMarketing = lazy(() => import("./pages/provider-guides/RehabContentMarketing"));
 const RehabInterventionistPartnerships = lazy(() => import("./pages/provider-guides/RehabInterventionistPartnerships"));
+const BestRehabListingPlatforms = lazy(() => import("./pages/provider-guides/BestRehabListingPlatforms"));
+const ExclusiveVsSharedLeads = lazy(() => import("./pages/provider-guides/ExclusiveVsSharedLeads"));
+const HowToChooseRehabDirectory = lazy(() => import("./pages/provider-guides/HowToChooseRehabDirectory"));
 // ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
@@ -725,6 +728,9 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-pay-per-click-advertising" element={<PublicRouteGuard><RehabPayPerClickAdvertising /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-content-marketing" element={<PublicRouteGuard><RehabContentMarketing /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-interventionist-partnerships" element={<PublicRouteGuard><RehabInterventionistPartnerships /></PublicRouteGuard>} />
+            <Route path="/provider-guides/best-rehab-listing-platforms" element={<PublicRouteGuard><BestRehabListingPlatforms /></PublicRouteGuard>} />
+            <Route path="/provider-guides/exclusive-vs-shared-leads" element={<PublicRouteGuard><ExclusiveVsSharedLeads /></PublicRouteGuard>} />
+            <Route path="/provider-guides/how-to-choose-a-rehab-directory" element={<PublicRouteGuard><HowToChooseRehabDirectory /></PublicRouteGuard>} />
             {/* List Your Facility routes handled by SmartCatchAll below */}
 
             {/* Provider Resource Hub */}

@@ -67,6 +67,9 @@ const relatedPages = [
   { href: "/provider-guides/rehab-pay-per-click-advertising", label: "PPC Advertising", desc: "Reduce cost per admission" },
   { href: "/provider-guides/rehab-content-marketing", label: "Content Marketing", desc: "Drive organic admissions" },
   { href: "/provider-guides/rehab-interventionist-partnerships", label: "Interventionist Partnerships", desc: "High-value referral network" },
+  { href: "/provider-guides/best-rehab-listing-platforms", label: "Listing Platforms 2026", desc: "Compare top directories" },
+  { href: "/provider-guides/exclusive-vs-shared-leads", label: "Exclusive vs Shared Leads", desc: "Lead model comparison" },
+  { href: "/provider-guides/how-to-choose-a-rehab-directory", label: "Choose a Directory", desc: "Evaluation framework" },
 ];
 
 const platformLinks = [
