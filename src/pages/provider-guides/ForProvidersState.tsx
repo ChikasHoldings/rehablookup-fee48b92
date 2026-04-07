@@ -368,25 +368,30 @@ export default function ForProvidersState() {
         </section>
 
         {/* Final CTA */}
-        <section className="py-16 bg-primary relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-3xl mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-primary-foreground mb-4">
-              Ready to Grow Your {state.name} Facility?
-            </h2>
-            <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-              Join hundreds of treatment centers already receiving qualified family inquiries through RehabLookup.
-            </p>
-            <Link to="/provider-signup">
-              <Button size="lg" variant="secondary" className="gap-2 h-14 px-10 text-base font-semibold shadow-lg">
-                List Your Facility — It's Free
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-primary-foreground/60 mt-6">
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> No credit card</span>
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> 5-minute setup</span>
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> Cancel anytime</span>
+        <section className="py-16 relative overflow-hidden">
+          <div className="container relative z-10 max-w-4xl mx-auto px-4">
+            <div className="relative rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 p-10 md:p-14 text-center overflow-hidden">
+              <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-accent/5 rounded-full blur-3xl" />
+              <div className="relative z-10">
+                <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-4">
+                  Ready to Grow Your {state.name} Facility?
+                </h2>
+                <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+                  Join hundreds of treatment centers already receiving qualified family inquiries through RehabLookup.
+                </p>
+                <Link to="/provider-signup">
+                  <Button size="lg" className="gap-2 h-14 px-10 text-base font-semibold shadow-lg">
+                    List Your Facility — It's Free
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground mt-6">
+                  <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> No credit card</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> 5-minute setup</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> Cancel anytime</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
