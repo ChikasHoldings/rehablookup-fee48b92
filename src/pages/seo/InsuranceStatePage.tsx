@@ -95,7 +95,7 @@ export default function InsuranceStatePage() {
       metaTitle={`${insurer.name} Rehab Coverage in ${stateConfig.state} — Find Treatment | RehabLookup`}
       metaDescription={`Find rehab centers accepting ${insurer.name} in ${stateConfig.state}. ${stateConfig.medicaidExpanded ? "Medicaid expanded state." : ""} Verify coverage, compare ${facilities.length}+ facilities. Get help today.`}
       canonical={`https://rehablookup.com/insurance/${slug}/${stateSlug}`}
-      structuredData={structuredData}
+      structuredData={[structuredData, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       breadcrumbs={[
         { name: "Home", url: "/" },
         { name: "Insurance", url: "/insurance" },
