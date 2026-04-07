@@ -4,7 +4,8 @@ import { Footer } from "@/components/layout/Footer";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Shield, Users, Building2, TrendingUp, ChevronRight } from "lucide-react";
+import { ArrowRight, CheckCircle, Shield, Users, Building2, TrendingUp, ChevronRight, Scale, FileText, ExternalLink, Clock } from "lucide-react";
+import { stateLicensingData } from "@/data/stateLicensingData";
 import { ProviderStickyCTA } from "@/components/provider-guides/ProviderStickyCTA";
 
 const STATE_DATA: Record<string, { name: string; abbr: string; facilities: number; searches: string }> = {
@@ -223,6 +224,101 @@ export default function ForProvidersState() {
             </div>
           </div>
         </section>
+
+        {/* State Licensing & Regulatory Info */}
+        {stateLicensingData[stateSlug] && (() => {
+          const lic = stateLicensingData[stateSlug];
+          return (
+            <section className="py-12 md:py-16">
+              <div className="container max-w-4xl mx-auto px-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Scale className="h-5 w-5 text-primary" />
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-display font-bold text-foreground">
+                    {state.name} Licensing & Regulatory Requirements
+                  </h2>
+                </div>
+                <p className="text-muted-foreground mb-8 ml-[52px]">
+                  Treatment centers in {state.name} are regulated by the <strong className="text-foreground">{lic.regulatoryBody}</strong>.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Regulatory Body Card */}
+                  <div className="bg-card border border-border rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Regulatory Body</h3>
+                    </div>
+                    <p className="text-sm text-foreground font-medium mb-1">{lic.regulatoryBody}</p>
+                    <p className="text-xs text-muted-foreground mb-3">({lic.regulatoryAbbr})</p>
+                    <a
+                      href={lic.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      Visit Official Website
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+
+                  {/* License Types Card */}
+                  <div className="bg-card border border-border rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">License Types</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {lic.licensureTypes.map((type) => (
+                        <li key={type} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <CheckCircle className="h-4 w-4 text-primary/60 mt-0.5 shrink-0" />
+                          {type}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Key Requirements Card */}
+                  <div className="bg-card border border-border rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Shield className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Key Requirements</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {lic.keyRequirements.map((req) => (
+                        <li key={req} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <CheckCircle className="h-4 w-4 text-primary/60 mt-0.5 shrink-0" />
+                          {req}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Renewal & Notes Card */}
+                  <div className="bg-card border border-border rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Renewal Period</h3>
+                    </div>
+                    <p className="text-sm text-foreground font-medium mb-3">{lic.renewalPeriod} renewal required</p>
+                    {lic.notes && (
+                      <div className="bg-muted/50 rounded-lg p-3 border border-border">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          <strong className="text-foreground">Note:</strong> {lic.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground mt-6 text-center">
+                  Licensing requirements may change. Always verify current requirements with the {lic.regulatoryAbbr} directly.
+                </p>
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Internal Links */}
         <section className="py-10 bg-background">
