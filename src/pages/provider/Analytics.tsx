@@ -279,6 +279,14 @@ export default function ProviderAnalyticsPage() {
             </CardContent>
           </Card>
         )}
+        {activeTab === "roi" && (
+          <Card>
+            <CardContent className="p-5">
+              <h2 className="text-sm font-semibold text-foreground mb-4">ROI Calculator — Compare Your Lead Costs</h2>
+              <ROICalculatorWidget />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
