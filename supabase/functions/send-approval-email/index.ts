@@ -267,11 +267,37 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Failed to create notification:", notifError);
     }
 
+    // Enroll provider in 7-day onboarding drip sequence
+    try {
+      const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Provider";
+      await fetch(
+        `${supabaseUrl}/functions/v1/process-provider-drip`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            action: "enroll",
+            userId,
+            facilityId,
+            providerName: fullName,
+            providerEmail: profile.email,
+          }),
+        }
+      );
+      console.log("Provider enrolled in onboarding drip sequence");
+    } catch (dripError) {
+      console.error("Drip enrollment failed (non-blocking):", dripError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `Approval email sent to ${profile.email}`,
-        indexNowSubmitted: !!facility?.slug
+        indexNowSubmitted: !!facility?.slug,
+        dripEnrolled: true,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

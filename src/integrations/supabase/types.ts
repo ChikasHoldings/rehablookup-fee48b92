@@ -4258,6 +4258,66 @@ export type Database = {
           },
         ]
       }
+      provider_onboarding_drip: {
+        Row: {
+          completed: boolean
+          created_at: string
+          day_number: number
+          facility_id: string | null
+          id: string
+          last_sent_day: number
+          next_send_at: string
+          provider_email: string
+          provider_name: string
+          unsubscribed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          day_number?: number
+          facility_id?: string | null
+          id?: string
+          last_sent_day?: number
+          next_send_at?: string
+          provider_email: string
+          provider_name?: string
+          unsubscribed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          day_number?: number
+          facility_id?: string | null
+          id?: string
+          last_sent_day?: number
+          next_send_at?: string
+          provider_email?: string
+          provider_name?: string
+          unsubscribed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_onboarding_drip_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_onboarding_drip_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_payment_methods: {
         Row: {
           bank_name: string | null
