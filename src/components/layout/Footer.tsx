@@ -105,6 +105,8 @@ const companyLinks: FooterLink[] = [
   { name: "Contact Us", path: "/contact" },
   { name: "Treatment Placement", path: "/concierge" },
   { name: "Blog", path: "/blog" },
+  { name: "Editorial Policy", path: "/editorial-policy" },
+  { name: "Medical Disclaimer", path: "/medical-disclaimer" },
 ];
 
 const allSections: FooterSection[] = [
