@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
+import { seekerTestimonials } from "@/data/testimonials";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { conciergeFaqs } from "@/data/pageFaqs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,26 +32,6 @@ import {
 } from "lucide-react";
 import conciergeHero from "@/assets/concierge-hero.jpg";
 
-const TESTIMONIALS = [
-  {
-    quote: "They found me a program that accepted my insurance and was close to family. I couldn't have done it alone.",
-    author: "Sarah M.",
-    location: "Texas",
-    rating: 5,
-  },
-  {
-    quote: "Within 48 hours I had 3 great options to choose from. The team was compassionate and really listened.",
-    author: "Michael R.",
-    location: "Florida", 
-    rating: 5,
-  },
-  {
-    quote: "I was overwhelmed trying to find help for my son. They made the process so much easier during a hard time.",
-    author: "Jennifer L.",
-    location: "California",
-    rating: 5,
-  },
-];
 
 const STATS = [
   { value: "500+", label: "Families Helped", icon: Users },
