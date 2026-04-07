@@ -303,62 +303,11 @@ export default function ConciergeLanding() {
           </section>
           
           {/* Testimonials */}
-          <section className="py-12 sm:py-16 md:py-24 bg-background">
-            <div className="container mx-auto px-4 md:px-6 lg:px-8">
-              <div className="text-center mb-10 sm:mb-14">
-                <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Success Stories</p>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4">
-                  Families We've Helped
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
-                  Join hundreds who found the right treatment
-                </p>
-              </div>
-              
-              {/* Mobile: Horizontal Scroll, Desktop: Grid */}
-              <div className="relative">
-                <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:pb-0 max-w-5xl mx-auto">
-                  {TESTIMONIALS.map((testimonial, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="min-w-[280px] snap-center md:min-w-0"
-                    >
-                      <Card className="h-full bg-card border shadow-sm">
-                        <CardContent className="p-4 sm:p-6">
-                          {/* Stars */}
-                          <div className="flex gap-0.5 mb-3 sm:mb-4">
-                            {[...Array(testimonial.rating)].map((_, i) => (
-                              <Star key={i} className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500 fill-yellow-500" />
-                            ))}
-                          </div>
-                          
-                          <blockquote className="text-sm sm:text-base text-foreground mb-3 sm:mb-4 leading-relaxed line-clamp-4">
-                            "{testimonial.quote}"
-                          </blockquote>
-                          
-                          <div className="flex items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-xs sm:text-sm font-semibold text-primary">
-                                {testimonial.author.charAt(0)}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-medium text-xs sm:text-sm text-foreground">{testimonial.author}</p>
-                              <p className="text-sm text-muted-foreground">{testimonial.location}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
+          <TestimonialsSection 
+            testimonials={seekerTestimonials}
+            title="Families We've Helped"
+            subtitle="Real stories from people who found the right treatment through our concierge service"
+          />
           
           {/* FAQ Section - Radix Accordion */}
           <section className="py-12 sm:py-16 md:py-24 bg-muted/30">
