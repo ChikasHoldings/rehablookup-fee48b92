@@ -92,10 +92,35 @@ const About = () => {
           "description": "RehabLookup connects families with verified addiction treatment centers.",
           "url": "https://rehablookup.com/about",
           "mainEntity": {
-            "@type": "Organization",
+            "@type": ["Organization", "MedicalBusiness"],
             "name": "RehabLookup",
             "url": "https://rehablookup.com",
             "description": "Trusted directory connecting families with verified addiction treatment centers across the United States.",
+            "foundingDate": "2024",
+            "foundingLocation": { "@type": "Place", "name": "United States" },
+            "numberOfEmployees": { "@type": "QuantitativeValue", "minValue": 10, "maxValue": 50 },
+            "founder": {
+              "@type": "Person",
+              "name": "Marcus Johnson",
+              "jobTitle": "Founder & CEO",
+              "alumniOf": "Healthcare Administration",
+            },
+            "member": [
+              {
+                "@type": "Person",
+                "name": "Dr. Sarah Mitchell",
+                "jobTitle": "Medical Director & Content Advisor",
+                "hasCredential": { "@type": "EducationalOccupationalCredential", "name": "MD, Board Certified Psychiatrist, ASAM Fellow" },
+              },
+              {
+                "@type": "Person",
+                "name": "David Reyes",
+                "jobTitle": "Chief Technology Officer",
+                "hasCredential": { "@type": "EducationalOccupationalCredential", "name": "MS Computer Science, CISSP" },
+              },
+            ],
+            "publishingPrinciples": "https://rehablookup.com/editorial-policy",
+            "ethicsPolicy": "https://rehablookup.com/editorial-policy",
           },
         }}
         breadcrumbs={[
