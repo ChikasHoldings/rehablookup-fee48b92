@@ -706,7 +706,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
       {/* Command Search Dialog */}
       <CommandDialog open={searchOpen} onOpenChange={(open) => { setSearchOpen(open); if (!open) setSearchQuery(""); }}>
         <CommandInput 
-          placeholder="Search providers, leads, or pages..." 
+          placeholder={isAdvisor ? "Search cases, pages..." : "Search providers, leads, or pages..."} 
           value={searchQuery}
           onValueChange={setSearchQuery}
         />
