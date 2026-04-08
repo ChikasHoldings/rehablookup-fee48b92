@@ -5179,8 +5179,9 @@ export type Database = {
           dual_diagnosis: string | null
           email: string | null
           email_verified: boolean | null
-          employment_status: string | null
+          exclusive_until: string | null
           exclusivity: string | null
+          extended_until: string | null
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
           gender: string | null
@@ -5190,12 +5191,12 @@ export type Database = {
           insurance_type: string | null
           ip_hash: string | null
           is_unlocked: boolean | null
-          legal_involvement: string | null
           level_of_care: string | null
           location_city_state: string | null
           location_zip: string | null
           message: string | null
           name: string | null
+          original_facility_id: string | null
           phone: string | null
           preferred_contact: string | null
           previous_treatment: string | null
@@ -5207,6 +5208,7 @@ export type Database = {
           qualified: boolean | null
           quality_flag: string | null
           readiness_level: string | null
+          redistribution_status: string | null
           relationship_to_patient: string | null
           routing_order: number | null
           shared_with: string[] | null
@@ -5216,7 +5218,6 @@ export type Database = {
           status: string | null
           urgency: string | null
           validation_status: string | null
-          veteran_status: string | null
           who_seeking_help: string | null
         }
         Insert: {
@@ -5231,8 +5232,9 @@ export type Database = {
           dual_diagnosis?: string | null
           email?: never
           email_verified?: boolean | null
-          employment_status?: string | null
+          exclusive_until?: string | null
           exclusivity?: string | null
+          extended_until?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
@@ -5242,12 +5244,12 @@ export type Database = {
           insurance_type?: string | null
           ip_hash?: string | null
           is_unlocked?: never
-          legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
           message?: string | null
           name?: never
+          original_facility_id?: string | null
           phone?: never
           preferred_contact?: string | null
           previous_treatment?: string | null
@@ -5259,6 +5261,7 @@ export type Database = {
           qualified?: boolean | null
           quality_flag?: string | null
           readiness_level?: string | null
+          redistribution_status?: string | null
           relationship_to_patient?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
@@ -5268,7 +5271,6 @@ export type Database = {
           status?: string | null
           urgency?: string | null
           validation_status?: string | null
-          veteran_status?: string | null
           who_seeking_help?: string | null
         }
         Update: {
@@ -5283,8 +5285,9 @@ export type Database = {
           dual_diagnosis?: string | null
           email?: never
           email_verified?: boolean | null
-          employment_status?: string | null
+          exclusive_until?: string | null
           exclusivity?: string | null
+          extended_until?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
@@ -5294,12 +5297,12 @@ export type Database = {
           insurance_type?: string | null
           ip_hash?: string | null
           is_unlocked?: never
-          legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
           message?: string | null
           name?: never
+          original_facility_id?: string | null
           phone?: never
           preferred_contact?: string | null
           previous_treatment?: string | null
@@ -5311,6 +5314,7 @@ export type Database = {
           qualified?: boolean | null
           quality_flag?: string | null
           readiness_level?: string | null
+          redistribution_status?: string | null
           relationship_to_patient?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
@@ -5320,7 +5324,6 @@ export type Database = {
           status?: string | null
           urgency?: string | null
           validation_status?: string | null
-          veteran_status?: string | null
           who_seeking_help?: string | null
         }
         Relationships: [
@@ -5334,6 +5337,20 @@ export type Database = {
           {
             foreignKeyName: "leads_facility_id_fkey"
             columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_original_facility_id_fkey"
+            columns: ["original_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_original_facility_id_fkey"
+            columns: ["original_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
             referencedColumns: ["id"]
