@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import {
   UserPlus,
   MessageCircle,
@@ -24,9 +25,12 @@ import {
   Inbox,
   MapPin,
   Activity,
+  HandMetal,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
-type CaseView = "mine" | "all";
+type CaseView = "mine" | "unassigned" | "all";
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
@@ -40,14 +44,15 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  new: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30" },
-  reviewing: { label: "Reviewing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30" },
-  matching: { label: "Placing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30" },
-  matched: { label: "Matched", color: "text-success", bgColor: "bg-success/10 border-success/30" },
-  introductions_sent: { label: "Intros Sent", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30" },
-  in_contact: { label: "In Contact", color: "text-info", bgColor: "bg-info/10 border-info/30" },
-  placed: { label: "Placed", color: "text-success", bgColor: "bg-success/10 border-success/30" },
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; order: number }> = {
+  new: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 1 },
+  reviewing: { label: "Reviewing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 2 },
+  matching: { label: "Placing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 3 },
+  matched: { label: "Matched", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 4 },
+  introductions_sent: { label: "Intros Sent", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 5 },
+  in_contact: { label: "In Contact", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 6 },
+  placed: { label: "Placed", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 7 },
+  closed: { label: "Closed", color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", order: 8 },
 };
 
 export function AdvisorDashboard() {
@@ -55,6 +60,7 @@ export function AdvisorDashboard() {
   const { user, hasPermission } = useAdminAuth();
   const [caseView, setCaseView] = useState<CaseView>("mine");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
 
   const advisorId = user?.id;
 
@@ -95,32 +101,69 @@ export function AdvisorDashboard() {
     };
   }, [invalidateDashboard]);
 
-  // Fetch concierge inquiry stats
+  // Claim case mutation
+  const claimCaseMutation = useMutation({
+    mutationFn: async (caseId: string) => {
+      if (!advisorId) throw new Error("Not authenticated");
+      setClaimingId(caseId);
+
+      const { error } = await supabase
+        .from("concierge_inquiries")
+        .update({ assigned_advisor_id: advisorId, status: "reviewing" })
+        .eq("id", caseId)
+        .is("assigned_advisor_id", null);
+
+      if (error) throw error;
+
+      // Log event
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseId,
+        event_type: "advisor_claimed",
+        event_data: { advisor_id: advisorId },
+        actor_id: advisorId,
+        actor_type: "admin",
+      });
+    },
+    onSuccess: () => {
+      toast.success("Case claimed! It's now in your pipeline.");
+      invalidateDashboard();
+    },
+    onError: (err: Error) => {
+      toast.error("Failed to claim case: " + err.message);
+    },
+    onSettled: () => {
+      setClaimingId(null);
+    },
+  });
+
+  // Fetch concierge inquiry stats (always for my cases)
   const { data: inquiryStats, isLoading: loadingInquiries } = useQuery({
-    queryKey: ["advisor-inquiry-stats", caseView, advisorId],
+    queryKey: ["advisor-inquiry-stats", advisorId],
     queryFn: async () => {
       const buildQuery = (status?: string) => {
-        let q = supabase.from("concierge_inquiries").select("id", { count: "exact", head: true });
-        if (caseView === "mine" && advisorId) {
-          q = q.eq("assigned_advisor_id", advisorId);
-        }
+        let q = supabase.from("concierge_inquiries").select("id", { count: "exact", head: true })
+          .eq("assigned_advisor_id", advisorId!);
         if (status) q = q.eq("status", status);
         return q;
       };
 
-      const [total, newCases, inProgress, matched, placed, closed] = await Promise.all([
+      const [total, newCases, reviewing, matching, introsSent, inContact, placed, closed] = await Promise.all([
         buildQuery(),
         buildQuery("new"),
         buildQuery("reviewing"),
-        buildQuery("matched"),
+        buildQuery("matching"),
+        buildQuery("introductions_sent"),
+        buildQuery("in_contact"),
         buildQuery("placed"),
         buildQuery("closed"),
       ]);
       return {
         total: total.count || 0,
         newCases: newCases.count || 0,
-        inProgress: inProgress.count || 0,
-        matched: matched.count || 0,
+        reviewing: reviewing.count || 0,
+        matching: matching.count || 0,
+        introsSent: introsSent.count || 0,
+        inContact: inContact.count || 0,
         placed: placed.count || 0,
         closed: closed.count || 0,
       };
@@ -128,19 +171,27 @@ export function AdvisorDashboard() {
     enabled: !!advisorId,
   });
 
-  // Fetch recent inquiries
+  // Fetch recent inquiries based on view
   const { data: recentInquiries, isLoading: loadingRecent } = useQuery({
     queryKey: ["advisor-recent-inquiries", caseView, advisorId],
     queryFn: async () => {
       let query = supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_phone, status, created_at, timeline_urgency, level_of_care, desired_location_state, preferred_state, payment_status")
-        .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"])
+        .select("id, user_name, user_phone, status, created_at, timeline_urgency, level_of_care, desired_location_state, preferred_state, payment_status, assigned_advisor_id")
         .order("created_at", { ascending: false })
-        .limit(8);
+        .limit(10);
 
-      if (caseView === "mine" && advisorId) {
-        query = query.eq("assigned_advisor_id", advisorId);
+      if (caseView === "mine") {
+        query = query
+          .eq("assigned_advisor_id", advisorId!)
+          .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
+      } else if (caseView === "unassigned") {
+        query = query
+          .is("assigned_advisor_id", null)
+          .not("status", "in", '("placed","closed")');
+      } else {
+        query = query
+          .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
       }
 
       const { data } = await query;
@@ -151,11 +202,21 @@ export function AdvisorDashboard() {
 
   // Fetch message stats
   const { data: messageStats, isLoading: loadingMessages } = useQuery({
-    queryKey: ["advisor-message-stats"],
+    queryKey: ["advisor-message-stats", advisorId],
     queryFn: async () => {
+      // Get threads for advisor's cases
+      const { data: myInquiries } = await supabase
+        .from("concierge_inquiries")
+        .select("id")
+        .eq("assigned_advisor_id", advisorId!)
+        .not("status", "eq", "closed");
+
+      if (!myInquiries || myInquiries.length === 0) return { totalThreads: 0, unread: 0 };
+
       const { data: threads } = await supabase
         .from("concierge_threads")
-        .select("id, last_message_at, admin_last_read_at");
+        .select("id, last_message_at, admin_last_read_at")
+        .in("inquiry_id", myInquiries.map(i => i.id));
       
       let unread = 0;
       threads?.forEach((thread) => {
@@ -169,21 +230,33 @@ export function AdvisorDashboard() {
         unread,
       };
     },
+    enabled: !!advisorId,
   });
 
-  // Fetch tour requests
+  // Fetch tour requests for advisor's cases
   const { data: tourStats, isLoading: loadingTours } = useQuery({
-    queryKey: ["advisor-tour-stats"],
+    queryKey: ["advisor-tour-stats", advisorId],
     queryFn: async () => {
+      const { data: myInquiries } = await supabase
+        .from("concierge_inquiries")
+        .select("id")
+        .eq("assigned_advisor_id", advisorId!)
+        .not("status", "eq", "closed");
+
+      if (!myInquiries || myInquiries.length === 0) return { pending: 0, scheduled: 0 };
+
       const [pending, scheduled] = await Promise.all([
-        supabase.from("concierge_tour_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("concierge_tour_requests").select("id", { count: "exact", head: true }).eq("status", "scheduled"),
+        supabase.from("concierge_tour_requests").select("id", { count: "exact", head: true })
+          .in("inquiry_id", myInquiries.map(i => i.id)).eq("status", "pending"),
+        supabase.from("concierge_tour_requests").select("id", { count: "exact", head: true })
+          .in("inquiry_id", myInquiries.map(i => i.id)).eq("status", "scheduled"),
       ]);
       return {
         pending: pending.count || 0,
         scheduled: scheduled.count || 0,
       };
     },
+    enabled: !!advisorId,
   });
 
   // Count unassigned cases
@@ -215,7 +288,8 @@ export function AdvisorDashboard() {
     enabled: !!selectedCaseId,
   });
 
-  const activeCases = (inquiryStats?.newCases || 0) + (inquiryStats?.inProgress || 0) + (inquiryStats?.matched || 0);
+  const activeCases = (inquiryStats?.newCases || 0) + (inquiryStats?.reviewing || 0) + 
+    (inquiryStats?.matching || 0) + (inquiryStats?.introsSent || 0) + (inquiryStats?.inContact || 0);
   const placementRate = inquiryStats?.total 
     ? Math.round(((inquiryStats.placed || 0) / inquiryStats.total) * 100) 
     : 0;
@@ -237,19 +311,23 @@ export function AdvisorDashboard() {
         <Tabs value={caseView} onValueChange={(v) => setCaseView(v as CaseView)}>
           <TabsList className="h-8 sm:h-9">
             <TabsTrigger value="mine" className="text-xs px-2.5 sm:px-3">My Cases</TabsTrigger>
-            <TabsTrigger value="all" className="text-xs px-2.5 sm:px-3">All Cases</TabsTrigger>
+            <TabsTrigger value="unassigned" className="text-xs px-2.5 sm:px-3 gap-1">
+              Unclaimed
+              {unassignedCount && unassignedCount > 0 ? (
+                <span className="text-[10px] bg-warning text-warning-foreground rounded-full px-1.5">{unassignedCount}</span>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="all" className="text-xs px-2.5 sm:px-3">All</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - always show MY stats */}
       <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         {/* Active Cases */}
         <Card className={`border shadow-sm overflow-hidden ${activeCases > 0 ? "border-accent/50 bg-accent/5" : ""}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
-            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">
-              {caseView === "mine" ? "My Cases" : "All Cases"}
-            </CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">My Active</CardTitle>
             <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
@@ -266,7 +344,7 @@ export function AdvisorDashboard() {
                   ) : null}
                   {unassignedCount && unassignedCount > 0 ? (
                     <Badge variant="secondary" className="text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0 bg-warning/20 text-warning-foreground">
-                      {unassignedCount} unassigned
+                      {unassignedCount} unclaimed
                     </Badge>
                   ) : null}
                 </div>
@@ -314,9 +392,7 @@ export function AdvisorDashboard() {
         {/* Placement Rate */}
         <Card className="border shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
-            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">
-              {caseView === "mine" ? "My Rate" : "Rate"}
-            </CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">My Rate</CardTitle>
             <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
@@ -334,16 +410,16 @@ export function AdvisorDashboard() {
 
       {/* Main Content */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        {/* Recent Cases */}
+        {/* Case List */}
         <Card className="border shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-medium">
-                  {caseView === "mine" ? "My Active Cases" : "All Active Cases"}
+                  {caseView === "mine" ? "My Active Cases" : caseView === "unassigned" ? "Unclaimed Cases" : "All Active Cases"}
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  {caseView === "mine" ? "Cases assigned to you" : "All concierge inquiries"}
+                  {caseView === "mine" ? "Cases assigned to you" : caseView === "unassigned" ? "Claim to start working" : "All concierge inquiries"}
                 </CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
@@ -365,13 +441,19 @@ export function AdvisorDashboard() {
                   const status = statusConfig[inquiry.status] || statusConfig.new;
                   const isPaid = inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded';
                   const location = inquiry.desired_location_state || inquiry.preferred_state;
+                  const isUnassigned = !inquiry.assigned_advisor_id;
+                  const isClaiming = claimingId === inquiry.id;
+
                   return (
-                    <button
+                    <div
                       key={inquiry.id}
-                      onClick={() => setSelectedCaseId(inquiry.id)}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors w-full text-left"
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() => !isUnassigned && setSelectedCaseId(inquiry.id)}
+                        className="flex-1 min-w-0 text-left"
+                        disabled={isUnassigned}
+                      >
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           <span className="text-sm font-medium truncate">{inquiry.user_name}</span>
                           <Badge variant="outline" className={`text-[10px] ${status.bgColor} ${status.color}`}>
@@ -380,6 +462,11 @@ export function AdvisorDashboard() {
                           {!isPaid && (
                             <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">
                               Unpaid
+                            </Badge>
+                          )}
+                          {inquiry.timeline_urgency === "immediate" && (
+                            <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">
+                              Urgent
                             </Badge>
                           )}
                         </div>
@@ -401,59 +488,93 @@ export function AdvisorDashboard() {
                             {formatTimeAgo(inquiry.created_at)}
                           </span>
                         </div>
-                        {inquiry.timeline_urgency && (
-                          <Badge variant="secondary" className="mt-1.5 text-[10px] bg-muted">
-                            {inquiry.timeline_urgency}
-                          </Badge>
-                        )}
-                      </div>
-                    </button>
+                      </button>
+
+                      {/* Claim button for unassigned cases */}
+                      {isUnassigned && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="ml-2 shrink-0"
+                          disabled={isClaiming}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            claimCaseMutation.mutate(inquiry.id);
+                          }}
+                        >
+                          {isClaiming ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <HandMetal className="h-3.5 w-3.5 mr-1" />
+                              Claim
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-success" />
-                <p className="text-sm">
-                  {caseView === "mine" ? "No cases assigned to you" : "No active cases"}
-                </p>
+                {caseView === "unassigned" ? (
+                  <>
+                    <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-success" />
+                    <p className="text-sm">All cases are assigned</p>
+                  </>
+                ) : (
+                  <>
+                    <Inbox className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">{caseView === "mine" ? "No cases assigned to you" : "No active cases"}</p>
+                    {caseView === "mine" && unassignedCount && unassignedCount > 0 ? (
+                      <Button variant="link" size="sm" className="mt-1" onClick={() => setCaseView("unassigned")}>
+                        {unassignedCount} unclaimed cases available →
+                      </Button>
+                    ) : null}
+                  </>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Case Pipeline */}
+        {/* Full Pipeline */}
         <Card className="border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-medium">Case Pipeline</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              {caseView === "mine" ? "Your case status breakdown" : "All cases by status"}
-            </CardDescription>
+            <CardTitle className="text-base font-medium">My Pipeline</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Your case status breakdown</CardDescription>
           </CardHeader>
           <CardContent>
             {loadingInquiries ? (
               <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[
-                  { key: "newCases", label: "New Cases", color: "text-info" },
-                  { key: "inProgress", label: "In Progress", color: "text-warning" },
-                  { key: "matched", label: "Facilities Found", color: "text-success" },
-                  { key: "placed", label: "Placed", color: "text-success" },
-                  { key: "closed", label: "Closed", color: "text-muted-foreground" },
-                ].map(({ key, label, color }) => {
+                  { key: "newCases", label: "New / Intake", icon: "🟢" },
+                  { key: "reviewing", label: "Reviewing", icon: "🔍" },
+                  { key: "matching", label: "Matching / Outreach", icon: "🔗" },
+                  { key: "introsSent", label: "Intros Sent", icon: "📨" },
+                  { key: "inContact", label: "In Contact / Tours", icon: "📞" },
+                  { key: "placed", label: "Placed ✓", icon: "🏠" },
+                  { key: "closed", label: "Closed", icon: "📁" },
+                ].map(({ key, label, icon }) => {
                   const count = (inquiryStats as any)?.[key] || 0;
                   const pct = inquiryStats?.total ? (count / inquiryStats.total) * 100 : 0;
+                  const isActive = key !== "placed" && key !== "closed" && count > 0;
                   return (
-                    <div key={key}>
+                    <div key={key} className={isActive ? "bg-muted/30 rounded-lg p-2 -mx-2" : ""}>
                       <div className="flex justify-between mb-1">
-                        <span className={`text-sm font-medium ${color}`}>{label}</span>
-                        <span className="text-sm text-muted-foreground tabular-nums">{count}</span>
+                        <span className="text-sm font-medium flex items-center gap-1.5">
+                          <span className="text-xs">{icon}</span>
+                          {label}
+                        </span>
+                        <span className="text-sm font-bold tabular-nums">{count}</span>
                       </div>
-                      <Progress value={pct} className="h-2" />
+                      <Progress value={pct} className="h-1.5" />
                     </div>
                   );
                 })}
@@ -469,21 +590,19 @@ export function AdvisorDashboard() {
           <CardTitle className="text-base font-medium">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {inquiryStats?.newCases && inquiryStats.newCases > 0 && (
-            <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-info/10" asChild>
-              <Link to="/admin/concierge?status=new">
-                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-info mr-2 sm:mr-3 shrink-0" />
-                <div className="flex flex-col items-start min-w-0">
-                  <span className="text-sm font-medium">New Cases</span>
-                  <span className="text-xs text-muted-foreground">{inquiryStats.newCases} awaiting review</span>
-                </div>
-              </Link>
+          {unassignedCount && unassignedCount > 0 && (
+            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-warning/10" onClick={() => setCaseView("unassigned")}>
+              <HandMetal className="h-5 w-5 text-warning mr-3 shrink-0" />
+              <div className="flex flex-col items-start min-w-0">
+                <span className="text-sm font-medium">Claim Cases</span>
+                <span className="text-xs text-muted-foreground">{unassignedCount} unclaimed</span>
+              </div>
             </Button>
           )}
           {messageStats?.unread && messageStats.unread > 0 && (
-            <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-warning/10" asChild>
-              <Link to="/admin/concierge">
-                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-warning mr-2 sm:mr-3 shrink-0" />
+            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-warning/10" asChild>
+              <Link to="/admin/inbox">
+                <MessageCircle className="h-5 w-5 text-warning mr-3 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Unread Messages</span>
                   <span className="text-xs text-muted-foreground">{messageStats.unread} to reply</span>
@@ -491,24 +610,46 @@ export function AdvisorDashboard() {
               </Link>
             </Button>
           )}
-          <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-accent/10" asChild>
+          {tourStats?.pending && tourStats.pending > 0 && (
+            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-info/10" asChild>
+              <Link to="/admin/concierge">
+                <Calendar className="h-5 w-5 text-info mr-3 shrink-0" />
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="text-sm font-medium">Pending Tours</span>
+                  <span className="text-xs text-muted-foreground">{tourStats.pending} to schedule</span>
+                </div>
+              </Link>
+            </Button>
+          )}
+          <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-accent/10" asChild>
             <Link to="/admin/concierge">
-              <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-accent-foreground mr-2 sm:mr-3 shrink-0" />
+              <Activity className="h-5 w-5 text-accent-foreground mr-3 shrink-0" />
               <div className="flex flex-col items-start min-w-0">
                 <span className="text-sm font-medium">Placement Center</span>
                 <span className="text-xs text-muted-foreground">Full case management</span>
               </div>
             </Link>
           </Button>
-          <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-info/10" asChild>
+          <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-info/10" asChild>
             <Link to="/admin/inbox">
-              <Inbox className="h-4 w-4 sm:h-5 sm:w-5 text-info mr-2 sm:mr-3 shrink-0" />
+              <Inbox className="h-5 w-5 text-info mr-3 shrink-0" />
               <div className="flex flex-col items-start min-w-0">
                 <span className="text-sm font-medium">Advisor Inbox</span>
                 <span className="text-xs text-muted-foreground">Messages & coordination</span>
               </div>
             </Link>
           </Button>
+          {hasPermission("escalations") && (
+            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-destructive/10" asChild>
+              <Link to="/admin/escalations">
+                <AlertTriangle className="h-5 w-5 text-destructive mr-3 shrink-0" />
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="text-sm font-medium">Escalations</span>
+                  <span className="text-xs text-muted-foreground">Escalate to manager</span>
+                </div>
+              </Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
 
