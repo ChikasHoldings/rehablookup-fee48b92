@@ -135,12 +135,12 @@ export default function MarketingLanding() {
             <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl text-center">
               {/* Headline */}
               <h1 className="text-[1.75rem] sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-lg [text-wrap:balance] max-w-3xl mx-auto">
-                Find the Right Treatment Center — Matched to You
+                Your Recovery Starts With the Right Program
               </h1>
 
               <p className="mt-4 text-sm sm:text-base md:text-lg text-white/85 max-w-xl mx-auto leading-relaxed drop-shadow">
-                Answer a few quick questions and we'll connect you with verified programs that accept your insurance.{" "}
-                <strong className="text-white">Free & confidential.</strong>
+                Tell us what you need and we'll match you with verified treatment centers that accept your insurance — in under 2 minutes.{" "}
+                <strong className="text-white">100% free. 100% confidential.</strong>
               </p>
 
               {/* Trust row — compact, single line */}
