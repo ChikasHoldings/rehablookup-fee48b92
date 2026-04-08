@@ -135,6 +135,9 @@ export function AdvisorEarningsCard() {
                           {entry.status}
                         </Badge>
                         <span className="text-muted-foreground">{entry.commission_rate}%</span>
+                        <span className="text-muted-foreground/70">
+                          {new Date(entry.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
                       </div>
                       <span className="font-medium tabular-nums">{formatCents(entry.commission_cents)}</span>
                     </div>
