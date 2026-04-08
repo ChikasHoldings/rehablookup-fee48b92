@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Save, XCircle, Loader2, History, AlertTriangle } from "lucide-react";
+import { Save, XCircle, Loader2, History, AlertTriangle, HandMetal } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
@@ -38,6 +39,7 @@ interface ConciergeActionsTabProps {
   caseData: ConciergeInquiry;
   onRefresh: () => void;
   onClose: () => void;
+  isAdvisor?: boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -51,13 +53,23 @@ const STATUS_OPTIONS = [
   { value: "closed", label: "Closed" },
 ];
 
-export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeActionsTabProps) {
+// Advisors can only move cases through these workflow statuses
+const ADVISOR_STATUS_OPTIONS = [
+  { value: "reviewing", label: "Reviewing" },
+  { value: "matching", label: "Placing" },
+  { value: "matched", label: "Facilities Found" },
+  { value: "introductions_sent", label: "Introductions Sent" },
+  { value: "in_contact", label: "In Contact" },
+];
+
+export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = false }: ConciergeActionsTabProps) {
+  const { user } = useAdminAuth();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState(caseData.status);
   const [adminNotes, setAdminNotes] = useState(caseData.admin_notes || "");
   const [closeReason, setCloseReason] = useState("");
 
-  // Sync state when caseData changes (e.g., switching between cases)
+  // Sync state when caseData changes
   useEffect(() => {
     setStatus(caseData.status);
     setAdminNotes(caseData.admin_notes || "");
@@ -66,7 +78,6 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
 
   const updateCaseMutation = useMutation({
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {
-      // Guard: prevent reverting placed/closed cases to earlier states
       if (updates.status && caseData.status === 'placed' && updates.status !== 'placed' && updates.status !== 'closed') {
         throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
       }
@@ -78,13 +89,12 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
 
       if (error) throw error;
 
-      // Log status change event
       if (updates.status && updates.status !== caseData.status) {
         await supabase.from("concierge_case_events").insert({
           inquiry_id: caseData.id,
           event_type: "status_changed",
           event_data: { from: caseData.status, to: updates.status },
-          actor_type: "admin",
+          actor_type: isAdvisor ? "advisor" : "admin",
         });
       }
     },
@@ -116,7 +126,37 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
     });
   };
 
+  // Self-assign for advisors
+  const selfAssignMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("concierge_inquiries")
+        .update({ assigned_advisor_id: user.id })
+        .eq("id", caseData.id);
+      if (error) throw error;
+
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseData.id,
+        event_type: "advisor_assigned",
+        event_data: { advisor_id: user.id, self_assigned: true },
+        actor_type: "advisor",
+      });
+    },
+    onSuccess: () => {
+      toast.success("Case assigned to you");
+      queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
+      onRefresh();
+    },
+    onError: (error) => {
+      toast.error("Failed to self-assign: " + error.message);
+    },
+  });
+
   const isUnpaid = caseData.payment_status !== 'paid' && caseData.payment_status !== 'succeeded';
+  const statusOptions = isAdvisor ? ADVISOR_STATUS_OPTIONS : STATUS_OPTIONS;
+  const isAssignedToMe = caseData.assigned_advisor_id === user?.id;
+  const isUnassigned = !caseData.assigned_advisor_id;
 
   return (
     <div className="space-y-4">
@@ -126,15 +166,46 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Payment Not Received</AlertTitle>
           <AlertDescription>
-            This case has not been paid ($29 intake fee). The seeker may have abandoned checkout. 
-            Avoid sending introductions until payment is confirmed.
+            This case has not been paid ($29 intake fee). Avoid sending introductions until payment is confirmed.
           </AlertDescription>
         </Alert>
       )}
-      <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
 
-      {/* Admin Confirm Placement - ONLY admins can confirm */}
-      <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
+      {/* Self-assign card for advisors on unassigned cases */}
+      {isAdvisor && isUnassigned && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">This case is unassigned</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Claim it to start working on this placement</p>
+              </div>
+              <Button 
+                onClick={() => selfAssignMutation.mutate()}
+                disabled={selfAssignMutation.isPending}
+                size="sm"
+              >
+                {selfAssignMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                ) : (
+                  <HandMetal className="h-4 w-4 mr-1.5" />
+                )}
+                Claim Case
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Advisor assignment - only for non-advisors (admins/managers) */}
+      {!isAdvisor && (
+        <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
+      )}
+
+      {/* Admin Confirm Placement - only for non-advisors */}
+      {!isAdvisor && (
+        <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
+      )}
 
       {/* Status Update */}
       <Card>
@@ -148,7 +219,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {STATUS_OPTIONS.map((opt) => (
+                {statusOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
@@ -169,13 +240,15 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
       {/* Admin Notes */}
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm font-medium">Admin Notes</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            {isAdvisor ? "Advisor Notes" : "Admin Notes"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="py-2">
           <Textarea
             value={adminNotes}
             onChange={(e) => setAdminNotes(e.target.value)}
-            placeholder="Add internal notes about this case..."
+            placeholder={isAdvisor ? "Add notes about this case..." : "Add internal notes about this case..."}
             rows={4}
           />
           <Button
@@ -194,7 +267,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
         </CardContent>
       </Card>
 
-      {/* Case Timeline - Now with real events */}
+      {/* Case Timeline */}
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -209,8 +282,8 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
         </CardContent>
       </Card>
 
-      {/* Close Case */}
-      {caseData.status !== "closed" && (
+      {/* Close Case - only for non-advisors */}
+      {!isAdvisor && caseData.status !== "closed" && (
         <Card className="border-destructive/50">
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium text-destructive flex items-center gap-2">
