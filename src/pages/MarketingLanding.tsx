@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Shield, Clock, CheckCircle2, Star, Heart, ArrowRight, Phone, Zap } from "lucide-react";
+import { Shield, Clock, CheckCircle2, Star, ArrowRight, Phone, Zap } from "lucide-react";
+import headerLogo from "@/assets/logo-header.webp";
 import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
 import { seekerTestimonials } from "@/data/testimonials";
 import { LeadIntakeForm } from "@/components/lead-intake";
@@ -110,8 +111,7 @@ export default function MarketingLanding() {
         <header className="bg-white/95 backdrop-blur-md border-b border-border/30 sticky top-0 z-50 shadow-sm">
           <div className="container mx-auto px-4 md:px-6 lg:px-8 h-14 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-primary shrink-0" />
-              <span className="text-base font-bold text-foreground">RehabLookup</span>
+              <img src={headerLogo} alt="RehabLookup" className="h-7 sm:h-8 w-auto" />
             </div>
             <a
               href="tel:1-800-662-4357"
@@ -135,12 +135,12 @@ export default function MarketingLanding() {
             <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl text-center">
               {/* Headline */}
               <h1 className="text-[1.75rem] sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-lg [text-wrap:balance] max-w-3xl mx-auto">
-                Find the Right Treatment Center — Matched to You
+                Your Recovery Starts With the Right Program
               </h1>
 
               <p className="mt-4 text-sm sm:text-base md:text-lg text-white/85 max-w-xl mx-auto leading-relaxed drop-shadow">
-                Answer a few quick questions and we'll connect you with verified programs that accept your insurance.{" "}
-                <strong className="text-white">Free & confidential.</strong>
+                Tell us what you need and we'll match you with verified treatment centers that accept your insurance — in under 2 minutes.{" "}
+                <strong className="text-white">100% free. 100% confidential.</strong>
               </p>
 
               {/* Trust row — compact, single line */}
@@ -228,9 +228,9 @@ export default function MarketingLanding() {
 
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               {[
-                { num: "1", title: "Tell Us Your Needs", desc: "Answer a few questions about your situation, insurance, and preferences.", time: "~60 sec" },
-                { num: "2", title: "Get Matched Instantly", desc: "We'll show you verified centers that accept your coverage.", time: "Instant" },
-                { num: "3", title: "Connect With Confidence", desc: "Request info from facilities — they'll reach out at your preferred time.", time: "Within 24 hrs" },
+                { num: "1", title: "Share Your Situation", desc: "Tell us about your needs, location, and insurance — everything stays private.", time: "~60 sec" },
+                { num: "2", title: "See Your Matches", desc: "We surface verified programs that fit your criteria and accept your coverage.", time: "Instant" },
+                { num: "3", title: "Take the Next Step", desc: "Choose a facility and they'll reach out at a time that works for you.", time: "Within 24 hrs" },
               ].map((step, idx) => (
                 <div key={idx} className="relative bg-card rounded-xl p-5 text-center shadow-sm border border-border/30 hover:shadow-md transition-shadow">
                   {idx < 2 && (
@@ -261,10 +261,10 @@ export default function MarketingLanding() {
         <section className="py-10 sm:py-14 bg-primary/5">
           <div className="container mx-auto px-4 md:px-6 text-center max-w-xl">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground [text-wrap:balance]">
-              Don't Wait — Treatment Works
+              Recovery Is Possible — Take the First Step Today
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-lg mx-auto">
-              Every day counts in recovery. Our service is completely free and confidential.
+              Thousands of families have found the right program through RehabLookup. The sooner you reach out, the sooner healing can begin.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <button
