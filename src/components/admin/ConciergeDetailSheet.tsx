@@ -139,7 +139,17 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
           </div>
         </SheetHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-4">
+        {/* Progress Stepper */}
+        <div className="flex-shrink-0 mt-3 overflow-x-auto">
+          <PlacementProgressStepper
+            currentStatus={caseData.status}
+            onAdvance={(nextStatus) => advanceStatus.mutate(nextStatus)}
+            disabled={advanceStatus.isPending}
+            compact
+          />
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-3">
           <TabsList className={`grid flex-shrink-0`} style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
             {tabs.map(tab => (
               <TabsTrigger key={tab.value} value={tab.value} className="gap-1 px-2">
