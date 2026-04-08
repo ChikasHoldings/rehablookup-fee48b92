@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Settings2,
   Star,
+  Download,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -611,6 +612,36 @@ export default function AdminSubscriptions() {
                     {sortedSubscriptions.length} of {enrichedSubscriptions.length} providers
                   </CardDescription>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={sortedSubscriptions.length === 0}
+                  onClick={() => {
+                    const headers = ["Provider", "Email", "Plan", "Status", "Revenue/mo", "Leads This Month", "Renews", "Created"];
+                    const rows = sortedSubscriptions.map((sub) => [
+                      sub.facility_name,
+                      sub.customer_email,
+                      sub.plan,
+                      sub.cancel_at_period_end ? "canceling" : sub.status,
+                      `$${sub.monthly_amount}`,
+                      String(sub.leads_used),
+                      format(new Date(sub.current_period_end), "yyyy-MM-dd"),
+                      format(new Date(sub.created), "yyyy-MM-dd"),
+                    ].map(v => v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v));
+                    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `subscriptions-export-${new Date().toISOString().split("T")[0]}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Subscriptions exported");
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-1.5" />
+                  Export
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
