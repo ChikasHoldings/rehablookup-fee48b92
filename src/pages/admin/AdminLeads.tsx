@@ -1042,6 +1042,15 @@ export default function AdminLeads() {
                     
                     return (
                       <TableRow key={lead.id} className="group">
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => toggleSelect(lead.id)} className="p-1">
+                            {selectedIds.has(lead.id) ? (
+                              <CheckSquare className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Square className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </TableCell>
                         <TableCell>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
