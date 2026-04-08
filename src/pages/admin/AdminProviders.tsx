@@ -567,15 +567,29 @@ export default function AdminProviders() {
         activeTab={activeTab}
       />
 
-      {/* Search */}
-      <div className="relative w-full sm:max-w-md">
-        <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, city, or email..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="pl-8 sm:pl-9 h-9 text-sm"
-        />
+      {/* Search + Actions */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="relative flex-1 w-full sm:max-w-md">
+          <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, city, or email..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-8 sm:pl-9 h-9 text-sm"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 h-9">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          {selectedIds.size > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)} className="gap-1.5 h-9">
+              <Trash2 className="h-4 w-4" />
+              Delete ({selectedIds.size})
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Provider List */}
