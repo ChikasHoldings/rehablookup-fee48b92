@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, Filter, Inbox, Mail, Building2, User, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, Filter, Inbox, Mail, Building2, User, Clock, CheckCircle2, AlertCircle, Download, Trash2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,12 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAdminSupportTickets, SupportTicket, SupportTicketFilters } from "@/hooks/useAdminSupportTickets";
 import { SupportTicketModal } from "@/components/admin/SupportTicketModal";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -55,11 +59,25 @@ export default function AdminSupport() {
   const debouncedSearch = useDebounce(searchTerm, 350);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [deepLinkLoading, setDeepLinkLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: tickets = [], isLoading } = useAdminSupportTickets({
     ...filters,
     search: debouncedSearch || undefined,
   });
+
+  // Sync selected ticket with fresh query data
+  useEffect(() => {
+    if (selectedTicket) {
+      const fresh = tickets.find((t) => t.id === selectedTicket.id);
+      if (fresh && JSON.stringify(fresh) !== JSON.stringify(selectedTicket)) {
+        setSelectedTicket(fresh);
+      }
+    }
+  }, [tickets, selectedTicket]);
 
   // Handle deep link ?ticket=ID from admin notifications
   useEffect(() => {
@@ -101,6 +119,68 @@ export default function AdminSupport() {
   const inProgressCount = statusCounts["in_progress"] || 0;
   const resolvedCount = statusCounts["resolved"] || 0;
 
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) =>
+      prev.size === tickets.length ? new Set() : new Set(tickets.map((t) => t.id))
+    );
+  }, [tickets]);
+
+  const handleExportCSV = useCallback(() => {
+    if (tickets.length === 0) return;
+    const headers = ["ID", "Status", "Priority", "Source", "Category", "Subject", "Sender Name", "Sender Email", "Created At", "Assigned To"];
+    const rows = tickets.map((t) => [
+      t.id,
+      t.status,
+      t.priority,
+      t.source,
+      t.category,
+      t.subject || "",
+      t.sender_name,
+      t.sender_email,
+      t.created_at,
+      t.assigned_admin?.display_name || "Unassigned",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `support-tickets-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported");
+  }, [tickets]);
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("support_tickets")
+        .delete()
+        .in("id", Array.from(selectedIds));
+      if (error) throw error;
+      toast.success(`${selectedIds.size} ticket(s) deleted`);
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["admin-support-tickets"] });
+    } catch (err) {
+      console.error("Bulk delete failed:", err);
+      toast.error("Failed to delete tickets");
+    } finally {
+      setBulkDeleting(false);
+      setBulkDeleteOpen(false);
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -128,6 +208,34 @@ export default function AdminSupport() {
         </div>
       </div>
 
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">New</p>
+            <p className="text-xl sm:text-2xl font-bold text-info tabular-nums">{newCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Open / In Progress</p>
+            <p className="text-xl sm:text-2xl font-bold text-warning tabular-nums">{openCount + inProgressCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Resolved</p>
+            <p className="text-xl sm:text-2xl font-bold text-success tabular-nums">{resolvedCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Total</p>
+            <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums">{tickets.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <Card>
         <CardContent className="p-3 sm:p-4">
@@ -141,7 +249,7 @@ export default function AdminSupport() {
                 className="pl-8 sm:pl-9 h-9 text-sm"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Select
                 value={filters.source || "all"}
                 onValueChange={(value) => setFilters({ ...filters, source: value })}
@@ -171,6 +279,16 @@ export default function AdminSupport() {
                   <SelectItem value="unassigned">Unassigned</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={tickets.length === 0} className="h-9 text-xs sm:text-sm">
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Export
+              </Button>
+              {selectedIds.size > 0 && (
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)} className="h-9 text-xs sm:text-sm">
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  Delete ({selectedIds.size})
+                </Button>
+              )}
             </div>
           </div>
 
@@ -206,13 +324,20 @@ export default function AdminSupport() {
       {/* Ticket List */}
       <Card>
         <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-          <CardTitle className="text-base sm:text-lg tabular-nums">
-            {isLoading ? (
-              <Skeleton className="h-5 w-24" />
-            ) : (
-              `${tickets.length} Tickets`
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base sm:text-lg tabular-nums">
+              {isLoading ? <Skeleton className="h-5 w-24" /> : `${tickets.length} Tickets`}
+            </CardTitle>
+            {tickets.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedIds.size === tickets.length && tickets.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span className="text-xs text-muted-foreground">Select all</span>
+              </div>
             )}
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -251,12 +376,20 @@ export default function AdminSupport() {
                 const SourceIcon = source?.icon || Mail;
 
                 return (
-                  <button
+                  <div
                     key={ticket.id}
-                    onClick={() => setSelectedTicket(ticket)}
-                    className="w-full px-4 sm:px-6 py-3 sm:py-4 hover:bg-muted/50 transition-colors text-left"
+                    className="flex items-start gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(ticket.id)}
+                        onCheckedChange={() => toggleSelect(ticket.id)}
+                      />
+                    </div>
+                    <button
+                      onClick={() => setSelectedTicket(ticket)}
+                      className="flex-1 text-left flex items-start gap-3 sm:gap-4 min-w-0"
+                    >
                       <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center">
                         <SourceIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                       </div>
@@ -314,8 +447,8 @@ export default function AdminSupport() {
                           </div>
                         )}
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -328,7 +461,34 @@ export default function AdminSupport() {
         ticket={selectedTicket}
         open={!!selectedTicket}
         onOpenChange={(open) => !open && setSelectedTicket(null)}
+        onDeleted={() => {
+          setSelectedTicket(null);
+          queryClient.invalidateQueries({ queryKey: ["admin-support-tickets"] });
+        }}
       />
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} ticket(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the selected support tickets and their notes. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
