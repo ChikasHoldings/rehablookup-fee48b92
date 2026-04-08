@@ -307,7 +307,7 @@ export default function AdminNotifications() {
 
     switch (notification.type) {
       case "provider_signup":
-        return "/admin/providers?status=pending";
+        return hasPermission("providers") ? "/admin/providers?status=pending" : null;
       case "payment_failed":
       case "payment_delinquent":
       case "placement_payment_failed":
@@ -317,26 +317,26 @@ export default function AdminNotifications() {
       case "churn_alert":
       case "at_risk_provider":
       case "provider_health":
-        return "/admin/subscriptions";
+        return hasPermission("subscriptions") ? "/admin/subscriptions" : null;
       case "new_lead":
       case "lead_assigned":
-        return metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads";
+        return hasPermission("leads") ? (metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads") : null;
       case "facility_approved":
       case "flagged_image":
-        return "/admin/providers";
+        return hasPermission("providers") ? "/admin/providers" : null;
       case "brute_force":
       case "brute_force_alert":
       case "login_alert":
       case "security_event":
       case "security_block":
       case "security_unblock":
-        return "/admin/security-logs";
+        return hasPermission("security_logs") ? "/admin/security-logs" : null;
       case "new_review":
       case "review_disputed":
-        return "/admin/reviews";
+        return hasPermission("reviews") ? "/admin/reviews" : null;
       case "welcome":
       case "system":
-        return "/admin/settings";
+        return "/admin/profile";
       default:
         return null;
     }
