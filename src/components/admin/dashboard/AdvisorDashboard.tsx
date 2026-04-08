@@ -348,10 +348,10 @@ export function AdvisorDashboard() {
                   const isPaid = inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded';
                   const location = inquiry.desired_location_state || inquiry.preferred_state;
                   return (
-                    <Link
+                    <button
                       key={inquiry.id}
-                      to="/admin/concierge"
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      onClick={() => setSelectedCaseId(inquiry.id)}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors w-full text-left"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
@@ -389,7 +389,7 @@ export function AdvisorDashboard() {
                           </Badge>
                         )}
                       </div>
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
