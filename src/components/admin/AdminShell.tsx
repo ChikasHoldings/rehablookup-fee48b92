@@ -112,11 +112,11 @@ export function AdminShell() {
       {isImpersonating && (
         <div className="bg-amber-400 text-amber-950 px-4 py-2 flex items-center justify-center gap-3 text-sm font-medium z-[60] relative">
           <Eye className="h-4 w-4" />
-          <span>Viewing as <strong>{targetName}</strong> ({targetRole?.replace('_', ' ')})</span>
+          <span>Viewing as <strong>{impersonating?.displayName}</strong> ({impersonating?.role?.replace('_', ' ')})</span>
           <Button
             variant="ghost"
             size="sm"
-            onClick={stopImpersonating}
+            onClick={() => user?.id && stopImpersonation(user.id)}
             className="h-6 px-2 text-amber-950 hover:bg-amber-500/50 ml-2"
           >
             <X className="h-3 w-3 mr-1" />
