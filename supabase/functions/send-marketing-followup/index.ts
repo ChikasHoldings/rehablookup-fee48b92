@@ -32,31 +32,66 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Find marketing leads that:
-    // 1. Haven't received follow-up email
-    // 2. Were created 12-24 hours ago
-    // 3. Haven't requested any facilities (no engagement)
-    const cutoffStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const cutoffEnd = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-
-    const { data: leads, error: fetchError } = await supabase
-      .from("marketing_leads")
-      .select("*")
-      .eq("followup_email_sent", false)
-      .gte("created_at", cutoffStart)
-      .lte("created_at", cutoffEnd)
-      .eq("converted_to_concierge", false)
-      .limit(50);
-
-    if (fetchError) {
-      log(requestId, "ERROR", "Failed to fetch marketing leads", { error: fetchError.message });
-      throw new Error("Failed to fetch leads");
+    // Support manual trigger for a specific lead
+    let manualLeadId: string | null = null;
+    try {
+      const body = await req.json();
+      manualLeadId = body?.manualLeadId || null;
+    } catch {
+      // No body or invalid JSON — batch mode
     }
 
-    // Filter to only leads with no facility requests
-    const unengagedLeads = (leads || []).filter(
-      (lead) => !lead.facilities_requested || lead.facilities_requested.length === 0
-    );
+    let unengagedLeads: any[] = [];
+
+    if (manualLeadId) {
+      // Manual mode: send to a specific lead regardless of time window
+      const { data: lead, error: fetchError } = await supabase
+        .from("marketing_leads")
+        .select("*")
+        .eq("id", manualLeadId)
+        .single();
+
+      if (fetchError || !lead) {
+        log(requestId, "ERROR", "Manual lead not found", { id: manualLeadId });
+        return new Response(
+          JSON.stringify({ error: "Lead not found" }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      if (lead.followup_email_sent) {
+        return new Response(
+          JSON.stringify({ error: "Follow-up already sent" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      unengagedLeads = [lead];
+      log(requestId, "INFO", "Manual follow-up trigger", { leadId: manualLeadId });
+    } else {
+      // Batch mode: find leads 12-24 hours old with no engagement
+      const cutoffStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const cutoffEnd = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+
+      const { data: leads, error: fetchError } = await supabase
+        .from("marketing_leads")
+        .select("*")
+        .eq("followup_email_sent", false)
+        .gte("created_at", cutoffStart)
+        .lte("created_at", cutoffEnd)
+        .eq("converted_to_concierge", false)
+        .limit(50);
+
+      if (fetchError) {
+        log(requestId, "ERROR", "Failed to fetch marketing leads", { error: fetchError.message });
+        throw new Error("Failed to fetch leads");
+      }
+
+      // Filter to only leads with no facility requests
+      unengagedLeads = (leads || []).filter(
+        (lead: any) => !lead.facilities_requested || lead.facilities_requested.length === 0
+      );
+    }
 
     log(requestId, "INFO", "Found unengaged marketing leads", { count: unengagedLeads.length });
 
