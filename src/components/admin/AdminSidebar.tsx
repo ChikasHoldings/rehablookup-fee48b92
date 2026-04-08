@@ -18,6 +18,7 @@ import {
   Headphones,
   Megaphone,
   FileText,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
