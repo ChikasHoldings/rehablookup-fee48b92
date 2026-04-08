@@ -10,11 +10,122 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { TwoFactorVerifyDialog } from "@/components/admin/TwoFactorVerifyDialog";
+import { generateSessionToken, getBrowserInfo } from "@/hooks/useSessionManager";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
+
+const ADMIN_TRUSTED_DEVICE_KEY = "rl_admin_trusted_device_token";
+const ADMIN_TRUSTED_DEVICE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+
+const getStoredTrustedDeviceToken = () => {
+  try {
+    return localStorage.getItem(ADMIN_TRUSTED_DEVICE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const setStoredTrustedDeviceToken = (token: string) => {
+  try {
+    localStorage.setItem(ADMIN_TRUSTED_DEVICE_KEY, token);
+  } catch {
+    // ignore storage failures
+  }
+};
+
+const clearStoredTrustedDeviceToken = () => {
+  try {
+    localStorage.removeItem(ADMIN_TRUSTED_DEVICE_KEY);
+  } catch {
+    // ignore storage failures
+  }
+};
+
+const getTrustedDeviceExpiry = () =>
+  new Date(Date.now() + ADMIN_TRUSTED_DEVICE_WINDOW_MS).toISOString();
+
+async function getTrustedAdminDeviceSession(userId: string) {
+  const trustedToken = getStoredTrustedDeviceToken();
+  if (!trustedToken) return null;
+
+  const { browser, os, device } = getBrowserInfo();
+  const { data, error } = await supabase
+    .from("user_sessions")
+    .select("id, browser, os, device_name, expires_at, revoked_at")
+    .eq("user_id", userId)
+    .eq("session_token", trustedToken)
+    .maybeSingle();
+
+  if (error || !data || data.revoked_at) {
+    clearStoredTrustedDeviceToken();
+    return null;
+  }
+
+  const isExpired = Boolean(data.expires_at) && new Date(data.expires_at).getTime() <= Date.now();
+  const matchesDevice = data.browser === browser && data.os === os && (!data.device_name || data.device_name === device);
+
+  if (isExpired || !matchesDevice) {
+    clearStoredTrustedDeviceToken();
+    return null;
+  }
+
+  return { id: data.id, sessionToken: trustedToken };
+}
+
+async function refreshTrustedAdminDevice(userId: string) {
+  const trustedSession = await getTrustedAdminDeviceSession(userId);
+  if (!trustedSession) return false;
+
+  const now = new Date().toISOString();
+  const expiresAt = getTrustedDeviceExpiry();
+
+  await supabase
+    .from("user_sessions")
+    .update({
+      last_active_at: now,
+      expires_at: expiresAt,
+      revoked_at: null,
+      is_current: true,
+    })
+    .eq("id", trustedSession.id);
+
+  await supabase
+    .from("user_sessions")
+    .update({ is_current: false })
+    .eq("user_id", userId)
+    .neq("id", trustedSession.id);
+
+  return true;
+}
+
+async function trustCurrentAdminDevice(userId: string) {
+  const { browser, os, device } = getBrowserInfo();
+  const sessionToken = generateSessionToken();
+  const now = new Date().toISOString();
+  const expiresAt = getTrustedDeviceExpiry();
+
+  setStoredTrustedDeviceToken(sessionToken);
+
+  await supabase.from("user_sessions").insert({
+    user_id: userId,
+    session_token: sessionToken,
+    browser,
+    os,
+    device_name: device,
+    is_current: true,
+    last_active_at: now,
+    expires_at: expiresAt,
+  });
+
+  await supabase
+    .from("user_sessions")
+    .update({ is_current: false })
+    .eq("user_id", userId)
+    .neq("session_token", sessionToken);
+}
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -26,6 +137,7 @@ export default function AdminLogin() {
   const [isSuspended, setIsSuspended] = useState(false);
   const [show2FADialog, setShow2FADialog] = useState(false);
   const [pendingLoginUserId, setPendingLoginUserId] = useState<string | null>(null);
+  const [pendingLoginEmail, setPendingLoginEmail] = useState("");
 
   useEffect(() => {
     const checkExistingSession = async () => {
@@ -37,17 +149,34 @@ export default function AdminLogin() {
         });
         
         if (isAdmin) {
-          // Check if suspended
-          const { data: profile } = await supabase
-            .from('admin_user_profiles')
-            .select('status')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
+          const [{ data: profile }, { data: factorsData }, { data: aalData }] = await Promise.all([
+            supabase
+              .from('admin_user_profiles')
+              .select('status')
+              .eq('user_id', session.user.id)
+              .maybeSingle(),
+            supabase.auth.mfa.listFactors(),
+            supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+          ]);
           
           if (profile?.status === 'suspended') {
             await supabase.auth.signOut();
             setIsSuspended(true);
             return;
+          }
+
+          const hasVerifiedTotp = factorsData?.totp?.some((factor) => factor.status === 'verified') ?? false;
+          const hasVerifiedMfaSession = aalData?.currentLevel === 'aal2';
+
+          if (hasVerifiedTotp && !hasVerifiedMfaSession) {
+            const hasTrustedDevice = await refreshTrustedAdminDevice(session.user.id);
+
+            if (!hasTrustedDevice) {
+              setPendingLoginUserId(session.user.id);
+              setPendingLoginEmail(session.user.email?.trim().toLowerCase() ?? "");
+              setShow2FADialog(true);
+              return;
+            }
           }
           
           navigate("/admin", { replace: true });
@@ -78,7 +207,6 @@ export default function AdminLogin() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      // Check if email or IP is blocked and rate limited using edge function
       const { data: preCheckResult, error: preCheckError } = await supabase.functions.invoke('log-login-attempt', {
         body: {
           identifier: normalizedEmail,
@@ -106,7 +234,6 @@ export default function AdminLogin() {
       });
 
       if (error) {
-        // Log failed attempt with IP capture via edge function
         await supabase.functions.invoke('log-login-attempt', {
           body: {
             identifier: normalizedEmail,
@@ -127,7 +254,6 @@ export default function AdminLogin() {
         });
 
         if (roleError || !isAdmin) {
-          // Log failed attempt (not admin) with IP capture
           await supabase.functions.invoke('log-login-attempt', {
             body: {
               identifier: normalizedEmail,
@@ -142,7 +268,6 @@ export default function AdminLogin() {
           return;
         }
 
-        // Check if admin is suspended
         const { data: profile } = await supabase
           .from('admin_user_profiles')
           .select('status, mfa_enabled')
@@ -150,7 +275,6 @@ export default function AdminLogin() {
           .maybeSingle();
 
         if (profile?.status === 'suspended') {
-          // Log failed attempt (suspended) with IP capture
           await supabase.functions.invoke('log-login-attempt', {
             body: {
               identifier: normalizedEmail,
@@ -165,19 +289,21 @@ export default function AdminLogin() {
           return;
         }
 
-        // Check if MFA is enabled - verify using Supabase MFA API
         const { data: factorsData } = await supabase.auth.mfa.listFactors();
-        const hasVerifiedTotp = factorsData?.totp?.some(f => f.status === 'verified');
+        const hasVerifiedTotp = factorsData?.totp?.some((factor) => factor.status === 'verified') ?? false;
 
         if (hasVerifiedTotp) {
-          // MFA is required - show verification dialog
-          setPendingLoginUserId(data.user.id);
-          setShow2FADialog(true);
-          setIsLoading(false);
-          return;
+          const hasTrustedDevice = await refreshTrustedAdminDevice(data.user.id);
+
+          if (!hasTrustedDevice) {
+            setPendingLoginUserId(data.user.id);
+            setPendingLoginEmail(normalizedEmail);
+            setShow2FADialog(true);
+            setIsLoading(false);
+            return;
+          }
         }
 
-        // No MFA - proceed with login completion
         await completeLogin(data.user.id, normalizedEmail);
       }
     } catch (err) {
@@ -188,7 +314,6 @@ export default function AdminLogin() {
   };
 
   const completeLogin = async (userId: string, userEmail: string) => {
-    // Log successful login with IP capture via edge function
     await supabase.functions.invoke('log-login-attempt', {
       body: {
         identifier: userEmail,
@@ -197,13 +322,11 @@ export default function AdminLogin() {
       }
     });
 
-    // Update last login timestamp
     await supabase
       .from('admin_user_profiles')
       .update({ last_login_at: new Date().toISOString() })
       .eq('user_id', userId);
 
-    // Log to admin audit log for activity tracking
     await logAdminAction({
       actionType: "admin_login",
       targetType: "admin_user",
@@ -211,25 +334,34 @@ export default function AdminLogin() {
       details: { email: userEmail },
     });
 
+    setPendingLoginUserId(null);
+    setPendingLoginEmail("");
     toast.success("Welcome back, Admin!");
     navigate("/admin", { replace: true });
   };
 
   const handle2FASuccess = async () => {
     setShow2FADialog(false);
+
     if (pendingLoginUserId) {
-      await completeLogin(pendingLoginUserId, email.trim().toLowerCase());
+      try {
+        await trustCurrentAdminDevice(pendingLoginUserId);
+      } catch (error) {
+        console.error("Error saving trusted admin device:", error);
+      }
+
+      await completeLogin(pendingLoginUserId, pendingLoginEmail || email.trim().toLowerCase());
     }
   };
 
   const handle2FACancel = async () => {
     setShow2FADialog(false);
     setPendingLoginUserId(null);
+    setPendingLoginEmail("");
     await supabase.auth.signOut();
     toast.info("Login cancelled");
   };
 
-  // Suspended account view
   if (isSuspended) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
