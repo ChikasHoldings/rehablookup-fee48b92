@@ -312,9 +312,25 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
     enabled: searchQuery.length >= 2 && canViewLeads,
     staleTime: 10000,
   });
+  // Search concierge cases when query changes - only if user has placement permission
+  const { data: searchedCases, isLoading: searchingCases } = useQuery({
+    queryKey: ["admin-search-cases", searchQuery, canViewPlacements],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2 || !canViewPlacements) return [];
+      const { data } = await supabase
+        .from("concierge_inquiries")
+        .select("id, user_name, user_email, status, created_at, desired_location_state")
+        .or(`user_name.ilike.%${searchQuery}%,user_email.ilike.%${searchQuery}%`)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: searchQuery.length >= 2 && canViewPlacements,
+    staleTime: 10000,
+  });
 
-  const isSearching = searchingProviders || searchingLeads;
-  const hasSearchResults = (searchedProviders?.length || 0) > 0 || (searchedLeads?.length || 0) > 0;
+  const isSearching = searchingProviders || searchingLeads || searchingCases;
+  const hasSearchResults = (searchedProviders?.length || 0) > 0 || (searchedLeads?.length || 0) > 0 || (searchedCases?.length || 0) > 0;
 
   // Build notifications from real data
   const notifications: Notification[] = [];
