@@ -19,6 +19,8 @@ import {
   Megaphone,
   FileText,
   Inbox,
+  AlertTriangle,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
@@ -64,13 +66,15 @@ const navEntries: NavEntry[] = [
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews", countKey: "pendingReviews" },
+  { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations" },
   { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
   {
     icon: ShieldCheck,
     label: "Administration",
-    permission: "users", // Only visible to those with admin user management
+    permission: "users",
     items: [
       { to: "/admin/users", icon: ShieldCheck, label: "Admin Staff", permission: "users" },
+      { to: "/admin/back-office", icon: Landmark, label: "Back Office", permission: "back_office" },
       { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
       { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
     ],

@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, Suspense } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell, Headphones, UserSearch, UserPlus, MessageSquare, FileText, Megaphone, ShieldAlert, Inbox } from "lucide-react";
+import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell, Headphones, UserSearch, UserPlus, MessageSquare, FileText, Megaphone, ShieldAlert, Inbox, AlertTriangle, Landmark, Eye, X } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
@@ -15,6 +15,7 @@ import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
 import { preloadAdminPages } from "@/lib/routePrefetch";
 import { scrollContainerToTop } from "@/hooks/useScrollToTop";
+import { useImpersonation } from "@/hooks/useImpersonation";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
@@ -31,9 +32,11 @@ const mobileNavItems = [
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", permission: "reviews" },
+  { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations" },
   { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
   { to: "/admin/notifications", icon: Bell, label: "Notifications", permission: "dashboard" },
   { to: "/admin/users", icon: ShieldAlert, label: "Admin Staff", permission: "users" },
+  { to: "/admin/back-office", icon: Landmark, label: "Back Office", permission: "back_office" },
   { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
 ];
 
@@ -72,6 +75,7 @@ export function AdminShell() {
     isInitialized,
     logout 
   } = useAdminAuth();
+  const { isImpersonating, targetName, targetRole, stopImpersonating } = useImpersonation();
   const mainContentRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -87,12 +91,9 @@ export function AdminShell() {
   // Scroll to top and prefetch adjacent pages on route change
   useEffect(() => {
     scrollContainerToTop(mainContentRef.current);
-    // Prefetch adjacent pages after the current page has loaded
     prefetchAdjacentPages(location.pathname);
   }, [location.pathname]);
 
-  // NEVER show skeleton - render shell immediately
-  // Redirects happen in hook, render null during redirect
   if (!isAdmin) {
     return null;
   }
@@ -107,6 +108,23 @@ export function AdminShell() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 isolate" data-shell>
+      {/* Impersonation Banner */}
+      {isImpersonating && (
+        <div className="bg-amber-400 text-amber-950 px-4 py-2 flex items-center justify-center gap-3 text-sm font-medium z-[60] relative">
+          <Eye className="h-4 w-4" />
+          <span>Viewing as <strong>{targetName}</strong> ({targetRole?.replace('_', ' ')})</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={stopImpersonating}
+            className="h-6 px-2 text-amber-950 hover:bg-amber-500/50 ml-2"
+          >
+            <X className="h-3 w-3 mr-1" />
+            Exit
+          </Button>
+        </div>
+      )}
+
       {/* Force password change dialog */}
       <ForcePasswordChangeDialog 
         open={forcePasswordChange} 
