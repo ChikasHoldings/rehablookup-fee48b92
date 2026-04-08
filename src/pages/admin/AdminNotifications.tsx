@@ -150,6 +150,7 @@ const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "secu
 export default function AdminNotifications() {
   const navigate = useNavigate();
   const { logError } = useAdminErrorHandler("AdminNotifications");
+  const { adminRole, isSuperAdmin, hasPermission } = useAdminAuth();
   const {
     notifications: globalNotifications,
     unreadCount: globalUnreadCount,
@@ -176,6 +177,37 @@ export default function AdminNotifications() {
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const isLoading = globalLoading || userLoading;
+
+  // Role-based notification type filtering
+  // Advisors only see placement-related and system notifications
+  // Customer reps see reviews, support, leads
+  // Managers see everything except security-admin-only
+  const isRelevantNotification = useMemo(() => {
+    if (isSuperAdmin) return () => true;
+    
+    const ADVISOR_TYPES = new Set([
+      "welcome", "system", "placement_assigned", "placement_update",
+      "concierge_update", "tour_request", "new_review", "review_disputed",
+    ]);
+    const LEAD_TYPES = new Set(["new_lead", "lead_assigned"]);
+    const SECURITY_ADMIN_TYPES = new Set([
+      "brute_force", "brute_force_alert", "login_alert", 
+      "security_event", "security_block", "security_unblock",
+    ]);
+    
+    return (type: string) => {
+      if (adminRole === "advisor") {
+        return ADVISOR_TYPES.has(type) || !LEAD_TYPES.has(type) && !SECURITY_ADMIN_TYPES.has(type);
+      }
+      // Customer reps don't see security-admin types
+      if (adminRole === "customer_rep") {
+        return !SECURITY_ADMIN_TYPES.has(type);
+      }
+      return true;
+    };
+  }, [isSuperAdmin, adminRole]);
 
   const isLoading = globalLoading || userLoading;
 
