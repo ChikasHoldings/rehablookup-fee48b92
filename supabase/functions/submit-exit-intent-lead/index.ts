@@ -33,6 +33,8 @@ Deno.serve(async (req) => {
     const email = String(body.email || "").trim().toLowerCase().slice(0, 254);
     const phone = body.phone ? sanitize(String(body.phone), 30).replace(/[^\d+\-() ]/g, "") : null;
     const pageUrl = sanitize(String(body.pageUrl || "/"), 500);
+    const treatmentType = sanitize(String(body.treatmentType || ""), 100);
+    const preferredState = body.preferredState ? sanitize(String(body.preferredState), 100) : null;
     const fullName = `${firstName} ${lastName}`.trim();
 
     if (!firstName || firstName.length < 1) {
@@ -81,6 +83,8 @@ Deno.serve(async (req) => {
         message: `Captured from: ${pageUrl}`,
         preferred_contact: "email",
         inquiry_type: "request_info",
+        level_of_care: treatmentType || null,
+        location_city_state: preferredState || null,
       })
       .select("id")
       .single();
