@@ -611,19 +611,28 @@ export default function AdminProviders() {
           ) : providers && providers.length > 0 ? (
             <div className="divide-y">
               {providers.map((provider) => (
-                <ProviderListItem
-                  key={provider.id}
-                  provider={provider}
-                  isPro={!!proSubscriptions?.[provider.id]}
-                  leadCount={leadCounts?.[provider.id] || 0}
-                  onOpenDetail={openProviderDetail}
-                  onStatusChange={handleStatusChange}
-                  onToggleVerified={handleToggleVerified}
-                  onToggleFeatured={handleToggleFeatured}
-                  onSuspend={handleSuspend}
-                  onReactivate={handleReactivate}
-                  onDelete={handleDelete}
-                />
+                <div key={provider.id} className="flex items-center">
+                  <div className="pl-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedIds.has(provider.id)}
+                      onCheckedChange={() => toggleSelect(provider.id)}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <ProviderListItem
+                      provider={provider}
+                      isPro={!!proSubscriptions?.[provider.id]}
+                      leadCount={leadCounts?.[provider.id] || 0}
+                      onOpenDetail={openProviderDetail}
+                      onStatusChange={handleStatusChange}
+                      onToggleVerified={handleToggleVerified}
+                      onToggleFeatured={handleToggleFeatured}
+                      onSuspend={handleSuspend}
+                      onReactivate={handleReactivate}
+                      onDelete={handleDelete}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
