@@ -26,31 +26,31 @@ export function useAdminSidebarCounts() {
       ] = await Promise.all([
         supabase
           .from("leads")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("status", "new"),
         supabase
           .from("facilities")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("status", "pending"),
         supabase
           .from("support_tickets")
-          .select("*", { count: "exact", head: true })
-          .in("status", ["open", "in_progress"]),
+          .select("id", { count: "exact", head: true })
+          .in("status", ["new", "open", "in_progress"]),
         supabase
           .from("facility_reviews")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("status", "pending"),
         supabase
           .from("concierge_inquiries")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]),
         supabase
           .from("marketing_leads")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("status", "new"),
         supabase
           .from("admin_escalations")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .in("status", ["open", "in_progress"]),
       ]);
 
@@ -64,7 +64,7 @@ export function useAdminSidebarCounts() {
         openEscalations: escalationsResult.count || 0,
       };
     },
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refetch every minute
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
   });
 }
