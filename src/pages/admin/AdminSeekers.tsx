@@ -489,7 +489,7 @@ export default function AdminSeekers() {
                 className="pl-9"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Select value={verificationFilter} onValueChange={(v) => handleFilterChange(v as typeof verificationFilter)}>
                 <SelectTrigger className="w-full sm:w-[170px]">
                   <SelectValue placeholder="Verification" />
@@ -500,6 +500,16 @@ export default function AdminSeekers() {
                   <SelectItem value="unverified">Not Verified</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 h-10">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+              {selectedIds.size > 0 && (
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)} className="gap-1.5 h-10">
+                  <Trash2 className="h-4 w-4" />
+                  Delete ({selectedIds.size})
+                </Button>
+              )}
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearAllFilters} className="gap-1.5 text-muted-foreground hover:text-foreground h-10">
                   <X className="h-3.5 w-3.5" />
