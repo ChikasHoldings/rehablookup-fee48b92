@@ -820,6 +820,12 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
           {(!searchQuery || searchQuery.length < 2) && (
             <>
               <CommandGroup heading="Quick Actions">
+                {canViewPlacements && (
+                  <CommandItem onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); }}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    View Placement Cases
+                  </CommandItem>
+                )}
                 {canViewProviders && (
                   <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
                     <Building2 className="h-4 w-4 mr-2" />
