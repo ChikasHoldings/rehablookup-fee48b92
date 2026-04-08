@@ -39,6 +39,8 @@ export function ExitIntentCapture() {
   const isPhoneValid = !phone || PHONE_REGEX.test(phone.trim());
   const canSubmit = isFirstNameValid && isLastNameValid && isEmailValid && isPhoneValid;
 
+  if (isExcluded) return null;
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setFormState("loading");
