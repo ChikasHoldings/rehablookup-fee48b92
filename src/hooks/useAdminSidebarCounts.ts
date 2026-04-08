@@ -8,13 +8,13 @@ export interface AdminSidebarCounts {
   pendingReviews: number;
   placements: number;
   marketingLeads: number;
+  openEscalations: number;
 }
 
 export function useAdminSidebarCounts() {
   return useQuery({
     queryKey: ["admin-sidebar-counts"],
     queryFn: async (): Promise<AdminSidebarCounts> => {
-      // Fetch all counts in parallel
       const [
         leadsResult,
         providersResult,
@@ -22,42 +22,36 @@ export function useAdminSidebarCounts() {
         reviewsResult,
         placementsResult,
         marketingResult,
+        escalationsResult,
       ] = await Promise.all([
-        // New leads (status = "new")
         supabase
           .from("leads")
           .select("*", { count: "exact", head: true })
           .eq("status", "new"),
-        
-        // Pending providers
         supabase
           .from("facilities")
           .select("*", { count: "exact", head: true })
           .eq("status", "pending"),
-        
-        // Open support tickets
         supabase
           .from("support_tickets")
           .select("*", { count: "exact", head: true })
           .in("status", ["open", "in_progress"]),
-        
-        // Pending reviews
         supabase
           .from("facility_reviews")
           .select("*", { count: "exact", head: true })
           .eq("status", "pending"),
-        
-        // Active placements (concierge inquiries needing attention)
         supabase
           .from("concierge_inquiries")
           .select("*", { count: "exact", head: true })
           .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]),
-        
-        // Marketing leads (new/uncontacted)
         supabase
           .from("marketing_leads")
           .select("*", { count: "exact", head: true })
           .eq("status", "new"),
+        supabase
+          .from("admin_escalations")
+          .select("*", { count: "exact", head: true })
+          .in("status", ["open", "in_progress"]),
       ]);
 
       return {
@@ -67,6 +61,7 @@ export function useAdminSidebarCounts() {
         pendingReviews: reviewsResult.count || 0,
         placements: placementsResult.count || 0,
         marketingLeads: marketingResult.count || 0,
+        openEscalations: escalationsResult.count || 0,
       };
     },
     staleTime: 30 * 1000, // 30 seconds

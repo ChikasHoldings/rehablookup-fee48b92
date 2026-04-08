@@ -5674,15 +5674,18 @@ export type Database = {
         Returns: {
           admin_role: string
           avatar_url: string
+          commission_rate: number
           created_at: string
           display_name: string
           email: string
+          employment_type: string
           first_name: string
           force_password_change: boolean
           last_login_at: string
           last_name: string
           mfa_enabled: boolean
           mfa_skip: boolean
+          phone: string
           status: string
           user_id: string
         }[]
