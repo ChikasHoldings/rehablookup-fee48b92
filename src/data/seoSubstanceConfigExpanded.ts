@@ -10,7 +10,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
     slug: "alcohol-addiction-treatment",
     title: "Alcohol Addiction Treatment",
     metaTitle: "Alcohol Addiction Treatment Programs — Recovery Help",
-    metaDescription: "Find accredited alcohol addiction treatment programs offering medical detox, behavioral therapy, and long-term recovery support. Insurance accepted. Get help today.",
+    metaDescription: "Find accredited alcohol addiction treatment programs offering medical detox, behavioral therapy, and long-term recovery support. Get help today.",
     heroSubtitle: "Comprehensive alcohol addiction treatment combining medical detox, evidence-based therapy, and sustained recovery support for lasting sobriety.",
     conditionName: "Alcohol Use Disorder",
     filterKeys: ["alcohol", "detox", "inpatient"],
