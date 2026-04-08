@@ -29,9 +29,11 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const firstName = sanitize(String(body.firstName || ""), 100);
+    const lastName = sanitize(String(body.lastName || ""), 100);
     const email = String(body.email || "").trim().toLowerCase().slice(0, 254);
     const phone = body.phone ? sanitize(String(body.phone), 30).replace(/[^\d+\-() ]/g, "") : null;
     const pageUrl = sanitize(String(body.pageUrl || "/"), 500);
+    const fullName = `${firstName} ${lastName}`.trim();
 
     if (!firstName || firstName.length < 1) {
       return new Response(JSON.stringify({ error: "First name is required" }), {
