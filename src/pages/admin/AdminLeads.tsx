@@ -508,7 +508,33 @@ export default function AdminLeads() {
     },
   });
 
-  // CSV Export handler
+  // Delete lead handler
+  const handleDeleteLead = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("admin-delete-lead", {
+        body: { leadIds: [deleteTarget.id] },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      invalidateLeadsQueries();
+      toast.success("Lead deleted permanently");
+      setDeleteTarget(null);
+    } catch (err) {
+      logError("delete_lead", err);
+      toast.error("Failed to delete lead");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+
   const handleExportCSV = useCallback(() => {
     if (!leads || leads.length === 0) {
       toast.error("No leads to export");
