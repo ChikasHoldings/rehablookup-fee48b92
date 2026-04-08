@@ -258,127 +258,160 @@ export default function AdminConcierge() {
             activeStatus={statusFilter}
           />
 
-          <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b gap-2">
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:flex-none">
-                  <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name, email, or phone..."
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
-                  />
-                </div>
-                {isAdvisor && (
-                  <Button
-                    variant={advisorFilter === "mine" ? "default" : "outline"}
-                    size="sm"
-                    className="h-9 text-xs whitespace-nowrap"
-                    onClick={() => setAdvisorFilter(advisorFilter === "mine" ? "all" : "mine")}
-                  >
-                    <Filter className="h-3.5 w-3.5 mr-1.5" />
-                    {advisorFilter === "mine" ? "My Cases" : "All Cases"}
-                  </Button>
-                )}
+          {/* View Toggle + Search Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or phone..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
+                />
               </div>
-              <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
-                {filteredCases?.length || 0} domestic cases
-              </span>
-            </div>
-            <div className="p-3 sm:p-4">
-              {isLoading ? (
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-48" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-6 w-16" />
-                    </div>
-                  ))}
-                </div>
-              ) : filteredCases?.length === 0 ? (
-                <div className="text-center py-12">
-                  <HeartHandshake className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground font-medium">No cases found</p>
-                  <p className="text-sm text-muted-foreground/70 mt-1">Try adjusting your filters or search</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b text-left text-sm text-muted-foreground">
-                        <th className="pb-3 font-medium min-w-[120px]">Name</th>
-                        <th className="pb-3 font-medium min-w-[180px]">Contact</th>
-                        <th className="pb-3 font-medium min-w-[100px]">Care Type</th>
-                        <th className="pb-3 font-medium min-w-[80px]">Location</th>
-                        <th className="pb-3 font-medium min-w-[100px]">Status</th>
-                        <th className="pb-3 font-medium min-w-[80px]">Payment</th>
-                        <th className="pb-3 font-medium min-w-[100px]">Advisor</th>
-                        <th className="pb-3 font-medium min-w-[60px]">Matches</th>
-                        <th className="pb-3 font-medium min-w-[90px]">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredCases?.map((c) => (
-                        <tr
-                          key={c.id}
-                          className="border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() => setSelectedCaseId(c.id)}
-                        >
-                          <td className="py-3 font-medium">{c.user_name}</td>
-                          <td className="py-3">
-                            <div className="text-sm">{c.user_email}</div>
-                            <div className="text-xs text-muted-foreground">{c.user_phone}</div>
-                          </td>
-                          <td className="py-3">{c.level_of_care || "—"}</td>
-                          <td className="py-3">
-                            {c.desired_location_state || c.preferred_state || "Any"}
-                          </td>
-                          <td className="py-3">
-                            <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
-                              {STATUS_CONFIG[c.status]?.label || c.status}
-                            </Badge>
-                          </td>
-                          <td className="py-3">
-                            <Badge 
-                              variant="outline" 
-                              className={
-                                isPaid(c.payment_status)
-                                  ? "bg-success/10 text-success border-success/30" 
-                                  : "bg-destructive/10 text-destructive border-destructive/30"
-                              }
-                            >
-                              {isPaid(c.payment_status) ? '✓ Paid' : '⚠ Unpaid'}
-                            </Badge>
-                          </td>
-                          <td className="py-3 text-sm text-muted-foreground">
-                            {getAdvisorName(c.assigned_advisor_id)}
-                          </td>
-                          <td className="py-3">
-                            <div className="flex items-center gap-1 tabular-nums">
-                              {c.match_count || 0}
-                              {c.match_count && c.match_count > 0 && (
-                                <UserCheck className="h-4 w-4 text-success" />
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 text-sm text-muted-foreground">
-                            {format(new Date(c.created_at), "MMM d, yyyy")}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              {isAdvisor && (
+                <Button
+                  variant={advisorFilter === "mine" ? "default" : "outline"}
+                  size="sm"
+                  className="h-9 text-xs whitespace-nowrap"
+                  onClick={() => setAdvisorFilter(advisorFilter === "mine" ? "all" : "mine")}
+                >
+                  <Filter className="h-3.5 w-3.5 mr-1.5" />
+                  {advisorFilter === "mine" ? "My Cases" : "All Cases"}
+                </Button>
               )}
             </div>
-          </Card>
-        </TabsContent>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
+                {filteredCases?.length || 0} cases
+              </span>
+              <div className="flex items-center border rounded-md overflow-hidden">
+                <Button
+                  variant={viewMode === "pipeline" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-8 px-2.5 rounded-none"
+                  onClick={() => setViewMode("pipeline")}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant={viewMode === "table" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-8 px-2.5 rounded-none"
+                  onClick={() => setViewMode("table")}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          </div>
 
-        <TabsContent value="international">
+          {/* Pipeline View */}
+          {viewMode === "pipeline" ? (
+            <PlacementPipelineBoard
+              cases={filteredCases}
+              isLoading={isLoading}
+              onCaseClick={(id) => setSelectedCaseId(id)}
+              onRefresh={() => refetch()}
+              advisorNames={advisorNames}
+              isAdvisor={isAdvisor}
+            />
+          ) : (
+            /* Table View */
+            <Card>
+              <div className="p-3 sm:p-4">
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredCases?.length === 0 ? (
+                  <div className="text-center py-12">
+                    <HeartHandshake className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground font-medium">No cases found</p>
+                    <p className="text-sm text-muted-foreground/70 mt-1">Try adjusting your filters or search</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b text-left text-sm text-muted-foreground">
+                          <th className="pb-3 font-medium min-w-[120px]">Name</th>
+                          <th className="pb-3 font-medium min-w-[180px]">Contact</th>
+                          <th className="pb-3 font-medium min-w-[100px]">Care Type</th>
+                          <th className="pb-3 font-medium min-w-[80px]">Location</th>
+                          <th className="pb-3 font-medium min-w-[100px]">Status</th>
+                          <th className="pb-3 font-medium min-w-[80px]">Payment</th>
+                          <th className="pb-3 font-medium min-w-[100px]">Advisor</th>
+                          <th className="pb-3 font-medium min-w-[60px]">Matches</th>
+                          <th className="pb-3 font-medium min-w-[90px]">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCases?.map((c) => (
+                          <tr
+                            key={c.id}
+                            className="border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
+                            onClick={() => setSelectedCaseId(c.id)}
+                          >
+                            <td className="py-3 font-medium">{c.user_name}</td>
+                            <td className="py-3">
+                              <div className="text-sm">{c.user_email}</div>
+                              <div className="text-xs text-muted-foreground">{c.user_phone}</div>
+                            </td>
+                            <td className="py-3">{c.level_of_care || "—"}</td>
+                            <td className="py-3">
+                              {c.desired_location_state || c.preferred_state || "Any"}
+                            </td>
+                            <td className="py-3">
+                              <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
+                                {STATUS_CONFIG[c.status]?.label || c.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3">
+                              <Badge 
+                                variant="outline" 
+                                className={
+                                  isPaid(c.payment_status)
+                                    ? "bg-success/10 text-success border-success/30" 
+                                    : "bg-destructive/10 text-destructive border-destructive/30"
+                                }
+                              >
+                                {isPaid(c.payment_status) ? '✓ Paid' : '⚠ Unpaid'}
+                              </Badge>
+                            </td>
+                            <td className="py-3 text-sm text-muted-foreground">
+                              {getAdvisorName(c.assigned_advisor_id)}
+                            </td>
+                            <td className="py-3">
+                              <div className="flex items-center gap-1 tabular-nums">
+                                {c.match_count || 0}
+                                {c.match_count && c.match_count > 0 && (
+                                  <UserCheck className="h-4 w-4 text-success" />
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 text-sm text-muted-foreground">
+                              {format(new Date(c.created_at), "MMM d, yyyy")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+        </TabsContent>
           <InternationalCasesTab />
         </TabsContent>
 
