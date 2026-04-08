@@ -3,7 +3,7 @@
   "short_name": "RehabLookup",
   "description": "Find Trusted Addiction Treatment Centers Near You",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#f8fafc",
   "theme_color": "#1B365D",
   "icons": [
