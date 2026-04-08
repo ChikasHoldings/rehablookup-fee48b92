@@ -66,7 +66,7 @@ const navEntries: NavEntry[] = [
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews", countKey: "pendingReviews" },
-  { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations" },
+  { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations", countKey: "openEscalations" },
   { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
   {
     icon: ShieldCheck,
