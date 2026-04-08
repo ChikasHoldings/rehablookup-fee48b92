@@ -41,7 +41,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
   function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }, ref) {
-  const { adminRole, isSuperAdmin } = useAdminAuth();
+  const { adminRole, isSuperAdmin, user } = useAdminAuth();
+  const queryClient = useQueryClient();
   const isAdvisor = adminRole === "advisor";
   const canManageBilling = !isAdvisor;
   const canManageActions = true;
@@ -71,6 +72,32 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
       });
     }
   }, [open, caseData?.id, caseData?.status]);
+
+  // Advance status via stepper
+  const advanceStatus = useMutation({
+    mutationFn: async (nextStatus: string) => {
+      if (!caseData) throw new Error("No case data");
+      const { error } = await supabase
+        .from("concierge_inquiries")
+        .update({ status: nextStatus })
+        .eq("id", caseData.id);
+      if (error) throw error;
+
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseData.id,
+        event_type: "status_changed",
+        event_data: { from: caseData.status, to: nextStatus, via: "stepper" },
+        actor_id: user?.id,
+        actor_type: isAdvisor ? "advisor" : "admin",
+      });
+    },
+    onSuccess: () => {
+      toast.success("Status advanced");
+      queryClient.invalidateQueries({ queryKey: ["case-events", caseData?.id] });
+      onRefresh();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   if (!caseData) return null;
 
