@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Settings2,
   Star,
+  Download,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
