@@ -78,6 +78,7 @@ const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-guides/Reh
 const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-guides/TreatmentCenterPatientAcquisition"));
 const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-guides/BehavioralHealthLeadGeneration"));
 const RehabCenterSEO = lazy(() => import("./pages/provider-guides/RehabCenterSEO"));
+const MarketingLanding = lazy(() => import("./pages/MarketingLanding"));
 const DrugRehabAdvertising = lazy(() => import("./pages/provider-guides/DrugRehabAdvertising"));
 const RehabCensusManagement = lazy(() => import("./pages/provider-guides/RehabCensusManagement"));
 const TreatmentCenterReferralSources = lazy(() => import("./pages/provider-guides/TreatmentCenterReferralSources"));
