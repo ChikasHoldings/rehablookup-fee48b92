@@ -412,6 +412,8 @@ export default function AdminConcierge() {
             </Card>
           )}
         </TabsContent>
+
+        <TabsContent value="international">
           <InternationalCasesTab />
         </TabsContent>
 
