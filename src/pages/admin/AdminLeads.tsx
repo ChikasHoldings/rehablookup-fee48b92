@@ -436,6 +436,7 @@ export default function AdminLeads() {
   const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
     setter(value);
     setCurrentPage(1);
+    setSelectedIds(new Set());
   };
 
   // Fetch facilities for display
