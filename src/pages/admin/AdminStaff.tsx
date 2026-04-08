@@ -248,6 +248,13 @@ export default function AdminStaff() {
                   <span className="truncate">{user.email}</span>
                 </div>
 
+                {user.employment_type && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/50 text-muted-foreground border-transparent w-fit">
+                    {user.employment_type === "va" ? "VA" : user.employment_type === "contractor" ? "Contractor" : "Employee"}
+                    {user.employment_type === "contractor" && user.commission_rate ? ` · ${user.commission_rate}%` : ""}
+                  </Badge>
+                )}
+
                 <div className="flex items-center gap-3 pt-0.5">
                   <Tooltip>
                     <TooltipTrigger asChild>
