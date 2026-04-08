@@ -15,6 +15,7 @@ import { toast } from "sonner";
 interface TwoFactorEnforcementDialogProps {
   open: boolean;
   onSuccess: () => void;
+  onSkip?: () => void;
 }
 
 type SetupStep = "intro" | "qr" | "verify" | "recovery";
@@ -22,6 +23,7 @@ type SetupStep = "intro" | "qr" | "verify" | "recovery";
 export function TwoFactorEnforcementDialog({
   open,
   onSuccess,
+  onSkip,
 }: TwoFactorEnforcementDialogProps) {
   const [step, setStep] = useState<SetupStep>("intro");
   const [isLoading, setIsLoading] = useState(false);
