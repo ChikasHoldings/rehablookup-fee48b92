@@ -201,14 +201,16 @@ export default function MarketingLanding() {
         {/* Lead Intake Form Section */}
         <section className="py-8 sm:py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-2xl">
-            <div ref={formRef} className="bg-card rounded-xl sm:rounded-2xl shadow-xl border border-border/40 overflow-hidden">
-              {/* Form Header */}
-              <div className="bg-primary/5 border-b border-border/20 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Zap className="h-4 w-4 text-accent" />
-                  Takes less than 2 minutes
-                </div>
+            <div className="text-center mb-5 sm:mb-6">
+              <div className="inline-flex items-center gap-1.5 bg-accent/10 text-accent px-3 py-1 rounded-full text-xs font-medium mb-2">
+                <Zap className="h-3 w-3" />
+                Takes less than 2 minutes
               </div>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground [text-wrap:balance]">
+                Start Your Free Assessment
+              </h2>
+            </div>
+            <div ref={formRef} className="bg-card rounded-xl sm:rounded-2xl shadow-xl border border-border/40 overflow-hidden">
               <LeadIntakeForm
                 onCustomSubmit={handleMarketingSubmit}
                 renderSuccess={() => null}
