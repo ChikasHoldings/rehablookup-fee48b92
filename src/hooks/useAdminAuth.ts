@@ -108,7 +108,10 @@ export function useAdminAuth() {
   const queryClient = useQueryClient();
   const hasInitialized = useRef(false);
   // Optimistic flag: once password change is cleared locally, don't let re-fetch overwrite it
-  const passwordChangeCleared = useRef(false);
+  // Also check sessionStorage so it survives the USER_UPDATED event race within the same session
+  const passwordChangeCleared = useRef(
+    sessionStorage.getItem('rl_pwd_change_cleared') === '1'
+  );
 
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     try {
@@ -198,10 +201,9 @@ export function useAdminAuth() {
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from("admin_user_profiles")
-        .update({ mfa_enabled: true })
-        .eq("user_id", user.id);
+      const { error } = await supabase.rpc("complete_admin_mfa_setup", {
+        p_user_id: user.id,
+      });
 
       if (!error) {
         setRequireMfaSetup(false);
@@ -221,15 +223,22 @@ export function useAdminAuth() {
     
     // Set optimistic flag FIRST so any concurrent re-fetch won't overwrite
     passwordChangeCleared.current = true;
+    // Persist in sessionStorage so it survives USER_UPDATED event race
+    sessionStorage.setItem('rl_pwd_change_cleared', '1');
     setForcePasswordChange(false);
-    setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
+    setAdminProfile((prev) => prev ? { ...prev, force_password_change: false, status: 'active' } : null);
     
     try {
-      await supabase
-        .from("admin_user_profiles")
-        .update({ force_password_change: false, temp_password_hash: null, temp_password_expires_at: null })
-        .eq("user_id", user.id);
-    } catch {}
+      // Use security-definer RPC to bypass RLS restrictions on security fields
+      const { error } = await supabase.rpc("complete_admin_password_setup", {
+        p_user_id: user.id,
+      });
+      if (error) {
+        console.error("Failed to complete password setup:", error);
+      }
+    } catch (err) {
+      console.error("Error completing password setup:", err);
+    }
   }, [user]);
 
   const hasPermission = useCallback((permissionKey: string): boolean => {
@@ -353,6 +362,9 @@ export function useAdminAuth() {
           setIsInitialized(true);
           clearSentryUser();
           clearAdminCache();
+          // Clear password-change session flag on logout
+          sessionStorage.removeItem('rl_pwd_change_cleared');
+          passwordChangeCleared.current = false;
           navigate("/admin/login", { replace: true });
           return;
         }
