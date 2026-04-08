@@ -53,6 +53,7 @@ export function AdvisorDashboard() {
   const queryClient = useQueryClient();
   const { user, hasPermission } = useAdminAuth();
   const [caseView, setCaseView] = useState<CaseView>("mine");
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   const advisorId = user?.id;
 
