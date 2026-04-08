@@ -605,11 +605,16 @@ export default function AdminAnalytics() {
         return lDate === dateStr;
       }) || [];
 
+      const qualifiedLeads = leads.filter(l => l.status === "qualified" || l.status === "converted" || l.status === "contacted").length;
+      const unqualifiedLeads = leads.filter(l => l.status === "new" || l.status === "rejected" || l.status === "duplicate" || l.status === "lost").length;
+
       return {
         date: grouping === "monthly" ? format(date, "MMM yyyy") : format(date, "MMM dd"),
         visitors: views,
         clicks,
         leads: leads.length,
+        qualifiedLeads,
+        unqualifiedLeads,
       };
     });
   }, [dateRange, grouping, viewsData, interactionsData, leadsData]);
