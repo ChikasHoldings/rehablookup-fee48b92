@@ -1,5 +1,4 @@
 import React from "react";
-import * as Sentry from "@sentry/react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 
@@ -24,7 +23,10 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("GlobalErrorBoundary caught an error:", error, errorInfo);
-    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
+    // Dynamically import Sentry to avoid bundling 231KB in critical path
+    import("@sentry/react").then((Sentry) => {
+      Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
+    }).catch(() => { /* Sentry not available */ });
   }
 
   handleRefresh = () => {

@@ -1,5 +1,4 @@
 import React, { Suspense, lazy, useEffect } from "react";
-import * as Sentry from "@sentry/react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -355,7 +354,10 @@ const AppInner = () => {
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
       console.error("Unhandled rejection:", event.reason);
-      Sentry.captureException(event.reason || new Error("Unhandled promise rejection"));
+      import("@sentry/react").then((Sentry) => {
+        Sentry.captureException(event.reason || new Error("Unhandled promise rejection"));
+      }).catch(() => {});
+
       // Prevent default browser error handling which can crash/blank the app
       event.preventDefault();
     };

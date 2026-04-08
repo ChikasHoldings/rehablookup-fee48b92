@@ -1,19 +1,21 @@
-import * as Sentry from "@sentry/react";
+// Lazy Sentry helpers - Sentry is loaded dynamically to avoid 231KB in critical path
+
+const getSentry = () => import("@sentry/react");
 
 export const setSentryUser = (user: {
   id: string;
   email?: string;
   role?: "admin" | "provider";
 }) => {
-  Sentry.setUser({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-  });
+  getSentry().then((Sentry) => {
+    Sentry.setUser({ id: user.id, email: user.email, role: user.role });
+  }).catch(() => {});
 };
 
 export const clearSentryUser = () => {
-  Sentry.setUser(null);
+  getSentry().then((Sentry) => {
+    Sentry.setUser(null);
+  }).catch(() => {});
 };
 
 export const captureError = (
@@ -24,32 +26,34 @@ export const captureError = (
     extra?: Record<string, unknown>;
   }
 ) => {
-  Sentry.captureException(error, {
-    tags: {
-      panel: context?.panel,
-      page: context?.page,
-    },
-    extra: context?.extra,
-  });
+  getSentry().then((Sentry) => {
+    Sentry.captureException(error, {
+      tags: { panel: context?.panel, page: context?.page },
+      extra: context?.extra,
+    });
+  }).catch(() => {});
 };
 
-// Breadcrumb helpers for tracking user actions
 export const addNavigationBreadcrumb = (from: string, to: string) => {
-  Sentry.addBreadcrumb({
-    category: "navigation",
-    message: `Navigated from ${from} to ${to}`,
-    level: "info",
-    data: { from, to },
-  });
+  getSentry().then((Sentry) => {
+    Sentry.addBreadcrumb({
+      category: "navigation",
+      message: `Navigated from ${from} to ${to}`,
+      level: "info",
+      data: { from, to },
+    });
+  }).catch(() => {});
 };
 
 export const addClickBreadcrumb = (element: string, details?: Record<string, unknown>) => {
-  Sentry.addBreadcrumb({
-    category: "ui.click",
-    message: `Clicked: ${element}`,
-    level: "info",
-    data: details,
-  });
+  getSentry().then((Sentry) => {
+    Sentry.addBreadcrumb({
+      category: "ui.click",
+      message: `Clicked: ${element}`,
+      level: "info",
+      data: details,
+    });
+  }).catch(() => {});
 };
 
 export const addApiCallBreadcrumb = (
@@ -58,19 +62,23 @@ export const addApiCallBreadcrumb = (
   status?: number,
   error?: string
 ) => {
-  Sentry.addBreadcrumb({
-    category: "api",
-    message: `${method} ${endpoint}`,
-    level: error ? "error" : "info",
-    data: { endpoint, method, status, error },
-  });
+  getSentry().then((Sentry) => {
+    Sentry.addBreadcrumb({
+      category: "api",
+      message: `${method} ${endpoint}`,
+      level: error ? "error" : "info",
+      data: { endpoint, method, status, error },
+    });
+  }).catch(() => {});
 };
 
 export const addFormBreadcrumb = (formName: string, action: "submit" | "validation_error", details?: Record<string, unknown>) => {
-  Sentry.addBreadcrumb({
-    category: "form",
-    message: `${formName}: ${action}`,
-    level: action === "validation_error" ? "warning" : "info",
-    data: details,
-  });
+  getSentry().then((Sentry) => {
+    Sentry.addBreadcrumb({
+      category: "form",
+      message: `${formName}: ${action}`,
+      level: action === "validation_error" ? "warning" : "info",
+      data: details,
+    });
+  }).catch(() => {});
 };
