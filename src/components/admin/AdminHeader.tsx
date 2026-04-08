@@ -466,7 +466,9 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
               onClick={() => setSearchOpen(true)}
             >
               <Search className="h-4 w-4 mr-3 text-slate-300" />
-              <span className="text-slate-300">Search providers, leads, pages...</span>
+              <span className="text-slate-300">
+                {isAdvisor ? "Search cases, pages..." : "Search providers, leads, pages..."}
+              </span>
               <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden h-6 select-none items-center gap-1 rounded-md border border-white/30 bg-slate-700 px-2 font-mono text-[11px] font-medium text-slate-300 sm:flex">
                 ⌘K
               </kbd>
