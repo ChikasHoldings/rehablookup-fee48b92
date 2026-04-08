@@ -163,7 +163,7 @@ export function ExitIntentCapture() {
               </div>
               <div>
                 <label htmlFor="exit-phone" className="text-sm font-medium text-foreground mb-1 block">
-                  Phone <span className="text-muted-foreground text-xs">(optional)</span>
+                  Phone
                 </label>
                 <ValidatedInput
                   id="exit-phone"
