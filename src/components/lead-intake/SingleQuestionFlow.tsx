@@ -655,7 +655,7 @@ export function SingleQuestionFlow({
   };
   
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div ref={formTopRef} className="w-full max-w-lg mx-auto">
       {/* Progress bar */}
       <div className="px-4 sm:px-6 pt-4 sm:pt-5">
         <div className="flex items-center justify-between mb-1.5">
