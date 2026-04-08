@@ -360,3 +360,32 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
     </div>
   );
 }
+
+function EscalateCardInline({ caseData }: { caseData: ConciergeInquiry }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Card className="border-orange-300/50">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Need help with this case?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Escalate to a Manager or Super Admin</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+              <AlertTriangle className="h-4 w-4 mr-1.5" />
+              Escalate
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <EscalationDialog
+        open={open}
+        onOpenChange={setOpen}
+        relatedType="concierge_inquiry"
+        relatedId={caseData.id}
+        defaultSubject={`Escalation: Case #${caseData.id.slice(0, 8)} — ${caseData.user_name}`}
+      />
+    </>
+  );
+}
