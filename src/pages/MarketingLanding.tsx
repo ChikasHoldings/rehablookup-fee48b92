@@ -228,9 +228,9 @@ export default function MarketingLanding() {
 
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               {[
-                { num: "1", title: "Tell Us Your Needs", desc: "Answer a few questions about your situation, insurance, and preferences.", time: "~60 sec" },
-                { num: "2", title: "Get Matched Instantly", desc: "We'll show you verified centers that accept your coverage.", time: "Instant" },
-                { num: "3", title: "Connect With Confidence", desc: "Request info from facilities — they'll reach out at your preferred time.", time: "Within 24 hrs" },
+                { num: "1", title: "Share Your Situation", desc: "Tell us about your needs, location, and insurance — everything stays private.", time: "~60 sec" },
+                { num: "2", title: "See Your Matches", desc: "We surface verified programs that fit your criteria and accept your coverage.", time: "Instant" },
+                { num: "3", title: "Take the Next Step", desc: "Choose a facility and they'll reach out at a time that works for you.", time: "Within 24 hrs" },
               ].map((step, idx) => (
                 <div key={idx} className="relative bg-card rounded-xl p-5 text-center shadow-sm border border-border/30 hover:shadow-md transition-shadow">
                   {idx < 2 && (
