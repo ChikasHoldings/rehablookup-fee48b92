@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { EscalationDialog } from "@/components/admin/escalations/EscalationDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -282,6 +283,11 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         </CardContent>
       </Card>
 
+      {/* Escalate Case */}
+      {isAdvisor && caseData.status !== "closed" && (
+        <EscalateCardInline caseData={caseData} />
+      )}
+
       {/* Close Case - only for non-advisors */}
       {!isAdvisor && caseData.status !== "closed" && (
         <Card className="border-destructive/50">
@@ -352,5 +358,34 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         </Card>
       )}
     </div>
+  );
+}
+
+function EscalateCardInline({ caseData }: { caseData: ConciergeInquiry }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Card className="border-orange-300/50">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Need help with this case?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Escalate to a Manager or Super Admin</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+              <AlertTriangle className="h-4 w-4 mr-1.5" />
+              Escalate
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <EscalationDialog
+        open={open}
+        onOpenChange={setOpen}
+        relatedType="concierge_inquiry"
+        relatedId={caseData.id}
+        defaultSubject={`Escalation: Case #${caseData.id.slice(0, 8)} — ${caseData.user_name}`}
+      />
+    </>
   );
 }
