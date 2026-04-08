@@ -116,6 +116,7 @@ interface MarketingLeadProfileModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated?: () => void;
+  onDeleted?: () => void;
 }
 
 export function MarketingLeadProfileModal({
