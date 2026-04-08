@@ -554,6 +554,13 @@ export function MarketingLeadProfileModal({
                 <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 UTM
               </TabsTrigger>
+              <TabsTrigger
+                value="actions"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Actions
+              </TabsTrigger>
             </TabsList>
           </div>
 
