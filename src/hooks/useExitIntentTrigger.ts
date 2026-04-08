@@ -19,7 +19,7 @@ export function useExitIntentTrigger() {
   }, []);
 
   const markSubmitted = useCallback(() => {
-    setShouldShow(false);
+    // Don't close dialog — let the success screen render inside the modal
     try {
       sessionStorage.setItem(SESSION_KEY, "1");
       sessionStorage.setItem(SUBMITTED_KEY, "1");
