@@ -76,11 +76,11 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
   });
 
   const handleAssign = () => {
-    assignAdvisorMutation.mutate(selectedAdvisor || null);
+    assignAdvisorMutation.mutate(selectedAdvisor);
   };
 
   const currentAdvisor = adminStaff?.find(a => a.user_id === caseData.assigned_advisor_id);
-  const hasChanged = selectedAdvisor !== (caseData.assigned_advisor_id || "");
+  const hasChanged = selectedAdvisor !== (caseData.assigned_advisor_id || "unassigned");
 
   return (
     <Card>
@@ -110,7 +110,7 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
                 <SelectValue placeholder="Select an advisor..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {adminStaff?.map((staff) => (
                   <SelectItem key={staff.user_id} value={staff.user_id}>
                     {staff.display_name || `${staff.first_name} ${staff.last_name}`}
