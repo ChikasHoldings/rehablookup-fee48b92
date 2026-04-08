@@ -250,6 +250,8 @@ export default function AdminLeads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const highlightProcessedRef = useRef(false);
 
   const searchQuery = useDebounce(searchInput, 350);
