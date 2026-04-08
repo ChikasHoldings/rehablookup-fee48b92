@@ -441,7 +441,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                           <div className="text-xs text-muted-foreground">
                             {format(new Date(event.created_at), "MMM d, yyyy 'at' h:mm a")}
                           </div>
-                          {event.event_data && Object.keys(event.event_data as object).length > 0 && (
+                          {event.event_data && typeof event.event_data === "object" && !Array.isArray(event.event_data) && Object.keys(event.event_data).length > 0 && (
                             <div className="text-xs text-muted-foreground mt-1">
                               {JSON.stringify(event.event_data)}
                             </div>

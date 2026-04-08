@@ -81,8 +81,8 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
     ...(events || []).map(e => ({
       id: e.id,
       type: e.event_type,
-      date: e.created_at,
-      data: e.event_data as Record<string, any>,
+      date: e.created_at || "",
+      data: (e.event_data && typeof e.event_data === "object" && !Array.isArray(e.event_data) ? e.event_data : {}) as Record<string, any>,
       actor: e.actor_type,
     })),
   ];
@@ -142,22 +142,22 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium text-sm capitalize">{config.label}</span>
                 <span className="text-xs text-muted-foreground shrink-0">
-                  {format(new Date(event.date), "MMM d, h:mm a")}
+                  {event.date ? format(new Date(event.date), "MMM d, h:mm a") : "—"}
                 </span>
               </div>
-              {event.data && Object.keys(event.data).length > 0 && (
+              {event.data && typeof event.data === "object" && Object.keys(event.data).length > 0 && (
                 <div className="text-xs text-muted-foreground mt-0.5 space-x-2">
                   {(event.data.from_status || event.data.from) && (event.data.to_status || event.data.to) && (
                     <span className="capitalize">
-                      {(event.data.from_status || event.data.from).replace(/_/g, " ")} → {(event.data.to_status || event.data.to).replace(/_/g, " ")}
+                      {String(event.data.from_status || event.data.from).replace(/_/g, " ")} → {String(event.data.to_status || event.data.to).replace(/_/g, " ")}
                     </span>
                   )}
                   {event.data.match_count && <span>{event.data.match_count} matches</span>}
                   {event.data.count && !event.data.match_count && <span>{event.data.count} items</span>}
-                  {event.data.facility_name && <span>{event.data.facility_name}</span>}
-                  {event.data.notes && <span className="italic">"{event.data.notes}"</span>}
-                  {event.data.reason && <span>Reason: {event.data.reason}</span>}
-                  {event.data.trigger && !event.data.from_status && <span className="capitalize">({event.data.trigger.replace(/_/g, " ")})</span>}
+                  {event.data.facility_name && <span>{String(event.data.facility_name)}</span>}
+                  {event.data.notes && <span className="italic">"{String(event.data.notes)}"</span>}
+                  {event.data.reason && <span>Reason: {String(event.data.reason)}</span>}
+                  {event.data.trigger && !event.data.from_status && <span className="capitalize">({String(event.data.trigger).replace(/_/g, " ")})</span>}
                 </div>
               )}
               {event.actor && event.actor !== "system" && (
