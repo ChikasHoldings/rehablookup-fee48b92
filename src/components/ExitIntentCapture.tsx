@@ -20,16 +20,18 @@ type FormState = "idle" | "loading" | "success" | "error";
 export function ExitIntentCapture() {
   const { shouldShow, dismiss, markSubmitted } = useExitIntentTrigger();
   const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const pageUrlRef = useRef(window.location.pathname);
 
-  const isNameValid = firstName.trim().length >= 1;
+  const isFirstNameValid = firstName.trim().length >= 1;
+  const isLastNameValid = lastName.trim().length >= 1;
   const isEmailValid = EMAIL_REGEX.test(email.trim());
   const isPhoneValid = !phone || PHONE_REGEX.test(phone.trim());
-  const canSubmit = isNameValid && isEmailValid && isPhoneValid;
+  const canSubmit = isFirstNameValid && isLastNameValid && isEmailValid && isPhoneValid;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -42,6 +44,7 @@ export function ExitIntentCapture() {
         {
           body: {
             firstName: firstName.trim(),
+            lastName: lastName.trim(),
             email: email.trim().toLowerCase(),
             phone: phone.trim() || undefined,
             pageUrl: pageUrlRef.current,
@@ -109,21 +112,39 @@ export function ExitIntentCapture() {
             </DialogHeader>
 
             <div className="flex flex-col gap-3">
-              <div>
-                <label htmlFor="exit-first-name" className="text-sm font-medium text-foreground mb-1 block">
-                  First Name <span className="text-destructive">*</span>
-                </label>
-                <ValidatedInput
-                  id="exit-first-name"
-                  type="text"
-                  value={firstName}
-                  onChange={setFirstName}
-                  placeholder="Your first name"
-                  isValid={isNameValid}
-                  showValidation={firstName.length > 0}
-                  disabled={formState === "loading"}
-                  autoComplete="given-name"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="exit-first-name" className="text-sm font-medium text-foreground mb-1 block">
+                    First Name <span className="text-destructive">*</span>
+                  </label>
+                  <ValidatedInput
+                    id="exit-first-name"
+                    type="text"
+                    value={firstName}
+                    onChange={setFirstName}
+                    placeholder="First name"
+                    isValid={isFirstNameValid}
+                    showValidation={firstName.length > 0}
+                    disabled={formState === "loading"}
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="exit-last-name" className="text-sm font-medium text-foreground mb-1 block">
+                    Last Name <span className="text-destructive">*</span>
+                  </label>
+                  <ValidatedInput
+                    id="exit-last-name"
+                    type="text"
+                    value={lastName}
+                    onChange={setLastName}
+                    placeholder="Last name"
+                    isValid={isLastNameValid}
+                    showValidation={lastName.length > 0}
+                    disabled={formState === "loading"}
+                    autoComplete="family-name"
+                  />
+                </div>
               </div>
               <div>
                 <label htmlFor="exit-email" className="text-sm font-medium text-foreground mb-1 block">
