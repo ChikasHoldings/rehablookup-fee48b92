@@ -3,6 +3,7 @@ import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export function AdvisorDashboard() {
   const queryClient = useQueryClient();
   const { user, hasPermission } = useAdminAuth();
   const [caseView, setCaseView] = useState<CaseView>("mine");
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   const advisorId = user?.id;
 
@@ -177,6 +179,22 @@ export function AdvisorDashboard() {
         .not("status", "in", '("placed","closed")');
       return count || 0;
     },
+  });
+
+  // Fetch full case data when a case is selected for the detail sheet
+  const { data: selectedCase } = useQuery({
+    queryKey: ["advisor-case-detail", selectedCaseId],
+    queryFn: async () => {
+      if (!selectedCaseId) return undefined;
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select("*")
+        .eq("id", selectedCaseId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCaseId,
   });
 
   const activeCases = (inquiryStats?.newCases || 0) + (inquiryStats?.inProgress || 0) + (inquiryStats?.matched || 0);
@@ -330,10 +348,10 @@ export function AdvisorDashboard() {
                   const isPaid = inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded';
                   const location = inquiry.desired_location_state || inquiry.preferred_state;
                   return (
-                    <Link
+                    <button
                       key={inquiry.id}
-                      to="/admin/concierge"
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      onClick={() => setSelectedCaseId(inquiry.id)}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors w-full text-left"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
@@ -371,7 +389,7 @@ export function AdvisorDashboard() {
                           </Badge>
                         )}
                       </div>
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
@@ -477,6 +495,17 @@ export function AdvisorDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Case Detail Sheet - opens directly from dashboard */}
+      <ConciergeDetailSheet
+        caseData={selectedCase}
+        open={!!selectedCaseId}
+        onClose={() => setSelectedCaseId(null)}
+        onRefresh={() => {
+          invalidateDashboard();
+          queryClient.invalidateQueries({ queryKey: ["advisor-case-detail", selectedCaseId] });
+        }}
+      />
     </div>
   );
 }
