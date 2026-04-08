@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Shield, Clock, CheckCircle2, Star, Heart, ArrowRight, Phone, Zap } from "lucide-react";
+import { Shield, Clock, CheckCircle2, Star, ArrowRight, Phone, Zap } from "lucide-react";
+import headerLogo from "@/assets/logo-header.webp";
 import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
 import { seekerTestimonials } from "@/data/testimonials";
 import { LeadIntakeForm } from "@/components/lead-intake";
