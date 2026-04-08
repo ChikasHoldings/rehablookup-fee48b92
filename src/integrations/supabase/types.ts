@@ -77,6 +77,81 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_escalations: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          priority: Database["public"]["Enums"]["escalation_priority"]
+          related_id: string | null
+          related_type: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["escalation_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          priority?: Database["public"]["Enums"]["escalation_priority"]
+          related_id?: string | null
+          related_type?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["escalation_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["escalation_priority"]
+          related_id?: string | null
+          related_type?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["escalation_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_impersonation_log: {
+        Row: {
+          admin_user_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          target_role: string
+          target_user_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          target_role: string
+          target_user_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          target_role?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       admin_mfa_recovery_codes: {
         Row: {
           code_hash: string
@@ -198,12 +273,15 @@ export type Database = {
         Row: {
           admin_role: Database["public"]["Enums"]["admin_role_type"] | null
           avatar_url: string | null
+          commission_rate: number | null
           created_at: string
           created_by: string | null
           display_name: string | null
           email_digest_frequency: string | null
+          employment_type: Database["public"]["Enums"]["employment_type"] | null
           first_name: string | null
           force_password_change: boolean | null
+          hire_date: string | null
           id: string
           last_login_at: string | null
           last_name: string | null
@@ -214,6 +292,7 @@ export type Database = {
           notify_security_events: boolean | null
           notify_subscription_changes: boolean | null
           notify_system_alerts: boolean | null
+          phone: string | null
           status: string
           temp_password_expires_at: string | null
           temp_password_hash: string | null
@@ -223,12 +302,17 @@ export type Database = {
         Insert: {
           admin_role?: Database["public"]["Enums"]["admin_role_type"] | null
           avatar_url?: string | null
+          commission_rate?: number | null
           created_at?: string
           created_by?: string | null
           display_name?: string | null
           email_digest_frequency?: string | null
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null
           first_name?: string | null
           force_password_change?: boolean | null
+          hire_date?: string | null
           id?: string
           last_login_at?: string | null
           last_name?: string | null
@@ -239,6 +323,7 @@ export type Database = {
           notify_security_events?: boolean | null
           notify_subscription_changes?: boolean | null
           notify_system_alerts?: boolean | null
+          phone?: string | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null
@@ -248,12 +333,17 @@ export type Database = {
         Update: {
           admin_role?: Database["public"]["Enums"]["admin_role_type"] | null
           avatar_url?: string | null
+          commission_rate?: number | null
           created_at?: string
           created_by?: string | null
           display_name?: string | null
           email_digest_frequency?: string | null
+          employment_type?:
+            | Database["public"]["Enums"]["employment_type"]
+            | null
           first_name?: string | null
           force_password_change?: boolean | null
+          hire_date?: string | null
           id?: string
           last_login_at?: string | null
           last_name?: string | null
@@ -264,6 +354,7 @@ export type Database = {
           notify_security_events?: boolean | null
           notify_subscription_changes?: boolean | null
           notify_system_alerts?: boolean | null
+          phone?: string | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null
@@ -271,6 +362,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      advisor_earnings: {
+        Row: {
+          advisor_id: string
+          commission_cents: number
+          commission_rate: number
+          created_at: string
+          id: string
+          inquiry_id: string | null
+          paid_at: string | null
+          placement_fee_cents: number
+          status: Database["public"]["Enums"]["earning_status"]
+        }
+        Insert: {
+          advisor_id: string
+          commission_cents?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          paid_at?: string | null
+          placement_fee_cents?: number
+          status?: Database["public"]["Enums"]["earning_status"]
+        }
+        Update: {
+          advisor_id?: string
+          commission_cents?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          paid_at?: string | null
+          placement_fee_cents?: number
+          status?: Database["public"]["Enums"]["earning_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advisor_earnings_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       badge_impressions: {
         Row: {
@@ -5749,6 +5884,10 @@ export type Database = {
     Enums: {
       admin_role_type: "super_admin" | "manager" | "customer_rep" | "advisor"
       app_role: "admin" | "moderator" | "seeker"
+      earning_status: "pending" | "approved" | "paid"
+      employment_type: "employee" | "contractor" | "va"
+      escalation_priority: "low" | "medium" | "high" | "critical"
+      escalation_status: "open" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5878,6 +6017,10 @@ export const Constants = {
     Enums: {
       admin_role_type: ["super_admin", "manager", "customer_rep", "advisor"],
       app_role: ["admin", "moderator", "seeker"],
+      earning_status: ["pending", "approved", "paid"],
+      employment_type: ["employee", "contractor", "va"],
+      escalation_priority: ["low", "medium", "high", "critical"],
+      escalation_status: ["open", "in_progress", "resolved", "closed"],
     },
   },
 } as const
