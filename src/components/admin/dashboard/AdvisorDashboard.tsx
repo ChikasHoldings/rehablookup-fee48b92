@@ -58,6 +58,23 @@ export function AdvisorDashboard() {
 
   const advisorId = user?.id;
 
+  // Check if this advisor is a contractor (for earnings card)
+  const { data: advisorProfile } = useQuery({
+    queryKey: ["advisor-profile", advisorId],
+    queryFn: async () => {
+      if (!advisorId) return null;
+      const { data } = await supabase
+        .from("admin_user_profiles")
+        .select("employment_type, commission_rate")
+        .eq("user_id", advisorId)
+        .single();
+      return data;
+    },
+    enabled: !!advisorId,
+  });
+
+  const isContractor = advisorProfile?.employment_type === "contractor";
+
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["advisor-inquiry-stats"] });
     queryClient.invalidateQueries({ queryKey: ["advisor-recent-inquiries"] });
