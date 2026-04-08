@@ -379,3 +379,8 @@ const coreBestInStateConfigs: BestInStateConfig[] = [
     ],
   },
 ];
+
+export const bestInStateConfigs: BestInStateConfig[] = [
+  ...coreBestInStateConfigs,
+  ...expandedBestInStateConfigs,
+];
