@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
+import { useUserManagement } from "@/hooks/admin/useUserManagement";
 import { UserProfileModal } from "@/components/admin/users/UserProfileModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,9 @@ import {
   Shield,
   X,
   Download,
+  Trash2,
+  Ban,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
