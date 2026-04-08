@@ -65,6 +65,8 @@ const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
 const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
 const InsuranceStatePage = lazy(() => import("./pages/seo/InsuranceStatePage"));
+const DemographicTreatmentPage = lazy(() => import("./pages/seo/DemographicTreatmentPage"));
+const SeekerGuidePage = lazy(() => import("./pages/seo/SeekerGuidePage"));
 // BestInStatePage moved to SmartCatchAll
 
 // Provider SEO Pages
@@ -439,16 +441,31 @@ const AppInner = () => {
             <Route path="/outpatient-rehab" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/dual-diagnosis-treatment" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
             
+            {/* New Treatment Hub Pages */}
+            <Route path="/php-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/iop-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/mat-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            
             {/* SEO Comparison Pages */}
             <Route path="/inpatient-vs-outpatient-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
             <Route path="/detox-vs-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
             <Route path="/private-vs-public-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/php-vs-iop" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/30-day-vs-90-day-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/mat-vs-abstinence-based-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/12-step-vs-non-12-step-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/rehab-vs-therapy" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/inpatient-vs-residential-treatment" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+            <Route path="/sober-living-vs-halfway-house" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
             
             {/* SEO Cost & Insurance Pages */}
             <Route path="/rehab-cost" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             <Route path="/does-insurance-cover-rehab" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             <Route path="/free-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             <Route path="/medicaid-rehab-centers" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            <Route path="/rehab-without-insurance" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            <Route path="/free-rehab-programs" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
+            <Route path="/rehab-financial-assistance" element={<PublicRouteGuard><CostInsurancePage /></PublicRouteGuard>} />
             
             {/* Substance-Specific SEO Landing Pages */}
             <Route path="/cocaine-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
@@ -457,6 +474,33 @@ const AppInner = () => {
             <Route path="/meth-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
             <Route path="/prescription-drug-rehab" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
             <Route path="/benzodiazepine-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/alcohol-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/marijuana-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/fentanyl-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/xanax-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/adderall-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/kratom-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/gabapentin-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/tramadol-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+            
+            {/* Demographic/Population-Specific Pages */}
+            <Route path="/young-adult-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/teen-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/senior-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/lgbtq-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/pregnant-women-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/first-responders-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/healthcare-professionals-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/executive-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/teachers-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            <Route path="/college-student-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+            
+            {/* Seeker Intent / Family Guide Pages */}
+            <Route path="/how-to-stage-an-intervention" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+            <Route path="/signs-loved-one-needs-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+            <Route path="/how-to-help-alcoholic-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+            <Route path="/what-to-expect-loved-one-in-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+            <Route path="/how-to-find-rehab-for-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
             
             {/* Insurance + State Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
