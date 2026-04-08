@@ -18,6 +18,7 @@ import {
   Headphones,
   Megaphone,
   FileText,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
@@ -56,6 +57,7 @@ const navEntries: NavEntry[] = [
   { to: "/admin/seekers", icon: UserSearch, label: "Users", permission: "seekers" },
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
   { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
+  { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
   { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support", countKey: "supportTickets" },
   { to: "/admin/marketing", icon: Megaphone, label: "Marketing Leads", permission: "leads", countKey: "marketingLeads" },
   { to: "/admin/blog", icon: FileText, label: "Blog Articles", permission: "providers" },

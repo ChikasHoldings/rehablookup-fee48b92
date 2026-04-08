@@ -20,7 +20,7 @@ import {
   HeartHandshake,
   Calendar,
   AlertCircle,
-  Headphones,
+  Inbox,
   MapPin,
   Activity,
 } from "lucide-react";
@@ -482,17 +482,15 @@ export function AdvisorDashboard() {
               </div>
             </Link>
           </Button>
-          {hasPermission("support") && (
-            <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-info/10" asChild>
-              <Link to="/admin/support">
-                <Headphones className="h-4 w-4 sm:h-5 sm:w-5 text-info mr-2 sm:mr-3 shrink-0" />
-                <div className="flex flex-col items-start min-w-0">
-                  <span className="text-sm font-medium">Support Inbox</span>
-                  <span className="text-xs text-muted-foreground">Seeker communications</span>
-                </div>
-              </Link>
-            </Button>
-          )}
+          <Button variant="ghost" className="justify-start h-auto py-2.5 sm:py-3 px-3 sm:px-4 hover:bg-info/10" asChild>
+            <Link to="/admin/inbox">
+              <Inbox className="h-4 w-4 sm:h-5 sm:w-5 text-info mr-2 sm:mr-3 shrink-0" />
+              <div className="flex flex-col items-start min-w-0">
+                <span className="text-sm font-medium">Advisor Inbox</span>
+                <span className="text-xs text-muted-foreground">Messages & coordination</span>
+              </div>
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 

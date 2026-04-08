@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, Suspense } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell, Headphones, UserSearch, UserPlus, MessageSquare, FileText, Megaphone, ShieldAlert } from "lucide-react";
+import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell, Headphones, UserSearch, UserPlus, MessageSquare, FileText, Megaphone, ShieldAlert, Inbox } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
@@ -24,6 +24,7 @@ const mobileNavItems = [
   { to: "/admin/seekers", icon: UserSearch, label: "Users", permission: "seekers" },
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements" },
+  { to: "/admin/inbox", icon: Inbox, label: "Inbox", permission: "placements" },
   { to: "/admin/support", icon: Headphones, label: "Support", permission: "support" },
   { to: "/admin/marketing", icon: Megaphone, label: "Marketing", permission: "leads" },
   { to: "/admin/blog", icon: FileText, label: "Blog", permission: "providers" },
