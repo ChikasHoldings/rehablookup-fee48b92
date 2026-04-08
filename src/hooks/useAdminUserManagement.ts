@@ -100,7 +100,7 @@ export const ROLE_DEFAULTS: Record<AdminRoleType, Record<string, boolean>> = {
   customer_rep: {
     dashboard: true, analytics: false, providers: true, leads: true,
     subscriptions: false, featured: false, reviews: true, seekers: true,
-    placements: false, support: true, escalations: false, back_office: false,
+    placements: false, support: true, escalations: true, back_office: false,
     security_logs: false, users: false, audit_log: false, settings: false, notifications: true,
   },
   advisor: {
