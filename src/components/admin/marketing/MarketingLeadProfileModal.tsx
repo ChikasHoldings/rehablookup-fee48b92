@@ -295,6 +295,110 @@ export function MarketingLeadProfileModal({
     },
     onError: () => toast.error("Failed to save notes"),
   });
+  // Delete lead
+  const deleteLead = useMutation({
+    mutationFn: async () => {
+      if (!lead) return;
+      const { error } = await supabase.from("marketing_leads").delete().eq("id", lead.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
+      toast.success("Marketing lead deleted");
+      setDeleteConfirmOpen(false);
+      onOpenChange(false);
+      onDeleted?.();
+    },
+    onError: () => toast.error("Failed to delete lead"),
+  });
+
+  // Route to provider
+  const routeToProvider = useMutation({
+    mutationFn: async (facilityId: string) => {
+      if (!lead) return;
+      const fullName = `${lead.first_name} ${lead.last_name}`.trim();
+      const { error } = await supabase.from("leads").insert({
+        facility_id: facilityId,
+        name: fullName,
+        email: lead.email,
+        phone: lead.phone,
+        urgency: lead.urgency || "flexible",
+        level_of_care: lead.level_of_care,
+        insurance_type: lead.insurance_type,
+        location_zip: lead.location_zip,
+        location_city_state: lead.location_city_state,
+        primary_substance: lead.primary_substance || [],
+        dual_diagnosis: lead.dual_diagnosis,
+        message: lead.message,
+        source: "marketing_routed",
+        status: "new",
+      });
+      if (error) throw error;
+      await supabase.from("marketing_leads").update({ status: "contacted" }).eq("id", lead.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
+      toast.success("Lead routed to provider");
+      setRouteDialogOpen(false);
+      setSelectedFacilityId("");
+      setFacilitySearch("");
+      onUpdated?.();
+    },
+    onError: () => toast.error("Failed to route lead"),
+  });
+
+  // Convert to concierge
+  const convertToConcierge = useMutation({
+    mutationFn: async () => {
+      if (!lead) return;
+      const { error } = await supabase.from("marketing_leads").update({
+        converted_to_concierge: true,
+        converted_at: new Date().toISOString(),
+        status: "converted",
+      }).eq("id", lead.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
+      toast.success("Marked as converted to concierge");
+      onUpdated?.();
+    },
+    onError: () => toast.error("Failed to convert"),
+  });
+
+  // Send follow-up email manually
+  const sendFollowup = useMutation({
+    mutationFn: async () => {
+      if (!lead) return;
+      const { error } = await supabase.functions.invoke("send-marketing-followup", {
+        body: { manualLeadId: lead.id },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
+      toast.success("Follow-up email sent");
+      onUpdated?.();
+    },
+    onError: () => toast.error("Failed to send follow-up email"),
+  });
+
+  // Search facilities for routing
+  const { data: searchedFacilities = [] } = useQuery({
+    queryKey: ["admin-facility-search-route", facilitySearch],
+    queryFn: async () => {
+      if (!facilitySearch || facilitySearch.length < 2) return [];
+      const { data } = await supabase
+        .from("facilities")
+        .select("id, name, city, state")
+        .eq("status", "approved")
+        .ilike("name", `%${facilitySearch}%`)
+        .limit(10);
+      return data || [];
+    },
+    enabled: facilitySearch.length >= 2,
+  });
 
   const handleCopy = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
