@@ -513,9 +513,7 @@ export function AdvisorDashboard() {
       </Card>
 
       {/* Contractor Earnings */}
-      {isContractor && advisorId && (
-        <AdvisorEarningsCard advisorId={advisorId} />
-      )}
+      {isContractor && <AdvisorEarningsCard />}
 
       {/* Case Detail Sheet - opens directly from dashboard */}
       <ConciergeDetailSheet
