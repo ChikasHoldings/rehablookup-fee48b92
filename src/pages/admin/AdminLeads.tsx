@@ -20,6 +20,9 @@ import {
   X,
   Trash2,
   ArrowRightLeft,
+  CheckSquare,
+  Square,
+  Loader2,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -252,6 +255,9 @@ export default function AdminLeads() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const highlightProcessedRef = useRef(false);
 
   const searchQuery = useDebounce(searchInput, 350);
@@ -430,6 +436,7 @@ export default function AdminLeads() {
   const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
     setter(value);
     setCurrentPage(1);
+    setSelectedIds(new Set());
   };
 
   // Fetch facilities for display
@@ -534,6 +541,47 @@ export default function AdminLeads() {
     }
   };
 
+  // Bulk delete handler
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+      const { data, error } = await supabase.functions.invoke("admin-delete-lead", {
+        body: { leadIds: Array.from(selectedIds) },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      invalidateLeadsQueries();
+      toast.success(`${selectedIds.size} lead(s) deleted`);
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+    } catch (err) {
+      logError("bulk_delete_leads", err);
+      toast.error("Failed to delete leads");
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!filteredLeads) return;
+    if (selectedIds.size === filteredLeads.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredLeads.map((l) => l.id)));
+    }
+  };
 
   const handleExportCSV = useCallback(() => {
     if (!leads || leads.length === 0) {
@@ -597,15 +645,29 @@ export default function AdminLeads() {
             Direct facility inquiries from seekers
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          className="gap-2 w-fit"
-          onClick={handleExportCSV}
-          disabled={!leads || leads.length === 0}
-        >
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setBulkDeleteOpen(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete ({selectedIds.size})
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={!leads || leads.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* KPI Summary Bar - uses independent counts, not page data */}
@@ -956,6 +1018,15 @@ export default function AdminLeads() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-10">
+                      <button onClick={toggleSelectAll} className="p-1">
+                        {selectedIds.size === filteredLeads.length && filteredLeads.length > 0 ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </TableHead>
                     <TableHead className="min-w-[220px]">Contact</TableHead>
                     <TableHead className="min-w-[100px]">Status</TableHead>
                     <TableHead className="min-w-[120px]">Distribution</TableHead>
@@ -972,6 +1043,15 @@ export default function AdminLeads() {
                     
                     return (
                       <TableRow key={lead.id} className="group">
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => toggleSelect(lead.id)} className="p-1">
+                            {selectedIds.has(lead.id) ? (
+                              <CheckSquare className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Square className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </TableCell>
                         <TableCell>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
@@ -1192,6 +1272,29 @@ export default function AdminLeads() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? "Deleting…" : "Delete Permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} lead(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the selected leads and all associated notes, emails, and unlock records. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isBulkDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              Delete {selectedIds.size} Lead(s)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
