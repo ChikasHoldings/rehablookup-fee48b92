@@ -31,7 +31,7 @@ export function ExitIntentCapture() {
   const isLastNameValid = lastName.trim().length >= 1;
   const isEmailValid = EMAIL_REGEX.test(email.trim());
   const isPhoneValid = !phone || PHONE_REGEX.test(phone.trim());
-  const canSubmit = isNameValid && isEmailValid && isPhoneValid;
+  const canSubmit = isFirstNameValid && isLastNameValid && isEmailValid && isPhoneValid;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -44,6 +44,7 @@ export function ExitIntentCapture() {
         {
           body: {
             firstName: firstName.trim(),
+            lastName: lastName.trim(),
             email: email.trim().toLowerCase(),
             phone: phone.trim() || undefined,
             pageUrl: pageUrlRef.current,
