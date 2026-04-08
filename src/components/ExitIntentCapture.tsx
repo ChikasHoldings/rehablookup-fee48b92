@@ -112,21 +112,39 @@ export function ExitIntentCapture() {
             </DialogHeader>
 
             <div className="flex flex-col gap-3">
-              <div>
-                <label htmlFor="exit-first-name" className="text-sm font-medium text-foreground mb-1 block">
-                  First Name <span className="text-destructive">*</span>
-                </label>
-                <ValidatedInput
-                  id="exit-first-name"
-                  type="text"
-                  value={firstName}
-                  onChange={setFirstName}
-                  placeholder="Your first name"
-                  isValid={isNameValid}
-                  showValidation={firstName.length > 0}
-                  disabled={formState === "loading"}
-                  autoComplete="given-name"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="exit-first-name" className="text-sm font-medium text-foreground mb-1 block">
+                    First Name <span className="text-destructive">*</span>
+                  </label>
+                  <ValidatedInput
+                    id="exit-first-name"
+                    type="text"
+                    value={firstName}
+                    onChange={setFirstName}
+                    placeholder="First name"
+                    isValid={isFirstNameValid}
+                    showValidation={firstName.length > 0}
+                    disabled={formState === "loading"}
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="exit-last-name" className="text-sm font-medium text-foreground mb-1 block">
+                    Last Name <span className="text-destructive">*</span>
+                  </label>
+                  <ValidatedInput
+                    id="exit-last-name"
+                    type="text"
+                    value={lastName}
+                    onChange={setLastName}
+                    placeholder="Last name"
+                    isValid={isLastNameValid}
+                    showValidation={lastName.length > 0}
+                    disabled={formState === "loading"}
+                    autoComplete="family-name"
+                  />
+                </div>
               </div>
               <div>
                 <label htmlFor="exit-email" className="text-sm font-medium text-foreground mb-1 block">
