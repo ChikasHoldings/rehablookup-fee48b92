@@ -1174,6 +1174,28 @@ export default function AdminLeads() {
         onAssign={(leadId, facilityId) => assignLead.mutate({ leadId, facilityId })}
         isAssigning={assignLead.isPending}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lead Permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the lead <strong>{deleteTarget?.name}</strong> ({deleteTarget?.email}) and all associated notes, emails, and unlock records. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLead}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting…" : "Delete Permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
