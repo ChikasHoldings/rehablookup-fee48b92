@@ -706,14 +706,14 @@ async function generateDemographicPages() {
         { name: "Treatment Programs", url: "/rehab-centers" },
         { name: page.title, url: `/${page.slug}` },
       ],
-      structuredData: {
+      structuredData: [{
         "@context": "https://schema.org",
         "@type": "MedicalWebPage",
         name: page.title,
         description: page.metaDescription,
         url: `https://rehablookup.com/${page.slug}`,
         specialty: "Addiction Medicine",
-      },
+      }],
     });
     await writePage(path.join(publicDir, `${page.slug}.html`), html);
   }
@@ -733,13 +733,13 @@ async function generateSeekerGuidePages() {
         { name: "Guides", url: "/rehab-centers" },
         { name: page.title, url: `/${page.slug}` },
       ],
-      structuredData: {
+      structuredData: [{
         "@context": "https://schema.org",
         "@type": "Article",
         name: page.title,
         description: page.metaDescription,
         url: `https://rehablookup.com/${page.slug}`,
-      },
+      }],
     });
     await writePage(path.join(publicDir, `${page.slug}.html`), html);
   }
