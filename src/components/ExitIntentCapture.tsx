@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useExitIntentTrigger } from "@/hooks/useExitIntentTrigger";
 import {
   Dialog,
@@ -15,9 +16,19 @@ import { supabase } from "@/integrations/supabase/client";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[+\d\s().-]{7,20}$/;
 
+const EXCLUDED_PREFIXES = ["/provider", "/admin", "/auth"];
+
 type FormState = "idle" | "loading" | "success" | "error";
 
 export function ExitIntentCapture() {
+  const location = useLocation();
+  const isExcluded = EXCLUDED_PREFIXES.some((p) => location.pathname.startsWith(p));
+
+  const { shouldShow, dismiss, markSubmitted } = useExitIntentTrigger();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const { shouldShow, dismiss, markSubmitted } = useExitIntentTrigger();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
