@@ -18,6 +18,8 @@ import {
   Timer,
   Download,
   X,
+  Trash2,
+  ArrowRightLeft,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,8 +38,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -234,6 +250,8 @@ export default function AdminLeads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const highlightProcessedRef = useRef(false);
 
   const searchQuery = useDebounce(searchInput, 350);
@@ -490,7 +508,33 @@ export default function AdminLeads() {
     },
   });
 
-  // CSV Export handler
+  // Delete lead handler
+  const handleDeleteLead = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("admin-delete-lead", {
+        body: { leadIds: [deleteTarget.id] },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      invalidateLeadsQueries();
+      toast.success("Lead deleted permanently");
+      setDeleteTarget(null);
+    } catch (err) {
+      logError("delete_lead", err);
+      toast.error("Failed to delete lead");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+
   const handleExportCSV = useCallback(() => {
     if (!leads || leads.length === 0) {
       toast.error("No leads to export");
@@ -1009,6 +1053,37 @@ export default function AdminLeads() {
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
+                              {facilities && facilities.length > 0 && (
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>
+                                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                    Route to Provider
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                    {facilities.slice(0, 50).map((f) => (
+                                      <DropdownMenuItem
+                                        key={f.id}
+                                        onClick={() => assignLead.mutate({ leadId: lead.id, facilityId: f.id })}
+                                        disabled={lead.facility_id === f.id}
+                                      >
+                                        <Building2 className="h-3.5 w-3.5 mr-2 shrink-0" />
+                                        <span className="truncate">{f.name}</span>
+                                        {lead.facility_id === f.id && (
+                                          <Badge variant="secondary" className="ml-auto text-[10px]">Current</Badge>
+                                        )}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDeleteTarget(lead)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Lead
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -1099,6 +1174,28 @@ export default function AdminLeads() {
         onAssign={(leadId, facilityId) => assignLead.mutate({ leadId, facilityId })}
         isAssigning={assignLead.isPending}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lead Permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the lead <strong>{deleteTarget?.name}</strong> ({deleteTarget?.email}) and all associated notes, emails, and unlock records. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLead}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting…" : "Delete Permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

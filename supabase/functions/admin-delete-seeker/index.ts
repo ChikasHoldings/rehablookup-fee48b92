@@ -98,6 +98,9 @@ Deno.serve(async (req) => {
         adminClient.from("account_activity_log").delete().eq("user_id", targetUserId),
         adminClient.from("review_helpful_votes").delete().eq("user_id", targetUserId),
         adminClient.from("user_roles").delete().eq("user_id", targetUserId),
+        adminClient.from("user_sessions").delete().eq("user_id", targetUserId),
+        // Clean up email verification so they can re-verify on re-registration
+        ...(targetEmail ? [adminClient.from("email_verification_codes").delete().eq("email", targetEmail.toLowerCase())] : []),
       ];
 
       const results = await Promise.all(deletions);

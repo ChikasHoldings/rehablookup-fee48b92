@@ -181,6 +181,10 @@ Deno.serve(async (req) => {
       if (!otherFacilities || otherFacilities.length === 0) {
         console.log("[ADMIN-DELETE-PROVIDER] Deleting user account:", providerUserId);
 
+        // Get user email for verification cleanup
+        const { data: authUser } = await adminClient.auth.admin.getUserById(providerUserId);
+        const userEmail = authUser?.user?.email;
+
         // Delete profile
         await adminClient.from("profiles").delete().eq("user_id", providerUserId);
 
@@ -199,6 +203,11 @@ Deno.serve(async (req) => {
         // Delete subscription alerts and events
         await adminClient.from("subscription_alerts").delete().eq("user_id", providerUserId);
         await adminClient.from("subscription_events").delete().eq("user_id", providerUserId);
+
+        // Clean up email verification codes so they can re-verify on re-registration
+        if (userEmail) {
+          await adminClient.from("email_verification_codes").delete().eq("email", userEmail.toLowerCase());
+        }
 
         // Delete the auth user
         const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(providerUserId);
