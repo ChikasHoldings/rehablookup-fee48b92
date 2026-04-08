@@ -233,23 +233,28 @@ export function SingleQuestionFlow({
     }
   }, [zipcodeData, updateFormData]);
   
+  // Ref for scrolling to form top on step change
+  const formTopRef = useRef<HTMLDivElement>(null);
+  
+  const scrollToFormTop = useCallback(() => {
+    formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
+  
   const goNext = useCallback(() => {
     if (currentIndex < activeQuestions.length - 1) {
       setDirection(1);
       setCurrentIndex(prev => prev + 1);
-      // Scroll to top of form section
-      scrollToTopSmooth();
+      scrollToFormTop();
     }
-  }, [currentIndex, activeQuestions.length]);
+  }, [currentIndex, activeQuestions.length, scrollToFormTop]);
   
   const goBack = useCallback(() => {
     if (currentIndex > 0) {
       setDirection(-1);
       setCurrentIndex(prev => prev - 1);
-      // Scroll to top of form section
-      scrollToTopSmooth();
+      scrollToFormTop();
     }
-  }, [currentIndex]);
+  }, [currentIndex, scrollToFormTop]);
   
   // Handle choice selection with auto-advance
   const handleChoiceSelect = useCallback((field: keyof LeadIntakeFormData, value: string) => {
