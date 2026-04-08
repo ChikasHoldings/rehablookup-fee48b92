@@ -261,10 +261,10 @@ export default function MarketingLanding() {
         <section className="py-10 sm:py-14 bg-primary/5">
           <div className="container mx-auto px-4 md:px-6 text-center max-w-xl">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground [text-wrap:balance]">
-              Don't Wait — Treatment Works
+              Recovery Is Possible — Take the First Step Today
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-lg mx-auto">
-              Every day counts in recovery. Our service is completely free and confidential.
+              Thousands of families have found the right program through RehabLookup. The sooner you reach out, the sooner healing can begin.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <button
