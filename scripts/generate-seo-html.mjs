@@ -705,6 +705,8 @@ async function main() {
     generateNearMePages(),
     generateBestInStatePages(),
     generateCostAndComparisonPages(),
+    generateDemographicPages(),
+    generateSeekerGuidePages(),
   ]);
 
   // These have more files, run sequentially to avoid filesystem pressure
