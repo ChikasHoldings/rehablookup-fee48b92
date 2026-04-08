@@ -9,7 +9,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "alcohol-addiction-treatment",
     title: "Alcohol Addiction Treatment",
-    metaTitle: "Alcohol Addiction Treatment Programs — Recovery Help | RehabLookup",
+    metaTitle: "Alcohol Addiction Treatment Programs — Recovery Help",
     metaDescription: "Find accredited alcohol addiction treatment programs offering medical detox, behavioral therapy, and long-term recovery support. Insurance accepted. Get help today.",
     heroSubtitle: "Comprehensive alcohol addiction treatment combining medical detox, evidence-based therapy, and sustained recovery support for lasting sobriety.",
     conditionName: "Alcohol Use Disorder",
@@ -49,7 +49,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "marijuana-addiction-treatment",
     title: "Marijuana Addiction Treatment",
-    metaTitle: "Marijuana Addiction Treatment — Cannabis Use Disorder Help | RehabLookup",
+    metaTitle: "Marijuana Addiction Treatment — Cannabis Use Disorder Help",
     metaDescription: "Find marijuana addiction treatment programs for cannabis use disorder. Evidence-based therapy, outpatient programs, and recovery support. Get help today.",
     heroSubtitle: "Professional marijuana addiction treatment addressing cannabis use disorder through behavioral therapy, counseling, and structured recovery programs.",
     conditionName: "Cannabis Use Disorder",
@@ -88,7 +88,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "fentanyl-addiction-treatment",
     title: "Fentanyl Addiction Treatment",
-    metaTitle: "Fentanyl Addiction Treatment — Emergency Recovery Programs | RehabLookup",
+    metaTitle: "Fentanyl Addiction Treatment — Emergency Recovery Programs",
     metaDescription: "Find urgent fentanyl addiction treatment with medical detox and MAT. Life-saving programs for fentanyl dependence. Immediate admission available. Get help now.",
     heroSubtitle: "Life-saving fentanyl addiction treatment with emergency medical detox, medication-assisted treatment, and comprehensive overdose prevention.",
     conditionName: "Fentanyl Addiction",
@@ -127,7 +127,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "xanax-addiction-treatment",
     title: "Xanax Addiction Treatment",
-    metaTitle: "Xanax Addiction Treatment — Safe Detox & Recovery Programs | RehabLookup",
+    metaTitle: "Xanax Addiction Treatment — Safe Detox & Recovery Programs",
     metaDescription: "Find Xanax addiction treatment with medically supervised tapering and detox. Safe withdrawal management, therapy, and anxiety treatment alternatives. Get help.",
     heroSubtitle: "Specialized Xanax addiction treatment with safe medical tapering, supervised detox, and comprehensive anxiety management alternatives.",
     conditionName: "Xanax Addiction",
@@ -166,7 +166,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "adderall-addiction-treatment",
     title: "Adderall Addiction Treatment",
-    metaTitle: "Adderall Addiction Treatment — Stimulant Abuse Recovery | RehabLookup",
+    metaTitle: "Adderall Addiction Treatment — Stimulant Abuse Recovery",
     metaDescription: "Find Adderall addiction treatment programs for prescription stimulant abuse. Evidence-based therapy, ADHD management alternatives, and recovery support.",
     heroSubtitle: "Professional Adderall addiction treatment addressing prescription stimulant dependence with behavioral therapy and alternative ADHD management.",
     conditionName: "Adderall Addiction",
@@ -205,7 +205,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "kratom-addiction-treatment",
     title: "Kratom Addiction Treatment",
-    metaTitle: "Kratom Addiction Treatment — Withdrawal Help & Recovery | RehabLookup",
+    metaTitle: "Kratom Addiction Treatment — Withdrawal Help & Recovery",
     metaDescription: "Find kratom addiction treatment programs. Medical withdrawal management, behavioral therapy, and recovery support for kratom dependence. Get professional help.",
     heroSubtitle: "Professional kratom addiction treatment with medical withdrawal management, behavioral therapy, and evidence-based recovery support.",
     conditionName: "Kratom Addiction",
@@ -244,7 +244,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "gabapentin-addiction-treatment",
     title: "Gabapentin Addiction Treatment",
-    metaTitle: "Gabapentin Addiction Treatment — Abuse & Withdrawal Help | RehabLookup",
+    metaTitle: "Gabapentin Addiction Treatment — Abuse & Withdrawal Help",
     metaDescription: "Find gabapentin addiction treatment for Neurontin abuse and dependence. Medical tapering, withdrawal management, and recovery programs. Get professional help.",
     heroSubtitle: "Specialized gabapentin addiction treatment with safe medical tapering, withdrawal management, and comprehensive recovery support.",
     conditionName: "Gabapentin Addiction",
@@ -283,7 +283,7 @@ export const expandedSubstancePages: SubstanceConfig[] = [
   {
     slug: "tramadol-addiction-treatment",
     title: "Tramadol Addiction Treatment",
-    metaTitle: "Tramadol Addiction Treatment — Safe Withdrawal & Recovery | RehabLookup",
+    metaTitle: "Tramadol Addiction Treatment — Safe Withdrawal & Recovery",
     metaDescription: "Find tramadol addiction treatment programs with medical detox and tapering. Safe withdrawal management, therapy, and alternative pain treatment. Get help today.",
     heroSubtitle: "Specialized tramadol addiction treatment with safe medical detox, gradual tapering, and comprehensive pain management alternatives.",
     conditionName: "Tramadol Addiction",

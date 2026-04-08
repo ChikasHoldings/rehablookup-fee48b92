@@ -20,7 +20,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
   {
     slug: "how-to-stage-an-intervention",
     title: "How to Stage an Intervention",
-    metaTitle: "How to Stage an Intervention — Step-by-Step Guide | RehabLookup",
+    metaTitle: "How to Stage an Intervention — Step-by-Step Guide",
     metaDescription: "Learn how to stage an effective intervention for a loved one struggling with addiction. Step-by-step guide, professional tips, and what to expect.",
     heroSubtitle: "A compassionate, step-by-step guide to planning and conducting an effective addiction intervention for your loved one.",
     introContent: "An intervention is a carefully planned process in which family, friends, and sometimes professionals confront someone about their addiction and encourage them to seek treatment. When done correctly, interventions are powerful tools that can break through denial and motivate change. Studies show professional interventions result in the loved one entering treatment over 90% of the time. This guide walks you through planning, conducting, and following up on an intervention with compassion and effectiveness.",
@@ -56,7 +56,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
   {
     slug: "signs-loved-one-needs-rehab",
     title: "Signs Your Loved One Needs Rehab",
-    metaTitle: "Signs Your Loved One Needs Rehab — When to Seek Help | RehabLookup",
+    metaTitle: "Signs Your Loved One Needs Rehab — When to Seek Help",
     metaDescription: "Recognize the warning signs that your loved one needs professional addiction treatment. Behavioral, physical, and emotional indicators. Know when to act.",
     heroSubtitle: "Recognize the critical warning signs that indicate your loved one may need professional addiction treatment — and learn how to take action.",
     introContent: "Recognizing when a loved one's substance use has crossed from recreational or manageable to a point requiring professional treatment can be challenging. Denial, secrecy, and gradual progression make it difficult to identify the tipping point. This guide outlines the behavioral, physical, emotional, and social warning signs that indicate professional rehab may be necessary, and provides guidance on how to approach the conversation and take meaningful action.",
@@ -92,7 +92,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
   {
     slug: "how-to-help-alcoholic-family-member",
     title: "How to Help an Alcoholic Family Member",
-    metaTitle: "How to Help an Alcoholic Family Member — Family Guide | RehabLookup",
+    metaTitle: "How to Help an Alcoholic Family Member — Family Guide",
     metaDescription: "Learn how to help a family member with alcoholism. Practical guidance on communication, boundaries, intervention, and finding treatment. Support your family.",
     heroSubtitle: "Practical guidance for families navigating a loved one's alcoholism — from difficult conversations to finding effective treatment.",
     introContent: "Living with an alcoholic family member is emotionally devastating — the unpredictability, broken promises, financial strain, and erosion of trust take a profound toll on everyone in the family. Yet family members often feel helpless, unsure how to help without enabling, and exhausted from cycles of hope and disappointment. This guide provides practical, evidence-based strategies for supporting a family member with alcoholism while protecting your own mental health. You can't force recovery, but you can create conditions that encourage it while maintaining your own wellbeing.",
@@ -128,7 +128,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
   {
     slug: "what-to-expect-loved-one-in-rehab",
     title: "What to Expect When a Loved One Goes to Rehab",
-    metaTitle: "What to Expect When a Loved One Goes to Rehab | RehabLookup",
+    metaTitle: "What to Expect When a Loved One Goes to Rehab",
     metaDescription: "Learn what happens when your loved one enters rehab — the treatment process, your role, communication, and how to prepare for their return. Family guide.",
     heroSubtitle: "Understanding the rehab process from a family perspective — what your loved one experiences, your role, and how to prepare for their return.",
     introContent: "When your loved one enters rehab, you may feel a mix of relief, anxiety, guilt, and uncertainty. Understanding what the treatment process involves — from admission to aftercare — helps you manage expectations, participate effectively in their recovery, and prepare for the changes ahead. This guide walks families through the entire rehab experience: what your loved one will experience, what your role will be, how communication works, and how to create a supportive environment for their return home.",
@@ -164,7 +164,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
   {
     slug: "how-to-find-rehab-for-family-member",
     title: "How to Find Rehab for a Family Member",
-    metaTitle: "How to Find Rehab for a Family Member — Step-by-Step | RehabLookup",
+    metaTitle: "How to Find Rehab for a Family Member — Step-by-Step",
     metaDescription: "Step-by-step guide to finding the right rehab for a family member. Insurance verification, program types, questions to ask, and placement help.",
     heroSubtitle: "A practical, step-by-step guide to finding and securing the right treatment program for your loved one — from research to admission.",
     introContent: "Finding the right rehab for a family member can feel overwhelming — hundreds of facilities, different program types, insurance complexities, and the pressure of making the right choice during a crisis. This guide simplifies the process into manageable steps, helping you evaluate programs, verify insurance, ask the right questions, and navigate admission efficiently. Whether you're planning ahead or responding to an emergency, these steps will help you find quality, accredited treatment matched to your loved one's specific needs.",
