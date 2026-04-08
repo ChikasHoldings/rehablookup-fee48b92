@@ -16,7 +16,9 @@ export interface BestInStateConfig {
   faqs: { question: string; answer: string }[];
 }
 
-export const bestInStateConfigs: BestInStateConfig[] = [
+import { expandedBestInStateConfigs } from "./seoBestInStateConfigExpanded";
+
+const coreBestInStateConfigs: BestInStateConfig[] = [
   {
     slug: "california",
     state: "California",
@@ -376,4 +378,9 @@ export const bestInStateConfigs: BestInStateConfig[] = [
       { question: "How much does rehab cost in Georgia?", answer: "Georgia rehab costs are moderate: state-funded programs are free for qualifying individuals, standard private insurance programs range $8,000-$20,000 for 30 days, and luxury Atlanta programs reach $25,000-$50,000 per month." },
     ],
   },
+];
+
+export const bestInStateConfigs: BestInStateConfig[] = [
+  ...coreBestInStateConfigs,
+  ...expandedBestInStateConfigs,
 ];
