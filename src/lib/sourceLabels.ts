@@ -15,6 +15,7 @@ const SOURCE_LABELS: Record<string, string> = {
   
   // Landing page sources
   marketing_landing: "Marketing Landing",
+  marketing_routed: "Marketing (Admin Routed)",
   social_landing: "Social Ads",
   ads_landing: "Google Ads",
   rehab_cta: "Rehab CTA",
