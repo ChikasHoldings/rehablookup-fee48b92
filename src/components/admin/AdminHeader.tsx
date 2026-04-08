@@ -786,6 +786,36 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
             </CommandGroup>
           )}
 
+          {/* Placement Case Search Results - only if user has permission */}
+          {canViewPlacements && searchedCases && searchedCases.length > 0 && (
+            <CommandGroup heading={`Placement Cases (${searchedCases.length})`}>
+              {searchedCases.map((c) => (
+                <CommandItem 
+                  key={c.id} 
+                  onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); setSearchQuery(""); }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                    <UserPlus className="h-4 w-4 text-accent-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{c.user_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {c.desired_location_state || c.user_email}
+                    </p>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    c.status === "placed" ? "bg-success/10 text-success" :
+                    c.status === "new" ? "bg-info/10 text-info" :
+                    "bg-muted text-muted-foreground"
+                  }`}>
+                    {c.status}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
           {/* Quick Actions - show when not searching or no results, filtered by permissions */}
           {(!searchQuery || searchQuery.length < 2) && (
             <>
