@@ -1017,6 +1017,15 @@ export default function AdminLeads() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-10">
+                      <button onClick={toggleSelectAll} className="p-1">
+                        {selectedIds.size === filteredLeads.length && filteredLeads.length > 0 ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </TableHead>
                     <TableHead className="min-w-[220px]">Contact</TableHead>
                     <TableHead className="min-w-[100px]">Status</TableHead>
                     <TableHead className="min-w-[120px]">Distribution</TableHead>
