@@ -23,11 +23,11 @@ interface AdvisorAssignmentCardProps {
 
 export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignmentCardProps) {
   const queryClient = useQueryClient();
-  const [selectedAdvisor, setSelectedAdvisor] = useState(caseData.assigned_advisor_id || "");
+  const [selectedAdvisor, setSelectedAdvisor] = useState(caseData.assigned_advisor_id || "unassigned");
 
   // Sync state when caseData changes (e.g., switching between cases)
   useEffect(() => {
-    setSelectedAdvisor(caseData.assigned_advisor_id || "");
+    setSelectedAdvisor(caseData.assigned_advisor_id || "unassigned");
   }, [caseData.id, caseData.assigned_advisor_id]);
 
   // Fetch admin staff for advisor assignment
@@ -45,10 +45,11 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
   });
 
   const assignAdvisorMutation = useMutation({
-    mutationFn: async (advisorId: string | null) => {
+    mutationFn: async (advisorId: string) => {
+      const actualId = advisorId === "unassigned" ? null : advisorId;
       const { error } = await supabase
         .from("concierge_inquiries")
-        .update({ assigned_advisor_id: advisorId || null })
+        .update({ assigned_advisor_id: actualId })
         .eq("id", caseData.id);
 
       if (error) throw error;
@@ -58,7 +59,7 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
         inquiry_id: caseData.id,
         event_type: "advisor_assigned",
         event_data: { 
-          advisor_id: advisorId,
+          advisor_id: advisorId === "unassigned" ? null : advisorId,
           previous_advisor_id: caseData.assigned_advisor_id 
         },
         actor_type: "admin",
