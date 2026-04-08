@@ -170,7 +170,7 @@ export function EscalationsList({ filterStatus = "all" }: EscalationsListProps) 
 
                 {esc.status !== "resolved" && esc.status !== "closed" && (
                   <div className="flex gap-1.5 shrink-0">
-                    {!isAssigned && (isSuperAdmin || true) && (
+                    {!isAssigned && (
                       <Button
                         size="sm"
                         variant="outline"
