@@ -559,6 +559,12 @@ export default function AdminSeekers() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={safeUsers.length > 0 && safeUsers.every((u) => selectedIds.has(u.user_id))}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="min-w-[200px]">User</TableHead>
                     <TableHead className="min-w-[180px]">Email</TableHead>
                     <TableHead className="min-w-[120px]">Location</TableHead>
@@ -574,9 +580,15 @@ export default function AdminSeekers() {
                     return (
                       <TableRow
                         key={user.id}
-                        className="group cursor-pointer hover:bg-muted/50 transition-colors"
+                        className={cn("group cursor-pointer hover:bg-muted/50 transition-colors", selectedIds.has(user.user_id) && "bg-accent/5")}
                         onClick={() => openDetail(user)}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(user.user_id)}
+                            onCheckedChange={() => toggleSelect(user.user_id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
