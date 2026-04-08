@@ -362,6 +362,9 @@ export function useAdminAuth() {
           setIsInitialized(true);
           clearSentryUser();
           clearAdminCache();
+          // Clear password-change session flag on logout
+          sessionStorage.removeItem('rl_pwd_change_cleared');
+          passwordChangeCleared.current = false;
           navigate("/admin/login", { replace: true });
           return;
         }
