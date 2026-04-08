@@ -174,7 +174,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "pregnant-women-addiction-treatment",
     title: "Pregnant Women Addiction Treatment",
-    metaTitle: "Pregnant Women Addiction Treatment — Safe Prenatal Recovery",
+    metaTitle: "Pregnant Women Addiction Treatment — Safe Recovery",
     metaDescription: "Find addiction treatment for pregnant women with prenatal care, safe detox, and MAT. Protect your baby and your recovery. Priority admission available.",
     heroSubtitle: "Specialized addiction treatment for pregnant women integrating prenatal care, safe medication management, and maternal-child health support.",
     population: "Pregnant Women",
@@ -212,7 +212,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "first-responders-rehab",
     title: "First Responders Rehab",
-    metaTitle: "First Responders Rehab — Addiction Treatment for EMS, Fire & Police",
+    metaTitle: "First Responders Rehab — EMS, Fire & Police Recovery",
     metaDescription: "Find addiction treatment for first responders — police, firefighters, EMTs, paramedics. Confidential, career-aware programs with trauma-specialized care.",
     heroSubtitle: "Confidential addiction treatment designed for first responders with trauma-specialized care, peer support, and career protection.",
     population: "First Responders",
