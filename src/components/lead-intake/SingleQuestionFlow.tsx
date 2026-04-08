@@ -11,7 +11,6 @@ import { EmailInput } from "@/components/ui/email-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
 import { isValidEmail } from "@/lib/emailUtils";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
-import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { cn } from "@/lib/utils";
 import {
   LeadIntakeFormData,
