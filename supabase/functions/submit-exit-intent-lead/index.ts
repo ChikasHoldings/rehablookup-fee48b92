@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     const { data: lead, error: insertErr } = await supabase
       .from("leads")
       .insert({
-        name: firstName,
+        name: fullName,
         email,
         phone: phone || "",
         source: "exit_intent",
