@@ -75,7 +75,7 @@ export function AdminShell() {
     isInitialized,
     logout 
   } = useAdminAuth();
-  const { isImpersonating, targetName, targetRole, stopImpersonating } = useImpersonation();
+  const { impersonating, isImpersonating, stopImpersonation } = useImpersonation();
   const mainContentRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
