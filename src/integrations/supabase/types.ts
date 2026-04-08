@@ -5526,6 +5526,24 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["admin_role_type"]
       }
+      get_admin_users_list: {
+        Args: never
+        Returns: {
+          admin_role: string
+          avatar_url: string
+          created_at: string
+          display_name: string
+          email: string
+          first_name: string
+          force_password_change: boolean
+          last_login_at: string
+          last_name: string
+          mfa_enabled: boolean
+          mfa_skip: boolean
+          status: string
+          user_id: string
+        }[]
+      }
       get_facility_leads_count: {
         Args: { p_facility_id: string }
         Returns: {
