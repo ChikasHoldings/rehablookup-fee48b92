@@ -224,43 +224,21 @@ export function useAdminUserManagement() {
   const { data: adminUsers, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ["admin-users-full"],
     queryFn: async () => {
-      // Get all users with admin role in user_roles
-      const { data: allRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .eq("role", "admin");
+      // Use the security-definer RPC that resolves emails from auth.users
+      // This ensures admin users without a profiles row are still visible
+      const { data: adminList, error: listError } = await supabase
+        .rpc("get_admin_users_list");
 
-      if (rolesError) {
-        logAdminError("useAdminUserManagement", "fetch_roles", rolesError, { queryKey: "admin-users-full" });
-        throw rolesError;
+      if (listError) {
+        logAdminError("useAdminUserManagement", "fetch_admin_list", listError, { queryKey: "admin-users-full" });
+        throw listError;
       }
 
-      const adminUserIds = [...new Set((allRoles || []).map(r => r.user_id))];
-      
-      if (adminUserIds.length === 0) {
+      if (!adminList || adminList.length === 0) {
         return [];
       }
 
-      // Get profiles for these users
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, email, first_name, last_name, created_at")
-        .in("user_id", adminUserIds);
-
-      if (profilesError) {
-        logAdminError("useAdminUserManagement", "fetch_profiles", profilesError, { queryKey: "admin-users-full" });
-        throw profilesError;
-      }
-
-      // Get admin profiles with admin_role
-      const { data: adminProfiles, error: adminProfilesError } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, display_name, first_name, last_name, admin_role, status, avatar_url, created_at, last_login_at, force_password_change, mfa_enabled")
-        .in("user_id", adminUserIds);
-
-      if (adminProfilesError) {
-        logAdminError("useAdminUserManagement", "fetch_admin_profiles", adminProfilesError, { queryKey: "admin-users-full" });
-      }
+      const adminUserIds = adminList.map((u: any) => u.user_id);
 
       // Get permissions
       const { data: permissions, error: permissionsError } = await supabase
@@ -272,12 +250,6 @@ export function useAdminUserManagement() {
         logAdminError("useAdminUserManagement", "fetch_permissions", permissionsError, { queryKey: "admin-users-full" });
       }
 
-      // Group admin profiles by user
-      const adminProfilesByUser: Record<string, any> = {};
-      (adminProfiles || []).forEach((p) => {
-        adminProfilesByUser[p.user_id] = p;
-      });
-
       // Group permissions by user
       const permissionsByUser: Record<string, Record<string, boolean>> = {};
       (permissions || []).forEach((p) => {
@@ -287,27 +259,24 @@ export function useAdminUserManagement() {
         permissionsByUser[p.user_id][p.permission_key] = p.granted;
       });
 
-      return (profiles || []).map((profile) => {
-        const adminProfile = adminProfilesByUser[profile.user_id];
-        const userPermissions = permissionsByUser[profile.user_id] || {};
-        
-        // Get admin_role from admin_user_profiles, default to customer_rep
-        const adminRole = (adminProfile?.admin_role as AdminRoleType) || "customer_rep";
+      return adminList.map((u: any) => {
+        const userPermissions = permissionsByUser[u.user_id] || {};
+        const adminRole = (u.admin_role as AdminRoleType) || "customer_rep";
 
         return {
-          user_id: profile.user_id,
-          email: profile.email,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          created_at: profile.created_at,
+          user_id: u.user_id,
+          email: u.email || "unknown",
+          first_name: u.first_name,
+          last_name: u.last_name,
+          created_at: u.created_at,
           admin_role: adminRole,
-          status: (adminProfile?.status || "active") as AdminUserStatus,
-          display_name: adminProfile?.display_name || null,
-          avatar_url: adminProfile?.avatar_url || null,
-          last_login_at: adminProfile?.last_login_at || null,
+          status: (u.status || "active") as AdminUserStatus,
+          display_name: u.display_name || null,
+          avatar_url: u.avatar_url || null,
+          last_login_at: u.last_login_at || null,
           permissions: userPermissions,
-          mfa_skip: adminProfile?.mfa_skip || false,
-          mfa_enabled: adminProfile?.mfa_enabled || false,
+          mfa_skip: u.mfa_skip || false,
+          mfa_enabled: u.mfa_enabled || false,
         };
       }) as AdminUser[];
     },
