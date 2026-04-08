@@ -52,6 +52,7 @@ export default function AdminConcierge() {
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [advisorFilter, setAdvisorFilter] = useState<"mine" | "all">(isAdvisor ? "mine" : "all");
+  const [viewMode, setViewMode] = useState<"pipeline" | "table">("pipeline");
 
   const { data: cases, isLoading, refetch } = useQuery({
     queryKey: ["admin-concierge-cases", statusFilter, advisorFilter, user?.id],
