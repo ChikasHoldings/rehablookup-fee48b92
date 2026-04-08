@@ -644,15 +644,29 @@ export default function AdminLeads() {
             Direct facility inquiries from seekers
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          className="gap-2 w-fit"
-          onClick={handleExportCSV}
-          disabled={!leads || leads.length === 0}
-        >
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setBulkDeleteOpen(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete ({selectedIds.size})
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={!leads || leads.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* KPI Summary Bar - uses independent counts, not page data */}
