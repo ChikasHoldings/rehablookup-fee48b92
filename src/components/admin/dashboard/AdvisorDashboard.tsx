@@ -512,6 +512,11 @@ export function AdvisorDashboard() {
         </CardContent>
       </Card>
 
+      {/* Contractor Earnings */}
+      {isContractor && advisorId && (
+        <AdvisorEarningsCard advisorId={advisorId} />
+      )}
+
       {/* Case Detail Sheet - opens directly from dashboard */}
       <ConciergeDetailSheet
         caseData={selectedCase}
