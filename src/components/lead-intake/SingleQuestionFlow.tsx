@@ -650,11 +650,29 @@ export function SingleQuestionFlow({
   };
   
   return (
-    <div className="w-full max-w-lg mx-auto px-1">
-      
+    <div className="w-full max-w-lg mx-auto">
+      {/* Progress bar */}
+      <div className="px-4 sm:px-6 pt-4 sm:pt-5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Step {currentIndex + 1} of {totalQuestions}
+          </span>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {Math.round(progress)}%
+          </span>
+        </div>
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-primary rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          />
+        </div>
+      </div>
       
       {/* Question content */}
-      <div className="relative min-h-[350px] sm:min-h-[400px]">
+      <div className="relative min-h-[350px] sm:min-h-[400px] px-4 sm:px-6 pb-2">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentQuestion?.id}
@@ -666,8 +684,8 @@ export function SingleQuestionFlow({
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="w-full"
           >
-            {/* Question header - Mobile Optimized */}
-            <div className="text-center mb-5 sm:mb-8">
+            {/* Question header */}
+            <div className="text-center mb-5 sm:mb-8 pt-4 sm:pt-5">
               {currentQuestion?.icon && (
                 <motion.div 
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -694,8 +712,8 @@ export function SingleQuestionFlow({
         </AnimatePresence>
       </div>
       
-      {/* Navigation - Mobile Optimized */}
-      <div className="mt-4 sm:mt-6 flex items-center justify-between">
+      {/* Navigation */}
+      <div className="px-4 sm:px-6 flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
@@ -723,22 +741,34 @@ export function SingleQuestionFlow({
         )}
       </div>
       
-      {/* Trust indicators - Mobile Compact */}
-      <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
+      {/* Trust indicators */}
+      <div className="mx-4 sm:mx-6 mt-4 sm:mt-5 mb-4 sm:mb-5 pt-4 border-t flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1">
           <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
           <span>HIPAA Compliant</span>
         </div>
-        <span className="hidden sm:block text-border">•</span>
-        <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
+        <span className="text-border">·</span>
+        <div className="flex items-center gap-1">
           <span className="text-xs">🔒</span>
           <span>Encrypted</span>
         </div>
-        <span className="hidden sm:block text-border">•</span>
-        <div className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
-          <span className="text-xs">✓</span>
+        <span className="text-border">·</span>
+        <div className="flex items-center gap-1">
+          <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500" />
           <span>100% Free</span>
         </div>
+      </div>
+      
+      {/* Honeypot — hidden from humans, traps bots */}
+      <div className="hidden" aria-hidden="true">
+        <input
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={formData.website}
+          onChange={(e) => updateFormData({ website: e.target.value })}
+        />
       </div>
     </div>
   );
