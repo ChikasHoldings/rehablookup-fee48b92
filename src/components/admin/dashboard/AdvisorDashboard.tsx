@@ -543,11 +543,20 @@ export function AdvisorDashboard() {
           </CardContent>
         </Card>
 
-        {/* Full Pipeline */}
+        {/* Full Pipeline - visual board */}
         <Card className="border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-medium">My Pipeline</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Your case status breakdown</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-medium">My Pipeline</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Your case status breakdown</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/admin/concierge" className="text-xs">
+                  Full Board <ChevronRight className="h-3 w-3 ml-1" />
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {loadingInquiries ? (
@@ -558,22 +567,21 @@ export function AdvisorDashboard() {
             ) : (
               <div className="space-y-3">
                 {[
-                  { key: "newCases", label: "New / Intake", icon: "🟢" },
-                  { key: "reviewing", label: "Reviewing", icon: "🔍" },
-                  { key: "matching", label: "Matching / Outreach", icon: "🔗" },
-                  { key: "introsSent", label: "Intros Sent", icon: "📨" },
-                  { key: "inContact", label: "In Contact / Tours", icon: "📞" },
-                  { key: "placed", label: "Placed ✓", icon: "🏠" },
-                  { key: "closed", label: "Closed", icon: "📁" },
-                ].map(({ key, label, icon }) => {
-                  const count = (inquiryStats as any)?.[key] || 0;
+                  { key: "newCases", label: "New / Intake", color: "bg-primary", count: inquiryStats?.newCases || 0 },
+                  { key: "reviewing", label: "Reviewing", color: "bg-info", count: inquiryStats?.reviewing || 0 },
+                  { key: "matching", label: "Matching / Outreach", color: "bg-warning", count: inquiryStats?.matching || 0 },
+                  { key: "introsSent", label: "Intros Sent", color: "bg-accent", count: inquiryStats?.introsSent || 0 },
+                  { key: "inContact", label: "In Contact / Tours", color: "bg-info", count: inquiryStats?.inContact || 0 },
+                  { key: "placed", label: "Placed ✓", color: "bg-success", count: inquiryStats?.placed || 0 },
+                  { key: "closed", label: "Closed", color: "bg-muted-foreground", count: inquiryStats?.closed || 0 },
+                ].map(({ key, label, color, count }) => {
                   const pct = inquiryStats?.total ? (count / inquiryStats.total) * 100 : 0;
                   const isActive = key !== "placed" && key !== "closed" && count > 0;
                   return (
                     <div key={key} className={isActive ? "bg-muted/30 rounded-lg p-2 -mx-2" : ""}>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm font-medium flex items-center gap-1.5">
-                          <span className="text-xs">{icon}</span>
+                          <span className={`h-2 w-2 rounded-full ${color}`} />
                           {label}
                         </span>
                         <span className="text-sm font-bold tabular-nums">{count}</span>

@@ -1,4 +1,5 @@
 import { forwardRef, useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClipboardList, Users, Send, Settings, DollarSign, MessageSquare, CalendarCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { toast } from "sonner";
+import { PlacementProgressStepper } from "./concierge/PlacementProgressStepper";
 import { ConciergeIntakeTab } from "./concierge/ConciergeIntakeTab";
 import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
@@ -38,7 +41,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
   function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }, ref) {
-  const { adminRole, isSuperAdmin } = useAdminAuth();
+  const { adminRole, isSuperAdmin, user } = useAdminAuth();
+  const queryClient = useQueryClient();
   const isAdvisor = adminRole === "advisor";
   const canManageBilling = !isAdvisor;
   const canManageActions = true;
@@ -68,6 +72,32 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
       });
     }
   }, [open, caseData?.id, caseData?.status]);
+
+  // Advance status via stepper
+  const advanceStatus = useMutation({
+    mutationFn: async (nextStatus: string) => {
+      if (!caseData) throw new Error("No case data");
+      const { error } = await supabase
+        .from("concierge_inquiries")
+        .update({ status: nextStatus })
+        .eq("id", caseData.id);
+      if (error) throw error;
+
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseData.id,
+        event_type: "status_changed",
+        event_data: { from: caseData.status, to: nextStatus, via: "stepper" },
+        actor_id: user?.id,
+        actor_type: isAdvisor ? "advisor" : "admin",
+      });
+    },
+    onSuccess: () => {
+      toast.success("Status advanced");
+      queryClient.invalidateQueries({ queryKey: ["case-events", caseData?.id] });
+      onRefresh();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   if (!caseData) return null;
 
@@ -109,7 +139,17 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
           </div>
         </SheetHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-4">
+        {/* Progress Stepper */}
+        <div className="flex-shrink-0 mt-3 overflow-x-auto">
+          <PlacementProgressStepper
+            currentStatus={caseData.status}
+            onAdvance={(nextStatus) => advanceStatus.mutate(nextStatus)}
+            disabled={advanceStatus.isPending}
+            compact
+          />
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-3">
           <TabsList className={`grid flex-shrink-0`} style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
             {tabs.map(tab => (
               <TabsTrigger key={tab.value} value={tab.value} className="gap-1 px-2">
