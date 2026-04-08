@@ -346,8 +346,8 @@ export function ManagerDashboard() {
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
-                  <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <UserCheck className="h-5 w-5 text-blue-600" />
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <UserCheck className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -363,8 +363,8 @@ export function ManagerDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
-                  <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <Headphones className="h-5 w-5 text-purple-600" />
+                  <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <Headphones className="h-5 w-5 text-accent-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -460,13 +460,13 @@ export function ManagerDashboard() {
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <Clock className="h-4 w-4 text-blue-600 mx-auto mb-1" />
+                   <div className="text-center p-3 rounded-lg bg-primary/10 border border-primary/20">
+                     <Clock className="h-4 w-4 text-primary mx-auto mb-1" />
                     <div className="text-lg font-bold tabular-nums">{placementStats?.activeCases}</div>
                     <div className="text-[10px] text-muted-foreground">Active Cases</div>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <Target className="h-4 w-4 text-amber-600 mx-auto mb-1" />
+                   <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
+                     <Target className="h-4 w-4 text-warning mx-auto mb-1" />
                     <div className="text-lg font-bold tabular-nums">{placementStats?.matching}</div>
                     <div className="text-[10px] text-muted-foreground">Matching</div>
                   </div>
@@ -637,9 +637,9 @@ export function ManagerDashboard() {
             </Button>
           )}
           {hasPermission("placements") && (
-            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-blue-500/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-primary/10" asChild>
               <Link to="/admin/concierge">
-                <UserPlus className="h-5 w-5 text-blue-600 mr-3 shrink-0" />
+                <UserPlus className="h-5 w-5 text-primary mr-3 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Placement Center</span>
                   <span className="text-xs text-muted-foreground">{placementStats?.activeCases} active cases</span>
@@ -670,9 +670,9 @@ export function ManagerDashboard() {
             </Button>
           )}
           {hasPermission("support") && (
-            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-purple-500/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-accent/10" asChild>
               <Link to="/admin/support">
-                <Headphones className="h-5 w-5 text-purple-600 mr-3 shrink-0" />
+                 <Headphones className="h-5 w-5 text-accent-foreground mr-3 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Support Inbox</span>
                   <span className="text-xs text-muted-foreground">Customer tickets</span>
@@ -703,9 +703,9 @@ export function ManagerDashboard() {
             </Button>
           )}
           {hasPermission("reviews") && (
-            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-amber-500/10" asChild>
+            <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-warning/10" asChild>
               <Link to="/admin/reviews">
-                <Activity className="h-5 w-5 text-amber-600 mr-3 shrink-0" />
+                 <Activity className="h-5 w-5 text-warning mr-3 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Review Moderation</span>
                   <span className="text-xs text-muted-foreground">Pending reviews</span>

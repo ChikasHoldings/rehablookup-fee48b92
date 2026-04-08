@@ -39,7 +39,12 @@ export function CustomerRepDashboard() {
   const [isEscalating, setIsEscalating] = useState(false);
 
   const invalidateDashboard = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["rep-"] });
+    queryClient.invalidateQueries({ queryKey: ["rep-ticket-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["rep-my-tickets"] });
+    queryClient.invalidateQueries({ queryKey: ["rep-unassigned-tickets"] });
+    queryClient.invalidateQueries({ queryKey: ["rep-review-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["rep-pending-reviews"] });
+    queryClient.invalidateQueries({ queryKey: ["rep-my-escalations"] });
   }, [queryClient]);
 
   useEffect(() => {
@@ -155,7 +160,7 @@ export function CustomerRepDashboard() {
       .eq("id", ticketId);
     if (error) { toast.error("Failed to claim ticket"); return; }
     toast.success("Ticket claimed");
-    queryClient.invalidateQueries({ queryKey: ["rep-"] });
+    invalidateDashboard();
   };
 
   // Escalate ticket
@@ -216,7 +221,7 @@ export function CustomerRepDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shrink-0">
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shrink-0">
             <Headphones className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
           <div className="min-w-0">
@@ -228,18 +233,15 @@ export function CustomerRepDashboard() {
           variant="outline"
           size="sm"
           onClick={() => {
-            setEscalateTicketId(null);
+            setEscalateTicketId("");
             setEscalateSubject("");
             setEscalateDescription("");
             setEscalatePriority("medium");
           }}
           className="gap-1.5"
-          asChild
         >
-          <button onClick={() => setEscalateTicketId("")}>
-            <ArrowUpRight className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Escalate Issue</span>
-          </button>
+          <ArrowUpRight className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Escalate Issue</span>
         </Button>
       </div>
 
