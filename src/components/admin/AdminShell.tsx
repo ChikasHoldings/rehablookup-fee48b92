@@ -98,12 +98,46 @@ export function AdminShell() {
     return null;
   }
 
-  // Check if user can access current route
-  const hasRouteAccess = canAccessRoute(location.pathname);
+  // When impersonating, use impersonated role's permissions for sidebar/routing
+  const effectiveIsSuperAdmin = isImpersonating ? false : isSuperAdmin;
+  const effectiveHasPermission = isImpersonating
+    ? (key: string) => impersonating?.permissions?.[key] === true
+    : hasPermission;
+  const effectiveCanAccessRoute = isImpersonating
+    ? (pathname: string) => {
+        // During impersonation, check the impersonated user's permissions
+        const routeMap: Record<string, string> = {
+          "/admin": "dashboard", "/admin/dashboard": "dashboard",
+          "/admin/analytics": "analytics", "/admin/providers": "providers",
+          "/admin/leads": "leads", "/admin/seekers": "seekers",
+          "/admin/subscriptions": "subscriptions", "/admin/featured": "featured",
+          "/admin/users": "users", "/admin/audit-log": "audit_log",
+          "/admin/settings": "settings", "/admin/notifications": "notifications",
+          "/admin/profile": "dashboard", "/admin/reviews": "reviews",
+          "/admin/concierge": "placements", "/admin/support": "support",
+          "/admin/placement-revenue": "placements", "/admin/credentials": "providers",
+          "/admin/security-logs": "security_logs", "/admin/marketing": "leads",
+          "/admin/blog": "providers", "/admin/international": "placements",
+          "/admin/inbox": "placements", "/admin/escalations": "escalations",
+          "/admin/back-office": "back_office",
+        };
+        let permKey = routeMap[pathname];
+        if (!permKey) {
+          for (const [route, perm] of Object.entries(routeMap).sort((a, b) => b[0].length - a[0].length)) {
+            if (pathname.startsWith(route) && route !== "/admin") { permKey = perm; break; }
+          }
+        }
+        if (!permKey || permKey === "dashboard" || permKey === "notifications") return true;
+        return impersonating?.permissions?.[permKey] === true;
+      }
+    : canAccessRoute;
 
-  // Filter mobile nav items based on permissions
+  // Check if user can access current route
+  const hasRouteAccess = effectiveCanAccessRoute(location.pathname);
+
+  // Filter mobile nav items based on effective permissions
   const visibleNavItems = mobileNavItems.filter(
-    (item) => isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission)
+    (item) => effectiveIsSuperAdmin || item.permission === "dashboard" || effectiveHasPermission(item.permission)
   );
 
   return (
