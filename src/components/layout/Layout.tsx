@@ -7,6 +7,7 @@ import { FloatingHelpButton } from "@/components/ui/floating-help-button";
 import { InternationalBanner } from "@/components/InternationalBanner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { preloadPublicPages } from "@/lib/routePrefetch";
+import { ExitIntentCapture } from "@/components/ExitIntentCapture";
 
 interface LayoutProps {
   children: ReactNode;
@@ -48,6 +49,7 @@ export function Layout({ children }: LayoutProps) {
       <MemoizedFooter />
       <BackToTop />
       <FloatingHelpButton />
+      <ExitIntentCapture />
     </div>
   );
 }
