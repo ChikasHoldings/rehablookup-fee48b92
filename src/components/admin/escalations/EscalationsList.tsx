@@ -53,7 +53,7 @@ export function EscalationsList({ filterStatus = "all" }: EscalationsListProps) 
         .limit(100);
 
       if (filterStatus !== "all") {
-        query = query.eq("status", filterStatus);
+        query = query.eq("status", filterStatus as "open" | "in_progress" | "resolved" | "closed");
       }
 
       const { data, error } = await query;
