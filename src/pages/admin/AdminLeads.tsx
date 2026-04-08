@@ -20,6 +20,9 @@ import {
   X,
   Trash2,
   ArrowRightLeft,
+  CheckSquare,
+  Square,
+  Loader2,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
