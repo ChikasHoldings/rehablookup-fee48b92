@@ -181,6 +181,22 @@ export function AdvisorDashboard() {
     },
   });
 
+  // Fetch full case data when a case is selected for the detail sheet
+  const { data: selectedCase } = useQuery({
+    queryKey: ["advisor-case-detail", selectedCaseId],
+    queryFn: async () => {
+      if (!selectedCaseId) return undefined;
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select("*")
+        .eq("id", selectedCaseId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCaseId,
+  });
+
   const activeCases = (inquiryStats?.newCases || 0) + (inquiryStats?.inProgress || 0) + (inquiryStats?.matched || 0);
   const placementRate = inquiryStats?.total 
     ? Math.round(((inquiryStats.placed || 0) / inquiryStats.total) * 100) 
