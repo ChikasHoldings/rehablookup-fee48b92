@@ -123,8 +123,8 @@ export function TwoFactorEnforcementDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && step === "intro" && onSkip) onSkip(); }}>
+      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => { if (step !== "intro") e.preventDefault(); }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
