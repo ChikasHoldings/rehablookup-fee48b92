@@ -5505,6 +5505,10 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_admin_mfa_setup: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       complete_admin_password_setup: {
         Args: { p_user_id: string }
         Returns: boolean
