@@ -18,7 +18,9 @@ export interface SubstanceConfig {
   faqs: { question: string; answer: string }[];
 }
 
-export const substancePages: SubstanceConfig[] = [
+import { expandedSubstancePages } from "./seoSubstanceConfigExpanded";
+
+const coreSubstancePages: SubstanceConfig[] = [
   {
     slug: "cocaine-addiction-treatment",
     title: "Cocaine Addiction Treatment",
@@ -259,4 +261,9 @@ export const substancePages: SubstanceConfig[] = [
       { question: "Does insurance cover benzodiazepine addiction treatment?", answer: "Yes, benzodiazepine addiction treatment is covered by all major insurance plans under the Mental Health Parity Act. Given the medical necessity of supervised detoxification, insurance companies generally authorize comprehensive treatment including inpatient medical taper, outpatient follow-up, psychiatric care, and therapy." },
     ],
   },
+];
+
+export const substancePages: SubstanceConfig[] = [
+  ...coreSubstancePages,
+  ...expandedSubstancePages,
 ];
