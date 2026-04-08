@@ -780,3 +780,5 @@ export default function AdminSeekers() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
