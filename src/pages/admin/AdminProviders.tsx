@@ -1,11 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, Download, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { ProviderStatsCharts } from "@/components/admin/ProviderStatsCharts";
@@ -55,6 +66,74 @@ export default function AdminProviders() {
   } | null>(null);
   const [deleteWithUser, setDeleteWithUser] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      let successCount = 0;
+      for (const facilityId of selectedIds) {
+        const { error } = await supabase.functions.invoke("admin-delete-provider", {
+          body: { facilityId, deleteUser: false },
+        });
+        if (!error) successCount++;
+      }
+      toast.success(`Deleted ${successCount} provider(s)`);
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      invalidateProviderQueries();
+    } catch (err: any) {
+      toast.error("Bulk delete failed: " + (err.message || "Unknown error"));
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const rows = (providers || []).map((p) => ({
+      Name: p.name,
+      City: p.city,
+      State: p.state,
+      "Facility Type": p.facility_type,
+      Status: p.suspended ? "Suspended" : p.status,
+      Email: p.email || "",
+      Phone: p.phone,
+      Verified: p.verified ? "Yes" : "No",
+      Featured: p.featured ? "Yes" : "No",
+      "Placement Network": p.concierge_network_opted_in ? "Yes" : "No",
+      Leads: String(leadCounts?.[p.id] || 0),
+      Created: p.created_at ? new Date(p.created_at).toLocaleDateString() : "",
+    }));
+    if (!rows.length) { toast.info("No providers to export"); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => headers.map((h) => {
+        const v = String((r as any)[h] ?? "");
+        return v.includes(",") || v.includes('"') || v.includes("\n") ? `"${v.replace(/"/g, '""')}"` : v;
+      }).join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `providers-export-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Providers exported to CSV");
+  };
 
   // Invalidate all provider queries for real-time updates
   const invalidateProviderQueries = useCallback(() => {
@@ -488,15 +567,29 @@ export default function AdminProviders() {
         activeTab={activeTab}
       />
 
-      {/* Search */}
-      <div className="relative w-full sm:max-w-md">
-        <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, city, or email..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="pl-8 sm:pl-9 h-9 text-sm"
-        />
+      {/* Search + Actions */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="relative flex-1 w-full sm:max-w-md">
+          <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, city, or email..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-8 sm:pl-9 h-9 text-sm"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 h-9">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          {selectedIds.size > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)} className="gap-1.5 h-9">
+              <Trash2 className="h-4 w-4" />
+              Delete ({selectedIds.size})
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Provider List */}
@@ -518,19 +611,28 @@ export default function AdminProviders() {
           ) : providers && providers.length > 0 ? (
             <div className="divide-y">
               {providers.map((provider) => (
-                <ProviderListItem
-                  key={provider.id}
-                  provider={provider}
-                  isPro={!!proSubscriptions?.[provider.id]}
-                  leadCount={leadCounts?.[provider.id] || 0}
-                  onOpenDetail={openProviderDetail}
-                  onStatusChange={handleStatusChange}
-                  onToggleVerified={handleToggleVerified}
-                  onToggleFeatured={handleToggleFeatured}
-                  onSuspend={handleSuspend}
-                  onReactivate={handleReactivate}
-                  onDelete={handleDelete}
-                />
+                <div key={provider.id} className="flex items-center">
+                  <div className="pl-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedIds.has(provider.id)}
+                      onCheckedChange={() => toggleSelect(provider.id)}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <ProviderListItem
+                      provider={provider}
+                      isPro={!!proSubscriptions?.[provider.id]}
+                      leadCount={leadCounts?.[provider.id] || 0}
+                      onOpenDetail={openProviderDetail}
+                      onStatusChange={handleStatusChange}
+                      onToggleVerified={handleToggleVerified}
+                      onToggleFeatured={handleToggleFeatured}
+                      onSuspend={handleSuspend}
+                      onReactivate={handleReactivate}
+                      onDelete={handleDelete}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
@@ -635,6 +737,33 @@ export default function AdminProviders() {
         deleteWithUser={deleteWithUser}
         onDeleteWithUserChange={setDeleteWithUser}
       />
+
+      {/* Bulk Delete Dialog */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete {selectedIds.size} Provider(s)
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the selected facilities and all their associated data
+              (leads, reviews, accreditations, images). Provider user accounts will not be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Delete {selectedIds.size} Provider(s)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
