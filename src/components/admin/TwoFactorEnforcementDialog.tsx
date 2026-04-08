@@ -173,6 +173,16 @@ export function TwoFactorEnforcementDialog({
                 </>
               )}
             </Button>
+
+            {onSkip && (
+              <Button
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={onSkip}
+              >
+                Remind me later
+              </Button>
+            )}
           </div>
         )}
 
