@@ -261,8 +261,17 @@ export function useAdminUserManagement() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Split displayName for edge function
+      const nameParts = data.displayName.trim().split(/\s+/);
+      const firstName = nameParts[0] || data.displayName;
+      const lastName = nameParts.slice(1).join(" ") || "";
+
       const response = await supabase.functions.invoke("create-admin-user", {
-        body: data,
+        body: {
+          ...data,
+          firstName,
+          lastName,
+        },
       });
 
       if (response.error) throw new Error(response.error.message);
