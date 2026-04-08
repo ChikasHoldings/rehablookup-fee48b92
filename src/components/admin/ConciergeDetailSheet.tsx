@@ -141,7 +141,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               </TabsContent>
             )}
             <TabsContent value="actions" className="m-0">
-              <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} isAdvisor={isAdvisor} />
+              <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} isAdvisor={isAdvisor} onSwitchTab={setActiveTab} />
             </TabsContent>
           </ScrollArea>
         </Tabs>
