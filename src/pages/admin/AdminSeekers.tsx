@@ -100,15 +100,103 @@ export default function AdminSeekers() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
 
   const hasActiveFilters = verificationFilter !== "all" || searchInput !== "";
 
+  const toggleSelect = (userId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId); else next.add(userId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!safeUsers.length) return;
+    const allOnPage = safeUsers.map((u) => u.user_id);
+    const allSelected = allOnPage.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allOnPage.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allOnPage.forEach((id) => next.add(id));
+        return next;
+      });
+    }
+  };
+
   const clearAllFilters = () => {
     setVerificationFilter("all");
     setSearchInput("");
     setCurrentPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      let successCount = 0;
+      for (const userId of selectedIds) {
+        const { error } = await supabase.functions.invoke("admin-delete-seeker", {
+          body: { targetUserId: userId, action: "delete" },
+        });
+        if (!error) successCount++;
+      }
+
+      toast.success(`Deleted ${successCount} seeker account(s)`);
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-count"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-global-stats"] });
+    } catch (err: any) {
+      toast.error("Bulk delete failed: " + (err.message || "Unknown error"));
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const rows = safeUsers.map((u) => ({
+      Name: getDisplayName(u),
+      Email: u.email || "",
+      Phone: u.aggregated_phone || u.phone || "",
+      City: u.aggregated_city || u.city || "",
+      State: u.aggregated_state || u.state || "",
+      Zip: u.aggregated_zipcode || u.zipcode || "",
+      "Phone Verified": u.phone_verified ? "Yes" : "No",
+      Joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : "",
+    }));
+    if (!rows.length) { toast.info("No data to export"); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => headers.map((h) => {
+        const v = String((r as any)[h] ?? "");
+        return v.includes(",") || v.includes('"') || v.includes("\n") ? `"${v.replace(/"/g, '""')}"` : v;
+      }).join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `seekers-export-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Seekers exported to CSV");
   };
 
   // Fetch total count for pagination
