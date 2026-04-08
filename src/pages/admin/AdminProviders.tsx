@@ -67,6 +67,74 @@ export default function AdminProviders() {
   const [deleteWithUser, setDeleteWithUser] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      let successCount = 0;
+      for (const facilityId of selectedIds) {
+        const { error } = await supabase.functions.invoke("admin-delete-provider", {
+          body: { facilityId, deleteUser: false },
+        });
+        if (!error) successCount++;
+      }
+      toast.success(`Deleted ${successCount} provider(s)`);
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      invalidateProviderQueries();
+    } catch (err: any) {
+      toast.error("Bulk delete failed: " + (err.message || "Unknown error"));
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const rows = (providers || []).map((p) => ({
+      Name: p.name,
+      City: p.city,
+      State: p.state,
+      "Facility Type": p.facility_type,
+      Status: p.suspended ? "Suspended" : p.status,
+      Email: p.email || "",
+      Phone: p.phone,
+      Verified: p.verified ? "Yes" : "No",
+      Featured: p.featured ? "Yes" : "No",
+      "Placement Network": p.concierge_network_opted_in ? "Yes" : "No",
+      Leads: String(leadCounts?.[p.id] || 0),
+      Created: p.created_at ? new Date(p.created_at).toLocaleDateString() : "",
+    }));
+    if (!rows.length) { toast.info("No providers to export"); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => headers.map((h) => {
+        const v = String((r as any)[h] ?? "");
+        return v.includes(",") || v.includes('"') || v.includes("\n") ? `"${v.replace(/"/g, '""')}"` : v;
+      }).join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `providers-export-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Providers exported to CSV");
+  };
+
   // Invalidate all provider queries for real-time updates
   const invalidateProviderQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
