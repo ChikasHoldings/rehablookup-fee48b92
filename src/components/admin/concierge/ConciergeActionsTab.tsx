@@ -285,21 +285,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
 
       {/* Escalate Case */}
       {isAdvisor && caseData.status !== "closed" && (
-        <Card className="border-orange-300/50 bg-orange-50/30 dark:bg-orange-950/10">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">Need help with this case?</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Escalate to a Manager or Super Admin for review</p>
-              </div>
-              <EscalationDialog
-                relatedType="concierge_inquiry"
-                relatedId={caseData.id}
-                defaultSubject={`Escalation: Case #${caseData.id.slice(0, 8)} — ${caseData.user_name}`}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <EscalateCardInline caseData={caseData} />
       )}
 
       {/* Close Case - only for non-advisors */}
