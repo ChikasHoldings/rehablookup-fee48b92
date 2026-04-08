@@ -1168,9 +1168,192 @@ export function MarketingLeadProfileModal({
                 </div>
               </div>
             </TabsContent>
+
+            {/* Actions Tab */}
+            <TabsContent value="actions" className="p-4 sm:p-6 space-y-5 sm:space-y-6 mt-0">
+              {/* Route to Provider */}
+              <div className="p-4 rounded-xl border bg-card space-y-3">
+                <div className="flex items-center gap-2">
+                  <ArrowRightCircle className="h-5 w-5 text-info" />
+                  <h3 className="font-semibold">Route to Provider</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Manually route this lead to a specific provider. This creates an inquiry in the provider's dashboard.
+                </p>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => setRouteDialogOpen(true)}
+                >
+                  <Building2 className="h-4 w-4" />
+                  Select Provider & Route
+                </Button>
+              </div>
+
+              {/* Convert to Concierge */}
+              <div className="p-4 rounded-xl border bg-card space-y-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-chart-3" />
+                  <h3 className="font-semibold">Convert to Concierge</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Mark this lead as converted to concierge placement. Use when they've signed up for concierge service.
+                </p>
+                {lead.converted_to_concierge ? (
+                  <Badge className="bg-chart-3/10 text-chart-3 border-chart-3/30 gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Already Converted
+                    {lead.converted_at && ` • ${format(new Date(lead.converted_at), "MMM d, yyyy")}`}
+                  </Badge>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => convertToConcierge.mutate()}
+                    disabled={convertToConcierge.isPending}
+                  >
+                    {convertToConcierge.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <Sparkles className="h-4 w-4" />
+                    Mark as Converted
+                  </Button>
+                )}
+              </div>
+
+              {/* Send Follow-up Email */}
+              <div className="p-4 rounded-xl border bg-card space-y-3">
+                <div className="flex items-center gap-2">
+                  <Send className="h-5 w-5 text-warning" />
+                  <h3 className="font-semibold">Follow-up Email</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Send a follow-up email to this lead encouraging them to engage with matched facilities.
+                </p>
+                {lead.followup_email_sent ? (
+                  <Badge className="bg-success/10 text-success border-success/30 gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Already Sent
+                    {lead.followup_email_sent_at && ` • ${format(new Date(lead.followup_email_sent_at), "MMM d, yyyy h:mm a")}`}
+                  </Badge>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => sendFollowup.mutate()}
+                    disabled={sendFollowup.isPending}
+                  >
+                    {sendFollowup.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <Mail className="h-4 w-4" />
+                    Send Follow-up
+                  </Button>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Delete Lead - Danger Zone */}
+              <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Trash2 className="h-5 w-5 text-destructive" />
+                  <h3 className="font-semibold text-destructive">Danger Zone</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete this marketing lead. This action cannot be undone.
+                </p>
+                <Button
+                  variant="destructive"
+                  className="gap-2"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Lead
+                </Button>
+              </div>
+            </TabsContent>
           </ScrollArea>
         </Tabs>
       </DialogContent>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete marketing lead?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove {lead.first_name} {lead.last_name}'s marketing lead record. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteLead.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLead.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Route to Provider Dialog */}
+      <AlertDialog open={routeDialogOpen} onOpenChange={setRouteDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Route Lead to Provider</AlertDialogTitle>
+            <AlertDialogDescription>
+              Search for a provider and route this lead to them. This creates an inquiry in their dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search facilities by name..."
+                value={facilitySearch}
+                onChange={(e) => setFacilitySearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            {searchedFacilities.length > 0 && (
+              <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-1">
+                {searchedFacilities.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setSelectedFacilityId(f.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors text-sm",
+                      selectedFacilityId === f.id
+                        ? "bg-primary/10 ring-1 ring-primary"
+                        : "hover:bg-muted/50"
+                    )}
+                  >
+                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="font-medium">{f.name}</p>
+                      <p className="text-xs text-muted-foreground">{f.city}, {f.state}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {facilitySearch.length >= 2 && searchedFacilities.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">No approved facilities found</p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setFacilitySearch(""); setSelectedFacilityId(""); }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => routeToProvider.mutate(selectedFacilityId)}
+              disabled={!selectedFacilityId || routeToProvider.isPending}
+            >
+              {routeToProvider.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
+              Route Lead
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
