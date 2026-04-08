@@ -125,6 +125,9 @@ export type AdminUser = {
   permissions: Record<string, boolean>;
   mfa_skip: boolean;
   mfa_enabled: boolean;
+  employment_type: string | null;
+  commission_rate: number | null;
+  phone: string | null;
 };
 
 export function useAdminUserManagement() {
@@ -235,6 +238,9 @@ export function useAdminUserManagement() {
           permissions: userPermissions,
           mfa_skip: u.mfa_skip || false,
           mfa_enabled: u.mfa_enabled || false,
+          employment_type: u.employment_type || null,
+          commission_rate: u.commission_rate || null,
+          phone: u.phone || null,
         };
       }) as AdminUser[];
     },
@@ -261,8 +267,17 @@ export function useAdminUserManagement() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Split displayName for edge function
+      const nameParts = data.displayName.trim().split(/\s+/);
+      const firstName = nameParts[0] || data.displayName;
+      const lastName = nameParts.slice(1).join(" ") || "";
+
       const response = await supabase.functions.invoke("create-admin-user", {
-        body: data,
+        body: {
+          ...data,
+          firstName,
+          lastName,
+        },
       });
 
       if (response.error) throw new Error(response.error.message);

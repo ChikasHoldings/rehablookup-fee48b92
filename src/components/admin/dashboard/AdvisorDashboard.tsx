@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
+import { AdvisorEarningsCard } from "@/components/admin/dashboard/AdvisorEarningsCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,23 @@ export function AdvisorDashboard() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   const advisorId = user?.id;
+
+  // Check if this advisor is a contractor (for earnings card)
+  const { data: advisorProfile } = useQuery({
+    queryKey: ["advisor-profile", advisorId],
+    queryFn: async () => {
+      if (!advisorId) return null;
+      const { data } = await supabase
+        .from("admin_user_profiles")
+        .select("employment_type, commission_rate")
+        .eq("user_id", advisorId)
+        .single();
+      return data;
+    },
+    enabled: !!advisorId,
+  });
+
+  const isContractor = advisorProfile?.employment_type === "contractor";
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["advisor-inquiry-stats"] });
@@ -493,6 +511,9 @@ export function AdvisorDashboard() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Contractor Earnings */}
+      {isContractor && <AdvisorEarningsCard />}
 
       {/* Case Detail Sheet - opens directly from dashboard */}
       <ConciergeDetailSheet
