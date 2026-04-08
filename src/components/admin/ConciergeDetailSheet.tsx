@@ -22,6 +22,7 @@ interface ConciergeDetailSheetProps {
   open: boolean;
   onClose: () => void;
   onRefresh: () => void;
+  initialTab?: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -36,20 +37,20 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
-  function ConciergeDetailSheet({ caseData, open, onClose, onRefresh }, ref) {
+  function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }, ref) {
   const { adminRole, isSuperAdmin } = useAdminAuth();
   const isAdvisor = adminRole === "advisor";
-  const canManageBilling = !isAdvisor; // Only admins/managers can manage billing
-  const canManageActions = true; // All roles can see actions, but tab content is role-scoped
+  const canManageBilling = !isAdvisor;
+  const canManageActions = true;
 
-  const [activeTab, setActiveTab] = useState("intake");
+  const [activeTab, setActiveTab] = useState(initialTab || "intake");
 
-  // Reset tab when sheet opens to prevent landing on a restricted tab
+  // Reset tab when sheet opens
   useEffect(() => {
     if (open) {
-      setActiveTab("intake");
+      setActiveTab(initialTab || "intake");
     }
-  }, [open, caseData?.id]);
+  }, [open, caseData?.id, initialTab]);
 
   // Auto-transition: new → reviewing when admin opens case
   useEffect(() => {
