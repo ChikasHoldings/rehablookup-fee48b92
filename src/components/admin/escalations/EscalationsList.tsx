@@ -48,7 +48,7 @@ export function EscalationsList({ filterStatus = "all" }: EscalationsListProps) 
     queryFn: async () => {
       let query = supabase
         .from("admin_escalations")
-        .select("*")
+        .select("id, subject, description, priority, status, created_by, assigned_to, related_type, related_id, resolution_notes, resolved_at, created_at, updated_at")
         .order("created_at", { ascending: false })
         .limit(100);
 
@@ -170,7 +170,7 @@ export function EscalationsList({ filterStatus = "all" }: EscalationsListProps) 
 
                 {esc.status !== "resolved" && esc.status !== "closed" && (
                   <div className="flex gap-1.5 shrink-0">
-                    {!isAssigned && (isSuperAdmin || true) && (
+                    {!isAssigned && (
                       <Button
                         size="sm"
                         variant="outline"
