@@ -49,7 +49,7 @@ export function Layout({ children }: LayoutProps) {
       <MemoizedFooter />
       <BackToTop />
       <FloatingHelpButton />
-      <ExitIntentCapture />
+      
     </div>
   );
 }
