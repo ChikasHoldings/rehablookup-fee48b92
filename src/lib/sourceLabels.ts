@@ -24,6 +24,7 @@ const SOURCE_LABELS: Record<string, string> = {
   referral: "Referral",
   concierge: "Concierge",
   widget: "Embedded Widget",
+  exit_intent: "Exit Intent",
 };
 
 /**
