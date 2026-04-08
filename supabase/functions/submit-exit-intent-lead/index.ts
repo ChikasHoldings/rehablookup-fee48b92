@@ -83,6 +83,8 @@ Deno.serve(async (req) => {
         message: `Captured from: ${pageUrl}`,
         preferred_contact: "email",
         inquiry_type: "request_info",
+        level_of_care: treatmentType || null,
+        location_city_state: preferredState || null,
       })
       .select("id")
       .single();
