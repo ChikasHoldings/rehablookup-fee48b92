@@ -124,10 +124,15 @@ export function MarketingLeadProfileModal({
   open,
   onOpenChange,
   onUpdated,
+  onDeleted,
 }: MarketingLeadProfileModalProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [routeDialogOpen, setRouteDialogOpen] = useState(false);
+  const [selectedFacilityId, setSelectedFacilityId] = useState("");
+  const [facilitySearch, setFacilitySearch] = useState("");
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
