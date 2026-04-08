@@ -371,7 +371,7 @@ const Index = () => {
 
       {/* Featured Centers - Premium Grid - Immediately Visible */}
       {isLoadingFeatured ? (
-        <section className="py-8 md:py-10 lg:py-14 bg-gradient-to-b from-background to-muted/20">
+        <section className="py-8 md:py-10 lg:py-14 bg-gradient-to-b from-background to-muted/20 min-h-[420px] md:min-h-[480px]">
           <div className="container px-4 md:px-6 lg:px-8">
             <FeaturedCentersLoading />
           </div>
