@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
       type: "welcome",
       title: "Welcome to RehabLookup Admin! 👋",
       message: `Your admin account has been set up. Please change your temporary password to secure your account.`,
-      link: "/admin/settings",
+      link: "/admin/profile",
     });
 
     return new Response(
