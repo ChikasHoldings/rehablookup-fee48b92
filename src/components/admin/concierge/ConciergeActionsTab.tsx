@@ -41,6 +41,7 @@ interface ConciergeActionsTabProps {
   onRefresh: () => void;
   onClose: () => void;
   isAdvisor?: boolean;
+  onSwitchTab?: (tab: string) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -63,7 +64,7 @@ const ADVISOR_STATUS_OPTIONS = [
   { value: "in_contact", label: "In Contact" },
 ];
 
-export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = false }: ConciergeActionsTabProps) {
+export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = false, onSwitchTab }: ConciergeActionsTabProps) {
   const { user } = useAdminAuth();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState(caseData.status);
@@ -145,9 +146,11 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       });
     },
     onSuccess: () => {
-      toast.success("Case assigned to you");
+      toast.success("Case assigned to you — starting placement workflow");
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       onRefresh();
+      // Navigate to placement tab so advisor can start working
+      onSwitchTab?.("placement");
     },
     onError: (error) => {
       toast.error("Failed to self-assign: " + error.message);
