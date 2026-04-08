@@ -219,16 +219,16 @@ export function useAdminAuth() {
   const clearForcePasswordChange = useCallback(async () => {
     if (!user) return;
     
+    // Set optimistic flag FIRST so any concurrent re-fetch won't overwrite
+    passwordChangeCleared.current = true;
+    setForcePasswordChange(false);
+    setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
+    
     try {
-      const { error } = await supabase
+      await supabase
         .from("admin_user_profiles")
         .update({ force_password_change: false, temp_password_hash: null, temp_password_expires_at: null })
         .eq("user_id", user.id);
-
-      if (!error) {
-        setForcePasswordChange(false);
-        setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
-      }
     } catch {}
   }, [user]);
 
