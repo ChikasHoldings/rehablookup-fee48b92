@@ -209,13 +209,11 @@ export default function AdminNotifications() {
     };
   }, [isSuperAdmin, adminRole]);
 
-  const isLoading = globalLoading || userLoading;
-
-  // Memoize combined notifications
+  // Memoize combined notifications - filtered by role relevance
   const allNotifications = useMemo(() => [
-    ...globalNotifications.map(n => ({ ...n, source: "global" as const })),
+    ...globalNotifications.filter(n => isRelevantNotification(n.type)).map(n => ({ ...n, source: "global" as const })),
     ...userNotifications.map(n => ({ ...n, source: "personal" as const })),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [globalNotifications, userNotifications]);
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [globalNotifications, userNotifications, isRelevantNotification]);
 
   const totalUnreadCount = globalUnreadCount + userUnreadCount;
 
