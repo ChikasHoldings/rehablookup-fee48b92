@@ -20,7 +20,7 @@ import {
   HeartHandshake,
   Calendar,
   AlertCircle,
-  Headphones,
+  Inbox,
   MapPin,
   Activity,
 } from "lucide-react";
