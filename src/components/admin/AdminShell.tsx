@@ -67,6 +67,7 @@ export function AdminShell() {
     clearForcePasswordChange,
     requireMfaSetup,
     completeMfaSetup,
+    skipMfaSetup,
     isInitialized,
     logout 
   } = useAdminAuth();
@@ -115,6 +116,7 @@ export function AdminShell() {
       <TwoFactorEnforcementDialog
         open={requireMfaSetup && !forcePasswordChange}
         onSuccess={completeMfaSetup}
+        onSkip={skipMfaSetup}
       />
       
       <AdminHeader userEmail={user?.email} userId={user?.id} adminRole={adminRole} onLogout={logout} isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />

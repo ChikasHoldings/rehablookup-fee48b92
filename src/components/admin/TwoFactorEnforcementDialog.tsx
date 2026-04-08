@@ -15,6 +15,7 @@ import { toast } from "sonner";
 interface TwoFactorEnforcementDialogProps {
   open: boolean;
   onSuccess: () => void;
+  onSkip?: () => void;
 }
 
 type SetupStep = "intro" | "qr" | "verify" | "recovery";
@@ -22,6 +23,7 @@ type SetupStep = "intro" | "qr" | "verify" | "recovery";
 export function TwoFactorEnforcementDialog({
   open,
   onSuccess,
+  onSkip,
 }: TwoFactorEnforcementDialogProps) {
   const [step, setStep] = useState<SetupStep>("intro");
   const [isLoading, setIsLoading] = useState(false);
@@ -121,8 +123,8 @@ export function TwoFactorEnforcementDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && step === "intro" && onSkip) onSkip(); }}>
+      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => { if (step !== "intro") e.preventDefault(); }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
@@ -171,6 +173,16 @@ export function TwoFactorEnforcementDialog({
                 </>
               )}
             </Button>
+
+            {onSkip && (
+              <Button
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={onSkip}
+              >
+                Remind me later
+              </Button>
+            )}
           </div>
         )}
 

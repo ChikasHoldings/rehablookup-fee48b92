@@ -208,6 +208,12 @@ export function useAdminAuth() {
     } catch {}
   }, [user]);
 
+  const skipMfaSetup = useCallback(() => {
+    setRequireMfaSetup(false);
+    // Only skip for this session - will prompt again next login
+    sessionStorage.setItem('mfa_setup_skipped', '1');
+  }, []);
+
   const clearForcePasswordChange = useCallback(async () => {
     if (!user) return;
     
@@ -276,7 +282,8 @@ export function useAdminAuth() {
         setPermissions(userPermissions);
         setAdminProfile(profile);
         setForcePasswordChange(profile?.force_password_change === true);
-        setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true);
+        const mfaSkippedThisSession = sessionStorage.getItem('mfa_setup_skipped') === '1';
+        setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true && !mfaSkippedThisSession);
         
         // Cache for instant next load
         const role: AdminRoleType = superAdminStatus ? "super_admin" : (profile?.admin_role || "customer_rep");
@@ -420,6 +427,7 @@ export function useAdminAuth() {
     clearForcePasswordChange,
     requireMfaSetup,
     completeMfaSetup,
+    skipMfaSetup,
     hasPermission, 
     canAccessRoute, 
     isLoading,
