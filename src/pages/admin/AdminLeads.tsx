@@ -1053,6 +1053,37 @@ export default function AdminLeads() {
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
+                              {facilities && facilities.length > 0 && (
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>
+                                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                    Route to Provider
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                    {facilities.slice(0, 50).map((f) => (
+                                      <DropdownMenuItem
+                                        key={f.id}
+                                        onClick={() => assignLead.mutate({ leadId: lead.id, facilityId: f.id })}
+                                        disabled={lead.facility_id === f.id}
+                                      >
+                                        <Building2 className="h-3.5 w-3.5 mr-2 shrink-0" />
+                                        <span className="truncate">{f.name}</span>
+                                        {lead.facility_id === f.id && (
+                                          <Badge variant="secondary" className="ml-auto text-[10px]">Current</Badge>
+                                        )}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDeleteTarget(lead)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Lead
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
