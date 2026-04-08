@@ -23,11 +23,11 @@ interface AdvisorAssignmentCardProps {
 
 export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignmentCardProps) {
   const queryClient = useQueryClient();
-  const [selectedAdvisor, setSelectedAdvisor] = useState(caseData.assigned_advisor_id || "");
+  const [selectedAdvisor, setSelectedAdvisor] = useState(caseData.assigned_advisor_id || "unassigned");
 
   // Sync state when caseData changes (e.g., switching between cases)
   useEffect(() => {
-    setSelectedAdvisor(caseData.assigned_advisor_id || "");
+    setSelectedAdvisor(caseData.assigned_advisor_id || "unassigned");
   }, [caseData.id, caseData.assigned_advisor_id]);
 
   // Fetch admin staff for advisor assignment
@@ -45,10 +45,11 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
   });
 
   const assignAdvisorMutation = useMutation({
-    mutationFn: async (advisorId: string | null) => {
+    mutationFn: async (advisorId: string) => {
+      const actualId = advisorId === "unassigned" ? null : advisorId;
       const { error } = await supabase
         .from("concierge_inquiries")
-        .update({ assigned_advisor_id: advisorId || null })
+        .update({ assigned_advisor_id: actualId })
         .eq("id", caseData.id);
 
       if (error) throw error;
@@ -58,7 +59,7 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
         inquiry_id: caseData.id,
         event_type: "advisor_assigned",
         event_data: { 
-          advisor_id: advisorId,
+          advisor_id: advisorId === "unassigned" ? null : advisorId,
           previous_advisor_id: caseData.assigned_advisor_id 
         },
         actor_type: "admin",
@@ -75,11 +76,11 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
   });
 
   const handleAssign = () => {
-    assignAdvisorMutation.mutate(selectedAdvisor || null);
+    assignAdvisorMutation.mutate(selectedAdvisor);
   };
 
   const currentAdvisor = adminStaff?.find(a => a.user_id === caseData.assigned_advisor_id);
-  const hasChanged = selectedAdvisor !== (caseData.assigned_advisor_id || "");
+  const hasChanged = selectedAdvisor !== (caseData.assigned_advisor_id || "unassigned");
 
   return (
     <Card>
@@ -109,7 +110,7 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
                 <SelectValue placeholder="Select an advisor..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {adminStaff?.map((staff) => (
                   <SelectItem key={staff.user_id} value={staff.user_id}>
                     {staff.display_name || `${staff.first_name} ${staff.last_name}`}
