@@ -20,13 +20,15 @@ type FormState = "idle" | "loading" | "success" | "error";
 export function ExitIntentCapture() {
   const { shouldShow, dismiss, markSubmitted } = useExitIntentTrigger();
   const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const pageUrlRef = useRef(window.location.pathname);
 
-  const isNameValid = firstName.trim().length >= 1;
+  const isFirstNameValid = firstName.trim().length >= 1;
+  const isLastNameValid = lastName.trim().length >= 1;
   const isEmailValid = EMAIL_REGEX.test(email.trim());
   const isPhoneValid = !phone || PHONE_REGEX.test(phone.trim());
   const canSubmit = isNameValid && isEmailValid && isPhoneValid;
