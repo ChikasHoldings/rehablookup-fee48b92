@@ -74,6 +74,8 @@ export const ADMIN_PERMISSIONS = {
   seekers: { label: "User Management", description: "View and manage seeker accounts" },
   placements: { label: "Concierge/Placements", description: "Manage placement cases and concierge" },
   support: { label: "Support Inbox", description: "Handle support tickets and seeker communications" },
+  escalations: { label: "Escalations", description: "View and manage escalated issues" },
+  back_office: { label: "Back Office", description: "Super Admin oversight and impersonation (Super Admin only)" },
   security_logs: { label: "Security Logs", description: "View security and rate limit logs" },
   users: { label: "Admin Staff", description: "Create and manage admin users (Super Admin only)" },
   audit_log: { label: "Audit Log", description: "View system audit logs" },
@@ -84,72 +86,28 @@ export const ADMIN_PERMISSIONS = {
 // Default permissions per role
 export const ROLE_DEFAULTS: Record<AdminRoleType, Record<string, boolean>> = {
   super_admin: {
-    dashboard: true,
-    analytics: true,
-    providers: true,
-    leads: true,
-    subscriptions: true,
-    featured: true,
-    reviews: true,
-    seekers: true,
-    placements: true,
-    support: true,
-    security_logs: true,
-    users: true,
-    audit_log: true,
-    settings: true,
-    notifications: true,
+    dashboard: true, analytics: true, providers: true, leads: true,
+    subscriptions: true, featured: true, reviews: true, seekers: true,
+    placements: true, support: true, escalations: true, back_office: true,
+    security_logs: true, users: true, audit_log: true, settings: true, notifications: true,
   },
   manager: {
-    dashboard: true,
-    analytics: true,
-    providers: true,
-    leads: true,
-    subscriptions: true,
-    featured: true,
-    reviews: true,
-    seekers: true,
-    placements: true,
-    support: true,
-    security_logs: false,
-    users: false,
-    audit_log: false,
-    settings: false,
-    notifications: true,
+    dashboard: true, analytics: true, providers: true, leads: true,
+    subscriptions: true, featured: true, reviews: true, seekers: true,
+    placements: true, support: true, escalations: true, back_office: false,
+    security_logs: false, users: false, audit_log: false, settings: false, notifications: true,
   },
   customer_rep: {
-    dashboard: true,
-    analytics: false,
-    providers: true,
-    leads: true,
-    subscriptions: false,
-    featured: false,
-    reviews: true,
-    seekers: true,
-    placements: false,
-    support: true,
-    security_logs: false,
-    users: false,
-    audit_log: false,
-    settings: false,
-    notifications: true,
+    dashboard: true, analytics: false, providers: true, leads: true,
+    subscriptions: false, featured: false, reviews: true, seekers: true,
+    placements: false, support: true, escalations: false, back_office: false,
+    security_logs: false, users: false, audit_log: false, settings: false, notifications: true,
   },
   advisor: {
-    dashboard: true,
-    analytics: false,
-    providers: false,
-    leads: false,
-    subscriptions: false,
-    featured: false,
-    reviews: false,
-    seekers: true,
-    placements: true,
-    support: true,
-    security_logs: false,
-    users: false,
-    audit_log: false,
-    settings: false,
-    notifications: true,
+    dashboard: true, analytics: false, providers: false, leads: false,
+    subscriptions: false, featured: false, reviews: false, seekers: true,
+    placements: true, support: false, escalations: false, back_office: false,
+    security_logs: false, users: false, audit_log: false, settings: false, notifications: true,
   },
 };
 
@@ -295,6 +253,10 @@ export function useAdminUserManagement() {
       displayName: string;
       adminRole: AdminRoleType;
       permissions: Record<string, boolean>;
+      employmentType?: string;
+      phone?: string;
+      commissionRate?: number;
+      hireDate?: string;
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
