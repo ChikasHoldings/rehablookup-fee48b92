@@ -16,7 +16,9 @@ export interface BestInStateConfig {
   faqs: { question: string; answer: string }[];
 }
 
-export const bestInStateConfigs: BestInStateConfig[] = [
+import { expandedBestInStateConfigs } from "./seoBestInStateConfigExpanded";
+
+const coreBestInStateConfigs: BestInStateConfig[] = [
   {
     slug: "california",
     state: "California",
