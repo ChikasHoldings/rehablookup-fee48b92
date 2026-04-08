@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
+import { useUserManagement } from "@/hooks/admin/useUserManagement";
 import { UserProfileModal } from "@/components/admin/users/UserProfileModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,9 @@ import {
   Shield,
   X,
   Download,
+  Trash2,
+  Ban,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +36,17 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -42,6 +57,7 @@ import {
 } from "@/components/ui/table";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface UserProfile {
   id: string;
@@ -84,15 +100,103 @@ export default function AdminSeekers() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
 
   const hasActiveFilters = verificationFilter !== "all" || searchInput !== "";
 
+  const toggleSelect = (userId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId); else next.add(userId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!safeUsers.length) return;
+    const allOnPage = safeUsers.map((u) => u.user_id);
+    const allSelected = allOnPage.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allOnPage.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allOnPage.forEach((id) => next.add(id));
+        return next;
+      });
+    }
+  };
+
   const clearAllFilters = () => {
     setVerificationFilter("all");
     setSearchInput("");
     setCurrentPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      let successCount = 0;
+      for (const userId of selectedIds) {
+        const { error } = await supabase.functions.invoke("admin-delete-seeker", {
+          body: { targetUserId: userId, action: "delete" },
+        });
+        if (!error) successCount++;
+      }
+
+      toast.success(`Deleted ${successCount} seeker account(s)`);
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-count"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-global-stats"] });
+    } catch (err: any) {
+      toast.error("Bulk delete failed: " + (err.message || "Unknown error"));
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const rows = safeUsers.map((u) => ({
+      Name: getDisplayName(u),
+      Email: u.email || "",
+      Phone: u.aggregated_phone || u.phone || "",
+      City: u.aggregated_city || u.city || "",
+      State: u.aggregated_state || u.state || "",
+      Zip: u.aggregated_zipcode || u.zipcode || "",
+      "Phone Verified": u.phone_verified ? "Yes" : "No",
+      Joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : "",
+    }));
+    if (!rows.length) { toast.info("No data to export"); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => headers.map((h) => {
+        const v = String((r as any)[h] ?? "");
+        return v.includes(",") || v.includes('"') || v.includes("\n") ? `"${v.replace(/"/g, '""')}"` : v;
+      }).join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `seekers-export-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Seekers exported to CSV");
   };
 
   // Fetch total count for pagination
@@ -385,7 +489,7 @@ export default function AdminSeekers() {
                 className="pl-9"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Select value={verificationFilter} onValueChange={(v) => handleFilterChange(v as typeof verificationFilter)}>
                 <SelectTrigger className="w-full sm:w-[170px]">
                   <SelectValue placeholder="Verification" />
@@ -396,6 +500,16 @@ export default function AdminSeekers() {
                   <SelectItem value="unverified">Not Verified</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 h-10">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+              {selectedIds.size > 0 && (
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)} className="gap-1.5 h-10">
+                  <Trash2 className="h-4 w-4" />
+                  Delete ({selectedIds.size})
+                </Button>
+              )}
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearAllFilters} className="gap-1.5 text-muted-foreground hover:text-foreground h-10">
                   <X className="h-3.5 w-3.5" />
@@ -445,6 +559,12 @@ export default function AdminSeekers() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={safeUsers.length > 0 && safeUsers.every((u) => selectedIds.has(u.user_id))}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="min-w-[200px]">User</TableHead>
                     <TableHead className="min-w-[180px]">Email</TableHead>
                     <TableHead className="min-w-[120px]">Location</TableHead>
@@ -460,9 +580,15 @@ export default function AdminSeekers() {
                     return (
                       <TableRow
                         key={user.id}
-                        className="group cursor-pointer hover:bg-muted/50 transition-colors"
+                        className={cn("group cursor-pointer hover:bg-muted/50 transition-colors", selectedIds.has(user.user_id) && "bg-accent/5")}
                         onClick={() => openDetail(user)}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(user.user_id)}
+                            onCheckedChange={() => toggleSelect(user.user_id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
@@ -626,6 +752,33 @@ export default function AdminSeekers() {
         onOpenChange={setDetailDialogOpen}
         onDeleted={handleUserDeleted}
       />
+
+      {/* Bulk Delete Dialog */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete {selectedIds.size} Seeker Account(s)
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. All selected seeker accounts and their associated data
+              (favorites, reviews, inquiries, activity logs) will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Delete {selectedIds.size} Account(s)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
