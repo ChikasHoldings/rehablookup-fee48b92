@@ -283,7 +283,7 @@ export function useAdminAuth() {
         setIsSuperAdmin(superAdminStatus);
         setPermissions(userPermissions);
         setAdminProfile(profile);
-        setForcePasswordChange(profile?.force_password_change === true);
+        setForcePasswordChange(passwordChangeCleared.current ? false : profile?.force_password_change === true);
         const mfaSkippedThisSession = sessionStorage.getItem('mfa_setup_skipped') === '1';
         setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true && !mfaSkippedThisSession);
         
