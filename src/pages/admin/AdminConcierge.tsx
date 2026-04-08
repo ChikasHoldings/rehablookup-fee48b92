@@ -168,6 +168,12 @@ export default function AdminConcierge() {
     return advisor ? (advisor.display_name || `${advisor.first_name} ${advisor.last_name}`) : "—";
   };
 
+  // Build advisor name map for pipeline board
+  const advisorNames: Record<string, string> = {};
+  adminStaff?.forEach(a => {
+    advisorNames[a.user_id] = a.display_name || `${a.first_name} ${a.last_name}`;
+  });
+
   const isPaid = (status: string) => status === 'paid' || status === 'succeeded';
 
   return (
