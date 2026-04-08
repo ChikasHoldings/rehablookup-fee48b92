@@ -692,6 +692,59 @@ async function generateInsuranceStatePages() {
   }
 }
 
+async function generateDemographicPages() {
+  for (const page of demographicPages) {
+    const html = generatePage({
+      urlPath: `/${page.slug}`,
+      title: page.title,
+      metaTitle: page.metaTitle,
+      metaDescription: page.metaDescription,
+      h1: page.title,
+      content: `<p>${page.intro}</p><p>Browse our directory to find accredited ${page.title.toLowerCase()} across the United States.</p>`,
+      breadcrumbs: [
+        { name: "Home", url: "/" },
+        { name: "Treatment Programs", url: "/rehab-centers" },
+        { name: page.title, url: `/${page.slug}` },
+      ],
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "MedicalWebPage",
+        name: page.title,
+        description: page.metaDescription,
+        url: `https://rehablookup.com/${page.slug}`,
+        specialty: "Addiction Medicine",
+      },
+    });
+    await writePage(path.join(publicDir, `${page.slug}.html`), html);
+  }
+}
+
+async function generateSeekerGuidePages() {
+  for (const page of seekerGuidePages) {
+    const html = generatePage({
+      urlPath: `/${page.slug}`,
+      title: page.title,
+      metaTitle: page.metaTitle,
+      metaDescription: page.metaDescription,
+      h1: page.title,
+      content: `<p>${page.intro}</p><p>Use our resources to get the guidance you need and connect with treatment programs that can help.</p>`,
+      breadcrumbs: [
+        { name: "Home", url: "/" },
+        { name: "Guides", url: "/rehab-centers" },
+        { name: page.title, url: `/${page.slug}` },
+      ],
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        name: page.title,
+        description: page.metaDescription,
+        url: `https://rehablookup.com/${page.slug}`,
+      },
+    });
+    await writePage(path.join(publicDir, `${page.slug}.html`), html);
+  }
+}
+
 // ============================================================
 // MAIN
 // ============================================================
