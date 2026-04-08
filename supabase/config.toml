@@ -324,6 +324,3 @@ verify_jwt = false
 
 [functions.seed-blog-articles]
 verify_jwt = false
-
-[functions.test-resend-email]
-verify_jwt = false
