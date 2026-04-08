@@ -539,7 +539,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "inpatient-vs-outpatient-rehab",
     title: "Inpatient vs. Outpatient Rehab",
-    metaTitle: "Inpatient vs Outpatient Rehab: Which Is Right for You? | RehabLookup",
+    metaTitle: "Inpatient vs Outpatient Rehab: Which Is Right for You?",
     metaDescription: "Compare inpatient and outpatient rehab programs — costs, benefits, success rates, and who each is best for. Make an informed treatment decision.",
     optionA: {
       label: "Inpatient Rehab",
@@ -568,7 +568,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "detox-vs-rehab",
     title: "Detox vs. Rehab",
-    metaTitle: "Detox vs Rehab: Understanding the Difference | RehabLookup",
+    metaTitle: "Detox vs Rehab: Understanding the Difference",
     metaDescription: "Learn the key differences between detox and rehab — what each involves, when you need both, and how they work together for lasting recovery.",
     optionA: {
       label: "Medical Detox",
@@ -597,7 +597,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "private-vs-public-rehab",
     title: "Private vs. Public Rehab",
-    metaTitle: "Private vs Public Rehab: Costs, Quality & What to Expect | RehabLookup",
+    metaTitle: "Private vs Public Rehab: Costs, Quality & What to Expect",
     metaDescription: "Compare private and public rehab facilities — cost differences, quality of care, amenities, wait times, and which option best fits your needs and budget.",
     optionA: {
       label: "Private Rehab",
@@ -626,7 +626,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "php-vs-iop",
     title: "PHP vs. IOP",
-    metaTitle: "PHP vs IOP: Partial Hospitalization vs Intensive Outpatient | RehabLookup",
+    metaTitle: "PHP vs IOP: Partial Hospitalization vs Intensive Outpatient",
     metaDescription: "Compare PHP and IOP programs — hours, structure, costs, and which level of care fits your needs. Make an informed treatment decision.",
     optionA: {
       label: "Partial Hospitalization (PHP)",
@@ -655,7 +655,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "30-day-vs-90-day-rehab",
     title: "30-Day vs. 90-Day Rehab",
-    metaTitle: "30-Day vs 90-Day Rehab: How Long Should Treatment Be? | RehabLookup",
+    metaTitle: "30-Day vs 90-Day Rehab: How Long Should Treatment Be?",
     metaDescription: "Compare 30-day and 90-day rehab programs — effectiveness, costs, and who benefits from each. Learn how treatment duration impacts long-term recovery.",
     optionA: {
       label: "30-Day Rehab",
@@ -684,7 +684,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "mat-vs-abstinence-based-rehab",
     title: "MAT vs. Abstinence-Based Rehab",
-    metaTitle: "MAT vs Abstinence-Based Rehab: Which Approach Works? | RehabLookup",
+    metaTitle: "MAT vs Abstinence-Based Rehab: Which Approach Works?",
     metaDescription: "Compare medication-assisted treatment (MAT) with abstinence-based rehab. Evidence, success rates, and who benefits from each approach.",
     optionA: {
       label: "Medication-Assisted Treatment (MAT)",
@@ -713,7 +713,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "12-step-vs-non-12-step-rehab",
     title: "12-Step vs. Non-12-Step Rehab",
-    metaTitle: "12-Step vs Non-12-Step Rehab: Comparing Approaches | RehabLookup",
+    metaTitle: "12-Step vs Non-12-Step Rehab: Comparing Approaches",
     metaDescription: "Compare 12-step and non-12-step rehab programs. Learn about AA alternatives like SMART Recovery, secular options, and which approach may work best for you.",
     optionA: {
       label: "12-Step Programs",
@@ -742,7 +742,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "rehab-vs-therapy",
     title: "Rehab vs. Therapy",
-    metaTitle: "Do I Need Rehab or Therapy? Understanding the Difference | RehabLookup",
+    metaTitle: "Do I Need Rehab or Therapy? Understanding the Difference",
     metaDescription: "Learn the difference between rehab and therapy for addiction. When individual therapy is enough vs. when you need a full rehab program.",
     optionA: {
       label: "Rehab (Treatment Program)",
@@ -771,7 +771,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "inpatient-vs-residential-treatment",
     title: "Inpatient vs. Residential Treatment",
-    metaTitle: "Inpatient vs Residential Treatment: What's the Difference? | RehabLookup",
+    metaTitle: "Inpatient vs Residential Treatment: What's the Difference?",
     metaDescription: "Understand the difference between inpatient and residential addiction treatment — medical focus, duration, environment, and which is right for you.",
     optionA: {
       label: "Inpatient Treatment",
@@ -800,7 +800,7 @@ export const comparisonPages: ComparisonConfig[] = [
   {
     slug: "sober-living-vs-halfway-house",
     title: "Sober Living vs. Halfway House",
-    metaTitle: "Sober Living vs Halfway House: What's the Difference? | RehabLookup",
+    metaTitle: "Sober Living vs Halfway House: What's the Difference?",
     metaDescription: "Compare sober living homes and halfway houses — rules, costs, requirements, and which transitional housing option supports your recovery best.",
     optionA: {
       label: "Sober Living Home",
@@ -842,7 +842,7 @@ export const treatmentHubPages: {
   {
     slug: "alcohol-rehab-centers",
     title: "Alcohol Rehab Centers",
-    metaTitle: "Alcohol Rehab Centers Near You — Find Treatment Today | RehabLookup",
+    metaTitle: "Alcohol Rehab Centers Near You — Find Treatment Today",
     metaDescription: "Search accredited alcohol rehab centers with verified reviews. Compare inpatient, outpatient & detox programs. Insurance accepted. Get help now.",
     heroSubtitle: "Find accredited alcohol rehabilitation programs offering medically supervised detox, evidence-based therapy, and long-term recovery support.",
     filterKey: "alcohol",
@@ -874,7 +874,7 @@ export const treatmentHubPages: {
   {
     slug: "drug-rehab-centers",
     title: "Drug Rehab Centers",
-    metaTitle: "Drug Rehab Centers Near You — Evidence-Based Treatment | RehabLookup",
+    metaTitle: "Drug Rehab Centers Near You — Evidence-Based Treatment",
     metaDescription: "Find verified drug rehab centers offering detox, inpatient & outpatient programs. Compare facilities, check insurance coverage, and start recovery today.",
     heroSubtitle: "Connect with evidence-based drug rehabilitation facilities providing comprehensive treatment for all substance use disorders.",
     filterKey: "drug",
@@ -905,7 +905,7 @@ export const treatmentHubPages: {
   {
     slug: "detox-centers",
     title: "Detox Centers",
-    metaTitle: "Medical Detox Centers Near You — Safe Withdrawal Management | RehabLookup",
+    metaTitle: "Medical Detox Centers Near You — Safe Withdrawal Management",
     metaDescription: "Find medically supervised detox centers offering safe withdrawal management. 24/7 medical support, medication-assisted detox. Start your recovery today.",
     heroSubtitle: "Locate medically supervised detoxification programs offering safe withdrawal management with 24/7 medical support.",
     filterKey: "detox",
@@ -936,7 +936,7 @@ export const treatmentHubPages: {
   {
     slug: "inpatient-rehab",
     title: "Inpatient Rehab",
-    metaTitle: "Inpatient Rehab Programs Near You — Residential Treatment | RehabLookup",
+    metaTitle: "Inpatient Rehab Programs Near You — Residential Treatment",
     metaDescription: "Find residential inpatient rehab programs with 24/7 care. Compare accredited facilities, check insurance, and begin your recovery journey today.",
     heroSubtitle: "Explore residential inpatient programs with 24/7 care, structured treatment, and comprehensive therapeutic support.",
     filterKey: "inpatient",
@@ -967,7 +967,7 @@ export const treatmentHubPages: {
   {
     slug: "outpatient-rehab",
     title: "Outpatient Rehab",
-    metaTitle: "Outpatient Rehab Programs — Flexible Treatment Options | RehabLookup",
+    metaTitle: "Outpatient Rehab Programs — Flexible Treatment Options",
     metaDescription: "Find flexible outpatient rehab programs including IOP & PHP. Continue working while getting treatment. Compare programs and verify insurance coverage.",
     heroSubtitle: "Find flexible outpatient treatment programs that fit your schedule — including IOP and PHP options.",
     filterKey: "outpatient",
@@ -998,7 +998,7 @@ export const treatmentHubPages: {
   {
     slug: "dual-diagnosis-treatment",
     title: "Dual Diagnosis Treatment",
-    metaTitle: "Dual Diagnosis Treatment Centers — Co-Occurring Disorder Care | RehabLookup",
+    metaTitle: "Dual Diagnosis Treatment Centers — Co-Occurring Disorder Care",
     metaDescription: "Find specialized dual diagnosis treatment centers treating addiction and mental health disorders simultaneously. Evidence-based, integrated care.",
     heroSubtitle: "Discover specialized facilities treating co-occurring mental health and substance use disorders with integrated care.",
     filterKey: "dual diagnosis",
@@ -1029,7 +1029,7 @@ export const treatmentHubPages: {
   {
     slug: "php-programs",
     title: "Partial Hospitalization Programs (PHP)",
-    metaTitle: "Partial Hospitalization Programs Near You — PHP Treatment | RehabLookup",
+    metaTitle: "Partial Hospitalization Programs Near You — PHP Treatment",
     metaDescription: "Find partial hospitalization programs (PHP) offering intensive day treatment for addiction. 5-7 days/week structured care while living at home. Get help today.",
     heroSubtitle: "Intensive day treatment programs providing near-inpatient care while allowing you to return home each evening.",
     filterKey: "PHP",
@@ -1060,7 +1060,7 @@ export const treatmentHubPages: {
   {
     slug: "iop-programs",
     title: "Intensive Outpatient Programs (IOP)",
-    metaTitle: "Intensive Outpatient Programs Near You — IOP Treatment | RehabLookup",
+    metaTitle: "Intensive Outpatient Programs Near You — IOP Treatment",
     metaDescription: "Find intensive outpatient programs (IOP) for addiction treatment. Flexible evening and weekend options. Continue working while getting professional help.",
     heroSubtitle: "Flexible, structured addiction treatment programs designed to fit your schedule — with evening and weekend options available.",
     filterKey: "IOP",
@@ -1091,7 +1091,7 @@ export const treatmentHubPages: {
   {
     slug: "mat-programs",
     title: "Medication-Assisted Treatment (MAT) Programs",
-    metaTitle: "MAT Programs Near You — Medication-Assisted Treatment | RehabLookup",
+    metaTitle: "MAT Programs Near You — Medication-Assisted Treatment",
     metaDescription: "Find medication-assisted treatment (MAT) programs for opioid and alcohol addiction. Suboxone, methadone, Vivitrol providers. Evidence-based recovery.",
     heroSubtitle: "Evidence-based medication-assisted treatment combining FDA-approved medications with behavioral therapy for optimal recovery outcomes.",
     filterKey: "MAT",
@@ -1124,7 +1124,7 @@ export const costInsurancePages: CostPageConfig[] = [
   {
     slug: "rehab-cost",
     title: "How Much Does Rehab Cost?",
-    metaTitle: "How Much Does Rehab Cost in 2026? Complete Pricing Guide | RehabLookup",
+    metaTitle: "How Much Does Rehab Cost in 2026? Complete Pricing Guide",
     metaDescription: "Comprehensive guide to rehab costs in 2026 — inpatient, outpatient, detox pricing. Learn about insurance coverage, payment options, and financial assistance.",
     heroSubtitle: "Understanding addiction treatment costs is the first step to finding affordable care. Here's what to expect.",
     sections: [
@@ -1143,7 +1143,7 @@ export const costInsurancePages: CostPageConfig[] = [
   {
     slug: "does-insurance-cover-rehab",
     title: "Does Insurance Cover Rehab?",
-    metaTitle: "Does Insurance Cover Rehab? Complete 2026 Coverage Guide | RehabLookup",
+    metaTitle: "Does Insurance Cover Rehab? Complete 2026 Coverage Guide",
     metaDescription: "Learn how insurance covers addiction treatment — what's included, how to verify benefits, and how to maximize your coverage for rehab. Updated for 2026.",
     heroSubtitle: "Yes, most insurance plans cover addiction treatment. Learn how to verify your benefits and maximize coverage.",
     sections: [
@@ -1162,7 +1162,7 @@ export const costInsurancePages: CostPageConfig[] = [
   {
     slug: "free-rehab-centers",
     title: "Free Rehab Centers",
-    metaTitle: "Free Rehab Centers Near You — No-Cost Addiction Treatment | RehabLookup",
+    metaTitle: "Free Rehab Centers Near You — No-Cost Addiction Treatment",
     metaDescription: "Find free and low-cost rehab centers near you. State-funded programs, Medicaid facilities, and nonprofit treatment options. Get help regardless of finances.",
     heroSubtitle: "Financial barriers should never prevent someone from getting addiction treatment. Find free and affordable options.",
     filterKey: "medicaid",
@@ -1182,7 +1182,7 @@ export const costInsurancePages: CostPageConfig[] = [
   {
     slug: "medicaid-rehab-centers",
     title: "Medicaid Rehab Centers",
-    metaTitle: "Medicaid Rehab Centers — Addiction Treatment Covered by Medicaid | RehabLookup",
+    metaTitle: "Medicaid Rehab Centers — Addiction Treatment Covered by Medicaid",
     metaDescription: "Find rehab centers that accept Medicaid. Learn what Medicaid covers for addiction treatment, how to enroll, and locate Medicaid-accepted facilities near you.",
     heroSubtitle: "Medicaid provides comprehensive addiction treatment coverage. Find Medicaid-accepted rehab centers near you.",
     filterKey: "medicaid",
@@ -1202,7 +1202,7 @@ export const costInsurancePages: CostPageConfig[] = [
   {
     slug: "rehab-without-insurance",
     title: "How to Pay for Rehab Without Insurance",
-    metaTitle: "How to Pay for Rehab Without Insurance — Affordable Options | RehabLookup",
+    metaTitle: "How to Pay for Rehab Without Insurance — Affordable Options",
     metaDescription: "Learn how to afford rehab without insurance. State-funded programs, sliding-scale fees, grants, payment plans, and free treatment options explained.",
     heroSubtitle: "Lack of insurance doesn't mean lack of options. Explore affordable pathways to addiction treatment.",
     sections: [
@@ -1221,7 +1221,7 @@ export const costInsurancePages: CostPageConfig[] = [
   {
     slug: "free-rehab-programs",
     title: "Free Rehab Programs Guide",
-    metaTitle: "Free Rehab Programs — State-Funded & No-Cost Treatment | RehabLookup",
+    metaTitle: "Free Rehab Programs — State-Funded & No-Cost Treatment",
     metaDescription: "Complete guide to free rehab programs including state-funded treatment, SAMHSA programs, nonprofit facilities, and Medicaid-covered addiction treatment.",
     heroSubtitle: "Everyone deserves access to addiction treatment regardless of finances. Find free and no-cost recovery programs.",
     filterKey: "medicaid",
@@ -1241,7 +1241,7 @@ export const costInsurancePages: CostPageConfig[] = [
   {
     slug: "rehab-financial-assistance",
     title: "Rehab Financial Assistance Guide",
-    metaTitle: "Rehab Financial Assistance — Grants, Scholarships & Aid | RehabLookup",
+    metaTitle: "Rehab Financial Assistance — Grants, Scholarships & Aid",
     metaDescription: "Find financial assistance for rehab — grants, scholarships, employer programs, and creative funding options. Don't let cost prevent treatment. Get help now.",
     heroSubtitle: "Financial barriers should never prevent recovery. Explore grants, scholarships, and creative funding options for addiction treatment.",
     sections: [

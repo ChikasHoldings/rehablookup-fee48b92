@@ -64,7 +64,7 @@ export function SEO({
   locale = "en_US",
   hreflang,
 }: SEOProps) {
-  const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
+  const fullTitle = title === SITE_NAME || title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
   
   // Auto-generate canonical from current path if not provided, always normalize
   const normalizedCanonical = canonical 

@@ -24,7 +24,7 @@ const coreSubstancePages: SubstanceConfig[] = [
   {
     slug: "cocaine-addiction-treatment",
     title: "Cocaine Addiction Treatment",
-    metaTitle: "Cocaine Addiction Treatment Programs — Find Help Today | RehabLookup",
+    metaTitle: "Cocaine Addiction Treatment Programs — Find Help Today",
     metaDescription: "Find accredited cocaine addiction treatment programs. Evidence-based therapies, behavioral counseling, and comprehensive recovery support. Get help now.",
     heroSubtitle: "Evidence-based cocaine addiction treatment programs combining behavioral therapy, counseling, and long-term recovery support.",
     conditionName: "Cocaine Addiction",
@@ -64,7 +64,7 @@ const coreSubstancePages: SubstanceConfig[] = [
   {
     slug: "opioid-addiction-treatment",
     title: "Opioid Addiction Treatment",
-    metaTitle: "Opioid Addiction Treatment Programs — MAT & Recovery | RehabLookup",
+    metaTitle: "Opioid Addiction Treatment Programs — MAT & Recovery",
     metaDescription: "Find specialized opioid addiction treatment with MAT (Suboxone, methadone, Vivitrol). Evidence-based programs for prescription opioids and heroin. Get help today.",
     heroSubtitle: "Specialized opioid addiction treatment featuring medication-assisted treatment (MAT), behavioral therapy, and comprehensive recovery support.",
     conditionName: "Opioid Addiction",
@@ -104,7 +104,7 @@ const coreSubstancePages: SubstanceConfig[] = [
   {
     slug: "heroin-addiction-treatment",
     title: "Heroin Addiction Treatment",
-    metaTitle: "Heroin Addiction Treatment Centers — Detox & Recovery | RehabLookup",
+    metaTitle: "Heroin Addiction Treatment Centers — Detox & Recovery",
     metaDescription: "Find heroin addiction treatment centers offering medical detox, MAT, and comprehensive recovery programs. Accredited facilities. Insurance accepted. Get help now.",
     heroSubtitle: "Accredited heroin addiction treatment programs with medical detox, medication-assisted treatment, and evidence-based behavioral therapy.",
     conditionName: "Heroin Addiction",
@@ -144,7 +144,7 @@ const coreSubstancePages: SubstanceConfig[] = [
   {
     slug: "meth-addiction-treatment",
     title: "Meth Addiction Treatment",
-    metaTitle: "Meth Addiction Treatment Programs — Crystal Meth Recovery | RehabLookup",
+    metaTitle: "Meth Addiction Treatment Programs — Crystal Meth Recovery",
     metaDescription: "Find meth addiction treatment centers offering evidence-based recovery programs. Behavioral therapy, medical support, and comprehensive aftercare. Get help today.",
     heroSubtitle: "Specialized methamphetamine addiction treatment programs with behavioral therapy, medical support, and structured recovery environments.",
     conditionName: "Methamphetamine Addiction",
@@ -184,7 +184,7 @@ const coreSubstancePages: SubstanceConfig[] = [
   {
     slug: "prescription-drug-rehab",
     title: "Prescription Drug Rehab",
-    metaTitle: "Prescription Drug Rehab — Painkiller & Benzo Addiction Treatment | RehabLookup",
+    metaTitle: "Prescription Drug Rehab — Painkiller & Benzo Addiction Treatment",
     metaDescription: "Find prescription drug addiction treatment for painkillers, benzodiazepines, and stimulants. Medical detox, MAT, and evidence-based programs. Get help today.",
     heroSubtitle: "Specialized treatment programs for prescription painkiller, benzodiazepine, and stimulant addiction with medical detox and comprehensive recovery support.",
     conditionName: "Prescription Drug Addiction",
@@ -224,7 +224,7 @@ const coreSubstancePages: SubstanceConfig[] = [
   {
     slug: "benzodiazepine-addiction-treatment",
     title: "Benzodiazepine Addiction Treatment",
-    metaTitle: "Benzodiazepine Addiction Treatment — Xanax, Valium Recovery | RehabLookup",
+    metaTitle: "Benzodiazepine Addiction Treatment — Xanax, Valium Recovery",
     metaDescription: "Find specialized benzodiazepine addiction treatment centers. Safe medical detox, tapering protocols, and comprehensive recovery programs. Get help today.",
     heroSubtitle: "Specialized benzodiazepine addiction treatment with medically supervised tapering, safe detox protocols, and comprehensive anxiety management.",
     conditionName: "Benzodiazepine Addiction",

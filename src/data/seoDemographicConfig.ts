@@ -22,7 +22,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "young-adult-rehab",
     title: "Young Adult Rehab Programs (18-25)",
-    metaTitle: "Young Adult Rehab Programs (18-25) — Treatment & Recovery | RehabLookup",
+    metaTitle: "Young Adult Rehab Programs (18-25) — Treatment & Recovery",
     metaDescription: "Find rehab programs designed for young adults ages 18-25. Age-appropriate therapy, peer support, and life skills development. Start recovery today.",
     heroSubtitle: "Age-appropriate addiction treatment programs designed for young adults navigating recovery during a critical developmental stage.",
     population: "Young Adults (18-25)",
@@ -60,7 +60,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "teen-rehab-programs",
     title: "Teen Rehab Programs",
-    metaTitle: "Teen Rehab Programs — Adolescent Addiction Treatment | RehabLookup",
+    metaTitle: "Teen Rehab Programs — Adolescent Addiction Treatment",
     metaDescription: "Find teen rehab programs for adolescent substance abuse. Age-appropriate treatment, family therapy, and academic support. Help your teen recover today.",
     heroSubtitle: "Specialized adolescent addiction treatment with age-appropriate therapy, family involvement, and continued educational support.",
     population: "Teenagers (13-17)",
@@ -98,7 +98,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "senior-addiction-treatment",
     title: "Senior Addiction Treatment",
-    metaTitle: "Senior Addiction Treatment — Elderly Substance Abuse Help | RehabLookup",
+    metaTitle: "Senior Addiction Treatment — Elderly Substance Abuse Help",
     metaDescription: "Find addiction treatment programs for seniors and elderly adults. Age-sensitive care, prescription drug management, and geriatric-specialized recovery programs.",
     heroSubtitle: "Age-sensitive addiction treatment for older adults addressing the unique medical, psychological, and social factors of senior substance use.",
     population: "Seniors (65+)",
@@ -136,7 +136,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "lgbtq-rehab-programs",
     title: "LGBTQ+ Rehab Programs",
-    metaTitle: "LGBTQ+ Rehab Programs — Affirming Addiction Treatment | RehabLookup",
+    metaTitle: "LGBTQ+ Rehab Programs — Affirming Addiction Treatment",
     metaDescription: "Find LGBTQ+ affirming rehab programs with specialized therapy, inclusive peer groups, and safe treatment environments. Compassionate, judgment-free recovery.",
     heroSubtitle: "LGBTQ+ affirming addiction treatment providing safe, inclusive environments with specialized therapy addressing unique community needs.",
     population: "LGBTQ+ Individuals",
@@ -174,7 +174,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "pregnant-women-addiction-treatment",
     title: "Pregnant Women Addiction Treatment",
-    metaTitle: "Pregnant Women Addiction Treatment — Safe Prenatal Recovery | RehabLookup",
+    metaTitle: "Pregnant Women Addiction Treatment — Safe Recovery",
     metaDescription: "Find addiction treatment for pregnant women with prenatal care, safe detox, and MAT. Protect your baby and your recovery. Priority admission available.",
     heroSubtitle: "Specialized addiction treatment for pregnant women integrating prenatal care, safe medication management, and maternal-child health support.",
     population: "Pregnant Women",
@@ -212,7 +212,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "first-responders-rehab",
     title: "First Responders Rehab",
-    metaTitle: "First Responders Rehab — Addiction Treatment for EMS, Fire & Police | RehabLookup",
+    metaTitle: "First Responders Rehab — EMS, Fire & Police Recovery",
     metaDescription: "Find addiction treatment for first responders — police, firefighters, EMTs, paramedics. Confidential, career-aware programs with trauma-specialized care.",
     heroSubtitle: "Confidential addiction treatment designed for first responders with trauma-specialized care, peer support, and career protection.",
     population: "First Responders",
@@ -250,7 +250,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "healthcare-professionals-rehab",
     title: "Healthcare Professionals Rehab",
-    metaTitle: "Healthcare Professionals Rehab — Nurses, Doctors Recovery | RehabLookup",
+    metaTitle: "Healthcare Professionals Rehab — Nurses, Doctors Recovery",
     metaDescription: "Find addiction treatment for healthcare professionals — doctors, nurses, pharmacists. Confidential, license-protecting programs with specialized care.",
     heroSubtitle: "Confidential, license-aware addiction treatment for healthcare professionals with specialized monitoring and career reentry support.",
     population: "Healthcare Professionals",
@@ -288,7 +288,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "executive-rehab-programs",
     title: "Executive Rehab Programs",
-    metaTitle: "Executive Rehab Programs — Luxury, Private Treatment | RehabLookup",
+    metaTitle: "Executive Rehab Programs — Luxury, Private Treatment",
     metaDescription: "Find executive rehab programs offering luxury accommodations, privacy, and business continuity. Premium addiction treatment for professionals and executives.",
     heroSubtitle: "Premium, private addiction treatment for executives and professionals with luxury accommodations and business continuity support.",
     population: "Executives & Business Leaders",
@@ -326,7 +326,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "teachers-rehab-programs",
     title: "Rehab Programs for Teachers & Educators",
-    metaTitle: "Rehab for Teachers & Educators — Confidential Treatment | RehabLookup",
+    metaTitle: "Rehab for Teachers & Educators — Confidential Treatment",
     metaDescription: "Find addiction treatment for teachers and educators. Confidential, career-sensitive programs with schedule-accommodating care. Protect your career and recovery.",
     heroSubtitle: "Confidential addiction treatment for educators addressing occupational burnout, career protection, and schedule-sensitive recovery options.",
     population: "Teachers & Educators",
@@ -364,7 +364,7 @@ export const demographicPages: DemographicConfig[] = [
   {
     slug: "college-student-addiction-treatment",
     title: "College Student Addiction Treatment",
-    metaTitle: "College Student Addiction Treatment — Campus Recovery | RehabLookup",
+    metaTitle: "College Student Addiction Treatment — Campus Recovery",
     metaDescription: "Find addiction treatment for college students. Academic-supportive programs, campus recovery resources, and flexible care preserving your education.",
     heroSubtitle: "Addiction treatment for college students preserving academic progress with flexible scheduling and campus recovery support.",
     population: "College Students",
