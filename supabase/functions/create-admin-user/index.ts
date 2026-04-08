@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
+const VERSION = "2.0.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -8,8 +10,13 @@ const corsHeaders = {
 
 interface CreateAdminUserRequest {
   email: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
   adminRole: "super_admin" | "manager" | "customer_rep" | "advisor";
+  employmentType?: "employee" | "contractor" | "va";
+  commissionRate?: number;
+  hireDate?: string;
   permissions: Record<string, boolean>;
 }
 
@@ -24,6 +31,73 @@ function generateTempPassword(): string {
     password += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return password;
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
+  manager: "Manager",
+  customer_rep: "Customer Rep",
+  advisor: "Placement Advisor",
+};
+
+function getRoleWelcomeContent(role: string, employmentType?: string, commissionRate?: number): { headline: string; description: string; capabilities: string[] } {
+  switch (role) {
+    case "super_admin":
+      return {
+        headline: "Full Platform Access Granted",
+        description: "You've been granted full platform access as a Super Admin. You can manage all staff, settings, and system operations across the entire RehabLookup platform.",
+        capabilities: [
+          "Manage all admin staff, roles & permissions",
+          "Access Back Office oversight & impersonation",
+          "Configure system settings & integrations",
+          "View all analytics, audit logs & escalations",
+          "Full access to every module and workflow",
+        ],
+      };
+    case "manager":
+      return {
+        headline: "Welcome, Manager",
+        description: "You've been added as a Manager. You oversee day-to-day platform operations, manage staff, and ensure smooth workflows across the platform.",
+        capabilities: [
+          "Manage providers, leads & subscriptions",
+          "Oversee advisors and customer reps",
+          "Handle escalations from team members",
+          "View analytics and operational reports",
+          "Moderate reviews and manage users",
+        ],
+      };
+    case "advisor":
+      return {
+        headline: "Welcome, Placement Advisor",
+        description: employmentType === "contractor"
+          ? `You've been added as a Placement Advisor (Contractor). Your commission rate is ${commissionRate || 10}% per successful placement. You'll be able to track your earnings from your dashboard.`
+          : "You've been added as a Placement Advisor. You'll manage placement cases, coordinate between seekers and providers, and handle the full placement workflow.",
+        capabilities: [
+          "View and claim new placement cases",
+          "Match seekers with verified providers",
+          "Communicate with seekers & providers",
+          "Coordinate tours and admissions",
+          "Track placement outcomes & follow-ups",
+          ...(employmentType === "contractor" ? ["Track commissions & earnings"] : []),
+        ],
+      };
+    case "customer_rep":
+      return {
+        headline: employmentType === "va" ? "Welcome, Virtual Assistant" : "Welcome, Customer Rep",
+        description: employmentType === "va"
+          ? "You've been added as a Customer Rep (Virtual Assistant). You'll handle support inquiries, assist users, and help maintain platform quality within your assigned scope."
+          : "You've been added as a Customer Rep. You'll handle support inquiries, moderate reviews, and assist users with platform questions.",
+        capabilities: [
+          "Handle support tickets & user inquiries",
+          "Moderate facility reviews",
+          "Assist with onboarding & platform usage",
+          "Escalate issues to managers",
+          "Manage lead communications",
+        ],
+      };
+    default:
+      return { headline: "Welcome", description: "Your admin account has been created.", capabilities: [] };
+  }
 }
 
 Deno.serve(async (req) => {
@@ -61,7 +135,7 @@ Deno.serve(async (req) => {
     }
 
     const body: CreateAdminUserRequest = await req.json();
-    const { email, displayName, adminRole, permissions } = body;
+    const { email, firstName, lastName, phone, adminRole, employmentType, commissionRate, hireDate, permissions } = body;
 
     // Validate role value
     const validRoles = ["super_admin", "manager", "customer_rep", "advisor"];
@@ -69,35 +143,28 @@ Deno.serve(async (req) => {
       throw new Error("Invalid admin role");
     }
 
-    console.log("[CREATE-ADMIN-USER] Creating admin user:", { email, displayName, adminRole });
+    const displayName = `${firstName} ${lastName}`.trim();
+    console.log(`[CREATE-ADMIN-USER] v${VERSION} Creating:`, { email, displayName, adminRole, employmentType });
 
     // Check if user already exists with this email
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
     
     if (existingUser) {
-      // Check if they already have any conflicting roles
       const { data: hasProviderProfile } = await supabase.rpc("user_has_provider_profile", { p_user_id: existingUser.id });
       const { data: hasSeekerProfile } = await supabase.rpc("user_has_seeker_profile", { p_user_id: existingUser.id });
       const { data: isAlreadyAdmin } = await supabase.rpc("has_role", { _user_id: existingUser.id, _role: "admin" });
       
-      if (hasProviderProfile) {
-        throw new Error("This email belongs to an existing provider account and cannot be made an admin");
-      }
-      if (hasSeekerProfile) {
-        throw new Error("This email belongs to an existing seeker account and cannot be made an admin");
-      }
-      if (isAlreadyAdmin) {
-        throw new Error("This user is already an admin");
-      }
-      
+      if (hasProviderProfile) throw new Error("This email belongs to an existing provider account and cannot be made an admin");
+      if (hasSeekerProfile) throw new Error("This email belongs to an existing seeker account and cannot be made an admin");
+      if (isAlreadyAdmin) throw new Error("This user is already an admin");
       throw new Error("A user with this email address already exists in the system");
     }
 
     // Generate temporary password
     const tempPassword = generateTempPassword();
     const tempPasswordExpiry = new Date();
-    tempPasswordExpiry.setHours(tempPasswordExpiry.getHours() + 72); // 72 hours expiry
+    tempPasswordExpiry.setHours(tempPasswordExpiry.getHours() + 72);
 
     // Create the user in Supabase Auth
     const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -118,7 +185,7 @@ Deno.serve(async (req) => {
     const userId = newUser.user.id;
     console.log("[CREATE-ADMIN-USER] User created:", userId);
 
-    // Assign admin role in user_roles table FIRST (before any other tables)
+    // Assign admin role in user_roles table
     const { error: roleError } = await supabase.from("user_roles").insert({
       user_id: userId,
       role: "admin",
@@ -126,62 +193,51 @@ Deno.serve(async (req) => {
 
     if (roleError) {
       console.error("[CREATE-ADMIN-USER] Failed to assign role:", roleError);
-      // Clean up the auth user if role assignment fails
       await supabase.auth.admin.deleteUser(userId);
       throw new Error("Failed to assign admin role. Please try again.");
     }
 
-    console.log("[CREATE-ADMIN-USER] Admin role assigned successfully");
-
-    // Split display name into first and last name
-    const nameParts = displayName.trim().split(/\s+/);
-    const firstName = nameParts[0] || displayName;
-    const lastName = nameParts.slice(1).join(" ") || null;
-
-    // Create admin profile with specific admin_role and temp password info
-    const { error: adminProfileError } = await supabase.from("admin_user_profiles").insert({
+    // Create admin profile with classification fields
+    const profileData: Record<string, any> = {
       user_id: userId,
       display_name: displayName,
       first_name: firstName,
-      last_name: lastName,
+      last_name: lastName || null,
       admin_role: adminRole,
       status: "pending_password_reset",
       force_password_change: true,
       temp_password_expires_at: tempPasswordExpiry.toISOString(),
       created_by: requestingUser.id,
-    });
+    };
+
+    if (phone) profileData.phone = phone;
+    if (employmentType) profileData.employment_type = employmentType;
+    if (commissionRate !== undefined && employmentType === "contractor") profileData.commission_rate = commissionRate;
+    if (hireDate) profileData.hire_date = hireDate;
+
+    const { error: adminProfileError } = await supabase.from("admin_user_profiles").insert(profileData);
 
     if (adminProfileError) {
       console.error("[CREATE-ADMIN-USER] Failed to create admin profile:", adminProfileError);
     }
 
-    // Build permissions - always include the role-appropriate entries
+    // Build permissions
     const permissionInserts = Object.entries(permissions).map(([key, granted]) => ({
       user_id: userId,
       permission_key: key,
       granted,
     }));
 
-    // CRITICAL: If creating a super_admin, ensure the super_admin permission is set
     if (adminRole === "super_admin") {
       const hasSuperAdminPerm = permissionInserts.some(p => p.permission_key === "super_admin");
       if (!hasSuperAdminPerm) {
-        permissionInserts.push({
-          user_id: userId,
-          permission_key: "super_admin",
-          granted: true,
-        });
+        permissionInserts.push({ user_id: userId, permission_key: "super_admin", granted: true });
       }
     }
 
     if (permissionInserts.length > 0) {
-      const { error: permError } = await supabase
-        .from("admin_user_permissions")
-        .insert(permissionInserts);
-
-      if (permError) {
-        console.error("[CREATE-ADMIN-USER] Failed to insert permissions:", permError);
-      }
+      const { error: permError } = await supabase.from("admin_user_permissions").insert(permissionInserts);
+      if (permError) console.error("[CREATE-ADMIN-USER] Failed to insert permissions:", permError);
     }
 
     // Log the action
@@ -190,31 +246,35 @@ Deno.serve(async (req) => {
       action_type: "admin_user_created",
       target_type: "admin_user",
       target_id: userId,
-      details: {
-        email,
-        display_name: displayName,
-        admin_role: adminRole,
-        permissions,
-      },
+      details: { email, display_name: displayName, admin_role: adminRole, employment_type: employmentType, permissions },
     });
 
-    // Send invitation email
+    // Send role-specific welcome email
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
       const loginUrl = "https://rehablookup.com/admin/login";
+      const roleLabel = ROLE_LABELS[adminRole] || adminRole;
+      const welcome = getRoleWelcomeContent(adminRole, employmentType, commissionRate);
+
+      const capabilitiesHtml = welcome.capabilities.map(c => 
+        `<tr><td style="padding: 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #374151; line-height: 1.5;">✓ ${escapeHtml(c)}</td></tr>`
+      ).join("");
+
+      const employmentBadge = employmentType 
+        ? `<span style="display: inline-block; background: #EBF5FF; color: #1B365D; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 8px;">${employmentType === "va" ? "Virtual Assistant" : employmentType.charAt(0).toUpperCase() + employmentType.slice(1)}</span>` 
+        : "";
 
       try {
         await resend.emails.send({
           from: "RehabLookup Admin <no-reply@rehablookup.com>",
           to: [email],
-          subject: "Your RehabLookup Admin Account Has Been Created",
+          subject: `Welcome to RehabLookup — You're now a ${roleLabel}`,
           html: `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Account Created</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
@@ -225,10 +285,13 @@ Deno.serve(async (req) => {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 40px 32px; text-align: center;">
-              <div style="font-size: 40px; margin-bottom: 12px;">🛡️</div>
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700;">
-                Admin Account Created
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 700;">
+                ${escapeHtml(welcome.headline)}
               </h1>
+              <div style="margin-top: 12px;">
+                <span style="display: inline-block; background: rgba(255,255,255,0.2); color: #ffffff; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">${escapeHtml(roleLabel)}</span>
+                ${employmentBadge ? employmentBadge.replace('color: #1B365D', 'color: #ffffff').replace('background: #EBF5FF', 'background: rgba(255,255,255,0.15)') : ""}
+              </div>
             </td>
           </tr>
           
@@ -236,12 +299,28 @@ Deno.serve(async (req) => {
           <tr>
             <td style="padding: 40px 32px;">
               <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 17px; color: #1a1a1a; line-height: 1.6;">
-                Hello ${escapeHtml(displayName)},
+                Hello ${escapeHtml(firstName)},
               </p>
               
-              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
-                An admin account has been created for you on the RehabLookup platform. You have been assigned the <strong style="color: #1a1a1a;">${adminRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong> role.
+              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #4b5563; line-height: 1.7;">
+                ${escapeHtml(welcome.description)}
               </p>
+
+              <!-- What You Can Do -->
+              ${welcome.capabilities.length > 0 ? `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <h3 style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #166534;">
+                      What You Can Do
+                    </h3>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      ${capabilitiesHtml}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
               
               <!-- Credentials Box -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 28px;">
@@ -250,18 +329,17 @@ Deno.serve(async (req) => {
                     <h3 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1B365D;">
                       Your Login Credentials
                     </h3>
-                    
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 12px 0;">
-                          <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
-                          <p style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 16px; font-weight: 600; color: #1B365D; background: #f1f5f9; padding: 10px 14px; border-radius: 6px;">${email}</p>
+                          <p style="margin: 0 0 6px 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
+                          <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 16px; font-weight: 600; color: #1B365D; background: #f1f5f9; padding: 10px 14px; border-radius: 6px;">${email}</p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 12px 0;">
-                          <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
-                          <p style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 16px; font-weight: 600; color: #1B365D; background: #f1f5f9; padding: 10px 14px; border-radius: 6px;">${tempPassword}</p>
+                          <p style="margin: 0 0 6px 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
+                          <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 16px; font-weight: 600; color: #1B365D; background: #f1f5f9; padding: 10px 14px; border-radius: 6px;">${tempPassword}</p>
                         </td>
                       </tr>
                     </table>
@@ -269,77 +347,40 @@ Deno.serve(async (req) => {
                 </tr>
               </table>
               
-              <!-- Warning Box -->
+              <!-- Warning -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; margin-bottom: 32px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
-                      ⚠️ Important Security Notice
+                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #92400e;">⚠️ Important</p>
+                    <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.6;">
+                      This temporary password expires in <strong>72 hours</strong>. You'll be asked to set a new password on first login. Do not share these credentials.
                     </p>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 1.5;">
-                          • This temporary password expires in <strong>72 hours</strong>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 1.5;">
-                          • You will be required to change your password upon first login
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 1.5;">
-                          • Do not share these credentials with anyone
-                        </td>
-                      </tr>
-                    </table>
                   </td>
                 </tr>
               </table>
               
-              <!-- CTA Button -->
+              <!-- CTA -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
                 <tr>
                   <td align="center">
-                    <a href="${loginUrl}" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
-                      Login to Admin Panel →
+                    <a href="${loginUrl}" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                      Complete Setup →
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
-                If you did not expect this account or have questions, please contact your system administrator immediately at <a href="mailto:Support@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">Support@rehablookup.com</a>.
+              <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">
+                Questions? Contact your administrator at <a href="mailto:Support@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">Support@rehablookup.com</a>.
               </p>
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="background: #1B365D; padding: 28px 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding-bottom: 12px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
-                      RehabLookup
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-bottom: 16px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
-                      Admin System
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
-                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
-                    </p>
-                  </td>
-                </tr>
-              </table>
+            <td style="background: #1B365D; padding: 28px 32px; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #ffffff;">RehabLookup</p>
+              <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.5);">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
             </td>
           </tr>
           
@@ -351,19 +392,19 @@ Deno.serve(async (req) => {
 </html>
           `,
         });
-        console.log("[CREATE-ADMIN-USER] Invitation email sent to:", email);
+        console.log("[CREATE-ADMIN-USER] Welcome email sent to:", email);
       } catch (emailError) {
         console.error("[CREATE-ADMIN-USER] Failed to send email:", emailError);
-        // Don't throw, user was still created
       }
     }
 
-    // Create notification for the new admin
+    // Create role-specific welcome notification
+    const roleLabel = ROLE_LABELS[adminRole] || "Admin";
     await supabase.from("admin_user_notifications").insert({
       user_id: userId,
       type: "welcome",
-      title: "Welcome to RehabLookup Admin! 👋",
-      message: `Your admin account has been set up. Please change your temporary password to secure your account.`,
+      title: `Welcome to RehabLookup, ${firstName}! 👋`,
+      message: `You've been added as a ${roleLabel}. Please change your temporary password to secure your account.`,
       link: "/admin/profile",
     });
 
@@ -371,22 +412,16 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         userId,
-        message: "Admin user created successfully. Invitation email sent.",
+        message: "Admin user created successfully. Welcome email sent.",
         tempPassword,
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("[CREATE-ADMIN-USER] Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 });
