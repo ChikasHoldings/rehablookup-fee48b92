@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
@@ -149,6 +150,7 @@ const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "secu
 export default function AdminNotifications() {
   const navigate = useNavigate();
   const { logError } = useAdminErrorHandler("AdminNotifications");
+  const { adminRole, isSuperAdmin, hasPermission } = useAdminAuth();
   const {
     notifications: globalNotifications,
     unreadCount: globalUnreadCount,
@@ -178,11 +180,40 @@ export default function AdminNotifications() {
 
   const isLoading = globalLoading || userLoading;
 
-  // Memoize combined notifications
+  // Role-based notification type filtering
+  // Advisors only see placement-related and system notifications
+  // Customer reps see reviews, support, leads
+  // Managers see everything except security-admin-only
+  const isRelevantNotification = useMemo(() => {
+    if (isSuperAdmin) return () => true;
+    
+    const ADVISOR_TYPES = new Set([
+      "welcome", "system", "placement_assigned", "placement_update",
+      "concierge_update", "tour_request", "new_review", "review_disputed",
+    ]);
+    const LEAD_TYPES = new Set(["new_lead", "lead_assigned"]);
+    const SECURITY_ADMIN_TYPES = new Set([
+      "brute_force", "brute_force_alert", "login_alert", 
+      "security_event", "security_block", "security_unblock",
+    ]);
+    
+    return (type: string) => {
+      if (adminRole === "advisor") {
+        return ADVISOR_TYPES.has(type) || !LEAD_TYPES.has(type) && !SECURITY_ADMIN_TYPES.has(type);
+      }
+      // Customer reps don't see security-admin types
+      if (adminRole === "customer_rep") {
+        return !SECURITY_ADMIN_TYPES.has(type);
+      }
+      return true;
+    };
+  }, [isSuperAdmin, adminRole]);
+
+  // Memoize combined notifications - filtered by role relevance
   const allNotifications = useMemo(() => [
-    ...globalNotifications.map(n => ({ ...n, source: "global" as const })),
+    ...globalNotifications.filter(n => isRelevantNotification(n.type)).map(n => ({ ...n, source: "global" as const })),
     ...userNotifications.map(n => ({ ...n, source: "personal" as const })),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [globalNotifications, userNotifications]);
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [globalNotifications, userNotifications, isRelevantNotification]);
 
   const totalUnreadCount = globalUnreadCount + userUnreadCount;
 
@@ -276,7 +307,7 @@ export default function AdminNotifications() {
 
     switch (notification.type) {
       case "provider_signup":
-        return "/admin/providers?status=pending";
+        return hasPermission("providers") ? "/admin/providers?status=pending" : null;
       case "payment_failed":
       case "payment_delinquent":
       case "placement_payment_failed":
@@ -286,26 +317,26 @@ export default function AdminNotifications() {
       case "churn_alert":
       case "at_risk_provider":
       case "provider_health":
-        return "/admin/subscriptions";
+        return hasPermission("subscriptions") ? "/admin/subscriptions" : null;
       case "new_lead":
       case "lead_assigned":
-        return metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads";
+        return hasPermission("leads") ? (metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads") : null;
       case "facility_approved":
       case "flagged_image":
-        return "/admin/providers";
+        return hasPermission("providers") ? "/admin/providers" : null;
       case "brute_force":
       case "brute_force_alert":
       case "login_alert":
       case "security_event":
       case "security_block":
       case "security_unblock":
-        return "/admin/security-logs";
+        return hasPermission("security_logs") ? "/admin/security-logs" : null;
       case "new_review":
       case "review_disputed":
-        return "/admin/reviews";
+        return hasPermission("reviews") ? "/admin/reviews" : null;
       case "welcome":
       case "system":
-        return "/admin/settings";
+        return "/admin/profile";
       default:
         return null;
     }
