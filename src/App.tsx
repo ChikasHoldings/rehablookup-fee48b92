@@ -280,6 +280,7 @@ const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementReve
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
+const AdvisorInbox = lazy(() => import("./pages/admin/AdvisorInbox"));
 const MarketingLanding = lazy(() => import("./pages/MarketingLanding"));
 
 function LegacyCenterRedirect() {
