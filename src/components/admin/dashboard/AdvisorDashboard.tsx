@@ -495,6 +495,17 @@ export function AdvisorDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Case Detail Sheet - opens directly from dashboard */}
+      <ConciergeDetailSheet
+        caseData={selectedCase}
+        open={!!selectedCaseId}
+        onClose={() => setSelectedCaseId(null)}
+        onRefresh={() => {
+          invalidateDashboard();
+          queryClient.invalidateQueries({ queryKey: ["advisor-case-detail", selectedCaseId] });
+        }}
+      />
     </div>
   );
 }
