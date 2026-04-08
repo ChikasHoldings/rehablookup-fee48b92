@@ -875,6 +875,12 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     Concierge
                   </CommandItem>
                 )}
+                {(isSuperAdmin || hasPermission("support")) && (
+                  <CommandItem onSelect={() => { navigate("/admin/support"); setSearchOpen(false); }}>
+                    <Headphones className="h-4 w-4 mr-2" />
+                    Support Inbox
+                  </CommandItem>
+                )}
                 {canViewSubscriptions && (
                   <CommandItem onSelect={() => { navigate("/admin/subscriptions"); setSearchOpen(false); }}>
                     <CreditCard className="h-4 w-4 mr-2" />
