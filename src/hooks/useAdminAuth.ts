@@ -107,6 +107,8 @@ export function useAdminAuth() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const hasInitialized = useRef(false);
+  // Optimistic flag: once password change is cleared locally, don't let re-fetch overwrite it
+  const passwordChangeCleared = useRef(false);
 
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     try {
@@ -217,16 +219,16 @@ export function useAdminAuth() {
   const clearForcePasswordChange = useCallback(async () => {
     if (!user) return;
     
+    // Set optimistic flag FIRST so any concurrent re-fetch won't overwrite
+    passwordChangeCleared.current = true;
+    setForcePasswordChange(false);
+    setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
+    
     try {
-      const { error } = await supabase
+      await supabase
         .from("admin_user_profiles")
         .update({ force_password_change: false, temp_password_hash: null, temp_password_expires_at: null })
         .eq("user_id", user.id);
-
-      if (!error) {
-        setForcePasswordChange(false);
-        setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
-      }
     } catch {}
   }, [user]);
 
@@ -281,7 +283,7 @@ export function useAdminAuth() {
         setIsSuperAdmin(superAdminStatus);
         setPermissions(userPermissions);
         setAdminProfile(profile);
-        setForcePasswordChange(profile?.force_password_change === true);
+        setForcePasswordChange(passwordChangeCleared.current ? false : profile?.force_password_change === true);
         const mfaSkippedThisSession = sessionStorage.getItem('mfa_setup_skipped') === '1';
         setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true && !mfaSkippedThisSession);
         
