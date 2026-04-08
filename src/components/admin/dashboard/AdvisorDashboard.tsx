@@ -61,6 +61,7 @@ export function AdvisorDashboard() {
   const [caseView, setCaseView] = useState<CaseView>("mine");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [initialDetailTab, setInitialDetailTab] = useState<string | undefined>(undefined);
 
   const advisorId = user?.id;
 
@@ -124,9 +125,12 @@ export function AdvisorDashboard() {
         actor_type: "admin",
       });
     },
-    onSuccess: () => {
-      toast.success("Case claimed! It's now in your pipeline.");
+    onSuccess: (_data, caseId) => {
+      toast.success("Case claimed! Opening placement workflow...");
       invalidateDashboard();
+      // Auto-open the case detail sheet on the placement tab
+      setSelectedCaseId(caseId);
+      setInitialDetailTab("placement");
     },
     onError: (err: Error) => {
       toast.error("Failed to claim case: " + err.message);
@@ -660,11 +664,12 @@ export function AdvisorDashboard() {
       <ConciergeDetailSheet
         caseData={selectedCase}
         open={!!selectedCaseId}
-        onClose={() => setSelectedCaseId(null)}
+        onClose={() => { setSelectedCaseId(null); setInitialDetailTab(undefined); }}
         onRefresh={() => {
           invalidateDashboard();
           queryClient.invalidateQueries({ queryKey: ["advisor-case-detail", selectedCaseId] });
         }}
+        initialTab={initialDetailTab}
       />
     </div>
   );
