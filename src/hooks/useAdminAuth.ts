@@ -108,7 +108,10 @@ export function useAdminAuth() {
   const queryClient = useQueryClient();
   const hasInitialized = useRef(false);
   // Optimistic flag: once password change is cleared locally, don't let re-fetch overwrite it
-  const passwordChangeCleared = useRef(false);
+  // Also check sessionStorage so it survives the USER_UPDATED event race within the same session
+  const passwordChangeCleared = useRef(
+    sessionStorage.getItem('rl_pwd_change_cleared') === '1'
+  );
 
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     try {
