@@ -324,6 +324,9 @@ export const statesData: StateData[] = [
       { name: "Davenport", slug: "davenport", population: 101590, description: "Davenport provides treatment in the Quad Cities.", metaDescription: "Drug rehab in Davenport, IA. Find addiction treatment." },
       { name: "Sioux City", slug: "sioux-city", population: 85797, description: "Sioux City offers treatment in western Iowa.", metaDescription: "Rehab centers in Sioux City, IA. Find drug treatment near you." },
       { name: "Iowa City", slug: "iowa-city", population: 74828, description: "Iowa City provides research-backed treatment approaches.", metaDescription: "Addiction treatment in Iowa City, IA. Browse rehab facilities." },
+      { name: "Waterloo", slug: "waterloo", population: 67314, description: "Waterloo offers treatment in the Cedar Valley.", metaDescription: "Drug rehab in Waterloo, IA. Find addiction treatment." },
+      { name: "Ames", slug: "ames", population: 66427, description: "Ames provides university-connected treatment near Iowa State.", metaDescription: "Addiction treatment in Ames, IA. Browse rehab facilities." },
+      { name: "Council Bluffs", slug: "council-bluffs", population: 62230, description: "Council Bluffs offers treatment in the Omaha metro area.", metaDescription: "Rehab centers in Council Bluffs, IA. Find drug treatment." },
     ],
   },
   {
@@ -338,6 +341,9 @@ export const statesData: StateData[] = [
       { name: "Kansas City", slug: "kansas-city", population: 156607, description: "Kansas City, KS provides metro-area treatment options.", metaDescription: "Addiction treatment in Kansas City, KS. Browse rehab centers." },
       { name: "Olathe", slug: "olathe", population: 141290, description: "Olathe offers accessible treatment in Johnson County.", metaDescription: "Drug rehab in Olathe, KS. Find addiction treatment centers." },
       { name: "Topeka", slug: "topeka", population: 126587, description: "Topeka offers treatment as the state capital.", metaDescription: "Rehab centers in Topeka, KS. Find drug treatment facilities." },
+      { name: "Lawrence", slug: "lawrence", population: 94934, description: "Lawrence provides treatment near the University of Kansas.", metaDescription: "Drug rehab in Lawrence, KS. Find addiction treatment." },
+      { name: "Shawnee", slug: "shawnee", population: 67311, description: "Shawnee offers treatment in the KC metro area.", metaDescription: "Addiction treatment in Shawnee, KS. Browse rehab facilities." },
+      { name: "Manhattan", slug: "manhattan-ks", population: 54832, description: "Manhattan provides treatment in the Flint Hills region.", metaDescription: "Rehab centers in Manhattan, KS. Find drug treatment." },
     ],
   },
   {
@@ -352,6 +358,9 @@ export const statesData: StateData[] = [
       { name: "Bowling Green", slug: "bowling-green", population: 74169, description: "Bowling Green offers treatment in south-central Kentucky.", metaDescription: "Drug rehab in Bowling Green, KY. Find addiction treatment." },
       { name: "Owensboro", slug: "owensboro", population: 60183, description: "Owensboro provides treatment in western Kentucky.", metaDescription: "Rehab centers in Owensboro, KY. Find drug treatment near you." },
       { name: "Covington", slug: "covington", population: 40366, description: "Covington offers treatment in the Cincinnati metro area.", metaDescription: "Addiction treatment in Covington, KY. Browse rehab facilities." },
+      { name: "Richmond", slug: "richmond-ky", population: 36533, description: "Richmond provides treatment near Eastern Kentucky University.", metaDescription: "Drug rehab in Richmond, KY. Find addiction treatment." },
+      { name: "Florence", slug: "florence-ky", population: 32305, description: "Florence offers treatment in northern Kentucky.", metaDescription: "Addiction treatment in Florence, KY. Browse rehab facilities." },
+      { name: "Georgetown", slug: "georgetown-ky", population: 37238, description: "Georgetown provides treatment in the Lexington metro.", metaDescription: "Rehab centers in Georgetown, KY. Find drug treatment." },
     ],
   },
   {
@@ -366,6 +375,10 @@ export const statesData: StateData[] = [
       { name: "Shreveport", slug: "shreveport", population: 187593, description: "Shreveport offers treatment in northwest Louisiana.", metaDescription: "Drug rehab in Shreveport, LA. Find addiction treatment centers." },
       { name: "Lafayette", slug: "lafayette", population: 121374, description: "Lafayette provides treatment in Acadiana.", metaDescription: "Rehab centers in Lafayette, LA. Find drug treatment near you." },
       { name: "Lake Charles", slug: "lake-charles", population: 84872, description: "Lake Charles offers treatment in southwest Louisiana.", metaDescription: "Addiction treatment in Lake Charles, LA. Browse rehab facilities." },
+      { name: "Metairie", slug: "metairie", population: 138481, description: "Metairie provides suburban treatment near New Orleans.", metaDescription: "Drug rehab in Metairie, LA. Find addiction treatment." },
+      { name: "Kenner", slug: "kenner", population: 66702, description: "Kenner offers treatment in Jefferson Parish.", metaDescription: "Addiction treatment in Kenner, LA. Browse rehab facilities." },
+      { name: "Monroe", slug: "monroe", population: 47702, description: "Monroe provides treatment in northeast Louisiana.", metaDescription: "Rehab centers in Monroe, LA. Find drug treatment." },
+      { name: "Alexandria", slug: "alexandria-la", population: 46545, description: "Alexandria offers treatment in central Louisiana.", metaDescription: "Drug rehab in Alexandria, LA. Find addiction treatment." },
     ],
   },
   {
