@@ -312,7 +312,7 @@ export function ToursTab({ caseData }: ToursTabProps) {
                       </div>
 
                       {tour.confirmed_datetime && (
-                        <div className="flex items-center gap-1 text-sm text-green-600">
+                        <div className="flex items-center gap-1 text-sm text-success">
                           <CheckCircle className="h-3.5 w-3.5" />
                           Confirmed:{" "}
                           {format(new Date(tour.confirmed_datetime), "MMM d 'at' h:mm a")}
@@ -320,7 +320,7 @@ export function ToursTab({ caseData }: ToursTabProps) {
                       )}
 
                       {tour.proposed_datetime && !tour.confirmed_datetime && (
-                        <div className="flex items-center gap-1 text-sm text-amber-600">
+                        <div className="flex items-center gap-1 text-sm text-warning">
                           <Clock className="h-3.5 w-3.5" />
                           Proposed:{" "}
                           {format(new Date(tour.proposed_datetime), "MMM d 'at' h:mm a")}
@@ -350,7 +350,7 @@ export function ToursTab({ caseData }: ToursTabProps) {
                       )}
 
                       {tour.facility_response_notes && (
-                        <p className="text-sm text-blue-600 dark:text-blue-400">
+                        <p className="text-sm text-info dark:text-info">
                           Facility: "{tour.facility_response_notes}"
                         </p>
                       )}

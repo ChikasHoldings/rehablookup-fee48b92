@@ -108,12 +108,12 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
   const highRiskCount = atRiskProviders.filter(p => p.riskScore >= 50).length;
 
   return (
-    <Card ref={ref} className={highRiskCount > 0 ? "border-amber-500/50" : ""}>
+    <Card ref={ref} className={highRiskCount > 0 ? "border-warning/50" : ""}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertTriangle className={`h-5 w-5 ${highRiskCount > 0 ? "text-amber-500" : "text-muted-foreground"}`} />
+              <AlertTriangle className={`h-5 w-5 ${highRiskCount > 0 ? "text-warning" : "text-muted-foreground"}`} />
               <CardTitle className="text-lg">At-Risk Providers</CardTitle>
               {highRiskCount > 0 && (
                 <Badge variant="destructive" className="ml-2">
@@ -197,7 +197,7 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="text-muted-foreground">Last active:</span>
-                        <span className={provider.daysInactive > 7 ? "text-amber-600 font-medium" : ""}>
+                        <span className={provider.daysInactive > 7 ? "text-warning font-medium" : ""}>
                           {formatLastActivity(provider.lastActivity)}
                         </span>
                       </div>
