@@ -175,6 +175,7 @@ export function SuperAdminDashboard() {
         verified: approved.count || 0,
       };
     },
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch leads stats with unlock/revenue metrics
@@ -210,9 +211,8 @@ export function SuperAdminDashboard() {
         assigned: unlocksAll.count || 0,
       };
     },
+    staleTime: 2 * 60 * 1000,
   });
-
-  // Fetch redistribution stats
   const { data: redistStats } = useQuery({
     queryKey: ["admin-redistribution-stats"],
     queryFn: async () => {
@@ -227,9 +227,8 @@ export function SuperAdminDashboard() {
         expired: expired.count || 0,
       };
     },
+    staleTime: 2 * 60 * 1000,
   });
-
-  // Fetch top cities
   const { data: topCities } = useQuery({
     queryKey: ["admin-top-cities"],
     queryFn: async () => {
@@ -253,9 +252,8 @@ export function SuperAdminDashboard() {
 
       return sorted.map(([city, count]) => ({ city, count, percentage: Math.round((count / maxCount) * 100) }));
     },
+    staleTime: 5 * 60 * 1000,
   });
-
-  // Fetch recent leads
   const { data: recentLeads } = useQuery({
     queryKey: ["admin-recent-leads"],
     queryFn: async () => {
@@ -266,9 +264,8 @@ export function SuperAdminDashboard() {
         .limit(5);
       return data || [];
     },
+    staleTime: 60 * 1000,
   });
-
-  // Fetch placement pipeline stats
   const { data: placementStats } = useQuery<Record<string, number>>({
     queryKey: ["admin-placement-pipeline"],
     queryFn: async () => {
@@ -331,13 +328,13 @@ export function SuperAdminDashboard() {
       )}
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3">
-        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shrink-0">
-          <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shrink-0">
+          <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground truncate">Super Admin Dashboard</h1>
-            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Full platform overview with all metrics and controls</p>
         </div>
