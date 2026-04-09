@@ -10,6 +10,8 @@ import {
   Send,
   Loader2,
   Trash2,
+  AlertTriangle,
+  UserCheck,
 } from "lucide-react";
 import {
   Dialog,
@@ -182,6 +184,47 @@ export function SupportTicketModal({
     } finally {
       setDeleting(false);
       setDeleteOpen(false);
+    }
+  };
+
+  // Auto-claim: assign to current user when opened if unassigned
+  const handleClaimTicket = () => {
+    if (!user?.id || ticket.assigned_to) return;
+    assignTicket.mutate({
+      ticketId: ticket.id,
+      assigneeId: user.id,
+      currentUserId: user.id,
+    });
+    toast.success("Ticket claimed");
+  };
+
+  // Escalate to manager via escalations system
+  const [escalating, setEscalating] = useState(false);
+  const handleEscalateToManager = async () => {
+    if (!user?.id) return;
+    setEscalating(true);
+    try {
+      const { error } = await supabase.from("admin_escalations").insert({
+        subject: `Support Ticket: ${ticket.subject || ticket.category}`,
+        description: `Escalated from support ticket.\n\nSender: ${ticket.sender_name} (${ticket.sender_email})\nMessage: ${ticket.message?.slice(0, 500)}`,
+        priority: ticket.priority === "urgent" ? "critical" : ticket.priority === "high" ? "high" : "medium",
+        created_by: user.id,
+        related_type: "support_ticket",
+        related_id: ticket.id,
+        status: "open",
+      });
+      if (error) throw error;
+      // Mark ticket as in_progress
+      updateTicket.mutate({
+        ticketId: ticket.id,
+        updates: { status: "in_progress" as SupportTicket["status"] },
+        currentUserId: user.id,
+      });
+      toast.success("Escalated to management");
+    } catch (err) {
+      toast.error("Failed to escalate: " + (err as Error).message);
+    } finally {
+      setEscalating(false);
     }
   };
 
