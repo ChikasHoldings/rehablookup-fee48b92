@@ -45,18 +45,33 @@ const RehabCenters = () => {
     return [...treatmentCenters, ...approvedFacilities];
   }, [approvedFacilities]);
 
-  // Get top rated centers
-  const topRatedCenters = useMemo(() => {
-    return [...allCenters]
-      .sort((a, b) => {
-        const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
-        const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
-        if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
-        if (b.featured !== a.featured) return b.featured ? 1 : -1;
-        return b.rating - a.rating;
-      })
-      .slice(0, 6);
+  const sorted = useMemo(() => {
+    return [...allCenters].sort((a, b) => {
+      const aF = (a as any).hasFeaturedSubscription ? 1 : 0;
+      const bF = (b as any).hasFeaturedSubscription ? 1 : 0;
+      if (bF !== aF) return bF - aF;
+      if (b.featured !== a.featured) return b.featured ? 1 : -1;
+      return b.rating - a.rating;
+    });
   }, [allCenters]);
+
+  const topRatedCenters = useMemo(() => sorted.slice(0, 6), [sorted]);
+
+  const detoxCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /detox|withdrawal/i.test(t))).slice(0, 6),
+    [sorted]);
+
+  const inpatientCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /inpatient|residential/i.test(t))).slice(0, 6),
+    [sorted]);
+
+  const outpatientCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /outpatient|IOP/i.test(t))).slice(0, 6),
+    [sorted]);
+
+  const dualDiagnosisCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /dual.diagnosis|co.occurring|mental.health/i.test(t))).slice(0, 6),
+    [sorted]);
 
   // Popular states for browse
   const popularStates = usStates.slice(0, 12);
@@ -194,6 +209,126 @@ const RehabCenters = () => {
           </div>
         </div>
       </section>
+
+      {/* Detox Programs */}
+      {detoxCenters.length > 0 && (
+        <section className="bg-secondary/30 border-t border-border py-10 md:py-14">
+          <div className="container">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-display text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Clock className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  Detox Programs
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">Medical detoxification and withdrawal management</p>
+              </div>
+              <Link to="/search-results?treatmentType=detox" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                View All <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {detoxCenters.map((center) => (
+                <TreatmentCenterCard key={center.id} center={center} featured={center.featured} />
+              ))}
+            </div>
+            <div className="mt-6 text-center sm:hidden">
+              <Link to="/search-results?treatmentType=detox">
+                <Button variant="outline" size="sm" className="gap-2">View All Detox Programs <ChevronRight className="h-4 w-4" /></Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Inpatient / Residential */}
+      {inpatientCenters.length > 0 && (
+        <section className="bg-background py-10 md:py-14 border-t border-border">
+          <div className="container">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-display text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Building2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  Inpatient &amp; Residential
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">24/7 residential treatment programs</p>
+              </div>
+              <Link to="/search-results?treatmentType=inpatient" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                View All <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {inpatientCenters.map((center) => (
+                <TreatmentCenterCard key={center.id} center={center} featured={center.featured} />
+              ))}
+            </div>
+            <div className="mt-6 text-center sm:hidden">
+              <Link to="/search-results?treatmentType=inpatient">
+                <Button variant="outline" size="sm" className="gap-2">View All Inpatient Programs <ChevronRight className="h-4 w-4" /></Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Outpatient Programs */}
+      {outpatientCenters.length > 0 && (
+        <section className="bg-secondary/30 py-10 md:py-14 border-t border-border">
+          <div className="container">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-display text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Users className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  Outpatient Programs
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">Flexible outpatient and IOP treatment options</p>
+              </div>
+              <Link to="/search-results?treatmentType=outpatient" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                View All <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {outpatientCenters.map((center) => (
+                <TreatmentCenterCard key={center.id} center={center} featured={center.featured} />
+              ))}
+            </div>
+            <div className="mt-6 text-center sm:hidden">
+              <Link to="/search-results?treatmentType=outpatient">
+                <Button variant="outline" size="sm" className="gap-2">View All Outpatient Programs <ChevronRight className="h-4 w-4" /></Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Dual Diagnosis */}
+      {dualDiagnosisCenters.length > 0 && (
+        <section className="bg-background py-10 md:py-14 border-t border-border">
+          <div className="container">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-display text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Heart className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  Dual Diagnosis Treatment
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">Programs for co-occurring mental health and substance use</p>
+              </div>
+              <Link to="/search-results?treatmentType=dual-diagnosis" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                View All <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {dualDiagnosisCenters.map((center) => (
+                <TreatmentCenterCard key={center.id} center={center} featured={center.featured} />
+              ))}
+            </div>
+            <div className="mt-6 text-center sm:hidden">
+              <Link to="/search-results?treatmentType=dual-diagnosis">
+                <Button variant="outline" size="sm" className="gap-2">View All Dual Diagnosis Programs <ChevronRight className="h-4 w-4" /></Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Browse by State */}
       <section className="bg-secondary/30 border-y border-border py-10 md:py-14">
