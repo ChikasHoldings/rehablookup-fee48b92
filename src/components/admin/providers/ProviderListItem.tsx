@@ -197,13 +197,13 @@ export function ProviderListItem({
             )}
             <DropdownMenuSeparator />
             
-            {provider.status === "pending" && (
+            {canModerate && provider.status === "pending" && (
               <DropdownMenuItem onClick={() => onStatusChange(provider.id, "approved")} className="text-emerald-600">
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Approve Provider
               </DropdownMenuItem>
             )}
-            {provider.status === "approved" && !provider.suspended && (
+            {canModerate && provider.status === "approved" && !provider.suspended && (
               <DropdownMenuItem onClick={() => onStatusChange(provider.id, "pending")} className="text-amber-600">
                 <Clock className="h-4 w-4 mr-2" />
                 Set to Pending
@@ -220,23 +220,27 @@ export function ProviderListItem({
               {provider.featured ? "Remove Featured" : "Mark as Featured"}
             </DropdownMenuItem>
             
-            <DropdownMenuSeparator />
-            {provider.suspended ? (
-              <DropdownMenuItem onClick={() => onReactivate(provider)} className="text-emerald-600">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Reactivate Provider
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={() => onSuspend(provider)} className="text-destructive">
-                <Ban className="h-4 w-4 mr-2" />
-                Suspend Provider
-              </DropdownMenuItem>
+            {canModerate && (
+              <>
+                <DropdownMenuSeparator />
+                {provider.suspended ? (
+                  <DropdownMenuItem onClick={() => onReactivate(provider)} className="text-emerald-600">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reactivate Provider
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => onSuspend(provider)} className="text-destructive">
+                    <Ban className="h-4 w-4 mr-2" />
+                    Suspend Provider
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onDelete(provider)} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Provider
+                </DropdownMenuItem>
+              </>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDelete(provider)} className="text-destructive">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Provider
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
