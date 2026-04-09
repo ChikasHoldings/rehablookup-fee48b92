@@ -158,13 +158,17 @@ export function CustomerRepDashboard() {
   // Claim ticket
   const claimTicket = async (ticketId: string) => {
     if (!user?.id) return;
+    setClaimingTicketId(ticketId);
     const { error } = await supabase
       .from("support_tickets")
       .update({ assigned_to: user.id, assigned_at: new Date().toISOString(), assigned_by: user.id, status: "open" })
       .eq("id", ticketId);
+    setClaimingTicketId(null);
     if (error) { toast.error("Failed to claim ticket"); return; }
-    toast.success("Ticket claimed");
+    toast.success("Ticket claimed — opening details...");
     invalidateDashboard();
+    // Auto-open the ticket detail
+    setSelectedTicketId(ticketId);
   };
 
   // Resolve ticket inline
