@@ -123,7 +123,7 @@ function generateHowToFind(stateName: string, abbr: string, p: StateProfile): St
     sections: [
       {
         heading: `Understanding ${stateName}'s Treatment Landscape`,
-        content: `${stateName}, located in the ${p.region} region of the United States, offers ${p.uniqueFactor}. The state's ${p.landscape} provides diverse environments for recovery, from urban clinical settings to nature-based healing programs. The ${p.stateAgency} oversees licensing and regulation of treatment facilities statewide, ensuring baseline quality standards for all providers.`,
+        content: `${stateName} is home to ${p.uniqueFactor}. Known for its ${p.landscape}, the state provides diverse environments for recovery, from urban clinical settings to nature-based healing programs. The ${p.stateAgency} oversees licensing and regulation of treatment facilities statewide, ensuring baseline quality standards for all providers.`,
       },
       {
         heading: "Key Factors When Evaluating Rehab Centers",
@@ -191,7 +191,7 @@ function generateCostOfRehab(stateName: string, abbr: string, p: StateProfile): 
     sections: [
       {
         heading: `What Does Rehab Cost in ${stateName}?`,
-        content: `Treatment costs in ${stateName} vary significantly based on program type, duration, location, and amenities. Understanding these ranges helps you plan financially and avoid unexpected expenses. The ${p.region} region's cost of living influences facility pricing, with ${p.majorCity}-area programs typically at the higher end of the range.`,
+        content: `Treatment costs in ${stateName} vary significantly based on program type, duration, location, and amenities. Understanding these ranges helps you plan financially and avoid unexpected expenses. The cost of living in ${p.majorCity} and surrounding areas influences facility pricing, with metro-area programs typically at the higher end of the range.`,
       },
       {
         heading: "Cost Breakdown by Treatment Type",
