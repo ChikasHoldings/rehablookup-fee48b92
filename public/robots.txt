@@ -37,7 +37,6 @@ Disallow: /concierge/dashboard
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
-Disallow: /search-results
 Disallow: /search?
 Disallow: /*?utm_source=
 Disallow: /*?utm_medium=
@@ -71,7 +70,6 @@ Disallow: /signup
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
-Disallow: /search-results
 
 User-agent: BingPreview
 Allow: /
@@ -306,7 +304,6 @@ Disallow: /api/
 Disallow: /functions/
 Disallow: /_vercel/
 Disallow: /.netlify/
-Disallow: /search-results
 Disallow: /search?
 Disallow: /*?utm_source=
 Disallow: /*?utm_medium=
