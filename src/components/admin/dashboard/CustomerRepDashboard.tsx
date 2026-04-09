@@ -2,6 +2,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { SupportTicketModal } from "@/components/admin/SupportTicketModal";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -738,7 +739,13 @@ export function CustomerRepDashboard() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      {/* Support Ticket Detail Modal - inline open from dashboard */}
+      <SupportTicketModal
+        ticket={selectedTicketId ? { id: selectedTicketId } as any : null}
+        open={!!selectedTicketId}
+        onOpenChange={(open) => { if (!open) setSelectedTicketId(null); }}
+        onTicketUpdated={invalidateDashboard}
+      />
     </div>
   );
 }
