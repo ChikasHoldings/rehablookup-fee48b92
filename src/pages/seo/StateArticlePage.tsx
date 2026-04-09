@@ -189,6 +189,81 @@ export default function StateArticlePage() {
         </div>
       </section>
 
+      {/* Cities, Counties & Quick Links Section */}
+      {(() => {
+        const stateData = getStateBySlug(stateSlug!);
+        const counties = getCountiesForState(stateSlug!);
+        const hasCities = stateData && stateData.cities.length > 0;
+        const hasCounties = counties.length > 0;
+        if (!hasCities && !hasCounties) return null;
+        return (
+          <section className="bg-muted/20 border-t border-border/40 py-10 md:py-14">
+            <div className="max-w-5xl mx-auto px-4">
+              <h2 className="text-xl font-bold text-foreground mb-8">Explore {stateName} Locations</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {hasCities && (
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" /> Cities
+                    </h3>
+                    <div className="space-y-1.5 text-sm">
+                      {stateData.cities.slice(0, 10).map(city => (
+                        <Link key={city.slug} to={`/rehab-centers/${stateSlug}/${city.slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors py-0.5">
+                          <ChevronRight className="w-3 h-3" /> {city.name}
+                        </Link>
+                      ))}
+                      {stateData.cities.length > 10 && (
+                        <Link to={`/rehab-centers/${stateSlug}`} className="flex items-center gap-2 text-primary font-medium py-0.5">
+                          <ChevronRight className="w-3 h-3" /> View all {stateData.cities.length} cities
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {hasCounties && (
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-primary" /> Counties
+                    </h3>
+                    <div className="space-y-1.5 text-sm">
+                      {counties.slice(0, 10).map(county => (
+                        <Link key={county.slug} to={`/rehab-centers/${stateSlug}/county/${county.slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors py-0.5">
+                          <ChevronRight className="w-3 h-3" /> {county.name} County
+                        </Link>
+                      ))}
+                      {counties.length > 10 && (
+                        <Link to={`/rehab-centers/${stateSlug}`} className="flex items-center gap-2 text-primary font-medium py-0.5">
+                          <ChevronRight className="w-3 h-3" /> View all {counties.length} counties
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-primary" /> Quick Links
+                  </h3>
+                  <div className="space-y-1.5 text-sm">
+                    <Link to={`/rehab-centers/${stateSlug}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors py-0.5">
+                      <ChevronRight className="w-3 h-3" /> {stateName} Rehab Centers
+                    </Link>
+                    <Link to="/search-results" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors py-0.5">
+                      <ChevronRight className="w-3 h-3" /> Search All Facilities
+                    </Link>
+                    <Link to="/treatment-types" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors py-0.5">
+                      <ChevronRight className="w-3 h-3" /> Treatment Types
+                    </Link>
+                    <Link to="/insurance" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors py-0.5">
+                      <ChevronRight className="w-3 h-3" /> Insurance Coverage
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
       {/* Internal Links Footer */}
       <section className="bg-muted/30 border-t border-border/40 py-10 md:py-12">
         <div className="max-w-5xl mx-auto px-4">
