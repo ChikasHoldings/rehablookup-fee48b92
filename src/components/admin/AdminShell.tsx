@@ -183,21 +183,27 @@ export function AdminShell() {
       <div className="lg:hidden fixed bottom-4 right-4 z-50">
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button size="icon" className="h-14 w-14 rounded-full shadow-lg bg-slate-900 hover:bg-slate-800 text-white">
+            <Button size="icon" className="h-14 w-14 rounded-full shadow-xl bg-slate-900 hover:bg-slate-800 text-white ring-2 ring-white/10">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0 bg-white border-r border-slate-200">
-            <div className="p-4 border-b bg-slate-900 text-white">
-              <span className="text-lg font-bold">Admin Menu</span>
+            <div className="p-4 border-b bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+              <span className="text-lg font-bold tracking-tight">Admin Menu</span>
+              <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wider">
+                {effectiveAdminRole?.replace('_', ' ')}
+              </p>
             </div>
-            <nav className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-80px)]">
+            <nav className="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-80px)]">
               {visibleMobileSections.map((section) => (
                 <div key={section.label || "core"}>
                   {section.label && (
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-3 mb-1">
-                      {section.label}
-                    </p>
+                    <div className="flex items-center gap-2 px-3 mb-1.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        {section.label}
+                      </span>
+                      <div className="h-px flex-1 bg-slate-100" />
+                    </div>
                   )}
                   <div className="space-y-0.5">
                     {section.items.map((item) => {
@@ -213,13 +219,20 @@ export function AdminShell() {
                           onClick={() => setMobileMenuOpen(false)}
                           onMouseEnter={() => prefetchAdminPage(item.to)}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
                             isActive
-                              ? "bg-slate-900 text-white"
-                              : "text-slate-700 hover:bg-slate-200"
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-slate-700 hover:bg-slate-100"
                           )}
                         >
-                          <Icon className="h-5 w-5" />
+                          <div className={cn(
+                            "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                            isActive
+                              ? "bg-white/20"
+                              : "bg-slate-100"
+                          )}>
+                            <Icon className={cn("h-4 w-4", isActive ? "text-primary-foreground" : "text-slate-500")} />
+                          </div>
                           <span className="text-sm font-medium">{item.label}</span>
                         </Link>
                       );
