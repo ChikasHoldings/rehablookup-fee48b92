@@ -3,6 +3,7 @@ import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeam
 import { useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
