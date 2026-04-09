@@ -1464,11 +1464,11 @@ export default function ProviderSignup() {
                     />
                     <Label htmlFor="terms" className="text-sm font-normal leading-relaxed cursor-pointer">
                       I agree to the{" "}
-                      <Link to="/terms-of-service" className="text-primary hover:underline" target="_blank">
+                      <Link to="/terms-of-service" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
                         Terms of Service
                       </Link>{" "}
                       and{" "}
-                      <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
+                      <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
                         Privacy Policy
                       </Link>
                       . I confirm that all information provided is accurate.
