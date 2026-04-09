@@ -83,8 +83,12 @@ export function PublicRouteGuard({ children }: PublicRouteGuardProps) {
 
   const currentPath = location.pathname;
 
-  // Allow legal/universal pages for everyone
-  if (ALWAYS_ALLOWED_ROUTES.some(route => currentPath.startsWith(route))) {
+  // Allow content/SEO pages for everyone regardless of role
+  const isAllowedRoute = ALWAYS_ALLOWED_ROUTES.some(route => currentPath.startsWith(route));
+  
+  console.log("[PublicRouteGuard]", { currentPath, role, isAllowedRoute, isAuthenticated });
+
+  if (isAllowedRoute) {
     return <>{children}</>;
   }
 
