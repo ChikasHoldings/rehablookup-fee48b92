@@ -298,17 +298,46 @@ export function EscalationDetailSheet({
             )}
 
             {/* Close option for resolved */}
-            {escalation.status === "resolved" && isSuperAdmin && (
+            {escalation.status === "resolved" && (
+              <>
+                <Separator />
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleStatusChange("open")}
+                    disabled={updateMutation.isPending}
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Reopen
+                  </Button>
+                  {isSuperAdmin && (
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleStatusChange("closed")}
+                      disabled={updateMutation.isPending}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Close
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Reopen closed escalations (Super Admin only) */}
+            {escalation.status === "closed" && isSuperAdmin && (
               <>
                 <Separator />
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleStatusChange("closed")}
+                  onClick={() => handleStatusChange("open")}
                   disabled={updateMutation.isPending}
                 >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Close Escalation
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Reopen Escalation
                 </Button>
               </>
             )}

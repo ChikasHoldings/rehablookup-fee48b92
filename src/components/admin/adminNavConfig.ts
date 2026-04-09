@@ -185,6 +185,7 @@ const advisorNav: NavSection[] = [
       { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
       { to: "/admin/inbox", icon: Inbox, label: "Messages", permission: "placements" },
       { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
+      { to: "/admin/placement-revenue", icon: CreditCard, label: "Earnings", permission: "placements" },
     ],
   },
   {

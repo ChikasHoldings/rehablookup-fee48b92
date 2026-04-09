@@ -10,6 +10,8 @@ import {
   Send,
   Loader2,
   Trash2,
+  AlertTriangle,
+  UserCheck,
 } from "lucide-react";
 import {
   Dialog,
@@ -93,6 +95,7 @@ export function SupportTicketModal({
   const [newNote, setNewNote] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [escalating, setEscalating] = useState(false);
 
   const { data: notes = [], isLoading: notesLoading } = useSupportTicketNotes(ticket?.id || "");
   const updateTicket = useUpdateSupportTicket();
@@ -182,6 +185,45 @@ export function SupportTicketModal({
     } finally {
       setDeleting(false);
       setDeleteOpen(false);
+    }
+  };
+
+  // Auto-claim: assign to current user when opened if unassigned
+  const handleClaimTicket = () => {
+    if (!user?.id || ticket.assigned_to) return;
+    assignTicket.mutate({
+      ticketId: ticket.id,
+      assigneeId: user.id,
+      currentUserId: user.id,
+    });
+    toast.success("Ticket claimed");
+  };
+
+  const handleEscalateToManager = async () => {
+    if (!user?.id) return;
+    setEscalating(true);
+    try {
+      const { error } = await supabase.from("admin_escalations").insert({
+        subject: `Support Ticket: ${ticket.subject || ticket.category}`,
+        description: `Escalated from support ticket.\n\nSender: ${ticket.sender_name} (${ticket.sender_email})\nMessage: ${ticket.message?.slice(0, 500)}`,
+        priority: ticket.priority === "urgent" ? "critical" : ticket.priority === "high" ? "high" : "medium",
+        created_by: user.id,
+        related_type: "support_ticket",
+        related_id: ticket.id,
+        status: "open",
+      });
+      if (error) throw error;
+      // Mark ticket as in_progress
+      updateTicket.mutate({
+        ticketId: ticket.id,
+        updates: { status: "in_progress" as SupportTicket["status"] },
+        currentUserId: user.id,
+      });
+      toast.success("Escalated to management");
+    } catch (err) {
+      toast.error("Failed to escalate: " + (err as Error).message);
+    } finally {
+      setEscalating(false);
     }
   };
 
@@ -401,7 +443,7 @@ export function SupportTicketModal({
           </ScrollArea>
 
           {/* Footer Actions */}
-          <div className="flex-shrink-0 flex justify-between px-4 sm:px-6 py-3 sm:py-4 border-t bg-background">
+          <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-t bg-background gap-2 flex-wrap">
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} size="sm" className="text-xs sm:text-sm h-8 sm:h-9">
                 Close
@@ -416,21 +458,50 @@ export function SupportTicketModal({
                 Delete
               </Button>
             </div>
-            {ticket.status !== "resolved" && ticket.status !== "closed" && (
-              <Button
-                onClick={handleResolve}
-                disabled={resolveTicket.isPending}
-                className="bg-success hover:bg-success/90 text-success-foreground text-xs sm:text-sm h-8 sm:h-9"
-                size="sm"
-              >
-                {resolveTicket.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                ) : (
-                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                )}
-                Resolve
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {/* Claim button if unassigned */}
+              {!ticket.assigned_to && ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClaimTicket}
+                  disabled={assignTicket.isPending}
+                  className="text-xs sm:text-sm h-8 sm:h-9"
+                >
+                  <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                  Claim
+                </Button>
+              )}
+              {/* Escalate button */}
+              {ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEscalateToManager}
+                  disabled={escalating}
+                  className="text-xs sm:text-sm h-8 sm:h-9 text-warning hover:text-warning hover:bg-warning/10"
+                >
+                  {escalating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />}
+                  Escalate
+                </Button>
+              )}
+              {/* Resolve button */}
+              {ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  onClick={handleResolve}
+                  disabled={resolveTicket.isPending}
+                  className="bg-success hover:bg-success/90 text-success-foreground text-xs sm:text-sm h-8 sm:h-9"
+                  size="sm"
+                >
+                  {resolveTicket.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  Resolve
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
