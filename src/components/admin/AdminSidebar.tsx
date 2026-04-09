@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { TransitionNavLink } from "@/components/ui/transition-nav-link";
 import { ChevronDown, Minus } from "lucide-react";
@@ -29,22 +29,35 @@ interface AdminSidebarProps {
 function AdminSidebarComponent({ isSuperAdmin, hasPermission, adminRole = "customer_rep" }: AdminSidebarProps) {
   const location = useLocation();
   const { data: counts } = useAdminSidebarCounts();
+  const activeItemRef = useRef<HTMLAnchorElement>(null);
 
   // Get role-specific navigation
   const navSections = getNavSectionsForRole(adminRole, isSuperAdmin);
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
+  // Compute which groups should be open based on current route
+  const computeOpenGroups = useCallback(() => {
+    const groups: Record<string, boolean> = {};
     navSections.flatMap((s) => s.entries).forEach((entry) => {
       if (isNavGroup(entry)) {
         const hasActiveChild = entry.items.some((item) => location.pathname.startsWith(item.to));
         if (hasActiveChild) {
-          initial[entry.label] = true;
+          groups[entry.label] = true;
         }
       }
     });
-    return initial;
-  });
+    return groups;
+  }, [navSections, location.pathname]);
+
+  const [openGroups, setOpenGroups] = useState(computeOpenGroups);
+
+  // Auto-expand group containing active route on navigation
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      const active = computeOpenGroups();
+      // Merge: keep manually opened groups, add newly active ones
+      return { ...prev, ...active };
+    });
+  }, [location.pathname, computeOpenGroups]);
 
   const handleMouseEnter = useCallback((path: string) => {
     prefetchAdminPage(path);
