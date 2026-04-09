@@ -284,6 +284,7 @@ const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const AdvisorInbox = lazy(() => import("./pages/admin/AdvisorInbox"));
 const AdminEscalations = lazy(() => import("./pages/admin/AdminEscalations"));
 const AdminBackOffice = lazy(() => import("./pages/admin/AdminBackOffice"));
+const AdvisorProviderDirectory = lazy(() => import("./pages/admin/AdvisorProviderDirectory"));
 
 function LegacyCenterRedirect() {
   const { slug } = useParams();
