@@ -17,7 +17,7 @@ import {
 } from "@/components/admin/dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Sparkles, ChevronRight } from "lucide-react";
+import { Shield, Sparkles, ChevronRight, AlertTriangle } from "lucide-react";
 
 const PLAN_COLORS = {
   free: "hsl(215, 16%, 47%)",
