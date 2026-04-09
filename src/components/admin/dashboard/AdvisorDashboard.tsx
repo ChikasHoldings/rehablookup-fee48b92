@@ -284,7 +284,7 @@ export function AdvisorDashboard() {
       if (!selectedCaseId) return undefined;
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("*")
+        .select("id, user_name, user_email, user_phone, status, payment_status, primary_concern, level_of_care, insurance_carrier, budget_range, preferred_state, preferred_city, timeline_urgency, gender, age_range, notes, admin_notes, assigned_advisor_id, matched_facility_ids, placed_facility_id, created_at, updated_at, intake_data, match_scores, relationship_to_seeker, detox_needed, prior_treatment_history, prior_treatment_notes, substance_use_duration, substance_use_frequency, faith_based_preference, preferred_environment, co_occurring_concerns, amenity_preferences, desired_location_state, desired_location_city, desired_radius_miles, willing_to_travel, current_medications, mobility_needs, scholarship_interest, holistic_interest, referral_source, payment_amount_cents, introductions_sent_at, introductions_sent_count, matched_at, closed_at, placement_confirmed, placement_confirmed_at, seeker_confirmed, seeker_confirmed_at, seeker_feedback, seeker_rating")
         .eq("id", selectedCaseId)
         .single();
       if (error) throw error;
