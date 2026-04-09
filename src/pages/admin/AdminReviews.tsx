@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,8 @@ function ReviewCardSkeleton() {
 
 export default function AdminReviews() {
   const queryClient = useQueryClient();
+  const { adminRole, isSuperAdmin } = useAdminAuth();
+  const canModerateReviews = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([]);
   const [disputes, setDisputes] = useState<DisputeWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -719,7 +722,7 @@ export default function AdminReviews() {
                         <p className="text-sm text-muted-foreground italic">No review text provided</p>
                       )}
 
-                      {review.status === 'pending' && (
+                      {review.status === 'pending' && canModerateReviews && (
                         <div className="space-y-3">
                           <Textarea
                             placeholder="Admin notes (required for rejection)"
@@ -755,6 +758,9 @@ export default function AdminReviews() {
                             </Button>
                           </div>
                         </div>
+                      )}
+                      {review.status === 'pending' && !canModerateReviews && (
+                        <p className="text-xs text-muted-foreground italic">Only Managers and Super Admins can approve or reject reviews.</p>
                       )}
 
                       {review.admin_notes && review.status !== 'pending' && (

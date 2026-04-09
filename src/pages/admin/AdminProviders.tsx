@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Download, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,6 +46,8 @@ function useDebounce(value: string, delay: number) {
 export default function AdminProviders() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminProviders");
+  const { adminRole, isSuperAdmin } = useAdminAuth();
+  const canModerate = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
   const [searchInput, setSearchInput] = useState("");
   const searchQuery = useDebounce(searchInput, 350);
   const [activeTab, setActiveTab] = useState("all");
@@ -623,6 +626,7 @@ export default function AdminProviders() {
                       provider={provider}
                       isPro={!!proSubscriptions?.[provider.id]}
                       leadCount={leadCounts?.[provider.id] || 0}
+                      canModerate={canModerate}
                       onOpenDetail={openProviderDetail}
                       onStatusChange={handleStatusChange}
                       onToggleVerified={handleToggleVerified}
