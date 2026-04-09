@@ -77,6 +77,13 @@ export const statesData: StateData[] = [
       { name: "Peoria", slug: "peoria", population: 190985, description: "Peoria offers quality treatment in northwestern Phoenix metro.", metaDescription: "Drug rehab in Peoria, AZ. Find addiction treatment centers." },
       { name: "Tempe", slug: "tempe", population: 180587, description: "Tempe provides accessible treatment options in the Valley.", metaDescription: "Addiction treatment in Tempe, AZ. Browse verified rehab centers." },
       { name: "Surprise", slug: "surprise", population: 143148, description: "Surprise offers growing treatment options in the West Valley.", metaDescription: "Rehab centers in Surprise, AZ. Find drug treatment near Phoenix." },
+    
+      {
+        name: "Yuma",
+        slug: "yuma",
+        description: "Yuma provides treatment services for the agricultural corridor along the Arizona-Mexico border.",
+        metaDescription: "Find addiction treatment in Yuma, AZ. Compare rehab programs in southwestern Arizona.",
+      },
     ],
   },
   {
@@ -98,6 +105,13 @@ export const statesData: StateData[] = [
       { name: "Jonesboro", slug: "jonesboro", population: 78576, description: "Jonesboro provides treatment in northeast Arkansas.", metaDescription: "Addiction treatment in Jonesboro, AR. Browse rehab facilities." },
       { name: "Pine Bluff", slug: "pine-bluff", population: 41253, description: "Pine Bluff offers recovery services in southeast Arkansas.", metaDescription: "Find rehab in Pine Bluff, AR. Drug and alcohol treatment centers." },
       { name: "Conway", slug: "conway", population: 67336, description: "Conway provides treatment in central Arkansas near Little Rock.", metaDescription: "Drug rehab in Conway, AR. Find addiction treatment programs." },
+    
+      {
+        name: "Hot Springs",
+        slug: "hot-springs",
+        description: "Hot Springs features treatment in a historic therapeutic setting with natural healing traditions.",
+        metaDescription: "Find drug rehab in Hot Springs, AR. Compare treatment in Garland County.",
+      },
     ],
   },
   {
@@ -172,6 +186,13 @@ export const statesData: StateData[] = [
             { name: "Pueblo", slug: "pueblo", population: 112368, description: "Pueblo provides accessible treatment in southern Colorado.", metaDescription: "Drug rehab in Pueblo, CO. Find addiction treatment centers." },
       { name: "Greeley", slug: "greeley", population: 108795, description: "Greeley offers treatment in northern Colorado.", metaDescription: "Addiction treatment in Greeley, CO. Browse rehab facilities." },
       { name: "Arvada", slug: "arvada", population: 124402, description: "Arvada provides treatment in the Denver metro area.", metaDescription: "Rehab centers in Arvada, CO. Find drug treatment near Denver." },
+    
+      {
+        name: "Grand Junction",
+        slug: "grand-junction",
+        description: "Grand Junction is western Colorado's treatment hub serving the Western Slope region.",
+        metaDescription: "Find addiction treatment in Grand Junction, CO. Compare rehab on Colorado's Western Slope.",
+      },
     ],
   },
   {
@@ -333,6 +354,20 @@ export const statesData: StateData[] = [
       { name: "Aurora", slug: "aurora", population: 180542, description: "Aurora offers diverse treatment in the western Chicago suburbs.", metaDescription: "Drug rehab in Aurora, IL. Find verified treatment facilities." },
       { name: "Naperville", slug: "naperville", population: 149540, description: "Naperville provides high-quality treatment in the western suburbs.", metaDescription: "Rehab in Naperville, IL. Browse verified addiction treatment." },
       { name: "Peoria", slug: "peoria", population: 113150, description: "Peoria offers treatment options in central Illinois.", metaDescription: "Find addiction treatment in Peoria, IL. Compare rehab centers." },
+    
+      {
+        name: "Elgin",
+        slug: "elgin",
+        description: "Elgin features bilingual treatment programs serving the diverse Fox Valley communities.",
+        metaDescription: "Find addiction treatment in Elgin, IL. Compare rehab facilities in the Fox Valley.",
+      },
+    
+      {
+        name: "Decatur",
+        slug: "decatur",
+        description: "Decatur provides treatment options for central Illinois communities with community health center programs.",
+        metaDescription: "Find addiction treatment in Decatur, IL. Compare rehab programs in Macon County.",
+      },
     ],
   },
   {
@@ -521,6 +556,20 @@ export const statesData: StateData[] = [
       { name: "Sterling Heights", slug: "sterling-heights", population: 134346, description: "Sterling Heights offers treatment in the Detroit suburbs.", metaDescription: "Addiction treatment in Sterling Heights, MI. Browse rehab facilities." },
       { name: "Kalamazoo", slug: "kalamazoo", population: 72584, description: "Kalamazoo provides treatment in southwest Michigan.", metaDescription: "Find rehab in Kalamazoo, MI. Drug and alcohol treatment programs." },
       { name: "Flint", slug: "flint", population: 95943, description: "Flint offers recovery services in the Genesee County area.", metaDescription: "Drug rehab in Flint, MI. Find addiction treatment centers." },
+    
+      {
+        name: "Dearborn",
+        slug: "dearborn",
+        description: "Dearborn features culturally responsive treatment serving Metro Detroit's diverse communities.",
+        metaDescription: "Find rehab in Dearborn, MI. Browse treatment centers in western Wayne County.",
+      },
+    
+      {
+        name: "Traverse City",
+        slug: "traverse-city",
+        description: "Traverse City provides treatment in a scenic northern Michigan setting with strong recovery resources.",
+        metaDescription: "Find addiction treatment in Traverse City, MI. Compare rehab in northern Michigan.",
+      },
     ],
   },
   {
@@ -542,6 +591,13 @@ export const statesData: StateData[] = [
       { name: "Rochester", slug: "rochester", population: 121395, description: "Rochester offers treatment with Mayo Clinic medical resources.", metaDescription: "Drug rehab in Rochester, MN. Find addiction treatment centers." },
       { name: "Bloomington", slug: "bloomington", population: 89987, description: "Bloomington provides treatment in the Twin Cities metro.", metaDescription: "Addiction treatment in Bloomington, MN. Browse rehab facilities." },
       { name: "Plymouth", slug: "plymouth", population: 81026, description: "Plymouth offers treatment in suburban Minneapolis.", metaDescription: "Find rehab in Plymouth, MN. Drug and alcohol treatment programs." },
+    
+      {
+        name: "Woodbury",
+        slug: "woodbury",
+        description: "Woodbury offers treatment in the eastern Twin Cities metro with suburban program settings.",
+        metaDescription: "Find drug rehab in Woodbury, MN. Compare treatment centers east of St. Paul.",
+      },
     ],
   },
   {
@@ -584,6 +640,13 @@ export const statesData: StateData[] = [
       { name: "Lee's Summit", slug: "lees-summit", population: 101168, description: "Lee's Summit provides treatment in suburban Kansas City.", metaDescription: "Addiction treatment in Lee's Summit, MO. Browse rehab facilities." },
       { name: "Columbia", slug: "columbia", population: 126254, description: "Columbia offers treatment with University of Missouri medical resources.", metaDescription: "Find rehab in Columbia, MO. Drug and alcohol treatment programs." },
       { name: "Joplin", slug: "joplin", population: 51762, description: "Joplin provides treatment in southwest Missouri.", metaDescription: "Drug rehab in Joplin, MO. Find addiction treatment services." },
+    
+      {
+        name: "Columbia",
+        slug: "columbia-mo",
+        description: "Columbia provides treatment through University of Missouri Health System and community programs.",
+        metaDescription: "Find rehab in Columbia, MO. Compare addiction treatment in central Missouri.",
+      },
     ],
   },
   {
@@ -692,6 +755,13 @@ export const statesData: StateData[] = [
       { name: "Clifton", slug: "clifton", population: 89460, description: "Clifton provides treatment in the northern NJ metro.", metaDescription: "Addiction treatment in Clifton, NJ. Browse rehab facilities." },
       { name: "Camden", slug: "camden", population: 73562, description: "Camden offers treatment across the river from Philadelphia.", metaDescription: "Find rehab in Camden, NJ. Drug and alcohol treatment programs." },
       { name: "Vineland", slug: "vineland", population: 60724, description: "Vineland provides treatment in southern New Jersey.", metaDescription: "Drug rehab in Vineland, NJ. Find addiction treatment services." },
+    
+      {
+        name: "Atlantic City",
+        slug: "atlantic-city",
+        description: "Atlantic City offers treatment addressing gaming industry-related substance use and tourism worker needs.",
+        metaDescription: "Find drug rehab in Atlantic City, NJ. Compare treatment on the Jersey Shore.",
+      },
     ],
   },
   {
@@ -753,6 +823,20 @@ export const statesData: StateData[] = [
       { name: "Wilmington", slug: "wilmington", population: 115451, description: "Wilmington offers coastal treatment options.", metaDescription: "Addiction treatment in Wilmington, NC. Browse rehab facilities." },
       { name: "High Point", slug: "high-point", population: 114059, description: "High Point provides Piedmont Triad treatment options.", metaDescription: "Drug rehab in High Point, NC. Find addiction treatment near you." },
       { name: "Asheville", slug: "asheville", population: 94589, description: "Asheville is known for holistic mountain retreat treatment.", metaDescription: "Holistic rehab in Asheville, NC. Find mountain treatment centers." },
+    
+      {
+        name: "Wilmington",
+        slug: "wilmington-nc",
+        description: "Wilmington features coastal treatment settings with specialized programs for maritime community needs.",
+        metaDescription: "Find addiction treatment in Wilmington, NC. Compare rehab on the North Carolina coast.",
+      },
+    
+      {
+        name: "Concord",
+        slug: "concord",
+        description: "Concord offers growing behavioral health services in the Charlotte metro's northern corridor.",
+        metaDescription: "Find addiction treatment in Concord, NC. Compare rehab centers near Charlotte.",
+      },
     ],
   },
   {
@@ -837,6 +921,13 @@ export const statesData: StateData[] = [
       { name: "Medford", slug: "medford", population: 85824, description: "Medford provides treatment in the Rogue Valley of southern Oregon.", metaDescription: "Addiction treatment in Medford, OR. Browse rehab facilities." },
       { name: "Springfield", slug: "springfield", population: 62256, description: "Springfield offers treatment in the Eugene-Springfield metro.", metaDescription: "Find rehab in Springfield, OR. Drug and alcohol treatment programs." },
       { name: "Corvallis", slug: "corvallis", population: 59922, description: "Corvallis offers treatment near Oregon State University.", metaDescription: "Drug rehab in Corvallis, OR. Find addiction treatment services." },
+    
+      {
+        name: "Grants Pass",
+        slug: "grants-pass",
+        description: "Grants Pass provides treatment for southern Oregon's Rogue Valley communities.",
+        metaDescription: "Find drug rehab in Grants Pass, OR. Compare treatment in Josephine County.",
+      },
     ],
   },
   {
