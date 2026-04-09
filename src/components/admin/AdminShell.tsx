@@ -165,10 +165,15 @@ export function AdminShell() {
   // Check if user can access current route
   const hasRouteAccess = effectiveCanAccessRoute(location.pathname);
 
-  // Filter mobile nav items based on effective permissions
-  const visibleNavItems = mobileNavItems.filter(
-    (item) => effectiveIsSuperAdmin || item.permission === "dashboard" || effectiveHasPermission(item.permission)
-  );
+  // Filter mobile nav sections based on effective permissions
+  const visibleMobileSections = mobileNavSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(
+        (item) => effectiveIsSuperAdmin || item.permission === "dashboard" || effectiveHasPermission(item.permission)
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 isolate" data-shell>
@@ -237,31 +242,42 @@ export function AdminShell() {
             <div className="p-4 border-b bg-slate-900 text-white">
               <span className="text-lg font-bold">Admin Menu</span>
             </div>
-            <nav className="p-4 space-y-1">
-              {visibleNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = item.end
-                  ? location.pathname === item.to
-                  : location.pathname.startsWith(item.to);
+            <nav className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-80px)]">
+              {visibleMobileSections.map((section) => (
+                <div key={section.label || "core"}>
+                  {section.label && (
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-3 mb-1">
+                      {section.label}
+                    </p>
+                  )}
+                  <div className="space-y-0.5">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = item.end
+                        ? location.pathname === item.to
+                        : location.pathname.startsWith(item.to);
 
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setMobileMenuOpen(false)}
-                    onMouseEnter={() => prefetchAdminPage(item.to)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                      isActive
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-200"
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                );
-              })}
+                      return (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          onClick={() => setMobileMenuOpen(false)}
+                          onMouseEnter={() => prefetchAdminPage(item.to)}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                            isActive
+                              ? "bg-slate-900 text-white"
+                              : "text-slate-700 hover:bg-slate-200"
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span className="text-sm font-medium">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
           </SheetContent>
         </Sheet>
