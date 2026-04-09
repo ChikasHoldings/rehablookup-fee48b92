@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 
 const treatmentFeatures = [
   {
@@ -163,6 +164,17 @@ const CityDualDiagnosis = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["dual diagnosis", "co-occurring", "mental health"]}
+        heading={`Dual Diagnosis in ${cityName}, ${abbreviation}`}
+        subheading={`Browse verified dual diagnosis facilities in ${cityName}, ${stateName}`}
+      />
+
 
       {/* Treatment Features */}
       <section className="section-padding">

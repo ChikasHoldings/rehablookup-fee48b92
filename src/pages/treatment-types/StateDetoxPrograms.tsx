@@ -21,6 +21,7 @@ import {
   Building2,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 
 const detoxTypes = [
   {
@@ -158,6 +159,17 @@ const StateDetoxPrograms = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["detox", "withdrawal", "detoxification"]}
+        heading={`Detox Centers in ${stateName}`}
+        subheading={`Browse verified medical detox facilities in ${stateName}`}
+      />
+
 
       {/* Why Detox in State */}
       <section className="section-padding">

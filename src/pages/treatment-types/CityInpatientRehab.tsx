@@ -20,6 +20,7 @@ import {
   Building2,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 
 const programTypes = [
   {
@@ -157,6 +158,17 @@ const CityInpatientRehab = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["inpatient", "residential"]}
+        heading={`Inpatient Rehab in ${cityName}, ${abbreviation}`}
+        subheading={`Browse verified residential treatment in ${cityName}, ${stateName}`}
+      />
+
 
       {/* Why Inpatient in City */}
       <section className="section-padding">
