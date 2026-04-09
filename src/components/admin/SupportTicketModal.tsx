@@ -443,7 +443,7 @@ export function SupportTicketModal({
           </ScrollArea>
 
           {/* Footer Actions */}
-          <div className="flex-shrink-0 flex justify-between px-4 sm:px-6 py-3 sm:py-4 border-t bg-background">
+          <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-t bg-background gap-2 flex-wrap">
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} size="sm" className="text-xs sm:text-sm h-8 sm:h-9">
                 Close
@@ -458,21 +458,50 @@ export function SupportTicketModal({
                 Delete
               </Button>
             </div>
-            {ticket.status !== "resolved" && ticket.status !== "closed" && (
-              <Button
-                onClick={handleResolve}
-                disabled={resolveTicket.isPending}
-                className="bg-success hover:bg-success/90 text-success-foreground text-xs sm:text-sm h-8 sm:h-9"
-                size="sm"
-              >
-                {resolveTicket.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                ) : (
-                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                )}
-                Resolve
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {/* Claim button if unassigned */}
+              {!ticket.assigned_to && ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClaimTicket}
+                  disabled={assignTicket.isPending}
+                  className="text-xs sm:text-sm h-8 sm:h-9"
+                >
+                  <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                  Claim
+                </Button>
+              )}
+              {/* Escalate button */}
+              {ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEscalateToManager}
+                  disabled={escalating}
+                  className="text-xs sm:text-sm h-8 sm:h-9 text-warning hover:text-warning hover:bg-warning/10"
+                >
+                  {escalating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />}
+                  Escalate
+                </Button>
+              )}
+              {/* Resolve button */}
+              {ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  onClick={handleResolve}
+                  disabled={resolveTicket.isPending}
+                  className="bg-success hover:bg-success/90 text-success-foreground text-xs sm:text-sm h-8 sm:h-9"
+                  size="sm"
+                >
+                  {resolveTicket.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  Resolve
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
