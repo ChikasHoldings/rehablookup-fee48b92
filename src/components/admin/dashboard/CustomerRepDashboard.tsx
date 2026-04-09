@@ -551,6 +551,7 @@ export function CustomerRepDashboard() {
                             title="Reject review"
                             disabled={moderatingReviewId === review.id}
                             onClick={async () => {
+                              if (!window.confirm("Are you sure you want to reject this review?")) return;
                               setModeratingReviewId(review.id);
                               const { error } = await supabase
                                 .from("facility_reviews")
