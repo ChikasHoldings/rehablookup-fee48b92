@@ -725,3 +725,71 @@ export function ManagerDashboard() {
     </div>
   );
 }
+
+// Inline sub-component: recent escalations with quick-resolve
+function RecentEscalationsList() {
+  const queryClient = useQueryClient();
+
+  const { data: recentEscalations } = useQuery({
+    queryKey: ["manager-recent-escalations"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("admin_escalations")
+        .select("id, subject, priority, status, created_at, created_by")
+        .in("status", ["open", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+  });
+
+  const resolveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("admin_escalations")
+        .update({ status: "resolved", resolved_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["manager-recent-escalations"] });
+      queryClient.invalidateQueries({ queryKey: ["manager-escalation-stats"] });
+    },
+  });
+
+  const priorityColors: Record<string, string> = {
+    low: "bg-muted text-muted-foreground",
+    medium: "bg-warning/10 text-warning",
+    high: "bg-destructive/10 text-destructive",
+    critical: "bg-destructive text-destructive-foreground",
+  };
+
+  if (!recentEscalations || recentEscalations.length === 0) return null;
+
+  return (
+    <div className="space-y-2 pt-2 border-t">
+      {recentEscalations.map((esc: any) => (
+        <div key={esc.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{esc.subject}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Badge variant="outline" className={`text-[10px] ${priorityColors[esc.priority] || ""}`}>{esc.priority}</Badge>
+              <span className="text-[10px] text-muted-foreground">
+                {new Date(esc.created_at).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 ml-2 text-xs h-7"
+            onClick={() => resolveMutation.mutate(esc.id)}
+            disabled={resolveMutation.isPending}
+          >
+            Resolve
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
