@@ -235,7 +235,7 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Shield className="h-8 w-8 text-green-500 mb-2" />
+                  <Shield className="h-8 w-8 text-success mb-2" />
                   <p className="text-sm text-muted-foreground">No blocked email addresses</p>
                   <p className="text-xs text-muted-foreground">
                     Emails are auto-blocked after too many failed login attempts
@@ -246,9 +246,9 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
           </TabsContent>
         </Tabs>
 
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
-          <Shield className="h-4 w-4 text-blue-600 shrink-0" />
-          <p className="text-xs text-blue-700">
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-info/10 border border-info/20">
+          <Shield className="h-4 w-4 text-info shrink-0" />
+          <p className="text-xs text-muted-foreground">
             Blocked identifiers are automatically managed by the brute force protection system. 
             Unblocking an identifier allows them to attempt login again.
           </p>
