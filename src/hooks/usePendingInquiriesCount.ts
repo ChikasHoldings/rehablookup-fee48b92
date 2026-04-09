@@ -64,7 +64,7 @@ export function usePendingInquiriesCount() {
             filter: `facility_id=eq.${facilityId}`,
           },
           (payload) => {
-            console.log("[usePendingInquiriesCount] Lead change detected:", payload.eventType);
+            
             queryClient.invalidateQueries({ queryKey: ["pending-inquiries-count"] });
             queryClient.invalidateQueries({ queryKey: ["new-inquiries-count"] });
             queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
@@ -85,7 +85,7 @@ export function usePendingInquiriesCount() {
             filter: `facility_id=eq.${facilityId}`,
           },
           (payload) => {
-            console.log("[usePendingInquiriesCount] Lead unlock detected:", payload);
+            
             queryClient.invalidateQueries({ queryKey: ["pending-inquiries-count"] });
             queryClient.invalidateQueries({ queryKey: ["new-inquiries-count"] });
             queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
