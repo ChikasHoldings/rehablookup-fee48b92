@@ -193,7 +193,7 @@ const DetoxPrograms = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Find Treatment
@@ -493,7 +493,7 @@ const DetoxPrograms = () => {
               Our team can help you find a safe, medically supervised detox program that accepts your insurance.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Find Treatment

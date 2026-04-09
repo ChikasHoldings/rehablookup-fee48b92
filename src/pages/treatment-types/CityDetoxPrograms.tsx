@@ -127,7 +127,7 @@ const CityDetoxPrograms = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Find Treatment in {cityName}
@@ -329,7 +329,7 @@ const CityDetoxPrograms = () => {
               assessments and can help verify your insurance coverage.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Find Treatment

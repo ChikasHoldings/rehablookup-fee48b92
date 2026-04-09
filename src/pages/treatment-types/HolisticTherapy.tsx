@@ -182,7 +182,7 @@ const HolisticTherapy = () => {
               Heal the whole person—mind, body, and spirit—with complementary therapies that enhance traditional addiction treatment.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="secondary" className="gap-2">
                   <Heart className="h-5 w-5" />
                   Find Treatment
@@ -456,7 +456,7 @@ const HolisticTherapy = () => {
               Our specialists can help you find programs that combine holistic therapies with evidence-based addiction treatment.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Find Treatment

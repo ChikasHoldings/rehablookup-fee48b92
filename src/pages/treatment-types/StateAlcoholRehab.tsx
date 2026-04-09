@@ -86,7 +86,7 @@ const StateAlcoholRehab = () => {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" variant="secondary">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Phone className="mr-2 h-4 w-4" />
                 Find Treatment
               </Link>
@@ -216,7 +216,7 @@ const StateAlcoholRehab = () => {
             Insurance verification is free and confidential.
           </p>
           <Button asChild size="lg" variant="secondary">
-            <Link to="/concierge">
+            <Link to="/rehab-centers">
               <Phone className="mr-2 h-4 w-4" />
               Find Treatment
             </Link>
