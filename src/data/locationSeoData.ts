@@ -478,6 +478,9 @@ export const statesData: StateData[] = [
       { name: "Southaven", slug: "southaven", population: 55026, description: "Southaven provides treatment in the Memphis metro area.", metaDescription: "Drug rehab in Southaven, MS. Find addiction treatment." },
       { name: "Hattiesburg", slug: "hattiesburg", population: 48147, description: "Hattiesburg offers treatment in south-central Mississippi.", metaDescription: "Rehab centers in Hattiesburg, MS. Find drug treatment near you." },
       { name: "Biloxi", slug: "biloxi", population: 46212, description: "Biloxi provides coastal treatment options.", metaDescription: "Addiction treatment in Biloxi, MS. Browse rehab facilities." },
+      { name: "Meridian", slug: "meridian-ms", population: 33865, description: "Meridian offers treatment in east-central Mississippi.", metaDescription: "Drug rehab in Meridian, MS. Find addiction treatment." },
+      { name: "Tupelo", slug: "tupelo", population: 38300, description: "Tupelo provides treatment in northeast Mississippi.", metaDescription: "Addiction treatment in Tupelo, MS. Browse rehab facilities." },
+      { name: "Olive Branch", slug: "olive-branch", population: 42459, description: "Olive Branch offers treatment in the Memphis metro.", metaDescription: "Rehab centers in Olive Branch, MS. Find drug treatment." },
     ],
   },
   {
@@ -492,6 +495,9 @@ export const statesData: StateData[] = [
       { name: "Springfield", slug: "springfield", population: 169176, description: "Springfield offers treatment in southwest Missouri.", metaDescription: "Rehab centers in Springfield, MO. Find drug treatment near you." },
       { name: "Columbia", slug: "columbia", population: 126254, description: "Columbia provides treatment in central Missouri.", metaDescription: "Drug rehab in Columbia, MO. Find addiction treatment centers." },
       { name: "Independence", slug: "independence", population: 123011, description: "Independence offers treatment in the KC metro.", metaDescription: "Addiction treatment in Independence, MO. Browse rehab facilities." },
+      { name: "Lee's Summit", slug: "lees-summit", population: 101108, description: "Lee's Summit provides treatment in eastern KC metro.", metaDescription: "Drug rehab in Lee's Summit, MO. Find addiction treatment." },
+      { name: "O'Fallon", slug: "ofallon", population: 91316, description: "O'Fallon offers treatment in the St. Louis metro.", metaDescription: "Addiction treatment in O'Fallon, MO. Browse rehab facilities." },
+      { name: "Joplin", slug: "joplin", population: 51762, description: "Joplin provides treatment in the Four States area.", metaDescription: "Rehab centers in Joplin, MO. Find drug treatment." },
     ],
   },
   {
@@ -506,6 +512,9 @@ export const statesData: StateData[] = [
       { name: "Great Falls", slug: "great-falls", population: 60506, description: "Great Falls provides treatment in north-central Montana.", metaDescription: "Drug rehab in Great Falls, MT. Find addiction treatment." },
       { name: "Bozeman", slug: "bozeman", population: 53293, description: "Bozeman offers treatment in the Gallatin Valley.", metaDescription: "Rehab centers in Bozeman, MT. Find drug treatment near you." },
       { name: "Helena", slug: "helena", population: 32091, description: "Helena provides treatment as Montana's state capital.", metaDescription: "Addiction treatment in Helena, MT. Browse rehab facilities." },
+      { name: "Butte", slug: "butte", population: 34895, description: "Butte offers treatment in southwestern Montana.", metaDescription: "Drug rehab in Butte, MT. Find addiction treatment." },
+      { name: "Kalispell", slug: "kalispell", population: 24558, description: "Kalispell provides treatment in the Flathead Valley.", metaDescription: "Addiction treatment in Kalispell, MT. Browse rehab facilities." },
+      { name: "Havre", slug: "havre", population: 9846, description: "Havre offers treatment on Montana's Hi-Line.", metaDescription: "Rehab centers in Havre, MT. Find drug treatment." },
     ],
   },
   {
