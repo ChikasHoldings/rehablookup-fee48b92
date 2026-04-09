@@ -65,8 +65,8 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
 
   const getRiskBadgeColor = (score: number) => {
     if (score >= 70) return "bg-destructive text-destructive-foreground";
-    if (score >= 50) return "bg-amber-500 text-white";
-    return "bg-amber-300 text-amber-900";
+    if (score >= 50) return "bg-warning text-warning-foreground";
+    return "bg-warning/50 text-warning-foreground";
   };
 
   const getRiskLabel = (score: number) => {

@@ -345,7 +345,7 @@ export function LeadFormAnalytics({ dateRange }: LeadFormAnalyticsProps) {
                           <span className="text-sm font-medium">{step.dropOff}% drop</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-success">
                           <TrendingUp className="h-4 w-4" />
                           <span className="text-sm font-medium">{step.retention}% retained</span>
                         </div>
@@ -473,10 +473,10 @@ export function LeadFormAnalytics({ dateRange }: LeadFormAnalyticsProps) {
                 </div>
               )}
               {funnelMetrics.spamBlocked > 0 && (
-                <div className="flex items-center gap-4 p-4 rounded-lg bg-green-500/10">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-success/10">
+                  <CheckCircle2 className="h-8 w-8 text-success" />
                   <div>
-                    <p className="font-medium text-green-600">{funnelMetrics.spamBlocked} Spam Blocked</p>
+                    <p className="font-medium text-success">{funnelMetrics.spamBlocked} Spam Blocked</p>
                     <p className="text-sm text-muted-foreground">Bot submissions prevented by honeypot</p>
                   </div>
                 </div>

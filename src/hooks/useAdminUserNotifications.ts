@@ -43,7 +43,7 @@ export function useAdminUserNotifications() {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch((err) => {
-        console.log("Could not play notification sound:", err);
+        console.warn("Could not play notification sound:", err);
       });
     }
   }, []);

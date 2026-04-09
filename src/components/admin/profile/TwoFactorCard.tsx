@@ -83,7 +83,7 @@ export function TwoFactorCard({ userId }: TwoFactorCardProps) {
             {isCheckingMFA ? (
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : mfaEnabled ? (
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/20 text-success">Enabled</Badge>
             ) : (
               <Badge variant="secondary">Disabled</Badge>
             )}
@@ -92,18 +92,18 @@ export function TwoFactorCard({ userId }: TwoFactorCardProps) {
         <CardContent className="space-y-4">
           {mfaEnabled ? (
             <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-success/10 border border-success/20 rounded-lg p-4">
                 <div className="flex gap-3">
-                  <ShieldCheck className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                  <ShieldCheck className="h-5 w-5 text-success shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <p className="font-medium text-green-800">Your account is protected</p>
-                    <p className="text-sm text-green-700">
+                    <p className="font-medium text-success">Your account is protected</p>
+                    <p className="text-sm text-muted-foreground">
                       Two-factor authentication is enabled. You'll need your authenticator app to sign in.
                     </p>
                     {recoveryCodesCount !== undefined && (
-                      <p className={`text-sm mt-2 ${recoveryCodesCount <= 2 ? 'text-amber-700 font-medium' : 'text-green-700'}`}>
+                      <p className={`text-sm mt-2 ${recoveryCodesCount <= 2 ? 'text-warning font-medium' : 'text-muted-foreground'}`}>
                         {recoveryCodesCount === 0 ? (
-                          <span className="text-red-700 font-medium">⚠️ No recovery codes remaining - regenerate now</span>
+                          <span className="text-destructive font-medium">⚠️ No recovery codes remaining - regenerate now</span>
                         ) : recoveryCodesCount <= 2 ? (
                           <span>⚠️ Only {recoveryCodesCount} recovery code{recoveryCodesCount === 1 ? '' : 's'} remaining</span>
                         ) : (
@@ -126,7 +126,7 @@ export function TwoFactorCard({ userId }: TwoFactorCardProps) {
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => setShow2FADisable(true)}
                 >
                   <ShieldOff className="h-4 w-4 mr-2" />
@@ -136,12 +136,12 @@ export function TwoFactorCard({ userId }: TwoFactorCardProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
                 <div className="flex gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <p className="font-medium text-amber-800">Recommended for admin accounts</p>
-                    <p className="text-sm text-amber-700">
+                    <p className="font-medium text-warning">Recommended for admin accounts</p>
+                    <p className="text-sm text-muted-foreground">
                       Two-factor authentication adds an extra layer of security by requiring a code from your authenticator app when signing in.
                     </p>
                   </div>
