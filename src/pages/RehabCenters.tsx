@@ -45,18 +45,33 @@ const RehabCenters = () => {
     return [...treatmentCenters, ...approvedFacilities];
   }, [approvedFacilities]);
 
-  // Get top rated centers
-  const topRatedCenters = useMemo(() => {
-    return [...allCenters]
-      .sort((a, b) => {
-        const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
-        const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
-        if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
-        if (b.featured !== a.featured) return b.featured ? 1 : -1;
-        return b.rating - a.rating;
-      })
-      .slice(0, 6);
+  const sorted = useMemo(() => {
+    return [...allCenters].sort((a, b) => {
+      const aF = (a as any).hasFeaturedSubscription ? 1 : 0;
+      const bF = (b as any).hasFeaturedSubscription ? 1 : 0;
+      if (bF !== aF) return bF - aF;
+      if (b.featured !== a.featured) return b.featured ? 1 : -1;
+      return b.rating - a.rating;
+    });
   }, [allCenters]);
+
+  const topRatedCenters = useMemo(() => sorted.slice(0, 6), [sorted]);
+
+  const detoxCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /detox|withdrawal/i.test(t))).slice(0, 6),
+    [sorted]);
+
+  const inpatientCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /inpatient|residential/i.test(t))).slice(0, 6),
+    [sorted]);
+
+  const outpatientCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /outpatient|IOP/i.test(t))).slice(0, 6),
+    [sorted]);
+
+  const dualDiagnosisCenters = useMemo(() =>
+    sorted.filter(c => c.treatmentTypes?.some(t => /dual.diagnosis|co.occurring|mental.health/i.test(t))).slice(0, 6),
+    [sorted]);
 
   // Popular states for browse
   const popularStates = usStates.slice(0, 12);
