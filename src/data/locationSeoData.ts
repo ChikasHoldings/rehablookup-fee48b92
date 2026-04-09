@@ -598,6 +598,9 @@ export const statesData: StateData[] = [
       { name: "Rio Rancho", slug: "rio-rancho", population: 104046, description: "Rio Rancho offers treatment in the Albuquerque metro.", metaDescription: "Drug rehab in Rio Rancho, NM. Find addiction treatment centers." },
       { name: "Santa Fe", slug: "santa-fe", population: 87505, description: "Santa Fe offers holistic treatment as the state capital.", metaDescription: "Addiction treatment in Santa Fe, NM. Browse rehab facilities." },
       { name: "Roswell", slug: "roswell", population: 48422, description: "Roswell provides treatment in southeastern New Mexico.", metaDescription: "Rehab centers in Roswell, NM. Find drug treatment near you." },
+      { name: "Farmington", slug: "farmington", population: 44372, description: "Farmington offers treatment in the Four Corners region.", metaDescription: "Drug rehab in Farmington, NM. Find addiction treatment." },
+      { name: "Clovis", slug: "clovis-nm", population: 39860, description: "Clovis provides treatment in eastern New Mexico.", metaDescription: "Addiction treatment in Clovis, NM. Browse rehab facilities." },
+      { name: "Alamogordo", slug: "alamogordo", population: 31384, description: "Alamogordo offers treatment in southern New Mexico.", metaDescription: "Rehab centers in Alamogordo, NM. Find drug treatment." },
     ],
   },
   {
@@ -684,6 +687,9 @@ export const statesData: StateData[] = [
       { name: "Norman", slug: "norman", population: 128026, description: "Norman provides treatment near Oklahoma City.", metaDescription: "Drug rehab in Norman, OK. Find addiction treatment centers." },
       { name: "Broken Arrow", slug: "broken-arrow", population: 113540, description: "Broken Arrow offers treatment in the Tulsa metro.", metaDescription: "Addiction treatment in Broken Arrow, OK. Browse rehab facilities." },
       { name: "Edmond", slug: "edmond", population: 99950, description: "Edmond provides upscale treatment in the OKC metro.", metaDescription: "Rehab centers in Edmond, OK. Find drug treatment near you." },
+      { name: "Lawton", slug: "lawton", population: 89199, description: "Lawton offers treatment near Fort Sill in southwest Oklahoma.", metaDescription: "Drug rehab in Lawton, OK. Find addiction treatment." },
+      { name: "Moore", slug: "moore", population: 62793, description: "Moore provides treatment in the OKC metro area.", metaDescription: "Addiction treatment in Moore, OK. Browse rehab facilities." },
+      { name: "Stillwater", slug: "stillwater", population: 50612, description: "Stillwater offers treatment near Oklahoma State University.", metaDescription: "Rehab centers in Stillwater, OK. Find drug treatment." },
     ],
   },
   {
@@ -731,6 +737,9 @@ export const statesData: StateData[] = [
       { name: "Cranston", slug: "cranston", population: 82934, description: "Cranston offers treatment in the Providence metro.", metaDescription: "Drug rehab in Cranston, RI. Find addiction treatment centers." },
       { name: "Pawtucket", slug: "pawtucket", population: 75604, description: "Pawtucket provides treatment near Providence.", metaDescription: "Rehab centers in Pawtucket, RI. Find drug treatment." },
       { name: "East Providence", slug: "east-providence", population: 47139, description: "East Providence offers accessible treatment options.", metaDescription: "Addiction treatment in East Providence, RI. Browse rehab facilities." },
+      { name: "Woonsocket", slug: "woonsocket", population: 44328, description: "Woonsocket provides treatment in northern Rhode Island.", metaDescription: "Drug rehab in Woonsocket, RI. Find addiction treatment." },
+      { name: "Newport", slug: "newport", population: 25163, description: "Newport offers treatment in a historic coastal setting.", metaDescription: "Addiction treatment in Newport, RI. Browse rehab facilities." },
+      { name: "Central Falls", slug: "central-falls", population: 22583, description: "Central Falls provides community-based treatment options.", metaDescription: "Rehab centers in Central Falls, RI. Find drug treatment." },
     ],
   },
   {
