@@ -175,6 +175,7 @@ export function SuperAdminDashboard() {
         verified: approved.count || 0,
       };
     },
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch leads stats with unlock/revenue metrics
