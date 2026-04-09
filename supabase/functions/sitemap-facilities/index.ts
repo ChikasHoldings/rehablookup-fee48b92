@@ -598,7 +598,30 @@ function generateStateArticleRoutes(): RouteEntry[] {
   return routes;
 }
 
-function generateTreatmentGeoRoutes(): RouteEntry[] {
+const NEAR_ME_PREFIXES = [
+  "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
+  "dual-diagnosis-near-me", "inpatient-rehab-near-me", "outpatient-near-me",
+  "free-rehab-near-me", "luxury-rehab-near-me", "womens-rehab-near-me",
+  "mens-rehab-near-me", "fentanyl-rehab-near-me", "sober-living-near-me",
+  "teen-rehab-near-me", "veterans-rehab-near-me", "medicaid-rehab-near-me",
+  "court-ordered-rehab-near-me", "suboxone-clinic-near-me", "methadone-clinic-near-me",
+  "outpatient-rehab-near-me", "dual-diagnosis-rehab-near-me", "faith-based-rehab-near-me",
+  "holistic-rehab-near-me", "christian-rehab-near-me", "long-term-rehab-near-me",
+  "iop-near-me", "php-near-me", "couples-rehab-near-me", "executive-rehab-near-me",
+  "rehab-near-me", "mat-clinic-near-me", "affordable-rehab-near-me",
+];
+
+function generateStateNearMeRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const prefix of NEAR_ME_PREFIXES) {
+    routes.push({ path: `/${prefix}`, priority: 0.8, changefreq: "weekly" });
+    for (const state of US_STATES) {
+      routes.push({ path: `/${prefix}/${state}`, priority: 0.75, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
   const routes: RouteEntry[] = [];
   for (const type of TREATMENT_TYPES_WITH_GEO) {
     for (const state of TOP_STATES_FOR_TREATMENT) {
