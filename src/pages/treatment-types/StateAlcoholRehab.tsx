@@ -4,24 +4,20 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData, getNearbyStates } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
-import {
-  Phone,
-  Clock,
-  Shield,
-  CheckCircle,
-  Brain,
-  Users,
-  Activity,
-  ChevronRight,
-  MapPin,
-  ArrowRight,
-} from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
+import {
+  generateStateTreatmentSections,
+  generateStateTreatmentFAQs,
+  generateStateTreatmentChecklist,
+} from "@/utils/stateContentGenerator";
+import {
+  Phone, Clock, Shield, CheckCircle, MapPin, ArrowRight, Search, Heart,
+} from "lucide-react";
 
 const StateAlcoholRehab = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
-
   const stateData = statesData.find((s) => s.slug === stateSlug);
 
   if (!stateData) {
@@ -30,24 +26,46 @@ const StateAlcoholRehab = () => {
 
   const { name: stateName, abbreviation, cities } = stateData;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
+  const cityNames = cities.map((c) => c.name);
+
+  const sections = generateStateTreatmentSections(stateName, abbreviation, "alcohol", cityNames);
+  const faqs = generateStateTreatmentFAQs(stateName, abbreviation, "alcohol");
+  const checklist = generateStateTreatmentChecklist(abbreviation, "alcohol");
 
   const structuredData = [
     {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",
       name: `Alcohol Rehab Centers in ${stateName}`,
-      description: `Find alcohol addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient alcohol rehab programs across the state.`,
+      description: `Find accredited alcohol addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient alcohol rehab programs with insurance verification.`,
       url: `https://rehablookup.com/treatment-types/alcohol-rehabilitation/${stateSlug}`,
+      specialty: "Addiction Medicine",
+      lastReviewed: new Date().toISOString().split("T")[0],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
     },
   ];
 
   return (
     <Layout>
       <SEO
-        title={`Alcohol Rehab Centers in ${stateName} | Find Treatment Near You`}
-        description={`Find alcohol addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient alcohol rehab programs with insurance verification.`}
+        title={`Alcohol Rehab Centers in ${stateName} (${abbreviation}) | Find Treatment`}
+        description={`Find accredited alcohol addiction treatment in ${stateName}. Compare detox, inpatient, and outpatient programs. Verify insurance coverage. ${cities.length}+ cities covered.`}
         canonical={`/treatment-types/alcohol-rehabilitation/${stateSlug}`}
         structuredData={structuredData}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Treatment Types", url: "/treatment-types" },
+          { name: "Alcohol Rehab", url: "/treatment-types/alcohol-rehabilitation" },
+          { name: stateName, url: `/treatment-types/alcohol-rehabilitation/${stateSlug}` },
+        ]}
       />
 
       {/* Hero Section */}
@@ -61,23 +79,22 @@ const StateAlcoholRehab = () => {
               { label: "Alcohol Rehab", href: "/treatment-types/alcohol-rehabilitation" },
               { label: stateName },
             ]}
-          /><div className="flex items-center gap-2 text-white/80 mb-3">
+          />
+          <div className="flex items-center gap-2 text-white/80 mb-3">
             <MapPin className="h-4 w-4" />
             <span className="text-sm">{stateName}</span>
           </div>
-
           <h1 className="text-2xl md:text-4xl font-bold text-white mb-4">
             Alcohol Rehab Centers in {stateName}
           </h1>
           <p className="text-white/85 text-lg max-w-2xl mb-6">
-            Find comprehensive alcohol addiction treatment programs across {stateName}. From medical detox to long-term 
-            recovery support, our verified facilities offer evidence-based care.
+            Find accredited alcohol addiction treatment programs across {stateName}. From medical detox to long-term 
+            recovery support, compare verified facilities and verify insurance coverage — all in one place.
           </p>
-
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" variant="secondary">
               <Link to="/rehab-centers">
-                <Phone className="mr-2 h-4 w-4" />
+                <Search className="mr-2 h-4 w-4" />
                 Find Treatment
               </Link>
             </Button>
@@ -90,17 +107,6 @@ const StateAlcoholRehab = () => {
           </div>
         </div>
       </section>
-
-      {/* Facility Listings */}
-      <StateFacilitiesSection
-        stateName={stateName}
-        stateSlug={stateSlug!}
-        abbreviation={abbreviation}
-        treatmentFilter={["alcohol"]}
-        heading={`Alcohol Rehab Centers in ${stateName}`}
-        subheading={`Browse verified alcohol treatment facilities in ${stateName}`}
-      />
-
 
       {/* Trust Bar */}
       <section className="border-b bg-muted/30 py-4">
@@ -122,8 +128,53 @@ const StateAlcoholRehab = () => {
         </div>
       </section>
 
-      {/* Cities Grid */}
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["alcohol"]}
+        heading={`Alcohol Rehab Centers in ${stateName}`}
+        subheading={`Browse verified alcohol treatment facilities across ${stateName}`}
+      />
+
+      {/* Rich Content Sections */}
+      {sections.map((section, idx) => (
+        <section key={idx} className={`py-12 md:py-16 ${idx % 2 === 0 ? "bg-muted/30" : ""}`}>
+          <div className="container">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6">{section.heading}</h2>
+              <div className="prose prose-lg mx-auto text-muted-foreground leading-relaxed">
+                {section.content.split("\n\n").map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+
+      {/* What to Look For Checklist */}
       <section className="py-12 md:py-16">
+        <div className="container">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+              What to Look for in {stateName} Alcohol Rehab
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {checklist.map((item, i) => (
+                <div key={i} className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border">
+                  <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Cities Grid */}
+      <section className="py-12 md:py-16 bg-muted/30">
         <div className="container">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
             Find Alcohol Rehab by City in {stateName}
@@ -147,31 +198,12 @@ const StateAlcoholRehab = () => {
         </div>
       </section>
 
-      {/* Treatment Info */}
-      <section className="py-12 md:py-16 bg-muted/30">
-        <div className="container">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-              About Alcohol Treatment in {stateName}
-            </h2>
-            <div className="prose prose-lg mx-auto">
-              <p>
-                {stateName} offers a wide range of alcohol addiction treatment options to meet the diverse needs of 
-                individuals seeking recovery. Whether you're looking for medical detox, inpatient rehabilitation, 
-                or outpatient programs, you'll find licensed facilities throughout the state.
-              </p>
-              <h3>Types of Alcohol Treatment Available</h3>
-              <ul>
-                <li><strong>Medical Detox:</strong> Supervised withdrawal management with 24/7 medical care</li>
-                <li><strong>Inpatient Rehab:</strong> Residential programs with intensive therapy and support</li>
-                <li><strong>Outpatient Programs:</strong> Flexible treatment while maintaining daily responsibilities</li>
-                <li><strong>Intensive Outpatient (IOP):</strong> Structured programs meeting several times per week</li>
-                <li><strong>Partial Hospitalization (PHP):</strong> Day programs with comprehensive care</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* FAQs */}
+      <TreatmentFAQSection
+        faqs={faqs}
+        treatmentType="Alcohol Rehab"
+        location={{ state: stateName }}
+      />
 
       {/* Nearby States */}
       {nearbyStates.length > 0 && (
@@ -202,15 +234,23 @@ const StateAlcoholRehab = () => {
             Start Your Recovery in {stateName} Today
           </h2>
           <p className="text-primary-foreground/85 max-w-2xl mx-auto mb-6">
-            Our treatment specialists are available 24/7 to help you find the right alcohol rehab program. 
+            Our treatment specialists are available 24/7 to help you find the right alcohol rehab program in {stateName}. 
             Insurance verification is free and confidential.
           </p>
-          <Button asChild size="lg" variant="secondary">
-            <Link to="/rehab-centers">
-              <Phone className="mr-2 h-4 w-4" />
-              Find Treatment
-            </Link>
-          </Button>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button asChild size="lg" variant="secondary">
+              <Link to="/rehab-centers">
+                <Search className="mr-2 h-4 w-4" />
+                Find Treatment
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Link to="/concierge">
+                <Heart className="mr-2 h-4 w-4" />
+                Get Matched Free
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -221,12 +261,17 @@ const StateAlcoholRehab = () => {
           { title: "Inpatient Rehab", href: `/treatment-types/residential-inpatient/${stateSlug}` },
           { title: "Outpatient Programs", href: `/treatment-types/outpatient-programs/${stateSlug}` },
           { title: "Drug Addiction Treatment", href: `/treatment-types/drug-addiction/${stateSlug}` },
+          { title: "Dual Diagnosis", href: `/treatment-types/dual-diagnosis-treatment/${stateSlug}` },
         ]}
         locationLinks={[
           { title: `All Rehabs in ${stateName}`, href: `/rehab-centers/${stateSlug}` },
+          ...cities.slice(0, 4).map((c) => ({
+            title: `Rehab in ${c.name}`, href: `/rehab-centers/${stateSlug}/${c.slug}`,
+          })),
         ]}
         insuranceLinks={[
           { title: "Insurance Guide", href: "/insurance" },
+          { title: "Verify Coverage", href: "/concierge" },
         ]}
       />
     </Layout>
