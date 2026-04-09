@@ -21,6 +21,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 
 const programTypes = [
   {
@@ -158,6 +159,17 @@ const StateOutpatientPrograms = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["outpatient", "IOP", "intensive outpatient"]}
+        heading={`Outpatient Programs in ${stateName}`}
+        subheading={`Browse verified outpatient treatment facilities in ${stateName}`}
+      />
+
 
       {/* Why Outpatient */}
       <section className="section-padding">

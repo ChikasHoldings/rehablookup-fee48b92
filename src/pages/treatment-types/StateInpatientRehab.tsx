@@ -21,6 +21,7 @@ import {
   Building2,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 
 const programFeatures = [
   {
@@ -160,6 +161,17 @@ const StateInpatientRehab = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["inpatient", "residential"]}
+        heading={`Inpatient Rehab Centers in ${stateName}`}
+        subheading={`Browse verified residential treatment facilities in ${stateName}`}
+      />
+
 
       {/* Why Inpatient in State */}
       <section className="section-padding">

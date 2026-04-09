@@ -17,6 +17,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 
 const StateAlcoholRehab = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
@@ -99,6 +100,17 @@ const StateAlcoholRehab = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["alcohol"]}
+        heading={`Alcohol Rehab Centers in ${stateName}`}
+        subheading={`Browse verified alcohol treatment facilities in ${stateName}`}
+      />
+
 
       {/* Trust Bar */}
       <section className="border-b bg-muted/30 py-4">
