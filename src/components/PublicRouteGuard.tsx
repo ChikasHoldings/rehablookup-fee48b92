@@ -5,69 +5,21 @@ interface PublicRouteGuardProps {
   children: React.ReactNode;
 }
 
-// Routes that admins/providers can still access (legal pages, etc.)
-const ALWAYS_ALLOWED_ROUTES = [
-  "/privacy-policy",
-  "/terms-of-service",
-  "/login",
-  "/forgot-password",
-  "/rehab-centers",
-  "/locations",
-  "/center/",
-  "/treatment-types",
-  "/search-results",
-  "/concierge",
-  "/how-it-works",
-  "/insurance",
-  "/international",
-  "/about",
-  "/contact",
-  "/faq",
-  "/resources",
-  "/best-rehab-centers-in-",
-  "/alcohol-rehab-in-",
-  "/drug-rehab-in-",
-  "/detox-centers-in-",
-  "/inpatient-rehab-in-",
-  "/outpatient-rehab-in-",
-  "/for-providers-in-",
-  "/list-your-facility-in-",
-  "/us-rehab",
-  "/editorial-policy",
-  "/medical-disclaimer",
-  "/cost-estimator",
-];
-
-// Provider-specific public pages
-const PROVIDER_ALLOWED_ROUTES = [
-  "/for-providers",
-  "/provider-resources",
-  "/provider-support",
-  "/provider-faq",
-  "/provider-guides",
-  "/providers/resources",
-  "/login",
-  "/provider-signup",
-  "/provider/forgot-password",
-  "/provider-reset-password",
-];
-
 /**
- * Wrapper component for public routes that redirects authenticated admins
- * and providers to their respective portals. Uses declarative Navigate
- * component for reliable redirects.
+ * Wrapper for public-facing routes. Redirects authenticated admins/providers
+ * to their portals ONLY for the homepage and generic catch-all routes.
  * 
- * Seekers CAN access public routes (they're regular users browsing).
+ * All content/SEO pages (rehab-centers, locations, treatment-types, etc.)
+ * are accessible to ALL users including admins and providers.
+ * 
+ * Seekers CAN access all public routes (they're regular users).
  */
 export function PublicRouteGuard({ children }: PublicRouteGuardProps) {
   const { role, isLoading, isAuthenticated } = useUserRole();
   const location = useLocation();
 
-  // Skip loading state - show children immediately for perceived instant loading
-  // Redirects will happen after role resolves
+  // During loading, show content immediately for fast perceived loading
   if (isLoading) {
-    // Return children during loading for instant content display
-    // Role-based redirects will trigger after loading completes
     return <>{children}</>;
   }
 
@@ -83,25 +35,17 @@ export function PublicRouteGuard({ children }: PublicRouteGuardProps) {
 
   const currentPath = location.pathname;
 
-  // Allow legal/universal pages for everyone
-  if (ALWAYS_ALLOWED_ROUTES.some(route => currentPath.startsWith(route))) {
-    return <>{children}</>;
-  }
-
-  // Admin redirect - use Navigate component for reliable redirect
-  if (role === "admin") {
-    return <Navigate to="/admin" replace />;
-  }
-
-  // Provider redirect
-  if (role === "provider") {
-    // Allow provider-specific public pages
-    if (PROVIDER_ALLOWED_ROUTES.some(route => currentPath.startsWith(route))) {
-      return <>{children}</>;
+  // Only redirect from the homepage — all other public routes are accessible
+  // This ensures admins/providers can view SEO pages, content pages, etc.
+  if (currentPath === "/") {
+    if (role === "admin") {
+      return <Navigate to="/admin" replace />;
     }
-    return <Navigate to="/provider/dashboard" replace />;
+    if (role === "provider") {
+      return <Navigate to="/provider/dashboard" replace />;
+    }
   }
 
-  // Seekers can access all public routes
+  // All other public routes — allow access for everyone
   return <>{children}</>;
 }

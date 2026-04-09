@@ -440,10 +440,29 @@ export function useRoleBasedRedirect() {
       return { shouldBlock: false, redirectTo: null };
     }
 
+    // Public content routes accessible by all authenticated roles
+    const PUBLIC_CONTENT_ROUTES = [
+      "/rehab-centers", "/locations", "/center/", "/treatment-types",
+      "/search-results", "/concierge", "/how-it-works", "/insurance",
+      "/international", "/about", "/contact", "/faq", "/resources",
+      "/best-rehab-centers-in-", "/alcohol-rehab-in-", "/drug-rehab-in-",
+      "/detox-centers-in-", "/inpatient-rehab-in-", "/outpatient-rehab-in-",
+      "/for-providers-in-", "/list-your-facility-in-", "/us-rehab",
+      "/editorial-policy", "/medical-disclaimer", "/cost-estimator",
+      "/privacy-policy", "/terms-of-service",
+      "/alcohol-rehab-centers", "/drug-rehab-centers", "/detox-centers",
+      "/inpatient-rehab", "/outpatient-rehab", "/dual-diagnosis-treatment",
+      "/free-rehab-", "/luxury-rehab-", "/sober-living-", "/veterans-rehab-",
+      "/womens-rehab-", "/mens-rehab-", "/faith-based-rehab-", "/fentanyl-rehab-",
+      "/drug-rehab-near-me", "/alcohol-rehab-near-me", "/detox-near-me",
+      "/rehab-near-me", "/rehab-cost", "/does-insurance-cover-rehab",
+    ];
+    const isPublicContent = PUBLIC_CONTENT_ROUTES.some(route => currentPath.startsWith(route));
+
     // Authenticated - enforce portal boundaries
     if (role === "admin") {
-      // Admins can ONLY access /admin routes (login is under /admin/login)
-      if (!currentPath.startsWith("/admin")) {
+      // Admins can access /admin routes + public content pages
+      if (!currentPath.startsWith("/admin") && !isPublicContent) {
         return { shouldBlock: true, redirectTo: "/admin" };
       }
     } else if (role === "provider") {
@@ -501,7 +520,8 @@ export function isRouteAllowedForRole(pathname: string, role: UserRole): boolean
 
   switch (role) {
     case "admin":
-      return pathname.startsWith("/admin");
+      return pathname.startsWith("/admin") || 
+             !pathname.startsWith("/provider") && !pathname.startsWith("/account");
     case "provider":
       return pathname.startsWith("/provider") || 
              PROVIDER_ALLOWED_PUBLIC_ROUTES.some(r => pathname.startsWith(r));
