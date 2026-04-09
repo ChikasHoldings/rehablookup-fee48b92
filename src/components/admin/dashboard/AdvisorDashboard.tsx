@@ -175,6 +175,7 @@ export function AdvisorDashboard() {
       };
     },
     enabled: !!advisorId,
+    staleTime: 30 * 1000,
   });
 
   // Fetch recent inquiries based on view
@@ -200,10 +201,9 @@ export function AdvisorDashboard() {
           .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
       }
 
-      const { data } = await query;
-      return data || [];
     },
     enabled: !!advisorId,
+    staleTime: 30 * 1000,
   });
 
   // Fetch message stats
@@ -237,6 +237,7 @@ export function AdvisorDashboard() {
       };
     },
     enabled: !!advisorId,
+    staleTime: 30 * 1000,
   });
 
   // Fetch tour requests for advisor's cases
@@ -263,6 +264,7 @@ export function AdvisorDashboard() {
       };
     },
     enabled: !!advisorId,
+    staleTime: 30 * 1000,
   });
 
   // Count unassigned cases
@@ -276,6 +278,7 @@ export function AdvisorDashboard() {
         .not("status", "in", '("placed","closed")');
       return count || 0;
     },
+    staleTime: 30 * 1000,
   });
 
   // Fetch full case data when a case is selected for the detail sheet
@@ -306,7 +309,7 @@ export function AdvisorDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shrink-0">
-            <HeartHandshake className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+            <HeartHandshake className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground truncate">Placement Advisor</h1>
