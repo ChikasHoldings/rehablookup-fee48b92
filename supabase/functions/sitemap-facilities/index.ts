@@ -84,7 +84,6 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/search-results", priority: 0.9, changefreq: "daily" },
   { path: "/provider-signup", priority: 0.7, changefreq: "monthly" },
   { path: "/provider-roi-calculator", priority: 0.7, changefreq: "monthly" },
-  { path: "/us-rehab", priority: 0.8, changefreq: "weekly" },
 
   // TREATMENT TYPE PAGES (only routes that exist in App.tsx)
   { path: "/treatment-types/drug-addiction-treatment", priority: 0.85, changefreq: "weekly" },
