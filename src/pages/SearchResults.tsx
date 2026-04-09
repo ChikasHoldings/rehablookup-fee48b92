@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, type ReactNode } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
@@ -552,11 +552,45 @@ const SearchResults = () => {
   // Mobile filter sidebar open state
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Accordion state — only one section open at a time, all collapsed by default
+  const [openFilterSection, setOpenFilterSection] = useState<string | null>(null);
+
+  const toggleFilterSection = useCallback((section: string) => {
+    setOpenFilterSection(prev => prev === section ? null : section);
+  }, []);
+
+  // Collapsible filter section component
+  const FilterSection = ({ id, icon, label, children, count }: { id: string; icon: ReactNode; label: string; children: ReactNode; count?: number }) => {
+    const isOpen = openFilterSection === id;
+    return (
+      <div className="border border-border/60 rounded-xl overflow-hidden transition-all">
+        <button
+          onClick={() => toggleFilterSection(id)}
+          className="w-full flex items-center justify-between px-3.5 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+        >
+          <span className="flex items-center gap-2.5">
+            {icon}
+            {label}
+            {count && count > 0 ? (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold bg-primary/10 text-primary">{count}</Badge>
+            ) : null}
+          </span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        </button>
+        <div className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
+          <div className="px-3.5 pb-3.5 pt-1">
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Sidebar filter content — reused for desktop and mobile
   const FilterSidebar = () => (
-    <div className="space-y-6">
-      {/* Sort */}
-      <div>
+    <div className="space-y-2">
+      {/* Sort — always visible */}
+      <div className="pb-3 mb-1">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
           <ArrowUpDown className="h-3.5 w-3.5" />
           Sort By
@@ -575,14 +609,8 @@ const SearchResults = () => {
         </Select>
       </div>
 
-      <div className="h-px bg-border" />
-
       {/* Treatment Type */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-          <Building2 className="h-3.5 w-3.5" />
-          Treatment Type
-        </h3>
+      <FilterSection id="treatment" icon={<Building2 className="h-3.5 w-3.5" />} label="Treatment Type" count={selectedTreatmentTypes.length}>
         <div className="space-y-1.5">
           {treatmentTypeFilters.map((filter) => {
             const active = selectedTreatmentTypes.includes(filter.value);
@@ -602,16 +630,10 @@ const SearchResults = () => {
             );
           })}
         </div>
-      </div>
-
-      <div className="h-px bg-border" />
+      </FilterSection>
 
       {/* Distance */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-          <Navigation className="h-3.5 w-3.5" />
-          Distance
-        </h3>
+      <FilterSection id="distance" icon={<Navigation className="h-3.5 w-3.5" />} label="Distance" count={selectedDistance ? 1 : 0}>
         <div className="space-y-1.5">
           {distanceFilters.map((filter) => {
             const active = selectedDistance === filter.value;
@@ -631,16 +653,10 @@ const SearchResults = () => {
             );
           })}
         </div>
-      </div>
-
-      <div className="h-px bg-border" />
+      </FilterSection>
 
       {/* Insurance */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-          <Shield className="h-3.5 w-3.5" />
-          Insurance
-        </h3>
+      <FilterSection id="insurance" icon={<Shield className="h-3.5 w-3.5" />} label="Insurance" count={selectedInsuranceTypes.length}>
         <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
           {insuranceFilters.map((filter) => {
             const active = selectedInsuranceTypes.includes(filter.value);
@@ -665,16 +681,10 @@ const SearchResults = () => {
             );
           })}
         </div>
-      </div>
-
-      <div className="h-px bg-border" />
+      </FilterSection>
 
       {/* Amenities */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-          <Star className="h-3.5 w-3.5" />
-          Amenities
-        </h3>
+      <FilterSection id="amenities" icon={<Star className="h-3.5 w-3.5" />} label="Amenities" count={selectedAmenities.length}>
         <div className="space-y-1.5">
           {amenityFilters.map((filter) => {
             const active = selectedAmenities.includes(filter.value);
@@ -694,16 +704,10 @@ const SearchResults = () => {
             );
           })}
         </div>
-      </div>
+      </FilterSection>
 
-      <div className="h-px bg-border" />
-
-      {/* Quick Toggles */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-          <Sparkles className="h-3.5 w-3.5" />
-          Quick Filters
-        </h3>
+      {/* Quick Filters */}
+      <FilterSection id="quick" icon={<Sparkles className="h-3.5 w-3.5" />} label="Quick Filters" count={(verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0)}>
         <div className="space-y-1.5">
           <button
             onClick={() => toggleBooleanFilter("verified", verifiedOnly)}
@@ -728,7 +732,7 @@ const SearchResults = () => {
             <span>Featured Only</span>
           </button>
         </div>
-      </div>
+      </FilterSection>
 
       {/* Clear All */}
       {activeFiltersCount > 0 && (
