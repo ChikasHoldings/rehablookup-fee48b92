@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
 import { useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -715,6 +716,9 @@ export function ManagerDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Team Performance Metrics */}
+      <ManagerTeamPerformance />
     </div>
   );
 }
