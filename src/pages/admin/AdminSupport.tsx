@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useSearchParams } from "react-router-dom";
 import { Search, Filter, Inbox, Mail, Building2, User, Clock, CheckCircle2, AlertCircle, Download, Trash2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -183,30 +184,16 @@ export default function AdminSupport() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-            <Inbox className="h-5 w-5 sm:h-6 sm:w-6" />
-            Support Inbox
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-            Manage support requests from all channels
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {newCount > 0 && (
-            <Badge variant="secondary" className="bg-info/10 text-info text-xs tabular-nums">
-              {newCount} New
-            </Badge>
-          )}
-          {openCount + inProgressCount > 0 && (
-            <Badge variant="secondary" className="bg-warning/10 text-warning text-xs tabular-nums">
-              {openCount + inProgressCount} Open
-            </Badge>
-          )}
-        </div>
-      </div>
+      <AdminPageHeader
+        icon={Inbox}
+        iconGradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+        title="Support Inbox"
+        subtitle="Manage support requests from all channels"
+        badges={[
+          ...(newCount > 0 ? [{ label: "New", value: newCount, className: "bg-info/10 text-info" }] : []),
+          ...(openCount + inProgressCount > 0 ? [{ label: "Open", value: openCount + inProgressCount, className: "bg-warning/10 text-warning" }] : []),
+        ]}
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

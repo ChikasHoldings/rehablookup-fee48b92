@@ -21,6 +21,7 @@ import {
   List,
 } from "lucide-react";
 import { EscalationsList } from "@/components/admin/escalations/EscalationsList";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminEscalations() {
   const [filter, setFilter] = useState("open");
@@ -49,38 +50,32 @@ export default function AdminEscalations() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-warning to-destructive flex items-center justify-center shadow-lg">
-            <AlertTriangle className="h-5 w-5 text-white" />
+      <AdminPageHeader
+        icon={AlertTriangle}
+        iconGradient="bg-gradient-to-br from-warning to-destructive"
+        title="Escalations"
+        subtitle={`${counts?.total ?? 0} total · ${counts?.open ?? 0} open · ${counts?.in_progress ?? 0} in progress`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === "cards" ? "default" : "outline"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setViewMode("cards")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "compact" ? "default" : "outline"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setViewMode("compact")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
           </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Escalations</h1>
-            <p className="text-sm text-muted-foreground">
-              {counts?.total ?? 0} total · {counts?.open ?? 0} open · {counts?.in_progress ?? 0} in progress
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === "cards" ? "default" : "outline"}
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setViewMode("cards")}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "compact" ? "default" : "outline"}
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setViewMode("compact")}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
