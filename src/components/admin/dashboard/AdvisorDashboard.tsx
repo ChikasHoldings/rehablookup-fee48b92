@@ -201,6 +201,8 @@ export function AdvisorDashboard() {
           .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
       }
 
+      const { data } = await query;
+      return data || [];
     },
     enabled: !!advisorId,
     staleTime: 30 * 1000,
