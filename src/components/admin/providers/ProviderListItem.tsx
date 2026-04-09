@@ -71,6 +71,7 @@ interface ProviderListItemProps {
   provider: Facility;
   isPro: boolean;
   leadCount: number;
+  canModerate?: boolean;
   onOpenDetail: (provider: Facility) => void;
   onStatusChange: (id: string, status: string) => void;
   onToggleVerified: (id: string, currentValue: boolean | null) => void;
@@ -104,6 +105,7 @@ export function ProviderListItem({
   provider,
   isPro,
   leadCount,
+  canModerate = true,
   onOpenDetail,
   onStatusChange,
   onToggleVerified,
