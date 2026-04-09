@@ -430,36 +430,40 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                   {isSendingReset ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                   Send Password Reset
                 </Button>
-                {isBanned ? (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleUnban}
-                    className="gap-2 text-success hover:text-success"
-                  >
-                    <ShieldOff className="h-4 w-4" />
-                    Unban User
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setBanDialogOpen(true)}
-                    className="gap-2 text-warning hover:text-warning"
-                  >
-                    <Ban className="h-4 w-4" />
-                    Ban User
-                  </Button>
+                {canModerateUsers && (
+                  <>
+                    {isBanned ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleUnban}
+                        className="gap-2 text-success hover:text-success"
+                      >
+                        <ShieldOff className="h-4 w-4" />
+                        Unban User
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setBanDialogOpen(true)}
+                        className="gap-2 text-warning hover:text-warning"
+                      >
+                        <Ban className="h-4 w-4" />
+                        Ban User
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="gap-2 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete Account
+                    </Button>
+                  </>
                 )}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="gap-2 text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete Account
-                </Button>
               </div>
 
               <Separator />
