@@ -159,7 +159,7 @@ export function AdminShell() {
       <AdminHeader userEmail={user?.email} userId={user?.id} adminRole={isImpersonating ? impersonating!.role : adminRole} onLogout={logout} isSuperAdmin={effectiveIsSuperAdmin} hasPermission={effectiveHasPermission} />
       
       <div className="flex flex-1 min-h-0">
-        <AdminSidebar isSuperAdmin={effectiveIsSuperAdmin} hasPermission={effectiveHasPermission} />
+        <AdminSidebar isSuperAdmin={effectiveIsSuperAdmin} hasPermission={effectiveHasPermission} adminRole={effectiveAdminRole} />
         
         <main
           ref={mainContentRef}
