@@ -4,6 +4,11 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import {
+  generateTreatmentCitySections,
+  generateTreatmentWhatToExpect,
+  generateTreatmentBenefits,
+} from "@/utils/cityContentGenerator";
+import {
   parseCityTreatmentSlug,
   generateCityTreatmentFAQs,
   topCities,
@@ -97,6 +102,19 @@ export default function CityTreatmentPage() {
       }));
   }, [city, treatment]);
 
+  const treatmentSections = useMemo(
+    () => treatment && city ? generateTreatmentCitySections(treatment.label, treatment.slug, city.city, city.stateAbbr) : [],
+    [treatment, city]
+  );
+  const treatmentWhatToExpect = useMemo(
+    () => treatment ? generateTreatmentWhatToExpect(treatment.label) : [],
+    [treatment]
+  );
+  const treatmentBenefits = useMemo(
+    () => treatment && city ? generateTreatmentBenefits(treatment.label, city.city) : [],
+    [treatment, city]
+  );
+
   // Early returns AFTER all hooks
   if (!treatment || !city) {
     return <Navigate to="/404" replace />;
@@ -155,6 +173,9 @@ export default function CityTreatmentPage() {
       heroLocation={`${city.city}, ${city.state}`}
       heroBadge="Verified & Accredited"
       introContent={`Looking for ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}? RehabLookup connects you with verified, accredited treatment facilities in the ${city.city} area.${populationText} has a range of addiction treatment resources available for individuals and families seeking help. Every listed center is checked for proper licensing, qualified clinical staff, and evidence-based treatment approaches. Whether you need immediate placement or want to compare programs, our directory makes finding the right ${treatment.label.toLowerCase()} simple and confidential.`}
+      sections={treatmentSections}
+      whatToExpect={treatmentWhatToExpect}
+      benefits={treatmentBenefits}
       facilities={facilities}
       isLoading={isLoading}
       facilityCount={facilities.length}

@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
+import {
+  generateCityContentSections,
+  generateCityWhatToExpect,
+  generateCityBenefits,
+} from "@/utils/cityContentGenerator";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
@@ -540,34 +545,73 @@ const CityPage = () => {
         </div>
       </section>
 
-      {/* SEO Content */}
-      <section className="border-t bg-card py-12">
-        <div className="container">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="text-2xl font-bold text-foreground">
-              About Addiction Treatment in {cityData.name}, {stateData.abbreviation}
-            </h2>
-            <div className="mt-4 space-y-4 text-muted-foreground leading-relaxed">
-              <p>
-                {cityData.name} offers various addiction treatment programs to meet diverse recovery needs. 
-                Local treatment centers provide medical detoxification, residential inpatient care, 
-                intensive outpatient programs (IOP), and continuing care services to support long-term recovery.
-              </p>
-              <p>
-                Treatment facilities in {cityData.name}, {stateData.abbreviation} utilize proven approaches 
-                including individual counseling, group therapy, family therapy, and evidence-based treatments 
-                like cognitive behavioral therapy (CBT) and medication-assisted treatment (MAT). Many centers 
-                also offer specialized programs for co-occurring mental health disorders.
-              </p>
-              <p>
-                If you or a loved one is struggling with addiction in {cityData.name}, help is available. 
-                Our verified treatment centers are ready to provide the compassionate care needed to 
-                begin the journey to recovery.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Unique City Content Sections */}
+      {(() => {
+        const contentSections = generateCityContentSections({
+          cityName: cityData.name,
+          stateName: stateData.name,
+          stateAbbr: stateData.abbreviation,
+          population: cityData.population,
+        });
+        const whatToExpect = generateCityWhatToExpect(cityData.name, stateData.abbreviation);
+        const benefits = generateCityBenefits(cityData.name, stateData.name, stateData.abbreviation);
+
+        return (
+          <>
+            <section className="border-t bg-card py-12">
+              <div className="container">
+                <div className="mx-auto max-w-4xl space-y-10">
+                  {contentSections.map((section, idx) => (
+                    <article key={idx}>
+                      <h2 className="text-2xl font-bold text-foreground mb-4">{section.heading}</h2>
+                      <p className="text-muted-foreground leading-relaxed text-base">{section.content}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="border-t bg-muted/30 py-12">
+              <div className="container">
+                <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                  <div className="rounded-2xl border bg-card p-6 md:p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Clock className="h-5 w-5 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground">What to Expect</h3>
+                    </div>
+                    <ul className="space-y-3">
+                      {whatToExpect.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                          <span className="text-sm text-muted-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-2xl border bg-card p-6 md:p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <Heart className="h-5 w-5 text-accent" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground">Key Benefits</h3>
+                    </div>
+                    <ul className="space-y-3">
+                      {benefits.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <Star className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                          <span className="text-sm text-muted-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
+        );
+      })()}
 
       {/* Other Cities */}
       {otherCities.length > 0 && (
