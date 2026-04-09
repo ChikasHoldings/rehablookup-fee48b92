@@ -116,6 +116,8 @@ function ReviewCardSkeleton() {
 
 export default function AdminReviews() {
   const queryClient = useQueryClient();
+  const { adminRole, isSuperAdmin } = useAdminAuth();
+  const canModerateReviews = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([]);
   const [disputes, setDisputes] = useState<DisputeWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
