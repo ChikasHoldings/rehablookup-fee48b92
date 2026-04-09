@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AdminWidgetBoundary } from "@/components/admin/AdminWidgetBoundary";
 import { useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -300,15 +301,17 @@ export function SuperAdminDashboard() {
       </div>
 
       {/* Primary KPIs */}
-      <DashboardKPICards
-        revenueStats={revenueStats}
-        providerStats={providerStats}
-        leadStats={leadStats}
-        weeklyTrends={weeklyTrends}
-        loadingRevenue={loadingRevenue}
-        loadingProviders={loadingProviders}
-        loadingLeads={loadingLeads}
-      />
+      <AdminWidgetBoundary name="KPI Cards">
+        <DashboardKPICards
+          revenueStats={revenueStats}
+          providerStats={providerStats}
+          leadStats={leadStats}
+          weeklyTrends={weeklyTrends}
+          loadingRevenue={loadingRevenue}
+          loadingProviders={loadingProviders}
+          loadingLeads={loadingLeads}
+        />
+      </AdminWidgetBoundary>
 
       {/* Placement Pipeline Overview */}
       {placementStats && (placementStats.active > 0 || (placementStats.placed || 0) > 0) && (
