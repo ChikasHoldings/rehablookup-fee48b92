@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { SuperAdminActivityFeed } from "@/components/admin/dashboard/SuperAdminActivityFeed";
@@ -13,7 +14,9 @@ import {
   TopCitiesCard,
   RecentLeadsCard,
 } from "@/components/admin/dashboard";
-import { Shield, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Shield, Sparkles, ChevronRight } from "lucide-react";
 
 const PLAN_COLORS = {
   free: "hsl(215, 16%, 47%)",
@@ -264,6 +267,22 @@ export function SuperAdminDashboard() {
     },
   });
 
+  // Fetch placement pipeline stats
+  const { data: placementStats } = useQuery<Record<string, number>>({
+    queryKey: ["admin-placement-pipeline"],
+    queryFn: async () => {
+      const stages = ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed", "closed"];
+      const results = await Promise.all(
+        stages.map(s => supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("status", s))
+      );
+      const counts: Record<string, number> = {};
+      stages.forEach((s, i) => { counts[s] = results[i].count || 0; });
+      counts.active = counts.new + counts.reviewing + counts.matching + counts.matched + counts.introductions_sent + counts.in_contact;
+      return counts;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -290,6 +309,44 @@ export function SuperAdminDashboard() {
         loadingProviders={loadingProviders}
         loadingLeads={loadingLeads}
       />
+
+      {/* Placement Pipeline Overview */}
+      {placementStats && (placementStats.active > 0 || (placementStats.placed || 0) > 0) && (
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-medium">Placement Pipeline</CardTitle>
+                <CardDescription>{placementStats.active} active · {placementStats.placed} placed</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/admin/concierge" className="text-xs">
+                  View all <ChevronRight className="h-3 w-3 ml-1" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+              {[
+                { key: "new", label: "New", color: "bg-info/10 text-info border-info/20" },
+                { key: "reviewing", label: "Review", color: "bg-warning/10 text-warning border-warning/20" },
+                { key: "matching", label: "Placing", color: "bg-warning/10 text-warning border-warning/20" },
+                { key: "matched", label: "Matched", color: "bg-success/10 text-success border-success/20" },
+                { key: "introductions_sent", label: "Intros", color: "bg-accent/10 text-accent-foreground border-accent/20" },
+                { key: "in_contact", label: "Contact", color: "bg-info/10 text-info border-info/20" },
+                { key: "placed", label: "Placed", color: "bg-success/10 text-success border-success/20" },
+                { key: "closed", label: "Closed", color: "bg-muted text-muted-foreground border-border" },
+              ].map(stage => (
+                <div key={stage.key} className={`text-center p-2 rounded-lg border ${stage.color}`}>
+                  <div className="text-base sm:text-lg font-bold tabular-nums">{(placementStats as any)[stage.key] || 0}</div>
+                  <div className="text-[9px] sm:text-[10px]">{stage.label}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       <DashboardChartsSection
