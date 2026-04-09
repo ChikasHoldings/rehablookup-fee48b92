@@ -595,8 +595,26 @@ function generateCountyRoutes(): RouteEntry[] {
   }
   return routes;
 }
+function generateStateArticleRoutes(): RouteEntry[] {
+  const articleSlugs = [
+    "how-to-find-best-rehab-centers-in",
+    "cost-of-rehab-in",
+    "best-cities-for-addiction-treatment-in",
+  ];
+  const routes: RouteEntry[] = [];
+  for (const state of US_STATES) {
+    for (const base of articleSlugs) {
+      routes.push({
+        path: `/rehab-centers/${state}/articles/${base}-${state}`,
+        priority: 0.7,
+        changefreq: "monthly",
+      });
+    }
+  }
+  return routes;
+}
 
-function generateStateNearMeRoutes(): RouteEntry[] {
+
   const routes: RouteEntry[] = [];
   for (const state of TOP_STATES_FOR_NEAR_ME) {
     for (const type of NEAR_ME_TYPES_WITH_STATES) {
