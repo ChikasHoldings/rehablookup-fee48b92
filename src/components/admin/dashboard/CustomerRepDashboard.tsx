@@ -367,7 +367,7 @@ export function CustomerRepDashboard() {
               ) : myTickets && myTickets.length > 0 ? (
                 <div className="space-y-2">
                   {myTickets.map((ticket: any) => (
-                    <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedTicketId(ticket.id)}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium truncate">{ticket.subject || ticket.category}</p>
@@ -459,9 +459,14 @@ export function CustomerRepDashboard() {
                         variant="outline"
                         size="sm"
                         className="shrink-0 ml-2 text-xs"
+                        disabled={claimingTicketId === ticket.id}
                         onClick={() => claimTicket(ticket.id)}
                       >
-                        Claim
+                        {claimingTicketId === ticket.id ? (
+                          <><Loader2 className="h-3 w-3 animate-spin mr-1" />Claiming</>
+                        ) : (
+                          "Claim"
+                        )}
                       </Button>
                     </div>
                   ))}
