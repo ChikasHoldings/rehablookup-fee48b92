@@ -151,6 +151,11 @@ export default function AdminEscalations() {
         searchQuery={searchQuery}
         viewMode={viewMode}
       />
+
+      <EscalationDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </div>
   );
 }
