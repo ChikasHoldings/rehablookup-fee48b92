@@ -220,6 +220,50 @@ export default function StateArticlePage() {
               </div>
             )}
 
+            {/* Cities & Counties */}
+            {(() => {
+              const stateData = getStateBySlug(stateSlug!);
+              const counties = getCountiesForState(stateSlug!);
+              return (
+                <>
+                  {stateData && stateData.cities.length > 0 && (
+                    <div className="rounded-2xl border border-border/60 p-6">
+                      <h3 className="text-base font-bold text-foreground mb-3">Cities in {stateName}</h3>
+                      <div className="space-y-1.5 text-sm">
+                        {stateData.cities.slice(0, 8).map(city => (
+                          <Link key={city.slug} to={`/rehab-centers/${stateSlug}/${city.slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                            <ChevronRight className="w-3.5 h-3.5" /> {city.name}
+                          </Link>
+                        ))}
+                        {stateData.cities.length > 8 && (
+                          <Link to={`/rehab-centers/${stateSlug}`} className="flex items-center gap-2 text-primary font-medium">
+                            <ChevronRight className="w-3.5 h-3.5" /> View all {stateData.cities.length} cities
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {counties.length > 0 && (
+                    <div className="rounded-2xl border border-border/60 p-6">
+                      <h3 className="text-base font-bold text-foreground mb-3">Counties in {stateName}</h3>
+                      <div className="space-y-1.5 text-sm">
+                        {counties.slice(0, 6).map(county => (
+                          <Link key={county.slug} to={`/rehab-centers/${stateSlug}/county/${county.slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                            <ChevronRight className="w-3.5 h-3.5" /> {county.name} County
+                          </Link>
+                        ))}
+                        {counties.length > 6 && (
+                          <Link to={`/rehab-centers/${stateSlug}`} className="flex items-center gap-2 text-primary font-medium">
+                            <ChevronRight className="w-3.5 h-3.5" /> View all {counties.length} counties
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
             {/* Quick Links */}
             <div className="rounded-2xl border border-border/60 p-6">
               <h3 className="text-base font-bold text-foreground mb-4">Quick Links</h3>
