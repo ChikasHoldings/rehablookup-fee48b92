@@ -240,7 +240,7 @@ export function EscalationDetailSheet({
                       <label className="text-sm font-medium">Priority</label>
                       <Select
                         value={escalation.priority}
-                        onValueChange={(v) => updateMutation.mutate({ id: escalation.id, priority: v })}
+                        onValueChange={(v) => updateMutation.mutate({ priority: v })}
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />
