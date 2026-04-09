@@ -529,6 +529,9 @@ export const statesData: StateData[] = [
       { name: "Bellevue", slug: "bellevue", population: 64176, description: "Bellevue offers treatment in the Omaha metro.", metaDescription: "Drug rehab in Bellevue, NE. Find addiction treatment centers." },
       { name: "Grand Island", slug: "grand-island", population: 53131, description: "Grand Island provides treatment in central Nebraska.", metaDescription: "Rehab centers in Grand Island, NE. Find drug treatment." },
       { name: "Kearney", slug: "kearney", population: 34182, description: "Kearney offers accessible treatment in south-central Nebraska.", metaDescription: "Addiction treatment in Kearney, NE. Browse rehab facilities." },
+      { name: "Fremont", slug: "fremont-ne", population: 26397, description: "Fremont provides treatment in eastern Nebraska.", metaDescription: "Drug rehab in Fremont, NE. Find addiction treatment." },
+      { name: "Hastings", slug: "hastings", population: 25268, description: "Hastings offers treatment in south-central Nebraska.", metaDescription: "Addiction treatment in Hastings, NE. Browse rehab facilities." },
+      { name: "Norfolk", slug: "norfolk-ne", population: 24525, description: "Norfolk provides treatment in northeast Nebraska.", metaDescription: "Rehab centers in Norfolk, NE. Find drug treatment." },
     ],
   },
   {
@@ -543,6 +546,9 @@ export const statesData: StateData[] = [
       { name: "Reno", slug: "reno", population: 264165, description: "Reno offers treatment in Northern Nevada.", metaDescription: "Addiction treatment in Reno, NV. Browse rehab facilities." },
       { name: "North Las Vegas", slug: "north-las-vegas", population: 262527, description: "North Las Vegas offers accessible treatment in the Vegas metro.", metaDescription: "Drug rehab in North Las Vegas, NV. Find addiction treatment." },
       { name: "Sparks", slug: "sparks", population: 108445, description: "Sparks provides treatment in the Reno metro area.", metaDescription: "Addiction treatment in Sparks, NV. Browse rehab facilities." },
+      { name: "Carson City", slug: "carson-city", population: 58639, description: "Carson City offers treatment as Nevada's state capital.", metaDescription: "Drug rehab in Carson City, NV. Find addiction treatment." },
+      { name: "Elko", slug: "elko", population: 20279, description: "Elko provides treatment in northeastern Nevada.", metaDescription: "Addiction treatment in Elko, NV. Browse rehab facilities." },
+      { name: "Mesquite", slug: "mesquite", population: 22479, description: "Mesquite offers treatment in the Virgin Valley.", metaDescription: "Rehab centers in Mesquite, NV. Find drug treatment." },
     ],
   },
   {
@@ -573,6 +579,11 @@ export const statesData: StateData[] = [
       { name: "Paterson", slug: "paterson", population: 159732, description: "Paterson provides treatment in Passaic County.", metaDescription: "Drug rehab in Paterson, NJ. Find addiction treatment centers." },
       { name: "Elizabeth", slug: "elizabeth", population: 137298, description: "Elizabeth offers treatment near Newark.", metaDescription: "Rehab centers in Elizabeth, NJ. Find drug treatment programs." },
       { name: "Edison", slug: "edison", population: 107588, description: "Edison provides accessible central NJ treatment.", metaDescription: "Addiction treatment in Edison, NJ. Browse rehab facilities." },
+      { name: "Woodbridge", slug: "woodbridge", population: 103639, description: "Woodbridge offers treatment in Middlesex County.", metaDescription: "Drug rehab in Woodbridge, NJ. Find addiction treatment." },
+      { name: "Lakewood", slug: "lakewood-nj", population: 135158, description: "Lakewood provides treatment in Ocean County.", metaDescription: "Addiction treatment in Lakewood, NJ. Browse rehab facilities." },
+      { name: "Toms River", slug: "toms-river", population: 95438, description: "Toms River offers treatment on the Jersey Shore.", metaDescription: "Rehab centers in Toms River, NJ. Find drug treatment." },
+      { name: "Cherry Hill", slug: "cherry-hill", population: 74553, description: "Cherry Hill provides treatment in South Jersey.", metaDescription: "Drug rehab in Cherry Hill, NJ. Find addiction treatment." },
+      { name: "Trenton", slug: "trenton", population: 90871, description: "Trenton offers treatment as the state capital.", metaDescription: "Addiction treatment in Trenton, NJ. Browse rehab facilities." },
     ],
   },
   {
