@@ -7,6 +7,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
+import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
 import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
@@ -737,6 +738,40 @@ const StatePage = () => {
           </div>
         </section>
       )}
+
+      {/* State Articles */}
+      {(() => {
+        const articles = getStateArticles(stateData.slug);
+        if (articles.length === 0) return null;
+        return (
+          <section className="py-12 md:py-16 border-t border-border/40">
+            <div className="container">
+              <h2 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl">
+                {stateData.name} Treatment Guides
+              </h2>
+              <p className="mb-6 text-muted-foreground">In-depth articles about finding and affording treatment in {stateData.name}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {articles.map(a => (
+                  <Link
+                    key={a.slug}
+                    to={`/rehab-centers/${stateData.slug}/articles/${a.slug}`}
+                    className="group rounded-xl border border-border/60 bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all"
+                  >
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                      {a.type === "how-to-find" ? "Treatment Guide" : a.type === "cost-of-rehab" ? "Financial Guide" : "City Guide"}
+                    </span>
+                    <h3 className="mt-2 text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug">{a.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.metaDescription}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                      Read article <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Related Links for SEO */}
       <RelatedLinksSection
