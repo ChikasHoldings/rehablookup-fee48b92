@@ -78,12 +78,12 @@ export function AdminShell() {
 
   // When impersonating, use impersonated role's permissions for sidebar/routing
   const effectiveIsSuperAdmin = isImpersonating ? false : isSuperAdmin;
+  const effectiveAdminRole = isImpersonating ? (impersonating?.role || "customer_rep") as any : adminRole;
   const effectiveHasPermission = isImpersonating
     ? (key: string) => impersonating?.permissions?.[key] === true
     : hasPermission;
   const effectiveCanAccessRoute = isImpersonating
     ? (pathname: string) => {
-        // During impersonation, check the impersonated user's permissions
         const routeMap: Record<string, string> = {
           "/admin": "dashboard", "/admin/dashboard": "dashboard",
           "/admin/analytics": "analytics", "/admin/providers": "providers",
@@ -113,7 +113,8 @@ export function AdminShell() {
   // Check if user can access current route
   const hasRouteAccess = effectiveCanAccessRoute(location.pathname);
 
-  // Filter mobile nav sections based on effective permissions
+  // Get role-specific mobile nav and filter by permissions
+  const mobileNavSections = getMobileNavForRole(effectiveAdminRole, effectiveIsSuperAdmin);
   const visibleMobileSections = mobileNavSections
     .map((section) => ({
       ...section,
