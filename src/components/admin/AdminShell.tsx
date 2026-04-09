@@ -168,7 +168,7 @@ export function AdminShell() {
           <div className="max-w-6xl mx-auto">
             <AdminErrorBoundary>
               {hasRouteAccess ? (
-                <Suspense fallback={null}>
+                <Suspense fallback={<AdminPageLoading />}>
                   <Outlet />
                 </Suspense>
               ) : (

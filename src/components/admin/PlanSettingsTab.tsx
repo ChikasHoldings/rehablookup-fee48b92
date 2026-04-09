@@ -153,7 +153,8 @@ export function PlanSettingsTab() {
       if (error) throw error;
       return data as { coupons: Coupon[]; promoCodes: PromoCode[] };
     },
-    refetchInterval: 15000, // Auto-refresh every 15 seconds for real-time updates
+    refetchInterval: 60000, // Auto-refresh every 60 seconds
+    staleTime: 30000,
   });
 
   // Detect new promo codes and show notification

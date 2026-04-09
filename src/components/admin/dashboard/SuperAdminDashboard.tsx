@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AdminWidgetBoundary } from "@/components/admin/AdminWidgetBoundary";
 import { useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -300,15 +301,17 @@ export function SuperAdminDashboard() {
       </div>
 
       {/* Primary KPIs */}
-      <DashboardKPICards
-        revenueStats={revenueStats}
-        providerStats={providerStats}
-        leadStats={leadStats}
-        weeklyTrends={weeklyTrends}
-        loadingRevenue={loadingRevenue}
-        loadingProviders={loadingProviders}
-        loadingLeads={loadingLeads}
-      />
+      <AdminWidgetBoundary name="KPI Cards">
+        <DashboardKPICards
+          revenueStats={revenueStats}
+          providerStats={providerStats}
+          leadStats={leadStats}
+          weeklyTrends={weeklyTrends}
+          loadingRevenue={loadingRevenue}
+          loadingProviders={loadingProviders}
+          loadingLeads={loadingLeads}
+        />
+      </AdminWidgetBoundary>
 
       {/* Placement Pipeline Overview */}
       {placementStats && (placementStats.active > 0 || (placementStats.placed || 0) > 0) && (
@@ -349,34 +352,50 @@ export function SuperAdminDashboard() {
       )}
 
       {/* Charts Row */}
-      <DashboardChartsSection
-        providerStats={providerStats}
-        leadStats={leadStats}
-        subscriptionBreakdown={subscriptionBreakdown}
-        loadingProviders={loadingProviders}
-        loadingLeads={loadingLeads}
-        loadingBreakdown={loadingRevenue}
-      />
+      <AdminWidgetBoundary name="Charts">
+        <DashboardChartsSection
+          providerStats={providerStats}
+          leadStats={leadStats}
+          subscriptionBreakdown={subscriptionBreakdown}
+          loadingProviders={loadingProviders}
+          loadingLeads={loadingLeads}
+          loadingBreakdown={loadingRevenue}
+        />
+      </AdminWidgetBoundary>
 
       {/* Lead Redistribution Stats */}
-      <LeadRedistributionCard redistStats={redistStats} />
+      <AdminWidgetBoundary name="Lead Redistribution">
+        <LeadRedistributionCard redistStats={redistStats} />
+      </AdminWidgetBoundary>
 
       {/* Quick Actions + Top Cities */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        <QuickActionsCard providerStats={providerStats} />
-        <TopCitiesCard topCities={topCities} />
+        <AdminWidgetBoundary name="Quick Actions">
+          <QuickActionsCard providerStats={providerStats} />
+        </AdminWidgetBoundary>
+        <AdminWidgetBoundary name="Top Cities">
+          <TopCitiesCard topCities={topCities} />
+        </AdminWidgetBoundary>
       </div>
 
       {/* Recent Leads + Activity Feed */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        <RecentLeadsCard recentLeads={recentLeads} />
-        <SuperAdminActivityFeed />
+        <AdminWidgetBoundary name="Recent Leads">
+          <RecentLeadsCard recentLeads={recentLeads} />
+        </AdminWidgetBoundary>
+        <AdminWidgetBoundary name="Activity Feed">
+          <SuperAdminActivityFeed />
+        </AdminWidgetBoundary>
       </div>
 
       {/* Subscription & Credit Widgets */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        <SubscriptionActivityWidget />
-        <LowCreditMonitorWidget />
+        <AdminWidgetBoundary name="Subscriptions">
+          <SubscriptionActivityWidget />
+        </AdminWidgetBoundary>
+        <AdminWidgetBoundary name="Credit Monitor">
+          <LowCreditMonitorWidget />
+        </AdminWidgetBoundary>
       </div>
     </div>
   );
