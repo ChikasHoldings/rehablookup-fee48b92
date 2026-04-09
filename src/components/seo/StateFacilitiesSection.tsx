@@ -78,7 +78,9 @@ export function StateFacilitiesSection({
         </div>
 
         {isLoading ? (
-          <SearchResultsLoading />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+            {[1,2,3].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
+          </div>
         ) : facilities.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
             {facilities.map((facility) => (
