@@ -459,25 +459,21 @@ export function useRoleBasedRedirect() {
     ];
     const isPublicContent = PUBLIC_CONTENT_ROUTES.some(route => currentPath.startsWith(route));
 
-    // Authenticated - enforce portal boundaries
+    // Authenticated users — enforce strict portal boundaries only.
+    // Public pages are handled by the public Layout (no redirects).
+    // This hook only guards portal routes (/admin, /provider, /account).
     if (role === "admin") {
-      // Admins can access /admin routes + public content pages
-      if (!currentPath.startsWith("/admin") && !isPublicContent) {
+      // Admins stay in /admin — don't redirect from public pages
+      if (currentPath.startsWith("/provider") || currentPath.startsWith("/account")) {
         return { shouldBlock: true, redirectTo: "/admin" };
       }
     } else if (role === "provider") {
-      // Providers can access /provider routes + specific allowed public routes
-      const isProviderRoute = currentPath.startsWith("/provider");
-      const isAllowedPublicRoute = PROVIDER_ALLOWED_PUBLIC_ROUTES.some(
-        route => currentPath.startsWith(route)
-      );
-      
-      if (!isProviderRoute && !isAllowedPublicRoute) {
+      // Providers stay in /provider — don't redirect from public pages
+      if (currentPath.startsWith("/admin") || currentPath.startsWith("/account")) {
         return { shouldBlock: true, redirectTo: "/provider/dashboard" };
       }
     } else if (role === "seeker") {
       // Seekers can access public website + /account routes
-      // Block admin and provider routes
       if (currentPath.startsWith("/admin") || currentPath.startsWith("/provider")) {
         return { shouldBlock: true, redirectTo: "/account" };
       }

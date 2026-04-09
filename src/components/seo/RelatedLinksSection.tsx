@@ -42,7 +42,7 @@ export function RelatedLinksSection({
                 <h3 className="font-semibold">Treatment Options</h3>
               </div>
               <ul className="space-y-2">
-                {treatmentLinks.map((link) => (
+              {treatmentLinks.filter(l => l?.href).map((link) => (
                   <li key={link.href}>
                     <Link
                       to={link.href}
@@ -65,7 +65,7 @@ export function RelatedLinksSection({
                 <h3 className="font-semibold">Nearby Locations</h3>
               </div>
               <ul className="space-y-2">
-                {locationLinks.map((link) => (
+              {locationLinks.filter(l => l?.href).map((link) => (
                   <li key={link.href}>
                     <Link
                       to={link.href}
@@ -88,7 +88,7 @@ export function RelatedLinksSection({
                 <h3 className="font-semibold">Insurance Coverage</h3>
               </div>
               <ul className="space-y-2">
-                {insuranceLinks.map((link) => (
+              {insuranceLinks.filter(l => l?.href).map((link) => (
                   <li key={link.href}>
                     <Link
                       to={link.href}
