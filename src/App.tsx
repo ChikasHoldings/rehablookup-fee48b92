@@ -839,6 +839,7 @@ const AppInner = () => {
               <Route path="inbox" element={<AdvisorInbox />} />
               <Route path="escalations" element={<AdminEscalations />} />
               <Route path="back-office" element={<AdminBackOffice />} />
+              <Route path="provider-directory" element={<AdvisorProviderDirectory />} />
             </Route>
             
             {/* Marketing Landing Page (Ad Traffic) */}
