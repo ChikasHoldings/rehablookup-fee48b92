@@ -123,7 +123,7 @@ const StateOutpatientPrograms = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Find Treatment in {abbreviation}
@@ -346,7 +346,7 @@ const StateOutpatientPrograms = () => {
               flexible scheduling and can verify your insurance same-day.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Find Treatment

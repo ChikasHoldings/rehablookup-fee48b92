@@ -116,7 +116,7 @@ const StateDualDiagnosis = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Find Treatment in {abbreviation}
@@ -377,7 +377,7 @@ const StateDualDiagnosis = () => {
               Our team can help you find integrated mental health and addiction treatment in {stateName} that accepts your insurance.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/rehab-centers">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Find Treatment Today

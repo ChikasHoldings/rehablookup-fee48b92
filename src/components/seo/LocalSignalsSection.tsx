@@ -80,7 +80,7 @@ export function LocalSignalsSection({
               near you. Our network includes facilities with immediate availability.
             </p>
 
-            <Link to="/concierge">
+            <Link to="/rehab-centers">
               <Button size="lg" className="gap-2">
                 <Heart className="h-4 w-4" />
                 Find Treatment Now
