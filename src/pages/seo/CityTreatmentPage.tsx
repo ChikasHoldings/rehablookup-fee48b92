@@ -102,6 +102,19 @@ export default function CityTreatmentPage() {
       }));
   }, [city, treatment]);
 
+  const treatmentSections = useMemo(
+    () => treatment && city ? generateTreatmentCitySections(treatment.label, treatment.slug, city.city, city.stateAbbr) : [],
+    [treatment, city]
+  );
+  const treatmentWhatToExpect = useMemo(
+    () => treatment ? generateTreatmentWhatToExpect(treatment.label) : [],
+    [treatment]
+  );
+  const treatmentBenefits = useMemo(
+    () => treatment && city ? generateTreatmentBenefits(treatment.label, city.city) : [],
+    [treatment, city]
+  );
+
   // Early returns AFTER all hooks
   if (!treatment || !city) {
     return <Navigate to="/404" replace />;
@@ -142,19 +155,6 @@ export default function CityTreatmentPage() {
       lastReviewed: new Date().toISOString().split("T")[0],
     },
   ];
-
-  const treatmentSections = useMemo(
-    () => generateTreatmentCitySections(treatment.label, treatment.slug, city.city, city.stateAbbr),
-    [treatment, city]
-  );
-  const treatmentWhatToExpect = useMemo(
-    () => generateTreatmentWhatToExpect(treatment.label),
-    [treatment]
-  );
-  const treatmentBenefits = useMemo(
-    () => generateTreatmentBenefits(treatment.label, city.city),
-    [treatment, city]
-  );
 
   return (
     <SEOLandingTemplate
