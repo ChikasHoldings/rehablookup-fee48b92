@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -98,18 +99,12 @@ export default function AdvisorProviderDirectory() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-          <Building2 className="h-5 w-5 text-primary-foreground" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Provider Directory</h1>
-          <p className="text-sm text-muted-foreground">
-            {counts?.all ?? 0} providers · {counts?.enrolled ?? 0} enrolled in placement · {counts?.not_enrolled ?? 0} not enrolled
-          </p>
-        </div>
-      </div>
+      <AdminPageHeader
+        icon={Building2}
+        iconGradient="bg-gradient-to-br from-primary to-primary/70"
+        title="Provider Directory"
+        subtitle={`${counts?.all ?? 0} providers · ${counts?.enrolled ?? 0} enrolled · ${counts?.not_enrolled ?? 0} not enrolled`}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">

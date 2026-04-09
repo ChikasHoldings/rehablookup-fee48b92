@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import {
@@ -362,25 +363,26 @@ export default function AdminStaff() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Admin Staff</h1>
-          <p className="text-sm text-muted-foreground">Manage admin accounts, roles, and permissions</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
-            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-            Refresh
-          </Button>
-          {isSuperAdmin && (
-            <Button onClick={() => setCreateDialogOpen(true)} size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Staff Member
+      <AdminPageHeader
+        icon={Users}
+        iconGradient="bg-gradient-to-br from-primary to-indigo-500"
+        title="Admin Staff"
+        subtitle="Manage admin accounts, roles, and permissions"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+              Refresh
             </Button>
-          )}
-        </div>
-      </div>
+            {isSuperAdmin && (
+              <Button onClick={() => setCreateDialogOpen(true)} size="sm">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Staff Member
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Role Stats */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
