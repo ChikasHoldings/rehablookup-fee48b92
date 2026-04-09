@@ -79,6 +79,7 @@ export function CustomerRepDashboard() {
         resolved: resolved.count || 0,
       };
     },
+    staleTime: 30 * 1000,
   });
 
   // Review stats
@@ -93,6 +94,7 @@ export function CustomerRepDashboard() {
       ]);
       return { total: total.count || 0, pending: pending.count || 0, approved: approved.count || 0, rejected: rejected.count || 0 };
     },
+    staleTime: 30 * 1000,
   });
 
   // My assigned tickets
@@ -110,6 +112,7 @@ export function CustomerRepDashboard() {
       return data || [];
     },
     enabled: !!user?.id,
+    staleTime: 15 * 1000,
   });
 
   // Unassigned tickets
@@ -125,6 +128,7 @@ export function CustomerRepDashboard() {
         .limit(10);
       return data || [];
     },
+    staleTime: 15 * 1000,
   });
 
   // Pending reviews
