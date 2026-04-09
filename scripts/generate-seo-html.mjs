@@ -807,6 +807,7 @@ async function main() {
   await generateCityTreatmentPages();
   await generateInsuranceStatePages();
   await generateStatePages();
+  await generateStateArticlePages();
   await generateCityPages();
   await generateStateTreatmentPages();
 
