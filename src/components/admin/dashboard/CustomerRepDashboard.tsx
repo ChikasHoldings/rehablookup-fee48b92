@@ -163,6 +163,18 @@ export function CustomerRepDashboard() {
     invalidateDashboard();
   };
 
+  // Resolve ticket inline
+  const resolveTicket = async (ticketId: string) => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from("support_tickets")
+      .update({ status: "resolved", resolved_at: new Date().toISOString() })
+      .eq("id", ticketId);
+    if (error) { toast.error("Failed to resolve ticket"); return; }
+    toast.success("Ticket resolved");
+    invalidateDashboard();
+  };
+
   // Escalate ticket
   const handleEscalate = async () => {
     if (!user?.id || !escalateSubject || !escalateDescription) return;
