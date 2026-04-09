@@ -199,8 +199,6 @@ export function SupportTicketModal({
     toast.success("Ticket claimed");
   };
 
-  // Escalate to manager via escalations system
-  const [escalating, setEscalating] = useState(false);
   const handleEscalateToManager = async () => {
     if (!user?.id) return;
     setEscalating(true);
