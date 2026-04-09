@@ -247,8 +247,8 @@ export function CustomerRepDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shrink-0">
-            <Headphones className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-success to-success/70 flex items-center justify-center shadow-lg shrink-0">
+            <Headphones className="h-4 w-4 sm:h-5 sm:w-5 text-success-foreground" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground truncate">Support Center</h1>
@@ -397,7 +397,7 @@ export function CustomerRepDashboard() {
                           size="icon"
                           className="h-7 w-7 text-success hover:text-success"
                           title="Resolve ticket"
-                          onClick={() => resolveTicket(ticket.id)}
+                          onClick={(e) => { e.stopPropagation(); resolveTicket(ticket.id); }}
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
@@ -406,7 +406,8 @@ export function CustomerRepDashboard() {
                           size="icon"
                           className="h-7 w-7 text-warning hover:text-warning"
                           title="Escalate"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEscalateTicketId(ticket.id);
                             setEscalateSubject(`Escalation: ${ticket.subject || ticket.category}`);
                             setEscalateDescription(`Ticket from ${ticket.sender_name} (${ticket.source}) needs management attention.\n\nOriginal ticket: ${ticket.subject || ticket.category}`);
