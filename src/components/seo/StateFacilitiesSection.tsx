@@ -4,8 +4,8 @@ import { Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { TreatmentCenterCard } from "@/components/TreatmentCenterCard";
-import { SearchResultsLoading } from "@/components/SearchResultsLoading";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StateFacilitiesSectionProps {
   stateName: string;
