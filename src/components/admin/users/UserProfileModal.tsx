@@ -99,6 +99,10 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
   const [banReason, setBanReason] = useState("");
   const [isBanned, setIsBanned] = useState(false);
   
+  const { adminRole, isSuperAdmin } = useAdminAuth();
+  // Only Super Admin and Manager can ban/delete users
+  const canModerateUsers = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
+
   const { 
     deleteUser, 
     banUser, 
