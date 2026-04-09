@@ -79,6 +79,7 @@ export function AdvisorDashboard() {
       return data;
     },
     enabled: !!advisorId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const isContractor = advisorProfile?.employment_type === "contractor";

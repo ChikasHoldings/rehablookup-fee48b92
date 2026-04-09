@@ -42,6 +42,7 @@ export function AdvisorEarningsCard() {
       };
     },
     enabled: !!user?.id,
+    staleTime: 60 * 1000,
   });
 
   // Get commission rate from profile
@@ -57,6 +58,7 @@ export function AdvisorEarningsCard() {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const isContractor = profile?.employment_type === "contractor";
