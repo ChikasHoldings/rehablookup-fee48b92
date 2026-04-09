@@ -6,6 +6,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
+import { getCountiesForState } from "@/data/countySeoData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
 import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
@@ -159,6 +160,7 @@ const StatePage = () => {
   }, [approvedFacilities, stateData]);
 
   const nearbyStates = stateData ? getNearbyStates(stateData.slug, 4) : [];
+  const counties = stateData ? getCountiesForState(stateData.slug) : [];
   const capitalImage = stateSlug ? stateCapitalImages[stateSlug] : undefined;
   const stateFAQs = stateData ? getStateFAQs(stateData.name, stateData.abbreviation, stateData.cities.length, stateCenters.length) : [];
   const displayedCities = showAllCities ? stateData?.cities : stateData?.cities.slice(0, 12);
@@ -714,6 +716,28 @@ const StatePage = () => {
         </div>
       </section>
 
+      {/* County Links */}
+      {counties.length > 0 && (
+        <section className="py-12 md:py-16 border-t border-border/40">
+          <div className="container">
+            <h2 className="mb-6 font-display text-xl font-bold text-foreground md:text-2xl">
+              Counties in {stateData.name}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {counties.map((county) => (
+                <Link
+                  key={county.slug}
+                  to={`/rehab-centers/${stateData.slug}/county/${county.slug}`}
+                  className="rounded-lg border border-border/60 bg-card px-3 py-2.5 text-sm font-medium text-foreground hover:border-primary/40 hover:bg-accent/5 transition-colors"
+                >
+                  {county.name} County
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Related Links for SEO */}
       <RelatedLinksSection
         title={`Related Resources for ${stateData.name}`}
@@ -723,10 +747,16 @@ const StatePage = () => {
           { title: `Outpatient Programs in ${stateData.name}`, href: `/treatment-types/outpatient-programs/${stateData.slug}` },
           { title: `Dual Diagnosis in ${stateData.name}`, href: `/treatment-types/dual-diagnosis-treatment/${stateData.slug}` },
         ]}
-        locationLinks={nearbyStates.map(state => ({
-          title: `Rehab in ${state.name}`,
-          href: `/rehab-centers/${state.slug}`,
-        }))}
+        locationLinks={[
+          ...counties.slice(0, 4).map(county => ({
+            title: `${county.name} County`,
+            href: `/rehab-centers/${stateData.slug}/county/${county.slug}`,
+          })),
+          ...nearbyStates.map(state => ({
+            title: `Rehab in ${state.name}`,
+            href: `/rehab-centers/${state.slug}`,
+          })),
+        ]}
         insuranceLinks={defaultInsuranceLinks.slice(0, 5)}
       />
 

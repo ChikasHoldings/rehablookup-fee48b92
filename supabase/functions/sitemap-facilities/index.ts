@@ -528,6 +528,74 @@ function generateCityRoutes(): RouteEntry[] {
   }));
 }
 
+// County-level SEO pages — maps stateSlug → array of county slugs
+const STATE_COUNTIES: Record<string, string[]> = {
+  "alabama": ["jefferson","mobile","madison","montgomery","shelby","tuscaloosa","baldwin","lee","morgan","calhoun"],
+  "alaska": ["anchorage","fairbanks-north-star","matanuska-susitna","kenai-peninsula","juneau"],
+  "arizona": ["maricopa","pima","pinal","yavapai","mohave","yuma","coconino","cochise"],
+  "arkansas": ["pulaski","benton","washington","faulkner","sebastian","saline","craighead","garland"],
+  "california": ["los-angeles","san-diego","orange","riverside","san-bernardino","santa-clara","alameda","sacramento","san-francisco","contra-costa","fresno","kern","san-joaquin","ventura","san-mateo"],
+  "colorado": ["denver","el-paso","arapahoe","jefferson","adams","douglas","larimer","weld","boulder"],
+  "connecticut": ["fairfield","hartford","new-haven","new-london","litchfield","middlesex"],
+  "delaware": ["new-castle","kent","sussex"],
+  "florida": ["miami-dade","broward","palm-beach","hillsborough","orange","duval","pinellas","lee","polk","brevard","volusia","seminole"],
+  "georgia": ["fulton","gwinnett","cobb","dekalb","chatham","richmond","muscogee","bibb","clarke","cherokee"],
+  "hawaii": ["honolulu","hawaii","maui","kauai"],
+  "idaho": ["ada","canyon","kootenai","bonneville","twin-falls","bannock"],
+  "illinois": ["cook","dupage","lake","will","kane","mchenry","winnebago","madison","st-clair","sangamon","peoria","champaign"],
+  "indiana": ["marion","lake","allen","hamilton","st-joseph","elkhart","tippecanoe","vanderburgh","monroe","hendricks"],
+  "iowa": ["polk","linn","scott","johnson","black-hawk","woodbury","dubuque","pottawattamie"],
+  "kansas": ["johnson","sedgwick","shawnee","wyandotte","douglas","leavenworth","riley"],
+  "kentucky": ["jefferson","fayette","kenton","boone","warren","hardin","daviess","madison","campbell","bullitt"],
+  "louisiana": ["east-baton-rouge","jefferson","orleans","caddo","calcasieu","ouachita","lafayette","st-tammany","rapides","bossier"],
+  "maine": ["cumberland","york","penobscot","kennebec","androscoggin"],
+  "maryland": ["montgomery","prince-georges","baltimore-county","anne-arundel","howard","harford","frederick","baltimore-city"],
+  "massachusetts": ["middlesex","worcester","suffolk","essex","norfolk","bristol","hampden","plymouth"],
+  "michigan": ["wayne","oakland","macomb","kent","genesee","washtenaw","ingham","kalamazoo","ottawa","saginaw"],
+  "minnesota": ["hennepin","ramsey","dakota","anoka","washington","scott","olmsted","st-louis"],
+  "mississippi": ["hinds","harrison","desoto","rankin","jackson","lee","forrest","lauderdale","madison"],
+  "missouri": ["st-louis-county","jackson","st-charles","st-louis-city","greene","clay","boone","jefferson","cass","cape-girardeau"],
+  "montana": ["yellowstone","missoula","gallatin","flathead","cascade","lewis-and-clark"],
+  "nebraska": ["douglas","lancaster","sarpy","hall","buffalo","scotts-bluff"],
+  "nevada": ["clark","washoe","carson-city","elko","douglas","lyon"],
+  "new-hampshire": ["hillsborough","rockingham","merrimack","strafford","grafton"],
+  "new-jersey": ["bergen","middlesex","essex","hudson","monmouth","ocean","union","passaic","camden","morris","burlington"],
+  "new-mexico": ["bernalillo","dona-ana","santa-fe","sandoval","san-juan","lea","valencia"],
+  "new-york": ["kings","queens","new-york-county","suffolk","nassau","bronx","westchester","erie","monroe","onondaga","albany","richmond"],
+  "north-carolina": ["mecklenburg","wake","guilford","forsyth","cumberland","durham","buncombe","new-hanover","gaston","cabarrus"],
+  "north-dakota": ["cass","burleigh","grand-forks","ward","williams","stark"],
+  "ohio": ["franklin","cuyahoga","hamilton","summit","montgomery","lucas","stark","butler","lorain","mahoning"],
+  "oklahoma": ["oklahoma","tulsa","cleveland","comanche","canadian","rogers","payne"],
+  "oregon": ["multnomah","washington","clackamas","lane","marion","jackson","deschutes","linn"],
+  "pennsylvania": ["philadelphia","allegheny","montgomery","bucks","delaware","lancaster","chester","berks","lehigh","luzerne","york","erie"],
+  "rhode-island": ["providence","kent","washington","newport","bristol"],
+  "south-carolina": ["greenville","richland","charleston","horry","spartanburg","lexington","york","beaufort","anderson"],
+  "south-dakota": ["minnehaha","pennington","lincoln","brown","brookings","codington"],
+  "tennessee": ["shelby","davidson","knox","hamilton","rutherford","williamson","sumner","montgomery","blount","sullivan"],
+  "texas": ["harris","dallas","tarrant","bexar","travis","collin","denton","hidalgo","el-paso","fort-bend","williamson","montgomery","nueces","lubbock","webb"],
+  "utah": ["salt-lake","utah","davis","weber","washington","cache","iron"],
+  "vermont": ["chittenden","rutland","washington","windham","windsor","bennington"],
+  "virginia": ["fairfax","prince-william","loudoun","chesterfield","henrico","virginia-beach-city","norfolk-city","richmond-city","chesapeake-city","arlington"],
+  "washington": ["king","pierce","snohomish","spokane","clark","thurston","kitsap","yakima","whatcom","benton"],
+  "west-virginia": ["kanawha","berkeley","cabell","monongalia","wood","raleigh","putnam"],
+  "wisconsin": ["milwaukee","dane","waukesha","brown","racine","outagamie","winnebago","kenosha","marathon","rock"],
+  "wyoming": ["laramie","natrona","campbell","sweetwater","fremont","albany","sheridan"],
+};
+
+function generateCountyRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const [stateSlug, counties] of Object.entries(STATE_COUNTIES)) {
+    for (const countySlug of counties) {
+      routes.push({
+        path: `/rehab-centers/${stateSlug}/county/${countySlug}`,
+        priority: 0.75,
+        changefreq: "weekly"
+      });
+    }
+  }
+  return routes;
+}
+
 function generateStateNearMeRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
   for (const state of TOP_STATES_FOR_NEAR_ME) {
@@ -647,6 +715,7 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...filteredStatic,
     ...generateStateRoutes(),
     ...generateCityRoutes(),
+    ...generateCountyRoutes(),
     ...generateStateNearMeRoutes(),
     ...generateTreatmentGeoRoutes(),
     ...generateCityTreatmentComboRoutes(),
