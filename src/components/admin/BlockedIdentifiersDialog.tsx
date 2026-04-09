@@ -107,7 +107,7 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Ban className="h-5 w-5 text-red-500" />
+            <Ban className="h-5 w-5 text-destructive" />
             Blocked Identifiers
           </DialogTitle>
           <DialogDescription>
@@ -138,11 +138,11 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
                   {ipBlocked.map((item) => (
                     <div 
                       key={item.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100"
+                      className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/20"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <Ban className="h-4 w-4 text-red-500" />
+                          <Ban className="h-4 w-4 text-destructive" />
                           <p className="font-mono text-sm font-medium">{item.identifier}</p>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
@@ -161,7 +161,7 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-green-600 hover:text-green-700"
+                        className="text-success hover:text-success"
                         onClick={() => unblockIdentifier.mutate(item.id)}
                         disabled={unblockIdentifier.isPending}
                       >
@@ -176,7 +176,7 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Shield className="h-8 w-8 text-green-500 mb-2" />
+                  <Shield className="h-8 w-8 text-success mb-2" />
                   <p className="text-sm text-muted-foreground">No blocked IP addresses</p>
                   <p className="text-xs text-muted-foreground">
                     IPs are auto-blocked after too many failed login attempts
@@ -197,11 +197,11 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
                   {emailBlocked.map((item) => (
                     <div 
                       key={item.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100"
+                      className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/20"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <Ban className="h-4 w-4 text-red-500" />
+                          <Ban className="h-4 w-4 text-destructive" />
                           <p className="text-sm font-medium">{item.identifier}</p>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
@@ -220,7 +220,7 @@ export function BlockedIdentifiersDialog({ trigger }: BlockedIdentifiersDialogPr
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-green-600 hover:text-green-700"
+                        className="text-success hover:text-success"
                         onClick={() => unblockIdentifier.mutate(item.id)}
                         disabled={unblockIdentifier.isPending}
                       >
