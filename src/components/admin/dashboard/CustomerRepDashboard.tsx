@@ -388,7 +388,7 @@ export function CustomerRepDashboard() {
                           {ticket.sender_name} · {ticket.source === "seeker_support" ? "Seeker" : ticket.source === "provider_support" ? "Provider" : "Contact"} · {formatTimeAgo(ticket.created_at)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 ml-2 shrink-0">
+                      <div className="flex items-center gap-1 ml-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                           <Link to={`/admin/support?ticket=${ticket.id}`}><Eye className="h-3.5 w-3.5" /></Link>
                         </Button>
