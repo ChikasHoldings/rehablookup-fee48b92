@@ -408,13 +408,13 @@ const AlcoholRehabilitation = () => {
             Explore Other Treatment Types
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/treatment-types/drug-addiction">
+            <Link to="/treatment-types/drug-addiction-treatment">
               <Button variant="outline" className="gap-2">
                 <Pill className="h-4 w-4" />
                 Drug Addiction Treatment
               </Button>
             </Link>
-            <Link to="/treatment-types/dual-diagnosis">
+            <Link to="/treatment-types/dual-diagnosis-treatment">
               <Button variant="outline" className="gap-2">
                 <Brain className="h-4 w-4" />
                 Dual Diagnosis

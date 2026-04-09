@@ -376,7 +376,7 @@ const DrugAddictionTreatment = () => {
                 Alcohol Rehabilitation
               </Button>
             </Link>
-            <Link to="/treatment-types/dual-diagnosis">
+            <Link to="/treatment-types/dual-diagnosis-treatment">
               <Button variant="outline" className="gap-2">
                 <Brain className="h-4 w-4" />
                 Dual Diagnosis
