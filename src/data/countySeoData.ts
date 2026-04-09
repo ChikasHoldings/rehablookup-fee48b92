@@ -2,6 +2,7 @@
  * County-level SEO data for all 50 US states.
  * Each state includes high-population, mid-size, and strategic SEO counties.
  * Content is unique per county — no duplicate descriptions or FAQs.
+ * Updated: 2026-04-09
  */
 
 export interface CountyData {
