@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
 import { useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
@@ -417,19 +417,22 @@ export function ManagerDashboard() {
                 <p className="text-xs">All issues resolved</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
-                  <div className="text-xl font-bold text-warning tabular-nums">{escalationStats?.open}</div>
-                  <div className="text-[10px] text-muted-foreground">Open</div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
+                    <div className="text-xl font-bold text-warning tabular-nums">{escalationStats?.open}</div>
+                    <div className="text-[10px] text-muted-foreground">Open</div>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-info/10 border border-info/20">
+                    <div className="text-xl font-bold text-info tabular-nums">{escalationStats?.inProgress}</div>
+                    <div className="text-[10px] text-muted-foreground">In Progress</div>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <div className="text-xl font-bold text-destructive tabular-nums">{escalationStats?.critical}</div>
+                    <div className="text-[10px] text-muted-foreground">Critical</div>
+                  </div>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-info/10 border border-info/20">
-                  <div className="text-xl font-bold text-info tabular-nums">{escalationStats?.inProgress}</div>
-                  <div className="text-[10px] text-muted-foreground">In Progress</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                  <div className="text-xl font-bold text-destructive tabular-nums">{escalationStats?.critical}</div>
-                  <div className="text-[10px] text-muted-foreground">Critical</div>
-                </div>
+                <RecentEscalationsList />
               </div>
             )}
           </CardContent>
