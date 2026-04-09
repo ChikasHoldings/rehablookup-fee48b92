@@ -11,6 +11,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
 import { getStateBySlug, getCityBySlug } from "@/data/locationSeoData";
+import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
 import { 
@@ -708,6 +709,33 @@ const CityPage = () => {
           </Link>
         </div>
       </section>
+
+      {/* State Treatment Guides */}
+      {(() => {
+        const articles = getStateArticles(stateData.slug);
+        if (articles.length === 0) return null;
+        return (
+          <section className="py-10 border-t border-border/40">
+            <div className="container">
+              <h2 className="mb-4 text-lg font-bold text-foreground">{stateData.name} Treatment Guides</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {articles.map(a => (
+                  <Link
+                    key={a.slug}
+                    to={`/rehab-centers/${stateData.slug}/articles/${a.slug}`}
+                    className="group rounded-lg border border-border/60 bg-card p-4 hover:border-primary/40 transition-all"
+                  >
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                      {a.type === "how-to-find" ? "Guide" : a.type === "cost-of-rehab" ? "Cost" : "Cities"}
+                    </span>
+                    <p className="mt-1 text-sm font-medium text-foreground group-hover:text-primary transition-colors leading-snug">{a.title}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* CTA Section */}
       <section className="py-16 md:py-20">

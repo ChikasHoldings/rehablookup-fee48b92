@@ -6,6 +6,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountyBySlug, getCountiesForState, getStateCountyData } from "@/data/countySeoData";
+import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -419,6 +420,31 @@ export default function CountyPage() {
             </div>
           </div>
         </section>
+
+        {/* State Treatment Guides */}
+        {(() => {
+          const articles = getStateArticles(stateData.slug);
+          if (articles.length === 0) return null;
+          return (
+            <section className="py-8">
+              <h2 className="mb-4 text-lg font-bold text-foreground">{stateData.name} Treatment Guides</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {articles.map(a => (
+                  <Link
+                    key={a.slug}
+                    to={`/rehab-centers/${stateData.slug}/articles/${a.slug}`}
+                    className="group rounded-lg border border-border/60 bg-card p-4 hover:border-primary/40 transition-all"
+                  >
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                      {a.type === "how-to-find" ? "Guide" : a.type === "cost-of-rehab" ? "Cost" : "Cities"}
+                    </span>
+                    <p className="mt-1 text-sm font-medium text-foreground group-hover:text-primary transition-colors leading-snug">{a.title}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* CTA */}
         <section className="rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-8 md:p-12 text-center">
