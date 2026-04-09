@@ -726,22 +726,28 @@ export function ManagerDashboard() {
   );
 }
 
-// Inline sub-component: recent escalations with quick-resolve
+// Inline sub-component: recent escalations with quick-resolve & assign
 function RecentEscalationsList() {
   const queryClient = useQueryClient();
+  const { user } = useAdminAuth();
 
   const { data: recentEscalations } = useQuery({
     queryKey: ["manager-recent-escalations"],
     queryFn: async () => {
       const { data } = await supabase
         .from("admin_escalations")
-        .select("id, subject, priority, status, created_at, created_by")
+        .select("id, subject, priority, status, created_at, created_by, assigned_to")
         .in("status", ["open", "in_progress"])
         .order("created_at", { ascending: false })
         .limit(5);
       return data || [];
     },
   });
+
+  const invalidateEscalations = () => {
+    queryClient.invalidateQueries({ queryKey: ["manager-recent-escalations"] });
+    queryClient.invalidateQueries({ queryKey: ["manager-escalation-stats"] });
+  };
 
   const resolveMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -752,8 +758,23 @@ function RecentEscalationsList() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["manager-recent-escalations"] });
-      queryClient.invalidateQueries({ queryKey: ["manager-escalation-stats"] });
+      toast.success("Escalation resolved");
+      invalidateEscalations();
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user?.id) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("admin_escalations")
+        .update({ assigned_to: user.id, status: "in_progress" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Assigned to you");
+      invalidateEscalations();
     },
   });
 
@@ -768,28 +789,47 @@ function RecentEscalationsList() {
 
   return (
     <div className="space-y-2 pt-2 border-t">
-      {recentEscalations.map((esc: any) => (
-        <div key={esc.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{esc.subject}</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <Badge variant="outline" className={`text-[10px] ${priorityColors[esc.priority] || ""}`}>{esc.priority}</Badge>
-              <span className="text-[10px] text-muted-foreground">
-                {new Date(esc.created_at).toLocaleDateString()}
-              </span>
+      {recentEscalations.map((esc: any) => {
+        const isAssignedToMe = esc.assigned_to === user?.id;
+        return (
+          <div key={esc.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{esc.subject}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Badge variant="outline" className={`text-[10px] ${priorityColors[esc.priority] || ""}`}>{esc.priority}</Badge>
+                {esc.status === "in_progress" && (
+                  <Badge variant="outline" className="text-[10px] bg-info/10 text-info">In Progress</Badge>
+                )}
+                <span className="text-[10px] text-muted-foreground">
+                  {new Date(esc.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 ml-2 shrink-0">
+              {!isAssignedToMe && esc.status === "open" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={() => assignMutation.mutate(esc.id)}
+                  disabled={assignMutation.isPending}
+                >
+                  Take
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs h-7"
+                onClick={() => resolveMutation.mutate(esc.id)}
+                disabled={resolveMutation.isPending}
+              >
+                Resolve
+              </Button>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 ml-2 text-xs h-7"
-            onClick={() => resolveMutation.mutate(esc.id)}
-            disabled={resolveMutation.isPending}
-          >
-            Resolve
-          </Button>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
