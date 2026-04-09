@@ -82,7 +82,6 @@ export function ManagerDashboard() {
       const activeAdvisors = advisors.filter(a => a.status === "active").length;
       const activeReps = reps.filter(r => r.status === "active").length;
 
-      // Recently active (logged in within 24h)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const recentlyActive = staff?.filter(s => s.last_login_at && s.last_login_at > oneDayAgo).length || 0;
 
@@ -95,6 +94,7 @@ export function ManagerDashboard() {
         totalStaff: (staff?.length || 0),
       };
     },
+    staleTime: 60 * 1000,
   });
 
   // Escalation stats
@@ -112,6 +112,7 @@ export function ManagerDashboard() {
         critical: critical.count || 0,
       };
     },
+    staleTime: 30 * 1000,
   });
 
   // Placement pipeline stats
@@ -131,6 +132,7 @@ export function ManagerDashboard() {
         placedThisMonth: thisMonth.count || 0,
       };
     },
+    staleTime: 60 * 1000,
   });
 
   // Revenue stats
@@ -170,6 +172,7 @@ export function ManagerDashboard() {
         approvalRate: total.count ? Math.round(((approved.count || 0) / total.count) * 100) : 0,
       };
     },
+    staleTime: 2 * 60 * 1000,
   });
 
   // Lead stats
@@ -195,6 +198,7 @@ export function ManagerDashboard() {
         newLeads: newLeads.count || 0,
       };
     },
+    staleTime: 2 * 60 * 1000,
   });
 
   // Subscription stats
@@ -212,6 +216,7 @@ export function ManagerDashboard() {
         canceled: canceled.count || 0,
       };
     },
+    staleTime: 2 * 60 * 1000,
   });
 
   const escalationCount = (escalationStats?.open || 0) + (escalationStats?.inProgress || 0);
