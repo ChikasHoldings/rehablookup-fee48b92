@@ -6,6 +6,7 @@ import { statesData } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import {
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
   Phone,
   Clock,
   Shield,
@@ -164,6 +165,17 @@ const CityAlcoholRehab = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["alcohol"]}
+        heading={`Alcohol Rehab in ${cityName}, ${abbreviation}`}
+        subheading={`Browse verified alcohol treatment facilities in ${cityName}, ${stateName}`}
+      />
+
 
       {/* Warning Signs Section */}
       <section className="py-12 md:py-16">

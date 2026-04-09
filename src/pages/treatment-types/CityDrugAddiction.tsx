@@ -20,6 +20,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 
 const substancesTreated = [
   { name: "Opioids", description: "Heroin, fentanyl, prescription painkillers (oxycodone, hydrocodone)" },
@@ -215,6 +216,17 @@ const CityDrugAddiction = () => {
           </div>
         </div>
       </section>
+
+      {/* Facility Listings */}
+      <StateFacilitiesSection
+        stateName={stateName}
+        stateSlug={stateSlug!}
+        abbreviation={abbreviation}
+        treatmentFilter={["drug", "substance", "opioid", "heroin"]}
+        heading={`Drug Rehab in ${cityName}, ${abbreviation}`}
+        subheading={`Browse verified drug treatment facilities in ${cityName}, ${stateName}`}
+      />
+
 
       {/* Why Choose Section */}
       <section className="py-12 md:py-16">
