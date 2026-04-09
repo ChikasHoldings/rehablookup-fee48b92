@@ -739,6 +739,8 @@ export function CustomerRepDashboard() {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
       {/* Support Ticket Detail Modal - inline open from dashboard */}
       <SupportTicketModal
         ticket={selectedTicketId ? { id: selectedTicketId } as any : null}
