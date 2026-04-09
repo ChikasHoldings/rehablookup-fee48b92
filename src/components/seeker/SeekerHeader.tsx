@@ -180,7 +180,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     const reviewTypes = ["review_response", "review_helpful"];
     
     if (inquiryTypes.includes(notification.type)) {
-      navigate("/account/inquiries");
+      navigate("/account/requests");
     } else if (facilityTypes.includes(notification.type)) {
       navigate("/account/saved");
     } else if (reviewTypes.includes(notification.type)) {
