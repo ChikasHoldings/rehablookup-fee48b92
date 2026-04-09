@@ -4,6 +4,8 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { getStateArticle, getStateArticles } from "@/data/stateArticlesData";
+import { getStateBySlug } from "@/data/locationSeoData";
+import { getCountiesForState } from "@/data/countySeoData";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
