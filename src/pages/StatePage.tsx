@@ -398,25 +398,15 @@ const StatePage = () => {
             </div>
           </div>
           
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="flex flex-wrap gap-2">
             {displayedCities?.map(city => (
               <Link
                 key={city.slug}
                 to={`/rehab-centers/${stateData.slug}/${city.slug}`}
-                className="group flex items-center justify-between rounded-xl border bg-background p-4 transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-3.5 py-1.5 text-sm font-medium text-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary hover:shadow-sm"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-                    <MapPin className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                      {city.name}
-                    </span>
-                    <p className="text-xs text-muted-foreground">View Centers</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-primary" />
+                <MapPin className="h-3 w-3 text-primary/70" />
+                {city.name}
               </Link>
             ))}
           </div>
@@ -723,13 +713,14 @@ const StatePage = () => {
             <h2 className="mb-6 font-display text-xl font-bold text-foreground md:text-2xl">
               Counties in {stateData.name}
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className="flex flex-wrap gap-2">
               {counties.map((county) => (
                 <Link
                   key={county.slug}
                   to={`/rehab-centers/${stateData.slug}/county/${county.slug}`}
-                  className="rounded-lg border border-border/60 bg-card px-3 py-2.5 text-sm font-medium text-foreground hover:border-primary/40 hover:bg-accent/5 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-3.5 py-1.5 text-sm font-medium text-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary hover:shadow-sm"
                 >
+                  <MapPin className="h-3 w-3 text-primary/70" />
                   {county.name} County
                 </Link>
               ))}
