@@ -622,6 +622,7 @@ function generateStateNearMeRoutes(): RouteEntry[] {
   return routes;
 }
 
+function generateTreatmentGeoRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
   for (const type of TREATMENT_TYPES_WITH_GEO) {
     for (const state of TOP_STATES_FOR_TREATMENT) {
