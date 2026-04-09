@@ -585,18 +585,6 @@ function generateStateArticleRoutes(): RouteEntry[] {
 }
 
 
-  const routes: RouteEntry[] = [];
-  for (const state of TOP_STATES_FOR_NEAR_ME) {
-    for (const type of NEAR_ME_TYPES_WITH_STATES) {
-      routes.push({
-        path: `/${type}/${state}`,
-        priority: 0.8,
-        changefreq: "weekly"
-      });
-    }
-  }
-  return routes;
-}
 
 const NEAR_ME_PREFIXES = [
   "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
