@@ -234,25 +234,44 @@ export function EscalationDetailSheet({
                 <div className="space-y-4">
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</h4>
 
-                  {/* Assign */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Assign to</label>
-                    <Select
-                      value={escalation.assigned_to || "unassigned_sentinel"}
-                      onValueChange={(v) => v !== "unassigned_sentinel" && handleAssign(v)}
-                    >
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Select admin..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned_sentinel" disabled>Unassigned</SelectItem>
-                        {assignableAdmins?.map((a) => (
-                          <SelectItem key={a.user_id} value={a.user_id}>
-                            {a.display_name || [a.first_name, a.last_name].filter(Boolean).join(" ") || "Admin"} ({a.admin_role})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Priority + Assignment row */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Priority</label>
+                      <Select
+                        value={escalation.priority}
+                        onValueChange={(v) => updateMutation.mutate({ id: escalation.id, priority: v })}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="critical">Critical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Assign to</label>
+                      <Select
+                        value={escalation.assigned_to || "unassigned_sentinel"}
+                        onValueChange={(v) => v !== "unassigned_sentinel" && handleAssign(v)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned_sentinel" disabled>Unassigned</SelectItem>
+                          {assignableAdmins?.map((a) => (
+                            <SelectItem key={a.user_id} value={a.user_id}>
+                              {a.display_name || [a.first_name, a.last_name].filter(Boolean).join(" ") || "Admin"} ({a.admin_role})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   {/* Quick claim */}
