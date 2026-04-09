@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
+import { SuperAdminActivityFeed } from "@/components/admin/dashboard/SuperAdminActivityFeed";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
 import LowCreditMonitorWidget from "@/components/admin/LowCreditMonitorWidget";
 import {
@@ -309,13 +310,16 @@ export function SuperAdminDashboard() {
         <TopCitiesCard topCities={topCities} />
       </div>
 
-      {/* Recent Leads + Activity Widgets */}
+      {/* Recent Leads + Activity Feed */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <RecentLeadsCard recentLeads={recentLeads} />
-        <div className="space-y-4 sm:space-y-6">
-          <SubscriptionActivityWidget />
-          <LowCreditMonitorWidget />
-        </div>
+        <SuperAdminActivityFeed />
+      </div>
+
+      {/* Subscription & Credit Widgets */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+        <SubscriptionActivityWidget />
+        <LowCreditMonitorWidget />
       </div>
     </div>
   );
