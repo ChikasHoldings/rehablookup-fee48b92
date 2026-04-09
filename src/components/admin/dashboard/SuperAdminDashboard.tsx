@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { SuperAdminActivityFeed } from "@/components/admin/dashboard/SuperAdminActivityFeed";
@@ -13,7 +14,9 @@ import {
   TopCitiesCard,
   RecentLeadsCard,
 } from "@/components/admin/dashboard";
-import { Shield, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Shield, Sparkles, ChevronRight } from "lucide-react";
 
 const PLAN_COLORS = {
   free: "hsl(215, 16%, 47%)",
