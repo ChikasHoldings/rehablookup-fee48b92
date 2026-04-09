@@ -177,9 +177,10 @@ export function CustomerRepDashboard() {
     setSelectedTicketId(ticketId);
   };
 
-  // Resolve ticket inline
+  // Resolve ticket inline with confirmation
   const resolveTicket = async (ticketId: string) => {
     if (!user?.id) return;
+    if (!window.confirm("Are you sure you want to mark this ticket as resolved?")) return;
     const { error } = await supabase
       .from("support_tickets")
       .update({ status: "resolved", resolved_at: new Date().toISOString() })
