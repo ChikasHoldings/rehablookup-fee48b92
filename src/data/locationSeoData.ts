@@ -925,6 +925,10 @@ export const statesData: StateData[] = [
       { name: "Green Bay", slug: "green-bay", population: 107395, description: "Green Bay offers accessible treatment in northeastern Wisconsin.", metaDescription: "Rehab centers in Green Bay, WI. Find drug treatment near you." },
       { name: "Kenosha", slug: "kenosha", population: 99877, description: "Kenosha provides treatment in southeastern Wisconsin.", metaDescription: "Drug rehab in Kenosha, WI. Find addiction treatment centers." },
       { name: "Racine", slug: "racine", population: 77816, description: "Racine offers accessible treatment south of Milwaukee.", metaDescription: "Addiction treatment in Racine, WI. Browse rehab facilities." },
+      { name: "Appleton", slug: "appleton", population: 75644, description: "Appleton provides treatment in the Fox Valley.", metaDescription: "Drug rehab in Appleton, WI. Find addiction treatment." },
+      { name: "Waukesha", slug: "waukesha", population: 72489, description: "Waukesha offers treatment in the Milwaukee metro.", metaDescription: "Addiction treatment in Waukesha, WI. Browse rehab facilities." },
+      { name: "Eau Claire", slug: "eau-claire", population: 69421, description: "Eau Claire provides treatment in western Wisconsin.", metaDescription: "Rehab centers in Eau Claire, WI. Find drug treatment." },
+      { name: "Oshkosh", slug: "oshkosh", population: 66778, description: "Oshkosh offers treatment on the Fox River.", metaDescription: "Drug rehab in Oshkosh, WI. Find addiction treatment." },
     ],
   },
   {
