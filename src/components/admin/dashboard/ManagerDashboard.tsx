@@ -225,8 +225,8 @@ export function ManagerDashboard() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3">
-        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg shrink-0">
-          <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shrink-0">
+          <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
         </div>
         <div className="min-w-0">
           <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground truncate">Operations Dashboard</h1>
@@ -817,7 +817,10 @@ function RecentEscalationsList() {
                   variant="ghost"
                   size="sm"
                   className="text-xs h-7"
-                  onClick={() => assignMutation.mutate(esc.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    assignMutation.mutate(esc.id);
+                  }}
                   disabled={assignMutation.isPending}
                 >
                   Take
@@ -827,7 +830,11 @@ function RecentEscalationsList() {
                 variant="outline"
                 size="sm"
                 className="text-xs h-7"
-                onClick={() => resolveMutation.mutate(esc.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!window.confirm("Mark this escalation as resolved?")) return;
+                  resolveMutation.mutate(esc.id);
+                }}
                 disabled={resolveMutation.isPending}
               >
                 Resolve
