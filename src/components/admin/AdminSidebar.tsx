@@ -1,28 +1,7 @@
 import { memo, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { TransitionNavLink } from "@/components/ui/transition-nav-link";
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  UserSearch,
-  CreditCard,
-  ClipboardList,
-  Settings,
-  ShieldCheck,
-  BarChart3,
-  ShieldAlert,
-  ChevronDown,
-  UserPlus,
-  MessageSquare,
-  Headphones,
-  Megaphone,
-  FileText,
-  Inbox,
-  AlertTriangle,
-  Landmark,
-  Minus,
-} from "lucide-react";
+import { ChevronDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
 import {
@@ -31,130 +10,32 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useAdminSidebarCounts, type AdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
-
-interface NavItem {
-  to: string;
-  icon: React.ElementType;
-  label: string;
-  end?: boolean;
-  permission: string;
-  countKey?: keyof AdminSidebarCounts;
-}
-
-interface NavGroup {
-  icon: React.ElementType;
-  label: string;
-  permission: string;
-  items: NavItem[];
-}
-
-interface NavSection {
-  sectionLabel: string;
-  entries: NavEntry[];
-}
-
-type NavEntry = NavItem | NavGroup;
-
-const isNavGroup = (entry: NavEntry): entry is NavGroup => {
-  return 'items' in entry;
-};
-
-/**
- * Sidebar navigation organized into logical sections:
- * - Core: Dashboard
- * - Operations: Leads, Placements, Providers, Subscriptions
- * - Communications: Support, Reviews, Escalations
- * - Content: Marketing, Blog
- * - Users: Seekers/Users
- * - Analytics: Analytics
- * - Administration: Staff, Back Office, Security, Audit, Settings
- */
-const navSections: NavSection[] = [
-  {
-    sectionLabel: "",
-    entries: [
-      { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
-    ],
-  },
-  {
-    sectionLabel: "Operations",
-    entries: [
-      { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
-      { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
-      {
-        icon: UserPlus,
-        label: "Placements",
-        permission: "placements",
-        items: [
-          { to: "/admin/concierge", icon: UserPlus, label: "Command Center", permission: "placements", countKey: "placements" },
-          { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
-          { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-        ],
-      },
-      { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
-    ],
-  },
-  {
-    sectionLabel: "Communications",
-    entries: [
-      { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support", countKey: "supportTickets" },
-      { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", permission: "reviews", countKey: "pendingReviews" },
-      { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations", countKey: "openEscalations" },
-    ],
-  },
-  {
-    sectionLabel: "Content",
-    entries: [
-      { to: "/admin/marketing", icon: Megaphone, label: "Marketing Leads", permission: "leads", countKey: "marketingLeads" },
-      { to: "/admin/blog", icon: FileText, label: "Blog Articles", permission: "providers" },
-    ],
-  },
-  {
-    sectionLabel: "Users",
-    entries: [
-      { to: "/admin/seekers", icon: UserSearch, label: "Platform Users", permission: "seekers" },
-    ],
-  },
-  {
-    sectionLabel: "Insights",
-    entries: [
-      { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-    ],
-  },
-  {
-    sectionLabel: "Administration",
-    entries: [
-      {
-        icon: ShieldCheck,
-        label: "System",
-        permission: "users",
-        items: [
-          { to: "/admin/users", icon: ShieldCheck, label: "Admin Staff", permission: "users" },
-          { to: "/admin/back-office", icon: Landmark, label: "Back Office", permission: "back_office" },
-          { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
-          { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
-        ],
-      },
-      { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
-    ],
-  },
-];
+import {
+  type NavItem,
+  type NavGroup,
+  type NavEntry,
+  type NavSection,
+  isNavGroup,
+  getNavSectionsForRole,
+} from "./adminNavConfig";
+import type { AdminRoleType } from "@/hooks/useAdminAuth";
 
 interface AdminSidebarProps {
   isSuperAdmin: boolean;
   hasPermission: (permissionKey: string) => boolean;
+  adminRole?: AdminRoleType;
 }
 
-function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProps) {
+function AdminSidebarComponent({ isSuperAdmin, hasPermission, adminRole = "customer_rep" }: AdminSidebarProps) {
   const location = useLocation();
   const { data: counts } = useAdminSidebarCounts();
 
-  // Flatten all entries to initialize open groups
-  const allEntries = navSections.flatMap((s) => s.entries);
-  
+  // Get role-specific navigation
+  const navSections = getNavSectionsForRole(adminRole, isSuperAdmin);
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    allEntries.forEach((entry) => {
+    navSections.flatMap((s) => s.entries).forEach((entry) => {
       if (isNavGroup(entry)) {
         const hasActiveChild = entry.items.some((item) => location.pathname.startsWith(item.to));
         if (hasActiveChild) {
