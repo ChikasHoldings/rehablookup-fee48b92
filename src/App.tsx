@@ -67,6 +67,7 @@ const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatment
 const InsuranceStatePage = lazy(() => import("./pages/seo/InsuranceStatePage"));
 const DemographicTreatmentPage = lazy(() => import("./pages/seo/DemographicTreatmentPage"));
 const SeekerGuidePage = lazy(() => import("./pages/seo/SeekerGuidePage"));
+const StateArticlePage = lazy(() => import("./pages/seo/StateArticlePage"));
 // BestInStatePage moved to SmartCatchAll
 
 // Provider SEO Pages
@@ -412,6 +413,7 @@ const AppInner = () => {
             <Route path="/locations" element={<PublicRouteGuard><Locations /></PublicRouteGuard>} />
             <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
             <Route path="/search-results" element={<PublicRouteGuard><SearchResults /></PublicRouteGuard>} />
+            <Route path="/rehab-centers/:stateSlug/articles/:articleSlug" element={<PublicRouteGuard><StateArticlePage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/county/:countySlug" element={<PublicRouteGuard><CountyPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/:citySlug" element={<PublicRouteGuard><CityPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug" element={<PublicRouteGuard><StatePage /></PublicRouteGuard>} />
