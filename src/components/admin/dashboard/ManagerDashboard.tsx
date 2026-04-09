@@ -748,6 +748,7 @@ function RecentEscalationsList() {
         .limit(5);
       return data || [];
     },
+    staleTime: 30 * 1000,
   });
 
   const invalidateEscalations = () => {
@@ -767,6 +768,9 @@ function RecentEscalationsList() {
       toast.success("Escalation resolved");
       invalidateEscalations();
     },
+    onError: () => {
+      toast.error("Failed to resolve escalation");
+    },
   });
 
   const assignMutation = useMutation({
@@ -781,6 +785,9 @@ function RecentEscalationsList() {
     onSuccess: () => {
       toast.success("Assigned to you");
       invalidateEscalations();
+    },
+    onError: () => {
+      toast.error("Failed to assign escalation");
     },
   });
 
