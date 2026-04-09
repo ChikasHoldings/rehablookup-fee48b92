@@ -20,7 +20,7 @@ export function useAdminNotifications() {
   const { data: notifications = [], isLoading, error, refetch } = useQuery({
     queryKey: ["admin-notifications"],
     queryFn: async () => {
-      console.log('[useAdminNotifications] Fetching notifications...');
+      
       const { data, error } = await supabase
         .from("admin_notifications")
         .select("id, title, message, type, read, metadata, created_at")
@@ -32,7 +32,7 @@ export function useAdminNotifications() {
         logAdminError("useAdminNotifications", "fetch_notifications", error, { queryKey: "admin-notifications" });
         return [];
       }
-      console.log('[useAdminNotifications] Loaded', data?.length || 0, 'notifications');
+      
       return (data || []) as AdminNotification[];
     },
     staleTime: 30 * 1000,

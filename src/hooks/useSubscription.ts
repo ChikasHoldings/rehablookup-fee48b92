@@ -62,15 +62,15 @@ export function useSubscription() {
     queryFn: async (): Promise<SubscriptionData> => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      console.log("[useSubscription] Session check:", { hasSession: !!session, sessionError });
+      
       
       if (!session) {
-        console.warn("[useSubscription] No session, returning default");
+        
         return DEFAULT_SUBSCRIPTION;
       }
 
       try {
-        console.log("[useSubscription] Invoking check-subscription function");
+        
         const { data, error } = await supabase.functions.invoke("check-subscription");
         
         if (error) {
@@ -79,7 +79,7 @@ export function useSubscription() {
           return getCachedSubscription() || DEFAULT_SUBSCRIPTION;
         }
         
-        console.log("[useSubscription] Subscription result:", data);
+        
         const subscriptionData = data as SubscriptionData;
         // Cache the result for instant future loads
         cacheSubscription(subscriptionData);

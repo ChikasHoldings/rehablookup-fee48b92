@@ -31,8 +31,6 @@ export async function logAdminAction({
 
     if (error) {
       console.error("Error logging admin action:", error);
-    } else {
-      console.log(`Audit logged: ${actionType} on ${targetType}`);
     }
   } catch (err) {
     console.error("Error in logAdminAction:", err);

@@ -145,7 +145,7 @@ export function useAdminUserManagement() {
         "postgres_changes",
         { event: "*", schema: "public", table: "user_roles" },
         (payload) => {
-          console.log("User roles update:", payload.eventType);
+          
           invalidateAdminUsers();
         }
       )
@@ -157,7 +157,7 @@ export function useAdminUserManagement() {
         "postgres_changes",
         { event: "*", schema: "public", table: "admin_user_profiles" },
         (payload) => {
-          console.log("Admin profiles update:", payload.eventType);
+          
           invalidateAdminUsers();
         }
       )
