@@ -16,7 +16,7 @@ export function AdvisorEarningsCard() {
 
       const { data, error } = await supabase
         .from("advisor_earnings")
-        .select("*")
+        .select("id, advisor_id, inquiry_id, commission_cents, commission_rate, placement_fee_cents, status, paid_at, created_at")
         .eq("advisor_id", user.id)
         .order("created_at", { ascending: false });
 
