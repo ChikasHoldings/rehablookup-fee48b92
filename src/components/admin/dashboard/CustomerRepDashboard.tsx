@@ -37,6 +37,7 @@ export function CustomerRepDashboard() {
   const [escalateDescription, setEscalateDescription] = useState("");
   const [escalatePriority, setEscalatePriority] = useState<string>("medium");
   const [isEscalating, setIsEscalating] = useState(false);
+  const [moderatingReviewId, setModeratingReviewId] = useState<string | null>(null);
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["rep-ticket-stats"] });
@@ -502,7 +503,48 @@ export function CustomerRepDashboard() {
                           <p className="text-sm font-medium truncate mt-1">{review.facilities?.name || "Unknown"}</p>
                           <p className="text-xs text-muted-foreground truncate">{review.review_text ? `${review.review_text.slice(0, 60)}...` : "No text"}</p>
                         </div>
-                        <Badge variant="outline" className="ml-2 bg-warning/10 text-warning border-warning/30 text-[10px] shrink-0">Pending</Badge>
+                        <div className="flex items-center gap-1 ml-2 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-success hover:text-success hover:bg-success/10"
+                            title="Approve review"
+                            disabled={moderatingReviewId === review.id}
+                            onClick={async () => {
+                              setModeratingReviewId(review.id);
+                              const { error } = await supabase
+                                .from("facility_reviews")
+                                .update({ status: "approved" })
+                                .eq("id", review.id);
+                              setModeratingReviewId(null);
+                              if (error) { toast.error("Failed to approve"); return; }
+                              toast.success("Review approved");
+                              invalidateDashboard();
+                            }}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Reject review"
+                            disabled={moderatingReviewId === review.id}
+                            onClick={async () => {
+                              setModeratingReviewId(review.id);
+                              const { error } = await supabase
+                                .from("facility_reviews")
+                                .update({ status: "rejected" })
+                                .eq("id", review.id);
+                              setModeratingReviewId(null);
+                              if (error) { toast.error("Failed to reject"); return; }
+                              toast.success("Review rejected");
+                              invalidateDashboard();
+                            }}
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

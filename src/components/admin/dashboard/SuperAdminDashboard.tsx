@@ -17,7 +17,7 @@ import {
 } from "@/components/admin/dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Sparkles, ChevronRight } from "lucide-react";
+import { Shield, Sparkles, ChevronRight, AlertTriangle } from "lucide-react";
 
 const PLAN_COLORS = {
   free: "hsl(215, 16%, 47%)",
@@ -284,8 +284,51 @@ export function SuperAdminDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch critical escalations for alert banner
+  const { data: criticalEscalations } = useQuery({
+    queryKey: ["admin-critical-escalations"],
+    queryFn: async () => {
+      const [critical, totalOpen] = await Promise.all([
+        supabase.from("admin_escalations").select("id, subject, created_at").eq("status", "open").eq("priority", "critical").order("created_at", { ascending: false }).limit(3),
+        supabase.from("admin_escalations").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+      ]);
+      return { critical: critical.data || [], criticalCount: critical.data?.length || 0, totalOpen: totalOpen.count || 0 };
+    },
+    staleTime: 60 * 1000,
+  });
+
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Critical Escalation Alert */}
+      {criticalEscalations && criticalEscalations.criticalCount > 0 && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-destructive">{criticalEscalations.criticalCount} Critical Escalation{criticalEscalations.criticalCount > 1 ? "s" : ""}</p>
+                <p className="text-xs text-muted-foreground">{criticalEscalations.totalOpen} total open · Needs immediate attention</p>
+              </div>
+            </div>
+            <Button variant="destructive" size="sm" asChild>
+              <Link to="/admin/escalations">Review Now</Link>
+            </Button>
+          </div>
+          {criticalEscalations.critical.length > 0 && (
+            <div className="mt-3 space-y-1.5 border-t border-destructive/20 pt-3">
+              {criticalEscalations.critical.map((esc: any) => (
+                <div key={esc.id} className="flex items-center gap-2 text-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-destructive flex-shrink-0" />
+                  <span className="font-medium truncate">{esc.subject}</span>
+                  <span className="text-muted-foreground ml-auto flex-shrink-0">{new Date(esc.created_at).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3">
         <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shrink-0">
