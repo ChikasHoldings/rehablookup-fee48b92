@@ -61,7 +61,7 @@ const CityDrugAddiction = () => {
   const cityData = stateData?.cities.find((c) => c.slug === citySlug);
 
   if (!stateData || !cityData) {
-    return <Navigate to="/treatment-types/drug-addiction" replace />;
+    return <Navigate to="/treatment-types/drug-addiction-treatment" replace />;
   }
 
   const { name: stateName, abbreviation } = stateData;

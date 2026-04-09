@@ -435,7 +435,7 @@ const ResidentialInpatient = () => {
                 Outpatient Programs
               </Button>
             </Link>
-            <Link to="/treatment-types/drug-addiction">
+            <Link to="/treatment-types/drug-addiction-treatment">
               <Button variant="outline" className="gap-2">
                 <Pill className="h-4 w-4" />
                 Drug Addiction
