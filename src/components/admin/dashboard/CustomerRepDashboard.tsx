@@ -745,8 +745,7 @@ export function CustomerRepDashboard() {
       <SupportTicketModal
         ticket={selectedTicketId ? { id: selectedTicketId } as any : null}
         open={!!selectedTicketId}
-        onOpenChange={(open) => { if (!open) setSelectedTicketId(null); }}
-        onTicketUpdated={invalidateDashboard}
+        onOpenChange={(open) => { if (!open) { setSelectedTicketId(null); invalidateDashboard(); } }}
       />
     </div>
   );
