@@ -520,7 +520,8 @@ export function isRouteAllowedForRole(pathname: string, role: UserRole): boolean
 
   switch (role) {
     case "admin":
-      return pathname.startsWith("/admin");
+      return pathname.startsWith("/admin") || 
+             !pathname.startsWith("/provider") && !pathname.startsWith("/account");
     case "provider":
       return pathname.startsWith("/provider") || 
              PROVIDER_ALLOWED_PUBLIC_ROUTES.some(r => pathname.startsWith(r));
