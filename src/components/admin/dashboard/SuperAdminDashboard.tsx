@@ -268,7 +268,7 @@ export function SuperAdminDashboard() {
   });
 
   // Fetch placement pipeline stats
-  const { data: placementStats } = useQuery({
+  const { data: placementStats } = useQuery<Record<string, number>>({
     queryKey: ["admin-placement-pipeline"],
     queryFn: async () => {
       const stages = ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed", "closed"];
@@ -277,8 +277,8 @@ export function SuperAdminDashboard() {
       );
       const counts: Record<string, number> = {};
       stages.forEach((s, i) => { counts[s] = results[i].count || 0; });
-      const active = counts.new + counts.reviewing + counts.matching + counts.matched + counts.introductions_sent + counts.in_contact;
-      return { ...counts, active };
+      counts.active = counts.new + counts.reviewing + counts.matching + counts.matched + counts.introductions_sent + counts.in_contact;
+      return counts;
     },
     staleTime: 5 * 60 * 1000,
   });
