@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { SupportTicketModal } from "@/components/admin/SupportTicketModal";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -27,6 +29,7 @@ import {
   ArrowUpRight,
   Eye,
   MailOpen,
+  Loader2,
 } from "lucide-react";
 
 export function CustomerRepDashboard() {
@@ -38,6 +41,8 @@ export function CustomerRepDashboard() {
   const [escalatePriority, setEscalatePriority] = useState<string>("medium");
   const [isEscalating, setIsEscalating] = useState(false);
   const [moderatingReviewId, setModeratingReviewId] = useState<string | null>(null);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [claimingTicketId, setClaimingTicketId] = useState<string | null>(null);
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["rep-ticket-stats"] });
@@ -155,13 +160,17 @@ export function CustomerRepDashboard() {
   // Claim ticket
   const claimTicket = async (ticketId: string) => {
     if (!user?.id) return;
+    setClaimingTicketId(ticketId);
     const { error } = await supabase
       .from("support_tickets")
       .update({ assigned_to: user.id, assigned_at: new Date().toISOString(), assigned_by: user.id, status: "open" })
       .eq("id", ticketId);
+    setClaimingTicketId(null);
     if (error) { toast.error("Failed to claim ticket"); return; }
-    toast.success("Ticket claimed");
+    toast.success("Ticket claimed — opening details...");
     invalidateDashboard();
+    // Auto-open the ticket detail
+    setSelectedTicketId(ticketId);
   };
 
   // Resolve ticket inline
@@ -360,7 +369,7 @@ export function CustomerRepDashboard() {
               ) : myTickets && myTickets.length > 0 ? (
                 <div className="space-y-2">
                   {myTickets.map((ticket: any) => (
-                    <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedTicketId(ticket.id)}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium truncate">{ticket.subject || ticket.category}</p>
@@ -452,9 +461,14 @@ export function CustomerRepDashboard() {
                         variant="outline"
                         size="sm"
                         className="shrink-0 ml-2 text-xs"
+                        disabled={claimingTicketId === ticket.id}
                         onClick={() => claimTicket(ticket.id)}
                       >
-                        Claim
+                        {claimingTicketId === ticket.id ? (
+                          <><Loader2 className="h-3 w-3 animate-spin mr-1" />Claiming</>
+                        ) : (
+                          "Claim"
+                        )}
                       </Button>
                     </div>
                   ))}
@@ -690,8 +704,7 @@ export function CustomerRepDashboard() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">Subject</label>
-              <input
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              <Input
                 value={escalateSubject}
                 onChange={(e) => setEscalateSubject(e.target.value)}
                 placeholder="Brief description of the issue"
@@ -727,6 +740,13 @@ export function CustomerRepDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Support Ticket Detail Modal - inline open from dashboard */}
+      <SupportTicketModal
+        ticket={selectedTicketId ? { id: selectedTicketId } as any : null}
+        open={!!selectedTicketId}
+        onOpenChange={(open) => { if (!open) { setSelectedTicketId(null); invalidateDashboard(); } }}
+      />
     </div>
   );
 }
