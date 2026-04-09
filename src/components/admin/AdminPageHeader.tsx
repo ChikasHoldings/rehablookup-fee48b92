@@ -28,7 +28,7 @@ export function AdminPageHeader({
             iconGradient
           )}
         >
-          <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
