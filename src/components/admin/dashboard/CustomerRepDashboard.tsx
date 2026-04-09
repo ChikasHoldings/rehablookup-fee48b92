@@ -163,6 +163,18 @@ export function CustomerRepDashboard() {
     invalidateDashboard();
   };
 
+  // Resolve ticket inline
+  const resolveTicket = async (ticketId: string) => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from("support_tickets")
+      .update({ status: "resolved", resolved_at: new Date().toISOString() })
+      .eq("id", ticketId);
+    if (error) { toast.error("Failed to resolve ticket"); return; }
+    toast.success("Ticket resolved");
+    invalidateDashboard();
+  };
+
   // Escalate ticket
   const handleEscalate = async () => {
     if (!user?.id || !escalateSubject || !escalateDescription) return;
@@ -362,14 +374,24 @@ export function CustomerRepDashboard() {
                           {ticket.sender_name} · {ticket.source === "seeker_support" ? "Seeker" : ticket.source === "provider_support" ? "Provider" : "Contact"} · {formatTimeAgo(ticket.created_at)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                      <div className="flex items-center gap-1 ml-2 shrink-0">
                         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                           <Link to={`/admin/support?ticket=${ticket.id}`}><Eye className="h-3.5 w-3.5" /></Link>
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 text-success hover:text-success"
+                          title="Resolve ticket"
+                          onClick={() => resolveTicket(ticket.id)}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-7 w-7 text-warning hover:text-warning"
+                          title="Escalate"
                           onClick={() => {
                             setEscalateTicketId(ticket.id);
                             setEscalateSubject(`Escalation: ${ticket.subject || ticket.category}`);

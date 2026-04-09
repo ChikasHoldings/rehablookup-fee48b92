@@ -28,6 +28,7 @@ import {
   HandMetal,
   Loader2,
   AlertTriangle,
+  Building2,
 } from "lucide-react";
 
 type CaseView = "mine" | "unassigned" | "all";
@@ -648,6 +649,15 @@ export function AdvisorDashboard() {
               <div className="flex flex-col items-start min-w-0">
                 <span className="text-sm font-medium">Advisor Inbox</span>
                 <span className="text-xs text-muted-foreground">Messages & coordination</span>
+              </div>
+            </Link>
+          </Button>
+          <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-primary/10" asChild>
+            <Link to="/admin/provider-directory">
+              <Building2 className="h-5 w-5 text-primary mr-3 shrink-0" />
+              <div className="flex flex-col items-start min-w-0">
+                <span className="text-sm font-medium">Provider Directory</span>
+                <span className="text-xs text-muted-foreground">Enroll & outreach</span>
               </div>
             </Link>
           </Button>
