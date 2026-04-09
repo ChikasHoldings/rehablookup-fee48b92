@@ -28,6 +28,7 @@ import {
   ArrowUpRight,
   Eye,
   MailOpen,
+  Loader2,
 } from "lucide-react";
 
 export function CustomerRepDashboard() {
