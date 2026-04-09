@@ -54,15 +54,15 @@ export function CityLinkGrid({
       <h3 className="text-xl font-semibold text-foreground mb-6">
         {title || `${getTreatmentLabel()} in ${state.name} Cities`}
       </h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div className="flex flex-wrap gap-2">
         {state.cities.map((city) => (
           <Link
             key={city.slug}
             to={getHref(city.slug)}
-            className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-3.5 py-1.5 text-sm font-medium text-foreground transition-all hover:border-primary hover:bg-primary/10 hover:text-primary hover:shadow-sm"
           >
-            <span>{city.name}</span>
-            <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowRight className="h-3 w-3 text-primary/70" />
+            {city.name}
           </Link>
         ))}
       </div>
