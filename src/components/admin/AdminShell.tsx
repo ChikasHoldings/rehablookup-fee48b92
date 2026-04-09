@@ -19,25 +19,55 @@ import { useImpersonation } from "@/hooks/useImpersonation";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
-const mobileNavItems = [
-  { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
-  { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
-  { to: "/admin/seekers", icon: UserSearch, label: "Users", permission: "seekers" },
-  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
-  { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements" },
-  { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
-  { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support" },
-  { to: "/admin/marketing", icon: Megaphone, label: "Marketing", permission: "leads" },
-  { to: "/admin/blog", icon: FileText, label: "Blog", permission: "providers" },
-  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
-  { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-  { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", permission: "reviews" },
-  { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations" },
-  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
-  { to: "/admin/notifications", icon: Bell, label: "Notifications", permission: "dashboard" },
-  { to: "/admin/users", icon: ShieldAlert, label: "Admin Staff", permission: "users" },
-  { to: "/admin/back-office", icon: Landmark, label: "Back Office", permission: "back_office" },
-  { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
+interface MobileNavSection {
+  label: string;
+  items: { to: string; icon: React.ElementType; label: string; end?: boolean; permission: string }[];
+}
+
+const mobileNavSections: MobileNavSection[] = [
+  {
+    label: "",
+    items: [
+      { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads" },
+      { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
+      { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements" },
+      { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
+      { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
+    ],
+  },
+  {
+    label: "Communications",
+    items: [
+      { to: "/admin/support", icon: Headphones, label: "Support Inbox", permission: "support" },
+      { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", permission: "reviews" },
+      { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations" },
+    ],
+  },
+  {
+    label: "Content & Users",
+    items: [
+      { to: "/admin/marketing", icon: Megaphone, label: "Marketing", permission: "leads" },
+      { to: "/admin/blog", icon: FileText, label: "Blog", permission: "providers" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Platform Users", permission: "seekers" },
+      { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { to: "/admin/notifications", icon: Bell, label: "Notifications", permission: "dashboard" },
+      { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
+      { to: "/admin/users", icon: ShieldAlert, label: "Admin Staff", permission: "users" },
+      { to: "/admin/back-office", icon: Landmark, label: "Back Office", permission: "back_office" },
+      { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
+    ],
+  },
 ];
 
 function AccessDenied() {
