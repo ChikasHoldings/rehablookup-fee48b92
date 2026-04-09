@@ -409,6 +409,9 @@ export const statesData: StateData[] = [
       { name: "Germantown", slug: "germantown", population: 90494, description: "Germantown offers treatment in Montgomery County.", metaDescription: "Addiction treatment in Germantown, MD. Browse rehab facilities." },
       { name: "Silver Spring", slug: "silver-spring", population: 81015, description: "Silver Spring provides treatment near Washington DC.", metaDescription: "Rehab centers in Silver Spring, MD. Find drug treatment." },
       { name: "Rockville", slug: "rockville", population: 68155, description: "Rockville provides upscale treatment near Washington DC.", metaDescription: "Addiction treatment in Rockville, MD. Browse rehab facilities." },
+      { name: "Frederick", slug: "frederick", population: 78171, description: "Frederick offers treatment in western Maryland.", metaDescription: "Drug rehab in Frederick, MD. Find addiction treatment." },
+      { name: "Annapolis", slug: "annapolis", population: 40812, description: "Annapolis provides treatment as Maryland's capital.", metaDescription: "Addiction treatment in Annapolis, MD. Browse rehab facilities." },
+      { name: "Hagerstown", slug: "hagerstown", population: 44076, description: "Hagerstown offers treatment in the Western Maryland region.", metaDescription: "Rehab centers in Hagerstown, MD. Find drug treatment." },
     ],
   },
   {
@@ -423,6 +426,10 @@ export const statesData: StateData[] = [
       { name: "Springfield", slug: "springfield", population: 155929, description: "Springfield provides treatment in western Massachusetts.", metaDescription: "Rehab centers in Springfield, MA. Find drug treatment near you." },
       { name: "Cambridge", slug: "cambridge", population: 118403, description: "Cambridge offers research-backed treatment approaches.", metaDescription: "Drug rehab in Cambridge, MA. Find innovative treatment programs." },
       { name: "Lowell", slug: "lowell", population: 115554, description: "Lowell provides accessible treatment in the Merrimack Valley.", metaDescription: "Addiction treatment in Lowell, MA. Browse rehab facilities." },
+      { name: "Brockton", slug: "brockton", population: 105643, description: "Brockton offers treatment south of Boston.", metaDescription: "Drug rehab in Brockton, MA. Find addiction treatment." },
+      { name: "New Bedford", slug: "new-bedford", population: 101079, description: "New Bedford provides treatment on the South Coast.", metaDescription: "Addiction treatment in New Bedford, MA. Browse rehab facilities." },
+      { name: "Fall River", slug: "fall-river", population: 93885, description: "Fall River offers treatment in southeastern Massachusetts.", metaDescription: "Rehab centers in Fall River, MA. Find drug treatment." },
+      { name: "Quincy", slug: "quincy", population: 101636, description: "Quincy provides accessible treatment south of Boston.", metaDescription: "Drug rehab in Quincy, MA. Find addiction treatment centers." },
     ],
   },
   {
@@ -453,6 +460,10 @@ export const statesData: StateData[] = [
       { name: "Rochester", slug: "rochester", population: 121395, description: "Rochester offers treatment near Mayo Clinic.", metaDescription: "Rehab centers in Rochester, MN. Find drug treatment near you." },
       { name: "Duluth", slug: "duluth", population: 90936, description: "Duluth provides treatment on Lake Superior.", metaDescription: "Drug rehab in Duluth, MN. Find addiction treatment centers." },
       { name: "Bloomington", slug: "bloomington", population: 89987, description: "Bloomington offers accessible Twin Cities treatment.", metaDescription: "Addiction treatment in Bloomington, MN. Browse rehab facilities." },
+      { name: "Brooklyn Park", slug: "brooklyn-park", population: 86478, description: "Brooklyn Park provides treatment in the north metro.", metaDescription: "Drug rehab in Brooklyn Park, MN. Find addiction treatment." },
+      { name: "Plymouth", slug: "plymouth", population: 81026, description: "Plymouth offers treatment in western Twin Cities metro.", metaDescription: "Addiction treatment in Plymouth, MN. Browse rehab facilities." },
+      { name: "Maple Grove", slug: "maple-grove", population: 72571, description: "Maple Grove provides suburban Twin Cities treatment.", metaDescription: "Rehab centers in Maple Grove, MN. Find drug treatment." },
+      { name: "St. Cloud", slug: "st-cloud", population: 69362, description: "St. Cloud offers treatment in central Minnesota.", metaDescription: "Drug rehab in St. Cloud, MN. Find addiction treatment." },
     ],
   },
   {
