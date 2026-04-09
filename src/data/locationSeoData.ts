@@ -46,6 +46,9 @@ export const statesData: StateData[] = [
       { name: "Juneau", slug: "juneau", population: 32255, description: "Juneau provides treatment options as Alaska's capital city.", metaDescription: "Rehab centers in Juneau, AK. Find drug and alcohol treatment facilities." },
       { name: "Sitka", slug: "sitka", population: 8458, description: "Sitka offers treatment in a beautiful island setting.", metaDescription: "Drug rehab in Sitka, AK. Find addiction treatment services." },
       { name: "Ketchikan", slug: "ketchikan", population: 8192, description: "Ketchikan provides accessible treatment in Southeast Alaska.", metaDescription: "Addiction treatment in Ketchikan, AK. Browse rehab facilities." },
+      { name: "Wasilla", slug: "wasilla", population: 10529, description: "Wasilla offers treatment in the Mat-Su Valley near Anchorage.", metaDescription: "Drug rehab in Wasilla, AK. Find addiction treatment in Mat-Su." },
+      { name: "Palmer", slug: "palmer", population: 7306, description: "Palmer provides recovery programs in the Mat-Su Borough.", metaDescription: "Addiction treatment in Palmer, AK. Browse rehab facilities." },
+      { name: "Kodiak", slug: "kodiak", population: 5983, description: "Kodiak offers treatment services on Kodiak Island.", metaDescription: "Rehab centers in Kodiak, AK. Find drug treatment." },
     ],
   },
   {
@@ -253,6 +256,9 @@ export const statesData: StateData[] = [
       { name: "Hilo", slug: "hilo", population: 45703, description: "Hilo offers treatment on the Big Island's east side.", metaDescription: "Drug rehab in Hilo, HI. Find addiction treatment on Hawaii Island." },
       { name: "Kailua", slug: "kailua", population: 40514, description: "Kailua provides serene windward Oahu treatment.", metaDescription: "Rehab centers in Kailua, HI. Find drug treatment near you." },
       { name: "Maui", slug: "maui", population: 164221, description: "Maui offers retreat-style treatment in stunning natural settings.", metaDescription: "Addiction treatment in Maui, HI. Find tropical rehab facilities." },
+      { name: "Kaneohe", slug: "kaneohe", population: 34597, description: "Kaneohe provides treatment on Oahu's windward side.", metaDescription: "Drug rehab in Kaneohe, HI. Find addiction treatment on Oahu." },
+      { name: "Waipahu", slug: "waipahu", population: 38216, description: "Waipahu offers accessible treatment in central Oahu.", metaDescription: "Addiction treatment in Waipahu, HI. Browse rehab facilities." },
+      { name: "Kailua-Kona", slug: "kailua-kona", population: 14165, description: "Kailua-Kona provides treatment on the Big Island's west coast.", metaDescription: "Rehab centers in Kailua-Kona, HI. Find drug treatment." },
     ],
   },
   {
@@ -267,6 +273,9 @@ export const statesData: StateData[] = [
       { name: "Nampa", slug: "nampa", population: 100200, description: "Nampa offers accessible treatment in the Treasure Valley.", metaDescription: "Drug rehab in Nampa, ID. Find addiction treatment facilities." },
       { name: "Idaho Falls", slug: "idaho-falls", population: 64602, description: "Idaho Falls provides treatment in eastern Idaho.", metaDescription: "Rehab centers in Idaho Falls, ID. Find drug treatment near you." },
       { name: "Pocatello", slug: "pocatello", population: 56320, description: "Pocatello offers treatment in southeast Idaho.", metaDescription: "Addiction treatment in Pocatello, ID. Browse rehab facilities." },
+      { name: "Caldwell", slug: "caldwell", population: 61835, description: "Caldwell provides treatment in Canyon County's Treasure Valley.", metaDescription: "Drug rehab in Caldwell, ID. Find addiction treatment." },
+      { name: "Twin Falls", slug: "twin-falls", population: 51807, description: "Twin Falls offers treatment in south-central Idaho.", metaDescription: "Addiction treatment in Twin Falls, ID. Browse rehab facilities." },
+      { name: "Coeur d'Alene", slug: "coeur-d-alene", population: 54628, description: "Coeur d'Alene provides treatment in scenic northern Idaho.", metaDescription: "Rehab centers in Coeur d'Alene, ID. Find drug treatment." },
     ],
   },
   {
@@ -296,6 +305,11 @@ export const statesData: StateData[] = [
       { name: "Evansville", slug: "evansville", population: 117298, description: "Evansville offers treatment in southwestern Indiana.", metaDescription: "Rehab centers in Evansville, IN. Find drug treatment near you." },
       { name: "South Bend", slug: "south-bend", population: 103453, description: "South Bend provides treatment in northern Indiana.", metaDescription: "Drug rehab in South Bend, IN. Find addiction treatment centers." },
       { name: "Carmel", slug: "carmel", population: 99757, description: "Carmel offers upscale treatment near Indianapolis.", metaDescription: "Addiction treatment in Carmel, IN. Browse rehab facilities." },
+      { name: "Fishers", slug: "fishers", population: 101171, description: "Fishers provides quality treatment in the Indianapolis metro.", metaDescription: "Drug rehab in Fishers, IN. Find addiction treatment centers." },
+      { name: "Bloomington", slug: "bloomington", population: 79168, description: "Bloomington offers university-connected treatment near IU.", metaDescription: "Addiction treatment in Bloomington, IN. Browse rehab facilities." },
+      { name: "Lafayette", slug: "lafayette-in", population: 70373, description: "Lafayette provides treatment in west-central Indiana.", metaDescription: "Rehab centers in Lafayette, IN. Find drug treatment." },
+      { name: "Muncie", slug: "muncie", population: 65194, description: "Muncie offers affordable treatment in east-central Indiana.", metaDescription: "Drug rehab in Muncie, IN. Find addiction treatment." },
+      { name: "Terre Haute", slug: "terre-haute", population: 58389, description: "Terre Haute provides treatment in western Indiana.", metaDescription: "Addiction treatment in Terre Haute, IN. Browse rehab centers." },
     ],
   },
   {
