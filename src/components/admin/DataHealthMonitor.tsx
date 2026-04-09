@@ -75,7 +75,8 @@ export function DataHealthMonitor() {
 
       return results;
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 60000, // Refresh every 60 seconds
+    staleTime: 30000,
   });
 
   // Monitor realtime connection
@@ -120,7 +121,8 @@ export function DataHealthMonitor() {
         connected: !error,
       };
     },
-    refetchInterval: 15000, // Check every 15 seconds
+    refetchInterval: 60000, // Check every 60 seconds
+    staleTime: 30000,
   });
 
   const handleRefreshAll = async () => {
