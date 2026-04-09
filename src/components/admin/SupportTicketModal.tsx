@@ -95,6 +95,7 @@ export function SupportTicketModal({
   const [newNote, setNewNote] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [escalating, setEscalating] = useState(false);
 
   const { data: notes = [], isLoading: notesLoading } = useSupportTicketNotes(ticket?.id || "");
   const updateTicket = useUpdateSupportTicket();
