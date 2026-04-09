@@ -549,6 +549,224 @@ const SearchResults = () => {
       ? `Rehab Centers Near ${location}`
       : "Find Treatment Centers";
 
+  // Mobile filter sidebar open state
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Sidebar filter content — reused for desktop and mobile
+  const FilterSidebar = () => (
+    <div className="space-y-6">
+      {/* Sort */}
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <ArrowUpDown className="h-3.5 w-3.5" />
+          Sort By
+        </h3>
+        <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
+          <SelectTrigger className="w-full h-9 text-sm border-border bg-card">
+            <SelectValue placeholder="Sort" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border shadow-lg">
+            {sortOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value} className="text-sm cursor-pointer">
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* Treatment Type */}
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <Building2 className="h-3.5 w-3.5" />
+          Treatment Type
+        </h3>
+        <div className="space-y-1.5">
+          {treatmentTypeFilters.map((filter) => {
+            const active = selectedTreatmentTypes.includes(filter.value);
+            return (
+              <button
+                key={filter.value}
+                onClick={() => toggleFilter("treatmentTypes", filter.value, selectedTreatmentTypes)}
+                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
+                  active
+                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                    : "text-foreground hover:bg-secondary/60 border border-transparent"
+                }`}
+              >
+                <span>{filter.label}</span>
+                {active && <X className="h-3.5 w-3.5" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* Distance */}
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <Navigation className="h-3.5 w-3.5" />
+          Distance
+        </h3>
+        <div className="space-y-1.5">
+          {distanceFilters.map((filter) => {
+            const active = selectedDistance === filter.value;
+            return (
+              <button
+                key={filter.value}
+                onClick={() => setSingleFilter("distance", active ? "" : filter.value)}
+                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
+                  active
+                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                    : "text-foreground hover:bg-secondary/60 border border-transparent"
+                }`}
+              >
+                <span>{filter.label}</span>
+                {active && <X className="h-3.5 w-3.5" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* Insurance */}
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <Shield className="h-3.5 w-3.5" />
+          Insurance
+        </h3>
+        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+          {insuranceFilters.map((filter) => {
+            const active = selectedInsuranceTypes.includes(filter.value);
+            return (
+              <button
+                key={filter.value}
+                onClick={() => toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes)}
+                className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
+                  active
+                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                    : "text-foreground hover:bg-secondary/60 border border-transparent"
+                }`}
+              >
+                {filter.logo ? (
+                  <img src={filter.logo} alt="" className="h-4 w-5 object-contain shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ) : (
+                  <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
+                <span className="flex-1 text-left truncate">{filter.label}</span>
+                {active && <X className="h-3.5 w-3.5 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* Amenities */}
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <Star className="h-3.5 w-3.5" />
+          Amenities
+        </h3>
+        <div className="space-y-1.5">
+          {amenityFilters.map((filter) => {
+            const active = selectedAmenities.includes(filter.value);
+            return (
+              <button
+                key={filter.value}
+                onClick={() => toggleFilter("amenities", filter.value, selectedAmenities)}
+                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
+                  active
+                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                    : "text-foreground hover:bg-secondary/60 border border-transparent"
+                }`}
+              >
+                <span>{filter.label}</span>
+                {active && <X className="h-3.5 w-3.5" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* Quick Toggles */}
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5" />
+          Quick Filters
+        </h3>
+        <div className="space-y-1.5">
+          <button
+            onClick={() => toggleBooleanFilter("verified", verifiedOnly)}
+            className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
+              verifiedOnly
+                ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                : "text-foreground hover:bg-secondary/60 border border-transparent"
+            }`}
+          >
+            <Shield className="h-4 w-4 shrink-0" />
+            <span>Verified Only</span>
+          </button>
+          <button
+            onClick={() => toggleBooleanFilter("featuredOnly", featuredOnly)}
+            className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
+              featuredOnly
+                ? "bg-amber-50 text-amber-700 font-medium border border-amber-200"
+                : "text-foreground hover:bg-secondary/60 border border-transparent"
+            }`}
+          >
+            <Sparkles className="h-4 w-4 shrink-0" />
+            <span>Featured Only</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Clear All */}
+      {activeFiltersCount > 0 && (
+        <>
+          <div className="h-px bg-border" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAllFilters}
+            className="w-full text-muted-foreground hover:text-destructive gap-2"
+          >
+            <X className="h-4 w-4" />
+            Clear All Filters ({activeFiltersCount})
+          </Button>
+        </>
+      )}
+
+      {/* Concierge CTA */}
+      <div className="rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 border border-primary/15">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+            <img src={supportSpecialistImg} alt="" className="w-full h-full object-cover object-top scale-110" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-foreground">Need Help?</p>
+            <p className="text-xs text-muted-foreground">Free guidance</p>
+          </div>
+        </div>
+        <Link to="/concierge">
+          <Button size="sm" className="w-full gap-2 text-xs">
+            <Heart className="h-3.5 w-3.5" />
+            Get Matched Free
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+
   return (
     <Layout>
       <SEO
@@ -567,614 +785,295 @@ const SearchResults = () => {
           })),
         }) : undefined}
       />
-      
-      {/* Sticky Filter Header */}
+
+      {/* Compact Top Bar */}
       <div className="sticky top-[68px] z-30 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
-        <div className="container max-w-5xl mx-auto">
-          {/* Top Row: Back + Results Count + Sort */}
-          <div className="flex items-center justify-between gap-4 py-3 border-b border-border/50">
-            <div className="flex items-center gap-4">
-              <Link 
-                to="/rehab-centers" 
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors group"
+        <div className="container">
+          <div className="flex items-center justify-between gap-4 py-2.5">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/rehab-centers"
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors group"
               >
                 <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
                 <span className="hidden sm:inline">Back</span>
               </Link>
               <div className="h-5 w-px bg-border" />
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                  <Search className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
+                  <Search className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <div>
                   <span className="text-sm font-semibold">
                     <span className="text-primary">{filteredCenters.length}</span>
-                    <span className="text-foreground"> Treatment Centers</span>
+                    <span className="text-foreground"> Centers</span>
                   </span>
                   {(location || queryParam) && (
-                    <p className="text-xs text-muted-foreground">
-                      {queryParam ? (
-                        <>Results for "<span className="text-foreground font-medium">{queryParam}</span>"</>
-                      ) : (
-                        <>Near <span className="text-foreground font-medium">{location}</span></>
-                      )}
+                    <p className="text-xs text-muted-foreground hidden sm:block">
+                      {queryParam ? `"${queryParam}"` : `Near ${location}`}
                     </p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Sort Dropdown */}
-            <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-              <SelectTrigger className="h-9 w-[140px] md:w-[170px] gap-2 text-sm border-border bg-card hover:bg-secondary/50 transition-colors">
-                <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
-                <SelectValue placeholder="Sort" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border shadow-lg">
-                {sortOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="text-sm cursor-pointer">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Filter Row */}
-          <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
-            {/* Treatment Type Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className={`gap-2 shrink-0 ${selectedTreatmentTypes.length > 0 ? 'border-primary bg-primary/5 text-primary' : ''}`}
-                >
-                  <Building2 className="h-4 w-4" />
-                  Treatment Type
-                  {selectedTreatmentTypes.length > 0 && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
-                      {selectedTreatmentTypes.length}
-                    </Badge>
-                  )}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 bg-card border-border shadow-lg">
-                <DropdownMenuLabel>Treatment Type</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {treatmentTypeFilters.map((filter) => (
-                  <DropdownMenuCheckboxItem
-                    key={filter.value}
-                    checked={selectedTreatmentTypes.includes(filter.value)}
-                    onCheckedChange={() => toggleFilter("treatmentTypes", filter.value, selectedTreatmentTypes)}
-                  >
-                    {filter.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Distance Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className={`gap-2 shrink-0 ${selectedDistance ? 'border-primary bg-primary/5 text-primary' : ''}`}
-                >
-                  <Navigation className="h-4 w-4" />
-                  Distance
-                  {selectedDistance && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
-                      1
-                    </Badge>
-                  )}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-card border-border shadow-lg">
-                <DropdownMenuLabel>Distance</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {distanceFilters.map((filter) => (
-                  <DropdownMenuCheckboxItem
-                    key={filter.value}
-                    checked={selectedDistance === filter.value}
-                    onCheckedChange={() => setSingleFilter("distance", selectedDistance === filter.value ? "" : filter.value)}
-                  >
-                    {filter.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Insurance Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className={`gap-2 shrink-0 ${selectedInsuranceTypes.length > 0 ? 'border-primary bg-primary/5 text-primary' : ''}`}
-                >
-                  <Shield className="h-4 w-4" />
-                  Insurance
-                  {selectedInsuranceTypes.length > 0 && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
-                      {selectedInsuranceTypes.length}
-                    </Badge>
-                  )}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 bg-card border-border shadow-lg max-h-80 overflow-y-auto">
-                <DropdownMenuLabel className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-primary" />
-                  Filter by Insurance
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {insuranceFilters.map((filter) => (
-                  <DropdownMenuCheckboxItem
-                    key={filter.value}
-                    checked={selectedInsuranceTypes.includes(filter.value)}
-                    onCheckedChange={() => toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes)}
-                    className="flex items-center gap-3 py-2"
-                  >
-                    {filter.logo ? (
-                      <div className="flex h-6 w-8 shrink-0 items-center justify-center">
-                        <img 
-                          src={filter.logo} 
-                          alt={filter.label} 
-                          className="h-5 w-auto max-w-full object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-6 w-8 shrink-0 items-center justify-center">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <span>{filter.label}</span>
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Amenities Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className={`gap-2 shrink-0 ${selectedAmenities.length > 0 ? 'border-primary bg-primary/5 text-primary' : ''}`}
-                >
-                  <Star className="h-4 w-4" />
-                  Amenities
-                  {selectedAmenities.length > 0 && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
-                      {selectedAmenities.length}
-                    </Badge>
-                  )}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48 bg-card border-border shadow-lg">
-                <DropdownMenuLabel>Amenities</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {amenityFilters.map((filter) => (
-                  <DropdownMenuCheckboxItem
-                    key={filter.value}
-                    checked={selectedAmenities.includes(filter.value)}
-                    onCheckedChange={() => toggleFilter("amenities", filter.value, selectedAmenities)}
-                  >
-                    {filter.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Verified Toggle */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => toggleBooleanFilter("verified", verifiedOnly)}
-              className={`gap-2 shrink-0 ${verifiedOnly ? 'border-primary bg-primary/5 text-primary' : ''}`}
-            >
-              <Shield className="h-4 w-4" />
-              Verified
-            </Button>
-
-            {/* Featured Toggle */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => toggleBooleanFilter("featuredOnly", featuredOnly)}
-              className={`gap-2 shrink-0 ${featuredOnly ? 'border-amber-500 bg-amber-50 text-amber-700' : ''}`}
-            >
-              <Sparkles className="h-4 w-4" />
-              Featured
-            </Button>
-
-            {/* Separator */}
-            {activeFiltersCount > 0 && (
-              <>
-                <div className="h-6 w-px bg-border shrink-0 mx-1" />
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={clearAllFilters}
-                  className="text-muted-foreground hover:text-destructive shrink-0"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Clear All
-                </Button>
-              </>
+            {/* Active filter pills — compact */}
+            {hasFilters && (
+              <div className="hidden md:flex items-center gap-1.5 flex-1 justify-center overflow-hidden max-w-md mx-4">
+                {queryParam && (
+                  <button onClick={() => clearFilter("q")} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors shrink-0">
+                    "{queryParam}" <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
+                {location && (
+                  <button onClick={() => clearFilter("location")} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors shrink-0">
+                    <MapPin className="h-2.5 w-2.5" />{location} <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
+                {activeFiltersCount > 0 && (
+                  <span className="text-xs text-muted-foreground shrink-0">+{activeFiltersCount} filters</span>
+                )}
+              </div>
             )}
-          </div>
 
-          {/* Active Filters Pills */}
-          {hasFilters && (
-            <div className="flex items-center gap-2 flex-wrap pb-3 animate-fade-in">
-              <span className="text-xs font-medium text-muted-foreground mr-1">Active:</span>
-              {queryParam && (
-                <button
-                  onClick={() => clearFilter("q")}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-                >
-                  <Search className="h-3 w-3" />
-                  "{queryParam}"
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
+            {/* Mobile filter toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="lg:hidden gap-2"
+              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                  {activeFiltersCount}
+                </Badge>
               )}
-              {location && (
-                <button
-                  onClick={() => clearFilter("location")}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-                >
-                  <MapPin className="h-3 w-3" />
-                  {location}
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-              {treatment && (
-                <button
-                  onClick={() => clearFilter("treatment")}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-                >
-                  {treatment}
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-              {insurance && (
-                <button
-                  onClick={() => clearFilter("insurance")}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-                >
-                  {insurance}
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-              {activeTypeFilter && (
-                <button
-                  onClick={() => clearFilter("type")}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-                >
-                  {activeTypeFilter}
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-              {selectedTreatmentTypes.map(tt => {
-                const filter = treatmentTypeFilters.find(f => f.value === tt);
-                return (
-                  <button
-                    key={tt}
-                    onClick={() => toggleFilter("treatmentTypes", tt, selectedTreatmentTypes)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
-                  >
-                    <Building2 className="h-3 w-3" />
-                    {filter?.label || tt}
-                    <X className="h-3 w-3 ml-0.5" />
-                  </button>
-                );
-              })}
-              {selectedInsuranceTypes.map(ins => {
-                const filter = insuranceFilters.find(f => f.value === ins);
-                return (
-                  <button
-                    key={ins}
-                    onClick={() => toggleFilter("insuranceTypes", ins, selectedInsuranceTypes)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
-                  >
-                    <CreditCard className="h-3 w-3" />
-                    {filter?.label || ins}
-                    <X className="h-3 w-3 ml-0.5" />
-                  </button>
-                );
-              })}
-              {selectedDistance && (
-                <button
-                  onClick={() => clearFilter("distance")}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  <Navigation className="h-3 w-3" />
-                  {distanceFilters.find(f => f.value === selectedDistance)?.label || selectedDistance}
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-              {selectedAmenities.map(am => {
-                const filter = amenityFilters.find(f => f.value === am);
-                return (
-                  <button
-                    key={am}
-                    onClick={() => toggleFilter("amenities", am, selectedAmenities)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
-                  >
-                    <Star className="h-3 w-3" />
-                    {filter?.label || am}
-                    <X className="h-3 w-3 ml-0.5" />
-                  </button>
-                );
-              })}
-              {verifiedOnly && (
-                <button
-                  onClick={() => toggleBooleanFilter("verified", true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  <Shield className="h-3 w-3" />
-                  Verified Only
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-              {featuredOnly && (
-                <button
-                  onClick={() => toggleBooleanFilter("featuredOnly", true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-200 transition-colors"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  Featured Only
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-            </div>
-          )}
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Main Content Area - Centered Cards */}
-      <section className="bg-gradient-to-b from-secondary/30 to-background py-8 min-h-screen">
-        <div className="container max-w-5xl mx-auto">
-          {isLoading ? (
-            <SearchResultsLoading count={6} />
-          ) : paginatedCenters.length > 0 ? (
-            <>
-              {/* Results Summary */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm text-muted-foreground tabular-nums">
-                    Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
-                    <span className="font-medium text-foreground">{filteredCenters.length}</span> results
-                  </p>
-                  {(location || effectiveLocation) && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <Compass className="h-3 w-3 text-primary" />
-                      {location ? (
-                        <>Results sorted by proximity to <span className="font-medium text-foreground">{resolvedZipData ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr} (${location})` : location}</span></>
-                      ) : (
-                        <>Sorted by proximity to <span className="font-medium text-foreground">{effectiveLocation}</span> <span className="text-muted-foreground/70">(auto-detected)</span></>
-                      )}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  {(location || effectiveLocation) && (
-                    <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                        <MapPin className="h-2.5 w-2.5" /> Exact
-                      </span>
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                        <Building2 className="h-2.5 w-2.5" /> City
-                      </span>
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-100 text-purple-700">
-                        <Navigation className="h-2.5 w-2.5" /> State
-                      </span>
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-700">
-                        <Compass className="h-2.5 w-2.5" /> Nearby
-                      </span>
-                    </div>
-                  )}
-                  {paginatedCenters.some(c => c.featured || (c as any).hasFeaturedSubscription) && (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-600">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Featured centers highlighted</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Results List */}
-              <div className="space-y-4">
-                {paginatedCenters.map((center, index) => (
-                  <div 
-                    key={center.id}
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <SearchResultCard 
-                      center={center} 
-                      featured={center.featured}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-10">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
-                  </Button>
-                  
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum: number;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={currentPage === pageNum ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`h-10 w-10 rounded-xl transition-all ${
-                            currentPage === pageNum 
-                              ? "bg-primary text-primary-foreground shadow-md" 
-                              : "border-border bg-card shadow-sm hover:shadow-md"
-                          }`}
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    })}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            /* Empty State */
-            <div className="flex flex-col items-center justify-center py-20 px-4 animate-fade-in">
-              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
-                <Search className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
-              <p className="text-muted-foreground text-center max-w-md mb-4">
-                {queryParam 
-                  ? `No treatment centers match "${queryParam}". Try a different search term or browse all centers.`
-                  : location
-                    ? `No centers found near "${location}". Try expanding your search area or browse nationwide.`
-                    : "We couldn't find any treatment centers matching your criteria. Try adjusting your filters."
-                }
-              </p>
-
-              {/* Smart Suggestions — nearby states when location search yields nothing */}
-              {location && (() => {
-                const parsed = parseLocationInput(location);
-                const nearbyAbbrs = parsed.stateAbbr ? getNearbyStates(parsed.stateAbbr) : [];
-                return nearbyAbbrs.length > 0 ? (
-                  <div className="flex flex-wrap justify-center gap-2 mb-6">
-                    <span className="text-xs text-muted-foreground">Try nearby states:</span>
-                    {nearbyAbbrs.slice(0, 4).map(abbr => (
-                      <Link 
-                        key={abbr} 
-                        to={`/search-results?location=${abbr}`} 
-                        className="text-xs text-primary hover:underline font-medium"
-                      >
-                        {abbr}
-                      </Link>
-                    ))}
-                    <button onClick={clearAllFilters} className="text-xs text-primary hover:underline ml-2">
-                      or Search Nationwide
-                    </button>
-                  </div>
-                ) : null;
-              })()}
-
-              {/* Generic suggestions when no location */}
-              {!location && (queryParam || activeFiltersCount > 0) && (
-                <div className="flex flex-wrap justify-center gap-2 mb-6">
-                  <span className="text-xs text-muted-foreground">Popular areas:</span>
-                  <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
-                  <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
-                  <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
-                  <Link to="/search-results?location=New+York" className="text-xs text-primary hover:underline">New York</Link>
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button onClick={clearAllFilters} variant="outline" className="gap-2">
-                  <X className="h-4 w-4" />
-                  Clear All Filters
-                </Button>
-                <Link to="/rehab-centers">
-                  <Button className="gap-2">
-                    Browse All Centers
-                  </Button>
-                </Link>
-                <Link to="/concierge">
-                  <Button variant="secondary" className="gap-2">
-                    <Heart className="h-4 w-4" />
-                    Get Personalized Help
-                  </Button>
-                </Link>
-              </div>
+      {/* Mobile Filter Overlay */}
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-[320px] max-w-[85vw] bg-card border-l border-border shadow-2xl overflow-y-auto">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-border bg-card">
+              <h2 className="font-semibold text-foreground flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4 text-primary" />
+                Filters & Sort
+              </h2>
+              <Button variant="ghost" size="sm" onClick={() => setMobileFiltersOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* Bottom CTA */}
-      <section className="border-t border-border bg-gradient-to-r from-primary/5 via-background to-primary/5 py-12">
-        <div className="container max-w-5xl mx-auto">
-          <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 p-8 border border-primary/20 shadow-lg">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="shrink-0">
-                <div className="relative">
-                  <img 
-                    src={supportSpecialistImg} 
-                    alt="Recovery specialist ready to help" 
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-                  />
-                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-white">
-                    <Phone className="h-4 w-4 text-white" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  Need Help Finding the Right Center?
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Our recovery specialists are available 24/7 to help you find the perfect treatment program for your needs.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                  <Link to="/concierge">
-                    <Button size="lg" className="gap-2 shadow-md hover:shadow-lg transition-shadow">
-                      <Heart className="h-5 w-5" />
-                      Find Treatment
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+            <div className="p-4">
+              <FilterSidebar />
             </div>
           </div>
         </div>
-      </section>
+      )}
+
+      {/* Split Screen Layout */}
+      <div className="bg-gradient-to-b from-secondary/20 to-background min-h-screen">
+        <div className="container py-6">
+          <div className="flex gap-6">
+            {/* Left Sidebar — Desktop Only */}
+            <aside className="hidden lg:block w-[280px] shrink-0">
+              <div className="sticky top-[128px] max-h-[calc(100vh-144px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-sm p-5 scrollbar-thin">
+                {/* Sidebar Header */}
+                <div className="flex items-center gap-2 mb-5 pb-4 border-b border-border">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+                    <SlidersHorizontal className="h-4 w-4 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-foreground">Filters</h2>
+                    <p className="text-xs text-muted-foreground">Refine your search</p>
+                  </div>
+                </div>
+                <FilterSidebar />
+              </div>
+            </aside>
+
+            {/* Right Content — Results */}
+            <main className="flex-1 min-w-0">
+              {isLoading ? (
+                <SearchResultsLoading count={6} />
+              ) : paginatedCenters.length > 0 ? (
+                <>
+                  {/* Results Summary */}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-sm text-muted-foreground tabular-nums">
+                        Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
+                        <span className="font-medium text-foreground">{filteredCenters.length}</span>
+                      </p>
+                      {(location || effectiveLocation) && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <Compass className="h-3 w-3 text-primary" />
+                          {location ? (
+                            <>Near <span className="font-medium text-foreground">{resolvedZipData ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}` : location}</span></>
+                          ) : (
+                            <>Near <span className="font-medium text-foreground">{effectiveLocation}</span> <span className="text-muted-foreground/60">(auto)</span></>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    {(location || effectiveLocation) && (
+                      <div className="hidden xl:flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                          <MapPin className="h-2.5 w-2.5" /> Exact
+                        </span>
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                          <Building2 className="h-2.5 w-2.5" /> City
+                        </span>
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                          <Navigation className="h-2.5 w-2.5" /> State
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Results List */}
+                  <div className="space-y-4">
+                    {paginatedCenters.map((center, index) => (
+                      <div
+                        key={center.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 40}ms` }}
+                      >
+                        <SearchResultCard
+                          center={center}
+                          featured={center.featured}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center gap-2 mt-10">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum: number;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`h-10 w-10 rounded-xl transition-all ${
+                                currentPage === pageNum
+                                  ? "bg-primary text-primary-foreground shadow-md"
+                                  : "border-border bg-card shadow-sm hover:shadow-md"
+                              }`}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Empty State */
+                <div className="flex flex-col items-center justify-center py-20 px-4 animate-fade-in">
+                  <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+                    <Search className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
+                  <p className="text-muted-foreground text-center max-w-md mb-4">
+                    {queryParam
+                      ? `No treatment centers match "${queryParam}". Try a different search term or browse all centers.`
+                      : location
+                        ? `No centers found near "${location}". Try expanding your search area or browse nationwide.`
+                        : "We couldn't find any treatment centers matching your criteria. Try adjusting your filters."}
+                  </p>
+
+                  {location && (() => {
+                    const parsed = parseLocationInput(location);
+                    const nearbyAbbrs = parsed.stateAbbr ? getNearbyStates(parsed.stateAbbr) : [];
+                    return nearbyAbbrs.length > 0 ? (
+                      <div className="flex flex-wrap justify-center gap-2 mb-6">
+                        <span className="text-xs text-muted-foreground">Try nearby states:</span>
+                        {nearbyAbbrs.slice(0, 4).map(abbr => (
+                          <Link key={abbr} to={`/search-results?location=${abbr}`} className="text-xs text-primary hover:underline font-medium">
+                            {abbr}
+                          </Link>
+                        ))}
+                        <button onClick={clearAllFilters} className="text-xs text-primary hover:underline ml-2">
+                          or Search Nationwide
+                        </button>
+                      </div>
+                    ) : null;
+                  })()}
+
+                  {!location && (queryParam || activeFiltersCount > 0) && (
+                    <div className="flex flex-wrap justify-center gap-2 mb-6">
+                      <span className="text-xs text-muted-foreground">Popular areas:</span>
+                      <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
+                      <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
+                      <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
+                      <Link to="/search-results?location=New+York" className="text-xs text-primary hover:underline">New York</Link>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button onClick={clearAllFilters} variant="outline" className="gap-2">
+                      <X className="h-4 w-4" />
+                      Clear All Filters
+                    </Button>
+                    <Link to="/rehab-centers">
+                      <Button className="gap-2">Browse All Centers</Button>
+                    </Link>
+                    <Link to="/concierge">
+                      <Button variant="secondary" className="gap-2">
+                        <Heart className="h-4 w-4" />
+                        Get Personalized Help
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      </div>
     </Layout>
   );
 };
