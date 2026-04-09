@@ -722,7 +722,7 @@ export default function AdminReviews() {
                         <p className="text-sm text-muted-foreground italic">No review text provided</p>
                       )}
 
-                      {review.status === 'pending' && (
+                      {review.status === 'pending' && canModerateReviews && (
                         <div className="space-y-3">
                           <Textarea
                             placeholder="Admin notes (required for rejection)"
@@ -758,6 +758,9 @@ export default function AdminReviews() {
                             </Button>
                           </div>
                         </div>
+                      )}
+                      {review.status === 'pending' && !canModerateReviews && (
+                        <p className="text-xs text-muted-foreground italic">Only Managers and Super Admins can approve or reject reviews.</p>
                       )}
 
                       {review.admin_notes && review.status !== 'pending' && (
