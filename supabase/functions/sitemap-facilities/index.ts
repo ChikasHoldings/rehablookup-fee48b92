@@ -651,11 +651,12 @@ function generateUrlEntry(
   lastmod: string,
   images?: { loc: string; title?: string }[]
 ): string {
+  const safePriority = typeof priority === "number" && !isNaN(priority) ? priority : 0.5;
   let entry = `  <url>
     <loc>${BASE_URL}${path}</loc>
     <lastmod>${lastmod}</lastmod>
-    <changefreq>${changefreq}</changefreq>
-    <priority>${priority.toFixed(2)}</priority>`;
+    <changefreq>${changefreq || "weekly"}</changefreq>
+    <priority>${safePriority.toFixed(2)}</priority>`;
 
   if (images && images.length > 0) {
     for (const img of images) {
