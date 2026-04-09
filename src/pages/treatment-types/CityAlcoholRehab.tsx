@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import {
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import {
   Phone,
   Clock,
   Shield,

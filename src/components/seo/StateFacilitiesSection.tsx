@@ -4,8 +4,8 @@ import { Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { TreatmentCenterCard } from "@/components/TreatmentCenterCard";
-import { SearchResultsLoading } from "@/components/SearchResultsLoading";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StateFacilitiesSectionProps {
   stateName: string;
@@ -78,7 +78,9 @@ export function StateFacilitiesSection({
         </div>
 
         {isLoading ? (
-          <SearchResultsLoading />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+            {[1,2,3].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
+          </div>
         ) : facilities.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
             {facilities.map((facility) => (
