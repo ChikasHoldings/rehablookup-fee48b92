@@ -19,8 +19,10 @@ import {
   Filter,
   LayoutGrid,
   List,
+  Plus,
 } from "lucide-react";
 import { EscalationsList } from "@/components/admin/escalations/EscalationsList";
+import { EscalationDialog } from "@/components/admin/escalations/EscalationDialog";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function AdminEscalations() {
@@ -28,6 +30,7 @@ export default function AdminEscalations() {
   const [priorityFilter, setPriorityFilter] = useState("all_priorities");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"cards" | "compact">("cards");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: counts } = useQuery({
     queryKey: ["escalation-counts"],
@@ -57,6 +60,10 @@ export default function AdminEscalations() {
         subtitle={`${counts?.total ?? 0} total · ${counts?.open ?? 0} open · ${counts?.in_progress ?? 0} in progress`}
         actions={
           <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setShowCreateDialog(true)} className="gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">New Escalation</span>
+            </Button>
             <Button
               variant={viewMode === "cards" ? "default" : "outline"}
               size="icon"
