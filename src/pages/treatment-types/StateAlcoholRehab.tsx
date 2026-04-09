@@ -39,16 +39,6 @@ const StateAlcoholRehab = () => {
       description: `Find alcohol addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient alcohol rehab programs across the state.`,
       url: `https://rehablookup.com/treatment-types/alcohol-rehabilitation/${stateSlug}`,
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: "https://rehablookup.com/" },
-        { "@type": "ListItem", position: 2, name: "Treatment Types", item: "https://rehablookup.com/treatment-types" },
-        { "@type": "ListItem", position: 3, name: "Alcohol Rehabilitation", item: "https://rehablookup.com/treatment-types/alcohol-rehabilitation" },
-        { "@type": "ListItem", position: 4, name: stateName, item: `https://rehablookup.com/treatment-types/alcohol-rehabilitation/${stateSlug}` },
-      ],
-    },
   ];
 
   return (

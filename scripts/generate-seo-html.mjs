@@ -561,7 +561,48 @@ async function generateStatePages() {
   }
 }
 
-// --- City Directory Pages (/rehab-centers/{state}/{city}) ---
+// --- State Article Pages (/rehab-centers/{state}/articles/{slug}) ---
+async function generateStateArticlePages() {
+  const articleTemplates = [
+    { slugBase: "how-to-find-best-rehab-centers-in", titleTemplate: (s) => `How to Find the Best Rehab Centers in ${s}`, descTemplate: (s) => `Complete guide to finding the best addiction treatment centers in ${s}. Compare programs, verify insurance, and get expert help.` },
+    { slugBase: "cost-of-rehab-in", titleTemplate: (s) => `Cost of Rehab in ${s} — Insurance, Payment & Options`, descTemplate: (s) => `Learn the cost of rehab in ${s}. Understand insurance coverage, payment options, and financial assistance for addiction treatment.` },
+    { slugBase: "best-cities-for-addiction-treatment-in", titleTemplate: (s) => `Best Cities for Addiction Treatment in ${s}`, descTemplate: (s) => `Discover the best cities in ${s} for addiction treatment and recovery. Compare facilities, resources, and recovery communities.` },
+  ];
+  for (const state of usStates) {
+    const slug = stateToSlug(state);
+    for (const tpl of articleTemplates) {
+      const articleSlug = `${tpl.slugBase}-${slug}`;
+      const title = tpl.titleTemplate(state);
+      const html = generatePage({
+        urlPath: `/rehab-centers/${slug}/articles/${articleSlug}`,
+        title,
+        metaTitle: `${title} | RehabLookup`,
+        metaDescription: tpl.descTemplate(state),
+        h1: title,
+        content: `<p>${tpl.descTemplate(state)}</p>
+          <h2>Finding Quality Treatment in ${state}</h2>
+          <p>Choosing the right rehab center in ${state} requires evaluating accreditation, treatment approaches, staff qualifications, and insurance acceptance. This guide helps you navigate the process with confidence.</p>
+          <h2>Resources</h2>
+          <ul><li><a href="/rehab-centers/${slug}">All Rehab Centers in ${state}</a></li><li><a href="/locations">Browse All Locations</a></li><li><a href="/concierge">Free Placement Help</a></li></ul>`,
+        breadcrumbs: [
+          { name: "Home", url: "/" },
+          { name: state, url: `/rehab-centers/${slug}` },
+          { name: title.split(" — ")[0].replace(`in ${state}`, "").trim(), url: `/rehab-centers/${slug}/articles/${articleSlug}` },
+        ],
+        structuredData: [{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: title,
+          description: tpl.descTemplate(state),
+          url: `${BASE_URL}/rehab-centers/${slug}/articles/${articleSlug}`,
+        }],
+      });
+      await writePage(path.join(publicDir, "rehab-centers", slug, "articles", `${articleSlug}.html`), html);
+    }
+  }
+}
+
+
 async function generateCityPages() {
   for (const city of topCities) {
     const stateSlug = stateToSlug(city.state);
@@ -766,6 +807,7 @@ async function main() {
   await generateCityTreatmentPages();
   await generateInsuranceStatePages();
   await generateStatePages();
+  await generateStateArticlePages();
   await generateCityPages();
   await generateStateTreatmentPages();
 
