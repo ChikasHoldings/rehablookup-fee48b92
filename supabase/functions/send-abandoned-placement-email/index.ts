@@ -302,6 +302,9 @@ Deno.serve(async (req) => {
       logStep("Error fetching international abandoned carts", { error: internationalError.message });
     }
 
+    // Deduplicate: don't email someone already in Tier 1
+    const tier1Emails = new Set((abandonedDomestic || []).map(i => i.user_email.toLowerCase()));
+
     const emailsSent: string[] = [];
     const errors: string[] = [];
 
