@@ -324,3 +324,30 @@ verify_jwt = false
 
 [functions.seed-blog-articles]
 verify_jwt = false
+
+[functions.admin-delete-lead]
+verify_jwt = true
+
+[functions.link-inquiry-to-user]
+verify_jwt = false
+
+[functions.process-provider-drip]
+verify_jwt = false
+
+[functions.process-seeker-drip]
+verify_jwt = false
+
+[functions.send-admin-monthly-report]
+verify_jwt = false
+
+[functions.send-new-facility-alerts]
+verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[functions.send-seeker-re-engagement]
+verify_jwt = false
+
+[functions.submit-exit-intent-lead]
+verify_jwt = false
