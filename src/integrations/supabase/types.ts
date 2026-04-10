@@ -4883,6 +4883,42 @@ export type Database = {
           },
         ]
       }
+      seeker_facility_alerts: {
+        Row: {
+          facility_id: string
+          id: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          facility_id: string
+          id?: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          facility_id?: string
+          id?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seeker_facility_alerts_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seeker_facility_alerts_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seeker_notifications: {
         Row: {
           created_at: string
@@ -4915,6 +4951,42 @@ export type Database = {
           read?: boolean
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seeker_onboarding_drip: {
+        Row: {
+          completed: boolean
+          created_at: string
+          current_step: number
+          email: string
+          id: string
+          last_email_sent_at: string | null
+          opted_out: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          current_step?: number
+          email: string
+          id?: string
+          last_email_sent_at?: string | null
+          opted_out?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          current_step?: number
+          email?: string
+          id?: string
+          last_email_sent_at?: string | null
+          opted_out?: boolean
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
