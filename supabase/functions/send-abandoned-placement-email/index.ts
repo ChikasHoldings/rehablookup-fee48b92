@@ -459,7 +459,8 @@ Deno.serve(async (req) => {
     logStep("Processing complete", { 
       emailsSent: emailsSent.length, 
       errors: errors.length,
-      domesticProcessed: abandonedDomestic?.length || 0,
+      domesticTier1: abandonedDomestic?.length || 0,
+      domesticTier2EarlyDropouts: earlyDropouts?.length || 0,
       internationalProcessed: abandonedInternational?.length || 0,
     });
 
