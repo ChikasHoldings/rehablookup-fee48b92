@@ -5642,6 +5642,7 @@ export type Database = {
       public_facility_staff: {
         Row: {
           bio: string | null
+          created_at: string | null
           display_order: number | null
           facility_id: string | null
           id: string | null
@@ -5649,26 +5650,6 @@ export type Database = {
           job_title: string | null
           name: string | null
           photo_url: string | null
-        }
-        Insert: {
-          bio?: string | null
-          display_order?: number | null
-          facility_id?: string | null
-          id?: string | null
-          is_visible?: boolean | null
-          job_title?: string | null
-          name?: string | null
-          photo_url?: string | null
-        }
-        Update: {
-          bio?: string | null
-          display_order?: number | null
-          facility_id?: string | null
-          id?: string | null
-          is_visible?: boolean | null
-          job_title?: string | null
-          name?: string | null
-          photo_url?: string | null
         }
         Relationships: [
           {
