@@ -256,8 +256,8 @@ Deno.serve(async (req) => {
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
-    // Find domestic abandoned carts with the new schema
-    // Criteria: form_completed_at AND email_verified_at are set, payment_status = 'pending'
+    // Find domestic abandoned carts - TWO TIERS:
+    // Tier 1: Form completed + email verified but didn't pay (2h-24h window, up to 2 reminders)
     const { data: abandonedDomestic, error: domesticError } = await supabase
       .from("concierge_inquiries")
       .select("id, user_email, user_name, primary_concern, level_of_care, preferred_state, preferred_city, timeline_urgency, created_at, payment_reminder_count, draft_id")
@@ -267,6 +267,21 @@ Deno.serve(async (req) => {
       .lt("form_completed_at", twoHoursAgo.toISOString())
       .gt("created_at", twentyFourHoursAgo.toISOString())
       .lt("payment_reminder_count", 2)
+      .limit(50);
+
+    // Tier 2: Contact info saved (draft) but never verified email (4h-48h window, 1 email max)
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+    const { data: earlyDropouts, error: earlyError } = await supabase
+      .from("concierge_inquiries")
+      .select("id, user_email, user_name, primary_concern, level_of_care, preferred_state, preferred_city, timeline_urgency, created_at, payment_reminder_count, draft_id")
+      .eq("payment_status", "pending")
+      .is("email_verified_at", null)
+      .is("abandoned_cart_email_sent_at", null)
+      .not("user_email", "is", null)
+      .not("user_phone", "is", null)
+      .lt("created_at", fourHoursAgo.toISOString())
+      .gt("created_at", fortyEightHoursAgo.toISOString())
       .limit(50);
 
     if (domesticError) {
@@ -286,6 +301,9 @@ Deno.serve(async (req) => {
     if (internationalError) {
       logStep("Error fetching international abandoned carts", { error: internationalError.message });
     }
+
+    // Deduplicate: don't email someone already in Tier 1
+    const tier1Emails = new Set((abandonedDomestic || []).map(i => i.user_email.toLowerCase()));
 
     const emailsSent: string[] = [];
     const errors: string[] = [];
@@ -343,6 +361,56 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Process Tier 2: Early-stage dropouts (contact info saved, no email verification)
+    for (const inquiry of earlyDropouts || []) {
+      // Skip if already emailed in Tier 1
+      if (tier1Emails.has(inquiry.user_email.toLowerCase())) continue;
+      
+      try {
+        const location = [inquiry.preferred_city, inquiry.preferred_state].filter(Boolean).join(", ");
+        const resumeParam = inquiry.draft_id ? `resume=${inquiry.draft_id}` : `id=${inquiry.id}`;
+        const resumeUrl = `https://rehablookup.com/concierge/intake?${resumeParam}`;
+        
+        const emailData = buildAbandonedCartEmail({
+          userName: inquiry.user_name,
+          userEmail: inquiry.user_email,
+          caseType: 'domestic',
+          intakeSummary: {
+            levelOfCare: inquiry.level_of_care,
+            primaryConcern: inquiry.primary_concern,
+            location: location || undefined,
+            urgency: inquiry.timeline_urgency,
+          },
+          resumeUrl,
+        });
+
+        const { error: sendError } = await resend.emails.send({
+          from: "RehabLookup <no-reply@rehablookup.com>",
+          to: [inquiry.user_email],
+          subject: emailData.subject,
+          html: emailData.html,
+        });
+
+        if (sendError) throw new Error(sendError.message);
+
+        await supabase
+          .from("concierge_inquiries")
+          .update({ 
+            abandoned_cart_email_sent_at: now.toISOString(),
+            payment_reminder_count: 1,
+          })
+          .eq("id", inquiry.id);
+
+        emailsSent.push(inquiry.user_email);
+        logStep("Sent early-dropout email", { email: inquiry.user_email, inquiryId: inquiry.id });
+        
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        errors.push(`EarlyDropout ${inquiry.id}: ${errorMsg}`);
+        logStep("Error sending early-dropout email", { error: errorMsg, inquiryId: inquiry.id });
+      }
+    }
+
     // Process international abandoned carts
     for (const caseData of abandonedInternational || []) {
       try {
@@ -391,7 +459,8 @@ Deno.serve(async (req) => {
     logStep("Processing complete", { 
       emailsSent: emailsSent.length, 
       errors: errors.length,
-      domesticProcessed: abandonedDomestic?.length || 0,
+      domesticTier1: abandonedDomestic?.length || 0,
+      domesticTier2EarlyDropouts: earlyDropouts?.length || 0,
       internationalProcessed: abandonedInternational?.length || 0,
     });
 

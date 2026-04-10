@@ -359,9 +359,29 @@ export default function ConciergeIntake() {
     setCurrentStep(5);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateStep(currentStep)) {
       if (currentStep < 7) {
+        // Auto-save draft to DB when leaving contact step (step 5)
+        // This captures leads who drop off before email verification or payment
+        if (currentStep === 5) {
+          try {
+            const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
+              body: {
+                intakeData: formData,
+                emailVerifiedAt: null,
+                draftId: draftId,
+              },
+            });
+            if (draftData?.draftId) {
+              setDraftId(draftData.draftId);
+              localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
+            }
+          } catch (e) {
+            // Don't block navigation if draft save fails
+            console.error("Auto-save draft failed:", e);
+          }
+        }
         setDirection(1);
         setCurrentStep(prev => prev + 1);
         scrollToTopSmooth();
