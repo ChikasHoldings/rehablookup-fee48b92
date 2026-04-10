@@ -361,6 +361,56 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Process Tier 2: Early-stage dropouts (contact info saved, no email verification)
+    for (const inquiry of earlyDropouts || []) {
+      // Skip if already emailed in Tier 1
+      if (tier1Emails.has(inquiry.user_email.toLowerCase())) continue;
+      
+      try {
+        const location = [inquiry.preferred_city, inquiry.preferred_state].filter(Boolean).join(", ");
+        const resumeParam = inquiry.draft_id ? `resume=${inquiry.draft_id}` : `id=${inquiry.id}`;
+        const resumeUrl = `https://rehablookup.com/concierge/intake?${resumeParam}`;
+        
+        const emailData = buildAbandonedCartEmail({
+          userName: inquiry.user_name,
+          userEmail: inquiry.user_email,
+          caseType: 'domestic',
+          intakeSummary: {
+            levelOfCare: inquiry.level_of_care,
+            primaryConcern: inquiry.primary_concern,
+            location: location || undefined,
+            urgency: inquiry.timeline_urgency,
+          },
+          resumeUrl,
+        });
+
+        const { error: sendError } = await resend.emails.send({
+          from: "RehabLookup <no-reply@rehablookup.com>",
+          to: [inquiry.user_email],
+          subject: emailData.subject,
+          html: emailData.html,
+        });
+
+        if (sendError) throw new Error(sendError.message);
+
+        await supabase
+          .from("concierge_inquiries")
+          .update({ 
+            abandoned_cart_email_sent_at: now.toISOString(),
+            payment_reminder_count: 1,
+          })
+          .eq("id", inquiry.id);
+
+        emailsSent.push(inquiry.user_email);
+        logStep("Sent early-dropout email", { email: inquiry.user_email, inquiryId: inquiry.id });
+        
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        errors.push(`EarlyDropout ${inquiry.id}: ${errorMsg}`);
+        logStep("Error sending early-dropout email", { error: errorMsg, inquiryId: inquiry.id });
+      }
+    }
+
     // Process international abandoned carts
     for (const caseData of abandonedInternational || []) {
       try {
