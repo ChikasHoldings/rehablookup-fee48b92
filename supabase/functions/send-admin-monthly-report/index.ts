@@ -1,4 +1,4 @@
-// Weekly report now delegates to the role-based digest with period=weekly
+// Monthly report delegates to the unified role-based digest with period=monthly
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -16,9 +16,8 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Delegate to the unified role-based digest with period=weekly
     const { data, error } = await supabase.functions.invoke("send-admin-daily-summary", {
-      body: { period: "weekly" },
+      body: { period: "monthly" },
     });
 
     if (error) throw error;
@@ -29,7 +28,7 @@ Deno.serve(async (req) => {
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Unknown error";
-    console.error("[WEEKLY-REPORT] Error:", msg);
+    console.error("[MONTHLY-REPORT] Error:", msg);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
