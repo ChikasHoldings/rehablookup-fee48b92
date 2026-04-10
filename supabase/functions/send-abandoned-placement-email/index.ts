@@ -256,8 +256,8 @@ Deno.serve(async (req) => {
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
-    // Find domestic abandoned carts with the new schema
-    // Criteria: form_completed_at AND email_verified_at are set, payment_status = 'pending'
+    // Find domestic abandoned carts - TWO TIERS:
+    // Tier 1: Form completed + email verified but didn't pay (2h-24h window, up to 2 reminders)
     const { data: abandonedDomestic, error: domesticError } = await supabase
       .from("concierge_inquiries")
       .select("id, user_email, user_name, primary_concern, level_of_care, preferred_state, preferred_city, timeline_urgency, created_at, payment_reminder_count, draft_id")
@@ -267,6 +267,21 @@ Deno.serve(async (req) => {
       .lt("form_completed_at", twoHoursAgo.toISOString())
       .gt("created_at", twentyFourHoursAgo.toISOString())
       .lt("payment_reminder_count", 2)
+      .limit(50);
+
+    // Tier 2: Contact info saved (draft) but never verified email (4h-48h window, 1 email max)
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+    const { data: earlyDropouts, error: earlyError } = await supabase
+      .from("concierge_inquiries")
+      .select("id, user_email, user_name, primary_concern, level_of_care, preferred_state, preferred_city, timeline_urgency, created_at, payment_reminder_count, draft_id")
+      .eq("payment_status", "pending")
+      .is("email_verified_at", null)
+      .is("abandoned_cart_email_sent_at", null)
+      .not("user_email", "is", null)
+      .not("user_phone", "is", null)
+      .lt("created_at", fourHoursAgo.toISOString())
+      .gt("created_at", fortyEightHoursAgo.toISOString())
       .limit(50);
 
     if (domesticError) {
