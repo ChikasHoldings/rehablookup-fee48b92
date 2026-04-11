@@ -351,3 +351,6 @@ verify_jwt = false
 
 [functions.submit-exit-intent-lead]
 verify_jwt = false
+
+[functions.assess-login-risk]
+verify_jwt = false
