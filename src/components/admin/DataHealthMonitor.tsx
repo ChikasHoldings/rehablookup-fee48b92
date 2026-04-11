@@ -57,8 +57,7 @@ export function DataHealthMonitor() {
         { name: "flagged_images", query: supabase.from("flagged_images").select("id, flagged_at", { count: "exact" }).order("flagged_at", { ascending: false }).limit(1) },
         
         { name: "notification_preferences", query: supabase.from("notification_preferences").select("id, updated_at", { count: "exact" }).order("updated_at", { ascending: false }).limit(1) },
-        { name: "facility_views", query: supabase.from("facility_views").select("id, created_at", { count: "exact" }).order("created_at", { ascending: false }).limit(1) },
-        { name: "facility_interactions", query: supabase.from("facility_interactions").select("id, created_at", { count: "exact" }).order("created_at", { ascending: false }).limit(1) },
+        { name: "provider_events", query: supabase.from("provider_events").select("id, created_at", { count: "exact" }).order("created_at", { ascending: false }).limit(1) },
       ];
 
       const results = await Promise.all(queries.map(async (q) => {
