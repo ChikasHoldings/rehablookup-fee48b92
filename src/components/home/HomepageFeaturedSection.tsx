@@ -239,23 +239,13 @@ export function HomepageFeaturedSection() {
               className="flex gap-5 overflow-x-auto scroll-smooth px-6 py-6 md:px-8 snap-x snap-mandatory"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {featuredCenters.map((center: any, index: number) => (
-                <FeaturedCard
-                  key={center.id}
-                  center={center}
-                  index={index}
-                  onClick={() => {
-                    if (center.isFromDatabase && center.id) {
-                      supabase.functions.invoke("track-featured-analytics", {
-                        body: { facility_id: center.id, event_type: "click" },
-                      }).catch(() => {});
-                    }
-                    const url = center.isFromDatabase && center.slug
-                      ? `/center/${center.slug}`
-                      : `/rehab-centers/${center.id}`;
-                    navigate(url, { state: { fromSearch: true } });
-                  }}
-                />
+              {featuredCenters.map((center: any) => (
+                <div key={center.id} className="flex-shrink-0 w-[340px] sm:w-[380px] snap-start">
+                  <TreatmentCenterCard
+                    center={center}
+                    featured={true}
+                  />
+                </div>
               ))}
             </div>
           </div>
