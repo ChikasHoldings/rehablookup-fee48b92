@@ -1,16 +1,12 @@
-import { useRef, useEffect, useState, useMemo, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { homeFaqs } from "@/data/pageFaqs";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
-import { treatmentCenters } from "@/data/treatmentCenters";
-import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSkeleton";
-import { supabase } from "@/integrations/supabase/client";
+import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import { InternationalCTA } from "@/components/home/InternationalCTA";
 import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
@@ -121,72 +117,6 @@ const treatmentOptions = [
 
 
 const Index = () => {
-  const { data: approvedFacilities = [], isLoading: isFacilitiesLoading } = useStaticFacilities();
-  
-  // Show loading during initial load
-  const isLoadingFeatured = isFacilitiesLoading;
-  
-  // Get homepage featured centers (max 6, with rotation from backend)
-  const featuredCenters = useMemo(() => {
-    // Get facilities that are designated for homepage display (isHomepageFeatured from rotation)
-    const homepageFeatured = approvedFacilities
-      .filter((f: any) => f.isHomepageFeatured || f.hasFeaturedSubscription)
-      .slice(0, 6);
-    
-    // Get static featured centers as fallback (add missing properties for type compatibility)
-    const staticFeatured = treatmentCenters
-      .filter((c) => c.featured)
-      .map((c) => ({
-        ...c,
-        slug: null,
-        isFromDatabase: false,
-        logo_url: null,
-        gallery_urls: null,
-        hasFeaturedSubscription: false,
-      }));
-    
-    // Combine: prioritize Featured subscription holders, fill remaining slots with static
-    const combined = [...homepageFeatured];
-    const remainingSlots = 6 - combined.length;
-    
-    if (remainingSlots > 0) {
-      combined.push(...staticFeatured.slice(0, remainingSlots));
-    }
-    
-    return combined.slice(0, 6);
-  }, [approvedFacilities]);
-
-  // Track impressions for featured facilities (once per session)
-  const hasTrackedImpressions = useRef(false);
-  
-  const trackFeaturedImpressions = useCallback(async () => {
-    if (hasTrackedImpressions.current) return;
-    
-    const featuredDbFacilities = featuredCenters.filter(
-      (c: any) => c.isFromDatabase && c.hasFeaturedSubscription && c.id
-    );
-    
-    if (featuredDbFacilities.length === 0) return;
-    
-    hasTrackedImpressions.current = true;
-    
-    // Track impression for each featured facility
-    for (const facility of featuredDbFacilities) {
-      try {
-        await supabase.functions.invoke("track-featured-analytics", {
-          body: { facility_id: facility.id, event_type: "impression" }
-        });
-      } catch (error) {
-        console.error("Failed to track impression:", error);
-      }
-    }
-  }, [featuredCenters]);
-
-  useEffect(() => {
-    if (featuredCenters.length > 0) {
-      trackFeaturedImpressions();
-    }
-  }, [featuredCenters, trackFeaturedImpressions]);
   // Parallax effect for Why Choose Us image
   const parallaxRef = useRef<HTMLDivElement>(null);
   const [parallaxOffset, setParallaxOffset] = useState(0);
@@ -369,65 +299,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Centers - Premium Grid - Immediately Visible */}
-      {isLoadingFeatured ? (
-        <section className="py-8 md:py-10 lg:py-14 bg-gradient-to-b from-background to-muted/20 min-h-[420px] md:min-h-[480px]">
-          <div className="container px-4 md:px-6 lg:px-8">
-            <FeaturedCentersLoading />
-          </div>
-        </section>
-      ) : featuredCenters.length > 0 ? (
-        <section className="py-8 md:py-10 lg:py-14 bg-gradient-to-b from-background to-muted/20">
-          <div className="container px-4 md:px-6 lg:px-8">
-            {/* Section Header */}
-            <div className="mb-5 md:mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 shadow-sm">
-                  <Star className="h-4 w-4 text-accent fill-accent" />
-                </div>
-                <div>
-                  <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
-                    Featured Treatment Centers
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-tight">
-                    Top-rated, verified facilities trusted by families
-                  </p>
-                </div>
-              </div>
-              <Link 
-                to="/rehab-centers" 
-                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors group"
-              >
-                View All
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
-
-            {/* Premium Grid */}
-            <div className="grid gap-4 md:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredCenters.map((center, index) => (
-                <div 
-                  key={center.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <TreatmentCenterCard center={center} featured />
-                </div>
-              ))}
-            </div>
-
-            {/* Mobile CTA */}
-            <div className="mt-5 text-center sm:hidden">
-              <Link to="/rehab-centers">
-                <Button variant="outline" size="sm" className="gap-2">
-                  View All Centers
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-      ) : null}
+      {/* Featured Centers - Premium Horizontal Scroll */}
+      <HomepageFeaturedSection />
 
       {/* Insurance Coverage Section */}
       <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-muted/30">
