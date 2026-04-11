@@ -1,6 +1,6 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Star, MapPin, ShieldCheck, Phone, ChevronLeft, ChevronRight, Globe, Clock, Users } from "lucide-react";
+import { ArrowRight, Star, MapPin, ShieldCheck, Phone, ChevronLeft, ChevronRight, Globe, Clock, Users, Building2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStaticFacilities, type PublicFacility } from "@/hooks/useStaticFacilities";
@@ -167,97 +167,102 @@ export function HomepageFeaturedSection() {
     : "Verified facilities across the United States";
 
   return (
-    <section className="py-14 md:py-20 bg-muted/30">
+    <section className="py-14 md:py-20">
       <div className="container px-4 md:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Featured Centers
-            </p>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-              Top-Rated Treatment Facilities
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2">
-              {locationLabel}
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2">
-              <button
-                onClick={() => scroll("left")}
-                disabled={!canScrollLeft}
-                className={cn(
-                  "h-10 w-10 rounded-full border flex items-center justify-center transition-colors",
-                  canScrollLeft
-                    ? "border-border bg-card hover:bg-accent text-foreground cursor-pointer"
-                    : "border-border/40 text-muted-foreground/30 cursor-default"
-                )}
-                aria-label="Scroll left"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => scroll("right")}
-                disabled={!canScrollRight}
-                className={cn(
-                  "h-10 w-10 rounded-full border flex items-center justify-center transition-colors",
-                  canScrollRight
-                    ? "border-border bg-card hover:bg-accent text-foreground cursor-pointer"
-                    : "border-border/40 text-muted-foreground/30 cursor-default"
-                )}
-                aria-label="Scroll right"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+        {/* Section Container with Refined Border */}
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-muted/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">
+                  Featured Centers
+                </p>
+                <h2 className="font-display text-xl md:text-2xl font-bold text-foreground tracking-tight">
+                  Top-Rated Treatment Facilities
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {locationLabel}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-1.5">
+                  <button
+                    onClick={() => scroll("left")}
+                    disabled={!canScrollLeft}
+                    className={cn(
+                      "h-9 w-9 rounded-lg border flex items-center justify-center transition-all",
+                      canScrollLeft
+                        ? "border-border bg-card hover:bg-muted text-foreground hover:border-primary/30"
+                        : "border-border/30 text-muted-foreground/30 cursor-default"
+                    )}
+                    aria-label="Scroll left"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => scroll("right")}
+                    disabled={!canScrollRight}
+                    className={cn(
+                      "h-9 w-9 rounded-lg border flex items-center justify-center transition-all",
+                      canScrollRight
+                        ? "border-border bg-card hover:bg-muted text-foreground hover:border-primary/30"
+                        : "border-border/30 text-muted-foreground/30 cursor-default"
+                    )}
+                    aria-label="Scroll right"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <Link
+                  to="/rehab-centers"
+                  className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  View all
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
-            <Link
-              to="/rehab-centers"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              View all centers
-              <ArrowRight className="h-4 w-4" />
-            </Link>
           </div>
-        </div>
 
-        {/* Scroll track */}
-        <div className="relative -mx-4 md:-mx-6 lg:-mx-8">
-          {canScrollLeft && (
-            <div className="absolute left-0 top-0 bottom-0 w-16 bg-[linear-gradient(to_right,hsl(var(--muted)/0.3),transparent)] pointer-events-none z-10 hidden md:block" />
-          )}
-          {canScrollRight && (
-            <div className="absolute right-0 top-0 bottom-0 w-16 bg-[linear-gradient(to_left,hsl(var(--muted)/0.3),transparent)] pointer-events-none z-10 hidden md:block" />
-          )}
+          {/* Scroll track */}
+          <div className="relative">
+            {canScrollLeft && (
+              <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-card to-transparent pointer-events-none z-10 hidden md:block" />
+            )}
+            {canScrollRight && (
+              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 hidden md:block" />
+            )}
 
-          <div
-            ref={scrollRef}
-            className="flex gap-5 overflow-x-auto scroll-smooth px-4 md:px-6 lg:px-8 pb-4 snap-x snap-mandatory"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {featuredCenters.map((center: any, index: number) => (
-              <FeaturedCard
-                key={center.id}
-                center={center}
-                index={index}
-                onClick={() => {
-                  if (center.isFromDatabase && center.id) {
-                    supabase.functions.invoke("track-featured-analytics", {
-                      body: { facility_id: center.id, event_type: "click" },
-                    }).catch(() => {});
-                  }
-                  const url = center.isFromDatabase && center.slug
-                    ? `/center/${center.slug}`
-                    : `/rehab-centers/${center.id}`;
-                  navigate(url, { state: { fromSearch: true } });
-                }}
-              />
-            ))}
+            <div
+              ref={scrollRef}
+              className="flex gap-5 overflow-x-auto scroll-smooth px-6 py-6 md:px-8 snap-x snap-mandatory"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {featuredCenters.map((center: any, index: number) => (
+                <FeaturedCard
+                  key={center.id}
+                  center={center}
+                  index={index}
+                  onClick={() => {
+                    if (center.isFromDatabase && center.id) {
+                      supabase.functions.invoke("track-featured-analytics", {
+                        body: { facility_id: center.id, event_type: "click" },
+                      }).catch(() => {});
+                    }
+                    const url = center.isFromDatabase && center.slug
+                      ? `/center/${center.slug}`
+                      : `/rehab-centers/${center.id}`;
+                    navigate(url, { state: { fromSearch: true } });
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Mobile CTA */}
-        <div className="mt-8 sm:hidden">
+        <div className="mt-6 sm:hidden">
           <Link to="/rehab-centers">
             <Button variant="outline" className="w-full gap-2 font-medium">
               View All Centers
@@ -289,6 +294,16 @@ function FeaturedCard({ center, index, onClick }: {
   const initials = center.name?.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join("").toUpperCase() || "?";
   const yearsInBusiness = center.year_established ? new Date().getFullYear() - center.year_established : null;
 
+  // Format treatment types for display
+  const displayServices = center.treatmentTypes?.slice(0, 4) || 
+    (center.facilityType ? [center.facilityType] : []);
+  
+  // Additional metadata to show
+  const hasInsurance = center.insuranceAccepted?.length > 0 || center.acceptedInsurance?.length > 0;
+  const insurancePreview = hasInsurance 
+    ? (center.insuranceAccepted?.slice(0, 2).join(", ") || center.acceptedInsurance?.slice(0, 2).join(", "))
+    : null;
+
   useEffect(() => {
     if (!center.isFromDatabase || !center.id || hasTracked.current) return;
     const observer = new IntersectionObserver(
@@ -315,118 +330,149 @@ function FeaturedCard({ center, index, onClick }: {
       role="button"
       aria-label={`View ${center.name} in ${center.city}, ${center.state}`}
       className={cn(
-        "group relative flex-shrink-0 w-[320px] sm:w-[340px] md:w-[360px] snap-start",
+        "group relative flex-shrink-0 w-[340px] sm:w-[380px] snap-start",
         "rounded-xl overflow-hidden bg-card cursor-pointer",
-        "border border-border",
+        "border border-border/80",
         "transition-all duration-200 ease-out",
-        "hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/30",
+        "hover:shadow-md hover:-translate-y-0.5 hover:border-primary/20",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
       )}
     >
       {/* Hero */}
-      <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
         <img
           src={hasHero ? heroImage : facilityPlaceholder}
           alt={`${center.name} facility`}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
           loading="lazy"
           decoding="async"
           onError={() => setImgErr(true)}
         />
 
-        {/* Top bar: Featured + Verified */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-3">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
+        {/* Subtle dark overlay for text readability - minimal */}
+        <div className="absolute inset-0 bg-black/20" />
+
+        {/* Top bar: Badges */}
+        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wide shadow-sm">
             <Star className="h-3 w-3 fill-current" />
             Featured
           </span>
           {center.verified && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card/95 backdrop-blur-sm text-[10px] font-semibold text-foreground border border-border/50">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/95 text-[10px] font-semibold text-foreground border border-border/50 shadow-sm">
               <ShieldCheck className="h-3 w-3 text-primary" />
               Verified
             </span>
           )}
         </div>
 
-        {/* Rating pill */}
-        {center.googleRating && center.googleReviewCount ? (
-          <div className="absolute bottom-3 left-3">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card/95 backdrop-blur-sm text-xs font-semibold border border-border/50">
-              <Star className="h-3 w-3 text-primary fill-primary" />
-              {center.googleRating.toFixed(1)}
-              <span className="text-muted-foreground font-normal text-[11px]">({center.googleReviewCount})</span>
-            </span>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Body */}
-      <div className="p-4">
-        {/* Identity */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+        {/* Bottom bar: Logo + Rating */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+          {/* Logo */}
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-card shadow-md">
             {hasLogo ? (
-              <img src={center.logo_url} alt="" className="h-full w-full object-cover" loading="lazy" onError={() => setLogoErr(true)} />
+              <img 
+                src={center.logo_url} 
+                alt="" 
+                className="h-full w-full object-cover" 
+                loading="lazy" 
+                onError={() => setLogoErr(true)} 
+              />
             ) : (
-              <div className="flex h-full w-full items-center justify-center">
+              <div className="flex h-full w-full items-center justify-center bg-muted">
                 <span className="font-display text-sm font-bold text-muted-foreground">{initials}</span>
               </div>
             )}
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-display text-[15px] font-semibold text-foreground leading-snug line-clamp-1 group-hover:text-primary transition-colors">
-              {center.name}
-            </h3>
-            <p className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">{center.city}, {center.state}</span>
-            </p>
-          </div>
+
+          {/* Rating pill */}
+          {center.googleRating && center.googleReviewCount ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-sm font-semibold border border-border/50 shadow-sm">
+              <Star className="h-3.5 w-3.5 text-primary fill-primary" />
+              {center.googleRating.toFixed(1)}
+              <span className="text-muted-foreground font-normal text-xs">({center.googleReviewCount})</span>
+            </span>
+          ) : center.rating ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-sm font-semibold border border-border/50 shadow-sm">
+              <Star className="h-3.5 w-3.5 text-primary fill-primary" />
+              {center.rating.toFixed(1)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="p-5">
+        {/* Identity */}
+        <div className="mb-3">
+          <h3 className="font-display text-base font-semibold text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+            {center.name}
+          </h3>
+          <p className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{center.city}, {center.state}</span>
+          </p>
         </div>
 
-        {/* Details row */}
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3 pb-3 border-b border-border">
+        {/* Details Grid */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
           {center.facilityType && (
-            <span className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {center.facilityType}
-            </span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
+                <Users className="h-3 w-3" />
+              </div>
+              <span className="line-clamp-1">{center.facilityType}</span>
+            </div>
           )}
           {yearsInBusiness && yearsInBusiness > 0 && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Est. {center.year_established}
-            </span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
+                <Clock className="h-3 w-3" />
+              </div>
+              <span>{yearsInBusiness}+ years</span>
+            </div>
           )}
-          {!center.facilityType && !yearsInBusiness && center.treatmentTypes?.length > 0 && (
-            <span className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {center.treatmentTypes[0]}
-            </span>
+          {center.bedCount && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
+                <Building2 className="h-3 w-3" />
+              </div>
+              <span>{center.bedCount} beds</span>
+            </div>
+          )}
+          {hasInsurance && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
+                <CreditCard className="h-3 w-3" />
+              </div>
+              <span className="line-clamp-1">Accepts {insurancePreview}...</span>
+            </div>
           )}
         </div>
 
         {/* Treatment types */}
-        {center.treatmentTypes?.length > 0 && (
+        {displayServices.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {center.treatmentTypes.slice(0, 3).map((t: string) => (
+            {displayServices.map((t: string) => (
               <span
                 key={t}
-                className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-[11px] font-medium text-muted-foreground"
+                className="inline-flex items-center px-2 py-1 rounded-md bg-secondary text-[11px] font-medium text-secondary-foreground"
               >
                 {t}
               </span>
             ))}
-            {center.treatmentTypes.length > 3 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded bg-muted/60 text-[11px] text-muted-foreground/60">
-                +{center.treatmentTypes.length - 3}
-              </span>
-            )}
           </div>
         )}
 
+        {/* Description snippet */}
+        {center.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+            {center.description}
+          </p>
+        )}
+
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-4 border-t border-border/60">
           <Button
             variant="default"
             size="sm"
@@ -439,29 +485,14 @@ function FeaturedCard({ center, index, onClick }: {
           {center.phone && (
             <Button
               variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.location.href = `tel:${center.phone}`;
-              }}
-              className="h-9 w-9 p-0 rounded-lg shrink-0"
-              aria-label={`Call ${center.name}`}
+              size="icon"
+              asChild
+              className="h-9 w-9 rounded-lg shrink-0"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Phone className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          {center.website && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(center.website, "_blank", "noopener,noreferrer");
-              }}
-              className="h-9 w-9 p-0 rounded-lg shrink-0"
-              aria-label={`Visit ${center.name} website`}
-            >
-              <Globe className="h-3.5 w-3.5" />
+              <a href={`tel:${center.phone}`}>
+                <Phone className="h-4 w-4" />
+              </a>
             </Button>
           )}
         </div>
@@ -469,7 +500,6 @@ function FeaturedCard({ center, index, onClick }: {
     </div>
   );
 }
-
 /* ═══════════════════ Skeleton ═══════════════════ */
 
 function FeaturedSkeleton() {
