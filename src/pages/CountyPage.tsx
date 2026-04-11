@@ -3,6 +3,7 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountyBySlug, getCountiesForState, getStateCountyData } from "@/data/countySeoData";
@@ -309,11 +310,7 @@ export default function CountyPage() {
           {isLoading ? (
             <SearchResultsLoading />
           ) : countyFacilities.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {countyFacilities.map(center => (
-                <TreatmentCenterCard key={center.id} center={center} />
-              ))}
-            </div>
+            <ResponsiveListingGrid facilities={countyFacilities} />
           ) : (
             <div className="text-center py-12 bg-card rounded-xl border">
               <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
