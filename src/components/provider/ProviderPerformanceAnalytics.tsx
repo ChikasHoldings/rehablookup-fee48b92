@@ -65,16 +65,18 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
     const leadFacility = leads?.facilityBreakdown.find(lf => lf.facilityId === fb.facilityId);
     return {
       name: fb.facilityName.length > 20 ? fb.facilityName.slice(0, 18) + "…" : fb.facilityName,
-      views: fb.listingViews,
+      impressions: fb.impressions,
+      views: fb.profileViews,
+      calls: fb.clickToCalls,
+      website: fb.websiteClicks,
       leads: leadFacility?.totalLeads || 0,
-      converted: leadFacility?.convertedLeads || 0,
     };
-  }).sort((a, b) => b.views - a.views);
+  }).sort((a, b) => b.impressions - a.impressions);
 
   // Ranked listings
   const rankedListings = [...facilityComparisonData].sort((a, b) => {
-    const scoreA = a.views + (a.leads * 5) + (a.converted * 20);
-    const scoreB = b.views + (b.leads * 5) + (b.converted * 20);
+    const scoreA = a.impressions + (a.views * 3) + (a.calls * 10) + (a.website * 5) + (a.leads * 20);
+    const scoreB = b.impressions + (b.views * 3) + (b.calls * 10) + (b.website * 5) + (b.leads * 20);
     return scoreB - scoreA;
   });
 
@@ -106,16 +108,20 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
                     contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)", padding: "8px 12px", fontSize: "12px" }}
                     labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600, fontSize: "11px" }}
                   />
-                  <Bar dataKey="views" name="Views" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={14} />
-                  <Bar dataKey="leads" name="Leads" fill="hsl(217, 91%, 60%)" radius={[0, 4, 4, 0]} barSize={14} />
-                  <Bar dataKey="converted" name="Converted" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={14} />
+                  <Bar dataKey="impressions" name="Impressions" fill="hsl(217, 91%, 60%)" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="views" name="Views" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="calls" name="Calls" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="website" name="Website" fill="hsl(280, 65%, 60%)" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="leads" name="Leads" fill="hsl(38, 92%, 50%)" radius={[0, 4, 4, 0]} barSize={10} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-center gap-4 mt-2">
+              <LegendItem color="hsl(217, 91%, 60%)" label="Impressions" />
               <LegendItem color="hsl(var(--primary))" label="Views" />
-              <LegendItem color="hsl(217, 91%, 60%)" label="Leads" />
-              <LegendItem color="hsl(142, 71%, 45%)" label="Converted" />
+              <LegendItem color="hsl(142, 71%, 45%)" label="Calls" />
+              <LegendItem color="hsl(280, 65%, 60%)" label="Website" />
+              <LegendItem color="hsl(38, 92%, 50%)" label="Leads" />
             </div>
           </div>
         </div>
@@ -132,35 +138,39 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30">
-                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
-                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Facility</th>
-                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Views</th>
-                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Leads</th>
-                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Converted</th>
-                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Score</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">#</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Facility</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Impressions</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Views</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Calls</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Website</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Leads</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Score</th>
                 </tr>
               </thead>
               <tbody>
                 {rankedListings.map((listing, idx) => {
-                  const score = listing.views + (listing.leads * 5) + (listing.converted * 20);
+                  const score = listing.impressions + (listing.views * 3) + (listing.calls * 10) + (listing.website * 5) + (listing.leads * 20);
                   return (
                     <tr key={idx} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-3">
                         {idx === 0 ? (
                           <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-500/10 text-amber-600 text-xs font-bold">1</span>
                         ) : (
                           <span className="text-muted-foreground font-medium">{idx + 1}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 font-medium text-foreground">{listing.name}</td>
-                      <td className="text-right px-4 py-3.5 text-muted-foreground">{listing.views}</td>
-                      <td className="text-right px-4 py-3.5 text-muted-foreground">{listing.leads}</td>
-                      <td className="text-right px-4 py-3.5">
-                        <Badge variant="outline" className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-200">
-                          {listing.converted}
+                      <td className="px-3 py-3 font-medium text-foreground">{listing.name}</td>
+                      <td className="text-right px-3 py-3 text-muted-foreground">{listing.impressions}</td>
+                      <td className="text-right px-3 py-3 text-muted-foreground">{listing.views}</td>
+                      <td className="text-right px-3 py-3 text-muted-foreground">{listing.calls}</td>
+                      <td className="text-right px-3 py-3 text-muted-foreground">{listing.website}</td>
+                      <td className="text-right px-3 py-3">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 bg-amber-500/10 text-amber-600 border-amber-200">
+                          {listing.leads}
                         </Badge>
                       </td>
-                      <td className="text-right px-4 py-3.5 font-bold text-foreground">{score}</td>
+                      <td className="text-right px-3 py-3 font-bold text-foreground">{score}</td>
                     </tr>
                   );
                 })}

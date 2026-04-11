@@ -8,6 +8,8 @@ import { type DateRange } from "./useLeadAnalytics";
 export interface FacilityEngagementBreakdown {
   facilityId: string;
   facilityName: string;
+  impressions: number;
+  profileViews: number;
   listingViews: number;
   clickToCalls: number;
   websiteClicks: number;
@@ -26,6 +28,8 @@ export interface CentralizedEngagementAnalytics {
   websiteClickGrowth: number;
   dailyTrends: {
     date: string;
+    impressions: number;
+    profileViews: number;
     listingViews: number;
     clickToCalls: number;
     websiteClicks: number;
@@ -181,18 +185,19 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
 
       const facilityBreakdown: FacilityEngagementBreakdown[] = facilityIds
         .map((facilityId) => {
-          const fViewEvents = currentViewEvents.filter((e) => e.facility_id === facilityId);
-          const fClickEvents = currentClickEvents.filter((e) => e.facility_id === facilityId);
+          const fEvents = allEvents.filter(e => e.facility_id === facilityId && inRange(e));
 
           return {
             facilityId,
             facilityName: facilityMap.get(facilityId) || "Unknown",
-            listingViews: fViewEvents.length,
-            clickToCalls: countByType(fClickEvents, "click_to_call"),
-            websiteClicks: countByType(fClickEvents, "website_click"),
+            impressions: fEvents.filter(e => e.event_type === "listing_impression").length,
+            profileViews: fEvents.filter(e => e.event_type === "profile_view").length,
+            listingViews: fEvents.filter(e => e.event_type === "profile_view" || e.event_type === "listing_impression").length,
+            clickToCalls: fEvents.filter(e => e.event_type === "click_to_call").length,
+            websiteClicks: fEvents.filter(e => e.event_type === "website_click").length,
           };
         })
-        .filter((facility) => facility.listingViews > 0 || facility.clickToCalls > 0 || facility.websiteClicks > 0);
+        .filter((f) => f.listingViews > 0 || f.clickToCalls > 0 || f.websiteClicks > 0);
 
       const dailyTrends = buildDailyTrends(currentViewEvents, currentClickEvents, rangeStart, rangeEnd);
 
@@ -260,6 +265,8 @@ function buildDailyTrends(
 
     trends.push({
       date: format(date, "MMM d"),
+      impressions: dayViews.filter(e => e.event_type === "listing_impression").length,
+      profileViews: dayViews.filter(e => e.event_type === "profile_view").length,
       listingViews: dayViews.length,
       clickToCalls: countByType(dayClicks, "click_to_call"),
       websiteClicks: countByType(dayClicks, "website_click"),
