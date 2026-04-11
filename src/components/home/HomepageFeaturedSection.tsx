@@ -59,18 +59,32 @@ export function HomepageFeaturedSection() {
   const nearbyStates = useMemo(() => userState ? getNearbyStates(userState) : [], [userState]);
 
   const featuredCenters = useMemo(() => {
+    // Priority 1: explicitly featured facilities
     const dbFeatured = approvedFacilities.filter(
       (f: any) => f.isHomepageFeatured || f.hasFeaturedSubscription
     );
-    const staticFeatured = treatmentCenters
-      .filter((c) => c.featured)
-      .map((c) => ({
-        ...c, slug: null, isFromDatabase: false, logo_url: null, gallery_urls: null,
-        hasFeaturedSubscription: false, isPro: false, verified: false,
-        year_established: null, facilityType: null, googleRating: null, googleReviewCount: null,
-      }));
 
-    let pool = dbFeatured.length > 0 ? [...dbFeatured] : [...staticFeatured as any[]];
+    // Priority 2: all approved facilities as fallback (sorted by pro > verified > rating)
+    let pool: any[];
+    if (dbFeatured.length > 0) {
+      pool = [...dbFeatured];
+    } else if (approvedFacilities.length > 0) {
+      pool = [...approvedFacilities].sort((a: any, b: any) => {
+        if (a.isPro !== b.isPro) return a.isPro ? -1 : 1;
+        if (a.verified !== b.verified) return a.verified ? -1 : 1;
+        return (b.googleRating || 0) - (a.googleRating || 0);
+      });
+    } else {
+      // Priority 3: static data
+      pool = treatmentCenters
+        .filter((c) => c.featured)
+        .map((c) => ({
+          ...c, slug: null, isFromDatabase: false, logo_url: null, gallery_urls: null,
+          hasFeaturedSubscription: false, isPro: false, verified: false,
+          year_established: null, facilityType: null, googleRating: null, googleReviewCount: null,
+        }));
+    }
+
     const seed = getDailySeed();
 
     if (userState && !geo.isLoading) {
@@ -89,11 +103,6 @@ export function HomepageFeaturedSection() {
       pool = seededShuffle(pool, seed);
     }
 
-    if (pool.length < 8) {
-      const existing = new Set(pool.map(p => p.id));
-      const extra = (staticFeatured as any[]).filter(s => !existing.has(s.id));
-      pool.push(...extra.slice(0, 8 - pool.length));
-    }
     return pool.slice(0, 8);
   }, [approvedFacilities, userState, userCity, nearbyStates, geo.isLoading]);
 
