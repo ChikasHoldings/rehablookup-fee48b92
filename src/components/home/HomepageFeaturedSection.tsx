@@ -1,16 +1,15 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Star, MapPin, ShieldCheck, Phone, ChevronLeft, ChevronRight, Globe, Clock, Users, Building2, CreditCard } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStaticFacilities, type PublicFacility } from "@/hooks/useStaticFacilities";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getNearbyStates } from "@/lib/proximitySearch";
 import { supabase } from "@/integrations/supabase/client";
-import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { cn } from "@/lib/utils";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 
 function getDailySeed(): number {
   const d = new Date();
@@ -48,7 +47,7 @@ function getProximityTier(facility: PublicFacility, userState: string, userCity:
 export function HomepageFeaturedSection() {
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
   const geo = useGeoLocation();
-  const navigate = useNavigate();
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasTrackedImpressions = useRef(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -239,23 +238,13 @@ export function HomepageFeaturedSection() {
               className="flex gap-5 overflow-x-auto scroll-smooth px-6 py-6 md:px-8 snap-x snap-mandatory"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {featuredCenters.map((center: any, index: number) => (
-                <FeaturedCard
-                  key={center.id}
-                  center={center}
-                  index={index}
-                  onClick={() => {
-                    if (center.isFromDatabase && center.id) {
-                      supabase.functions.invoke("track-featured-analytics", {
-                        body: { facility_id: center.id, event_type: "click" },
-                      }).catch(() => {});
-                    }
-                    const url = center.isFromDatabase && center.slug
-                      ? `/center/${center.slug}`
-                      : `/rehab-centers/${center.id}`;
-                    navigate(url, { state: { fromSearch: true } });
-                  }}
-                />
+              {featuredCenters.map((center: any) => (
+                <div key={center.id} className="flex-shrink-0 w-[340px] sm:w-[380px] snap-start">
+                  <TreatmentCenterCard
+                    center={center}
+                    featured={true}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -275,232 +264,6 @@ export function HomepageFeaturedSection() {
   );
 }
 
-/* ═══════════════════ Featured Card ═══════════════════ */
-
-function FeaturedCard({ center, index, onClick }: {
-  center: any;
-  index: number;
-  onClick: () => void;
-}) {
-  const [logoErr, setLogoErr] = useState(false);
-  const [imgErr, setImgErr] = useState(false);
-  const { trackImpression } = useProviderEventTracking();
-  const cardRef = useRef<HTMLDivElement>(null);
-  const hasTracked = useRef(false);
-
-  const heroImage = center.gallery_urls?.[0] || center.image;
-  const hasHero = heroImage && !imgErr;
-  const hasLogo = center.logo_url && !logoErr;
-  const initials = center.name?.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join("").toUpperCase() || "?";
-  const yearsInBusiness = center.year_established ? new Date().getFullYear() - center.year_established : null;
-
-  // Format treatment types for display
-  const displayServices = center.treatmentTypes?.slice(0, 4) || 
-    (center.facilityType ? [center.facilityType] : []);
-  
-  // Additional metadata to show
-  const hasInsurance = center.insuranceAccepted?.length > 0 || center.acceptedInsurance?.length > 0;
-  const insurancePreview = hasInsurance 
-    ? (center.insuranceAccepted?.slice(0, 2).join(", ") || center.acceptedInsurance?.slice(0, 2).join(", "))
-    : null;
-
-  useEffect(() => {
-    if (!center.isFromDatabase || !center.id || hasTracked.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && !hasTracked.current) {
-          hasTracked.current = true;
-          trackImpression(center.id, "search");
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => observer.disconnect();
-  }, [center.isFromDatabase, center.id, trackImpression]);
-
-  return (
-    <div
-      ref={cardRef}
-      data-featured-card
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      tabIndex={0}
-      role="button"
-      aria-label={`View ${center.name} in ${center.city}, ${center.state}`}
-      className={cn(
-        "group relative flex-shrink-0 w-[340px] sm:w-[380px] snap-start",
-        "rounded-xl overflow-hidden bg-card cursor-pointer",
-        "border border-border/80",
-        "transition-all duration-200 ease-out",
-        "hover:shadow-md hover:-translate-y-0.5 hover:border-primary/20",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-      )}
-    >
-      {/* Hero */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-        <img
-          src={hasHero ? heroImage : facilityPlaceholder}
-          alt={`${center.name} facility`}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-          loading="lazy"
-          decoding="async"
-          onError={() => setImgErr(true)}
-        />
-
-        {/* Subtle dark overlay for text readability - minimal */}
-        <div className="absolute inset-0 bg-black/20" />
-
-        {/* Top bar: Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wide shadow-sm">
-            <Star className="h-3 w-3 fill-current" />
-            Featured
-          </span>
-          {center.verified && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/95 text-[10px] font-semibold text-foreground border border-border/50 shadow-sm">
-              <ShieldCheck className="h-3 w-3 text-primary" />
-              Verified
-            </span>
-          )}
-        </div>
-
-        {/* Bottom bar: Logo + Rating */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-          {/* Logo */}
-          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-card shadow-md">
-            {hasLogo ? (
-              <img 
-                src={center.logo_url} 
-                alt="" 
-                className="h-full w-full object-cover" 
-                loading="lazy" 
-                onError={() => setLogoErr(true)} 
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-muted">
-                <span className="font-display text-sm font-bold text-muted-foreground">{initials}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Rating pill */}
-          {center.googleRating && center.googleReviewCount ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-sm font-semibold border border-border/50 shadow-sm">
-              <Star className="h-3.5 w-3.5 text-primary fill-primary" />
-              {center.googleRating.toFixed(1)}
-              <span className="text-muted-foreground font-normal text-xs">({center.googleReviewCount})</span>
-            </span>
-          ) : center.rating ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-sm font-semibold border border-border/50 shadow-sm">
-              <Star className="h-3.5 w-3.5 text-primary fill-primary" />
-              {center.rating.toFixed(1)}
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="p-5">
-        {/* Identity */}
-        <div className="mb-3">
-          <h3 className="font-display text-base font-semibold text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-            {center.name}
-          </h3>
-          <p className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{center.city}, {center.state}</span>
-          </p>
-        </div>
-
-        {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {center.facilityType && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
-                <Users className="h-3 w-3" />
-              </div>
-              <span className="line-clamp-1">{center.facilityType}</span>
-            </div>
-          )}
-          {yearsInBusiness && yearsInBusiness > 0 && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
-                <Clock className="h-3 w-3" />
-              </div>
-              <span>{yearsInBusiness}+ years</span>
-            </div>
-          )}
-          {center.bedCount && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
-                <Building2 className="h-3 w-3" />
-              </div>
-              <span>{center.bedCount} beds</span>
-            </div>
-          )}
-          {hasInsurance && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
-                <CreditCard className="h-3 w-3" />
-              </div>
-              <span className="line-clamp-1">Accepts {insurancePreview}...</span>
-            </div>
-          )}
-        </div>
-
-        {/* Treatment types */}
-        {displayServices.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {displayServices.map((t: string) => (
-              <span
-                key={t}
-                className="inline-flex items-center px-2 py-1 rounded-md bg-secondary text-[11px] font-medium text-secondary-foreground"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Description snippet */}
-        {center.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-            {center.description}
-          </p>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-2 pt-4 border-t border-border/60">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); onClick(); }}
-            className="flex-1 h-9 text-xs font-medium rounded-lg"
-          >
-            View Profile
-            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-          </Button>
-          {center.phone && (
-            <Button
-              variant="outline"
-              size="icon"
-              asChild
-              className="h-9 w-9 rounded-lg shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <a href={`tel:${center.phone}`}>
-                <Phone className="h-4 w-4" />
-              </a>
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-/* ═══════════════════ Skeleton ═══════════════════ */
 
 function FeaturedSkeleton() {
   return (
