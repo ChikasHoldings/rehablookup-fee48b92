@@ -8,6 +8,8 @@ import { type DateRange } from "./useLeadAnalytics";
 export interface FacilityEngagementBreakdown {
   facilityId: string;
   facilityName: string;
+  impressions: number;
+  profileViews: number;
   listingViews: number;
   clickToCalls: number;
   websiteClicks: number;
@@ -26,6 +28,8 @@ export interface CentralizedEngagementAnalytics {
   websiteClickGrowth: number;
   dailyTrends: {
     date: string;
+    impressions: number;
+    profileViews: number;
     listingViews: number;
     clickToCalls: number;
     websiteClicks: number;
