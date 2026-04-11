@@ -446,14 +446,13 @@ export default function AdminSettings() {
           break;
         case "analytics":
           const [viewsResult, interactionsResult] = await Promise.all([
-            supabase.from("facility_views").select("facility_id, view_date, view_count, created_at").order("view_date", { ascending: false }).limit(1000),
-            supabase.from("facility_interactions").select("id, facility_id, interaction_type, interaction_count, interaction_date, created_at").order("interaction_date", { ascending: false }).limit(1000),
+            supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["profile_view", "listing_impression"]).order("created_at", { ascending: false }).limit(1000),
+            supabase.from("provider_events").select("id, facility_id, event_type, created_at").in("event_type", ["click_to_call", "website_click"]).order("created_at", { ascending: false }).limit(1000),
           ]);
           
           if (format === "csv") {
-            // For CSV, combine views data
             data = viewsResult.data || [];
-            csvHeaders = ["facility_id", "view_date", "view_count", "created_at"];
+            csvHeaders = ["facility_id", "event_type", "created_at"];
           } else {
             data = {
               views: viewsResult.data || [],
