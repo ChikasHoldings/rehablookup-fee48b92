@@ -1,6 +1,6 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Star, MapPin, ShieldCheck, Phone, ChevronLeft, ChevronRight, Globe, Clock, Users } from "lucide-react";
+import { ArrowRight, Star, MapPin, ShieldCheck, Phone, ChevronLeft, ChevronRight, Globe, Clock, Users, Building2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStaticFacilities, type PublicFacility } from "@/hooks/useStaticFacilities";
@@ -500,12 +500,6 @@ function FeaturedCard({ center, index, onClick }: {
     </div>
   );
 }
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ═══════════════════ Skeleton ═══════════════════ */
 
 function FeaturedSkeleton() {
