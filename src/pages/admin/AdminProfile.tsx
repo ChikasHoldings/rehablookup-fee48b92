@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
-import { ProfileInformationCard, SecurityCard, TwoFactorCard } from "@/components/admin/profile";
+import { ProfileInformationCard, SecurityCard, TwoFactorCard, TrustedDevicesCard } from "@/components/admin/profile";
 
 // Extended admin profile type
 interface AdminProfile {
@@ -644,6 +644,11 @@ export default function AdminProfile() {
       {/* Two-Factor Authentication */}
       {userData?.id && (
         <TwoFactorCard userId={userData.id} />
+      )}
+
+      {/* Trusted Devices */}
+      {userData?.id && (
+        <TrustedDevicesCard userId={userData.id} />
       )}
 
       {/* Notification Preferences */}
