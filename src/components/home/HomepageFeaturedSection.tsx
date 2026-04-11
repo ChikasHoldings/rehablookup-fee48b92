@@ -1,8 +1,7 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Star, MapPin, Crown, ShieldCheck, Phone, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowRight, Star, MapPin, ShieldCheck, Phone, ChevronLeft, ChevronRight, Globe, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStaticFacilities, type PublicFacility } from "@/hooks/useStaticFacilities";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
@@ -13,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
 
-// Deterministic daily seed for fair rotation
 function getDailySeed(): number {
   const d = new Date();
   const str = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -141,16 +139,14 @@ export function HomepageFeaturedSection() {
   const scroll = useCallback((dir: "left" | "right") => {
     const el = scrollRef.current;
     if (!el) return;
-    const cardWidth = el.querySelector("[data-featured-card]")?.clientWidth || 320;
+    const cardWidth = el.querySelector("[data-featured-card]")?.clientWidth || 360;
     el.scrollBy({ left: dir === "left" ? -cardWidth - 20 : cardWidth + 20, behavior: "smooth" });
   }, []);
 
   if (isLoading) {
     return (
-      <section className="py-12 md:py-16 lg:py-20">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <FeaturedSkeleton />
-        </div>
+      <section className="py-14 md:py-20">
+        <div className="container px-4 md:px-6 lg:px-8"><FeaturedSkeleton /></div>
       </section>
     );
   }
@@ -158,87 +154,76 @@ export function HomepageFeaturedSection() {
   if (featuredCenters.length === 0) return null;
 
   const locationLabel = userState && !geo.isLoading
-    ? `Showing centers near ${userCity ? `${userCity}, ` : ""}${userState}`
-    : "Trusted centers across the United States";
+    ? `Showing results near ${userCity ? `${userCity}, ` : ""}${userState}`
+    : "Verified facilities across the United States";
 
   return (
-    <section className="py-12 md:py-16 lg:py-20 relative">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-muted/40 via-background to-background pointer-events-none" />
-
-      <div className="container px-4 md:px-6 lg:px-8 relative">
-        {/* Section header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+    <section className="py-14 md:py-20 bg-muted/30">
+      <div className="container px-4 md:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <Sparkles className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Featured
-              </span>
-            </div>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">
-              Top Treatment Centers
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
+              Featured Centers
+            </p>
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+              Top-Rated Treatment Facilities
             </h2>
-            <p className="text-sm text-muted-foreground mt-1.5 max-w-md">
+            <p className="text-sm text-muted-foreground mt-2">
               {locationLabel}
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            {/* Nav arrows */}
+          <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-2">
               <button
                 onClick={() => scroll("left")}
                 disabled={!canScrollLeft}
                 className={cn(
-                  "h-10 w-10 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                  "h-10 w-10 rounded-full border flex items-center justify-center transition-colors",
                   canScrollLeft
-                    ? "border-border bg-card hover:bg-accent text-foreground shadow-sm cursor-pointer"
-                    : "border-border/30 text-muted-foreground/30 cursor-default"
+                    ? "border-border bg-card hover:bg-accent text-foreground cursor-pointer"
+                    : "border-border/40 text-muted-foreground/30 cursor-default"
                 )}
                 aria-label="Scroll left"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => scroll("right")}
                 disabled={!canScrollRight}
                 className={cn(
-                  "h-10 w-10 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                  "h-10 w-10 rounded-full border flex items-center justify-center transition-colors",
                   canScrollRight
-                    ? "border-border bg-card hover:bg-accent text-foreground shadow-sm cursor-pointer"
-                    : "border-border/30 text-muted-foreground/30 cursor-default"
+                    ? "border-border bg-card hover:bg-accent text-foreground cursor-pointer"
+                    : "border-border/40 text-muted-foreground/30 cursor-default"
                 )}
                 aria-label="Scroll right"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
             <Link
               to="/rehab-centers"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors group"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
-              View All
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              View all centers
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
 
         {/* Scroll track */}
         <div className="relative -mx-4 md:-mx-6 lg:-mx-8">
-          {/* Fade edges */}
           {canScrollLeft && (
-            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-[linear-gradient(to_right,hsl(var(--muted)/0.3),transparent)] pointer-events-none z-10 hidden md:block" />
           )}
           {canScrollRight && (
-            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-[linear-gradient(to_left,hsl(var(--muted)/0.3),transparent)] pointer-events-none z-10 hidden md:block" />
           )}
 
           <div
             ref={scrollRef}
-            className="flex gap-5 overflow-x-auto scroll-smooth px-4 md:px-6 lg:px-8 pb-2 snap-x snap-mandatory"
+            className="flex gap-5 overflow-x-auto scroll-smooth px-4 md:px-6 lg:px-8 pb-4 snap-x snap-mandatory"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {featuredCenters.map((center: any, index: number) => (
@@ -263,9 +248,9 @@ export function HomepageFeaturedSection() {
         </div>
 
         {/* Mobile CTA */}
-        <div className="mt-6 sm:hidden">
+        <div className="mt-8 sm:hidden">
           <Link to="/rehab-centers">
-            <Button variant="outline" className="w-full gap-2 font-semibold">
+            <Button variant="outline" className="w-full gap-2 font-medium">
               View All Centers
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -293,7 +278,7 @@ function FeaturedCard({ center, index, onClick }: {
   const hasHero = heroImage && !imgErr;
   const hasLogo = center.logo_url && !logoErr;
   const initials = center.name?.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join("").toUpperCase() || "?";
-  const detailsUrl = center.isFromDatabase && center.slug ? `/center/${center.slug}` : `/rehab-centers/${center.id}`;
+  const yearsInBusiness = center.year_established ? new Date().getFullYear() - center.year_established : null;
 
   useEffect(() => {
     if (!center.isFromDatabase || !center.id || hasTracked.current) return;
@@ -321,122 +306,126 @@ function FeaturedCard({ center, index, onClick }: {
       role="button"
       aria-label={`View ${center.name} in ${center.city}, ${center.state}`}
       className={cn(
-        "group relative flex-shrink-0 w-[300px] sm:w-[320px] md:w-[340px] snap-start",
-        "rounded-2xl overflow-hidden bg-card cursor-pointer",
-        "border border-border/50 shadow-sm",
-        "transition-all duration-300 ease-out",
-        "hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 hover:border-primary/20",
+        "group relative flex-shrink-0 w-[320px] sm:w-[340px] md:w-[360px] snap-start",
+        "rounded-xl overflow-hidden bg-card cursor-pointer",
+        "border border-border",
+        "transition-all duration-200 ease-out",
+        "hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/30",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
       )}
-      style={{ animationDelay: `${index * 50}ms` }}
     >
-      {/* Hero image area */}
-      <div className="relative aspect-[16/9] overflow-hidden">
-        {hasHero ? (
-          <img
-            src={heroImage}
-            alt={`${center.name} facility`}
-            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-            loading="lazy"
-            decoding="async"
-            onError={() => setImgErr(true)}
-          />
-        ) : (
-          <img
-            src={facilityPlaceholder}
-            alt={`${center.name} facility`}
-            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-            loading="lazy"
-            decoding="async"
-          />
-        )}
+      {/* Hero */}
+      <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+        <img
+          src={hasHero ? heroImage : facilityPlaceholder}
+          alt={`${center.name} facility`}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          loading="lazy"
+          decoding="async"
+          onError={() => setImgErr(true)}
+        />
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
-
-        {/* Featured pill */}
-        <div className="absolute top-3 left-3">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wide shadow-lg">
-            <Crown className="h-3 w-3" />
+        {/* Top bar: Featured + Verified */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-3">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
+            <Star className="h-3 w-3 fill-current" />
             Featured
           </span>
-        </div>
-
-        {/* Verified badge */}
-        {center.verified && (
-          <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-card/90 backdrop-blur-sm text-[11px] font-semibold text-accent-foreground shadow-sm">
-              <ShieldCheck className="h-3 w-3" />
+          {center.verified && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card/95 backdrop-blur-sm text-[10px] font-semibold text-foreground border border-border/50">
+              <ShieldCheck className="h-3 w-3 text-primary" />
               Verified
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Google rating on image */}
+        {/* Rating pill */}
         {center.googleRating && center.googleReviewCount ? (
-          <div className="absolute bottom-3 right-3">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-card/90 backdrop-blur-sm text-xs font-semibold shadow-sm">
+          <div className="absolute bottom-3 left-3">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card/95 backdrop-blur-sm text-xs font-semibold border border-border/50">
               <Star className="h-3 w-3 text-primary fill-primary" />
               {center.googleRating.toFixed(1)}
-              <span className="text-muted-foreground font-normal">({center.googleReviewCount})</span>
+              <span className="text-muted-foreground font-normal text-[11px]">({center.googleReviewCount})</span>
             </span>
           </div>
         ) : null}
       </div>
 
-      {/* Card body */}
-      <div className="p-4 space-y-3">
-        {/* Logo + Name + Location */}
-        <div className="flex items-start gap-3">
-          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm">
+      {/* Body */}
+      <div className="p-4">
+        {/* Identity */}
+        <div className="flex items-start gap-3 mb-3">
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
             {hasLogo ? (
               <img src={center.logo_url} alt="" className="h-full w-full object-cover" loading="lazy" onError={() => setLogoErr(true)} />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-primary/5">
-                <span className="font-display text-sm font-bold text-primary">{initials}</span>
+              <div className="flex h-full w-full items-center justify-center">
+                <span className="font-display text-sm font-bold text-muted-foreground">{initials}</span>
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-display text-sm font-bold text-foreground leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+            <h3 className="font-display text-[15px] font-semibold text-foreground leading-snug line-clamp-1 group-hover:text-primary transition-colors">
               {center.name}
             </h3>
-            <div className="flex items-center gap-1 mt-0.5">
-              <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground truncate">{center.city}, {center.state}</span>
-            </div>
+            <p className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{center.city}, {center.state}</span>
+            </p>
           </div>
         </div>
 
-        {/* Treatment tags */}
+        {/* Details row */}
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3 pb-3 border-b border-border">
+          {center.facilityType && (
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {center.facilityType}
+            </span>
+          )}
+          {yearsInBusiness && yearsInBusiness > 0 && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Est. {center.year_established}
+            </span>
+          )}
+          {!center.facilityType && !yearsInBusiness && center.treatmentTypes?.length > 0 && (
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {center.treatmentTypes[0]}
+            </span>
+          )}
+        </div>
+
+        {/* Treatment types */}
         {center.treatmentTypes?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 mb-4">
             {center.treatmentTypes.slice(0, 3).map((t: string) => (
               <span
                 key={t}
-                className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-[11px] font-medium text-muted-foreground"
+                className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-[11px] font-medium text-muted-foreground"
               >
                 {t}
               </span>
             ))}
             {center.treatmentTypes.length > 3 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-[11px] text-muted-foreground/60">
-                +{center.treatmentTypes.length - 3} more
+              <span className="inline-flex items-center px-2 py-0.5 rounded bg-muted/60 text-[11px] text-muted-foreground/60">
+                +{center.treatmentTypes.length - 3}
               </span>
             )}
           </div>
         )}
 
-        {/* CTA row */}
-        <div className="flex gap-2 pt-1">
+        {/* Actions */}
+        <div className="flex gap-2">
           <Button
             variant="default"
             size="sm"
             onClick={(e) => { e.stopPropagation(); onClick(); }}
-            className="flex-1 h-9 text-xs font-semibold gap-1.5 rounded-lg"
+            className="flex-1 h-9 text-xs font-medium rounded-lg"
           >
-            View Details
-            <ArrowRight className="h-3 w-3" />
+            View Profile
+            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
           </Button>
           {center.phone && (
             <Button
@@ -452,6 +441,20 @@ function FeaturedCard({ center, index, onClick }: {
               <Phone className="h-3.5 w-3.5" />
             </Button>
           )}
+          {center.website && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(center.website, "_blank", "noopener,noreferrer");
+              }}
+              className="h-9 w-9 p-0 rounded-lg shrink-0"
+              aria-label={`Visit ${center.name} website`}
+            >
+              <Globe className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -463,29 +466,27 @@ function FeaturedCard({ center, index, onClick }: {
 function FeaturedSkeleton() {
   return (
     <div>
-      <div className="space-y-2 mb-8">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-8 rounded-lg" />
-          <Skeleton className="h-4 w-20" />
-        </div>
-        <Skeleton className="h-8 w-64" />
+      <div className="space-y-2 mb-10">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-8 w-72" />
         <Skeleton className="h-4 w-48" />
       </div>
       <div className="flex gap-5 overflow-hidden">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="flex-shrink-0 w-[340px] rounded-2xl border overflow-hidden">
+          <div key={i} className="flex-shrink-0 w-[360px] rounded-xl border border-border overflow-hidden bg-card">
             <Skeleton className="aspect-[16/9]" />
             <div className="p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <Skeleton className="h-11 w-11 rounded-xl" />
+                <Skeleton className="h-11 w-11 rounded-lg" />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-4 w-40" />
                   <Skeleton className="h-3 w-28" />
                 </div>
               </div>
+              <Skeleton className="h-px w-full" />
               <div className="flex gap-1.5">
-                <Skeleton className="h-5 w-16 rounded-md" />
-                <Skeleton className="h-5 w-20 rounded-md" />
+                <Skeleton className="h-5 w-16 rounded" />
+                <Skeleton className="h-5 w-20 rounded" />
               </div>
               <Skeleton className="h-9 w-full rounded-lg" />
             </div>
