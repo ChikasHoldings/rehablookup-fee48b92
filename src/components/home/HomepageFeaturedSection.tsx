@@ -225,28 +225,19 @@ export function HomepageFeaturedSection() {
           </div>
 
           {/* Scroll track */}
-          <div className="relative">
-            {canScrollLeft && (
-              <div className="absolute left-0 top-0 bottom-0 w-8 md:w-12 bg-gradient-to-r from-card to-transparent pointer-events-none z-10" />
-            )}
-            {canScrollRight && (
-              <div className="absolute right-0 top-0 bottom-0 w-8 md:w-12 bg-gradient-to-l from-card to-transparent pointer-events-none z-10" />
-            )}
-
-            <div
-              ref={scrollRef}
-              className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto scroll-smooth px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 snap-x snap-mandatory"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              {featuredCenters.map((center: any) => (
-                <div key={center.id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] snap-start" data-featured-card>
-                  <TreatmentCenterCard
-                    center={center}
-                    featured={true}
-                  />
-                </div>
-              ))}
-            </div>
+          <div
+            ref={scrollRef}
+            className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto scroll-smooth px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 snap-x snap-mandatory"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {featuredCenters.map((center: any) => (
+              <div key={center.id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] snap-start" data-featured-card>
+                <TreatmentCenterCard
+                  center={center}
+                  featured={true}
+                />
+              </div>
+            ))}
           </div>
         </div>
 
