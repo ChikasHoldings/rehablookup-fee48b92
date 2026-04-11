@@ -70,14 +70,6 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
         ))}
       </div>
 
-      {/* Edge fades */}
-      {canScrollLeft && (
-        <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
-      )}
-      {canScrollRight && (
-        <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
-      )}
-
       {/* Scroll dots indicator */}
       <div className="flex justify-center gap-1.5 mt-2">
         {items.slice(0, Math.min(items.length, 6)).map((_, i) => (
