@@ -206,6 +206,51 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_trusted_devices: {
+        Row: {
+          browser: string | null
+          created_at: string
+          device_label: string | null
+          device_token_hash: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          ip_range: string | null
+          is_active: boolean
+          last_used_at: string
+          os: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          created_at?: string
+          device_label?: string | null
+          device_token_hash: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          ip_range?: string | null
+          is_active?: boolean
+          last_used_at?: string
+          os?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string
+          device_label?: string | null
+          device_token_hash?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          ip_range?: string | null
+          is_active?: boolean
+          last_used_at?: string
+          os?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_user_notifications: {
         Row: {
           created_at: string
@@ -5670,6 +5715,16 @@ export type Database = {
       }
     }
     Functions: {
+      assess_login_risk: {
+        Args: {
+          p_browser?: string
+          p_device_token_hash?: string
+          p_ip_address?: string
+          p_os?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       can_access_lead: {
         Args: { p_lead_id: string; p_user_id: string }
         Returns: boolean
@@ -5929,6 +5984,17 @@ export type Database = {
           p_success?: boolean
         }
         Returns: undefined
+      }
+      register_trusted_device: {
+        Args: {
+          p_browser?: string
+          p_device_label?: string
+          p_device_token_hash: string
+          p_ip_address?: string
+          p_os?: string
+          p_user_id: string
+        }
+        Returns: string
       }
       user_has_provider_profile: {
         Args: { p_user_id: string }
