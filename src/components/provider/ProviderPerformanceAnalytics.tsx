@@ -65,16 +65,18 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
     const leadFacility = leads?.facilityBreakdown.find(lf => lf.facilityId === fb.facilityId);
     return {
       name: fb.facilityName.length > 20 ? fb.facilityName.slice(0, 18) + "…" : fb.facilityName,
-      views: fb.listingViews,
+      impressions: fb.impressions,
+      views: fb.profileViews,
+      calls: fb.clickToCalls,
+      website: fb.websiteClicks,
       leads: leadFacility?.totalLeads || 0,
-      converted: leadFacility?.convertedLeads || 0,
     };
-  }).sort((a, b) => b.views - a.views);
+  }).sort((a, b) => b.impressions - a.impressions);
 
   // Ranked listings
   const rankedListings = [...facilityComparisonData].sort((a, b) => {
-    const scoreA = a.views + (a.leads * 5) + (a.converted * 20);
-    const scoreB = b.views + (b.leads * 5) + (b.converted * 20);
+    const scoreA = a.impressions + (a.views * 3) + (a.calls * 10) + (a.website * 5) + (a.leads * 20);
+    const scoreB = b.impressions + (b.views * 3) + (b.calls * 10) + (b.website * 5) + (b.leads * 20);
     return scoreB - scoreA;
   });
 
