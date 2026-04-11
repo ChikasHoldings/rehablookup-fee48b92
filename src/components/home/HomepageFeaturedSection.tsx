@@ -1,5 +1,5 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,7 +47,7 @@ function getProximityTier(facility: PublicFacility, userState: string, userCity:
 export function HomepageFeaturedSection() {
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
   const geo = useGeoLocation();
-  const navigate = useNavigate();
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasTrackedImpressions = useRef(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
