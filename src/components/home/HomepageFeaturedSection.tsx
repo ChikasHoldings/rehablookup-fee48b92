@@ -349,8 +349,8 @@ function FeaturedCard({ center, index, onClick }: {
           onError={() => setImgErr(true)}
         />
 
-        {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+        {/* Subtle dark overlay for text readability - minimal */}
+        <div className="absolute inset-0 bg-black/20" />
 
         {/* Top bar: Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
