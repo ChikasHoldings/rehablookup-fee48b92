@@ -80,17 +80,18 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
   ].filter(Boolean);
   const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : `${facility.city}, ${facility.state}`;
 
-  // Fetch views count
+  // Fetch views count from provider_events (profile_view + listing_impression)
   const { data: viewsData } = useQuery({
     queryKey: ['facility-views-count', facility.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('facility_views')
-        .select('view_count')
-        .eq('facility_id', facility.id);
+      const { count, error } = await supabase
+        .from('provider_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('facility_id', facility.id)
+        .in('event_type', ['profile_view', 'listing_impression']);
       
       if (error) throw error;
-      return data?.reduce((sum, row) => sum + (row.view_count || 0), 0) || 0;
+      return count || 0;
     },
   });
 

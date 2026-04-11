@@ -51,11 +51,7 @@ interface ProviderEvent {
   created_at: string;
 }
 
-interface FacilityView {
-  facility_id: string;
-  view_date: string;
-  view_count: number;
-}
+// Legacy interface kept for reference; views now come from provider_events
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
