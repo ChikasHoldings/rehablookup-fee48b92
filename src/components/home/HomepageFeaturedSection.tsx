@@ -365,7 +365,7 @@ function FeaturedCard({ center, index, onClick }: {
         {/* Verified badge */}
         {center.verified && (
           <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-card/90 backdrop-blur-sm text-[11px] font-semibold text-emerald-600 shadow-sm">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-card/90 backdrop-blur-sm text-[11px] font-semibold text-accent-foreground shadow-sm">
               <ShieldCheck className="h-3 w-3" />
               Verified
             </span>
@@ -376,7 +376,7 @@ function FeaturedCard({ center, index, onClick }: {
         {center.googleRating && center.googleReviewCount ? (
           <div className="absolute bottom-3 right-3">
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-card/90 backdrop-blur-sm text-xs font-semibold shadow-sm">
-              <Star className="h-3 w-3 text-amber-500 fill-amber-400" />
+              <Star className="h-3 w-3 text-primary fill-primary" />
               {center.googleRating.toFixed(1)}
               <span className="text-muted-foreground font-normal">({center.googleReviewCount})</span>
             </span>
