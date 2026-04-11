@@ -388,13 +388,13 @@ function FeaturedCard({ center, index, onClick }: {
           {/* Rating pill */}
           {center.googleRating && center.googleReviewCount ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-sm font-semibold border border-border/50 shadow-sm">
-              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              <Star className="h-3.5 w-3.5 text-primary fill-primary" />
               {center.googleRating.toFixed(1)}
               <span className="text-muted-foreground font-normal text-xs">({center.googleReviewCount})</span>
             </span>
           ) : center.rating ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-sm font-semibold border border-border/50 shadow-sm">
-              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              <Star className="h-3.5 w-3.5 text-primary fill-primary" />
               {center.rating.toFixed(1)}
             </span>
           ) : null}
