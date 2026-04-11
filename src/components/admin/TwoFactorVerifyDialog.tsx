@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Loader2, Key } from "lucide-react";
+import { Shield, Loader2, Key, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -11,13 +11,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface TwoFactorVerifyDialogProps {
   open: boolean;
-  onSuccess: () => void;
+  onSuccess: (trustDevice: boolean) => void;
   onCancel: () => void;
+  /** Optional risk-based message explaining why 2FA was triggered */
+  riskMessage?: string | null;
+  /** Whether to show the "Trust this device" checkbox */
+  showTrustDevice?: boolean;
 }
 
 type VerifyMode = "totp" | "recovery";
@@ -26,12 +31,15 @@ export function TwoFactorVerifyDialog({
   open,
   onSuccess,
   onCancel,
+  riskMessage,
+  showTrustDevice = false,
 }: TwoFactorVerifyDialogProps) {
   const [mode, setMode] = useState<VerifyMode>("totp");
   const [verificationCode, setVerificationCode] = useState("");
   const [recoveryCode, setRecoveryCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [trustDevice, setTrustDevice] = useState(true);
 
   const handleVerifyTotp = async () => {
     if (verificationCode.length !== 6) return;
@@ -40,7 +48,6 @@ export function TwoFactorVerifyDialog({
     setError(null);
 
     try {
-      // Get the user's enrolled TOTP factors
       const { data: factorsData, error: factorsError } =
         await supabase.auth.mfa.listFactors();
 
@@ -54,13 +61,11 @@ export function TwoFactorVerifyDialog({
         throw new Error("No verified TOTP factor found");
       }
 
-      // Create a challenge
       const { data: challengeData, error: challengeError } =
         await supabase.auth.mfa.challenge({ factorId: totpFactor.id });
 
       if (challengeError) throw challengeError;
 
-      // Verify the code
       const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId: totpFactor.id,
         challengeId: challengeData.id,
@@ -73,7 +78,7 @@ export function TwoFactorVerifyDialog({
         return;
       }
 
-      onSuccess();
+      onSuccess(showTrustDevice ? trustDevice : false);
     } catch (err) {
       console.error("Error verifying MFA:", err);
       setError("Verification failed. Please try again.");
@@ -106,7 +111,7 @@ export function TwoFactorVerifyDialog({
       }
 
       toast.success("Recovery code accepted");
-      onSuccess();
+      onSuccess(showTrustDevice ? trustDevice : false);
     } catch (err) {
       console.error("Error verifying recovery code:", err);
       setError("Verification failed. Please try again.");
@@ -124,14 +129,21 @@ export function TwoFactorVerifyDialog({
             Two-Factor Authentication
           </DialogTitle>
           <DialogDescription>
-            {mode === "totp" 
+            {mode === "totp"
               ? "Enter the 6-digit code from your authenticator app"
-              : "Enter one of your recovery codes"
-            }
+              : "Enter one of your recovery codes"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
+          {/* Risk-based context message */}
+          {riskMessage && (
+            <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 flex gap-2.5">
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+              <p className="text-sm text-warning">{riskMessage}</p>
+            </div>
+          )}
+
           {mode === "totp" ? (
             <>
               <div className="flex justify-center">
@@ -156,6 +168,23 @@ export function TwoFactorVerifyDialog({
 
               {error && (
                 <p className="text-sm text-destructive text-center">{error}</p>
+              )}
+
+              {/* Trust device checkbox */}
+              {showTrustDevice && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="trust-device"
+                    checked={trustDevice}
+                    onCheckedChange={(checked) => setTrustDevice(checked === true)}
+                  />
+                  <label
+                    htmlFor="trust-device"
+                    className="text-sm text-muted-foreground cursor-pointer select-none"
+                  >
+                    Trust this device for 30 days
+                  </label>
+                </div>
               )}
 
               <div className="flex gap-2">
@@ -216,6 +245,23 @@ export function TwoFactorVerifyDialog({
 
               {error && (
                 <p className="text-sm text-destructive text-center">{error}</p>
+              )}
+
+              {/* Trust device checkbox */}
+              {showTrustDevice && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="trust-device-recovery"
+                    checked={trustDevice}
+                    onCheckedChange={(checked) => setTrustDevice(checked === true)}
+                  />
+                  <label
+                    htmlFor="trust-device-recovery"
+                    className="text-sm text-muted-foreground cursor-pointer select-none"
+                  >
+                    Trust this device for 30 days
+                  </label>
+                </div>
               )}
 
               <div className="flex gap-2">
