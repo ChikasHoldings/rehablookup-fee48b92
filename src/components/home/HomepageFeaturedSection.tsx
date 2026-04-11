@@ -1,16 +1,15 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Star, MapPin, ShieldCheck, Phone, ChevronLeft, ChevronRight, Globe, Clock, Users, Building2, CreditCard } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStaticFacilities, type PublicFacility } from "@/hooks/useStaticFacilities";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getNearbyStates } from "@/lib/proximitySearch";
 import { supabase } from "@/integrations/supabase/client";
-import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { cn } from "@/lib/utils";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 
 function getDailySeed(): number {
   const d = new Date();
