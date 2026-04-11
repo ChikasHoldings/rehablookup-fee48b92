@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { homeFaqs } from "@/data/pageFaqs";
 import { Link } from "react-router-dom";
