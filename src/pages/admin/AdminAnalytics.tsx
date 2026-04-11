@@ -408,15 +408,15 @@ export default function AdminAnalytics() {
 
   // Calculate KPIs with comparison
   const kpis = useMemo(() => {
-    // Calculate current period totals
-    const totalViews = viewsData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
-    const totalClicks = interactionsData?.reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
+    // Calculate current period totals (each row = 1 event)
+    const totalViews = viewsData?.length || 0;
+    const totalClicks = interactionsData?.length || 0;
     const totalLeads = leadsData?.length || 0;
     const conversionRate = totalViews > 0 ? ((totalLeads / totalViews) * 100).toFixed(2) : "0.00";
 
     // Previous period calculations
-    const prevTotalViews = prevViewsData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
-    const prevTotalClicks = prevInteractionsData?.reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
+    const prevTotalViews = prevViewsData?.length || 0;
+    const prevTotalClicks = prevInteractionsData?.length || 0;
     const prevTotalLeads = prevLeadsData?.length || 0;
     const prevConversionRate = prevTotalViews > 0 ? ((prevTotalLeads / prevTotalViews) * 100) : 0;
 
