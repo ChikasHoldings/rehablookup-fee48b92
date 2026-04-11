@@ -3,6 +3,7 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
@@ -312,11 +313,7 @@ const StatePage = () => {
             <SearchResultsLoading count={6} />
           ) : stateCenters.length > 0 ? (
             <>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {stateCenters.slice(0, 12).map(center => (
-                  <TreatmentCenterCard key={center.id} center={center} />
-                ))}
-              </div>
+              <ResponsiveListingGrid facilities={stateCenters} maxItems={12} />
               <div className="mt-8 text-center">
                 <Link to={`/search-results?location=${encodeURIComponent(stateData.name)}`}>
                   <Button variant="outline" size="lg" className="gap-2">

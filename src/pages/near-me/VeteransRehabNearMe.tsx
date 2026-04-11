@@ -5,6 +5,7 @@ import { NearMeHero } from "@/components/seo/NearMeHero";
 import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
@@ -167,15 +168,7 @@ export default function VeteransRehabNearMe() {
           ) : (
             <div>
               {/* Horizontal scroll on mobile, grid on larger screens */}
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {facilities.slice(0, 12).map((facility) => (
-                   <div key={facility.id || facility.name}>
-                    <TreatmentCenterCard
-                      center={facility as any}
-                    />
-                  </div>
-                ))}
-              </div>
+              <ResponsiveListingGrid facilities={facilities} maxItems={12} />
 
               {facilities.length > 12 && (
                 <div className="mt-8 text-center">

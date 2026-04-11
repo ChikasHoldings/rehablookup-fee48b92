@@ -6,6 +6,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import {
   Sparkles,
   ArrowRight,
@@ -250,11 +251,7 @@ const DetoxPrograms = () => {
                 </Button>
               </Link>
             </div>
-            <div className="grid gap-4 md:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {relatedCenters.map((center) => (
-                <TreatmentCenterCard key={center.id} center={center} />
-              ))}
-            </div>
+            <ResponsiveListingGrid facilities={relatedCenters} />
           </div>
         </section>
       )}
