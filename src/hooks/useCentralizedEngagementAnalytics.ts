@@ -51,12 +51,6 @@ interface ProviderEvent {
   created_at: string;
 }
 
-interface FacilityView {
-  facility_id: string;
-  view_date: string;
-  view_count: number;
-}
-
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterFacilityId?: string) {
@@ -88,27 +82,8 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
         .subscribe()
     );
 
-    const viewChannels = facilityIds.map((facilityId, index) =>
-      supabase
-        .channel(`centralized-engagement-views-${facilityId}-${index}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "facility_views",
-            filter: `facility_id=eq.${facilityId}`,
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ["centralized-engagement-analytics"] });
-          }
-        )
-        .subscribe()
-    );
-
     return () => {
       eventChannels.forEach((channel) => supabase.removeChannel(channel));
-      viewChannels.forEach((channel) => supabase.removeChannel(channel));
     };
   }, [facilityIds.join(","), queryClient]);
 
@@ -125,32 +100,28 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
         return getEmptyAnalytics();
       }
 
-      const { data: viewsData, error: viewsError } = await supabase
-        .from("facility_views")
-        .select("facility_id, view_date, view_count")
-        .in("facility_id", facilityIds);
-
-      if (viewsError) throw viewsError;
-
-      const { data: eventsData, error: eventsError } = await supabase
+      // Fetch ALL provider events (views + clicks) from the single source of truth
+      const { data: allEventsData, error: eventsError } = await supabase
         .from("provider_events")
         .select("id, facility_id, event_type, session_id, page_context, created_at")
         .in("facility_id", facilityIds)
-        .in("event_type", ["click_to_call", "website_click"])
         .order("created_at", { ascending: true });
 
       if (eventsError) throw eventsError;
 
-      const views = (viewsData || []) as FacilityView[];
-      const events = (eventsData || []) as ProviderEvent[];
+      const allEvents = (allEventsData || []) as ProviderEvent[];
       const facilityMap = new Map(facilities.map((f) => [f.id, f.name]));
+
+      // Split events by type
+      const viewEvents = allEvents.filter(e => e.event_type === "profile_view" || e.event_type === "listing_impression");
+      const clickEvents = allEvents.filter(e => e.event_type === "click_to_call" || e.event_type === "website_click");
+      const impressionEvents = allEvents.filter(e => e.event_type === "listing_impression");
+      const profileViewEvents = allEvents.filter(e => e.event_type === "profile_view");
 
       const now = new Date();
       const hasAllTimeSelection = Boolean(dateRange && !dateRange.from && !dateRange.to);
-      const allTimelineDates = [
-        ...views.map((view) => new Date(`${view.view_date}T00:00:00`)),
-        ...events.map((event) => parseISO(event.created_at)),
-      ]
+      const allTimelineDates = allEvents
+        .map((event) => parseISO(event.created_at))
         .filter((date) => !Number.isNaN(date.getTime()))
         .sort((a, b) => a.getTime() - b.getTime());
 
@@ -158,8 +129,8 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
       const rangeStart = dateRange?.from ?? (hasAllTimeSelection ? allTimelineDates[0] ?? fallbackStart : fallbackStart);
       const rangeEnd = dateRange?.to ?? (hasAllTimeSelection ? allTimelineDates[allTimelineDates.length - 1] ?? now : now);
 
-      const rangeStartStr = format(startOfDay(rangeStart), "yyyy-MM-dd");
-      const rangeEndStr = format(endOfDay(rangeEnd), "yyyy-MM-dd");
+      const rangeStartISO = startOfDay(rangeStart).toISOString();
+      const rangeEndISO = endOfDay(rangeEnd).toISOString();
 
       const periodLength = Math.max(
         1,
@@ -167,54 +138,63 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
       );
       const prevPeriodStart = subDays(startOfDay(rangeStart), periodLength);
       const prevPeriodEnd = subDays(startOfDay(rangeStart), 1);
-      const prevStartStr = format(startOfDay(prevPeriodStart), "yyyy-MM-dd");
-      const prevEndStr = format(endOfDay(prevPeriodEnd), "yyyy-MM-dd");
+      const prevStartISO = startOfDay(prevPeriodStart).toISOString();
+      const prevEndISO = endOfDay(prevPeriodEnd).toISOString();
 
-      const currentPeriodViews = views.filter((view) => view.view_date >= rangeStartStr && view.view_date <= rangeEndStr);
-      const prevPeriodViews = views.filter((view) => view.view_date >= prevStartStr && view.view_date <= prevEndStr);
+      const inRange = (e: ProviderEvent) => e.created_at >= rangeStartISO && e.created_at <= rangeEndISO;
+      const inPrevRange = (e: ProviderEvent) => e.created_at >= prevStartISO && e.created_at <= prevEndISO;
 
-      const currentPeriodEvents = events.filter((event) => {
-        const eventDateStr = format(parseISO(event.created_at), "yyyy-MM-dd");
-        return eventDateStr >= rangeStartStr && eventDateStr <= rangeEndStr;
-      });
+      const currentViewEvents = viewEvents.filter(inRange);
+      const prevViewEvents = viewEvents.filter(inPrevRange);
+      const currentClickEvents = clickEvents.filter(inRange);
+      const prevClickEvents = clickEvents.filter(inPrevRange);
 
-      const prevPeriodEvents = events.filter((event) => {
-        const eventDateStr = format(parseISO(event.created_at), "yyyy-MM-dd");
-        return eventDateStr >= prevStartStr && eventDateStr <= prevEndStr;
-      });
+      const totalListingViews = viewEvents.length;
+      const totalClickToCalls = countByType(clickEvents, "click_to_call");
+      const totalWebsiteClicks = countByType(clickEvents, "website_click");
 
-      const totalListingViews = views.reduce((sum, view) => sum + (view.view_count || 0), 0);
-      const totalClickToCalls = countByType(events, "click_to_call");
-      const totalWebsiteClicks = countByType(events, "website_click");
+      const periodListingViews = currentViewEvents.length;
+      const periodClickToCalls = countByType(currentClickEvents, "click_to_call");
+      const periodWebsiteClicks = countByType(currentClickEvents, "website_click");
 
-      const periodListingViews = currentPeriodViews.reduce((sum, view) => sum + (view.view_count || 0), 0);
-      const periodClickToCalls = countByType(currentPeriodEvents, "click_to_call");
-      const periodWebsiteClicks = countByType(currentPeriodEvents, "website_click");
-
-      const prevListingViews = prevPeriodViews.reduce((sum, view) => sum + (view.view_count || 0), 0);
-      const prevClickToCalls = countByType(prevPeriodEvents, "click_to_call");
-      const prevWebsiteClicks = countByType(prevPeriodEvents, "website_click");
+      const prevListingViews = prevViewEvents.length;
+      const prevClickToCalls = countByType(prevClickEvents, "click_to_call");
+      const prevWebsiteClicks = countByType(prevClickEvents, "website_click");
 
       const listingViewGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodListingViews, prevListingViews);
       const clickToCallGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodClickToCalls, prevClickToCalls);
       const websiteClickGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodWebsiteClicks, prevWebsiteClicks);
 
+      // Impressions & profile views
+      const currentImpressions = impressionEvents.filter(inRange);
+      const prevImpressions = impressionEvents.filter(inPrevRange);
+      const currentProfileViews = profileViewEvents.filter(inRange);
+      const prevProfileViewEvents = profileViewEvents.filter(inPrevRange);
+
+      const totalImpressions = impressionEvents.length;
+      const totalProfileViews = profileViewEvents.length;
+      const periodImpressions = currentImpressions.length;
+      const periodProfileViews = currentProfileViews.length;
+      const impressionGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodImpressions, prevImpressions.length);
+      const profileViewGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodProfileViews, prevProfileViewEvents.length);
+      const impressionToViewRate = periodImpressions > 0 ? Math.round((periodProfileViews / periodImpressions) * 100) : 0;
+
       const facilityBreakdown: FacilityEngagementBreakdown[] = facilityIds
         .map((facilityId) => {
-          const facilityViews = currentPeriodViews.filter((view) => view.facility_id === facilityId);
-          const facilityEvents = currentPeriodEvents.filter((event) => event.facility_id === facilityId);
+          const fViewEvents = currentViewEvents.filter((e) => e.facility_id === facilityId);
+          const fClickEvents = currentClickEvents.filter((e) => e.facility_id === facilityId);
 
           return {
             facilityId,
             facilityName: facilityMap.get(facilityId) || "Unknown",
-            listingViews: facilityViews.reduce((sum, view) => sum + (view.view_count || 0), 0),
-            clickToCalls: countByType(facilityEvents, "click_to_call"),
-            websiteClicks: countByType(facilityEvents, "website_click"),
+            listingViews: fViewEvents.length,
+            clickToCalls: countByType(fClickEvents, "click_to_call"),
+            websiteClicks: countByType(fClickEvents, "website_click"),
           };
         })
         .filter((facility) => facility.listingViews > 0 || facility.clickToCalls > 0 || facility.websiteClicks > 0);
 
-      const dailyTrends = buildDailyTrends(currentPeriodViews, currentPeriodEvents, rangeStart, rangeEnd);
+      const dailyTrends = buildDailyTrends(currentViewEvents, currentClickEvents, rangeStart, rangeEnd);
 
       const viewToCallRate = periodListingViews > 0 ? Math.round((periodClickToCalls / periodListingViews) * 100) : 0;
       const viewToWebsiteRate = periodListingViews > 0 ? Math.round((periodWebsiteClicks / periodListingViews) * 100) : 0;
@@ -234,13 +214,13 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
         viewToCallRate,
         viewToWebsiteRate,
         facilityIds,
-        totalImpressions: totalListingViews,
-        totalProfileViews: 0,
-        periodImpressions: periodListingViews,
-        periodProfileViews: 0,
-        impressionGrowth: listingViewGrowth,
-        profileViewGrowth: 0,
-        impressionToViewRate: 0,
+        totalImpressions,
+        totalProfileViews,
+        periodImpressions,
+        periodProfileViews,
+        impressionGrowth,
+        profileViewGrowth,
+        impressionToViewRate,
       };
     },
     enabled: !facilitiesLoading && facilityIds.length > 0,
@@ -262,8 +242,8 @@ function calculateGrowth(current: number, previous: number): number {
 }
 
 function buildDailyTrends(
-  views: FacilityView[],
-  events: ProviderEvent[],
+  viewEvents: ProviderEvent[],
+  clickEvents: ProviderEvent[],
   rangeStart: Date,
   rangeEnd: Date
 ): CentralizedEngagementAnalytics["dailyTrends"] {
@@ -275,14 +255,14 @@ function buildDailyTrends(
     const date = subDays(endOfDay(rangeEnd), daysToShow - 1 - i);
     const dateStr = format(date, "yyyy-MM-dd");
 
-    const dayViews = views.filter((view) => view.view_date === dateStr);
-    const dayEvents = events.filter((event) => format(parseISO(event.created_at), "yyyy-MM-dd") === dateStr);
+    const dayViews = viewEvents.filter((e) => format(parseISO(e.created_at), "yyyy-MM-dd") === dateStr);
+    const dayClicks = clickEvents.filter((e) => format(parseISO(e.created_at), "yyyy-MM-dd") === dateStr);
 
     trends.push({
       date: format(date, "MMM d"),
-      listingViews: dayViews.reduce((sum, view) => sum + (view.view_count || 0), 0),
-      clickToCalls: countByType(dayEvents, "click_to_call"),
-      websiteClicks: countByType(dayEvents, "website_click"),
+      listingViews: dayViews.length,
+      clickToCalls: countByType(dayClicks, "click_to_call"),
+      websiteClicks: countByType(dayClicks, "website_click"),
     });
   }
 

@@ -104,9 +104,10 @@ export function FeaturedPlacementTab() {
 
       const [viewsRes, leadsRes] = await Promise.all([
         supabase
-          .from("facility_views")
-          .select("facility_id, view_count")
-          .gte("view_date", dateStr),
+          .from("provider_events")
+          .select("facility_id")
+          .in("event_type", ["profile_view", "listing_impression"])
+          .gte("created_at", thirtyDaysAgo.toISOString()),
         supabase
           .from("leads")
           .select("facility_id")
@@ -119,7 +120,7 @@ export function FeaturedPlacementTab() {
         if (!stats[v.facility_id]) {
           stats[v.facility_id] = { facility_id: v.facility_id, total_views: 0, total_leads: 0 };
         }
-        stats[v.facility_id].total_views += v.view_count;
+        stats[v.facility_id].total_views += 1;
       });
 
       leadsRes.data?.forEach((l) => {

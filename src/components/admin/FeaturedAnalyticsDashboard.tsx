@@ -87,10 +87,10 @@ export function FeaturedAnalyticsDashboard() {
       .subscribe();
 
     const viewsChannel = supabase
-      .channel("featured-views-updates")
+      .channel("featured-provider-events-updates")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "facility_views" },
+        { event: "*", schema: "public", table: "provider_events" },
         () => {
           queryClient.invalidateQueries({ queryKey: ["featured-analytics", dateRange] });
         }
@@ -136,12 +136,13 @@ export function FeaturedAnalyticsDashboard() {
         .in("facility_id", featuredIds)
         .gte("event_date", startDateStr);
 
-      // Fetch facility views for click approximation
+      // Fetch facility views from provider_events
       const { data: viewsData } = await supabase
-        .from("facility_views")
-        .select("facility_id, view_count")
+        .from("provider_events")
+        .select("facility_id")
         .in("facility_id", featuredIds)
-        .gte("view_date", startDateStr);
+        .in("event_type", ["profile_view", "listing_impression"])
+        .gte("created_at", startDate.toISOString());
 
       // Fetch leads for conversions
       const { data: leadsData } = await supabase
@@ -185,11 +186,11 @@ export function FeaturedAnalyticsDashboard() {
         }
       });
 
-      // Use views as click proxy if no click data
+      // Use provider_events as click proxy if no click data
       viewsData?.forEach(view => {
         const metrics = metricsMap.get(view.facility_id);
         if (metrics && metrics.clicks === 0) {
-          metrics.clicks = view.view_count;
+          metrics.clicks += 1;
         }
       });
 
