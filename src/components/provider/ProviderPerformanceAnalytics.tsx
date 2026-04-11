@@ -108,16 +108,20 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
                     contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)", padding: "8px 12px", fontSize: "12px" }}
                     labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600, fontSize: "11px" }}
                   />
-                  <Bar dataKey="views" name="Views" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={14} />
-                  <Bar dataKey="leads" name="Leads" fill="hsl(217, 91%, 60%)" radius={[0, 4, 4, 0]} barSize={14} />
-                  <Bar dataKey="converted" name="Converted" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={14} />
+                  <Bar dataKey="impressions" name="Impressions" fill="hsl(217, 91%, 60%)" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="views" name="Views" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="calls" name="Calls" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="website" name="Website" fill="hsl(280, 65%, 60%)" radius={[0, 4, 4, 0]} barSize={10} />
+                  <Bar dataKey="leads" name="Leads" fill="hsl(38, 92%, 50%)" radius={[0, 4, 4, 0]} barSize={10} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-center gap-4 mt-2">
+              <LegendItem color="hsl(217, 91%, 60%)" label="Impressions" />
               <LegendItem color="hsl(var(--primary))" label="Views" />
-              <LegendItem color="hsl(217, 91%, 60%)" label="Leads" />
-              <LegendItem color="hsl(142, 71%, 45%)" label="Converted" />
+              <LegendItem color="hsl(142, 71%, 45%)" label="Calls" />
+              <LegendItem color="hsl(280, 65%, 60%)" label="Website" />
+              <LegendItem color="hsl(38, 92%, 50%)" label="Leads" />
             </div>
           </div>
         </div>
