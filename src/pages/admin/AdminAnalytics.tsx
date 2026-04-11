@@ -301,10 +301,11 @@ export default function AdminAnalytics() {
     queryKey: ["admin-analytics-prev-views", previousDateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
-        .from("facility_views")
-        .select("id, facility_id, view_date, view_count, facilities!inner(city, state)")
-        .gte("view_date", format(previousDateRange.from, "yyyy-MM-dd"))
-        .lte("view_date", format(previousDateRange.to, "yyyy-MM-dd"))
+        .from("provider_events")
+        .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
+        .in("event_type", ["profile_view", "listing_impression"])
+        .gte("created_at", format(previousDateRange.from, "yyyy-MM-dd") + "T00:00:00")
+        .lte("created_at", format(previousDateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(5000);
       
       if (selectedState !== "all") {
@@ -325,10 +326,11 @@ export default function AdminAnalytics() {
     queryKey: ["admin-analytics-prev-interactions", previousDateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
-        .from("facility_interactions")
-        .select("id, facility_id, interaction_date, interaction_count, facilities!inner(city, state)")
-        .gte("interaction_date", format(previousDateRange.from, "yyyy-MM-dd"))
-        .lte("interaction_date", format(previousDateRange.to, "yyyy-MM-dd"))
+        .from("provider_events")
+        .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
+        .in("event_type", ["click_to_call", "website_click"])
+        .gte("created_at", format(previousDateRange.from, "yyyy-MM-dd") + "T00:00:00")
+        .lte("created_at", format(previousDateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(5000);
       
       if (selectedState !== "all") {
