@@ -64,15 +64,15 @@ export function useProviderData(facilityId?: string) {
       )
       .subscribe();
 
-    // Subscribe to facility_views changes
+    // Subscribe to provider_events changes
     const viewsChannel = supabase
-      .channel(`facility-views-${facilityId}`)
+      .channel(`provider-events-${facilityId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'facility_views',
+          table: 'provider_events',
           filter: `facility_id=eq.${facilityId}`
         },
         () => {
@@ -172,18 +172,19 @@ export function useProviderData(facilityId?: string) {
         startOfMonth.setHours(0, 0, 0, 0);
 
         const [viewsResult, leadsCountResult] = await Promise.all([
-          // Views count for last 30 days
+          // Views count for last 30 days from provider_events
           supabase
-            .from("facility_views")
-            .select("view_count")
+            .from("provider_events")
+            .select("id", { count: "exact", head: true })
             .eq("facility_id", facilityData.id)
-            .gte("view_date", thirtyDaysAgo.toISOString().split('T')[0]),
+            .in("event_type", ["profile_view", "listing_impression"])
+            .gte("created_at", thirtyDaysAgo.toISOString()),
           // Accurate leads count via security definer function (bypasses RLS unlock restriction)
           supabase.rpc("get_facility_leads_count", { p_facility_id: facilityData.id }),
         ]);
 
-        if (viewsResult.data) {
-          viewsCount = viewsResult.data.reduce((sum, row) => sum + row.view_count, 0);
+        if (viewsResult.count != null) {
+          viewsCount = viewsResult.count;
         }
         if (leadsCountResult.data && leadsCountResult.data.length > 0) {
           leadsCount = Number(leadsCountResult.data[0].total_count) || 0;
