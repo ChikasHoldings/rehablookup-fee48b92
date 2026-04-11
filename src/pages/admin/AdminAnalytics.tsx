@@ -195,15 +195,16 @@ export default function AdminAnalytics() {
     return [...new Set(filtered.map(f => f.city).filter(Boolean))].sort();
   }, [facilities, selectedState]);
 
-  // Fetch views data
+  // Fetch views data from provider_events (profile_view + listing_impression)
   const { data: viewsData, isLoading: isLoadingViews, error: viewsError } = useQuery({
     queryKey: ["admin-analytics-views", dateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
-        .from("facility_views")
-        .select("id, facility_id, view_date, view_count, facilities!inner(city, state)")
-        .gte("view_date", format(dateRange.from, "yyyy-MM-dd"))
-        .lte("view_date", format(dateRange.to, "yyyy-MM-dd"))
+        .from("provider_events")
+        .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
+        .in("event_type", ["profile_view", "listing_impression"])
+        .gte("created_at", format(dateRange.from, "yyyy-MM-dd") + "T00:00:00")
+        .lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(5000);
       
       if (selectedState !== "all") {
@@ -219,15 +220,16 @@ export default function AdminAnalytics() {
     },
   });
 
-  // Fetch interactions data
+  // Fetch interactions data from provider_events (click_to_call + website_click)
   const { data: interactionsData, isLoading: isLoadingInteractions, error: interactionsError } = useQuery({
     queryKey: ["admin-analytics-interactions", dateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
-        .from("facility_interactions")
-        .select("id, facility_id, interaction_date, interaction_count, interaction_type, facilities!inner(city, state)")
-        .gte("interaction_date", format(dateRange.from, "yyyy-MM-dd"))
-        .lte("interaction_date", format(dateRange.to, "yyyy-MM-dd"))
+        .from("provider_events")
+        .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
+        .in("event_type", ["click_to_call", "website_click"])
+        .gte("created_at", format(dateRange.from, "yyyy-MM-dd") + "T00:00:00")
+        .lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(5000);
       
       if (selectedState !== "all") {
