@@ -31,6 +31,9 @@ interface ProviderDigest {
   planName: string;
   plan: PlanType;
   weeklyViews: number;
+  weeklyImpressions: number;
+  weeklyClickToCalls: number;
+  weeklyWebsiteClicks: number;
   newLeads: number;
   contactedLeads: number;
   isConciergeOptedIn: boolean;
