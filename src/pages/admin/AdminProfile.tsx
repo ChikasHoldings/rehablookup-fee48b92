@@ -646,6 +646,11 @@ export default function AdminProfile() {
         <TwoFactorCard userId={userData.id} />
       )}
 
+      {/* Trusted Devices */}
+      {userData?.id && (
+        <TrustedDevicesCard userId={userData.id} />
+      )}
+
       {/* Notification Preferences */}
       <Card>
         <CardHeader>
