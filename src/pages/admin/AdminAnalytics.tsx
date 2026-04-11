@@ -130,7 +130,6 @@ export default function AdminAnalytics() {
     return () => {
       supabase.removeChannel(leadsChannel);
       supabase.removeChannel(viewsChannel);
-      supabase.removeChannel(interactionsChannel);
       supabase.removeChannel(facilitiesChannel);
     };
   }, [invalidateAnalyticsQueries]);
