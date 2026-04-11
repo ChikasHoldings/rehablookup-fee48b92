@@ -500,34 +500,6 @@ function FeaturedCard({ center, index, onClick }: {
     </div>
   );
 }
-          {center.phone && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.location.href = `tel:${center.phone}`;
-              }}
-              className="h-9 w-9 p-0 rounded-lg shrink-0"
-              aria-label={`Call ${center.name}`}
-            >
-              <Phone className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          {center.website && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(center.website, "_blank", "noopener,noreferrer");
-              }}
-              className="h-9 w-9 p-0 rounded-lg shrink-0"
-              aria-label={`Visit ${center.name} website`}
-            >
-              <Globe className="h-3.5 w-3.5" />
-            </Button>
-          )}
         </div>
       </div>
     </div>
