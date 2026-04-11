@@ -52,7 +52,7 @@ function generateDigestEmail(digest: ProviderDigest): string {
   weekStart.setDate(weekStart.getDate() - 7);
   const dateRange = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
-  const { plan, weeklyLeads, unlockedLeads, weeklyViews, newLeads, contactedLeads, firstName, facilityName } = digest;
+  const { plan, weeklyLeads, unlockedLeads, weeklyViews, weeklyImpressions, weeklyClickToCalls, weeklyWebsiteClicks, newLeads, contactedLeads, firstName, facilityName } = digest;
   const styles = getPlanStyles(plan);
   const isPro = plan === 'pro';
 
@@ -107,19 +107,46 @@ ${emailBodyStart()}
                 </tr>
               </table>
               
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+              <!-- Engagement Stats -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
                 <tr>
                   <td width="33%" style="padding-right: 6px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
                       <tr>
                         <td style="padding: 16px; text-align: center;">
-                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #0369a1;">${weeklyViews}</p>
-                          <p style="margin: 4px 0 0 0; color: #0284c7; font-size: 12px;">Profile Views</p>
+                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #0369a1;">${weeklyImpressions}</p>
+                          <p style="margin: 4px 0 0 0; color: #0284c7; font-size: 12px;">Search Impressions</p>
                         </td>
                       </tr>
                     </table>
                   </td>
                   <td width="33%" style="padding: 0 3px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 16px; text-align: center;">
+                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1d4ed8;">${weeklyViews}</p>
+                          <p style="margin: 4px 0 0 0; color: #2563eb; font-size: 12px;">Profile Views</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding-left: 6px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 16px; text-align: center;">
+                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #047857;">${weeklyClickToCalls + weeklyWebsiteClicks}</p>
+                          <p style="margin: 4px 0 0 0; color: #059669; font-size: 12px;">Engagements</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Lead Stats -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td width="33%" style="padding-right: 6px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px;">
                       <tr>
                         <td style="padding: 16px; text-align: center;">
@@ -129,12 +156,22 @@ ${emailBodyStart()}
                       </tr>
                     </table>
                   </td>
-                  <td width="33%" style="padding-left: 6px;">
+                  <td width="33%" style="padding: 0 3px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px;">
                       <tr>
                         <td style="padding: 16px; text-align: center;">
                           <p style="margin: 0; font-size: 24px; font-weight: bold; color: #7c3aed;">${unlockedLeads}</p>
                           <p style="margin: 4px 0 0 0; color: #8b5cf6; font-size: 12px;">Unlocked</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding-left: 6px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 16px; text-align: center;">
+                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #c2410c;">${weeklyClickToCalls}</p>
+                          <p style="margin: 4px 0 0 0; color: #ea580c; font-size: 12px;">Click-to-Calls</p>
                         </td>
                       </tr>
                     </table>
@@ -264,8 +301,11 @@ Deno.serve(async (req) => {
         const { count: weeklyLeads } = await supabase.from("leads").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).gte("created_at", weekAgo.toISOString());
         const { count: unlockedLeads } = await supabase.from("lead_unlocks").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).gte("unlocked_at", weekAgo.toISOString());
         
-        const { data: viewsData } = await supabase.from("facility_views").select("view_count").in("facility_id", facilityIds).gte("view_date", weekAgo.toISOString().split('T')[0]);
-        const weeklyViews = viewsData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
+        // Fetch real engagement data from provider_events (single source of truth)
+        const { count: weeklyViews } = await supabase.from("provider_events").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "profile_view").gte("created_at", weekAgo.toISOString());
+        const { count: weeklyImpressions } = await supabase.from("provider_events").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "listing_impression").gte("created_at", weekAgo.toISOString());
+        const { count: weeklyClickToCalls } = await supabase.from("provider_events").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "click_to_call").gte("created_at", weekAgo.toISOString());
+        const { count: weeklyWebsiteClicks } = await supabase.from("provider_events").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "website_click").gte("created_at", weekAgo.toISOString());
         
         const { count: newLeads } = await supabase.from("leads").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).eq("status", "new");
         const { count: contactedLeads } = await supabase.from("leads").select("*", { count: "exact", head: true }).in("facility_id", facilityIds).eq("status", "contacted");
@@ -279,7 +319,10 @@ Deno.serve(async (req) => {
           unlockedLeads: unlockedLeads || 0,
           planName: planInfo.planName,
           plan: planInfo.plan,
-          weeklyViews,
+          weeklyViews: weeklyViews || 0,
+          weeklyImpressions: weeklyImpressions || 0,
+          weeklyClickToCalls: weeklyClickToCalls || 0,
+          weeklyWebsiteClicks: weeklyWebsiteClicks || 0,
           newLeads: newLeads || 0,
           contactedLeads: contactedLeads || 0,
           isConciergeOptedIn: userFacilities.some(f => f.concierge_network_opted_in === true),
