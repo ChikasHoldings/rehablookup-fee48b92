@@ -103,24 +103,12 @@ export default function AdminAnalytics() {
       )
       .subscribe();
 
-    // Subscribe to facility_views table changes
+    // Subscribe to provider_events table changes (primary analytics source)
     const viewsChannel = supabase
-      .channel('analytics-views')
+      .channel('analytics-provider-events')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'facility_views' },
-        () => {
-          invalidateAnalyticsQueries();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to facility_interactions table changes
-    const interactionsChannel = supabase
-      .channel('analytics-interactions')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'facility_interactions' },
+        { event: '*', schema: 'public', table: 'provider_events' },
         () => {
           invalidateAnalyticsQueries();
         }
