@@ -564,7 +564,7 @@ export default function AdminAnalytics() {
       const weekEnd = grouping === "weekly" ? format(endOfWeek(date), "yyyy-MM-dd") : dateStr;
       
       const views = viewsData?.filter(v => {
-        const vDate = v.view_date;
+        const vDate = format(new Date(v.created_at), "yyyy-MM-dd");
         if (grouping === "weekly") {
           return vDate >= dateStr && vDate <= weekEnd;
         }
@@ -572,10 +572,10 @@ export default function AdminAnalytics() {
           return vDate.startsWith(format(date, "yyyy-MM"));
         }
         return vDate === dateStr;
-      }).reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
+      }).length || 0;
 
       const clicks = interactionsData?.filter(i => {
-        const iDate = i.interaction_date;
+        const iDate = format(new Date(i.created_at), "yyyy-MM-dd");
         if (grouping === "weekly") {
           return iDate >= dateStr && iDate <= weekEnd;
         }
@@ -583,7 +583,7 @@ export default function AdminAnalytics() {
           return iDate.startsWith(format(date, "yyyy-MM"));
         }
         return iDate === dateStr;
-      }).reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
+      }).length || 0;
 
       const leads = leadsData?.filter(l => {
         const lDate = format(new Date(l.created_at), "yyyy-MM-dd");
@@ -628,7 +628,7 @@ export default function AdminAnalytics() {
       const key = `${f.state}-${f.city}`;
       const loc = locationMap.get(key);
       if (loc) {
-        loc.visitors += v.view_count || 0;
+        loc.visitors += 1;
       }
     });
 
@@ -637,7 +637,7 @@ export default function AdminAnalytics() {
       const key = `${f.state}-${f.city}`;
       const loc = locationMap.get(key);
       if (loc) {
-        loc.clicks += i.interaction_count || 0;
+        loc.clicks += 1;
       }
     });
 
@@ -698,11 +698,11 @@ export default function AdminAnalytics() {
       .map(facility => {
         const views = viewsData
           ?.filter(v => v.facility_id === facility.id)
-          .reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
+          .length || 0;
         
         const clicks = interactionsData
           ?.filter(i => i.facility_id === facility.id)
-          .reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
+          .length || 0;
         
         const facilityLeads = leadsData?.filter(l => l.facility_id === facility.id) || [];
         const leads = facilityLeads.length;
