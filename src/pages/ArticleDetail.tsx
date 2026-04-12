@@ -14,11 +14,6 @@ import {
   Heart,
   Calendar,
   User,
-  Twitter,
-  Facebook,
-  Linkedin,
-  Copy,
-  Check,
   MapPin,
   Stethoscope,
   Shield,
@@ -26,6 +21,7 @@ import {
 } from "lucide-react";
 import { ReactNode, useState, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
+import { ArticleShareBar } from "@/components/articles/ArticleShareBar";
 import { 
   InternalLinkingSection, 
   treatmentTypeLinks, 
