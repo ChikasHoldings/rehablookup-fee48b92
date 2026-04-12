@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -9,8 +9,15 @@ import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 
 export default function SubstanceStatePage() {
-  const { substanceSlug, stateSlug } = useParams<{ substanceSlug: string; stateSlug: string }>();
+  const { stateSlug } = useParams<{ stateSlug: string }>();
+  const location = useLocation();
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+
+  // Extract substance slug from path: /cocaine-addiction-treatment/california → cocaine-addiction-treatment
+  const substanceSlug = useMemo(() => {
+    const parts = location.pathname.replace(/^\//, "").split("/");
+    return parts[0] || "";
+  }, [location.pathname]);
 
   const substance = useMemo(() => substancePages.find((s) => s.slug === substanceSlug) || null, [substanceSlug]);
   const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
