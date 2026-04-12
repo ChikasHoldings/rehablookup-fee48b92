@@ -1,14 +1,17 @@
 /**
  * Generates unique, location-specific content for city and city+treatment SEO pages.
- * Content varies based on city name, state, population, and treatment type to avoid
- * templated/repetitive text that Google flags as thin content.
+ * Content varies based on city name, state, population, treatment type, facility density,
+ * and urban/rural classification to avoid templated/repetitive text that Google flags as thin content.
  */
+
+import { contentHash, getFacilityDensity, getUrbanClassification } from "./seoPageValidator";
 
 interface CityContentInput {
   cityName: string;
   stateName: string;
   stateAbbr: string;
   population?: number;
+  facilityCount?: number; // actual facility matches for density-based variation
 }
 
 interface ContentSection {
@@ -82,35 +85,83 @@ function getPopulationTier(pop?: number): "metro" | "mid" | "small" | "unknown" 
  * Generates unique content sections for standalone city pages (/rehab-centers/:state/:city)
  */
 export function generateCityContentSections(input: CityContentInput): ContentSection[] {
-  const { cityName, stateName, stateAbbr, population } = input;
+  const { cityName, stateName, stateAbbr, population, facilityCount = 0 } = input;
   const tier = getPopulationTier(population);
   const regionInfo = stateRegions[stateAbbr] || { region: "United States", climate: "temperate", flavor: "diverse communities" };
   const popText = population ? ` with a population of approximately ${population.toLocaleString()}` : "";
+  const density = getFacilityDensity(facilityCount);
+  const urbanClass = getUrbanClassification(population);
+  const variant = contentHash(`${cityName}-${stateAbbr}`) % 3; // 3 variants per tier
 
   const sections: ContentSection[] = [];
 
-  // Section 1: Local treatment landscape (varies by city size)
+  // Section 1: Local treatment landscape (varies by city size AND density AND variant)
   if (tier === "metro") {
+    const densityNote = density === "high"
+      ? `With ${facilityCount}+ verified treatment facilities, ${cityName} offers one of the strongest treatment networks in ${stateName}.`
+      : density === "moderate"
+      ? `${cityName} hosts a growing number of treatment providers, with several accredited facilities serving the metro area.`
+      : `While ${cityName} is a major metro, treatment facility density is still developing — our concierge team can help identify the best available options.`;
+
+    const variantContent = [
+      `As a major ${regionInfo.region} metropolitan area${popText}, ${cityName} hosts a comprehensive network of addiction treatment providers. ${densityNote} The city's healthcare infrastructure supports everything from hospital-affiliated detox programs and academic medical center research trials to boutique residential facilities and community-based outpatient clinics. ${cityName}'s size means residents can typically find specialized programs — including tracks for professionals, veterans, young adults, and LGBTQ+ individuals — without traveling far from home. The local recovery community is active, with numerous support groups, sober living homes, and peer mentorship programs that strengthen long-term sobriety.`,
+      `${cityName}${popText} stands as a key treatment hub in the ${regionInfo.region}, drawing both local residents and those from surrounding areas seeking specialized care. ${densityNote} The metro area's healthcare ecosystem includes major hospital systems with dedicated behavioral health wings, standalone residential treatment centers, and a robust outpatient network offering flexible scheduling. ${cityName}'s diverse population has spurred the development of culturally responsive treatment programs, multilingual clinical teams, and population-specific tracks that address the unique recovery needs of different communities.`,
+      `The treatment landscape in ${cityName}${popText} reflects the breadth and depth you'd expect from a major ${regionInfo.region} metropolitan center. ${densityNote} Beyond traditional inpatient and outpatient models, ${cityName} providers have embraced innovative approaches including telehealth-enhanced recovery programs, employer-partnership treatment pathways, and integrated primary care–behavioral health models. The city's recovery infrastructure extends well beyond clinical treatment, encompassing alumni networks, recovery-oriented housing, vocational rehabilitation, and community reintegration support.`,
+    ];
+
     sections.push({
-      heading: `The Treatment Landscape in ${cityName}`,
-      content: `As a major ${regionInfo.region} metropolitan area${popText}, ${cityName} hosts a comprehensive network of addiction treatment providers. The city's healthcare infrastructure supports everything from hospital-affiliated detox programs and academic medical center research trials to boutique residential facilities and community-based outpatient clinics. ${cityName}'s size means residents can typically find specialized programs — including tracks for professionals, veterans, young adults, and LGBTQ+ individuals — without traveling far from home. The local recovery community is active, with numerous support groups, sober living homes, and peer mentorship programs that strengthen long-term sobriety.`,
+      heading: variant === 0 ? `The Treatment Landscape in ${cityName}` : variant === 1 ? `Treatment Resources in ${cityName}, ${stateAbbr}` : `Addiction Treatment in ${cityName}`,
+      content: variantContent[variant],
     });
   } else if (tier === "mid") {
+    const densityNote = density === "high" || density === "moderate"
+      ? `${cityName} offers a solid selection of treatment options that rivals many larger metros.`
+      : `While treatment options in ${cityName} are developing, residents benefit from both local providers and easy access to regional facilities.`;
+
+    const variantContent = [
+      `${cityName}${popText} serves as an important treatment hub in the ${regionInfo.region} region. ${densityNote} Local providers understand the specific challenges facing ${cityName}'s community and often deliver more personalized care than larger urban centers. Community health centers and hospital behavioral health departments anchor the treatment network, with many facilities offering sliding-scale fees and accepting both private insurance and Medicaid.`,
+      `As a mid-sized ${regionInfo.region} community${popText}, ${cityName} bridges the gap between major metro medical centers and smaller rural clinics. ${densityNote} The city's behavioral health providers have built strong referral networks, connecting residents to the right level of care — from medical detox and intensive outpatient programs to longer-term residential treatment when needed. Local practitioners often know patients by name, creating accountability and continuity of care that larger systems struggle to match.`,
+      `${cityName}'s position in ${stateName}'s ${regionInfo.region} corridor provides residents with meaningful treatment access. ${densityNote} The community's healthcare infrastructure has grown alongside its population, with new treatment programs addressing local substance use patterns. ${cityName}-area providers specialize in creating treatment plans that respect the rhythms of community life — enabling patients to maintain employment, family connections, and social support during recovery.`,
+    ];
+
     sections.push({
-      heading: `Finding Treatment in ${cityName}`,
-      content: `${cityName}${popText} serves as an important treatment hub in the ${regionInfo.region} region. While not as large as major metros, ${cityName} offers a meaningful selection of treatment options including outpatient counseling, intensive outpatient programs, and connections to regional residential facilities. Local providers understand the specific challenges facing ${cityName}'s community and often deliver more personalized care than larger urban centers. Community health centers and hospital behavioral health departments anchor the treatment network, with many facilities offering sliding-scale fees and accepting both private insurance and Medicaid.`,
+      heading: variant === 0 ? `Finding Treatment in ${cityName}` : variant === 1 ? `Recovery Options in ${cityName}, ${stateAbbr}` : `Treatment Access in ${cityName}`,
+      content: variantContent[variant],
     });
   } else {
+    const densityNote = density !== "none"
+      ? `Despite its smaller size, ${cityName} has local treatment resources available to residents.`
+      : `${cityName} residents can access treatment through a combination of local outpatient services, telehealth, and regional facilities.`;
+
+    const variantContent = [
+      `${cityName} may be smaller in size, but its treatment resources provide essential access for residents and surrounding communities in ${stateName}. ${densityNote} The close-knit nature of ${cityName}'s community often means stronger support networks and more individualized attention during treatment. Telehealth services have further expanded access, connecting residents with specialists across ${stateName}.`,
+      `In ${cityName}${popText}, recovery is shaped by the strength of community bonds and local healthcare commitment. ${densityNote} Providers in smaller ${regionInfo.region} communities like ${cityName} often develop deep expertise in the substance use challenges most relevant to their patient population. When specialized programs aren't available locally, regional treatment centers and telehealth platforms ensure ${cityName} residents aren't left without options.`,
+      `${cityName} and its surrounding ${stateName} communities represent the frontline of accessible treatment in the ${regionInfo.region}. ${densityNote} Local clinics, faith-based recovery programs, and community health worker initiatives provide culturally attuned care that resonates with ${cityName}'s residents. For those needing higher levels of care, transportation assistance and telemedicine consultations bridge the distance to regional centers.`,
+    ];
+
     sections.push({
-      heading: `Treatment Resources in ${cityName}`,
-      content: `${cityName} may be smaller in size, but its treatment resources provide essential access for residents and surrounding communities in ${stateName}. Local providers offer outpatient services, medication-assisted treatment, and counseling, while partnerships with regional medical centers extend access to detox and residential programs. The close-knit nature of ${cityName}'s community often means stronger support networks and more individualized attention during treatment. Telehealth services have further expanded access, connecting residents with specialists across ${stateName}.`,
+      heading: variant === 0 ? `Treatment Resources in ${cityName}` : variant === 1 ? `Finding Help in ${cityName}, ${stateAbbr}` : `Recovery Support in ${cityName}`,
+      content: variantContent[variant],
     });
   }
 
-  // Section 2: Treatment approaches (varies by region)
+  // Section 2: Treatment approaches (varies by region AND urban classification)
+  const approachVariant = contentHash(`${cityName}-approach`) % 2;
+  const outdoorTherapy = regionInfo.climate === "arid desert" || regionInfo.climate === "Mediterranean"
+    ? "outdoor experiential therapy leveraging the region's natural landscape"
+    : regionInfo.climate === "tropical"
+    ? "nature-immersive healing unique to the region"
+    : urbanClass === "major-metro" || urbanClass === "metro"
+    ? "urban wellness programming including fitness centers and nutritional counseling"
+    : "nature-based therapeutic activities that leverage the local environment";
+
   sections.push({
-    heading: `Evidence-Based Treatment Approaches in ${cityName}, ${stateAbbr}`,
-    content: `Treatment centers in ${cityName} employ a range of evidence-based methodologies tailored to the ${regionInfo.region} context. Cognitive behavioral therapy (CBT) and dialectical behavior therapy (DBT) form the clinical backbone at most facilities, helping patients identify triggers and develop coping strategies. Medication-assisted treatment (MAT) using FDA-approved medications like buprenorphine, naltrexone, and methadone is widely available for opioid and alcohol use disorders. Many ${cityName} programs integrate holistic approaches — including mindfulness meditation, yoga, art therapy, and ${regionInfo.climate === "arid desert" || regionInfo.climate === "Mediterranean" ? "outdoor experiential therapy leveraging the region's natural landscape" : regionInfo.climate === "tropical" ? "nature-immersive healing unique to the region" : "fitness and nutritional counseling"} — recognizing that lasting recovery addresses mind, body, and spirit.`,
+    heading: approachVariant === 0
+      ? `Evidence-Based Treatment Approaches in ${cityName}, ${stateAbbr}`
+      : `Clinical Methods and Therapies in ${cityName}`,
+    content: approachVariant === 0
+      ? `Treatment centers in ${cityName} employ a range of evidence-based methodologies tailored to the ${regionInfo.region} context. Cognitive behavioral therapy (CBT) and dialectical behavior therapy (DBT) form the clinical backbone at most facilities, helping patients identify triggers and develop coping strategies. Medication-assisted treatment (MAT) using FDA-approved medications like buprenorphine, naltrexone, and methadone is widely available for opioid and alcohol use disorders. Many ${cityName} programs integrate holistic approaches — including mindfulness meditation, yoga, art therapy, and ${outdoorTherapy} — recognizing that lasting recovery addresses mind, body, and spirit.`
+      : `${cityName}'s treatment providers utilize proven therapeutic frameworks adapted for the ${regionInfo.region}'s population. The foundation of most programs includes CBT for restructuring thought patterns, motivational interviewing to build intrinsic commitment to change, and contingency management to reinforce positive behaviors. MAT protocols are available for opioid and alcohol dependence, reducing cravings and preventing relapse during the critical early recovery period. ${cityName} facilities increasingly offer ${outdoorTherapy}, trauma-focused therapies like EMDR, and family systems therapy — all of which contribute to the comprehensive, individualized treatment plans that lead to lasting recovery.`,
   });
 
   // Section 3: Choosing the right program (universal but location-flavored)
