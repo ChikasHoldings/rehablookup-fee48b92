@@ -664,6 +664,35 @@ function generateExpandedTreatmentCityRoutes(): RouteEntry[] {
   }
   return routes;
 }
+
+function generateSubstanceStateRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const sub of SUBSTANCE_SLUGS) {
+    for (const state of US_STATES) {
+      routes.push({ path: `/${sub}/${state}`, priority: 0.70, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateDemographicStateRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const demo of DEMOGRAPHIC_SLUGS) {
+    for (const state of US_STATES) {
+      routes.push({ path: `/${demo}/${state}`, priority: 0.65, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateTherapyModalityRoutes(): RouteEntry[] {
+  return THERAPY_MODALITY_SLUGS.map(slug => ({
+    path: `/${slug}`,
+    priority: 0.75,
+    changefreq: "monthly"
+  }));
+}
+
 function generateStateArticleRoutes(): RouteEntry[] {
   const articleSlugs = [
     "how-to-find-best-rehab-centers-in",
@@ -822,6 +851,9 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...generateStateArticleRoutes(),
     ...generateExpandedTreatmentStateRoutes(),
     ...generateExpandedTreatmentCityRoutes(),
+    ...generateSubstanceStateRoutes(),
+    ...generateDemographicStateRoutes(),
+    ...generateTherapyModalityRoutes(),
     ...articleRoutes
   ];
 
