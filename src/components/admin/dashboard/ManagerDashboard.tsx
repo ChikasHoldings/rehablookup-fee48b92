@@ -738,6 +738,7 @@ export function ManagerDashboard() {
 function RecentEscalationsList() {
   const queryClient = useQueryClient();
   const { user } = useAdminAuth();
+  const [confirmResolveEscId, setConfirmResolveEscId] = useState<string | null>(null);
 
   const { data: recentEscalations } = useQuery({
     queryKey: ["manager-recent-escalations"],
