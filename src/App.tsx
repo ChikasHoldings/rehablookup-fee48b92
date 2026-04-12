@@ -51,6 +51,8 @@ const StateDualDiagnosis = lazy(() => import("./pages/treatment-types/StateDualD
 const CityDualDiagnosis = lazy(() => import("./pages/treatment-types/CityDualDiagnosis"));
 const StateTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/StateTreatmentExpandedPage"));
 const ExpandedTreatmentHubPage = lazy(() => import("./pages/seo/ExpandedTreatmentHubPage"));
+const CityTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/CityTreatmentExpandedPage"));
+const ExpandedTreatmentNationalHub = lazy(() => import("./pages/treatment-types/ExpandedTreatmentNationalHub"));
 const CityInsurancePage = lazy(() => import("./pages/seo/CityInsurancePage"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const ForProviders = lazy(() => import("./pages/ForProviders"));
@@ -453,6 +455,26 @@ const AppInner = () => {
             <Route path="/treatment-types/veterans-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="veterans-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/womens-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="womens-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/mens-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="mens-rehab" /></PublicRouteGuard>} />
+
+            {/* City-level expanded treatment pages */}
+            <Route path="/treatment-types/luxury-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/sober-living/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="sober-living" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/free-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="free-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/faith-based-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="faith-based-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/fentanyl-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="fentanyl-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/veterans-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="veterans-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/womens-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="womens-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/mens-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="mens-rehab" /></PublicRouteGuard>} />
+
+            {/* National hub pages for expanded treatment types */}
+            <Route path="/treatment-types/sober-living" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="sober-living" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/free-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="free-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/faith-based-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="faith-based-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/fentanyl-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="fentanyl-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/veterans-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="veterans-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/womens-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="womens-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/mens-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="mens-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs" element={<PublicRouteGuard><DetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug" element={<PublicRouteGuard><StateDetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDetoxPrograms /></PublicRouteGuard>} />
