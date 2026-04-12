@@ -126,9 +126,11 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
     });
 
     if (!validation.success) {
-      const firstError = Object.values(validation.errors)[0];
+      const errors = (validation as { success: false; errors: Record<string, string> }).errors;
+      const firstError = Object.values(errors)[0];
       toast.error(firstError || "Please fix the form errors");
       return;
+    }
     }
 
     const { data: validated } = validation;
