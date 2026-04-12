@@ -5,9 +5,10 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, MapPin, Stethoscope, Shield, BarChart3, ChevronRight } from "lucide-react";
+import { ArrowRight, MapPin, Stethoscope, Shield, BarChart3, ChevronRight, Users, AlertTriangle, Building2 } from "lucide-react";
 import { providerCities } from "@/data/providerCityData";
 import { treatmentProviderConfigs, insuranceProviderConfigs, comparisonPageConfigs, STATE_TREATMENT_COMBOS } from "@/data/providerPageConfigs";
+import { providerPersonaConfigs, providerPainPointConfigs, additionalComparisonConfigs } from "@/data/providerPersonaConfigs";
 import { usStates } from "@/data/usStates";
 
 export default function RehabMarketingHub() {
@@ -162,10 +163,54 @@ export default function RehabMarketingHub() {
               <h2 className="text-2xl md:text-3xl font-bold text-foreground">Marketing Comparisons & Analysis</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              {comparisonPageConfigs.map(config => (
+              {[...comparisonPageConfigs, ...additionalComparisonConfigs].map(config => (
                 <Link key={config.slug} to={`/provider-guides/${config.slug}`} className="p-5 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
                   <h3 className="font-semibold text-foreground mb-2">{config.title}</h3>
                   <p className="text-sm text-muted-foreground line-clamp-2">{config.subheadline}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* By Facility Type */}
+        <section className="py-16">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-3 mb-8">
+              <Building2 className="h-7 w-7 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Marketing by Facility Type</h2>
+            </div>
+            <p className="text-muted-foreground mb-8 max-w-2xl">Targeted strategies for your specific type of treatment center — because a small faith-based program markets differently than a luxury executive rehab.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {providerPersonaConfigs.map(config => (
+                <Card key={config.slug} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{config.label}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{config.heroSubheadline}</p>
+                    <Link to={`/provider-guides/${config.slug}`} className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                      Read Guide <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Pain Point Pages */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-3 mb-8">
+              <AlertTriangle className="h-7 w-7 text-destructive" />
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Common Provider Problems (& Solutions)</h2>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {providerPainPointConfigs.map(config => (
+                <Link key={config.slug} to={`/provider-guides/${config.slug}`} className="p-5 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
+                  <h3 className="font-semibold text-foreground mb-2">{config.heroHeadline}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{config.heroSubheadline}</p>
                 </Link>
               ))}
             </div>

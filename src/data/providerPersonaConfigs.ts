@@ -1,0 +1,478 @@
+export interface ProviderPersonaConfig {
+  slug: string;
+  label: string;
+  metaTitle: string;
+  metaDescription: string;
+  heroHeadline: string;
+  heroSubheadline: string;
+  problemHeadline: string;
+  problemPoints: string[];
+  insightHeadline: string;
+  insightContent: string;
+  insightStats: { label: string; value: string }[];
+  keywords: string[];
+}
+
+export const providerPersonaConfigs: ProviderPersonaConfig[] = [
+  {
+    slug: "small-rehab-center-marketing",
+    label: "Small Rehab Centers",
+    metaTitle: "Marketing for Small Rehab Centers: Fill Beds Without a Big Budget | RehabLookup",
+    metaDescription: "Small rehab centers can compete with big chains. Learn how to get more patients with limited marketing budgets using high-intent directory listings.",
+    heroHeadline: "Small Rehab Center? Big Chains Shouldn't Get All the Patients",
+    heroSubheadline: "You provide better care. Your staff knows every patient by name. But corporate chains with million-dollar marketing budgets dominate Google — until now.",
+    problemHeadline: "Why Small Centers Struggle to Compete",
+    problemPoints: [
+      "Corporate chains spend $50K-$200K/month on Google Ads — you can't compete on budget alone",
+      "Big facilities buy every keyword in your city, pushing your website to page 3 or beyond",
+      "Your 10-20 bed facility provides personalized care, but patients can't find you online",
+      "Limited marketing staff means you can't manage SEO, PPC, social media, and referrals simultaneously",
+    ],
+    insightHeadline: "The Small Center Advantage",
+    insightContent: "Research shows patients at smaller facilities report 23% higher satisfaction rates. Families increasingly prefer intimate, personalized treatment environments over large institutional settings. The challenge isn't your care quality — it's visibility. Small centers that appear in the right directories see a 40-60% increase in qualified inquiries within 90 days.",
+    insightStats: [
+      { label: "Higher Patient Satisfaction", value: "23%" },
+      { label: "Lower Staff Turnover", value: "35%" },
+      { label: "Avg Beds (Small Center)", value: "10-30" },
+      { label: "Inquiry Increase", value: "40-60%" },
+    ],
+    keywords: ["small rehab center marketing", "small treatment center patients", "small rehab facility leads", "independent rehab marketing"],
+  },
+  {
+    slug: "new-rehab-facility-marketing",
+    label: "New Facilities",
+    metaTitle: "Marketing for New Rehab Facilities: Get Your First Patients Fast | RehabLookup",
+    metaDescription: "Just opened a rehab center? Learn how to get your first patients quickly without wasting money on expensive ads that don't convert.",
+    heroHeadline: "Just Opened a Rehab Center? Getting Your First Patients Is the Hardest Part",
+    heroSubheadline: "You invested millions in your facility, hired great staff, and got licensed. Now you need patients — and every empty bed is burning cash.",
+    problemHeadline: "The New Facility Cold Start Problem",
+    problemPoints: [
+      "No online reviews, no Google rankings, no referral relationships — you're starting from zero",
+      "SEO takes 12-18 months to build — you can't wait that long with empty beds costing $1,000+/day",
+      "Google Ads are expensive and inefficient when you have no conversion data or landing page history",
+      "Insurance panels take 90-180 days to get credentialed — limiting your patient mix early on",
+    ],
+    insightHeadline: "New Facility Growth Data",
+    insightContent: "New treatment centers take an average of 8-14 months to reach 70% occupancy through traditional marketing alone. However, facilities that launch with directory listings as their primary acquisition channel reach 70% occupancy 40% faster. Early visibility in high-intent directories gives new centers immediate access to patients who are ready to admit — no waiting for SEO to kick in.",
+    insightStats: [
+      { label: "Avg Time to 70% Occupancy", value: "8-14 mo" },
+      { label: "New Centers Opened (2025)", value: "1,200+" },
+      { label: "Startup Marketing Budget", value: "$15K/mo" },
+      { label: "Directory ROI vs PPC", value: "3.2x" },
+    ],
+    keywords: ["new rehab center marketing", "new treatment center patients", "rehab facility startup marketing", "get first rehab patients"],
+  },
+  {
+    slug: "faith-based-rehab-marketing",
+    label: "Faith-Based Rehab",
+    metaTitle: "Marketing for Faith-Based Rehab Centers: Reach Patients Seeking Spiritual Recovery | RehabLookup",
+    metaDescription: "Faith-based rehab centers need targeted marketing to reach patients who want spiritually-integrated treatment. Get qualified leads from families seeking faith-based recovery.",
+    heroHeadline: "Faith-Based Rehab? Your Patients Are Searching — But Can They Find You?",
+    heroSubheadline: "Millions of families want faith-integrated addiction treatment. Generic rehab directories don't highlight what makes your program unique.",
+    problemHeadline: "Why Faith-Based Programs Struggle Online",
+    problemPoints: [
+      "Generic rehab directories don't have filters for faith-based programs — your niche advantage is invisible",
+      "Patients searching for 'Christian rehab' or 'faith-based treatment' get mixed results with secular facilities",
+      "Church and ministry referrals are inconsistent — you need a reliable digital acquisition channel",
+      "Your program's spiritual component is your biggest differentiator, but most marketing platforms ignore it",
+    ],
+    insightHeadline: "Faith-Based Treatment Demand",
+    insightContent: "Over 73% of Americans identify as religious or spiritual, and studies show that faith-integrated treatment programs have 20-30% higher completion rates. Monthly searches for 'faith-based rehab' and 'Christian rehab' exceed 45,000 nationally. These families are specifically seeking programs that align with their values — and they're willing to travel to find the right fit.",
+    insightStats: [
+      { label: "Monthly Faith-Based Searches", value: "45K+" },
+      { label: "Higher Completion Rate", value: "20-30%" },
+      { label: "Willing to Travel", value: "68%" },
+      { label: "Religious Americans", value: "73%" },
+    ],
+    keywords: ["faith-based rehab marketing", "Christian rehab center leads", "faith-based treatment patients", "religious rehab marketing"],
+  },
+  {
+    slug: "veterans-rehab-marketing",
+    label: "Veterans Rehab",
+    metaTitle: "Marketing for Veterans Rehab Centers: Reach Veterans & Military Families | RehabLookup",
+    metaDescription: "Veterans rehab centers need targeted visibility to reach active-duty, veterans, and military families seeking addiction treatment. Get qualified military leads.",
+    heroHeadline: "Veterans Rehab Center? Military Families Need to Find You",
+    heroSubheadline: "1 in 10 veterans struggles with substance use disorder. Your specialized program serves those who served — but VA referrals alone can't fill your beds.",
+    problemHeadline: "The Veterans Treatment Marketing Gap",
+    problemPoints: [
+      "VA referral pipelines are slow, bureaucratic, and inconsistent — you can't rely on them as your sole patient source",
+      "TRICARE and VA benefit verification is complex, causing families to give up before completing intake",
+      "Many veterans prefer private facilities over VA hospitals but don't know veteran-specialized programs exist",
+      "Military families search online when VA wait times exceed 30 days — but most veteran-specific programs are invisible",
+    ],
+    insightHeadline: "Veterans Treatment Market",
+    insightContent: "Approximately 1.1 million veterans have a diagnosed substance use disorder, but fewer than 40% receive treatment. The private veteran rehab market is growing 15% annually as more families seek alternatives to VA hospital programs. TRICARE covers a wide range of SUD treatments, making veterans highly valuable patients for specialized facilities.",
+    insightStats: [
+      { label: "Veterans with SUD", value: "1.1M" },
+      { label: "Receiving Treatment", value: "<40%" },
+      { label: "Market Growth Rate", value: "15%/yr" },
+      { label: "Avg VA Wait Time", value: "30+ days" },
+    ],
+    keywords: ["veterans rehab marketing", "military rehab center leads", "veteran addiction treatment marketing", "TRICARE rehab patients"],
+  },
+  {
+    slug: "womens-rehab-marketing",
+    label: "Women's Rehab",
+    metaTitle: "Marketing for Women's Rehab Centers: Attract More Female Patients | RehabLookup",
+    metaDescription: "Women's rehab centers need gender-specific marketing to reach women and families seeking female-only addiction treatment programs.",
+    heroHeadline: "Women's Rehab Center? Female Patients Are Searching Differently",
+    heroSubheadline: "Women face unique barriers to seeking treatment — shame, childcare, safety concerns. Your gender-specific program is exactly what they need. Let them find you.",
+    problemHeadline: "Why Women's Programs Struggle with Visibility",
+    problemPoints: [
+      "Women research treatment options 3x longer than men — they need to find you early in their search journey",
+      "Safety and privacy concerns mean women search more discreetly and avoid programs that don't emphasize these",
+      "Childcare and family accommodations are major decision factors that most directories don't highlight",
+      "Generic rehab marketing doesn't address trauma-informed care, which is the primary draw for women's programs",
+    ],
+    insightHeadline: "Women's Treatment Market Insights",
+    insightContent: "Women represent 40% of individuals with substance use disorders but only 30% of treatment admissions — a massive gap that's narrowing as awareness grows. Monthly searches for 'women's rehab' and 'female rehab center' have increased 35% year-over-year. Programs that specifically market to women see 2x higher inquiry-to-admission conversion rates compared to co-ed facilities.",
+    insightStats: [
+      { label: "Women with SUD", value: "40%" },
+      { label: "In Treatment", value: "30%" },
+      { label: "Search Growth YoY", value: "35%" },
+      { label: "Higher Conversion", value: "2x" },
+    ],
+    keywords: ["women's rehab marketing", "female rehab center patients", "women's addiction treatment leads", "gender-specific rehab marketing"],
+  },
+  {
+    slug: "executive-rehab-marketing",
+    label: "Executive Rehab",
+    metaTitle: "Marketing for Executive Rehab Programs: Reach High-Net-Worth Professionals | RehabLookup",
+    metaDescription: "Executive rehab programs need discreet, targeted marketing to reach professionals, executives, and high-net-worth individuals seeking confidential treatment.",
+    heroHeadline: "Executive Rehab Program? Your Ideal Patients Value Discretion Above All",
+    heroSubheadline: "CEOs, physicians, attorneys, and executives need treatment but won't risk their careers or reputations. They need to find your discreet program.",
+    problemHeadline: "The Executive Treatment Marketing Challenge",
+    problemPoints: [
+      "Executives and professionals won't click on Google Ads for 'rehab' — they research privately and indirectly",
+      "Traditional rehab marketing feels clinical and institutional — executives expect a premium experience from first contact",
+      "Concierge physician and EAP referrals are your best channels, but they're relationship-dependent and slow to build",
+      "Your $30K-$100K+ per-stay price point means each empty bed is catastrophically expensive",
+    ],
+    insightHeadline: "Executive Treatment Demand",
+    insightContent: "An estimated 10-15% of executives and senior professionals struggle with substance use, but fewer than 5% seek treatment due to career and reputation concerns. The executive rehab market exceeds $8B and is growing 12% annually. Patients in this segment have the highest lifetime value and longest average stay (45-90 days) of any treatment demographic.",
+    insightStats: [
+      { label: "Executives with SUD", value: "10-15%" },
+      { label: "Market Size", value: "$8B+" },
+      { label: "Avg Length of Stay", value: "45-90 days" },
+      { label: "Revenue Per Stay", value: "$30-100K" },
+    ],
+    keywords: ["executive rehab marketing", "professional rehab patients", "executive addiction treatment leads", "high-net-worth rehab marketing"],
+  },
+  {
+    slug: "telehealth-rehab-marketing",
+    label: "Telehealth/Virtual Rehab",
+    metaTitle: "Marketing for Telehealth Rehab Programs: Get More Virtual Treatment Patients | RehabLookup",
+    metaDescription: "Telehealth rehab programs are booming. Learn how to attract patients seeking virtual IOP, online counseling, and remote addiction treatment services.",
+    heroHeadline: "Virtual Rehab Program? Patients Want Telehealth — But Can't Find Your Program",
+    heroSubheadline: "Post-pandemic, 60% of patients prefer telehealth options for behavioral health. Your virtual program can serve patients nationwide — if they can find you.",
+    problemHeadline: "Telehealth Treatment Marketing Challenges",
+    problemPoints: [
+      "Most rehab directories don't distinguish between in-person and virtual programs — your telehealth option is buried",
+      "Insurance coverage for telehealth SUD treatment varies wildly by state, creating marketing complexity",
+      "Patients searching for 'online rehab' get mixed results with self-help apps and unaccredited programs",
+      "Your nationwide reach is your superpower, but local SEO strategies don't work for virtual programs",
+    ],
+    insightHeadline: "Telehealth Treatment Growth",
+    insightContent: "Telehealth behavioral health visits increased 3,800% since 2019 and remain 35x above pre-pandemic levels. Monthly searches for 'online rehab program' and 'virtual IOP' exceed 28,000 nationally. The DEA's extension of telehealth prescribing for controlled substances means MAT via telehealth is now permanent — a massive opportunity for virtual providers.",
+    insightStats: [
+      { label: "Telehealth Growth", value: "3,800%" },
+      { label: "Monthly Virtual Searches", value: "28K+" },
+      { label: "Prefer Telehealth", value: "60%" },
+      { label: "States Allowing Virtual SUD", value: "48" },
+    ],
+    keywords: ["telehealth rehab marketing", "virtual IOP patients", "online addiction treatment leads", "virtual rehab program marketing"],
+  },
+  {
+    slug: "court-ordered-rehab-marketing",
+    label: "Court-Ordered Rehab",
+    metaTitle: "Marketing for Court-Ordered Rehab Programs: Get More Court & Legal Referrals | RehabLookup",
+    metaDescription: "Court-ordered rehab facilities need visibility with attorneys, probation officers, and families searching for court-approved addiction treatment programs.",
+    heroHeadline: "Accept Court-Ordered Patients? Attorneys and Families Need to Find You",
+    heroSubheadline: "Drug courts mandate treatment for 150,000+ people annually. If your facility accepts court referrals, you have a massive untapped patient source.",
+    problemHeadline: "The Court-Ordered Referral Challenge",
+    problemPoints: [
+      "Drug court judges and probation officers refer to the same 3-5 facilities — breaking into their network is difficult",
+      "Defense attorneys Google 'court-approved rehab near me' for their clients — and your facility doesn't show up",
+      "Families scrambling to find court-ordered treatment have 48-72 hours to comply — speed of discovery is critical",
+      "Court-ordered patients have specific compliance requirements that most directories don't help communicate",
+    ],
+    insightHeadline: "Court-Ordered Treatment Market",
+    insightContent: "Over 3,000 drug courts operate across the U.S., mandating treatment for 150,000+ individuals annually. The average court-ordered stay is 90-180 days, making these among the highest-value patients. Facilities that build relationships with local courts report 25-40% of their census coming from legal referrals — but most don't actively market to this channel.",
+    insightStats: [
+      { label: "Drug Courts in U.S.", value: "3,000+" },
+      { label: "Annual Mandated Patients", value: "150K+" },
+      { label: "Avg Stay Length", value: "90-180 days" },
+      { label: "Census from Courts", value: "25-40%" },
+    ],
+    keywords: ["court-ordered rehab marketing", "drug court referrals", "court-approved treatment facility", "legal referral rehab marketing"],
+  },
+  {
+    slug: "adolescent-rehab-marketing",
+    label: "Teen/Adolescent Rehab",
+    metaTitle: "Marketing for Teen Rehab Centers: Reach Parents Seeking Adolescent Treatment | RehabLookup",
+    metaDescription: "Adolescent rehab centers need to reach parents desperately searching for teen addiction treatment. Get qualified leads from families seeking help for their children.",
+    heroHeadline: "Teen Rehab Center? Parents Are Desperately Searching for Help",
+    heroSubheadline: "A parent discovering their child has a substance use problem is one of the most urgent searches in healthcare. Your adolescent program is exactly what they need.",
+    problemHeadline: "Why Teen Treatment Programs Struggle to Fill",
+    problemPoints: [
+      "Parents search differently than adults seeking treatment — they use terms like 'help for my teenager' not 'rehab'",
+      "Regulatory requirements for adolescent programs are stricter, but most marketing doesn't communicate your compliance",
+      "Parents check 5-10 facilities before deciding — if you're not in the first 3 they find, you've lost them",
+      "School counselor and pediatrician referrals are inconsistent and seasonal, creating enrollment gaps",
+    ],
+    insightHeadline: "Adolescent Treatment Demand",
+    insightContent: "1.5 million adolescents (ages 12-17) had a substance use disorder in 2024, but only 10% received treatment. Parent searches for 'teen rehab' and 'adolescent treatment center' have increased 50% since 2022, driven by the fentanyl crisis and increased cannabis potency. Programs that specialize in adolescent treatment report the highest family engagement and referral rates in the industry.",
+    insightStats: [
+      { label: "Teens with SUD", value: "1.5M" },
+      { label: "Receiving Treatment", value: "10%" },
+      { label: "Search Growth Since 2022", value: "50%" },
+      { label: "Family Referral Rate", value: "Highest" },
+    ],
+    keywords: ["teen rehab marketing", "adolescent treatment center leads", "teen addiction treatment marketing", "parent rehab search marketing"],
+  },
+  {
+    slug: "couples-rehab-marketing",
+    label: "Couples Rehab",
+    metaTitle: "Marketing for Couples Rehab Centers: Attract Couples Seeking Joint Treatment | RehabLookup",
+    metaDescription: "Couples rehab centers fill a unique niche. Reach couples and families searching for joint addiction treatment programs that keep partners together.",
+    heroHeadline: "Couples Rehab Program? This Niche Is Underserved and Growing Fast",
+    heroSubheadline: "When both partners struggle with addiction, they search for programs that treat them together. Your couples program is rare — make sure they find it.",
+    problemHeadline: "The Couples Treatment Marketing Gap",
+    problemPoints: [
+      "Fewer than 5% of rehab facilities offer true couples programming — but searchers can't filter for it",
+      "Couples search terms are highly specific ('rehab for couples', 'couples addiction treatment') with little competition",
+      "Most directories don't have a 'couples' filter, making your program invisible to your ideal patient",
+      "Couples are willing to travel further and pay more for joint treatment — but only if they can find you",
+    ],
+    insightHeadline: "Couples Treatment Market",
+    insightContent: "Research shows that when both partners have substance use disorders, treating them together improves outcomes by 40-50%. Monthly searches for 'couples rehab' exceed 12,000 nationally with very low competition. This is one of the highest-converting niches in addiction treatment — couples who find a suitable program admit at 2-3x the rate of individual seekers.",
+    insightStats: [
+      { label: "Monthly Couples Searches", value: "12K+" },
+      { label: "Better Outcomes Together", value: "40-50%" },
+      { label: "Higher Admission Rate", value: "2-3x" },
+      { label: "Facilities Offering This", value: "<5%" },
+    ],
+    keywords: ["couples rehab marketing", "couples addiction treatment leads", "couples rehab center patients", "joint treatment marketing"],
+  },
+];
+
+export interface ProviderPainPointConfig {
+  slug: string;
+  label: string;
+  metaTitle: string;
+  metaDescription: string;
+  heroHeadline: string;
+  heroSubheadline: string;
+  problemHeadline: string;
+  problemPoints: string[];
+  insightHeadline: string;
+  insightContent: string;
+  insightStats: { label: string; value: string }[];
+  keywords: string[];
+}
+
+export const providerPainPointConfigs: ProviderPainPointConfig[] = [
+  {
+    slug: "why-your-rehab-center-isnt-getting-patients",
+    label: "Not Getting Patients",
+    metaTitle: "Why Your Rehab Center Isn't Getting Patients (And How to Fix It) | RehabLookup",
+    metaDescription: "If your rehab center has empty beds, you have a visibility problem — not a quality problem. Learn the 4 most common reasons facilities fail to attract patients.",
+    heroHeadline: "Why Your Rehab Center Isn't Getting Patients",
+    heroSubheadline: "You built a great facility. You hired excellent clinical staff. But the beds are empty. Here's what's really going wrong — and how to fix it in 30 days.",
+    problemHeadline: "The 4 Reasons Rehab Centers Fail to Attract Patients",
+    problemPoints: [
+      "You're invisible online: 85% of treatment searches start on Google, and your facility isn't ranking for any high-intent keywords",
+      "Your website converts at <2%: Even when patients find you, your website doesn't compel them to pick up the phone",
+      "You're competing on the wrong channels: Spending on Facebook and Instagram where addiction treatment ads get restricted or banned",
+      "Your referral network is too small: Relying on 2-3 referral sources creates dangerous revenue concentration",
+    ],
+    insightHeadline: "The Patient Acquisition Reality",
+    insightContent: "The average rehab facility spends $4,200 per admission on marketing, but the top 20% spend only $1,800 — because they use high-intent channels like directories and organic SEO instead of expensive paid advertising. The difference isn't budget, it's strategy. Facilities that diversify their patient acquisition channels see 30-50% lower cost per admission and more predictable census.",
+    insightStats: [
+      { label: "Avg Cost Per Admission", value: "$4,200" },
+      { label: "Top 20% Spend", value: "$1,800" },
+      { label: "Searches Start Online", value: "85%" },
+      { label: "Avg Website Conversion", value: "1.8%" },
+    ],
+    keywords: ["rehab center not getting patients", "why no rehab patients", "empty rehab beds", "fix rehab admissions"],
+  },
+  {
+    slug: "reduce-empty-beds-rehab",
+    label: "Reduce Empty Beds",
+    metaTitle: "How to Reduce Empty Beds at Your Rehab Center: A Complete Guide | RehabLookup",
+    metaDescription: "Empty beds cost rehab facilities $500-$1,500/day in lost revenue. Learn proven strategies to increase occupancy and stabilize your census year-round.",
+    heroHeadline: "Every Empty Bed Is Costing You $500-$1,500 Per Day",
+    heroSubheadline: "At 70% occupancy, a 30-bed facility leaves $1.6M-$4.9M in unrealized revenue annually. Here's how to stop the bleeding.",
+    problemHeadline: "The Real Cost of Low Occupancy",
+    problemPoints: [
+      "Fixed costs (rent, staff, insurance, utilities) don't decrease when beds are empty — your margin shrinks with every vacancy",
+      "Low occupancy creates a death spiral: less revenue → less marketing budget → fewer patients → even lower occupancy",
+      "Seasonal fluctuations (January surge, summer lull) create cash flow stress that threatens facility viability",
+      "Staff morale drops when the facility feels empty, leading to turnover and further quality/cost problems",
+    ],
+    insightHeadline: "Occupancy Benchmarks & Economics",
+    insightContent: "Industry data shows the breakeven occupancy rate for most rehab facilities is 65-75%. The average facility operates at 72% — barely above breakeven. However, facilities using multi-channel acquisition strategies (directories, SEO, referrals, and targeted paid) average 85-90% occupancy. The difference between 72% and 87% occupancy for a 30-bed facility at $800/day is over $1.3M annually.",
+    insightStats: [
+      { label: "Industry Avg Occupancy", value: "72%" },
+      { label: "Breakeven Threshold", value: "65-75%" },
+      { label: "Top Performers", value: "85-90%" },
+      { label: "Revenue Gap (30 beds)", value: "$1.3M+" },
+    ],
+    keywords: ["reduce empty rehab beds", "increase rehab occupancy", "rehab census management", "fill rehab center beds"],
+  },
+  {
+    slug: "rehab-google-ads-not-working",
+    label: "Google Ads Not Working",
+    metaTitle: "Why Your Rehab Google Ads Aren't Working (And What to Do Instead) | RehabLookup",
+    metaDescription: "Spending thousands on Google Ads for your rehab center with no results? You're not alone. Here's why PPC fails for most treatment centers and what works better.",
+    heroHeadline: "Spending $10K+/Month on Google Ads with Nothing to Show for It?",
+    heroSubheadline: "You're not bad at marketing. Google Ads for rehab is broken — $150+ per click, 3% conversion rates, and LegitScript certification requirements that delay campaigns for months.",
+    problemHeadline: "Why Google Ads Fail for Rehab Centers",
+    problemPoints: [
+      "Rehab keywords cost $125-$250 per click — among the most expensive in all of healthcare advertising",
+      "Google requires LegitScript certification before running addiction treatment ads, adding $1,500+ in annual fees and months of delay",
+      "Click fraud is rampant in the rehab space — competitors and bots waste 15-30% of your ad budget",
+      "Landing page quality scores are hard to optimize for treatment centers due to Google's strict healthcare ad policies",
+    ],
+    insightHeadline: "Rehab PPC Economics",
+    insightContent: "The average rehab center spends $8,000-$25,000/month on Google Ads and generates 15-40 calls — of which only 20-30% are qualified. That means $2,600-$4,200 per qualified lead from PPC alone. Compare that to directory-based leads at $150-$500 per qualified lead. The math is clear: for most facilities, PPC should be a supplement, not the primary channel.",
+    insightStats: [
+      { label: "Avg Monthly PPC Spend", value: "$8-25K" },
+      { label: "Cost Per Qualified Lead (PPC)", value: "$2.6-4.2K" },
+      { label: "Cost Per Lead (Directory)", value: "$150-500" },
+      { label: "PPC Click Fraud Rate", value: "15-30%" },
+    ],
+    keywords: ["rehab google ads not working", "rehab PPC problems", "google ads rehab centers", "alternatives to rehab google ads"],
+  },
+  {
+    slug: "rehab-admissions-dropping",
+    label: "Admissions Dropping",
+    metaTitle: "Rehab Admissions Dropping? 5 Reasons Why and How to Reverse the Trend | RehabLookup",
+    metaDescription: "If your rehab admissions are declining, it's not just you. Learn the industry factors causing the drop and the 5 strategies to reverse the trend quickly.",
+    heroHeadline: "Admissions Down This Quarter? You're Not Alone — But You Can Fix It",
+    heroSubheadline: "45% of rehab facilities report declining admissions year-over-year. The industry is changing. Here's how to adapt before it's too late.",
+    problemHeadline: "5 Reasons Admissions Are Declining Industry-Wide",
+    problemPoints: [
+      "Telehealth competition: virtual programs are siphoning patients who previously needed in-person care",
+      "Insurance companies are aggressively shortening authorized lengths of stay, reducing revenue per patient",
+      "Patient acquisition costs have increased 35% since 2022 across all channels",
+      "Stigma reduction means more people seek help from primary care, not specialized treatment centers",
+    ],
+    insightHeadline: "Industry Admission Trends",
+    insightContent: "While total treatment admissions are flat nationally, the distribution is shifting dramatically. Large multi-site operators are growing 10-15% annually while single-facility centers are shrinking 5-8%. The difference? Multi-site operators invest 4x more in digital marketing and have dedicated business development teams. Independent facilities can compete by using high-intent, low-cost channels that punch above their weight.",
+    insightStats: [
+      { label: "Facilities Reporting Decline", value: "45%" },
+      { label: "Acquisition Cost Increase", value: "35%" },
+      { label: "Multi-Site Growth", value: "10-15%" },
+      { label: "Single-Site Decline", value: "5-8%" },
+    ],
+    keywords: ["rehab admissions dropping", "declining rehab census", "fix rehab admissions", "rehab admissions turnaround"],
+  },
+  {
+    slug: "rehab-referral-sources-drying-up",
+    label: "Referrals Drying Up",
+    metaTitle: "Rehab Referral Sources Drying Up? Build a Reliable Patient Pipeline | RehabLookup",
+    metaDescription: "If your referral sources are drying up, your census is at risk. Learn how to build a diversified patient pipeline that doesn't depend on any single referral source.",
+    heroHeadline: "Your Best Referral Source Just Stopped Sending Patients. Now What?",
+    heroSubheadline: "68% of rehab facilities depend on 3 or fewer referral sources for 80%+ of their patients. When one dries up, your census crashes. There's a better way.",
+    problemHeadline: "The Referral Dependency Trap",
+    problemPoints: [
+      "Your top referral source sent 15 patients last month and 2 this month — with no explanation or warning",
+      "Referral partners get poached by competitors offering kickbacks (illegal, but it happens) or better incentives",
+      "Hospital discharge planners rotate frequently — relationships you built over years disappear overnight",
+      "When referrals slow down, you panic-spend on Google Ads at inflated costs, burning cash with poor results",
+    ],
+    insightHeadline: "Referral vs. Direct Acquisition",
+    insightContent: "Industry data reveals that facilities with 5+ patient acquisition channels have 60% more stable census than referral-dependent facilities. Direct-to-consumer channels (directories, SEO, content marketing) provide the most predictable, controllable lead flow. The average facility with a diversified acquisition strategy maintains 82% occupancy vs 68% for referral-dependent centers.",
+    insightStats: [
+      { label: "Referral-Dependent Centers", value: "68%" },
+      { label: "Diversified Avg Occupancy", value: "82%" },
+      { label: "Dependent Avg Occupancy", value: "68%" },
+      { label: "Census Stability Improvement", value: "60%" },
+    ],
+    keywords: ["rehab referral sources drying up", "build rehab referral pipeline", "diversify rehab patient sources", "rehab referral alternatives"],
+  },
+  {
+    slug: "list-your-rehab-center-online-free",
+    label: "List Your Center Free",
+    metaTitle: "List Your Rehab Center Online for Free: Get Discovered by Patients Today | RehabLookup",
+    metaDescription: "List your rehab facility on RehabLookup for free. Get discovered by patients actively searching for treatment. No contracts, no setup fees, no monthly minimums.",
+    heroHeadline: "List Your Rehab Center Online — For Free",
+    heroSubheadline: "5,400+ patients visit RehabLookup every month searching for treatment. Your facility profile takes 5 minutes to create and starts getting views immediately.",
+    problemHeadline: "Why Most Facilities Aren't Listed Where Patients Are Looking",
+    problemPoints: [
+      "SAMHSA's directory is outdated and doesn't differentiate your facility from the competition",
+      "Paid directory listings cost $500-$2,000/month with no guaranteed results",
+      "Your Google Business Profile gets lost among restaurants and retail stores in local search results",
+      "Without a directory presence, you're leaving high-intent patient traffic on the table every single day",
+    ],
+    insightHeadline: "Why Directory Listings Work",
+    insightContent: "Treatment directories generate 35-50% of all rehab admissions nationally — more than any other single channel. The reason is simple: patients visiting a rehab directory have already decided they need treatment. They're comparing options and ready to take action. This high intent translates to conversion rates 3-5x higher than paid advertising channels.",
+    insightStats: [
+      { label: "Admissions from Directories", value: "35-50%" },
+      { label: "Conversion Rate", value: "3-5x higher" },
+      { label: "RehabLookup Visitors/Mo", value: "5,400+" },
+      { label: "Time to Create Profile", value: "5 min" },
+    ],
+    keywords: ["list rehab center online free", "free rehab facility listing", "add rehab center to directory", "list treatment center online"],
+  },
+];
+
+export const additionalComparisonConfigs = [
+  {
+    slug: "rehabs-com-vs-rehablookup",
+    title: "Rehabs.com vs RehabLookup",
+    metaTitle: "Rehabs.com vs RehabLookup: Which Gets More Patients for Your Facility? | RehabLookup",
+    headline: "Rehabs.com vs RehabLookup: An Honest Comparison for Treatment Providers",
+    subheadline: "Both platforms connect facilities with patients. But the business model, lead quality, and ROI are very different.",
+    sections: [
+      { heading: "The Business Model Difference", content: "Rehabs.com operates primarily as a lead aggregator — they buy traffic through paid advertising and resell it to facilities as shared leads. This means you're competing with 3-5 other facilities for the same patient. RehabLookup generates organic, SEO-driven traffic, meaning leads come from patients who found us through genuine search — higher intent, no sharing." },
+      { heading: "Lead Quality Comparison", content: "Shared leads from aggregators convert at 3-8% industry-wide. RehabLookup's exclusive, high-intent leads convert at 15-25% because every visitor is actively searching for treatment — not being sold to multiple facilities simultaneously. Quality over quantity reduces your cost per admission by 50-70%." },
+      { heading: "Cost Structure", content: "Rehabs.com charges per lead regardless of quality, with prices ranging from $50-$300 per shared lead. RehabLookup's model is designed for transparency — you list for free and pay only for qualified, actionable leads. No hidden fees, no contracts, no monthly minimums." },
+      { heading: "Our Recommendation", content: "If your admissions team has bandwidth to chase shared leads and call patients within 60 seconds of receiving a lead (seriously — that's what's required for shared leads), aggregators can work. For facilities that want higher-quality, lower-cost leads from patients who've already chosen your facility, RehabLookup delivers superior ROI." },
+    ],
+    keywords: ["rehabs.com vs rehablookup", "rehab directory comparison", "best rehab listing site", "rehab lead quality"],
+  },
+  {
+    slug: "samhsa-vs-private-rehab-directories",
+    title: "SAMHSA vs Private Rehab Directories",
+    metaTitle: "SAMHSA Treatment Locator vs Private Directories: Which Is Better for Providers? | RehabLookup",
+    headline: "SAMHSA Treatment Locator vs Private Directories: What's Better for Getting Patients?",
+    subheadline: "SAMHSA is free but limited. Private directories cost money but deliver results. Here's the real comparison.",
+    sections: [
+      { heading: "What SAMHSA Offers", content: "SAMHSA's Behavioral Health Treatment Locator is free and lists most licensed facilities. However, it provides no differentiation — your listing looks identical to every other facility. There are no photos, no reviews, no way to highlight what makes your program special. It's a database, not a marketing tool." },
+      { heading: "Where SAMHSA Falls Short", content: "SAMHSA's data is often 6-12 months out of date. Listings can't be customized or optimized. There's no analytics to tell you how many patients viewed your listing. And critically, SAMHSA's search algorithm doesn't account for treatment quality, patient reviews, or program specialization — just proximity." },
+      { heading: "The Private Directory Advantage", content: "Private directories like RehabLookup let you create a rich, compelling profile with photos, descriptions, treatment specialties, insurance information, and patient reviews. Your listing can be optimized for the specific patients you want to attract. Plus, you get analytics on views, clicks, and inquiries." },
+      { heading: "The Smart Strategy: Use Both", content: "Ensure your SAMHSA listing is up-to-date (it's free, after all), but don't rely on it for patient acquisition. Invest in a private directory listing where you can control your message, differentiate your facility, and track results. RehabLookup's free listing tier gives you everything SAMHSA doesn't." },
+    ],
+    keywords: ["SAMHSA vs private rehab directories", "SAMHSA treatment locator review", "best rehab directory for providers", "SAMHSA listing limitations"],
+  },
+  {
+    slug: "call-centers-vs-directories-for-rehab-leads",
+    title: "Call Centers vs Directories for Rehab Leads",
+    metaTitle: "Call Centers vs Directories for Rehab Leads: Which Delivers Better ROI? | RehabLookup",
+    headline: "Call Centers vs Directories: Which Source Gets You Better Rehab Patients?",
+    subheadline: "Call centers promise instant leads. Directories deliver organic traffic. Here's what the numbers actually show.",
+    sections: [
+      { heading: "The Call Center Model", content: "Rehab call centers (also called patient brokers) generate leads through paid advertising, answer calls, perform basic screening, and sell leads to facilities for $100-$500 each. Some operate ethically; many don't. The industry has been plagued by kickback schemes, patient brokering laws, and quality issues." },
+      { heading: "Quality and Compliance Risks", content: "Multiple states have enacted patient brokering laws specifically targeting rehab call centers. California, Florida, and Massachusetts have prosecuted call center operators for illegal kickbacks. Using non-compliant lead sources puts your facility's license at risk. Directories avoid these issues entirely because patients find and contact facilities directly." },
+      { heading: "Cost and Conversion Comparison", content: "Call center leads cost $100-$500 per lead with 5-15% admission rates, meaning $700-$10,000 per admission. Directory leads from organic traffic cost significantly less per qualified lead and convert at 15-25% because the patient has already selected your facility. Total cost per admission through directories: $500-$2,000." },
+      { heading: "The Verdict", content: "For facilities that need immediate lead volume and have a strong admissions team, ethical call centers can supplement your pipeline. But for sustainable, compliant, cost-effective patient acquisition, directory listings and organic channels are superior in every measurable dimension." },
+    ],
+    keywords: ["rehab call center leads", "call center vs directory rehab", "patient brokering rehab", "rehab lead source comparison"],
+  },
+  {
+    slug: "rehab-seo-agency-vs-directory-listing",
+    title: "Hiring an SEO Agency vs Directory Listing",
+    metaTitle: "Rehab SEO Agency vs Directory Listing: Which Gets More Patients? | RehabLookup",
+    headline: "Should You Hire an SEO Agency or List on a Directory? Here's the Math",
+    subheadline: "Rehab SEO agencies charge $5,000-$15,000/month and take 12 months to show results. Directories work immediately. Let's compare.",
+    sections: [
+      { heading: "The SEO Agency Promise", content: "Rehab SEO agencies promise first-page rankings for competitive keywords like 'drug rehab [city]'. The truth: it takes 12-18 months of consistent work, costs $60,000-$180,000 in that period, and there's no guarantee of results. Google algorithm updates can wipe out rankings overnight." },
+      { heading: "The Hidden Costs of DIY SEO", content: "Beyond the agency retainer, you'll need content writers ($2,000-$5,000/mo), technical SEO audits ($5,000-$10,000/year), link building ($1,000-$3,000/mo), and a dedicated internal contact to manage the agency relationship. Total real cost: $8,000-$23,000/month." },
+      { heading: "The Directory Shortcut", content: "RehabLookup has already invested years and hundreds of thousands of dollars in building domain authority, creating content, and optimizing for rehab-related keywords. When you list on our platform, you immediately benefit from our SEO — no 12-month wait, no agency fees, no algorithm anxiety." },
+      { heading: "Best of Both Worlds", content: "The smartest facilities use directories as their immediate, reliable patient source while building their own SEO gradually. Start with a RehabLookup listing today (free), then invest in SEO when your census stabilizes. Don't wait 12 months for your first SEO-generated lead when you could have directory leads this week." },
+    ],
+    keywords: ["rehab SEO agency cost", "rehab directory vs SEO", "rehab marketing agency alternative", "treatment center SEO pricing"],
+  },
+];

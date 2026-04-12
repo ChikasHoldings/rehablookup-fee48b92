@@ -410,6 +410,32 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/facebook-ads-vs-seo-for-treatment-centers", priority: 0.75, changefreq: "monthly" },
   { path: "/provider-guides/rehab-lead-generation-paid-vs-organic", priority: 0.75, changefreq: "monthly" },
 
+  // PROVIDER COMPARISON PAGES (Additional)
+  { path: "/provider-guides/rehabs-com-vs-rehablookup", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/samhsa-vs-private-rehab-directories", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/call-centers-vs-directories-for-rehab-leads", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-seo-agency-vs-directory-listing", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER PERSONA PAGES (By Facility Type)
+  { path: "/provider-guides/small-rehab-center-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/new-rehab-facility-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/faith-based-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/veterans-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/womens-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/executive-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/telehealth-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/court-ordered-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/adolescent-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/couples-rehab-marketing", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER PAIN POINT PAGES
+  { path: "/provider-guides/why-your-rehab-center-isnt-getting-patients", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/reduce-empty-beds-rehab", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-google-ads-not-working", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-admissions-dropping", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-referral-sources-drying-up", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/list-your-rehab-center-online-free", priority: 0.85, changefreq: "monthly" },
+
   // LEGAL
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },

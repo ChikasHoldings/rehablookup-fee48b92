@@ -130,6 +130,8 @@ const RehabInterventionistPartnerships = lazy(() => import("./pages/provider-gui
 const BestRehabListingPlatforms = lazy(() => import("./pages/provider-guides/BestRehabListingPlatforms"));
 const ExclusiveVsSharedLeads = lazy(() => import("./pages/provider-guides/ExclusiveVsSharedLeads"));
 const HowToChooseRehabDirectory = lazy(() => import("./pages/provider-guides/HowToChooseRehabDirectory"));
+const ProviderPersonaPage = lazy(() => import("./pages/provider-guides/ProviderPersonaPage"));
+const ProviderPainPointPage = lazy(() => import("./pages/provider-guides/ProviderPainPointPage"));
 // ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
@@ -949,6 +951,30 @@ const AppInner = () => {
             <Route path="/provider-guides/is-psychology-today-worth-it-for-rehab" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/facebook-ads-vs-seo-for-treatment-centers" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-lead-generation-paid-vs-organic" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehabs-com-vs-rehablookup" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/samhsa-vs-private-rehab-directories" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/call-centers-vs-directories-for-rehab-leads" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-seo-agency-vs-directory-listing" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+
+            {/* Provider Persona Pages (by facility type) */}
+            <Route path="/provider-guides/small-rehab-center-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/new-rehab-facility-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/faith-based-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/veterans-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/womens-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/executive-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/telehealth-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/court-ordered-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/adolescent-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/couples-rehab-marketing" element={<PublicRouteGuard><ProviderPersonaPage /></PublicRouteGuard>} />
+
+            {/* Provider Pain Point Pages */}
+            <Route path="/provider-guides/why-your-rehab-center-isnt-getting-patients" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/reduce-empty-beds-rehab" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-google-ads-not-working" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-admissions-dropping" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-referral-sources-drying-up" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/list-your-rehab-center-online-free" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
