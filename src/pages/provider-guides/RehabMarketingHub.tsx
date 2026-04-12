@@ -48,6 +48,32 @@ export default function RehabMarketingHub() {
           </div>
         </section>
 
+        {/* High-Volume Keyword Guides — TOP PRIORITY */}
+        <section className="py-16 bg-primary/5 border-b-2 border-primary/10">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-3 mb-4">
+              <TrendingUp className="h-7 w-7 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Highest-Volume Keyword Guides</h2>
+            </div>
+            <p className="text-muted-foreground mb-8 max-w-3xl">These pages target the most searched keywords in addiction treatment — terms that cost $25-$47 per click on Google Ads. Learn how to capture this traffic organically.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {highKeywordConfigs.map(config => (
+                <Card key={config.slug} className="hover:shadow-md transition-shadow border-primary/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{config.label}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{config.insightStats[0]?.value} searches/mo</p>
+                    <Link to={`/provider-guides/${config.slug}`} className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                      Read Guide <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* City Marketing Guides */}
         <section className="py-16">
           <div className="container mx-auto px-4 max-w-5xl">
