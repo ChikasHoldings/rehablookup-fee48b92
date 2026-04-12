@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -9,8 +9,14 @@ import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 
 export default function DemographicStatePage() {
-  const { demographicSlug, stateSlug } = useParams<{ demographicSlug: string; stateSlug: string }>();
+  const { stateSlug } = useParams<{ stateSlug: string }>();
+  const location = useLocation();
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+
+  const demographicSlug = useMemo(() => {
+    const parts = location.pathname.replace(/^\//, "").split("/");
+    return parts[0] || "";
+  }, [location.pathname]);
 
   const demographic = useMemo(() => demographicPages.find((d) => d.slug === demographicSlug) || null, [demographicSlug]);
   const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
