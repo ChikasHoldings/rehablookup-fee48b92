@@ -134,7 +134,9 @@ const ProviderPersonaPage = lazy(() => import("./pages/provider-guides/ProviderP
 const ProviderPainPointPage = lazy(() => import("./pages/provider-guides/ProviderPainPointPage"));
 const ProviderBusinessPage = lazy(() => import("./pages/provider-guides/ProviderBusinessPage"));
 const ProviderOperationsPage = lazy(() => import("./pages/provider-guides/ProviderOperationsPage"));
-const ProviderNichePage = lazy(() => import("./pages/provider-guides/ProviderNichePage"));
+const ProviderGrowthPage = lazy(() => import("./pages/provider-guides/ProviderGrowthPage"));
+const ProviderIndustryPage = lazy(() => import("./pages/provider-guides/ProviderIndustryPage"));
+
 // ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
