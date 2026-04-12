@@ -5,13 +5,14 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, MapPin, Stethoscope, Shield, BarChart3, ChevronRight, Users, AlertTriangle, Building2, DollarSign, Wrench, Heart } from "lucide-react";
+import { ArrowRight, MapPin, Stethoscope, Shield, BarChart3, ChevronRight, Users, AlertTriangle, Building2, DollarSign, Wrench, Heart, TrendingUp } from "lucide-react";
 import { providerCities } from "@/data/providerCityData";
 import { treatmentProviderConfigs, insuranceProviderConfigs, comparisonPageConfigs, STATE_TREATMENT_COMBOS } from "@/data/providerPageConfigs";
 import { providerPersonaConfigs, providerPainPointConfigs, additionalComparisonConfigs } from "@/data/providerPersonaConfigs";
 import { providerBusinessConfigs, providerOperationsConfigs, providerNicheConfigs } from "@/data/providerBusinessConfigs";
 import { providerGrowthConfigs, providerIndustryConfigs } from "@/data/providerGrowthConfigs";
 import { providerDigitalConfigs, providerFinanceConfigs } from "@/data/providerDigitalConfigs";
+import { highKeywordConfigs } from "@/data/providerHighKeywordConfigs";
 import { usStates } from "@/data/usStates";
 
 export default function RehabMarketingHub() {
