@@ -479,6 +479,19 @@ const THERAPY_MODALITY_SLUGS = [
   "what-to-pack-for-rehab", "questions-to-ask-rehab-center",
 ];
 
+const CO_OCCURRING_SLUGS = [
+  "anxiety-and-addiction-treatment", "depression-and-addiction-treatment",
+  "ptsd-and-addiction-treatment", "bipolar-and-addiction-treatment",
+  "adhd-and-addiction-treatment", "eating-disorders-and-addiction-treatment",
+];
+
+const DURATION_SETTING_SLUGS = [
+  "30-day-rehab-programs", "60-day-rehab-programs", "90-day-rehab-programs",
+  "long-term-rehab-programs", "beach-rehab-programs", "mountain-rehab-programs",
+];
+
+const PAYMENT_SLUGS = ["medicaid-rehab", "medicare-rehab"];
+
 // All 50 states for near-me state pages (full coverage)
 const TOP_STATES_FOR_NEAR_ME = [...US_STATES];
 
@@ -712,6 +725,37 @@ function generateStateArticleRoutes(): RouteEntry[] {
   return routes;
 }
 
+function generateCoOccurringRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of CO_OCCURRING_SLUGS) {
+    routes.push({ path: `/${slug}`, priority: 0.75, changefreq: "monthly" });
+    for (const state of US_STATES) {
+      routes.push({ path: `/${slug}/${state}`, priority: 0.65, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateDurationSettingRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of DURATION_SETTING_SLUGS) {
+    routes.push({ path: `/${slug}`, priority: 0.75, changefreq: "monthly" });
+    for (const state of US_STATES) {
+      routes.push({ path: `/${slug}/${state}`, priority: 0.65, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generatePaymentStateRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of PAYMENT_SLUGS) {
+    for (const state of US_STATES) {
+      routes.push({ path: `/${slug}/${state}`, priority: 0.70, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
 
 
 const NEAR_ME_PREFIXES = [
@@ -854,6 +898,9 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...generateSubstanceStateRoutes(),
     ...generateDemographicStateRoutes(),
     ...generateTherapyModalityRoutes(),
+    ...generateCoOccurringRoutes(),
+    ...generateDurationSettingRoutes(),
+    ...generatePaymentStateRoutes(),
     ...articleRoutes
   ];
 
