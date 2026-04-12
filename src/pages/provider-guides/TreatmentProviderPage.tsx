@@ -1,10 +1,13 @@
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { ProviderConversionPage } from "@/components/provider-guides/ProviderConversionPage";
 import { treatmentProviderConfigs } from "@/data/providerPageConfigs";
 import NotFound from "@/pages/NotFound";
 
 export default function TreatmentProviderPage() {
-  const { treatmentSlug } = useParams<{ treatmentSlug: string }>();
+  const { pathname } = useLocation();
+  // Extract slug from /provider-guides/get-more-{slug}-patients
+  const match = pathname.match(/\/provider-guides\/get-more-(.+)-patients$/);
+  const treatmentSlug = match?.[1];
   const config = treatmentProviderConfigs.find(c => c.slug === treatmentSlug);
 
   if (!config) return <NotFound />;

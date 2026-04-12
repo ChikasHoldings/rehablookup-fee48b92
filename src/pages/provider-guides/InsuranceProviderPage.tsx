@@ -1,10 +1,13 @@
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { ProviderConversionPage } from "@/components/provider-guides/ProviderConversionPage";
 import { insuranceProviderConfigs } from "@/data/providerPageConfigs";
 import NotFound from "@/pages/NotFound";
 
 export default function InsuranceProviderPage() {
-  const { insurerSlug } = useParams<{ insurerSlug: string }>();
+  const { pathname } = useLocation();
+  // Extract slug from /provider-guides/get-more-{slug}-patients
+  const match = pathname.match(/\/provider-guides\/get-more-(.+)-patients$/);
+  const insurerSlug = match?.[1];
   const config = insuranceProviderConfigs.find(c => c.slug === insurerSlug);
 
   if (!config) return <NotFound />;

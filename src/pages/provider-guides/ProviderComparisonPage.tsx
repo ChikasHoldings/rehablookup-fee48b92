@@ -1,11 +1,13 @@
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { ProviderConversionPage } from "@/components/provider-guides/ProviderConversionPage";
 import { comparisonPageConfigs } from "@/data/providerPageConfigs";
 import NotFound from "@/pages/NotFound";
 
 export default function ProviderComparisonPage() {
-  const { comparisonSlug } = useParams<{ comparisonSlug: string }>();
-  const config = comparisonPageConfigs.find(c => c.slug === comparisonSlug);
+  const { pathname } = useLocation();
+  // Extract slug from /provider-guides/{slug}
+  const slug = pathname.replace("/provider-guides/", "");
+  const config = comparisonPageConfigs.find(c => c.slug === slug);
 
   if (!config) return <NotFound />;
 
