@@ -131,7 +131,7 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
     newLeads: newLeads.count || 0,
     unlockedLeads: unlockedLeads.count || 0,
     totalRevenueCents,
-    totalViews,
+    totalViews: totalViews || 0,
     placements: placements.count || 0,
     confirmedPlacements: confirmedPlacements.count || 0,
     pendingProviders: pendingProviders.count || 0,
