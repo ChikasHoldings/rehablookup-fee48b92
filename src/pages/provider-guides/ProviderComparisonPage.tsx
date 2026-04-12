@@ -1,13 +1,16 @@
 import { useLocation } from "react-router-dom";
 import { ProviderConversionPage } from "@/components/provider-guides/ProviderConversionPage";
 import { comparisonPageConfigs } from "@/data/providerPageConfigs";
+import { additionalComparisonConfigs } from "@/data/providerPersonaConfigs";
 import NotFound from "@/pages/NotFound";
+
+const allComparisons = [...comparisonPageConfigs, ...additionalComparisonConfigs];
 
 export default function ProviderComparisonPage() {
   const { pathname } = useLocation();
   // Extract slug from /provider-guides/{slug}
   const slug = pathname.replace("/provider-guides/", "");
-  const config = comparisonPageConfigs.find(c => c.slug === slug);
+  const config = allComparisons.find(c => c.slug === slug);
 
   if (!config) return <NotFound />;
 
@@ -35,7 +38,7 @@ export default function ProviderComparisonPage() {
       insightContent={config.sections.map(s => s.content).join(" ")}
       relatedLinks={[
         { href: "/rehab-marketing", label: "Rehab Marketing Hub" },
-        ...comparisonPageConfigs
+        ...allComparisons
           .filter(c => c.slug !== config.slug)
           .slice(0, 4)
           .map(c => ({ href: `/provider-guides/${c.slug}`, label: c.title })),
