@@ -852,57 +852,61 @@ const Index = () => {
       </section>
 
       {/* SEO Internal Links Section */}
-      <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
-        <div className="container px-4 md:px-6 lg:px-8 space-y-8 md:space-y-10">
-          {/* Quick Links to Key Pages */}
-          <div>
-            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">
-              Explore RehabLookup
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {[
-                { name: "How It Works", href: "/how-it-works" },
-                { name: "About Us", href: "/about" },
-                { name: "Insurance Guide", href: "/insurance" },
-                { name: "FAQs", href: "/faq" },
-                { name: "Contact Us", href: "/contact" },
-                { name: "For Providers", href: "/for-providers" },
-                { name: "Treatment Types", href: "/treatment-types" },
-                { name: "All Locations", href: "/locations" },
-                { name: "Cost Estimator", href: "/cost-estimator" },
-                { name: "Provider Resources", href: "/provider-resources" },
-                { name: "Concierge Service", href: "/concierge" },
-                { name: "Search Centers", href: "/search-results" },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors py-1"
-                >
-                  {link.name}
-                </Link>
-              ))}
+      <LazySection fallbackHeight="600px">
+        <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
+          <div className="container px-4 md:px-6 lg:px-8 space-y-8 md:space-y-10">
+            {/* Quick Links to Key Pages */}
+            <div>
+              <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">
+                Explore RehabLookup
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {[
+                  { name: "How It Works", href: "/how-it-works" },
+                  { name: "About Us", href: "/about" },
+                  { name: "Insurance Guide", href: "/insurance" },
+                  { name: "FAQs", href: "/faq" },
+                  { name: "Contact Us", href: "/contact" },
+                  { name: "For Providers", href: "/for-providers" },
+                  { name: "Treatment Types", href: "/treatment-types" },
+                  { name: "All Locations", href: "/locations" },
+                  { name: "Cost Estimator", href: "/cost-estimator" },
+                  { name: "Provider Resources", href: "/provider-resources" },
+                  { name: "Concierge Service", href: "/concierge" },
+                  { name: "Search Centers", href: "/search-results" },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors py-1"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <InternalLinkBlock 
-            title="Find Treatment by State" 
-            variant="states" 
-          />
-          <InternalLinkBlock 
-            title="Treatment Programs" 
-            variant="treatments"
-          />
-          <InternalLinkBlock 
-            title="Insurance Coverage Guides" 
-            variant="insurance"
-          />
-          <InternalLinkBlock 
-            title="Find Treatment Near You" 
-            variant="nearme"
-          />
-        </div>
-      </section>
+            <Suspense fallback={null}>
+              <InternalLinkBlock 
+                title="Find Treatment by State" 
+                variant="states" 
+              />
+              <InternalLinkBlock 
+                title="Treatment Programs" 
+                variant="treatments"
+              />
+              <InternalLinkBlock 
+                title="Insurance Coverage Guides" 
+                variant="insurance"
+              />
+              <InternalLinkBlock 
+                title="Find Treatment Near You" 
+                variant="nearme"
+              />
+            </Suspense>
+          </div>
+        </section>
+      </LazySection>
 
       {/* CTA Section */}
       <section className="py-10 md:py-14 lg:py-20">
@@ -935,7 +939,11 @@ const Index = () => {
         </div>
       </section>
 
-      <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />
+      <LazySection fallbackHeight="300px">
+        <Suspense fallback={null}>
+          {homeFaqs.length > 0 && <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />}
+        </Suspense>
+      </LazySection>
     </Layout>
   );
 };
