@@ -70,9 +70,12 @@ const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
 const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
 const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
+const SubstanceStatePage = lazy(() => import("./pages/seo/SubstanceStatePage"));
 const InsuranceStatePage = lazy(() => import("./pages/seo/InsuranceStatePage"));
 const DemographicTreatmentPage = lazy(() => import("./pages/seo/DemographicTreatmentPage"));
+const DemographicStatePage = lazy(() => import("./pages/seo/DemographicStatePage"));
 const SeekerGuidePage = lazy(() => import("./pages/seo/SeekerGuidePage"));
+const TherapyModalityPage = lazy(() => import("./pages/seo/TherapyModalityPage"));
 const StateArticlePage = lazy(() => import("./pages/seo/StateArticlePage"));
 // BestInStatePage moved to SmartCatchAll
 
