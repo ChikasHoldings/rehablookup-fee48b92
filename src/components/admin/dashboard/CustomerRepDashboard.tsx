@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -412,7 +413,7 @@ export function CustomerRepDashboard() {
                           size="icon"
                           className="h-7 w-7 text-success hover:text-success"
                           title="Resolve ticket"
-                          onClick={(e) => { e.stopPropagation(); resolveTicket(ticket.id); }}
+                          onClick={(e) => { e.stopPropagation(); setConfirmResolveTicketId(ticket.id); }}
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
