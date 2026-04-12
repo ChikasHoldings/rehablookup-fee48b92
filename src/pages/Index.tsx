@@ -18,8 +18,6 @@ const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ defau
 const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
 const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
 import whyChooseUsImage from "@/assets/why-choose-us.webp";
-import {
-  Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
