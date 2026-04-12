@@ -328,6 +328,8 @@ export type Database = {
           force_password_change: boolean | null
           hire_date: string | null
           id: string
+          idle_timeout_minutes: number | null
+          last_active_at: string | null
           last_login_at: string | null
           last_name: string | null
           mfa_enabled: boolean | null
@@ -359,6 +361,8 @@ export type Database = {
           force_password_change?: boolean | null
           hire_date?: string | null
           id?: string
+          idle_timeout_minutes?: number | null
+          last_active_at?: string | null
           last_login_at?: string | null
           last_name?: string | null
           mfa_enabled?: boolean | null
@@ -390,6 +394,8 @@ export type Database = {
           force_password_change?: boolean | null
           hire_date?: string | null
           id?: string
+          idle_timeout_minutes?: number | null
+          last_active_at?: string | null
           last_login_at?: string | null
           last_name?: string | null
           mfa_enabled?: boolean | null
@@ -5729,6 +5735,7 @@ export type Database = {
         Args: { p_lead_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_moderate_users: { Args: { p_user_id: string }; Returns: boolean }
       check_lead_access: {
         Args: { p_facility_id: string; p_lead_id: string }
         Returns: {
@@ -5963,6 +5970,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_session_active: { Args: { p_user_id: string }; Returns: boolean }
       is_email_admin: { Args: { p_email: string }; Returns: boolean }
       is_email_provider: { Args: { p_email: string }; Returns: boolean }
       is_email_seeker: { Args: { p_email: string }; Returns: boolean }
@@ -5996,6 +6004,7 @@ export type Database = {
         }
         Returns: string
       }
+      touch_admin_activity: { Args: { p_user_id: string }; Returns: undefined }
       user_has_provider_profile: {
         Args: { p_user_id: string }
         Returns: boolean
