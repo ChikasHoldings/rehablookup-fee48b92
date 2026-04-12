@@ -311,6 +311,7 @@ Disallow: /functions/
 Disallow: /_vercel/
 Disallow: /.netlify/
 Disallow: /search?
+Disallow: /search-results?*
 Disallow: /*?utm_source=
 Disallow: /*?utm_medium=
 Disallow: /*?utm_campaign=
