@@ -851,6 +851,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+      </LazySection>
 
       {/* SEO Internal Links Section */}
       <LazySection fallbackHeight="600px">
