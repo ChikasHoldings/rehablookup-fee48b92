@@ -62,6 +62,13 @@ export function AdminShell() {
   // Track navigation for Sentry breadcrumbs
   useSentryBreadcrumbs();
 
+  // Admin idle session timeout — forces logout after 30 min of inactivity
+  useAdminIdleTimeout({
+    userId: user?.id,
+    enabled: isAdmin,
+    onTimeout: logout,
+  });
+
   // Preload all admin pages on mount for instant navigation
   useEffect(() => {
     preloadAdminPages();
