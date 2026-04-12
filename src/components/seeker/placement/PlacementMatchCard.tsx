@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
+import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
