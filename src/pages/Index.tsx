@@ -1,39 +1,31 @@
-import { useRef, useEffect, useState } from "react";
-import { PageFAQ } from "@/components/seo/PageFAQ";
-import { homeFaqs } from "@/data/pageFaqs";
+import { useRef, useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
-import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
-import { InternationalCTA } from "@/components/home/InternationalCTA";
-import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
-import { seekerTestimonials } from "@/data/testimonials";
+import { LazySection } from "@/components/ui/lazy-section";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
+
+// Lazy-load below-fold sections to reduce initial JS bundle
+const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
+const InternationalCTA = lazy(() => import("@/components/home/InternationalCTA").then(m => ({ default: m.InternationalCTA })));
+const TestimonialsSection = lazy(() => import("@/components/testimonials/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
+const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
+const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
+const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
 import whyChooseUsImage from "@/assets/why-choose-us.webp";
 import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import {
   ArrowRight,
-  Star,
   Pill,
   Brain,
   Home,
   Activity,
   Stethoscope,
   Sparkles,
-  Quote,
-  BookOpen,
-  Calendar,
   CheckCircle,
   Search,
   Users,
@@ -117,6 +109,14 @@ const treatmentOptions = [
 
 
 const Index = () => {
+  // Lazy-loaded data for below-fold sections
+  const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
+  const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+
+  useEffect(() => {
+    seekerTestimonialsPromise.then(setSeekerTestimonials);
+    homeFaqsPromise.then(setHomeFaqs);
+  }, []);
   // Parallax effect for Why Choose Us image
   const parallaxRef = useRef<HTMLDivElement>(null);
   const [parallaxOffset, setParallaxOffset] = useState(0);
@@ -643,15 +643,22 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <TestimonialsSection
-        testimonials={seekerTestimonials}
-        title="Real Stories from Families We've Helped"
-        subtitle="Hear from people who found the right treatment through RehabLookup"
-      />
+      <LazySection fallbackHeight="400px">
+        <Suspense fallback={null}>
+          <TestimonialsSection
+            testimonials={seekerTestimonials}
+            title="Real Stories from Families We've Helped"
+            subtitle="Hear from people who found the right treatment through RehabLookup"
+          />
+        </Suspense>
+      </LazySection>
 
       {/* International Patients CTA */}
-      <InternationalCTA />
+      <LazySection fallbackHeight="200px">
+        <Suspense fallback={null}>
+          <InternationalCTA />
+        </Suspense>
+      </LazySection>
 
       {/* Find Treatment Near You - SEO Section */}
       <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
@@ -779,6 +786,7 @@ const Index = () => {
       </section>
 
       {/* Resources / Blog Section */}
+      <LazySection fallbackHeight="400px">
       <section className="py-10 md:py-12 lg:py-20">
         <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
@@ -843,59 +851,64 @@ const Index = () => {
           </div>
         </div>
       </section>
+      </LazySection>
 
       {/* SEO Internal Links Section */}
-      <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
-        <div className="container px-4 md:px-6 lg:px-8 space-y-8 md:space-y-10">
-          {/* Quick Links to Key Pages */}
-          <div>
-            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">
-              Explore RehabLookup
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {[
-                { name: "How It Works", href: "/how-it-works" },
-                { name: "About Us", href: "/about" },
-                { name: "Insurance Guide", href: "/insurance" },
-                { name: "FAQs", href: "/faq" },
-                { name: "Contact Us", href: "/contact" },
-                { name: "For Providers", href: "/for-providers" },
-                { name: "Treatment Types", href: "/treatment-types" },
-                { name: "All Locations", href: "/locations" },
-                { name: "Cost Estimator", href: "/cost-estimator" },
-                { name: "Provider Resources", href: "/provider-resources" },
-                { name: "Concierge Service", href: "/concierge" },
-                { name: "Search Centers", href: "/search-results" },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors py-1"
-                >
-                  {link.name}
-                </Link>
-              ))}
+      <LazySection fallbackHeight="600px">
+        <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
+          <div className="container px-4 md:px-6 lg:px-8 space-y-8 md:space-y-10">
+            {/* Quick Links to Key Pages */}
+            <div>
+              <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">
+                Explore RehabLookup
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {[
+                  { name: "How It Works", href: "/how-it-works" },
+                  { name: "About Us", href: "/about" },
+                  { name: "Insurance Guide", href: "/insurance" },
+                  { name: "FAQs", href: "/faq" },
+                  { name: "Contact Us", href: "/contact" },
+                  { name: "For Providers", href: "/for-providers" },
+                  { name: "Treatment Types", href: "/treatment-types" },
+                  { name: "All Locations", href: "/locations" },
+                  { name: "Cost Estimator", href: "/cost-estimator" },
+                  { name: "Provider Resources", href: "/provider-resources" },
+                  { name: "Concierge Service", href: "/concierge" },
+                  { name: "Search Centers", href: "/search-results" },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors py-1"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <InternalLinkBlock 
-            title="Find Treatment by State" 
-            variant="states" 
-          />
-          <InternalLinkBlock 
-            title="Treatment Programs" 
-            variant="treatments"
-          />
-          <InternalLinkBlock 
-            title="Insurance Coverage Guides" 
-            variant="insurance"
-          />
-          <InternalLinkBlock 
-            title="Find Treatment Near You" 
-            variant="nearme"
-          />
-        </div>
-      </section>
+            <Suspense fallback={null}>
+              <InternalLinkBlock 
+                title="Find Treatment by State" 
+                variant="states" 
+              />
+              <InternalLinkBlock 
+                title="Treatment Programs" 
+                variant="treatments"
+              />
+              <InternalLinkBlock 
+                title="Insurance Coverage Guides" 
+                variant="insurance"
+              />
+              <InternalLinkBlock 
+                title="Find Treatment Near You" 
+                variant="nearme"
+              />
+            </Suspense>
+          </div>
+        </section>
+      </LazySection>
 
       {/* CTA Section */}
       <section className="py-10 md:py-14 lg:py-20">
@@ -928,7 +941,11 @@ const Index = () => {
         </div>
       </section>
 
-      <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />
+      <LazySection fallbackHeight="300px">
+        <Suspense fallback={null}>
+          {homeFaqs.length > 0 && <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />}
+        </Suspense>
+      </LazySection>
     </Layout>
   );
 };
