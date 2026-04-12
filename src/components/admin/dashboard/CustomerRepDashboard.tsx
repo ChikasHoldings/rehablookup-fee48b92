@@ -179,16 +179,28 @@ export function CustomerRepDashboard() {
     setSelectedTicketId(ticketId);
   };
 
-  // Resolve ticket inline with confirmation
+  // Resolve ticket — triggered by confirmation dialog
   const resolveTicket = async (ticketId: string) => {
     if (!user?.id) return;
-    if (!window.confirm("Are you sure you want to mark this ticket as resolved?")) return;
     const { error } = await supabase
       .from("support_tickets")
       .update({ status: "resolved", resolved_at: new Date().toISOString() })
       .eq("id", ticketId);
     if (error) { toast.error("Failed to resolve ticket"); return; }
     toast.success("Ticket resolved");
+    invalidateDashboard();
+  };
+
+  // Reject review — triggered by confirmation dialog
+  const handleRejectReview = async (reviewId: string) => {
+    setModeratingReviewId(reviewId);
+    const { error } = await supabase
+      .from("facility_reviews")
+      .update({ status: "rejected" })
+      .eq("id", reviewId);
+    setModeratingReviewId(null);
+    if (error) { toast.error("Failed to reject"); return; }
+    toast.success("Review rejected");
     invalidateDashboard();
   };
 
