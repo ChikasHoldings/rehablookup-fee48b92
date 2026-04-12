@@ -74,7 +74,7 @@ const stateContext: Record<string, {
   DC: { region: "Mid-Atlantic", population: "690,000", healthcareNote: "DC's treatment system benefits from federal resources, research institutions, and strong public funding", opioidNote: "DC has among the highest per-capita overdose rates, concentrated in specific wards", fundingNote: "DC DBH manages comprehensive substance use treatment services", medicaidExpanded: true, notableCities: ["Washington"], licensingBody: "DC DBH", uniqueFactor: "federal resource proximity and NIH-influenced treatment approaches" },
 };
 
-type TreatmentType = "alcohol" | "drug" | "detox" | "inpatient" | "outpatient" | "dual-diagnosis" | "luxury" | "sober-living" | "free" | "faith-based" | "fentanyl" | "veterans" | "womens" | "mens";
+type TreatmentType = "alcohol" | "drug" | "detox" | "inpatient" | "outpatient" | "dual-diagnosis" | "luxury" | "sober-living" | "free" | "faith-based" | "fentanyl" | "veterans" | "womens" | "mens" | "holistic";
 
 const treatmentDescriptions: Record<TreatmentType, {
   label: string;
