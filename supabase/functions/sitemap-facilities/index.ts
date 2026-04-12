@@ -479,6 +479,19 @@ const THERAPY_MODALITY_SLUGS = [
   "what-to-pack-for-rehab", "questions-to-ask-rehab-center",
 ];
 
+const CO_OCCURRING_SLUGS = [
+  "anxiety-and-addiction-treatment", "depression-and-addiction-treatment",
+  "ptsd-and-addiction-treatment", "bipolar-and-addiction-treatment",
+  "adhd-and-addiction-treatment", "eating-disorders-and-addiction-treatment",
+];
+
+const DURATION_SETTING_SLUGS = [
+  "30-day-rehab-programs", "60-day-rehab-programs", "90-day-rehab-programs",
+  "long-term-rehab-programs", "beach-rehab-programs", "mountain-rehab-programs",
+];
+
+const PAYMENT_SLUGS = ["medicaid-rehab", "medicare-rehab"];
+
 // All 50 states for near-me state pages (full coverage)
 const TOP_STATES_FOR_NEAR_ME = [...US_STATES];
 
