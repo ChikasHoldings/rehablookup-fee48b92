@@ -387,6 +387,11 @@ function DetoxStateRedirect() {
   return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;
 }
 
+function InpatientStateRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;
+}
+
 const AppInner = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
@@ -747,6 +752,8 @@ const AppInner = () => {
             <Route path="/treatment/dual-diagnosis/:stateSlug" element={<DualDiagnosisStateRedirect />} />
             <Route path="/treatment/detox" element={<Navigate to="/treatment-types/detox-programs" replace />} />
             <Route path="/treatment/detox/:stateSlug" element={<DetoxStateRedirect />} />
+            <Route path="/treatment/inpatient-rehab" element={<Navigate to="/treatment-types/residential-inpatient" replace />} />
+            <Route path="/treatment/inpatient-rehab/:stateSlug" element={<InpatientStateRedirect />} />
 
             {/* International Placement Routes */}
             <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
@@ -1100,6 +1107,16 @@ const AppInner = () => {
             
             {/* Marketing Landing Page (Ad Traffic) */}
             <Route path="/lp/convert" element={<MarketingLanding />} />
+            <Route path="/lp/treatment" element={<Navigate to="/treatment-types" replace />} />
+            <Route path="/lp/social" element={<Navigate to="/" replace />} />
+            
+            {/* Legacy /us-rehab/ redirects */}
+            <Route path="/us-rehab/detox-usa" element={<Navigate to="/treatment-types/detox-programs" replace />} />
+            <Route path="/us-rehab/california" element={<Navigate to="/rehab-centers/california" replace />} />
+            
+            {/* Legacy misc redirects */}
+            <Route path="/sitemap" element={<Navigate to="/sitemap-index.xml" replace />} />
+            <Route path="/search" element={<Navigate to="/search-results" replace />} />
             
             {/* 404 */}
             <Route path="*" element={<SmartCatchAll />} />
