@@ -79,6 +79,9 @@ interface SEOLandingTemplateProps {
   ctaSubtitle?: string;
   ctaButtonText?: string;
   ctaButtonLink?: string;
+
+  // Extra content (e.g. SmartInternalLinks) rendered before internal linking
+  children?: React.ReactNode;
 }
 
 export function SEOLandingTemplate({
@@ -112,6 +115,7 @@ export function SEOLandingTemplate({
   ctaSubtitle = "Connect with accredited treatment facilities that match your needs. Our team is available 24/7.",
   ctaButtonText = "Get Help Now",
   ctaButtonLink = "/concierge",
+  children,
 }: SEOLandingTemplateProps) {
   const displayFacilities = facilities.slice(0, 12);
 
@@ -449,6 +453,9 @@ export function SEOLandingTemplate({
           </div>
         </section>
       )}
+
+      {/* Extra content (SmartInternalLinks etc.) */}
+      {children}
 
       {/* Internal Linking */}
       <InternalLinkingSection
