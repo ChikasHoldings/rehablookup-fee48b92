@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.0.0";
+const VERSION = "v7.1.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
