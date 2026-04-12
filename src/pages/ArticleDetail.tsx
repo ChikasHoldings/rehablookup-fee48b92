@@ -19,7 +19,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { ReactNode, useState, useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
 import { ArticleShareBar } from "@/components/articles/ArticleShareBar";
 import { 
