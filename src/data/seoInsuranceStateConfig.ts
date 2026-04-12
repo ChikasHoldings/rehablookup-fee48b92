@@ -98,34 +98,60 @@ export const insuranceStateConfigs = insurerConfigs.flatMap((insurer) =>
   }))
 );
 
+// Insurer-specific coverage details for content variation
+const insurerCoverageDetails: Record<string, { networkSize: string; specialNote: string; denialTip: string }> = {
+  Aetna: { networkSize: "one of the nation's largest behavioral health networks", specialNote: "Aetna's Behavioral Health division offers a dedicated substance use disorder care management team", denialTip: "Aetna provides an expedited appeals process for urgent treatment needs" },
+  "Blue Cross Blue Shield": { networkSize: "the largest provider network in the US with 36 independent companies", specialNote: "BCBS coverage varies significantly between Blue Cross Blue Shield affiliates — verify your specific plan", denialTip: "BCBS affiliates have dedicated member advocates who can assist with appeals" },
+  Cigna: { networkSize: "extensive national and international provider networks", specialNote: "Cigna's Evernorth behavioral health division manages specialized addiction treatment pathways", denialTip: "Cigna offers independent external review through MAXIMUS Federal Services" },
+  UnitedHealthcare: { networkSize: "the nation's largest insurance carrier by enrollment", specialNote: "UHC's Optum behavioral health network manages treatment authorizations for most UnitedHealthcare plans", denialTip: "UnitedHealthcare allows expedited concurrent reviews for patients already in treatment" },
+  Humana: { networkSize: "strong networks particularly in the Southeast and military communities", specialNote: "Humana offers specialized behavioral health programs through its Humana Behavioral Health division", denialTip: "Humana's grievance process includes clinical peer-to-peer review options" },
+  "Kaiser Permanente": { networkSize: "integrated health system in 8 states and DC", specialNote: "Kaiser's integrated model means treatment is coordinated between primary care, psychiatry, and addiction medicine under one roof", denialTip: "Kaiser members can request an independent medical review through their state's Department of Managed Health Care" },
+  Medicare: { networkSize: "accepted by the vast majority of licensed treatment facilities", specialNote: "Medicare Part A covers inpatient treatment, Part B covers outpatient, and Part D covers MAT medications like Suboxone", denialTip: "Medicare appeals go through a five-level process starting with redetermination by a Medicare Administrative Contractor" },
+  Medicaid: { networkSize: "state-managed with varying provider networks", specialNote: "Medicaid coverage for substance use treatment varies by state — expansion states provide broader benefits", denialTip: "Medicaid fair hearing rights allow you to appeal any coverage denial at the state level" },
+  Anthem: { networkSize: "serves over 45 million members through its Blue Cross Blue Shield affiliates", specialNote: "Anthem's behavioral health coverage includes its LiveHealth Online platform for virtual addiction counseling", denialTip: "Anthem offers a two-level internal appeals process before external review" },
+  TRICARE: { networkSize: "serves 9.6 million military beneficiaries worldwide", specialNote: "TRICARE covers substance use treatment including residential care — active duty members can access programs through military treatment facilities", denialTip: "TRICARE beneficiaries can file formal appeals through the TRICARE Managerial Activity" },
+  "Molina Healthcare": { networkSize: "serves Medicaid and Medicare populations in 19 states", specialNote: "Molina specializes in government-sponsored healthcare and provides comprehensive behavioral health coverage for qualifying members", denialTip: "Molina follows state Medicaid fair hearing requirements for treatment denials" },
+  "Magellan Health": { networkSize: "manages behavioral health for employers and government agencies", specialNote: "Magellan Health often serves as the behavioral health carve-out for other insurance carriers", denialTip: "Magellan provides peer-to-peer clinical reviews and offers expedited appeal processes" },
+  WellCare: { networkSize: "serves Medicaid, Medicare Advantage, and PDP populations", specialNote: "WellCare offers care management programs that coordinate addiction treatment with primary care", denialTip: "WellCare follows CMS appeal guidelines for Medicare Advantage and state rules for Medicaid" },
+  Ambetter: { networkSize: "marketplace plans available in 27 states", specialNote: "Ambetter marketplace plans include essential health benefits covering substance use treatment as required by the ACA", denialTip: "Ambetter members can appeal through their state's marketplace appeal process" },
+  "Oscar Health": { networkSize: "tech-forward insurer in select markets", specialNote: "Oscar Health provides concierge-style care navigation that can help members find in-network treatment facilities quickly", denialTip: "Oscar's member services team can initiate a fast-track review for urgent treatment needs" },
+  Highmark: { networkSize: "serves members in Pennsylvania, Delaware, and West Virginia", specialNote: "Highmark's behavioral health services include its own network of recovery support specialists", denialTip: "Highmark offers a member complaint and grievance process with clinical peer review" },
+};
+
 export function getInsuranceStateFAQs(
   insurer: InsurerConfig,
   state: StateInsuranceConfig
 ): { question: string; answer: string }[] {
+  const details = insurerCoverageDetails[insurer.name] || {
+    networkSize: "a national provider network",
+    specialNote: `${insurer.name} covers substance abuse treatment under federal parity laws`,
+    denialTip: `${insurer.name} offers standard internal and external appeal processes`,
+  };
+
   return [
     {
       question: `Does ${insurer.name} cover rehab in ${state.state}?`,
-      answer: `Yes, ${insurer.name} covers substance abuse treatment in ${state.state} under the Mental Health Parity and Addiction Equity Act. Coverage includes medical detox, inpatient rehab, outpatient programs (IOP/PHP), medication-assisted treatment, and therapy. Specific coverage levels depend on your plan type and whether you choose in-network or out-of-network providers.`,
+      answer: `Yes, ${insurer.name} covers substance abuse treatment in ${state.state} under the Mental Health Parity and Addiction Equity Act. As ${details.networkSize}, ${insurer.name} provides access to medical detox, inpatient rehab, outpatient programs (IOP/PHP), medication-assisted treatment, and therapy. ${state.medicaidExpanded ? `${state.state}'s Medicaid expansion further broadens coverage options for qualifying residents.` : ""} Specific coverage levels depend on your plan type and whether you choose in-network or out-of-network providers.`,
     },
     {
       question: `How do I find ${insurer.name} in-network rehab centers in ${state.state}?`,
-      answer: `You can find in-network ${insurer.name} rehab centers in ${state.state} by: 1) Searching our RehabLookup directory and filtering by insurance accepted, 2) Calling ${insurer.name} member services to request a list of in-network behavioral health providers, 3) Using our concierge service for personalized facility matching with ${insurer.name} benefits verification.`,
+      answer: `You can find in-network ${insurer.name} rehab centers in ${state.state} by: 1) Searching our RehabLookup directory and filtering by insurance accepted, 2) Calling ${insurer.name} member services to request a list of in-network behavioral health providers, 3) Using our concierge service for personalized facility matching with ${insurer.name} benefits verification. ${details.specialNote}.`,
     },
     {
-      question: `What does ${insurer.name} typically cover for rehab treatment?`,
-      answer: `${insurer.name} typically covers: medical detoxification, residential/inpatient treatment, partial hospitalization (PHP), intensive outpatient programs (IOP), individual and group therapy, psychiatric evaluation, medication-assisted treatment (MAT), and aftercare planning. Coverage duration and copay amounts vary by specific plan.`,
+      question: `What does ${insurer.name} typically cover for rehab treatment in ${state.state}?`,
+      answer: `${insurer.name} typically covers: medical detoxification, residential/inpatient treatment, partial hospitalization (PHP), intensive outpatient programs (IOP), individual and group therapy, psychiatric evaluation, medication-assisted treatment (MAT), and aftercare planning. ${details.specialNote}. Coverage duration and copay amounts vary by specific plan. ${state.notableInfo}`,
     },
     {
       question: `Do I need pre-authorization from ${insurer.name} for rehab in ${state.state}?`,
-      answer: `Most ${insurer.name} plans require pre-authorization for inpatient and residential treatment. Outpatient services may not require prior approval depending on your plan. The treatment facility typically handles the authorization process. For urgent admissions, ${insurer.name} offers expedited review processes.`,
+      answer: `Most ${insurer.name} plans require pre-authorization for inpatient and residential treatment in ${state.state}. ${details.specialNote}. Outpatient services may not require prior approval depending on your plan. The treatment facility typically handles the authorization process. For urgent admissions, ${insurer.name} offers expedited review processes.`,
     },
     {
       question: `What if ${insurer.name} denies my rehab claim in ${state.state}?`,
-      answer: `If ${insurer.name} denies coverage, you can: 1) Request the denial in writing with specific reasons, 2) File an internal appeal with supporting clinical documentation, 3) Request an external independent review if the internal appeal is denied, 4) Contact the ${state.state} Department of Insurance for assistance. Many denials are overturned on appeal.`,
+      answer: `If ${insurer.name} denies coverage in ${state.state}, you can: 1) Request the denial in writing with specific reasons, 2) File an internal appeal with supporting clinical documentation, 3) Request an external independent review if the internal appeal is denied, 4) Contact the ${state.state} Department of Insurance for assistance. ${details.denialTip}. Many denials are overturned on appeal — do not accept an initial denial as final.`,
     },
     {
       question: `Can I use ${insurer.name} for out-of-state rehab from ${state.state}?`,
-      answer: `Yes, ${insurer.name} provides out-of-network coverage that can be used for treatment in other states, though at higher out-of-pocket costs. Some patients choose to travel for specialized treatment or to access facilities not available locally. ${insurer.name}'s national network includes providers across all 50 states.`,
+      answer: `Yes, ${insurer.name} provides out-of-network coverage that can be used for treatment in other states, though at higher out-of-pocket costs. As ${details.networkSize}, ${insurer.name} has providers across all 50 states. Some patients choose to travel for specialized treatment or to access facilities not available locally in ${state.state}. Contact ${insurer.name} member services to compare in-state versus out-of-state benefit levels.`,
     },
   ];
 }

@@ -341,11 +341,20 @@ export function SEO({
 }
 
 // Pre-built structured data generators
+
+/**
+ * Generates FAQPage schema only if there are at least 3 meaningful FAQs.
+ * Returns null if FAQs don't meet the quality threshold.
+ */
 export function generateFAQSchema(faqs: { question: string; answer: string }[]) {
+  // Don't emit FAQPage schema with fewer than 3 FAQs or if answers are too short
+  const meaningfulFaqs = faqs.filter((f) => f.answer.length >= 50);
+  if (meaningfulFaqs.length < 3) return null;
+
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
+    mainEntity: meaningfulFaqs.map((faq) => ({
       "@type": "Question",
       name: faq.question,
       acceptedAnswer: {

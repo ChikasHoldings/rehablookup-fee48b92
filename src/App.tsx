@@ -48,6 +48,7 @@ const StateOutpatientPrograms = lazy(() => import("./pages/treatment-types/State
 const CityOutpatientPrograms = lazy(() => import("./pages/treatment-types/CityOutpatientPrograms"));
 const StateDualDiagnosis = lazy(() => import("./pages/treatment-types/StateDualDiagnosis"));
 const CityDualDiagnosis = lazy(() => import("./pages/treatment-types/CityDualDiagnosis"));
+const StateTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/StateTreatmentExpandedPage"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const ForProviders = lazy(() => import("./pages/ForProviders"));
 const ProviderResources = lazy(() => import("./pages/ProviderResources"));
@@ -439,6 +440,14 @@ const AppInner = () => {
             <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-treatment" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
             <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><LuxuryRehab /></PublicRouteGuard>} />
+            <Route path="/treatment-types/luxury-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/sober-living/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="sober-living" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/free-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="free-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/faith-based-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="faith-based-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/fentanyl-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="fentanyl-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/veterans-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="veterans-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/womens-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="womens-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/mens-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="mens-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs" element={<PublicRouteGuard><DetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug" element={<PublicRouteGuard><StateDetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDetoxPrograms /></PublicRouteGuard>} />
