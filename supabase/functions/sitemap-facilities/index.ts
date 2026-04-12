@@ -785,6 +785,43 @@ function generatePaymentStateRoutes(): RouteEntry[] {
   return routes;
 }
 
+// Provider city conversion pages
+const PROVIDER_CITIES = [
+  "los-angeles-california","new-york-city-new-york","chicago-illinois","houston-texas","phoenix-arizona",
+  "philadelphia-pennsylvania","san-antonio-texas","san-diego-california","dallas-texas","austin-texas",
+  "jacksonville-florida","fort-worth-texas","columbus-ohio","charlotte-north-carolina","san-francisco-california",
+  "indianapolis-indiana","seattle-washington","denver-colorado","boston-massachusetts","nashville-tennessee",
+  "detroit-michigan","portland-oregon","las-vegas-nevada","miami-florida","atlanta-georgia",
+  "tampa-florida","orlando-florida","minneapolis-minnesota","sacramento-california","salt-lake-city-utah",
+  "baltimore-maryland","st-louis-missouri","pittsburgh-pennsylvania","cleveland-ohio","cincinnati-ohio",
+  "kansas-city-missouri","raleigh-north-carolina","new-orleans-louisiana","milwaukee-wisconsin","tucson-arizona",
+  "scottsdale-arizona","honolulu-hawaii","boise-idaho","richmond-virginia","memphis-tennessee",
+  "louisville-kentucky","oklahoma-city-oklahoma","albuquerque-new-mexico","omaha-nebraska","malibu-california",
+];
+const PROVIDER_STATE_TREATMENT_COMBOS: {state:string,treatments:string[]}[] = [
+  {state:"california",treatments:["detox","residential","iop","luxury","sober-living"]},
+  {state:"florida",treatments:["detox","residential","iop","luxury","sober-living"]},
+  {state:"texas",treatments:["detox","residential","iop","mat","dual-diagnosis"]},
+  {state:"new-york",treatments:["detox","residential","iop","php","dual-diagnosis"]},
+  {state:"pennsylvania",treatments:["detox","residential","iop","mat","dual-diagnosis"]},
+  {state:"ohio",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"illinois",treatments:["detox","residential","iop","php","mat"]},
+  {state:"georgia",treatments:["detox","residential","iop","sober-living","dual-diagnosis"]},
+];
+const PROVIDER_STATE_INSURANCE_COMBOS: {state:string,insurers:string[]}[] = [
+  {state:"california",insurers:["medicaid","blue-cross","aetna"]},
+  {state:"florida",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"texas",insurers:["medicaid","blue-cross","cigna"]},
+  {state:"new-york",insurers:["medicaid","blue-cross","aetna"]},
+];
+function generateProviderConversionRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const cs of PROVIDER_CITIES) { routes.push({ path: `/get-more-patients-in-${cs}`, priority: 0.70, changefreq: "monthly" }); }
+  for (const c of PROVIDER_STATE_TREATMENT_COMBOS) { for (const t of c.treatments) { routes.push({ path: `/rehab-marketing/${c.state}/${t}`, priority: 0.70, changefreq: "monthly" }); } }
+  for (const c of PROVIDER_STATE_INSURANCE_COMBOS) { for (const i of c.insurers) { routes.push({ path: `/rehab-marketing/${c.state}/insurance/${i}`, priority: 0.70, changefreq: "monthly" }); } }
+  return routes;
+}
+
 
 const NEAR_ME_PREFIXES = [
   "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
