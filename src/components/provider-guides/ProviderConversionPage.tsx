@@ -191,7 +191,7 @@ export function ProviderConversionPage({
                 "Dedicated support for facility profile optimization",
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 p-4 bg-background rounded-lg border">
-                  <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-accent shrink-0" />
                   <span className="text-foreground">{item}</span>
                 </div>
               ))}
