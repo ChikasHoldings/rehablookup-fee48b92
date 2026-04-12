@@ -132,6 +132,9 @@ const ExclusiveVsSharedLeads = lazy(() => import("./pages/provider-guides/Exclus
 const HowToChooseRehabDirectory = lazy(() => import("./pages/provider-guides/HowToChooseRehabDirectory"));
 const ProviderPersonaPage = lazy(() => import("./pages/provider-guides/ProviderPersonaPage"));
 const ProviderPainPointPage = lazy(() => import("./pages/provider-guides/ProviderPainPointPage"));
+const ProviderBusinessPage = lazy(() => import("./pages/provider-guides/ProviderBusinessPage"));
+const ProviderOperationsPage = lazy(() => import("./pages/provider-guides/ProviderOperationsPage"));
+const ProviderNichePage = lazy(() => import("./pages/provider-guides/ProviderNichePage"));
 // ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
@@ -975,6 +978,26 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-admissions-dropping" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-referral-sources-drying-up" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/list-your-rehab-center-online-free" element={<PublicRouteGuard><ProviderPainPointPage /></PublicRouteGuard>} />
+
+            {/* Provider Business Strategy Pages */}
+            <Route path="/provider-guides/increase-rehab-facility-valuation" element={<PublicRouteGuard><ProviderBusinessPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-private-equity-investment" element={<PublicRouteGuard><ProviderBusinessPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/multi-location-rehab-growth" element={<PublicRouteGuard><ProviderBusinessPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-cash-pay-patient-marketing" element={<PublicRouteGuard><ProviderBusinessPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-revenue-diversification" element={<PublicRouteGuard><ProviderBusinessPage /></PublicRouteGuard>} />
+
+            {/* Provider Operations Pages */}
+            <Route path="/provider-guides/rehab-insurance-denial-management" element={<PublicRouteGuard><ProviderOperationsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/reduce-rehab-patient-no-shows" element={<PublicRouteGuard><ProviderOperationsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-alumni-program-referrals" element={<PublicRouteGuard><ProviderOperationsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-hospital-community-partnerships" element={<PublicRouteGuard><ProviderOperationsPage /></PublicRouteGuard>} />
+
+            {/* Provider Niche Population Pages */}
+            <Route path="/provider-guides/spanish-speaking-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/lgbtq-affirming-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/first-responder-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/healthcare-professional-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/native-american-tribal-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
