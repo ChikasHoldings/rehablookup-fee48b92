@@ -382,6 +382,34 @@ const STATIC_ROUTES: RouteEntry[] = [
   ...US_STATES.map(s => ({ path: `/list-your-facility-in-${s}`, priority: 0.7 as number, changefreq: "monthly" })),
   ...US_STATES.map(s => ({ path: `/for-providers-in-${s}`, priority: 0.7 as number, changefreq: "monthly" })),
 
+  // REHAB MARKETING HUB
+  { path: "/rehab-marketing", priority: 0.8, changefreq: "weekly" },
+
+  // PROVIDER CONVERSION: Treatment-Specific
+  { path: "/provider-guides/get-more-detox-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-residential-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-iop-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-php-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-sober-living-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-mat-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-luxury-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-dual-diagnosis-patients", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER CONVERSION: Insurance-Specific
+  { path: "/provider-guides/get-more-medicaid-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-medicare-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-blue-cross-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-aetna-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-cigna-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-united-healthcare-patients", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER COMPARISON PAGES
+  { path: "/provider-guides/google-ads-vs-rehab-directories", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/best-rehab-marketing-platforms-2026", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/is-psychology-today-worth-it-for-rehab", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/facebook-ads-vs-seo-for-treatment-centers", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-lead-generation-paid-vs-organic", priority: 0.75, changefreq: "monthly" },
+
   // LEGAL
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
