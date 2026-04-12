@@ -200,11 +200,11 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
   }
 
   const breadcrumbs = [
-    { name: "Home", url: "/" },
-    { name: "Treatment Types", url: "/treatment-types" },
-    { name: config.label, url: `/treatment-types/${config.parentSlug}` },
-    { name: `${stateName}`, url: `/treatment-types/${config.parentSlug}/${stateSlug}` },
-    { name: cityName, url: `/treatment-types/${config.parentSlug}/${stateSlug}/${citySlug}` },
+    { label: "Home", href: "/" },
+    { label: "Treatment Types", href: "/treatment-types" },
+    { label: config.label, href: `/treatment-types/${config.parentSlug}` },
+    { label: stateName, href: `/treatment-types/${config.parentSlug}/${stateSlug}` },
+    { label: cityName },
   ];
 
   const otherCities = stateData.cities
@@ -230,7 +230,6 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
         description={`Find ${config.label.toLowerCase()} in ${cityName}, ${abbreviation}. Compare verified programs, check insurance, read reviews. Get help today.`}
         canonical={`https://rehablookup.com/treatment-types/${config.parentSlug}/${stateSlug}/${citySlug}`}
         structuredData={structuredData}
-        breadcrumbs={breadcrumbs}
       />
 
       <div className="min-h-screen bg-background">
@@ -295,9 +294,9 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
         <StateFacilitiesSection
           stateSlug={stateSlug!}
           stateName={stateName}
-          filterTags={config.filterKeys}
-          sectionTitle={`${config.label} Near ${cityName}, ${abbreviation}`}
-          cityFilter={cityName}
+          abbreviation={abbreviation}
+          treatmentFilter={config.filterKeys}
+          heading={`${config.label} Near ${cityName}, ${abbreviation}`}
         />
 
         {/* FAQs */}
@@ -322,18 +321,11 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
         {/* Related Links */}
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {otherCities.length > 0 && (
-              <RelatedLinksSection
-                title={`${config.label} in Other ${stateName} Cities`}
-                links={otherCities}
-              />
-            )}
-            {otherTreatments.length > 0 && (
-              <RelatedLinksSection
-                title={`Other Treatment Types in ${cityName}`}
-                links={otherTreatments}
-              />
-            )}
+            <RelatedLinksSection
+              title={`${config.label} in Other ${stateName} Cities`}
+              locationLinks={otherCities}
+              treatmentLinks={otherTreatments}
+            />
           </div>
         </section>
 

@@ -146,9 +146,9 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
   }
 
   const breadcrumbs = [
-    { name: "Home", url: "/" },
-    { name: "Treatment Types", url: "/treatment-types" },
-    { name: config.title, url: `/treatment-types/${config.slug}` },
+    { label: "Home", href: "/" },
+    { label: "Treatment Types", href: "/treatment-types" },
+    { label: config.title },
   ];
 
   const structuredData: any[] = [
@@ -190,7 +190,6 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
         description={config.metaDescription}
         canonical={`https://rehablookup.com/treatment-types/${config.slug}`}
         structuredData={structuredData}
-        breadcrumbs={breadcrumbs}
       />
 
       <div className="min-h-screen bg-background">
