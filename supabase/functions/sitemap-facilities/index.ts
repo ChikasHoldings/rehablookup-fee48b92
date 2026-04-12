@@ -81,7 +81,7 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-faq", priority: 0.7, changefreq: "monthly" },
   { path: "/provider-support", priority: 0.6, changefreq: "monthly" },
   { path: "/faq", priority: 0.7, changefreq: "monthly" },
-  { path: "/search-results", priority: 0.9, changefreq: "daily" },
+  // /search-results intentionally excluded — blocked via robots.txt and noindex
   { path: "/provider-signup", priority: 0.7, changefreq: "monthly" },
   { path: "/provider-roi-calculator", priority: 0.7, changefreq: "monthly" },
 
