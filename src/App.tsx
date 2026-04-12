@@ -470,6 +470,15 @@ const AppInner = () => {
             <Route path="/iop-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/mat-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
             
+            {/* Expanded Treatment Hub Pages */}
+            <Route path="/sober-living-homes" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/faith-based-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/fentanyl-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/veterans-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/womens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/mens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/free-rehab-options" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            
             {/* SEO Comparison Pages */}
             <Route path="/inpatient-vs-outpatient-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
             <Route path="/detox-vs-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
@@ -526,6 +535,8 @@ const AppInner = () => {
             <Route path="/what-to-expect-loved-one-in-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
             <Route path="/how-to-find-rehab-for-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
             
+            {/* Insurance + State + City Cross Pages */}
+            <Route path="/insurance/:slug/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInsurancePage /></PublicRouteGuard>} />
             {/* Insurance + State Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
             
