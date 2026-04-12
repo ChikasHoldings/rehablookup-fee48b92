@@ -5,7 +5,6 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { SEO, generateArticleSchema } from "@/components/SEO";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/hooks/use-toast";
 import {
   BookOpen,
   Clock,
