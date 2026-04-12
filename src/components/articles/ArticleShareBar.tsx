@@ -27,6 +27,23 @@ interface ArticleShareBarProps {
 }
 
 /**
+ * Builds the og-share URL that serves proper OG meta tags to social crawlers
+ * and instantly redirects human visitors to the real page.
+ */
+function getOgShareUrl(canonicalUrl: string): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) return canonicalUrl;
+
+  // Extract the path from the canonical URL
+  try {
+    const parsed = new URL(canonicalUrl);
+    return `${supabaseUrl}/functions/v1/og-share?path=${encodeURIComponent(parsed.pathname)}`;
+  } catch {
+    return canonicalUrl;
+  }
+}
+
+/**
  * Sanitizes text for use in share URLs to prevent XSS/injection.
  * Only allows safe characters and truncates to a max length.
  */
@@ -94,6 +111,8 @@ export function ArticleShareBar({
   const safeTitle = sanitizeShareText(title);
   const safeDesc = description ? sanitizeShareText(description, 200) : undefined;
   const shareUrl = getCanonicalShareUrl(url);
+  // Social share links use the og-share proxy so crawlers see proper OG tags
+  const ogShareUrl = getOgShareUrl(shareUrl);
 
   const handleNativeShare = useCallback(async () => {
     if (!navigator.share) return false;
@@ -139,7 +158,10 @@ export function ArticleShareBar({
 
   const handleShareClick = useCallback(
     async (channel: (typeof SHARE_CHANNELS)[number]) => {
-      const href = channel.getUrl(shareUrl, safeTitle, safeDesc);
+      // Use og-share proxy URL for social platforms so crawlers see proper OG tags
+      // Use canonical URL for email (no crawlers involved)
+      const urlForChannel = channel.id === "email" ? shareUrl : ogShareUrl;
+      const href = channel.getUrl(urlForChannel, safeTitle, safeDesc);
       if (channel.id === "email") {
         window.location.href = href;
         return;
@@ -155,7 +177,7 @@ export function ArticleShareBar({
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
       );
     },
-    [shareUrl, safeTitle, safeDesc]
+    [shareUrl, ogShareUrl, safeTitle, safeDesc]
   );
 
   const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
