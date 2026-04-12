@@ -11,6 +11,7 @@ import { treatmentProviderConfigs, insuranceProviderConfigs, comparisonPageConfi
 import { providerPersonaConfigs, providerPainPointConfigs, additionalComparisonConfigs } from "@/data/providerPersonaConfigs";
 import { providerBusinessConfigs, providerOperationsConfigs, providerNicheConfigs } from "@/data/providerBusinessConfigs";
 import { providerGrowthConfigs, providerIndustryConfigs } from "@/data/providerGrowthConfigs";
+import { providerDigitalConfigs, providerFinanceConfigs } from "@/data/providerDigitalConfigs";
 import { usStates } from "@/data/usStates";
 
 export default function RehabMarketingHub() {

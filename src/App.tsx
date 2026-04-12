@@ -1017,6 +1017,17 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-joint-commission-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-aftercare-continuum-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
 
+            {/* Provider Digital Marketing Pages */}
+            <Route path="/provider-guides/rehab-online-reviews-strategy" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-local-seo-domination" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-video-marketing-strategy" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-conversion-rate-optimization" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+
+            {/* Provider Finance & Funding Pages */}
+            <Route path="/provider-guides/rehab-billing-revenue-cycle" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-grant-funding-opportunities" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-data-analytics-growth" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
+
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
             <Route path="/providers/resources/:slug" element={<PublicRouteGuard><ProviderResourceArticle /></PublicRouteGuard>} />
