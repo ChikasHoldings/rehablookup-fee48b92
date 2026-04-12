@@ -21,6 +21,7 @@ import {
   allArticles,
 } from "@/data/providerResourcesData";
 import { resourceArticleContent } from "@/data/providerResourceArticles";
+import { ArticleShareBar } from "@/components/articles/ArticleShareBar";
 
 export default function ProviderResourceArticle() {
   const { slug } = useParams<{ slug: string }>();
@@ -172,6 +173,15 @@ export default function ProviderResourceArticle() {
                   </ul>
                 </div>
               )}
+
+              {/* Share Bar */}
+              <div className="pt-8 border-t border-border">
+                <ArticleShareBar
+                  title={article.title}
+                  description={article.description}
+                  url={`https://rehablookup.com/providers/resources/${slug}`}
+                />
+              </div>
             </div>
           </div>
         </section>

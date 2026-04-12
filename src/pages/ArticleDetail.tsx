@@ -5,7 +5,6 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { SEO, generateArticleSchema } from "@/components/SEO";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/hooks/use-toast";
 import {
   BookOpen,
   Clock,
@@ -14,18 +13,14 @@ import {
   Heart,
   Calendar,
   User,
-  Twitter,
-  Facebook,
-  Linkedin,
-  Copy,
-  Check,
   MapPin,
   Stethoscope,
   Shield,
   Sparkles,
 } from "lucide-react";
-import { ReactNode, useState, useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
+import { ArticleShareBar } from "@/components/articles/ArticleShareBar";
 import { 
   InternalLinkingSection, 
   treatmentTypeLinks, 
@@ -171,7 +166,7 @@ function ArticleSkeleton() {
 
 const ArticleDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [copied, setCopied] = useState(false);
+  
 
   // Normalize slug to lowercase for case-insensitive matching
   const normalizedSlug = id?.toLowerCase();
@@ -272,16 +267,6 @@ const ArticleDetail = () => {
     enabled: linkedArticleIds.length > 0,
   });
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      toast({ title: "Link copied to clipboard!" });
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast({ title: "Failed to copy link", variant: "destructive" });
-    }
-  };
 
   // Redirect if slug has uppercase characters (SEO canonical fix)
   if (needsRedirect) {
@@ -296,8 +281,6 @@ const ArticleDetail = () => {
     return <Navigate to="/resources" replace />;
   }
 
-  const shareUrl = encodeURIComponent(window.location.href);
-  const shareTitle = encodeURIComponent(article.title);
   const defaultImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop";
   const articleImage = article.image_url || defaultImage;
 
@@ -516,41 +499,11 @@ const ArticleDetail = () => {
 
               {/* Share Section */}
               <div className="mt-12 pt-8 border-t">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <p className="text-sm font-medium text-foreground">Share this article:</p>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <Twitter className="h-4 w-4" />
-                    </a>
-                    <a
-                      href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <Facebook className="h-4 w-4" />
-                    </a>
-                    <a
-                      href={`https://www.linkedin.com/shareArticle?mini=true&url=${shareUrl}&title=${shareTitle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <Linkedin className="h-4 w-4" />
-                    </a>
-                    <button
-                      onClick={handleCopyLink}
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
+                <ArticleShareBar
+                  title={article.title}
+                  description={article.excerpt}
+                  url={`https://rehablookup.com/resources/${article.slug}`}
+                />
               </div>
 
               {/* Enhanced Related Articles with Smart Linking */}
