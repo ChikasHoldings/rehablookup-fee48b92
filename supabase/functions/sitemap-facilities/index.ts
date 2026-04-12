@@ -382,6 +382,34 @@ const STATIC_ROUTES: RouteEntry[] = [
   ...US_STATES.map(s => ({ path: `/list-your-facility-in-${s}`, priority: 0.7 as number, changefreq: "monthly" })),
   ...US_STATES.map(s => ({ path: `/for-providers-in-${s}`, priority: 0.7 as number, changefreq: "monthly" })),
 
+  // REHAB MARKETING HUB
+  { path: "/rehab-marketing", priority: 0.8, changefreq: "weekly" },
+
+  // PROVIDER CONVERSION: Treatment-Specific
+  { path: "/provider-guides/get-more-detox-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-residential-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-iop-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-php-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-sober-living-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-mat-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-luxury-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-dual-diagnosis-patients", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER CONVERSION: Insurance-Specific
+  { path: "/provider-guides/get-more-medicaid-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-medicare-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-blue-cross-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-aetna-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-cigna-patients", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/get-more-united-healthcare-patients", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER COMPARISON PAGES
+  { path: "/provider-guides/google-ads-vs-rehab-directories", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/best-rehab-marketing-platforms-2026", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/is-psychology-today-worth-it-for-rehab", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/facebook-ads-vs-seo-for-treatment-centers", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-lead-generation-paid-vs-organic", priority: 0.75, changefreq: "monthly" },
+
   // LEGAL
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
@@ -757,6 +785,43 @@ function generatePaymentStateRoutes(): RouteEntry[] {
   return routes;
 }
 
+// Provider city conversion pages
+const PROVIDER_CITIES = [
+  "los-angeles-california","new-york-city-new-york","chicago-illinois","houston-texas","phoenix-arizona",
+  "philadelphia-pennsylvania","san-antonio-texas","san-diego-california","dallas-texas","austin-texas",
+  "jacksonville-florida","fort-worth-texas","columbus-ohio","charlotte-north-carolina","san-francisco-california",
+  "indianapolis-indiana","seattle-washington","denver-colorado","boston-massachusetts","nashville-tennessee",
+  "detroit-michigan","portland-oregon","las-vegas-nevada","miami-florida","atlanta-georgia",
+  "tampa-florida","orlando-florida","minneapolis-minnesota","sacramento-california","salt-lake-city-utah",
+  "baltimore-maryland","st-louis-missouri","pittsburgh-pennsylvania","cleveland-ohio","cincinnati-ohio",
+  "kansas-city-missouri","raleigh-north-carolina","new-orleans-louisiana","milwaukee-wisconsin","tucson-arizona",
+  "scottsdale-arizona","honolulu-hawaii","boise-idaho","richmond-virginia","memphis-tennessee",
+  "louisville-kentucky","oklahoma-city-oklahoma","albuquerque-new-mexico","omaha-nebraska","malibu-california",
+];
+const PROVIDER_STATE_TREATMENT_COMBOS: {state:string,treatments:string[]}[] = [
+  {state:"california",treatments:["detox","residential","iop","luxury","sober-living"]},
+  {state:"florida",treatments:["detox","residential","iop","luxury","sober-living"]},
+  {state:"texas",treatments:["detox","residential","iop","mat","dual-diagnosis"]},
+  {state:"new-york",treatments:["detox","residential","iop","php","dual-diagnosis"]},
+  {state:"pennsylvania",treatments:["detox","residential","iop","mat","dual-diagnosis"]},
+  {state:"ohio",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"illinois",treatments:["detox","residential","iop","php","mat"]},
+  {state:"georgia",treatments:["detox","residential","iop","sober-living","dual-diagnosis"]},
+];
+const PROVIDER_STATE_INSURANCE_COMBOS: {state:string,insurers:string[]}[] = [
+  {state:"california",insurers:["medicaid","blue-cross","aetna"]},
+  {state:"florida",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"texas",insurers:["medicaid","blue-cross","cigna"]},
+  {state:"new-york",insurers:["medicaid","blue-cross","aetna"]},
+];
+function generateProviderConversionRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const cs of PROVIDER_CITIES) { routes.push({ path: `/get-more-patients-in-${cs}`, priority: 0.70, changefreq: "monthly" }); }
+  for (const c of PROVIDER_STATE_TREATMENT_COMBOS) { for (const t of c.treatments) { routes.push({ path: `/rehab-marketing/${c.state}/${t}`, priority: 0.70, changefreq: "monthly" }); } }
+  for (const c of PROVIDER_STATE_INSURANCE_COMBOS) { for (const i of c.insurers) { routes.push({ path: `/rehab-marketing/${c.state}/insurance/${i}`, priority: 0.70, changefreq: "monthly" }); } }
+  return routes;
+}
+
 
 const NEAR_ME_PREFIXES = [
   "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
@@ -901,6 +966,7 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...generateCoOccurringRoutes(),
     ...generateDurationSettingRoutes(),
     ...generatePaymentStateRoutes(),
+    ...generateProviderConversionRoutes(),
     ...articleRoutes
   ];
 

@@ -80,6 +80,15 @@ const CoOccurringPage = lazy(() => import("./pages/seo/CoOccurringPage"));
 const DurationSettingPage = lazy(() => import("./pages/seo/DurationSettingPage"));
 const PaymentStatePage = lazy(() => import("./pages/seo/PaymentStatePage"));
 const StateArticlePage = lazy(() => import("./pages/seo/StateArticlePage"));
+
+// Provider Conversion Pages
+const CityProviderPage = lazy(() => import("./pages/provider-guides/CityProviderPage"));
+const TreatmentProviderPage = lazy(() => import("./pages/provider-guides/TreatmentProviderPage"));
+const StateTreatmentProviderPage = lazy(() => import("./pages/provider-guides/StateTreatmentProviderPage"));
+const InsuranceProviderPage = lazy(() => import("./pages/provider-guides/InsuranceProviderPage"));
+const StateInsuranceProviderPage = lazy(() => import("./pages/provider-guides/StateInsuranceProviderPage"));
+const ProviderComparisonPage = lazy(() => import("./pages/provider-guides/ProviderComparisonPage"));
+const RehabMarketingHub = lazy(() => import("./pages/provider-guides/RehabMarketingHub"));
 // BestInStatePage moved to SmartCatchAll
 
 // Provider SEO Pages
@@ -910,6 +919,36 @@ const AppInner = () => {
             <Route path="/provider-guides/exclusive-vs-shared-leads" element={<PublicRouteGuard><ExclusiveVsSharedLeads /></PublicRouteGuard>} />
             <Route path="/provider-guides/how-to-choose-a-rehab-directory" element={<PublicRouteGuard><HowToChooseRehabDirectory /></PublicRouteGuard>} />
             {/* List Your Facility routes handled by SmartCatchAll below */}
+
+            {/* Rehab Marketing Hub */}
+            <Route path="/rehab-marketing" element={<PublicRouteGuard><RehabMarketingHub /></PublicRouteGuard>} />
+            <Route path="/rehab-marketing/:stateSlug/:treatmentSlug" element={<PublicRouteGuard><StateTreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/rehab-marketing/:stateSlug/insurance/:insurerSlug" element={<PublicRouteGuard><StateInsuranceProviderPage /></PublicRouteGuard>} />
+
+            {/* Treatment-Specific Provider Conversion Pages */}
+            <Route path="/provider-guides/get-more-detox-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-residential-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-iop-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-php-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-sober-living-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-mat-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-luxury-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-dual-diagnosis-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
+
+            {/* Insurance-Specific Provider Conversion Pages */}
+            <Route path="/provider-guides/get-more-medicaid-patients" element={<PublicRouteGuard><InsuranceProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-medicare-patients" element={<PublicRouteGuard><InsuranceProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-blue-cross-patients" element={<PublicRouteGuard><InsuranceProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-aetna-patients" element={<PublicRouteGuard><InsuranceProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-cigna-patients" element={<PublicRouteGuard><InsuranceProviderPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/get-more-united-healthcare-patients" element={<PublicRouteGuard><InsuranceProviderPage /></PublicRouteGuard>} />
+
+            {/* Provider Comparison Pages */}
+            <Route path="/provider-guides/google-ads-vs-rehab-directories" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/best-rehab-marketing-platforms-2026" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/is-psychology-today-worth-it-for-rehab" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/facebook-ads-vs-seo-for-treatment-centers" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-lead-generation-paid-vs-organic" element={<PublicRouteGuard><ProviderComparisonPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
