@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v6.0.0";
+const VERSION = "v7.0.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -610,10 +610,32 @@ function generateCountyRoutes(): RouteEntry[] {
 function generateExpandedTreatmentStateRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
   for (const type of EXPANDED_TREATMENT_TYPES) {
+    // National hub page
+    routes.push({
+      path: `/treatment-types/${type === "holistic" ? "holistic-therapy" : type}`,
+      priority: 0.80,
+      changefreq: "weekly"
+    });
     for (const state of US_STATES) {
+      // State-level page
       routes.push({
         path: `/treatment-types/${type}/${state}`,
         priority: 0.75,
+        changefreq: "weekly"
+      });
+    }
+  }
+  return routes;
+}
+
+function generateExpandedTreatmentCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  const cityTypes = EXPANDED_TREATMENT_TYPES.filter(t => t !== "holistic");
+  for (const type of cityTypes) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({
+        path: `/treatment-types/${type}/${city.state}/${city.city}`,
+        priority: 0.65,
         changefreq: "weekly"
       });
     }
