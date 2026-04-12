@@ -601,6 +601,38 @@ const AppInner = () => {
              <Route path="/aftercare-and-relapse-prevention" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
              <Route path="/what-to-pack-for-rehab" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
              <Route path="/questions-to-ask-rehab-center" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+
+             {/* Co-Occurring Condition Pages */}
+             <Route path="/anxiety-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/anxiety-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/depression-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/depression-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/ptsd-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/ptsd-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/bipolar-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/bipolar-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/adhd-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/adhd-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/eating-disorders-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/eating-disorders-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+
+             {/* Duration & Setting Pages */}
+             <Route path="/30-day-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/30-day-rehab-programs/:stateSlug" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/60-day-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/60-day-rehab-programs/:stateSlug" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/90-day-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/90-day-rehab-programs/:stateSlug" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/long-term-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/long-term-rehab-programs/:stateSlug" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/beach-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/beach-rehab-programs/:stateSlug" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/mountain-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+             <Route path="/mountain-rehab-programs/:stateSlug" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
+
+             {/* Payment Method + State Pages */}
+             <Route path="/medicaid-rehab/:stateSlug" element={<PublicRouteGuard><PaymentStatePage paymentType="medicaid" /></PublicRouteGuard>} />
+             <Route path="/medicare-rehab/:stateSlug" element={<PublicRouteGuard><PaymentStatePage paymentType="medicare" /></PublicRouteGuard>} />
             
             {/* Insurance + State + City Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInsurancePage /></PublicRouteGuard>} />
