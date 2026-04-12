@@ -10,6 +10,7 @@ import { providerCities } from "@/data/providerCityData";
 import { treatmentProviderConfigs, insuranceProviderConfigs, comparisonPageConfigs, STATE_TREATMENT_COMBOS } from "@/data/providerPageConfigs";
 import { providerPersonaConfigs, providerPainPointConfigs, additionalComparisonConfigs } from "@/data/providerPersonaConfigs";
 import { providerBusinessConfigs, providerOperationsConfigs, providerNicheConfigs } from "@/data/providerBusinessConfigs";
+import { providerGrowthConfigs, providerIndustryConfigs } from "@/data/providerGrowthConfigs";
 import { usStates } from "@/data/usStates";
 
 export default function RehabMarketingHub() {
