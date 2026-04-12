@@ -1,19 +1,22 @@
-import { useRef, useEffect, useState } from "react";
-import { PageFAQ } from "@/components/seo/PageFAQ";
-import { homeFaqs } from "@/data/pageFaqs";
+import { useRef, useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
-import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
-import { InternationalCTA } from "@/components/home/InternationalCTA";
-import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
-import { seekerTestimonials } from "@/data/testimonials";
+import { LazySection } from "@/components/ui/lazy-section";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
+
+// Lazy-load below-fold sections to reduce initial JS bundle
+const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
+const InternationalCTA = lazy(() => import("@/components/home/InternationalCTA").then(m => ({ default: m.InternationalCTA })));
+const TestimonialsSection = lazy(() => import("@/components/testimonials/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
+const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
+const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
+const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
 import whyChooseUsImage from "@/assets/why-choose-us.webp";
 import {
   Carousel,

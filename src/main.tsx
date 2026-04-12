@@ -27,6 +27,10 @@ if (import.meta.env.PROD) {
 initPerformanceOptimizations();
 
 // Render app
+// Remove SSR skeleton before React paints
+const skeleton = document.getElementById("ssr-skeleton");
+if (skeleton) skeleton.remove();
+
 createRoot(document.getElementById("root")!).render(<App />);
 
 // Warm up query cache after initial render for faster navigations
