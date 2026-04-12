@@ -74,7 +74,7 @@ const stateContext: Record<string, {
   DC: { region: "Mid-Atlantic", population: "690,000", healthcareNote: "DC's treatment system benefits from federal resources, research institutions, and strong public funding", opioidNote: "DC has among the highest per-capita overdose rates, concentrated in specific wards", fundingNote: "DC DBH manages comprehensive substance use treatment services", medicaidExpanded: true, notableCities: ["Washington"], licensingBody: "DC DBH", uniqueFactor: "federal resource proximity and NIH-influenced treatment approaches" },
 };
 
-type TreatmentType = "alcohol" | "drug" | "detox" | "inpatient" | "outpatient" | "dual-diagnosis";
+type TreatmentType = "alcohol" | "drug" | "detox" | "inpatient" | "outpatient" | "dual-diagnosis" | "luxury" | "sober-living" | "free" | "faith-based" | "fentanyl" | "veterans" | "womens" | "mens";
 
 const treatmentDescriptions: Record<TreatmentType, {
   label: string;
@@ -188,6 +188,150 @@ const treatmentDescriptions: Record<TreatmentType, {
       "Psychiatric medication management is typically covered under medical/pharmacy benefits",
       "Longer treatment stays may be justified based on co-occurring condition severity",
       "Ask about carve-out behavioral health coverage — some plans manage this separately",
+    ],
+  },
+  luxury: {
+    label: "Luxury Rehab",
+    intro: "Luxury rehabilitation centers provide premium, resort-style addiction treatment with private accommodations, gourmet nutrition, and enhanced amenities alongside evidence-based clinical care. These programs cater to executives, professionals, and individuals seeking the highest standard of comfort during recovery.",
+    lookForItems: [
+      "Private or semi-private rooms with resort-quality accommodations",
+      "Low staff-to-patient ratios (often 1:3 or better) for personalized attention",
+      "Executive programming with business center access and flexible scheduling",
+      "Holistic therapies including equine therapy, yoga, acupuncture, and spa services",
+      "Gourmet chef-prepared meals with nutritional counseling",
+      "Confidentiality protections especially important for public figures and executives",
+    ],
+    insuranceTips: [
+      "Some luxury programs accept insurance for the clinical portion and charge a private-pay premium for amenities",
+      "Out-of-network benefits may cover a significant portion of luxury treatment costs",
+      "Many luxury facilities offer complimentary insurance verification before admission",
+      "HSA and FSA accounts can be used for qualified treatment expenses",
+    ],
+  },
+  "sober-living": {
+    label: "Sober Living Homes",
+    intro: "Sober living homes provide structured, substance-free housing for individuals transitioning from intensive treatment back to independent living. These residences offer peer accountability, house rules, and community support that bridge the gap between rehab and full independence.",
+    lookForItems: [
+      "Clear house rules including drug testing, curfews, and meeting attendance requirements",
+      "House manager or resident advisor present for support and accountability",
+      "Structured daily routine with employment or education expectations",
+      "Connection to outpatient treatment and 12-step or alternative recovery meetings",
+      "Safe neighborhood and well-maintained living environment",
+      "Transparent fee structure with no hidden costs",
+    ],
+    insuranceTips: [
+      "Most insurance plans do not cover sober living — these are typically private-pay",
+      "Some state-funded programs offer transitional housing assistance",
+      "Oxford House model residences are self-supporting with shared expenses among residents",
+      "Ask about sliding-scale fees or scholarship opportunities at nonprofit sober homes",
+    ],
+  },
+  free: {
+    label: "Free Rehab Programs",
+    intro: "Free and low-cost addiction treatment programs provide essential access to recovery for individuals without insurance or financial resources. Government-funded, nonprofit, and faith-based organizations offer medical detox, counseling, and residential treatment at no cost to qualifying individuals.",
+    lookForItems: [
+      "State licensing and accreditation — free programs should meet the same quality standards",
+      "Sliding-scale fee structure based on income and ability to pay",
+      "SAMHSA-funded or state substance abuse authority–contracted programs",
+      "Medicaid and Medicare acceptance for eligible individuals",
+      "Wait list policies and estimated admission timelines",
+      "Comprehensive treatment plans, not just basic counseling",
+    ],
+    insuranceTips: [
+      "Medicaid covers comprehensive addiction treatment in expansion states",
+      "SAMHSA's National Helpline (1-800-662-4357) provides free referrals to state-funded programs",
+      "Many hospitals are required to provide emergency stabilization regardless of ability to pay",
+      "Veterans can access free treatment through the VA healthcare system",
+    ],
+  },
+  "faith-based": {
+    label: "Faith-Based Rehab",
+    intro: "Faith-based rehabilitation programs integrate spiritual principles and religious practices into addiction treatment. These programs combine clinical evidence-based care with prayer, scripture study, pastoral counseling, and spiritual community support for individuals whose faith is central to their recovery journey.",
+    lookForItems: [
+      "Integration of clinical treatment methods alongside faith-based programming",
+      "Licensed clinical staff in addition to pastoral or spiritual counselors",
+      "Respect for individual spiritual beliefs — not all faith-based programs are denomination-specific",
+      "Structured daily schedule including worship, prayer, and therapeutic programming",
+      "Community support through church networks and faith-based recovery groups",
+      "Aftercare planning connected to local faith communities",
+    ],
+    insuranceTips: [
+      "Some faith-based programs operate on a donation basis and are free of charge",
+      "Programs with licensed clinical staff may accept insurance for the clinical portion",
+      "Salvation Army, Teen Challenge, and similar organizations offer free or low-cost options",
+      "Ask about scholarship programs funded by religious organizations",
+    ],
+  },
+  fentanyl: {
+    label: "Fentanyl Rehab",
+    intro: "Fentanyl addiction treatment addresses one of the most dangerous substance use disorders due to fentanyl's extreme potency and high overdose risk. Specialized programs provide medically supervised detox with careful tapering protocols, medication-assisted treatment, and intensive relapse prevention strategies.",
+    lookForItems: [
+      "Medical detox protocols specifically designed for synthetic opioid withdrawal",
+      "24/7 medical monitoring during the acute withdrawal phase (3-10 days)",
+      "Medication-assisted treatment with buprenorphine, methadone, or naltrexone",
+      "Naloxone (Narcan) training and distribution for patients and families",
+      "Fentanyl-specific education on the risks of relapse with synthetic opioids",
+      "Long-term aftercare planning — fentanyl relapse carries extreme overdose risk",
+    ],
+    insuranceTips: [
+      "Medical detox for opioids including fentanyl is covered as acute medical care by most plans",
+      "MAT medications (Suboxone, Vivitrol, methadone) are covered under pharmacy benefits",
+      "Emergency department naloxone administration is covered under emergency medical services",
+      "Long-term MAT maintenance is covered under behavioral health benefits",
+    ],
+  },
+  veterans: {
+    label: "Veterans Rehab",
+    intro: "Veteran-specific addiction treatment programs address the unique challenges faced by military service members including combat-related PTSD, traumatic brain injury, military sexual trauma, and the difficult transition to civilian life that can contribute to substance use disorders.",
+    lookForItems: [
+      "Experience treating combat-related PTSD alongside substance use disorders",
+      "Understanding of military culture and the unique stressors of service",
+      "VA-contracted or VA-community care network participation",
+      "Evidence-based trauma therapies: EMDR, CPT, prolonged exposure therapy",
+      "Peer support from fellow veterans in recovery",
+      "Family reintegration programs addressing deployment-related relationship strain",
+    ],
+    insuranceTips: [
+      "VA healthcare covers comprehensive addiction treatment for eligible veterans",
+      "Community Care Network allows veterans to access non-VA treatment when VA wait times are long",
+      "TRICARE covers addiction treatment for active duty, retirees, and dependents",
+      "State veterans affairs offices may provide additional treatment funding",
+    ],
+  },
+  womens: {
+    label: "Women's Rehab",
+    intro: "Women's-only addiction treatment programs address the gender-specific factors that influence substance use and recovery, including trauma from domestic violence, sexual abuse, hormonal influences, childcare responsibilities, and the unique social pressures women face during and after treatment.",
+    lookForItems: [
+      "All-female treatment environment for safety and peer bonding",
+      "Trauma-informed care addressing domestic violence, sexual assault, and relationship abuse",
+      "Childcare support or programs that allow children to accompany mothers",
+      "Prenatal and perinatal addiction treatment for pregnant women",
+      "Women-specific group therapy addressing body image, relationship patterns, and self-esteem",
+      "Parenting skills education and family reunification support",
+    ],
+    insuranceTips: [
+      "Medicaid covers prenatal addiction treatment and perinatal care in all states",
+      "Women-specific treatment may be covered at the same rate as co-ed programs",
+      "State maternal health programs may offer additional treatment funding",
+      "Some nonprofit women's programs operate on a grant-funded, no-cost basis",
+    ],
+  },
+  mens: {
+    label: "Men's Rehab",
+    intro: "Men's-only addiction treatment programs create an environment where men can address the unique factors driving their substance use, including societal expectations around masculinity, difficulty expressing emotions, anger management issues, and the specific relapse triggers men commonly face.",
+    lookForItems: [
+      "All-male treatment environment fostering openness and accountability",
+      "Programming addressing anger management, emotional regulation, and healthy masculinity",
+      "Vocational rehabilitation and career counseling for employment reintegration",
+      "Physical fitness and outdoor activities integrated into the treatment program",
+      "Peer accountability groups and mentorship from men in long-term recovery",
+      "Family and relationship repair programming",
+    ],
+    insuranceTips: [
+      "Men's-specific programs are covered at the same rate as co-ed programs by most insurers",
+      "Work-release programs may be covered by employer-sponsored EAP benefits",
+      "VA healthcare covers veteran men's treatment programs",
+      "Court-ordered treatment for men may be funded through state judicial programs",
     ],
   },
 };
