@@ -18,23 +18,14 @@ const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ defau
 const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
 const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
 import whyChooseUsImage from "@/assets/why-choose-us.webp";
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import {
   ArrowRight,
-  Star,
   Pill,
   Brain,
   Home,
   Activity,
   Stethoscope,
   Sparkles,
-  Quote,
-  BookOpen,
-  Calendar,
   CheckCircle,
   Search,
   Users,
