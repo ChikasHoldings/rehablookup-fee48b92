@@ -18,13 +18,13 @@ export function useAuditLog() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await supabase.from("admin_audit_log").insert({
+      await supabase.from("admin_audit_log").insert([{
         admin_user_id: user.id,
         action_type: actionType,
         target_type: targetType,
         target_id: targetId || null,
-        details: details || {},
-      });
+        details: (details || {}) as any,
+      }]);
     } catch (err) {
       console.error("[AUDIT] Failed to log action:", actionType, err);
     }
