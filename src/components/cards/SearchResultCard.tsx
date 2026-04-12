@@ -1,4 +1,4 @@
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
+import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

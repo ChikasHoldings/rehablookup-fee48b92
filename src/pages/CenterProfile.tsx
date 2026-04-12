@@ -1,5 +1,5 @@
 import { useParams, Link, useLocation } from "react-router-dom";
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
+import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
+import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { 

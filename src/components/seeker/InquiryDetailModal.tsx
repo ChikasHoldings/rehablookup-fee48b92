@@ -29,7 +29,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import facilityPlaceholder from "@/assets/facility-placeholder.jpg";
+import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 
 interface InquiryDetailModalProps {
   open: boolean;
