@@ -44,6 +44,7 @@ export function ManagerDashboard() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("ManagerDashboard");
   const { hasPermission } = useAdminAuth();
+  const [confirmResolveEscId, setConfirmResolveEscId] = useState<string | null>(null);
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["manager-stats"] });
@@ -839,8 +840,7 @@ function RecentEscalationsList() {
                 className="text-xs h-7"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!window.confirm("Mark this escalation as resolved?")) return;
-                  resolveMutation.mutate(esc.id);
+                  setConfirmResolveEscId(esc.id);
                 }}
                 disabled={resolveMutation.isPending}
               >
