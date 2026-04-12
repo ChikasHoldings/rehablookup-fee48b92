@@ -32,14 +32,19 @@ export default function InsuranceStatePage() {
     const stateLower = stateConfig.state.toLowerCase();
     const insurerLower = insurer.name.toLowerCase();
 
-    let filtered = allFacilities.filter((f) => {
+    // First try exact insurance match within state
+    const exactMatch = allFacilities.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateLower;
-      const insuranceMatch =
-        f.insuranceAccepted?.some((i) =>
-          i.toLowerCase().includes(insurerLower)
-        ) || true; // Show state-matched facilities as fallback
+      const insuranceMatch = f.insuranceAccepted?.some((i) =>
+        i.toLowerCase().includes(insurerLower)
+      );
       return stateMatch && insuranceMatch;
     });
+
+    // If we have insurance-matched facilities, use those; otherwise fall back to state facilities
+    const filtered = exactMatch.length > 0
+      ? exactMatch
+      : allFacilities.filter((f) => f.state.toLowerCase() === stateLower);
 
     return filtered.slice(0, 12);
   }, [approvedFacilities, insurer, stateConfig]);
