@@ -436,7 +436,26 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/rehab-referral-sources-drying-up", priority: 0.8, changefreq: "monthly" },
   { path: "/provider-guides/list-your-rehab-center-online-free", priority: 0.85, changefreq: "monthly" },
 
-  // LEGAL
+  // Provider Business Strategy Pages
+  { path: "/provider-guides/increase-rehab-facility-valuation", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-private-equity-investment", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/multi-location-rehab-growth", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-cash-pay-patient-marketing", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-revenue-diversification", priority: 0.85, changefreq: "monthly" },
+
+  // Provider Operations Pages
+  { path: "/provider-guides/rehab-insurance-denial-management", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/reduce-rehab-patient-no-shows", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-alumni-program-referrals", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-hospital-community-partnerships", priority: 0.85, changefreq: "monthly" },
+
+  // Provider Niche Population Pages
+  { path: "/provider-guides/spanish-speaking-rehab-marketing", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/lgbtq-affirming-rehab-marketing", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/first-responder-rehab-marketing", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/healthcare-professional-rehab-marketing", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/native-american-tribal-rehab-marketing", priority: 0.85, changefreq: "monthly" },
+
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
   { path: "/editorial-policy", priority: 0.3, changefreq: "yearly" },
