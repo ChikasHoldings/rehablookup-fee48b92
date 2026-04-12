@@ -502,41 +502,11 @@ const ArticleDetail = () => {
 
               {/* Share Section */}
               <div className="mt-12 pt-8 border-t">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <p className="text-sm font-medium text-foreground">Share this article:</p>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <Twitter className="h-4 w-4" />
-                    </a>
-                    <a
-                      href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <Facebook className="h-4 w-4" />
-                    </a>
-                    <a
-                      href={`https://www.linkedin.com/shareArticle?mini=true&url=${shareUrl}&title=${shareTitle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <Linkedin className="h-4 w-4" />
-                    </a>
-                    <button
-                      onClick={handleCopyLink}
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
+                <ArticleShareBar
+                  title={article.title}
+                  description={article.excerpt}
+                  url={`https://rehablookup.com/resources/${article.slug}`}
+                />
               </div>
 
               {/* Enhanced Related Articles with Smart Linking */}
