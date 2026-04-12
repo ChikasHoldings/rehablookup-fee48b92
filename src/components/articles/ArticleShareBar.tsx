@@ -27,6 +27,23 @@ interface ArticleShareBarProps {
 }
 
 /**
+ * Builds the og-share URL that serves proper OG meta tags to social crawlers
+ * and instantly redirects human visitors to the real page.
+ */
+function getOgShareUrl(canonicalUrl: string): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) return canonicalUrl;
+
+  // Extract the path from the canonical URL
+  try {
+    const parsed = new URL(canonicalUrl);
+    return `${supabaseUrl}/functions/v1/og-share?path=${encodeURIComponent(parsed.pathname)}`;
+  } catch {
+    return canonicalUrl;
+  }
+}
+
+/**
  * Sanitizes text for use in share URLs to prevent XSS/injection.
  * Only allows safe characters and truncates to a max length.
  */
