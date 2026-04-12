@@ -643,15 +643,22 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <TestimonialsSection
-        testimonials={seekerTestimonials}
-        title="Real Stories from Families We've Helped"
-        subtitle="Hear from people who found the right treatment through RehabLookup"
-      />
+      <LazySection fallbackHeight="400px">
+        <Suspense fallback={null}>
+          <TestimonialsSection
+            testimonials={seekerTestimonials}
+            title="Real Stories from Families We've Helped"
+            subtitle="Hear from people who found the right treatment through RehabLookup"
+          />
+        </Suspense>
+      </LazySection>
 
       {/* International Patients CTA */}
-      <InternationalCTA />
+      <LazySection fallbackHeight="200px">
+        <Suspense fallback={null}>
+          <InternationalCTA />
+        </Suspense>
+      </LazySection>
 
       {/* Find Treatment Near You - SEO Section */}
       <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
