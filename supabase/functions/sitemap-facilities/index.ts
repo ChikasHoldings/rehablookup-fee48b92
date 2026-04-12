@@ -469,6 +469,17 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/rehab-joint-commission-marketing", priority: 0.85, changefreq: "monthly" },
   { path: "/provider-guides/rehab-aftercare-continuum-marketing", priority: 0.85, changefreq: "monthly" },
 
+  // Provider Digital Marketing Pages
+  { path: "/provider-guides/rehab-online-reviews-strategy", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-local-seo-domination", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-video-marketing-strategy", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-conversion-rate-optimization", priority: 0.85, changefreq: "monthly" },
+
+  // Provider Finance & Funding Pages
+  { path: "/provider-guides/rehab-billing-revenue-cycle", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-grant-funding-opportunities", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-data-analytics-growth", priority: 0.85, changefreq: "monthly" },
+
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
   { path: "/editorial-policy", priority: 0.3, changefreq: "yearly" },
