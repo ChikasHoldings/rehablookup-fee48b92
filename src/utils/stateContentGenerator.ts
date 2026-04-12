@@ -334,6 +334,24 @@ const treatmentDescriptions: Record<TreatmentType, {
       "Court-ordered treatment for men may be funded through state judicial programs",
     ],
   },
+  holistic: {
+    label: "Holistic Therapy",
+    intro: "Holistic addiction treatment integrates complementary therapies — yoga, meditation, acupuncture, art therapy, and nutritional counseling — with evidence-based clinical care to address the physical, emotional, and spiritual dimensions of recovery.",
+    lookForItems: [
+      "Integration of yoga, meditation, and mindfulness practices",
+      "Acupuncture, massage, and other complementary therapies",
+      "Nutritional counseling and fitness programming",
+      "Art, music, and equine-assisted therapy options",
+      "Licensed clinical staff overseeing evidence-based treatment",
+      "Individualized wellness plans addressing whole-person health",
+    ],
+    insuranceTips: [
+      "Clinical components (therapy, medical care) are typically covered by insurance",
+      "Complementary therapies may be considered elective and not covered",
+      "Some insurers cover acupuncture and chiropractic as behavioral health benefits",
+      "Ask facilities about package pricing that includes holistic services",
+    ],
+  },
 };
 
 /**
