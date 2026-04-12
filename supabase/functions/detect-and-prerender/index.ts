@@ -92,6 +92,8 @@ const SEO_PATTERN_ROUTES = [
   '/resources/',
   '/center/',
   '/us-rehab',
+  '/providers/resources/',
+  '/provider-guides/',
 ];
 
 // Near-me landing pages

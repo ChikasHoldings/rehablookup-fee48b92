@@ -8,83 +8,31 @@ const corsHeaders = {
 // Bot detection patterns - comprehensive list of search engine and social crawlers
 const BOT_PATTERNS = [
   // Major search engines
-  'googlebot',
-  'google-inspectiontool',
-  'googleother',
-  'google-extended',
-  'storebot-google',
-  'bingbot',
-  'msnbot',
-  'slurp',
-  'duckduckbot',
-  'baiduspider',
-  'yandexbot',
-  'sogou',
-  'exabot',
-  'ia_archiver',
-  'applebot',
-  'seznambot',
-  'naverbot',
+  'googlebot', 'google-inspectiontool', 'googleother', 'google-extended',
+  'storebot-google', 'bingbot', 'msnbot', 'slurp', 'duckduckbot',
+  'baiduspider', 'yandexbot', 'sogou', 'exabot', 'ia_archiver',
+  'applebot', 'seznambot', 'naverbot',
   // Social media crawlers
-  'facebookexternalhit',
-  'facebot',
-  'twitterbot',
-  'linkedinbot',
-  'pinterest',
-  'whatsapp',
-  'telegrambot',
-  'slackbot',
-  'discordbot',
-  'redditbot',
-  'tumblr',
-  'snapchat',
+  'facebookexternalhit', 'facebot', 'twitterbot', 'linkedinbot',
+  'pinterest', 'whatsapp', 'telegrambot', 'slackbot', 'discordbot',
+  'redditbot', 'tumblr', 'snapchat',
   // SEO tools
-  'semrushbot',
-  'ahrefsbot',
-  'mj12bot',
-  'dotbot',
-  'rogerbot',
-  'screaming frog',
-  'seokicks',
-  'sistrix',
-  'siteauditbot',
+  'semrushbot', 'ahrefsbot', 'mj12bot', 'dotbot', 'rogerbot',
+  'screaming frog', 'seokicks', 'sistrix', 'siteauditbot',
   // AI crawlers
-  'gptbot',
-  'chatgpt-user',
-  'claude-web',
-  'anthropic-ai',
-  'cohere-ai',
-  'perplexitybot',
-  'youbot',
+  'gptbot', 'chatgpt-user', 'claude-web', 'anthropic-ai',
+  'cohere-ai', 'perplexitybot', 'youbot',
   // Other crawlers
-  'petalbot',
-  'bytespider',
-  'dataforseobot',
-  'coccocbot',
-  'amazonbot',
-  'yeti',
-  'archive.org_bot',
-  'ccbot',
+  'petalbot', 'bytespider', 'dataforseobot', 'coccocbot',
+  'amazonbot', 'yeti', 'archive.org_bot', 'ccbot',
 ];
 
 // Routes that should be prerendered for SEO
 const SEO_EXACT_ROUTES = [
-  '/',
-  '/for-providers',
-  '/concierge',
-  '/international',
-  '/international/apply',
-  '/about',
-  '/contact',
-  '/privacy-policy',
-  '/terms-of-service',
-  '/resources',
-  '/how-it-works',
-  '/insurance',
-  '/locations',
-  '/treatment-types',
-  '/rehab-centers',
-  '/cost-estimator',
+  '/', '/for-providers', '/concierge', '/international', '/international/apply',
+  '/about', '/contact', '/privacy-policy', '/terms-of-service', '/resources',
+  '/how-it-works', '/insurance', '/locations', '/treatment-types',
+  '/rehab-centers', '/cost-estimator',
 ];
 
 function isBot(userAgent: string): boolean {
@@ -94,24 +42,22 @@ function isBot(userAgent: string): boolean {
 }
 
 function shouldPrerender(path: string): boolean {
-  // Normalize path
-  const normalizedPath = path.endsWith('/') && path !== '/' 
-    ? path.slice(0, -1) 
+  const normalizedPath = path.endsWith('/') && path !== '/'
+    ? path.slice(0, -1)
     : path;
-  
-  // Check exact matches
+
   if (SEO_EXACT_ROUTES.includes(normalizedPath)) return true;
-  
-  // Check pattern matches
   if (normalizedPath.startsWith('/rehab-centers')) return true;
   if (normalizedPath.startsWith('/treatment-types')) return true;
   if (normalizedPath.startsWith('/insurance')) return true;
   if (normalizedPath.startsWith('/locations')) return true;
   if (normalizedPath.startsWith('/resources/') && normalizedPath.split('/').length === 3) return true;
+  if (normalizedPath.startsWith('/providers/resources/') && normalizedPath.split('/').length === 4) return true;
+  if (normalizedPath.startsWith('/provider-guides/')) return true;
   if (normalizedPath.endsWith('-near-me') && normalizedPath.startsWith('/')) return true;
   if (normalizedPath.startsWith('/center/')) return true;
   if (normalizedPath.startsWith('/us-rehab')) return true;
-  
+
   return false;
 }
 
@@ -135,16 +81,13 @@ interface CacheEntry {
   status_code: number;
 }
 
-// Cache TTL in seconds (1 hour for dynamic content, 24 hours for static pages)
+// Cache TTL in seconds
 const CACHE_TTL_DYNAMIC = 3600; // 1 hour
 const CACHE_TTL_STATIC = 86400; // 24 hours
 
 function getCacheTTL(path: string): number {
-  // Static pages get longer cache
   const staticPaths = ['/privacy-policy', '/terms-of-service', '/about', '/contact', '/how-it-works'];
-  if (staticPaths.includes(path)) {
-    return CACHE_TTL_STATIC;
-  }
+  if (staticPaths.includes(path)) return CACHE_TTL_STATIC;
   return CACHE_TTL_DYNAMIC;
 }
 
@@ -156,30 +99,21 @@ async function getCachedHtml(supabase: ReturnType<typeof createClient>, path: st
       .eq('path', path)
       .single();
 
-    if (error || !data) {
-      return null;
-    }
+    if (error || !data) return null;
 
-    // Type assertion for the data
     const cacheData = data as { html: string; cached_at: string; status_code: number };
-
-    // Check if cache is still valid
     const cachedAt = new Date(cacheData.cached_at);
     const now = new Date();
     const ageSeconds = (now.getTime() - cachedAt.getTime()) / 1000;
     const ttl = getCacheTTL(path);
 
     if (ageSeconds > ttl) {
-      console.log('[Prerender] Cache expired for', path, '(age:', Math.round(ageSeconds), 's, ttl:', ttl, 's)');
+      console.log('[Prerender] Cache expired for', path, '(age:', Math.round(ageSeconds), 's)');
       return null;
     }
 
-    console.log('[Prerender] Cache hit for', path, '(age:', Math.round(ageSeconds), 's)');
-    return {
-      html: cacheData.html,
-      cached_at: cacheData.cached_at,
-      status_code: cacheData.status_code,
-    };
+    console.log('[Prerender] Cache hit for', path);
+    return { html: cacheData.html, cached_at: cacheData.cached_at, status_code: cacheData.status_code };
   } catch (err) {
     console.error('[Prerender] Cache read error:', err);
     return null;
@@ -188,22 +122,10 @@ async function getCachedHtml(supabase: ReturnType<typeof createClient>, path: st
 
 async function setCachedHtml(supabase: ReturnType<typeof createClient>, path: string, html: string, statusCode: number): Promise<void> {
   try {
-    const { error } = await supabase
-      .from('prerender_cache')
-      .upsert({
-        path,
-        html,
-        status_code: statusCode,
-        cached_at: new Date().toISOString(),
-      }, {
-        onConflict: 'path',
-      });
-
-    if (error) {
-      console.error('[Prerender] Cache write error:', error);
-    } else {
-      console.log('[Prerender] Cached HTML for', path);
-    }
+    await supabase.from('prerender_cache').upsert(
+      { path, html, status_code: statusCode, cached_at: new Date().toISOString() },
+      { onConflict: 'path' }
+    );
   } catch (err) {
     console.error('[Prerender] Cache write error:', err);
   }
@@ -211,19 +133,14 @@ async function setCachedHtml(supabase: ReturnType<typeof createClient>, path: st
 
 async function renderPage(url: string, apiKey: string): Promise<{ html: string; statusCode: number }> {
   console.log('[Prerender] Rendering URL:', url);
-  
+
   const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
     method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + apiKey,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      url,
-      formats: ['html'],
-      waitFor: 3000,
-      onlyMainContent: false,
-    }),
+    body: JSON.stringify({ url, formats: ['html'], waitFor: 3000, onlyMainContent: false }),
   });
 
   if (!response.ok) {
@@ -233,74 +150,86 @@ async function renderPage(url: string, apiKey: string): Promise<{ html: string; 
   }
 
   const data: FirecrawlResponse = await response.json();
-  
+
   if (!data.success || !data.data?.html) {
-    console.error('[Prerender] Firecrawl returned no HTML:', data.error);
     throw new Error(data.error || 'No HTML returned');
   }
 
-  return {
-    html: data.data.html,
-    statusCode: data.data.metadata?.statusCode || 200,
-  };
+  return { html: data.data.html, statusCode: data.data.metadata?.statusCode || 200 };
 }
 
-// Generate fallback HTML for a route when prerendering fails
-function generateFallbackHtml(path: string): string {
-  const baseTitle = 'RehabLookup - Find Addiction Treatment Centers';
-  let title = baseTitle;
-  let description = 'Search and compare verified addiction treatment centers near you.';
-  let h1 = 'Find Trusted Addiction Treatment Centers';
-  let content = '<p>Search 15,000+ verified drug and alcohol rehab centers across all 50 states.</p>';
+// Escape HTML to prevent XSS in meta tags
+function escHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-  // Customize fallback based on route
-  if (path === '/for-providers') {
-    title = 'List Your Treatment Center | RehabLookup';
-    h1 = 'List Your Treatment Center on RehabLookup';
-    description = 'Join 2,000+ addiction treatment providers. Get qualified leads and grow your facility.';
-    content = '<p>Reach families actively seeking addiction treatment. Create your free provider account today.</p>';
-  } else if (path === '/privacy-policy') {
-    title = 'Privacy Policy | RehabLookup';
-    h1 = 'Privacy Policy';
-    description = 'RehabLookup privacy policy - how we collect, use, and protect your information.';
-    content = '<p>Last updated: February 2, 2026. RehabLookup is committed to protecting your privacy.</p>';
-  } else if (path === '/terms-of-service') {
-    title = 'Terms of Service | RehabLookup';
-    h1 = 'Terms of Service';
-    description = 'RehabLookup terms of service - rules and guidelines for using our platform.';
-    content = '<p>By using RehabLookup, you agree to these terms. Please read carefully.</p>';
-  } else if (path === '/concierge') {
-    title = 'Concierge Placement Service | RehabLookup';
-    h1 = 'Personalized Treatment Placement Service';
-    description = 'Get personalized help finding the right treatment center. Free insurance verification included.';
-    content = '<p>Let our placement specialists find the perfect treatment center for your unique situation.</p>';
-  } else if (path === '/about') {
-    title = 'About Us | RehabLookup';
-    h1 = 'About RehabLookup';
-    description = 'Learn about our mission to make quality addiction treatment accessible to everyone.';
-    content = '<p>RehabLookup connects individuals and families with verified treatment centers nationwide.</p>';
-  } else if (path === '/contact') {
-    title = 'Contact Us | RehabLookup';
-    h1 = 'Contact RehabLookup';
-    description = 'Get in touch with our team for help finding treatment or provider inquiries.';
-    content = '<p>We\'re here to help 24/7. Reach out for confidential support.</p>';
-  } else if (path.endsWith('-near-me')) {
-    const type = path.replace('/', '').replace(/-near-me$/, '').replace(/-/g, ' ');
-    title = `${type.charAt(0).toUpperCase() + type.slice(1)} Near Me | RehabLookup`;
-    h1 = `Find ${type.charAt(0).toUpperCase() + type.slice(1)} Near You`;
-    description = `Search for ${type} in your area. Compare facilities, verify insurance, and get help today.`;
-    content = `<p>Find trusted ${type} options in your area. Use our search to compare local facilities.</p>`;
-  }
+// Fetch blog article metadata from DB
+async function fetchBlogArticle(supabase: ReturnType<typeof createClient>, slug: string) {
+  const { data } = await supabase
+    .from('blog_articles')
+    .select('title, excerpt, meta_title, meta_description, image_url, author, published_at, category_label, seo_keywords')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single();
+  return data;
+}
+
+interface OgMeta {
+  title: string;
+  description: string;
+  image: string;
+  url: string;
+  type: string;
+  publishedTime?: string;
+  author?: string;
+  section?: string;
+}
+
+function buildOgHtml(meta: OgMeta, bodyContent: string): string {
+  const safeTitle = escHtml(meta.title);
+  const safeDesc = escHtml(meta.description).slice(0, 200);
+  const safeImage = escHtml(meta.image);
+  const safeUrl = escHtml(meta.url);
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <meta name="description" content="${description}">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://rehablookup.com${path}">
+  <title>${safeTitle}</title>
+  <meta name="description" content="${safeDesc}">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="canonical" href="${safeUrl}">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="${escHtml(meta.type)}">
+  <meta property="og:site_name" content="RehabLookup">
+  <meta property="og:title" content="${safeTitle}">
+  <meta property="og:description" content="${safeDesc}">
+  <meta property="og:image" content="${safeImage}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${safeTitle}">
+  <meta property="og:url" content="${safeUrl}">
+  <meta property="og:locale" content="en_US">${meta.publishedTime ? `
+  <meta property="article:published_time" content="${escHtml(meta.publishedTime)}">` : ''}${meta.author ? `
+  <meta property="article:author" content="${escHtml(meta.author)}">` : ''}${meta.section ? `
+  <meta property="article:section" content="${escHtml(meta.section)}">` : ''}
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@rehablookup">
+  <meta name="twitter:creator" content="@rehablookup">
+  <meta name="twitter:title" content="${safeTitle}">
+  <meta name="twitter:description" content="${safeDesc}">
+  <meta name="twitter:image" content="${safeImage}">
+  <meta name="twitter:image:alt" content="${safeTitle}">
+
   <style>
     body { font-family: 'Inter', -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; color: #1B365D; }
     h1 { font-size: 2rem; margin-bottom: 16px; }
@@ -309,19 +238,206 @@ function generateFallbackHtml(path: string): string {
   </style>
 </head>
 <body>
-  <header>
-    <a href="/">RehabLookup</a>
-  </header>
+  <header><a href="/">RehabLookup</a></header>
   <main>
-    <h1>${h1}</h1>
-    ${content}
-    <p><a href="/">Return to homepage</a> | <a href="/rehab-centers">Browse all treatment centers</a></p>
+    ${bodyContent}
   </main>
   <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.875rem; color: #666;">
-    <p>© 2026 RehabLookup. All rights reserved.</p>
+    <p>&copy; ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
   </footer>
 </body>
 </html>`;
+}
+
+const DEFAULT_OG_IMAGE = 'https://rehablookup.com/og-image.jpg';
+const BASE_URL = 'https://rehablookup.com';
+
+// Generate fallback HTML with proper OG tags, optionally enhanced with DB data
+async function generateFallbackHtml(path: string, supabase: ReturnType<typeof createClient> | null): Promise<string> {
+  // ---- Blog article: /resources/{slug} ----
+  const blogMatch = path.match(/^\/resources\/([a-z0-9-]+)$/);
+  if (blogMatch && supabase) {
+    const slug = blogMatch[1];
+    try {
+      const article = await fetchBlogArticle(supabase, slug);
+      if (article) {
+        const ogImage = article.image_url || DEFAULT_OG_IMAGE;
+        return buildOgHtml(
+          {
+            title: article.meta_title || `${article.title} | RehabLookup`,
+            description: article.meta_description || article.excerpt,
+            image: ogImage.startsWith('http') ? ogImage : `${BASE_URL}${ogImage}`,
+            url: `${BASE_URL}/resources/${slug}`,
+            type: 'article',
+            publishedTime: article.published_at || undefined,
+            author: article.author || 'RehabLookup Editorial Team',
+            section: article.category_label || 'Health',
+          },
+          `<h1>${escHtml(article.title)}</h1>
+    <p>${escHtml(article.excerpt)}</p>
+    <p><a href="/resources">Browse all resources</a></p>`
+        );
+      }
+    } catch (err) {
+      console.error('[Prerender] Blog article fetch error:', err);
+    }
+  }
+
+  // ---- Provider resource article: /providers/resources/{slug} ----
+  // These are static data, but we still provide proper OG structure
+  if (path.startsWith('/providers/resources/')) {
+    const slug = path.replace('/providers/resources/', '');
+    const titleFromSlug = slug
+      .split('-')
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    return buildOgHtml(
+      {
+        title: `${titleFromSlug} | RehabLookup Provider Resources`,
+        description: `Expert guide on ${titleFromSlug.toLowerCase()} for treatment center operators. Strategies to grow admissions and improve outcomes.`,
+        image: DEFAULT_OG_IMAGE,
+        url: `${BASE_URL}${path}`,
+        type: 'article',
+      },
+      `<h1>${escHtml(titleFromSlug)}</h1>
+    <p>Expert resource for treatment center operators.</p>
+    <p><a href="/providers/resources">Browse all provider resources</a></p>`
+    );
+  }
+
+  // ---- Provider guides: /provider-guides/{slug} ----
+  if (path.startsWith('/provider-guides/')) {
+    const slug = path.replace('/provider-guides/', '');
+    const titleFromSlug = slug
+      .split('-')
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    return buildOgHtml(
+      {
+        title: `${titleFromSlug} | RehabLookup`,
+        description: `Complete guide to ${titleFromSlug.toLowerCase()} for addiction treatment providers.`,
+        image: DEFAULT_OG_IMAGE,
+        url: `${BASE_URL}${path}`,
+        type: 'article',
+      },
+      `<h1>${escHtml(titleFromSlug)}</h1>
+    <p>Marketing and growth guide for treatment providers.</p>`
+    );
+  }
+
+  // ---- Facility page: /center/{slug} ----
+  if (path.startsWith('/center/') && supabase) {
+    const slug = path.replace('/center/', '');
+    try {
+      const { data: facility } = await supabase
+        .from('facilities')
+        .select('name, description, city, state, logo_url')
+        .eq('slug', slug)
+        .eq('status', 'active')
+        .single();
+      if (facility) {
+        return buildOgHtml(
+          {
+            title: `${facility.name} - ${facility.city}, ${facility.state} | RehabLookup`,
+            description: facility.description?.slice(0, 160) || `${facility.name} treatment center in ${facility.city}, ${facility.state}.`,
+            image: facility.logo_url || DEFAULT_OG_IMAGE,
+            url: `${BASE_URL}${path}`,
+            type: 'website',
+          },
+          `<h1>${escHtml(facility.name)}</h1>
+    <p>${escHtml(facility.city)}, ${escHtml(facility.state)}</p>
+    <p>${escHtml(facility.description?.slice(0, 300) || '')}</p>`
+        );
+      }
+    } catch (err) {
+      console.error('[Prerender] Facility fetch error:', err);
+    }
+  }
+
+  // ---- Generic static pages ----
+  const staticPages: Record<string, { title: string; desc: string; h1: string; body: string }> = {
+    '/for-providers': {
+      title: 'List Your Treatment Center | RehabLookup',
+      desc: 'Join 2,000+ addiction treatment providers. Get qualified leads and grow your facility.',
+      h1: 'List Your Treatment Center on RehabLookup',
+      body: '<p>Reach families actively seeking addiction treatment. Create your free provider account today.</p>',
+    },
+    '/concierge': {
+      title: 'Concierge Placement Service | RehabLookup',
+      desc: 'Get personalized help finding the right treatment center. Free insurance verification included.',
+      h1: 'Personalized Treatment Placement Service',
+      body: '<p>Let our placement specialists find the perfect treatment center for your unique situation.</p>',
+    },
+    '/about': {
+      title: 'About Us | RehabLookup',
+      desc: 'Learn about our mission to make quality addiction treatment accessible to everyone.',
+      h1: 'About RehabLookup',
+      body: '<p>RehabLookup connects individuals and families with verified treatment centers nationwide.</p>',
+    },
+    '/contact': {
+      title: 'Contact Us | RehabLookup',
+      desc: 'Get in touch with our team for help finding treatment or provider inquiries.',
+      h1: 'Contact RehabLookup',
+      body: '<p>We\'re here to help 24/7. Reach out for confidential support.</p>',
+    },
+    '/privacy-policy': {
+      title: 'Privacy Policy | RehabLookup',
+      desc: 'RehabLookup privacy policy - how we collect, use, and protect your information.',
+      h1: 'Privacy Policy',
+      body: '<p>RehabLookup is committed to protecting your privacy.</p>',
+    },
+    '/terms-of-service': {
+      title: 'Terms of Service | RehabLookup',
+      desc: 'RehabLookup terms of service - rules and guidelines for using our platform.',
+      h1: 'Terms of Service',
+      body: '<p>By using RehabLookup, you agree to these terms.</p>',
+    },
+  };
+
+  const staticPage = staticPages[path];
+  if (staticPage) {
+    return buildOgHtml(
+      {
+        title: staticPage.title,
+        description: staticPage.desc,
+        image: DEFAULT_OG_IMAGE,
+        url: `${BASE_URL}${path}`,
+        type: 'website',
+      },
+      `<h1>${escHtml(staticPage.h1)}</h1>${staticPage.body}`
+    );
+  }
+
+  // Near-me pages
+  if (path.endsWith('-near-me')) {
+    const type = path.replace('/', '').replace(/-near-me$/, '').replace(/-/g, ' ');
+    const capType = type.charAt(0).toUpperCase() + type.slice(1);
+    return buildOgHtml(
+      {
+        title: `${capType} Near Me | RehabLookup`,
+        description: `Search for ${type} in your area. Compare facilities, verify insurance, and get help today.`,
+        image: DEFAULT_OG_IMAGE,
+        url: `${BASE_URL}${path}`,
+        type: 'website',
+      },
+      `<h1>Find ${escHtml(capType)} Near You</h1>
+    <p>Find trusted ${escHtml(type)} options in your area.</p>`
+    );
+  }
+
+  // Default fallback
+  return buildOgHtml(
+    {
+      title: 'RehabLookup - Find Trusted Addiction Treatment Centers',
+      description: 'Search and compare verified addiction treatment centers near you. 24/7 confidential help.',
+      image: DEFAULT_OG_IMAGE,
+      url: `${BASE_URL}${path}`,
+      type: 'website',
+    },
+    `<h1>Find Trusted Addiction Treatment Centers</h1>
+    <p>Search 15,000+ verified drug and alcohol rehab centers across all 50 states.</p>
+    <p><a href="/">Return to homepage</a> | <a href="/rehab-centers">Browse all treatment centers</a></p>`
+  );
 }
 
 Deno.serve(async (req) => {
@@ -334,52 +450,35 @@ Deno.serve(async (req) => {
     const path = url.searchParams.get('path') || '/';
     const userAgent = req.headers.get('user-agent') || '';
     const isMiddlewareCall = req.headers.get('x-prerender-request') === 'true';
-    
+
     console.log('[Prerender] Request for path:', path);
     console.log('[Prerender] User-Agent:', userAgent.substring(0, 100));
-    console.log('[Prerender] Is middleware call:', isMiddlewareCall);
 
-    // Skip bot check if called from middleware (already validated)
     const isBotRequest = isMiddlewareCall || isBot(userAgent);
-    console.log('[Prerender] Is bot:', isBotRequest);
 
     if (!isBotRequest) {
       return new Response(
-        JSON.stringify({ 
-          prerendered: false, 
-          reason: 'Not a bot request',
-          message: 'Use standard SPA rendering' 
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ prerendered: false, reason: 'Not a bot request', message: 'Use standard SPA rendering' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (!shouldPrerender(path)) {
-      console.log('[Prerender] Route not in SEO routes:', path);
       return new Response(
-        JSON.stringify({ 
-          prerendered: false, 
-          reason: 'Route not configured for prerendering' 
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ prerendered: false, reason: 'Route not configured for prerendering' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Initialize Supabase client for caching
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
+
     let supabase: ReturnType<typeof createClient> | null = null;
     if (supabaseUrl && supabaseKey) {
       supabase = createClient(supabaseUrl, supabaseKey);
-      
-      // Try to get cached HTML first
+
+      // Try cache first
       const cached = await getCachedHtml(supabase, path);
       if (cached) {
         return new Response(cached.html, {
@@ -398,30 +497,31 @@ Deno.serve(async (req) => {
     // Check for Firecrawl API key
     const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!firecrawlApiKey) {
-      console.error('[Prerender] FIRECRAWL_API_KEY not configured, returning fallback');
-      
-      // Return fallback HTML instead of error
-      const fallbackHtml = generateFallbackHtml(path);
+      console.log('[Prerender] No FIRECRAWL_API_KEY, generating DB-backed fallback for', path);
+      const fallbackHtml = await generateFallbackHtml(path, supabase);
+
+      // Cache the fallback so subsequent crawler hits are fast
+      if (supabase) {
+        await setCachedHtml(supabase, path, fallbackHtml, 200);
+      }
+
       return new Response(fallbackHtml, {
         status: 200,
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/html; charset=utf-8',
-          'X-Prerendered': 'fallback',
-          'X-Prerender-Reason': 'firecrawl-not-configured',
+          'X-Prerendered': 'fallback-db',
+          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
         },
       });
     }
 
-    const baseUrl = 'https://rehablookup.com';
-    const fullUrl = baseUrl + path;
-    
+    const fullUrl = BASE_URL + path;
+
     try {
       const { html, statusCode } = await renderPage(fullUrl, firecrawlApiKey);
-      
-      console.log('[Prerender] Successfully rendered', path, '(' + html.length + ' bytes, status: ' + statusCode + ')');
+      console.log('[Prerender] Rendered', path, '(' + html.length + ' bytes)');
 
-      // Cache the result
       if (supabase) {
         await setCachedHtml(supabase, path, html, statusCode);
       }
@@ -433,40 +533,32 @@ Deno.serve(async (req) => {
           'Content-Type': 'text/html; charset=utf-8',
           'X-Prerendered': 'true',
           'X-Prerender-Cache': 'miss',
-          'X-Prerender-Status': statusCode.toString(),
           'Cache-Control': 'public, max-age=3600, s-maxage=3600',
         },
       });
     } catch (renderError) {
-      console.error('[Prerender] Render error:', renderError);
-      
-      // Return fallback HTML on render error
-      const fallbackHtml = generateFallbackHtml(path);
+      console.error('[Prerender] Render error, using DB fallback:', renderError);
+      const fallbackHtml = await generateFallbackHtml(path, supabase);
       return new Response(fallbackHtml, {
         status: 200,
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/html; charset=utf-8',
-          'X-Prerendered': 'fallback',
-          'X-Prerender-Reason': 'render-error',
+          'X-Prerendered': 'fallback-db',
         },
       });
     }
 
   } catch (error) {
     console.error('[Prerender] Error:', error);
-    
-    // Return fallback HTML on any error
     const path = new URL(req.url).searchParams.get('path') || '/';
-    const fallbackHtml = generateFallbackHtml(path);
-    
+    const fallbackHtml = await generateFallbackHtml(path, null);
     return new Response(fallbackHtml, {
       status: 200,
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'X-Prerendered': 'fallback',
-        'X-Prerender-Reason': 'error',
+        'X-Prerendered': 'fallback-error',
       },
     });
   }
