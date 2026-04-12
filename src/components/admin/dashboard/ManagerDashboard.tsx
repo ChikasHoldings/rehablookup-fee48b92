@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
 import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
@@ -851,5 +852,23 @@ function RecentEscalationsList() {
         );
       })}
     </div>
+
+    {/* Confirmation: Resolve Escalation */}
+    <ConfirmActionDialog
+      open={!!confirmResolveEscId}
+      onOpenChange={(open) => { if (!open) setConfirmResolveEscId(null); }}
+      title="Resolve Escalation"
+      description="Mark this escalation as resolved? The resolution will be logged in the audit trail."
+      confirmLabel="Resolve"
+      variant="warning"
+      isLoading={resolveMutation.isPending}
+      onConfirm={async () => {
+        if (confirmResolveEscId) {
+          resolveMutation.mutate(confirmResolveEscId);
+          setConfirmResolveEscId(null);
+        }
+      }}
+    />
+  </>
   );
 }
