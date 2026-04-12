@@ -803,6 +803,7 @@ function RecentEscalationsList() {
   if (!recentEscalations || recentEscalations.length === 0) return null;
 
   return (
+    <>
     <div className="space-y-2 pt-2 border-t">
       {recentEscalations.map((esc: any) => {
         const isAssignedToMe = esc.assigned_to === user?.id;
