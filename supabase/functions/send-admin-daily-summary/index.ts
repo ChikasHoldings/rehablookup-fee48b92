@@ -120,9 +120,8 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
   const { data: unlockRevenue } = await supabase.from("credit_transactions").select("amount_cents").eq("transaction_type", "unlock").gte("created_at", start).lte("created_at", end);
   const totalRevenueCents = (unlockRevenue || []).reduce((sum: number, t: { amount_cents: number }) => sum + Math.abs(t.amount_cents), 0);
 
-  // Facility views total
-  const { data: viewsData } = await supabase.from("facility_views").select("view_count").gte("view_date", start.split("T")[0]).lte("view_date", end.split("T")[0]);
-  const totalViews = (viewsData || []).reduce((sum: number, v: { view_count: number }) => sum + (v.view_count || 0), 0);
+  // Facility views total (from provider_events — source of truth)
+  const { count: totalViews } = await supabase.from("provider_events").select("id", { count: "exact", head: true }).in("event_type", ["profile_view", "listing_impression"]).gte("created_at", start).lte("created_at", end);
 
   // System alerts (escalations)
   const { count: openEscalations } = await supabase.from("admin_escalations").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]);
