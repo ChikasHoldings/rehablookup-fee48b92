@@ -6,6 +6,7 @@ const BestInStatePage = lazy(() => import("@/pages/seo/BestInStatePage"));
 const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYourFacilityState"));
 const ForProvidersState = lazy(() => import("@/pages/provider-guides/ForProvidersState"));
 const CityTreatmentPage = lazy(() => import("@/pages/seo/CityTreatmentPage"));
+const CityProviderPage = lazy(() => import("@/pages/provider-guides/CityProviderPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 /**

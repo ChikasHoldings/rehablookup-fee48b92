@@ -80,6 +80,15 @@ const CoOccurringPage = lazy(() => import("./pages/seo/CoOccurringPage"));
 const DurationSettingPage = lazy(() => import("./pages/seo/DurationSettingPage"));
 const PaymentStatePage = lazy(() => import("./pages/seo/PaymentStatePage"));
 const StateArticlePage = lazy(() => import("./pages/seo/StateArticlePage"));
+
+// Provider Conversion Pages
+const CityProviderPage = lazy(() => import("./pages/provider-guides/CityProviderPage"));
+const TreatmentProviderPage = lazy(() => import("./pages/provider-guides/TreatmentProviderPage"));
+const StateTreatmentProviderPage = lazy(() => import("./pages/provider-guides/StateTreatmentProviderPage"));
+const InsuranceProviderPage = lazy(() => import("./pages/provider-guides/InsuranceProviderPage"));
+const StateInsuranceProviderPage = lazy(() => import("./pages/provider-guides/StateInsuranceProviderPage"));
+const ProviderComparisonPage = lazy(() => import("./pages/provider-guides/ProviderComparisonPage"));
+const RehabMarketingHub = lazy(() => import("./pages/provider-guides/RehabMarketingHub"));
 // BestInStatePage moved to SmartCatchAll
 
 // Provider SEO Pages
