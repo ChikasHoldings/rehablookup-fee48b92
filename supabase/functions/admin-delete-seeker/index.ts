@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify caller is an admin
+    // Verify caller is an admin with moderation privileges
     const { data: isAdmin } = await userClient.rpc("user_is_admin", { p_user_id: adminUser.id });
     
     if (!isAdmin) {
@@ -50,15 +50,47 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Verify caller has moderation permission (super_admin or manager only)
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: canModerate } = await adminClient.rpc("can_moderate_users", { p_user_id: adminUser.id });
+    
+    if (!canModerate) {
+      console.error("[ADMIN-DELETE-SEEKER] User lacks moderation permission:", adminUser.id);
+      return new Response(
+        JSON.stringify({ error: "Forbidden - Only Super Admins and Managers can perform this action" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body = await req.json();
     const { targetUserId, action = "delete", reason } = body;
 
-    if (!targetUserId) {
+    // Input validation
+    if (!targetUserId || typeof targetUserId !== "string" || targetUserId.length > 40) {
       return new Response(
-        JSON.stringify({ error: "targetUserId is required" }),
+        JSON.stringify({ error: "Invalid targetUserId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // UUID format check
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(targetUserId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid targetUserId format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!["delete", "ban", "unban"].includes(action)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid action: ${action}. Valid actions are: delete, ban, unban` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Sanitize reason
+    const sanitizedReason = reason ? String(reason).replace(/<[^>]*>/g, "").slice(0, 500) : undefined;
 
     console.log(`[ADMIN-DELETE-SEEKER] Admin ${adminUser.id} performing ${action} on user ${targetUserId}`);
 
