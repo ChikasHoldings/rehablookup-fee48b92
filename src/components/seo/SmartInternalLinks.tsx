@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Shield, Heart, BookOpen } from "lucide-react";
-import { locationSeoData } from "@/data/locationSeoData";
+import { statesData } from "@/data/locationSeoData";
 import { stateCountyData } from "@/data/countySeoData";
 import { insurerConfigs } from "@/data/seoInsuranceStateConfig";
 
