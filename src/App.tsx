@@ -539,26 +539,65 @@ const AppInner = () => {
             <Route path="/adderall-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
             <Route path="/kratom-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
             <Route path="/gabapentin-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/tramadol-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
-            
-            {/* Demographic/Population-Specific Pages */}
-            <Route path="/young-adult-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/teen-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/senior-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/lgbtq-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/pregnant-women-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/first-responders-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/healthcare-professionals-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/executive-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/teachers-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            <Route path="/college-student-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
-            
-            {/* Seeker Intent / Family Guide Pages */}
-            <Route path="/how-to-stage-an-intervention" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
-            <Route path="/signs-loved-one-needs-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
-            <Route path="/how-to-help-alcoholic-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
-            <Route path="/what-to-expect-loved-one-in-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
-            <Route path="/how-to-find-rehab-for-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/tramadol-addiction-treatment" element={<PublicRouteGuard><SubstanceTreatmentPage /></PublicRouteGuard>} />
+
+             {/* Substance + State Pages */}
+             <Route path="/cocaine-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/opioid-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/heroin-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/meth-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/prescription-drug-rehab/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/benzodiazepine-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/alcohol-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/marijuana-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/fentanyl-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/xanax-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/adderall-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/kratom-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/gabapentin-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             <Route path="/tramadol-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
+             
+             {/* Demographic/Population-Specific Pages */}
+             <Route path="/young-adult-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/teen-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/senior-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/lgbtq-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/pregnant-women-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/first-responders-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/healthcare-professionals-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/executive-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/teachers-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+             <Route path="/college-student-addiction-treatment" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
+
+             {/* Demographic + State Pages */}
+             <Route path="/young-adult-rehab/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/teen-rehab-programs/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/senior-addiction-treatment/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/lgbtq-rehab-programs/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/pregnant-women-addiction-treatment/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/first-responders-rehab/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/healthcare-professionals-rehab/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/executive-rehab-programs/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/teachers-rehab-programs/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             <Route path="/college-student-addiction-treatment/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+             
+             {/* Seeker Intent / Family Guide Pages */}
+             <Route path="/how-to-stage-an-intervention" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/signs-loved-one-needs-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/how-to-help-alcoholic-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/what-to-expect-loved-one-in-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/how-to-find-rehab-for-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+
+             {/* Therapy Modality & Educational Pages */}
+             <Route path="/cbt-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/emdr-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/dbt-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/motivational-interviewing-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/art-music-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/adventure-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/aftercare-and-relapse-prevention" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/what-to-pack-for-rehab" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/questions-to-ask-rehab-center" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
             
             {/* Insurance + State + City Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInsurancePage /></PublicRouteGuard>} />
