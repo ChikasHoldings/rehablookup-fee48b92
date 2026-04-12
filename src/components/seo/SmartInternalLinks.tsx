@@ -40,7 +40,7 @@ export function SmartInternalLinks({
 
   // Find state data
   const stateData = stateSlug
-    ? locationSeoData.find((s) => s.stateSlug === stateSlug)
+    ? statesData.find((s) => s.slug === stateSlug)
     : null;
 
   // Find county data
