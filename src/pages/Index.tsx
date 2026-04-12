@@ -109,6 +109,14 @@ const treatmentOptions = [
 
 
 const Index = () => {
+  // Lazy-loaded data for below-fold sections
+  const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
+  const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+
+  useEffect(() => {
+    seekerTestimonialsPromise.then(setSeekerTestimonials);
+    homeFaqsPromise.then(setHomeFaqs);
+  }, []);
   // Parallax effect for Why Choose Us image
   const parallaxRef = useRef<HTMLDivElement>(null);
   const [parallaxOffset, setParallaxOffset] = useState(0);
