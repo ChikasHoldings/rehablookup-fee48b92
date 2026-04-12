@@ -43,6 +43,8 @@ export function CustomerRepDashboard() {
   const [moderatingReviewId, setModeratingReviewId] = useState<string | null>(null);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [claimingTicketId, setClaimingTicketId] = useState<string | null>(null);
+  const [confirmResolveTicketId, setConfirmResolveTicketId] = useState<string | null>(null);
+  const [confirmRejectReviewId, setConfirmRejectReviewId] = useState<string | null>(null);
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["rep-ticket-stats"] });
