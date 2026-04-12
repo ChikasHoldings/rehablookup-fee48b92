@@ -457,6 +457,28 @@ const COUNTY_TREATMENT_TYPES = [
   "dual-diagnosis-treatment",
 ];
 
+const SUBSTANCE_SLUGS = [
+  "cocaine-addiction-treatment", "opioid-addiction-treatment", "heroin-addiction-treatment",
+  "meth-addiction-treatment", "prescription-drug-rehab", "benzodiazepine-addiction-treatment",
+  "alcohol-addiction-treatment", "marijuana-addiction-treatment", "fentanyl-addiction-treatment",
+  "xanax-addiction-treatment", "adderall-addiction-treatment", "kratom-addiction-treatment",
+  "gabapentin-addiction-treatment", "tramadol-addiction-treatment",
+];
+
+const DEMOGRAPHIC_SLUGS = [
+  "young-adult-rehab", "teen-rehab-programs", "senior-addiction-treatment",
+  "lgbtq-rehab-programs", "pregnant-women-addiction-treatment", "first-responders-rehab",
+  "healthcare-professionals-rehab", "executive-rehab-programs", "teachers-rehab-programs",
+  "college-student-addiction-treatment",
+];
+
+const THERAPY_MODALITY_SLUGS = [
+  "cbt-therapy-for-addiction", "emdr-therapy-for-addiction", "dbt-therapy-for-addiction",
+  "motivational-interviewing-for-addiction", "art-music-therapy-for-addiction",
+  "adventure-therapy-for-addiction", "aftercare-and-relapse-prevention",
+  "what-to-pack-for-rehab", "questions-to-ask-rehab-center",
+];
+
 // All 50 states for near-me state pages (full coverage)
 const TOP_STATES_FOR_NEAR_ME = [...US_STATES];
 
