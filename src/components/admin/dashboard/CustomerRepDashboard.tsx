@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,8 @@ export function CustomerRepDashboard() {
   const [moderatingReviewId, setModeratingReviewId] = useState<string | null>(null);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [claimingTicketId, setClaimingTicketId] = useState<string | null>(null);
+  const [confirmResolveTicketId, setConfirmResolveTicketId] = useState<string | null>(null);
+  const [confirmRejectReviewId, setConfirmRejectReviewId] = useState<string | null>(null);
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["rep-ticket-stats"] });
@@ -177,16 +180,28 @@ export function CustomerRepDashboard() {
     setSelectedTicketId(ticketId);
   };
 
-  // Resolve ticket inline with confirmation
+  // Resolve ticket — triggered by confirmation dialog
   const resolveTicket = async (ticketId: string) => {
     if (!user?.id) return;
-    if (!window.confirm("Are you sure you want to mark this ticket as resolved?")) return;
     const { error } = await supabase
       .from("support_tickets")
       .update({ status: "resolved", resolved_at: new Date().toISOString() })
       .eq("id", ticketId);
     if (error) { toast.error("Failed to resolve ticket"); return; }
     toast.success("Ticket resolved");
+    invalidateDashboard();
+  };
+
+  // Reject review — triggered by confirmation dialog
+  const handleRejectReview = async (reviewId: string) => {
+    setModeratingReviewId(reviewId);
+    const { error } = await supabase
+      .from("facility_reviews")
+      .update({ status: "rejected" })
+      .eq("id", reviewId);
+    setModeratingReviewId(null);
+    if (error) { toast.error("Failed to reject"); return; }
+    toast.success("Review rejected");
     invalidateDashboard();
   };
 
@@ -398,7 +413,7 @@ export function CustomerRepDashboard() {
                           size="icon"
                           className="h-7 w-7 text-success hover:text-success"
                           title="Resolve ticket"
-                          onClick={(e) => { e.stopPropagation(); resolveTicket(ticket.id); }}
+                          onClick={(e) => { e.stopPropagation(); setConfirmResolveTicketId(ticket.id); }}
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
@@ -550,17 +565,9 @@ export function CustomerRepDashboard() {
                             className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                             title="Reject review"
                             disabled={moderatingReviewId === review.id}
-                            onClick={async () => {
-                              if (!window.confirm("Are you sure you want to reject this review?")) return;
-                              setModeratingReviewId(review.id);
-                              const { error } = await supabase
-                                .from("facility_reviews")
-                                .update({ status: "rejected" })
-                                .eq("id", review.id);
-                              setModeratingReviewId(null);
-                              if (error) { toast.error("Failed to reject"); return; }
-                              toast.success("Review rejected");
-                              invalidateDashboard();
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmRejectReviewId(review.id);
                             }}
                           >
                             <XCircle className="h-3.5 w-3.5" />
@@ -753,6 +760,38 @@ export function CustomerRepDashboard() {
         ticket={selectedTicketId ? { id: selectedTicketId } as any : null}
         open={!!selectedTicketId}
         onOpenChange={(open) => { if (!open) { setSelectedTicketId(null); invalidateDashboard(); } }}
+      />
+
+      {/* Confirmation: Resolve Ticket */}
+      <ConfirmActionDialog
+        open={!!confirmResolveTicketId}
+        onOpenChange={(open) => { if (!open) setConfirmResolveTicketId(null); }}
+        title="Resolve Ticket"
+        description="Are you sure you want to mark this ticket as resolved? The user will be notified."
+        confirmLabel="Resolve"
+        variant="warning"
+        onConfirm={async () => {
+          if (confirmResolveTicketId) {
+            await resolveTicket(confirmResolveTicketId);
+            setConfirmResolveTicketId(null);
+          }
+        }}
+      />
+
+      {/* Confirmation: Reject Review */}
+      <ConfirmActionDialog
+        open={!!confirmRejectReviewId}
+        onOpenChange={(open) => { if (!open) setConfirmRejectReviewId(null); }}
+        title="Reject Review"
+        description="Are you sure you want to reject this review? This action cannot be undone and the review will be hidden from public view."
+        confirmLabel="Reject"
+        variant="destructive"
+        onConfirm={async () => {
+          if (confirmRejectReviewId) {
+            await handleRejectReview(confirmRejectReviewId);
+            setConfirmRejectReviewId(null);
+          }
+        }}
       />
     </div>
   );

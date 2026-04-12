@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ export function ManagerDashboard() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("ManagerDashboard");
   const { hasPermission } = useAdminAuth();
+  const [confirmResolveEscId, setConfirmResolveEscId] = useState<string | null>(null);
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["manager-stats"] });
@@ -801,6 +803,7 @@ function RecentEscalationsList() {
   if (!recentEscalations || recentEscalations.length === 0) return null;
 
   return (
+    <>
     <div className="space-y-2 pt-2 border-t">
       {recentEscalations.map((esc: any) => {
         const isAssignedToMe = esc.assigned_to === user?.id;
@@ -839,8 +842,7 @@ function RecentEscalationsList() {
                 className="text-xs h-7"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!window.confirm("Mark this escalation as resolved?")) return;
-                  resolveMutation.mutate(esc.id);
+                  setConfirmResolveEscId(esc.id);
                 }}
                 disabled={resolveMutation.isPending}
               >
@@ -851,5 +853,23 @@ function RecentEscalationsList() {
         );
       })}
     </div>
+
+    {/* Confirmation: Resolve Escalation */}
+    <ConfirmActionDialog
+      open={!!confirmResolveEscId}
+      onOpenChange={(open) => { if (!open) setConfirmResolveEscId(null); }}
+      title="Resolve Escalation"
+      description="Mark this escalation as resolved? The resolution will be logged in the audit trail."
+      confirmLabel="Resolve"
+      variant="warning"
+      isLoading={resolveMutation.isPending}
+      onConfirm={async () => {
+        if (confirmResolveEscId) {
+          resolveMutation.mutate(confirmResolveEscId);
+          setConfirmResolveEscId(null);
+        }
+      }}
+    />
+  </>
   );
 }
