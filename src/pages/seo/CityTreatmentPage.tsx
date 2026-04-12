@@ -140,29 +140,27 @@ export default function CityTreatmentPage() {
     });
   }
 
-  structuredData.push(
-    {
-      "@context": "https://schema.org",
-      "@type": "MedicalWebPage",
-      name: pageTitle,
-      description: `Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}.`,
-      url: `https://rehablookup.com/${slug}`,
-      about: {
-        "@type": "MedicalCondition",
-        name: "Substance Use Disorder",
-      },
-      audience: {
-        "@type": "PeopleAudience",
-        geographicArea: {
-          "@type": "City",
-          name: city.city,
-          containedInPlace: { "@type": "State", name: city.state },
-        },
-      },
-      specialty: "Addiction Medicine",
-      lastReviewed: new Date().toISOString().split("T")[0],
+  structuredData.push({
+    "@context": "https://schema.org",
+    "@type": "MedicalWebPage",
+    name: pageTitle,
+    description: `Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}.`,
+    url: `https://rehablookup.com/${slug}`,
+    about: {
+      "@type": "MedicalCondition",
+      name: "Substance Use Disorder",
     },
-  ];
+    audience: {
+      "@type": "PeopleAudience",
+      geographicArea: {
+        "@type": "City",
+        name: city.city,
+        containedInPlace: { "@type": "State", name: city.state },
+      },
+    },
+    specialty: "Addiction Medicine",
+    lastReviewed: new Date().toISOString().split("T")[0],
+  });
 
   return (
     <SEOLandingTemplate
