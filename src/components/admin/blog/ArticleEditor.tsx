@@ -218,6 +218,18 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
         const { error } = await supabase.from("blog_articles").insert(articleData as any);
         if (error) throw error;
       }
+
+      // Audit log for blog changes
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: adminUser.id,
+          action_type: isEditing ? "blog_article_updated" : "blog_article_created",
+          target_type: "blog_article",
+          target_id: article?.id || null,
+          details: { title: data.title, slug: data.slug, status: data.status },
+        });
+      }
     },
     onSuccess: () => {
       toast({ title: isEditing ? "Article updated successfully" : "Article created successfully" });
