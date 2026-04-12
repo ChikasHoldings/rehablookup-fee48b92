@@ -387,6 +387,11 @@ function DetoxStateRedirect() {
   return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;
 }
 
+function InpatientStateRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;
+}
+
 const AppInner = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
