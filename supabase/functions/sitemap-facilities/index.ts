@@ -456,6 +456,19 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/healthcare-professional-rehab-marketing", priority: 0.85, changefreq: "monthly" },
   { path: "/provider-guides/native-american-tribal-rehab-marketing", priority: 0.85, changefreq: "monthly" },
 
+  // Provider Growth & Expansion Pages
+  { path: "/provider-guides/rehab-outpatient-program-expansion", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-branding-differentiation", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-medicaid-expansion-strategy", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-crisis-stabilization-marketing", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-family-program-marketing", priority: 0.85, changefreq: "monthly" },
+
+  // Provider Industry & Trends Pages
+  { path: "/provider-guides/rehab-telehealth-competition-strategy", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-workforce-shortage-solutions", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-joint-commission-marketing", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-aftercare-continuum-marketing", priority: 0.85, changefreq: "monthly" },
+
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
   { path: "/editorial-policy", priority: 0.3, changefreq: "yearly" },

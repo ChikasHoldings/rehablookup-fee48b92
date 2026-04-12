@@ -135,6 +135,9 @@ const ProviderPainPointPage = lazy(() => import("./pages/provider-guides/Provide
 const ProviderBusinessPage = lazy(() => import("./pages/provider-guides/ProviderBusinessPage"));
 const ProviderOperationsPage = lazy(() => import("./pages/provider-guides/ProviderOperationsPage"));
 const ProviderNichePage = lazy(() => import("./pages/provider-guides/ProviderNichePage"));
+const ProviderGrowthPage = lazy(() => import("./pages/provider-guides/ProviderGrowthPage"));
+const ProviderIndustryPage = lazy(() => import("./pages/provider-guides/ProviderIndustryPage"));
+
 // ListYourFacilityState moved to SmartCatchAll
 
 // Provider Resource Hub
@@ -998,6 +1001,19 @@ const AppInner = () => {
             <Route path="/provider-guides/first-responder-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/healthcare-professional-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/native-american-tribal-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
+
+            {/* Provider Growth & Expansion Pages */}
+            <Route path="/provider-guides/rehab-outpatient-program-expansion" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-branding-differentiation" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-medicaid-expansion-strategy" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-crisis-stabilization-marketing" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-family-program-marketing" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+
+            {/* Provider Industry & Trends Pages */}
+            <Route path="/provider-guides/rehab-telehealth-competition-strategy" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-workforce-shortage-solutions" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-joint-commission-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-aftercare-continuum-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
