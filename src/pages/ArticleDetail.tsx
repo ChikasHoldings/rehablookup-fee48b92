@@ -282,8 +282,6 @@ const ArticleDetail = () => {
     return <Navigate to="/resources" replace />;
   }
 
-  const shareUrl = encodeURIComponent(window.location.href);
-  const shareTitle = encodeURIComponent(article.title);
   const defaultImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop";
   const articleImage = article.image_url || defaultImage;
 
