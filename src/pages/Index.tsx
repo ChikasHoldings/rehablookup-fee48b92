@@ -786,6 +786,7 @@ const Index = () => {
       </section>
 
       {/* Resources / Blog Section */}
+      <LazySection fallbackHeight="400px">
       <section className="py-10 md:py-12 lg:py-20">
         <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
