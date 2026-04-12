@@ -137,6 +137,8 @@ const ProviderOperationsPage = lazy(() => import("./pages/provider-guides/Provid
 const ProviderNichePage = lazy(() => import("./pages/provider-guides/ProviderNichePage"));
 const ProviderGrowthPage = lazy(() => import("./pages/provider-guides/ProviderGrowthPage"));
 const ProviderIndustryPage = lazy(() => import("./pages/provider-guides/ProviderIndustryPage"));
+const ProviderDigitalPage = lazy(() => import("./pages/provider-guides/ProviderDigitalPage"));
+const ProviderFinancePage = lazy(() => import("./pages/provider-guides/ProviderFinancePage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
@@ -1014,6 +1016,17 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-workforce-shortage-solutions" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-joint-commission-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-aftercare-continuum-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+
+            {/* Provider Digital Marketing Pages */}
+            <Route path="/provider-guides/rehab-online-reviews-strategy" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-local-seo-domination" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-video-marketing-strategy" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-conversion-rate-optimization" element={<PublicRouteGuard><ProviderDigitalPage /></PublicRouteGuard>} />
+
+            {/* Provider Finance & Funding Pages */}
+            <Route path="/provider-guides/rehab-billing-revenue-cycle" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-grant-funding-opportunities" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-data-analytics-growth" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
