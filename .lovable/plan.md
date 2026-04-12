@@ -1,258 +1,207 @@
 
 
-# Admin System Full Rebuild & Hardening Plan
+# Platform-Wide SEO Audit and Controlled Expansion Plan
 
-## Current State Assessment
+## Current Inventory
 
-**What exists:**
-- 4 admin roles: Super Admin, Manager, Customer Rep, Advisor
-- Role-based permission system with `admin_user_permissions` table
-- Role-specific dashboards for each role
-- Basic user creation dialog (email, name, role, permissions)
-- Permission-gated sidebar, routing, and page access
-- Placement Advisor workspace with case management, inbox, tours
-
-**What's completely missing:**
-1. **Employee vs Contractor/VA classification** — No `employment_type` field in DB or UI
-2. **Contractor earnings/commission tracking** — No tables, no dashboard
-3. **Escalation system** — No escalation tables, no Back Office view
-4. **Impersonation system** — Zero implementation
-5. **Back Office panel** for Super Admin — Does not exist
-6. **Polished welcome email per role** — Current email is generic with temp password; no role explanation or onboarding guidance
-
-**What's partially built:**
-- Create user dialog lacks employment type, phone, and structured onboarding fields
-- Advisor dashboard exists but has no earnings/commission view for contractors
-- Customer Rep has no escalation capability
-- Settings page is Super Admin only; no role-specific settings views
-
----
-
-## Implementation Plan
-
-### Phase 1: Database Schema Updates
-
-**Migration 1 — Employment classification & escalations**
-
-Add to `admin_user_profiles`:
-- `employment_type` column: `enum ('employee', 'contractor', 'va')` — nullable for backward compat, default null
-- `phone` column: text, nullable
-- `hire_date` column: date, nullable
-- `commission_rate` column: integer (percentage), nullable — only for contractor advisors
-
-Create `admin_escalations` table:
-- `id` uuid PK
-- `created_by` uuid (FK to auth.users) — who escalated
-- `assigned_to` uuid nullable — Super Admin/Manager who picks it up
-- `subject` text
-- `description` text
-- `priority` enum ('low', 'medium', 'high', 'critical')
-- `status` enum ('open', 'in_progress', 'resolved', 'closed')
-- `related_type` text nullable — e.g. 'concierge_inquiry', 'support_ticket', 'lead'
-- `related_id` uuid nullable — reference to the related entity
-- `resolution_notes` text nullable
-- `resolved_at` timestamptz nullable
-- `created_at`, `updated_at`
-- RLS: Admins can read all; creator can read own; assigned_to can update
-
-Create `admin_impersonation_log` table:
-- `id` uuid PK
-- `admin_user_id` uuid — Super Admin performing impersonation
-- `target_user_id` uuid — user being impersonated
-- `target_role` text
-- `started_at` timestamptz default now()
-- `ended_at` timestamptz nullable
-- RLS: Only Super Admins can read/insert
-
-Create `advisor_earnings` table:
-- `id` uuid PK
-- `advisor_id` uuid (FK auth.users)
-- `inquiry_id` uuid (FK concierge_inquiries)
-- `placement_fee_cents` integer
-- `commission_rate` integer — percentage at time of placement
-- `commission_cents` integer — calculated amount
-- `status` enum ('pending', 'approved', 'paid')
-- `paid_at` timestamptz nullable
-- `created_at` timestamptz default now()
-- RLS: Advisor can read own; Super Admin/Manager can read all
-
----
-
-### Phase 2: Enhanced User Creation Dialog
-
-Rebuild `CreateAdminUserDialog.tsx` with 3-tab form:
-
-**Tab 1 — Identity:**
-- Full Name (split first/last)
-- Email
-- Phone number
-- Role selector (unchanged)
-
-**Tab 2 — Classification:**
-- Employment Type selector (dynamic based on role):
-  - Manager → always "Employee" (auto-set, read-only)
-  - Advisor → "Employee" or "Contractor"
-  - Customer Rep → "Employee" or "VA"
-  - Super Admin → always "Employee"
-- If Contractor: Commission Rate % field (default 10%)
-- Hire/Start Date
-
-**Tab 3 — Permissions** (existing, unchanged)
-
-Update `create-admin-user` edge function to:
-- Accept and store `employment_type`, `phone`, `commission_rate`, `hire_date`
-- Send role-specific welcome email (Phase 5)
-
----
-
-### Phase 3: Escalation System
-
-**New components:**
-- `src/components/admin/escalations/EscalationDialog.tsx` — Modal to create an escalation from any context (case detail, support ticket, etc.)
-- `src/components/admin/escalations/EscalationsList.tsx` — Filterable list of escalations
-- `src/pages/admin/AdminEscalations.tsx` — Full escalations page
-
-**Integration points:**
-- Add "Escalate" button to `ConciergeActionsTab` (for Advisors → escalates to Manager/Super Admin)
-- Add "Escalate" button to `SupportTicketModal` (for Customer Reps)
-- Sidebar: Show "Escalations" menu item for Manager and Super Admin roles
-- Route: `/admin/escalations` gated by new `escalations` permission (granted to Manager + Super Admin)
-
-**Escalation flow:**
-1. Any staff member creates escalation → selects priority, writes description, links related entity
-2. Escalation appears in Manager/Super Admin escalations queue
-3. Manager/Super Admin can assign, respond, resolve, close
-4. Resolution is logged; creator gets notification
-
----
-
-### Phase 4: Super Admin Back Office
-
-New page: `src/pages/admin/AdminBackOffice.tsx`
-
-Sections:
-- **Escalation Queue** — All open escalations with priority sorting
-- **System Health** — Active users, error rates, pending items across all modules
-- **Staff Activity** — Recent actions by all admin users (from audit log)
-- **Impersonation Controls** — List of staff with "View As" buttons
-- **Override Actions** — Direct case reassignment, forced status changes
-
-Route: `/admin/back-office` — Super Admin only permission
-
-Sidebar: Add "Back Office" item under Administration group, Super Admin only.
-
----
-
-### Phase 5: Impersonation System
-
-**How it works:**
-- Super Admin clicks "View As [User]" from Back Office or Staff page
-- System stores impersonation state in sessionStorage (NOT auth — no actual login swap)
-- UI renders the target role's sidebar, dashboard, and permission set
-- A persistent yellow banner shows "Viewing as [Name] (Advisor)" with an "Exit" button
-- All actions during impersonation are logged to `admin_impersonation_log`
-- Impersonation is read-only by default; no mutations allowed unless explicitly enabled
-
-**Implementation:**
-- New hook: `useImpersonation.ts` — manages impersonation state, overrides `useAdminAuth` permission/role returns
-- `AdminShell.tsx` — renders impersonation banner when active
-- `AdminSidebar.tsx` — uses impersonated role for menu filtering
-- Dashboard page — renders impersonated role's dashboard component
-
----
-
-### Phase 6: Advisor Earnings Dashboard
-
-New component: `src/components/admin/dashboard/AdvisorEarningsCard.tsx`
-
-Shows for contractor advisors only:
-- Total earnings (all time)
-- This month's earnings
-- Pending commissions
-- Paid commissions
-- List of recent placements with commission amounts
-- Commission rate display
-
-Integrated into `AdvisorDashboard.tsx` — conditionally rendered when `employment_type === 'contractor'`.
-
-Super Admin/Manager view: `PlacementRevenueDashboard.tsx` enhanced with per-advisor commission breakdown table.
-
----
-
-### Phase 7: Role-Specific Welcome Emails
-
-Update `create-admin-user` edge function email generation:
-
-**Super Admin:** "You've been granted full platform access. You can manage all staff, settings, and system operations."
-
-**Manager:** "You've been added as a Manager. You oversee platform operations, staff, and can manage providers, leads, and escalations."
-
-**Placement Advisor (Employee):** "You've been added as a Placement Advisor. You'll manage placement cases, coordinate between seekers and providers, and handle the full placement workflow."
-
-**Placement Advisor (Contractor):** Same as above + "As a contractor, your commission rate is X%. You'll be able to track your earnings and payouts from your dashboard."
-
-**Customer Rep (Employee):** "You've been added as a Customer Rep. You'll handle support inquiries, moderate reviews, and assist users with platform questions."
-
-**Customer Rep (VA):** Same as above + "As a virtual assistant, you have the same capabilities within your assigned scope."
-
-All emails include: Login URL, role badge, permission summary, "Complete Setup" CTA.
-
----
-
-### Phase 8: Final Audit & Hardening
-
-- Verify all new routes added to `routePermissionMap` in `useAdminAuth.ts`
-- Verify sidebar entries added with correct permission keys
-- Verify new permissions added to `ADMIN_PERMISSIONS` and `ROLE_DEFAULTS`
-- Ensure all new tables have RLS policies
-- Ensure escalation notifications are created in `admin_user_notifications`
-- Test that no role can access pages they shouldn't
-- Zero TypeScript errors
-
----
-
-## New Routes Summary
-
-| Route | Permission | Roles |
+| Page Type | Count | Coverage |
 |---|---|---|
-| `/admin/escalations` | `escalations` | Super Admin, Manager |
-| `/admin/back-office` | `back_office` | Super Admin only |
+| States (locationSeoData) | 50 | All 50 states |
+| Cities (locationSeoData) | ~655 | 8-15 per state |
+| Counties (countySeoData) | ~250 | 3-6 per state, 50 states |
+| topCities (seoPageConfig, for City+Treatment combos) | 288 | Weighted to CA, TX, FL |
+| Treatment types (for combos) | 14 | alcohol, drug, detox, inpatient, outpatient, dual-diagnosis, luxury, sober-living, free, faith, fentanyl, veterans, women's, men's |
+| BestInState configs | 50 (10 core + 40 expanded) | All 50 states |
+| Insurers | 16 | Major national carriers |
+| Insurance state configs | 50 | All 50 states |
+| Near-me pages | 31 variations x 51 (national + 50 states) | Full coverage |
+| Treatment-types state pages | 6 types x 50 states | Alcohol, drug, detox, dual-diagnosis, inpatient, outpatient |
+| Treatment-types city pages | 6 types x cities | Same 6 types |
+| City+Treatment combos (SmartCatchAll) | 288 cities x 14 types = ~4,032 | All combinations |
+| Insurance+State cross pages | 16 x 50 = 800 | All combinations |
+| Substance pages | 14 | Cocaine, opioid, heroin, meth, etc. |
+| Demographic pages | 10 | Young adult, teen, LGBTQ+, etc. |
+| Comparison pages | 10 | Inpatient vs outpatient, etc. |
+| Cost/insurance info pages | 7 | General educational |
+| Seeker guides | 5 | Family-focused |
+| State articles | 50 x 3 = 150 | How to find, cost, best cities |
 
-## New DB Tables
+**Estimated total addressable pages: ~6,000+**
 
-| Table | Purpose |
-|---|---|
-| `admin_escalations` | Cross-role escalation tracking |
-| `admin_impersonation_log` | Audit trail for impersonation |
-| `advisor_earnings` | Contractor commission tracking |
+---
 
-## New Permissions
+## PHASE 1: AUDIT — Issues Found
 
-| Key | Label | Default Roles |
+### 1. Duplicate Content Risks
+- **City+Treatment pages** (4,032) use `cityContentGenerator.ts` which varies content by population tier and state region, but 288 cities x 14 treatments = many pages with similar templated structure. The variation logic (metro/mid/small population tiers + ~50 state flavor strings) produces approximately 150 unique content combinations for 4,032 pages — high duplication risk.
+- **Insurance+State pages** (800) use a single template with identical FAQ generation logic (`getInsuranceStateFAQs`) — likely producing near-identical FAQ content across insurers per state.
+- **Near-me pages** (31 files) are individually coded but follow the same template structure — content differentiation relies mainly on treatment type name substitution.
+- **County FAQs** use a `countyFAQs()` helper that generates identical question structures with only county/state name swapped — Google will see these as templated.
+
+### 2. Soft 404 Risks
+- **City+Treatment combos**: For small cities with no matching facilities, the page falls back to state-level results. If even those are sparse (e.g., "luxury rehab in Palmdale"), pages show few/no relevant results.
+- **Insurance+State pages**: The facility filter has `|| true` fallback (line 40-41 of InsuranceStatePage), meaning ALL state facilities show regardless of insurance match — deceptive to users.
+
+### 3. Missing Page Types (Gaps)
+- **County+Treatment pages**: Do not exist.
+- **County+Insurance pages**: Do not exist.
+- **State+Insurance hub pages** (e.g., "Aetna rehab in California" without the `/insurance/` prefix): Only exist as `/insurance/:slug/:stateSlug`.
+- **City+Insurance pages**: Do not exist.
+- **Treatment+Insurance combo pages**: Do not exist.
+- **BestInState** only has 50 states — no city-level "best in [city]" pages.
+
+### 4. Schema/Breadcrumb Issues
+- Multiple pages emit both `FAQPage` and `MedicalWebPage` schemas — potential duplication if FAQ content is thin.
+- `BestInStatePage` emits `ItemList` + `FAQPage` — good.
+- Need to verify no page emits duplicate `BreadcrumbList` (the `SEO` component and `SEOLandingTemplate` both handle breadcrumbs).
+
+### 5. Internal Linking Gaps
+- City pages don't link to county pages and vice versa.
+- Insurance+State pages don't link to City+Treatment pages.
+- County pages don't link to City+Treatment combos within them.
+
+---
+
+## PHASE 2: QUALITY REBUILD — Implementation Steps
+
+### Step 1: Fix Insurance+State Facility Filter
+Remove the `|| true` fallback in `InsuranceStatePage.tsx` that shows all state facilities regardless of insurance match. Replace with a proper fallback: first try exact insurance match, then show state facilities with a disclaimer.
+
+### Step 2: Enhance Content Variation Engine
+Upgrade `cityContentGenerator.ts` to produce more unique content:
+- Add **facility density** variable (high/medium/low/none based on actual data)
+- Add **urban vs rural** classification
+- Add **regional healthcare context** (e.g., Medicaid expansion status, state licensing body name)
+- Create 4-5 content templates per section that rotate based on a hash of city+treatment, not just population tier
+
+### Step 3: Fix FAQ Deduplication
+- `countyFAQs()`: Add county-specific data points (population-based cost ranges, specific hospital names from `majorCities`)
+- `getInsuranceStateFAQs()`: Inject insurer-specific coverage details (e.g., Medicaid expansion status for Medicaid pages, network size for private insurers)
+- `generateCityTreatmentFAQs()`: Ensure questions vary by treatment type, not just location swap
+
+### Step 4: Thin Page Prevention System
+Create a utility `shouldIndexPage()` that checks:
+- Does this combination have >= 1 facility within the location?
+- Does this combination have >= 3 facilities within the state?
+- If neither: add `noindex` meta tag and exclude from sitemap
+- Apply to: City+Treatment, Insurance+State, County pages
+
+### Step 5: County Page Enhancement
+Current county pages exist but need:
+- Treatment type links to City+Treatment pages for cities within the county
+- Insurance links to Insurance+State pages
+- Better internal linking to neighboring counties
+
+---
+
+## PHASE 3: PAGE DIFFERENTIATION
+
+### Enforce Distinct Page Personalities
+
+| Page Type | Content Focus | Template Style |
 |---|---|---|
-| `escalations` | Escalations | Super Admin, Manager |
-| `back_office` | Back Office | Super Admin |
+| City | "Find treatment in [City]" — hyperlocal, nearby facilities, neighborhood context | Listings-first, map-oriented |
+| State | "[State] treatment overview" — major cities, statewide stats, Medicaid info | Hub page, links to cities |
+| County | "Regional coverage in [County]" — county seat focus, rural vs urban access | Regional context, bridge to cities |
+| City+Treatment | "[Treatment] in [City]" — specific service availability | Treatment-focused with local filter |
+| State+Treatment | "[Treatment] across [State]" — statewide availability, top cities | Overview with city links |
+| Insurance+State | "[Insurer] rehab in [State]" — coverage details, acceptance rates | Insurance-focused with state context |
+| Treatment Hub | "[Treatment Type]" — educational, national | Educational authority page |
 
-## Files to Create/Modify
+### Add `pagePersonality` field to content generators
+Each generator checks its page type and adjusts tone, section order, and CTA style accordingly.
 
-**New files (~8):**
-- `src/pages/admin/AdminEscalations.tsx`
-- `src/pages/admin/AdminBackOffice.tsx`
-- `src/components/admin/escalations/EscalationDialog.tsx`
-- `src/components/admin/escalations/EscalationsList.tsx`
-- `src/components/admin/dashboard/AdvisorEarningsCard.tsx`
-- `src/hooks/useImpersonation.ts`
-- 2-3 DB migrations
+---
 
-**Modified files (~10):**
-- `src/components/admin/CreateAdminUserDialog.tsx` — add classification fields
-- `src/components/admin/AdminSidebar.tsx` — add new menu items
-- `src/components/admin/AdminShell.tsx` — impersonation banner
-- `src/hooks/useAdminAuth.ts` — new routes, impersonation integration
-- `src/hooks/useAdminUserManagement.ts` — new permissions
-- `src/components/admin/dashboard/AdvisorDashboard.tsx` — earnings card
-- `src/components/admin/concierge/ConciergeActionsTab.tsx` — escalate button
-- `supabase/functions/create-admin-user/index.ts` — classification + welcome emails
-- `src/App.tsx` — new routes
-- `src/pages/admin/AdminStaff.tsx` — show employment type column
+## PHASE 4: SEO IMPLEMENTATION FIXES
+
+### Metadata
+- Audit all pages for unique `<title>` and `<meta description>` — the templated generators already do this, but verify no collisions across City+Treatment combos.
+- Ensure canonical URLs are self-referencing (currently handled by `SEOLandingTemplate`).
+
+### Schema Cleanup
+- Add a check in `SEO` component: if `FAQPage` schema has fewer than 3 FAQs, don't emit it.
+- Ensure only one `BreadcrumbList` per page (check for double-emission between `SEO` and `BreadcrumbNav`).
+
+### Internal Linking Enhancement
+Create a `SmartInternalLinks` component that generates contextual links based on page type:
+- City pages → link to county, state, city+treatment combos, insurance pages
+- County pages → link to cities within county, state page, nearby counties
+- Treatment pages → link to top city+treatment combos, insurance+treatment
+- Insurance pages → link to city and state pages
+
+---
+
+## PHASE 5: CONTROLLED EXPANSION
+
+### Tier 1 (Implement Now)
+1. **Expand BestInState** — Already at 50 states. Verify all content is unique (core 10 have hand-written content; expanded 40 may be templated).
+2. **State+Treatment for remaining types** — Currently only 6 treatment types have state pages. Add for: luxury, sober-living, free, faith-based, fentanyl, veterans, women's, men's (8 more types x 50 states = 400 pages). Use `stateContentGenerator.ts` pattern.
+3. **City+Treatment for top 50 cities** — Already covered via SmartCatchAll. Focus on ensuring these 50 x 14 = 700 pages have meaningful facility matches.
+
+### Tier 2 (After Validation)
+4. **County+Treatment pages** — For top 3 treatment types (alcohol, drug, detox) in counties with population > 200k. Estimated: ~80 counties x 3 = 240 pages. Route: `/rehab-centers/:stateSlug/county/:countySlug/:treatmentSlug`.
+5. **City+Insurance pages** — For top 50 cities x top 4 insurers (Aetna, BCBS, Cigna, UHC). Route: `/insurance/:insurerSlug/:stateSlug/:citySlug`. Only create where facility data exists.
+
+### Tier 3 (Deferred — requires data validation)
+6. **Treatment+Insurance combo pages** — Only for Medicaid + Medicare with specific treatment types. ~10 pages.
+7. **City+Treatment+Insurance** — Skip for now. Too high a risk of thin content.
+
+### DO NOT CREATE
+- Empty location pages with no facility data
+- County+Insurance pages (low search volume, high duplication risk)
+- Triple-combo pages without validated search demand
+
+---
+
+## PHASE 6: VALIDATION SYSTEM
+
+### Pre-Indexing Checks (Build as utility)
+Create `src/utils/seoPageValidator.ts`:
+```text
+validatePage(pageType, params) → {
+  hasUniqueContent: boolean
+  facilityCount: number  
+  hasInternalLinks: boolean
+  hasValidSchema: boolean
+  hasThinSections: boolean
+  recommendation: 'index' | 'noindex' | 'enhance'
+}
+```
+
+### Apply to Sitemap Generation
+Update the sitemap edge function to call validation before including URLs. Pages that fail get `noindex` and are excluded.
+
+---
+
+## PHASE 7: SITEMAP UPDATE
+
+Update `sitemap-generator` edge function to:
+1. Include new State+Treatment pages for expanded treatment types
+2. Include County+Treatment pages (Tier 2)
+3. Exclude pages where `shouldIndexPage()` returns false
+4. Add `<lastmod>` dates based on facility data freshness
+
+---
+
+## Implementation Order (16 steps)
+
+1. Fix Insurance+State `|| true` filter bug
+2. Add `shouldIndexPage()` thin page detection utility
+3. Enhance `cityContentGenerator` with density/urban-rural variables
+4. Fix `countyFAQs()` and `getInsuranceStateFAQs()` for uniqueness
+5. Schema cleanup — min 3 FAQs for FAQPage, single BreadcrumbList check
+6. Create `SmartInternalLinks` component for contextual cross-linking
+7. Add internal links to County, City, and Insurance pages
+8. Expand State+Treatment pages (8 new types x 50 states)
+9. Create State+Treatment data config and page components
+10. Apply `noindex` to pages with no facility matches
+11. Update sitemap edge function with expanded URLs + exclusions
+12. Add County+Treatment route and page component (Tier 2)
+13. Add City+Insurance route and page component (Tier 2)
+14. Verify expanded BestInState content uniqueness
+15. Audit all canonical URLs for correctness
+16. QA: Spot-check 20 pages across all types for content uniqueness
+
+**Estimated scope**: ~15-20 file changes, 3-5 new files, 1 edge function update. The data expansion (State+Treatment configs for 8 new types) is the largest single task.
 
