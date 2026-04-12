@@ -95,7 +95,7 @@ export function SmartInternalLinks({
     // Top cities in state
     if (stateData) {
       const cityLinks = stateData.cities.slice(0, maxLinks).map((c) => ({
-        label: c.city,
+        label: c.name,
         href: `/rehab-centers/${stateSlug}/${c.slug}`,
       }));
       if (cityLinks.length > 0) {
@@ -119,14 +119,14 @@ export function SmartInternalLinks({
       if (stateData) {
         const countyCityNames = thisCounty.majorCities.map((c) => c.toLowerCase());
         const matchedCities = stateData.cities.filter((c) =>
-          countyCityNames.includes(c.city.toLowerCase())
+          countyCityNames.includes(c.name.toLowerCase())
         );
         if (matchedCities.length > 0) {
           groups.push({
             title: `Cities in ${thisCounty.name} County`,
             icon: <MapPin className="h-4 w-4 text-primary" />,
             links: matchedCities.map((c) => ({
-              label: c.city,
+              label: c.name,
               href: `/rehab-centers/${stateSlug}/${c.slug}`,
             })),
           });
@@ -178,7 +178,7 @@ export function SmartInternalLinks({
         title: `Treatment in ${stateName}`,
         icon: <MapPin className="h-4 w-4 text-primary" />,
         links: stateData.cities.slice(0, 6).map((c) => ({
-          label: `Rehab in ${c.city}`,
+          label: `Rehab in ${c.name}`,
           href: `/rehab-centers/${stateSlug}/${c.slug}`,
         })),
       });
@@ -217,7 +217,7 @@ export function SmartInternalLinks({
         title: `${prefix.label} by City`,
         icon: <MapPin className="h-4 w-4 text-primary" />,
         links: stateData.cities.slice(0, 6).map((c) => ({
-          label: `${prefix.label} in ${c.city}`,
+          label: `${prefix.label} in ${c.name}`,
           href: `/${prefix.slug}-in-${c.slug}`,
         })),
       });
