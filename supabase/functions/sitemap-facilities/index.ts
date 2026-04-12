@@ -444,6 +444,7 @@ const EXPANDED_TREATMENT_TYPES = [
   "veterans-rehab",
   "womens-rehab",
   "mens-rehab",
+  "holistic",
 ];
 
 // County treatment types for Tier 2
