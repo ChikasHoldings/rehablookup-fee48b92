@@ -50,6 +50,8 @@ const CityOutpatientPrograms = lazy(() => import("./pages/treatment-types/CityOu
 const StateDualDiagnosis = lazy(() => import("./pages/treatment-types/StateDualDiagnosis"));
 const CityDualDiagnosis = lazy(() => import("./pages/treatment-types/CityDualDiagnosis"));
 const StateTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/StateTreatmentExpandedPage"));
+const ExpandedTreatmentHubPage = lazy(() => import("./pages/seo/ExpandedTreatmentHubPage"));
+const CityInsurancePage = lazy(() => import("./pages/seo/CityInsurancePage"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const ForProviders = lazy(() => import("./pages/ForProviders"));
 const ProviderResources = lazy(() => import("./pages/ProviderResources"));
@@ -440,6 +442,7 @@ const AppInner = () => {
             <Route path="/treatment-types/outpatient-programs/:stateSlug" element={<PublicRouteGuard><StateOutpatientPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/outpatient-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityOutpatientPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
+            <Route path="/treatment-types/holistic-therapy/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="holistic" /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-treatment" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
             <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><LuxuryRehab /></PublicRouteGuard>} />
             <Route path="/treatment-types/luxury-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
