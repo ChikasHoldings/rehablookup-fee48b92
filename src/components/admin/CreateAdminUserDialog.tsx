@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { 
+import { createAdminUserSchema, validateInput, sanitizeText } from "@/lib/adminValidation";
   UserPlus, 
   ShieldAlert, 
   Briefcase, 
@@ -111,23 +111,38 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
   };
 
   const handleSubmit = async () => {
-    if (!email.trim() || !firstName.trim()) {
-      toast.error("Please fill in all required fields");
+    // Validate with Zod schema
+    const validation = validateInput(createAdminUserSchema, {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim() || undefined,
+      adminRole,
+      employmentType,
+      commissionRate: employmentType === "contractor" ? commissionRate : undefined,
+      hireDate: hireDate || undefined,
+      permissions,
+    });
+
+    if (!validation.success) {
+      const firstError = Object.values(validation.errors)[0];
+      toast.error(firstError || "Please fix the form errors");
       return;
     }
 
-    const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const { data: validated } = validation;
+    const displayName = `${validated.firstName} ${validated.lastName || ""}`.trim();
 
     try {
       const result = await createAdminUser({
-        email: email.trim(),
-        displayName,
-        adminRole,
-        permissions,
-        employmentType,
-        phone: phone.trim() || undefined,
-        commissionRate: employmentType === "contractor" ? commissionRate : undefined,
-        hireDate: hireDate || undefined,
+        email: sanitizeText(validated.email),
+        displayName: sanitizeText(displayName),
+        adminRole: validated.adminRole,
+        permissions: validated.permissions,
+        employmentType: validated.employmentType,
+        phone: validated.phone ? sanitizeText(validated.phone) : undefined,
+        commissionRate: validated.commissionRate,
+        hireDate: validated.hireDate || undefined,
       });
 
       if (result?.tempPassword) {
