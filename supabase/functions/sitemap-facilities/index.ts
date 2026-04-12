@@ -480,6 +480,16 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/rehab-grant-funding-opportunities", priority: 0.85, changefreq: "monthly" },
   { path: "/provider-guides/rehab-data-analytics-growth", priority: 0.85, changefreq: "monthly" },
 
+  // Provider High-Keyword Pages (targeting highest-volume search terms)
+  { path: "/provider-guides/addiction-treatment-center-marketing", priority: 0.9, changefreq: "monthly" },
+  { path: "/provider-guides/drug-rehab-marketing-strategy", priority: 0.9, changefreq: "monthly" },
+  { path: "/provider-guides/alcohol-rehab-marketing-guide", priority: 0.9, changefreq: "monthly" },
+  { path: "/provider-guides/inpatient-rehab-marketing", priority: 0.9, changefreq: "monthly" },
+  { path: "/provider-guides/detox-center-patient-acquisition", priority: 0.9, changefreq: "monthly" },
+  { path: "/provider-guides/iop-program-marketing", priority: 0.9, changefreq: "monthly" },
+  { path: "/provider-guides/mental-health-rehab-marketing", priority: 0.9, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-near-me-ranking-strategy", priority: 0.9, changefreq: "monthly" },
+
   { path: "/privacy-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
   { path: "/editorial-policy", priority: 0.3, changefreq: "yearly" },

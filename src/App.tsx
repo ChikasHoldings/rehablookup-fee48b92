@@ -139,6 +139,7 @@ const ProviderGrowthPage = lazy(() => import("./pages/provider-guides/ProviderGr
 const ProviderIndustryPage = lazy(() => import("./pages/provider-guides/ProviderIndustryPage"));
 const ProviderDigitalPage = lazy(() => import("./pages/provider-guides/ProviderDigitalPage"));
 const ProviderFinancePage = lazy(() => import("./pages/provider-guides/ProviderFinancePage"));
+const ProviderHighKeywordPage = lazy(() => import("./pages/provider-guides/ProviderHighKeywordPage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
@@ -1027,6 +1028,16 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-billing-revenue-cycle" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-grant-funding-opportunities" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-data-analytics-growth" element={<PublicRouteGuard><ProviderFinancePage /></PublicRouteGuard>} />
+
+            {/* Provider High-Keyword Pages */}
+            <Route path="/provider-guides/addiction-treatment-center-marketing" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/drug-rehab-marketing-strategy" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/alcohol-rehab-marketing-guide" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/inpatient-rehab-marketing" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/detox-center-patient-acquisition" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/iop-program-marketing" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/mental-health-rehab-marketing" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-near-me-ranking-strategy" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />

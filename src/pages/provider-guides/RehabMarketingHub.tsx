@@ -5,13 +5,14 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, MapPin, Stethoscope, Shield, BarChart3, ChevronRight, Users, AlertTriangle, Building2, DollarSign, Wrench, Heart } from "lucide-react";
+import { ArrowRight, MapPin, Stethoscope, Shield, BarChart3, ChevronRight, Users, AlertTriangle, Building2, DollarSign, Wrench, Heart, TrendingUp } from "lucide-react";
 import { providerCities } from "@/data/providerCityData";
 import { treatmentProviderConfigs, insuranceProviderConfigs, comparisonPageConfigs, STATE_TREATMENT_COMBOS } from "@/data/providerPageConfigs";
 import { providerPersonaConfigs, providerPainPointConfigs, additionalComparisonConfigs } from "@/data/providerPersonaConfigs";
 import { providerBusinessConfigs, providerOperationsConfigs, providerNicheConfigs } from "@/data/providerBusinessConfigs";
 import { providerGrowthConfigs, providerIndustryConfigs } from "@/data/providerGrowthConfigs";
 import { providerDigitalConfigs, providerFinanceConfigs } from "@/data/providerDigitalConfigs";
+import { highKeywordConfigs } from "@/data/providerHighKeywordConfigs";
 import { usStates } from "@/data/usStates";
 
 export default function RehabMarketingHub() {
@@ -44,6 +45,32 @@ export default function RehabMarketingHub() {
             <Button asChild variant="hero" size="xl">
               <Link to="/for-providers">List Your Facility Now <ArrowRight className="ml-2 h-5 w-5" /></Link>
             </Button>
+          </div>
+        </section>
+
+        {/* High-Volume Keyword Guides — TOP PRIORITY */}
+        <section className="py-16 bg-primary/5 border-b-2 border-primary/10">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-3 mb-4">
+              <TrendingUp className="h-7 w-7 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Highest-Volume Keyword Guides</h2>
+            </div>
+            <p className="text-muted-foreground mb-8 max-w-3xl">These pages target the most searched keywords in addiction treatment — terms that cost $25-$47 per click on Google Ads. Learn how to capture this traffic organically.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {highKeywordConfigs.map(config => (
+                <Card key={config.slug} className="hover:shadow-md transition-shadow border-primary/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{config.label}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{config.insightStats[0]?.value} searches/mo</p>
+                    <Link to={`/provider-guides/${config.slug}`} className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                      Read Guide <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </section>
 
