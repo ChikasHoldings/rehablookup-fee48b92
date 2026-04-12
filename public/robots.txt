@@ -1,7 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
-# Last updated: 2026-04-07 — Full audit complete, sitemap v6.0.0
+# Last updated: 2026-04-12 — Added provider-guides Allow rules, sitemap v7.0.0
 # =============================================================================
 
 # =============================================================================
@@ -10,6 +10,8 @@
 
 User-agent: Googlebot
 Allow: /
+Allow: /provider-guides/
+Allow: /rehab-marketing
 Disallow: /admin
 Disallow: /admin/
 Disallow: /provider/
@@ -60,6 +62,8 @@ Allow: /blog
 
 User-agent: Bingbot
 Allow: /
+Allow: /provider-guides/
+Allow: /rehab-marketing
 Disallow: /admin
 Disallow: /admin/
 Disallow: /provider/
