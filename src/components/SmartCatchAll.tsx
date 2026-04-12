@@ -81,6 +81,16 @@ export function SmartCatchAll() {
       </PublicRouteGuard>
     );
   }
+  // City Provider Pages (e.g., /get-more-patients-in-los-angeles-california)
+  if (pathname.startsWith("/get-more-patients-in-")) {
+    return (
+      <PublicRouteGuard>
+        <Suspense fallback={null}>
+          <CityProviderPage />
+        </Suspense>
+      </PublicRouteGuard>
+    );
+  }
 
   return (
     <Suspense fallback={null}>
