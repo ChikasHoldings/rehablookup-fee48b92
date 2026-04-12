@@ -1002,6 +1002,19 @@ const AppInner = () => {
             <Route path="/provider-guides/healthcare-professional-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/native-american-tribal-rehab-marketing" element={<PublicRouteGuard><ProviderNichePage /></PublicRouteGuard>} />
 
+            {/* Provider Growth & Expansion Pages */}
+            <Route path="/provider-guides/rehab-outpatient-program-expansion" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-branding-differentiation" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-medicaid-expansion-strategy" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-crisis-stabilization-marketing" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-family-program-marketing" element={<PublicRouteGuard><ProviderGrowthPage /></PublicRouteGuard>} />
+
+            {/* Provider Industry & Trends Pages */}
+            <Route path="/provider-guides/rehab-telehealth-competition-strategy" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-workforce-shortage-solutions" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-joint-commission-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-aftercare-continuum-marketing" element={<PublicRouteGuard><ProviderIndustryPage /></PublicRouteGuard>} />
+
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
             <Route path="/providers/resources/:slug" element={<PublicRouteGuard><ProviderResourceArticle /></PublicRouteGuard>} />
