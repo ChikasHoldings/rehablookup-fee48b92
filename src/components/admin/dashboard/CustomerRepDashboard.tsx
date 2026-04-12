@@ -761,6 +761,38 @@ export function CustomerRepDashboard() {
         open={!!selectedTicketId}
         onOpenChange={(open) => { if (!open) { setSelectedTicketId(null); invalidateDashboard(); } }}
       />
+
+      {/* Confirmation: Resolve Ticket */}
+      <ConfirmActionDialog
+        open={!!confirmResolveTicketId}
+        onOpenChange={(open) => { if (!open) setConfirmResolveTicketId(null); }}
+        title="Resolve Ticket"
+        description="Are you sure you want to mark this ticket as resolved? The user will be notified."
+        confirmLabel="Resolve"
+        variant="warning"
+        onConfirm={async () => {
+          if (confirmResolveTicketId) {
+            await resolveTicket(confirmResolveTicketId);
+            setConfirmResolveTicketId(null);
+          }
+        }}
+      />
+
+      {/* Confirmation: Reject Review */}
+      <ConfirmActionDialog
+        open={!!confirmRejectReviewId}
+        onOpenChange={(open) => { if (!open) setConfirmRejectReviewId(null); }}
+        title="Reject Review"
+        description="Are you sure you want to reject this review? This action cannot be undone and the review will be hidden from public view."
+        confirmLabel="Reject"
+        variant="destructive"
+        onConfirm={async () => {
+          if (confirmRejectReviewId) {
+            await handleRejectReview(confirmRejectReviewId);
+            setConfirmRejectReviewId(null);
+          }
+        }}
+      />
     </div>
   );
 }
