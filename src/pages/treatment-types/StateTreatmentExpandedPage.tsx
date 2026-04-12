@@ -92,6 +92,14 @@ const TREATMENT_CONFIGS: TreatmentConfig[] = [
     filterKeys: ["men", "mens", "male"],
     heroDescription: "Find men-only treatment environments focused on accountability, emotional growth, and evidence-based recovery.",
   },
+  {
+    treatmentType: "holistic",
+    label: "Holistic Therapy",
+    slug: "holistic",
+    parentPath: "/treatment-types/holistic-therapy",
+    filterKeys: ["holistic", "yoga", "meditation", "acupuncture"],
+    heroDescription: "Discover holistic addiction treatment integrating mind-body practices with clinical care for whole-person healing.",
+  },
 ];
 
 interface StateTreatmentExpandedPageProps {

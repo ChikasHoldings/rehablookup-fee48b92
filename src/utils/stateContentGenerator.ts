@@ -74,7 +74,7 @@ const stateContext: Record<string, {
   DC: { region: "Mid-Atlantic", population: "690,000", healthcareNote: "DC's treatment system benefits from federal resources, research institutions, and strong public funding", opioidNote: "DC has among the highest per-capita overdose rates, concentrated in specific wards", fundingNote: "DC DBH manages comprehensive substance use treatment services", medicaidExpanded: true, notableCities: ["Washington"], licensingBody: "DC DBH", uniqueFactor: "federal resource proximity and NIH-influenced treatment approaches" },
 };
 
-type TreatmentType = "alcohol" | "drug" | "detox" | "inpatient" | "outpatient" | "dual-diagnosis" | "luxury" | "sober-living" | "free" | "faith-based" | "fentanyl" | "veterans" | "womens" | "mens";
+type TreatmentType = "alcohol" | "drug" | "detox" | "inpatient" | "outpatient" | "dual-diagnosis" | "luxury" | "sober-living" | "free" | "faith-based" | "fentanyl" | "veterans" | "womens" | "mens" | "holistic";
 
 const treatmentDescriptions: Record<TreatmentType, {
   label: string;
@@ -332,6 +332,24 @@ const treatmentDescriptions: Record<TreatmentType, {
       "Work-release programs may be covered by employer-sponsored EAP benefits",
       "VA healthcare covers veteran men's treatment programs",
       "Court-ordered treatment for men may be funded through state judicial programs",
+    ],
+  },
+  holistic: {
+    label: "Holistic Therapy",
+    intro: "Holistic addiction treatment integrates complementary therapies — yoga, meditation, acupuncture, art therapy, and nutritional counseling — with evidence-based clinical care to address the physical, emotional, and spiritual dimensions of recovery.",
+    lookForItems: [
+      "Integration of yoga, meditation, and mindfulness practices",
+      "Acupuncture, massage, and other complementary therapies",
+      "Nutritional counseling and fitness programming",
+      "Art, music, and equine-assisted therapy options",
+      "Licensed clinical staff overseeing evidence-based treatment",
+      "Individualized wellness plans addressing whole-person health",
+    ],
+    insuranceTips: [
+      "Clinical components (therapy, medical care) are typically covered by insurance",
+      "Complementary therapies may be considered elective and not covered",
+      "Some insurers cover acupuncture and chiropractic as behavioral health benefits",
+      "Ask facilities about package pricing that includes holistic services",
     ],
   },
 };

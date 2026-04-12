@@ -50,6 +50,8 @@ const CityOutpatientPrograms = lazy(() => import("./pages/treatment-types/CityOu
 const StateDualDiagnosis = lazy(() => import("./pages/treatment-types/StateDualDiagnosis"));
 const CityDualDiagnosis = lazy(() => import("./pages/treatment-types/CityDualDiagnosis"));
 const StateTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/StateTreatmentExpandedPage"));
+const ExpandedTreatmentHubPage = lazy(() => import("./pages/seo/ExpandedTreatmentHubPage"));
+const CityInsurancePage = lazy(() => import("./pages/seo/CityInsurancePage"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const ForProviders = lazy(() => import("./pages/ForProviders"));
 const ProviderResources = lazy(() => import("./pages/ProviderResources"));
@@ -440,6 +442,7 @@ const AppInner = () => {
             <Route path="/treatment-types/outpatient-programs/:stateSlug" element={<PublicRouteGuard><StateOutpatientPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/outpatient-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityOutpatientPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
+            <Route path="/treatment-types/holistic-therapy/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="holistic" /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-treatment" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
             <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><LuxuryRehab /></PublicRouteGuard>} />
             <Route path="/treatment-types/luxury-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
@@ -466,6 +469,15 @@ const AppInner = () => {
             <Route path="/php-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/iop-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/mat-programs" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            
+            {/* Expanded Treatment Hub Pages */}
+            <Route path="/sober-living-homes" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/faith-based-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/fentanyl-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/veterans-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/womens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/mens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/free-rehab-options" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
             
             {/* SEO Comparison Pages */}
             <Route path="/inpatient-vs-outpatient-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
@@ -523,6 +535,8 @@ const AppInner = () => {
             <Route path="/what-to-expect-loved-one-in-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
             <Route path="/how-to-find-rehab-for-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
             
+            {/* Insurance + State + City Cross Pages */}
+            <Route path="/insurance/:slug/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInsurancePage /></PublicRouteGuard>} />
             {/* Insurance + State Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
             

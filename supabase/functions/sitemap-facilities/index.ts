@@ -95,6 +95,15 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/treatment-types/holistic-therapy", priority: 0.8, changefreq: "weekly" },
   { path: "/treatment-types/luxury-rehab", priority: 0.8, changefreq: "weekly" },
 
+  // Expanded Treatment Hub Pages
+  { path: "/sober-living-homes", priority: 0.85, changefreq: "weekly" },
+  { path: "/faith-based-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/fentanyl-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/veterans-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/womens-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/mens-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/free-rehab-options", priority: 0.85, changefreq: "weekly" },
+
   // NEAR-ME PAGES (all defined in App.tsx)
   { path: "/drug-rehab-near-me", priority: 0.95, changefreq: "daily" },
   { path: "/alcohol-rehab-near-me", priority: 0.95, changefreq: "daily" },
@@ -435,6 +444,7 @@ const EXPANDED_TREATMENT_TYPES = [
   "veterans-rehab",
   "womens-rehab",
   "mens-rehab",
+  "holistic",
 ];
 
 // County treatment types for Tier 2
