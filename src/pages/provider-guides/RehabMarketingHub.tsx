@@ -288,6 +288,51 @@ export default function RehabMarketingHub() {
             </div>
           </div>
         </section>
+
+        {/* Growth & Expansion */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-3 mb-8">
+              <BarChart3 className="h-7 w-7 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Growth & Expansion Strategies</h2>
+            </div>
+            <p className="text-muted-foreground mb-8 max-w-2xl">Outpatient expansion, Medicaid strategy, crisis marketing, family programs, and branding differentiation for growing facilities.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {providerGrowthConfigs.map(config => (
+                <Card key={config.slug} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{config.label}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{config.heroSubheadline}</p>
+                    <Link to={`/provider-guides/${config.slug}`} className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                      Read Guide <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Industry Trends */}
+        <section className="py-16">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-3 mb-8">
+              <Shield className="h-7 w-7 text-primary" />
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Industry Trends & Competitive Edge</h2>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {providerIndustryConfigs.map(config => (
+                <Link key={config.slug} to={`/provider-guides/${config.slug}`} className="p-5 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
+                  <h3 className="font-semibold text-foreground mb-2">{config.label}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{config.heroSubheadline}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="py-16 bg-gradient-to-br from-primary via-primary/95 to-primary/85 text-white">
           <div className="container mx-auto px-4 max-w-3xl text-center">
             <h2 className="text-2xl md:text-4xl font-bold mb-4">Ready to Get More Patients?</h2>
