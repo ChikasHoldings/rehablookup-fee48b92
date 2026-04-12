@@ -183,6 +183,7 @@ export default function ProviderResourceArticle() {
                 />
               </div>
             </div>
+          </div>
         </section>
 
         {/* Bottom CTA */}
