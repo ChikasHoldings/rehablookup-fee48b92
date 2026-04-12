@@ -17,6 +17,7 @@ import { preloadAdminPages } from "@/lib/routePrefetch";
 import { scrollContainerToTop } from "@/hooks/useScrollToTop";
 import { useImpersonation } from "@/hooks/useImpersonation";
 import { getMobileNavForRole } from "./adminNavConfig";
+import { useAdminIdleTimeout } from "@/hooks/useAdminIdleTimeout";
 
 function AccessDenied() {
   return (
