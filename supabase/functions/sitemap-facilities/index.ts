@@ -725,6 +725,37 @@ function generateStateArticleRoutes(): RouteEntry[] {
   return routes;
 }
 
+function generateCoOccurringRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of CO_OCCURRING_SLUGS) {
+    routes.push({ path: `/${slug}`, priority: 0.75, changefreq: "monthly" });
+    for (const state of US_STATES) {
+      routes.push({ path: `/${slug}/${state}`, priority: 0.65, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateDurationSettingRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of DURATION_SETTING_SLUGS) {
+    routes.push({ path: `/${slug}`, priority: 0.75, changefreq: "monthly" });
+    for (const state of US_STATES) {
+      routes.push({ path: `/${slug}/${state}`, priority: 0.65, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generatePaymentStateRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of PAYMENT_SLUGS) {
+    for (const state of US_STATES) {
+      routes.push({ path: `/${slug}/${state}`, priority: 0.70, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
 
 
 const NEAR_ME_PREFIXES = [
