@@ -94,8 +94,7 @@ Deno.serve(async (req) => {
 
     console.log(`[ADMIN-DELETE-SEEKER] Admin ${adminUser.id} performing ${action} on user ${targetUserId}`);
 
-    // Use admin client for privileged operations
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    // adminClient already created above for moderation check
 
     // Verify target is a seeker
     const { data: seekerProfile } = await adminClient
