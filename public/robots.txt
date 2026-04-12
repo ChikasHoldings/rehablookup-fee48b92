@@ -1,6 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-04-12 — v7.1.0 Added search-results Disallow
 # Last updated: 2026-04-12 — Added provider-guides Allow rules, sitemap v7.0.0
 # =============================================================================
 
@@ -40,6 +41,7 @@ Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
 Disallow: /search?
+Disallow: /search-results?*
 Disallow: /*?utm_source=
 Disallow: /*?utm_medium=
 Disallow: /*?utm_campaign=
@@ -309,6 +311,7 @@ Disallow: /functions/
 Disallow: /_vercel/
 Disallow: /.netlify/
 Disallow: /search?
+Disallow: /search-results?*
 Disallow: /*?utm_source=
 Disallow: /*?utm_medium=
 Disallow: /*?utm_campaign=
