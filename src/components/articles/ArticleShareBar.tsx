@@ -111,6 +111,8 @@ export function ArticleShareBar({
   const safeTitle = sanitizeShareText(title);
   const safeDesc = description ? sanitizeShareText(description, 200) : undefined;
   const shareUrl = getCanonicalShareUrl(url);
+  // Social share links use the og-share proxy so crawlers see proper OG tags
+  const ogShareUrl = getOgShareUrl(shareUrl);
 
   const handleNativeShare = useCallback(async () => {
     if (!navigator.share) return false;
