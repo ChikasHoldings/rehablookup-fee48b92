@@ -167,7 +167,7 @@ function ArticleSkeleton() {
 
 const ArticleDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [copied, setCopied] = useState(false);
+  
 
   // Normalize slug to lowercase for case-insensitive matching
   const normalizedSlug = id?.toLowerCase();
