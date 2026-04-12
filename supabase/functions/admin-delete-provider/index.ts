@@ -41,14 +41,9 @@ Deno.serve(async (req) => {
     }
 
     // Check if user has admin role
-    const { data: adminRole } = await userClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
+    const { data: isAdmin } = await userClient.rpc("user_is_admin", { p_user_id: user.id });
 
-    if (!adminRole) {
+    if (!isAdmin) {
       console.error("[ADMIN-DELETE-PROVIDER] User is not an admin:", user.id);
       return new Response(
         JSON.stringify({ error: "Forbidden - Admin access required" }),
@@ -56,12 +51,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Use admin client for service-level operations
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify caller has moderation permission (super_admin or manager only)
+    const { data: canModerate } = await adminClient.rpc("can_moderate_users", { p_user_id: user.id });
+    
+    if (!canModerate) {
+      console.error("[ADMIN-DELETE-PROVIDER] User lacks moderation permission:", user.id);
+      return new Response(
+        JSON.stringify({ error: "Forbidden - Only Super Admins and Managers can delete providers" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Parse request body
     const { facilityId, deleteUser } = await req.json();
 
-    if (!facilityId) {
+    // Input validation - UUID format check
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!facilityId || typeof facilityId !== "string" || !uuidRegex.test(facilityId)) {
       return new Response(
-        JSON.stringify({ error: "facilityId is required" }),
+        JSON.stringify({ error: "Invalid facilityId format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

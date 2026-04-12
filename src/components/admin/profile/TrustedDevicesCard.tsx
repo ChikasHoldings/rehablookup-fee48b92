@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 
 interface TrustedDevicesCardProps {
   userId: string;
@@ -22,6 +23,8 @@ function getDeviceIcon(browser?: string | null, os?: string | null) {
 export function TrustedDevicesCard({ userId }: TrustedDevicesCardProps) {
   const queryClient = useQueryClient();
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
+  const [confirmRevokeAll, setConfirmRevokeAll] = useState(false);
 
   const { data: devices, isLoading } = useQuery({
     queryKey: ["trusted-devices", userId],
@@ -40,8 +43,6 @@ export function TrustedDevicesCard({ userId }: TrustedDevicesCardProps) {
   });
 
   const handleRevoke = async (deviceId: string) => {
-    if (!window.confirm("Revoke trust for this device? You'll need to verify with 2FA next time you log in from it.")) return;
-
     setRevokingId(deviceId);
     try {
       const { error } = await supabase
@@ -56,12 +57,11 @@ export function TrustedDevicesCard({ userId }: TrustedDevicesCardProps) {
       toast.error("Failed to revoke device");
     } finally {
       setRevokingId(null);
+      setConfirmRevokeId(null);
     }
   };
 
   const handleRevokeAll = async () => {
-    if (!window.confirm("Revoke all trusted devices? You'll need to verify with 2FA on your next login.")) return;
-
     try {
       const { error } = await supabase
         .from("admin_trusted_devices")
@@ -69,83 +69,109 @@ export function TrustedDevicesCard({ userId }: TrustedDevicesCardProps) {
         .eq("user_id", userId);
 
       if (error) throw error;
-      // Also clear local trusted device token
       try { localStorage.removeItem("rl_admin_td_token"); } catch {}
       toast.success("All trusted devices revoked");
       queryClient.invalidateQueries({ queryKey: ["trusted-devices"] });
     } catch {
       toast.error("Failed to revoke devices");
+    } finally {
+      setConfirmRevokeAll(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Trusted Devices
-            </CardTitle>
-            <CardDescription>Devices that can skip two-factor authentication</CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Trusted Devices
+              </CardTitle>
+              <CardDescription>Devices that can skip two-factor authentication</CardDescription>
+            </div>
+            {devices && devices.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setConfirmRevokeAll(true)}>
+                Revoke All
+              </Button>
+            )}
           </div>
-          {devices && devices.length > 0 && (
-            <Button variant="outline" size="sm" onClick={handleRevokeAll}>
-              Revoke All
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : !devices || devices.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No trusted devices. Complete 2FA verification and check "Trust this device" to add one.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {devices.map((device) => (
-              <div key={device.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                    {getDeviceIcon(device.browser, device.os)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {device.browser || "Unknown"} on {device.os || "Unknown"}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {device.ip_address && (
-                        <span className="flex items-center gap-1">
-                          <Globe className="h-3 w-3" />
-                          {device.ip_address}
-                        </span>
-                      )}
-                      <span>Last used {formatDistanceToNow(new Date(device.last_used_at), { addSuffix: true })}</span>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : !devices || devices.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No trusted devices. Complete 2FA verification and check "Trust this device" to add one.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {devices.map((device) => (
+                <div key={device.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                      {getDeviceIcon(device.browser, device.os)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {device.browser || "Unknown"} on {device.os || "Unknown"}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {device.ip_address && (
+                          <span className="flex items-center gap-1">
+                            <Globe className="h-3 w-3" />
+                            {device.ip_address}
+                          </span>
+                        )}
+                        <span>Last used {formatDistanceToNow(new Date(device.last_used_at), { addSuffix: true })}</span>
+                      </div>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setConfirmRevokeId(device.id)}
+                    disabled={revokingId === device.id}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    {revokingId === device.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRevoke(device.id)}
-                  disabled={revokingId === device.id}
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  {revokingId === device.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Confirm revoke single device */}
+      <ConfirmActionDialog
+        open={!!confirmRevokeId}
+        onOpenChange={(open) => { if (!open) setConfirmRevokeId(null); }}
+        title="Revoke Trusted Device"
+        description="You'll need to verify with 2FA next time you log in from this device."
+        variant="destructive"
+        confirmLabel="Revoke"
+        isLoading={!!revokingId}
+        onConfirm={() => confirmRevokeId && handleRevoke(confirmRevokeId)}
+      />
+
+      {/* Confirm revoke all devices */}
+      <ConfirmActionDialog
+        open={confirmRevokeAll}
+        onOpenChange={setConfirmRevokeAll}
+        title="Revoke All Trusted Devices"
+        description="All trusted devices will be removed. You'll need to verify with 2FA on your next login from any device."
+        variant="destructive"
+        confirmLabel="Revoke All"
+        onConfirm={handleRevokeAll}
+      />
+    </>
   );
 }

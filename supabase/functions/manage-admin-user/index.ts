@@ -289,6 +289,30 @@ Deno.serve(async (req) => {
     const body: ManageAdminUserRequest = await req.json();
     const { action, targetUserId, newRole, permissions } = body;
 
+    // Input validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!targetUserId || typeof targetUserId !== "string" || !uuidRegex.test(targetUserId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid targetUserId format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const validActions = ["suspend", "unsuspend", "delete", "reset_password", "update_role", "update_permissions", "resend_invitation", "toggle_mfa_skip"];
+    if (!action || !validActions.includes(action)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid action" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (newRole && !["super_admin", "manager", "customer_rep", "advisor"].includes(newRole)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid role" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("[MANAGE-ADMIN-USER] Action:", action, "Target:", targetUserId, "Requestor Super:", requestorIsSuperAdmin);
 
     // CRITICAL: Role hierarchy enforcement
