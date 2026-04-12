@@ -564,17 +564,9 @@ export function CustomerRepDashboard() {
                             className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                             title="Reject review"
                             disabled={moderatingReviewId === review.id}
-                            onClick={async () => {
-                              if (!window.confirm("Are you sure you want to reject this review?")) return;
-                              setModeratingReviewId(review.id);
-                              const { error } = await supabase
-                                .from("facility_reviews")
-                                .update({ status: "rejected" })
-                                .eq("id", review.id);
-                              setModeratingReviewId(null);
-                              if (error) { toast.error("Failed to reject"); return; }
-                              toast.success("Review rejected");
-                              invalidateDashboard();
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmRejectReviewId(review.id);
                             }}
                           >
                             <XCircle className="h-3.5 w-3.5" />
