@@ -79,8 +79,7 @@ Deno.serve(async (req) => {
 
     console.log("[ADMIN-DELETE-PROVIDER] Admin:", user.id, "deleting facility:", facilityId, "deleteUser:", deleteUser);
 
-    // Use admin client for deletions
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    // adminClient already created above for moderation check
 
     // Get facility info before deletion
     const { data: facility, error: facilityError } = await adminClient
