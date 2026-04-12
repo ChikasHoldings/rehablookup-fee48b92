@@ -24,6 +24,7 @@ const SearchResults = lazy(() => import("./pages/SearchResults"));
 const StatePage = lazy(() => import("./pages/StatePage"));
 const CityPage = lazy(() => import("./pages/CityPage"));
 const CountyPage = lazy(() => import("./pages/CountyPage"));
+const CountyTreatmentPage = lazy(() => import("./pages/seo/CountyTreatmentPage"));
 const Locations = lazy(() => import("./pages/Locations"));
 const TreatmentCenterProfile = lazy(() => import("./pages/TreatmentCenterProfile"));
 const CenterProfile = lazy(() => import("./pages/CenterProfile"));
@@ -415,6 +416,7 @@ const AppInner = () => {
             <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
             <Route path="/search-results" element={<PublicRouteGuard><SearchResults /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/articles/:articleSlug" element={<PublicRouteGuard><StateArticlePage /></PublicRouteGuard>} />
+            <Route path="/rehab-centers/:stateSlug/county/:countySlug/:treatmentSlug" element={<PublicRouteGuard><CountyTreatmentPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/county/:countySlug" element={<PublicRouteGuard><CountyPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/:citySlug" element={<PublicRouteGuard><CityPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug" element={<PublicRouteGuard><StatePage /></PublicRouteGuard>} />

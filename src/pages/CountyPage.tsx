@@ -12,6 +12,7 @@ import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleto
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
+import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import {
   MapPin, Building2, ChevronRight, Search, Phone, ArrowRight,
   CheckCircle, Shield, Clock, Star, Heart, ChevronDown, HelpCircle,
@@ -442,6 +443,14 @@ export default function CountyPage() {
             </section>
           );
         })()}
+
+        {/* Smart Internal Links */}
+        <SmartInternalLinks
+          pageType="county"
+          stateSlug={stateSlug}
+          stateName={stateData.name}
+          countySlug={countySlug}
+        />
 
         {/* CTA */}
         <section className="rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-8 md:p-12 text-center">

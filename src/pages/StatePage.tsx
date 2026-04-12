@@ -13,6 +13,7 @@ import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleto
 import { Button } from "@/components/ui/button";
 import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
+import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { 
   MapPin, 
   Building2, 
@@ -790,6 +791,13 @@ const StatePage = () => {
           })),
         ]}
         insuranceLinks={defaultInsuranceLinks.slice(0, 5)}
+      />
+
+      {/* Smart Internal Links */}
+      <SmartInternalLinks
+        pageType="state"
+        stateSlug={stateData.slug}
+        stateName={stateData.name}
       />
 
       {/* CTA Section */}

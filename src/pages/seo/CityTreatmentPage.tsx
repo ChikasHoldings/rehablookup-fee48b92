@@ -15,6 +15,8 @@ import {
   seoTreatmentTypes,
   getCityTreatmentSlug,
 } from "@/data/seoPageConfig";
+import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
+import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 
 export default function CityTreatmentPage() {
   const location = useLocation();
@@ -123,8 +125,11 @@ export default function CityTreatmentPage() {
   const pageTitle = `${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr}`;
   const populationText = city.population ? ` With a population of approximately ${Number(city.population).toLocaleString()}, ${city.city}` : ` ${city.city}`;
 
-  const structuredData = [
-    {
+  const structuredData: any[] = [];
+
+  // Only emit FAQPage schema if we have 3+ meaningful FAQs
+  if (shouldEmitFAQSchema(faqs)) {
+    structuredData.push({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: faqs.map((faq) => ({
@@ -132,29 +137,30 @@ export default function CityTreatmentPage() {
         name: faq.question,
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
+    });
+  }
+
+  structuredData.push({
+    "@context": "https://schema.org",
+    "@type": "MedicalWebPage",
+    name: pageTitle,
+    description: `Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}.`,
+    url: `https://rehablookup.com/${slug}`,
+    about: {
+      "@type": "MedicalCondition",
+      name: "Substance Use Disorder",
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "MedicalWebPage",
-      name: pageTitle,
-      description: `Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}.`,
-      url: `https://rehablookup.com/${slug}`,
-      about: {
-        "@type": "MedicalCondition",
-        name: "Substance Use Disorder",
+    audience: {
+      "@type": "PeopleAudience",
+      geographicArea: {
+        "@type": "City",
+        name: city.city,
+        containedInPlace: { "@type": "State", name: city.state },
       },
-      audience: {
-        "@type": "PeopleAudience",
-        geographicArea: {
-          "@type": "City",
-          name: city.city,
-          containedInPlace: { "@type": "State", name: city.state },
-        },
-      },
-      specialty: "Addiction Medicine",
-      lastReviewed: new Date().toISOString().split("T")[0],
     },
-  ];
+    specialty: "Addiction Medicine",
+    lastReviewed: new Date().toISOString().split("T")[0],
+  });
 
   return (
     <SEOLandingTemplate
@@ -190,6 +196,14 @@ export default function CityTreatmentPage() {
       showNearMeLinks
       ctaTitle={`Start ${treatment.label} in ${city.city} Today`}
       ctaSubtitle={`Our concierge team will match you with the best ${treatment.label.toLowerCase()} programs in ${city.city}. Confidential. No obligation.`}
-    />
+    >
+      <SmartInternalLinks
+        pageType="city-treatment"
+        stateSlug={city.stateSlug}
+        stateName={city.state}
+        citySlug={city.slug}
+        treatmentSlug={treatment.slug}
+      />
+    </SEOLandingTemplate>
   );
 }

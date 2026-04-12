@@ -11,6 +11,8 @@ import {
   type InsurerConfig,
   type StateInsuranceConfig,
 } from "@/data/seoInsuranceStateConfig";
+import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
+import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 
 export default function InsuranceStatePage() {
   const { slug, stateSlug } = useParams<{ slug: string; stateSlug: string }>();
@@ -60,7 +62,7 @@ export default function InsuranceStatePage() {
 
   const pageTitle = `${insurer.name} Rehab Coverage in ${stateConfig.state}`;
 
-  const structuredData = [
+  const structuredData: any[] = [
     {
       "@context": "https://schema.org",
       "@type": "WebPage",
@@ -68,7 +70,11 @@ export default function InsuranceStatePage() {
       description: `Find rehab centers accepting ${insurer.name} in ${stateConfig.state}. Verify coverage, compare facilities, and start treatment today.`,
       url: `https://rehablookup.com/insurance/${slug}/${stateSlug}`,
     },
-    {
+  ];
+
+  // Only emit FAQPage schema if we have 3+ meaningful FAQs
+  if (shouldEmitFAQSchema(faqs)) {
+    structuredData.push({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: faqs.map((faq) => ({
@@ -76,8 +82,8 @@ export default function InsuranceStatePage() {
         name: faq.question,
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
-    },
-  ];
+    });
+  }
 
   const relatedStateLinks = stateInsuranceConfigs
     .filter((s) => s.slug !== stateSlug)
@@ -140,6 +146,13 @@ export default function InsuranceStatePage() {
       ctaTitle={`Verify Your ${insurer.name} Benefits Today`}
       ctaSubtitle={`Our team will check your ${insurer.name} coverage and match you with the best treatment programs in ${stateConfig.state}. Free and confidential.`}
       ctaButtonText="Verify My Coverage"
-    />
+    >
+      <SmartInternalLinks
+        pageType="insurance-state"
+        stateSlug={stateSlug}
+        stateName={stateConfig.state}
+        insurerSlug={slug}
+      />
+    </SEOLandingTemplate>
   );
 }

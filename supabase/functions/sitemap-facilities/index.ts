@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v5.0.0";
+const VERSION = "v6.0.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -425,6 +425,28 @@ const TREATMENT_TYPES_WITH_GEO = [
   "detox-programs",
 ];
 
+// Expanded treatment types (StateTreatmentExpandedPage routes)
+const EXPANDED_TREATMENT_TYPES = [
+  "luxury-rehab",
+  "sober-living",
+  "free-rehab",
+  "faith-based-rehab",
+  "fentanyl-rehab",
+  "veterans-rehab",
+  "womens-rehab",
+  "mens-rehab",
+];
+
+// County treatment types for Tier 2
+const COUNTY_TREATMENT_TYPES = [
+  "alcohol-rehab",
+  "drug-rehab",
+  "detox-centers",
+  "inpatient-rehab",
+  "outpatient-rehab",
+  "dual-diagnosis-treatment",
+];
+
 // All 50 states for near-me state pages (full coverage)
 const TOP_STATES_FOR_NEAR_ME = [...US_STATES];
 
@@ -556,8 +578,31 @@ function generateCountyRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
   for (const [stateSlug, counties] of Object.entries(STATE_COUNTIES)) {
     for (const countySlug of counties) {
+      // Base county page
       routes.push({
         path: `/rehab-centers/${stateSlug}/county/${countySlug}`,
+        priority: 0.75,
+        changefreq: "weekly"
+      });
+      // County + Treatment combo pages (Tier 2)
+      for (const treatmentSlug of COUNTY_TREATMENT_TYPES) {
+        routes.push({
+          path: `/rehab-centers/${stateSlug}/county/${countySlug}/${treatmentSlug}`,
+          priority: 0.7,
+          changefreq: "weekly"
+        });
+      }
+    }
+  }
+  return routes;
+}
+
+function generateExpandedTreatmentStateRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const type of EXPANDED_TREATMENT_TYPES) {
+    for (const state of US_STATES) {
+      routes.push({
+        path: `/treatment-types/${type}/${state}`,
         priority: 0.75,
         changefreq: "weekly"
       });
@@ -721,6 +766,7 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...generateTreatmentGeoRoutes(),
     ...generateCityTreatmentComboRoutes(),
     ...generateStateArticleRoutes(),
+    ...generateExpandedTreatmentStateRoutes(),
     ...articleRoutes
   ];
 
