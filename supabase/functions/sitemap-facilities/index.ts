@@ -232,6 +232,59 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/inpatient-vs-residential-treatment", priority: 0.85, changefreq: "monthly" },
   { path: "/sober-living-vs-halfway-house", priority: 0.85, changefreq: "monthly" },
 
+  // TREATMENT DURATION PAGES
+  { path: "/30-day-rehab-programs", priority: 0.85, changefreq: "monthly" },
+  { path: "/60-day-rehab-programs", priority: 0.85, changefreq: "monthly" },
+  { path: "/90-day-rehab-programs", priority: 0.85, changefreq: "monthly" },
+  { path: "/long-term-rehab-programs", priority: 0.85, changefreq: "monthly" },
+
+  // THERAPY MODALITY PAGES
+  { path: "/cbt-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/dbt-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/emdr-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/motivational-interviewing-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/art-music-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/adventure-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+
+  // CO-OCCURRING DISORDER PAGES
+  { path: "/adhd-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/anxiety-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/bipolar-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/depression-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/eating-disorders-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/ptsd-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+
+  // TREATMENT SETTING & ENVIRONMENT PAGES
+  { path: "/beach-rehab-programs", priority: 0.8, changefreq: "monthly" },
+  { path: "/mountain-rehab-programs", priority: 0.8, changefreq: "monthly" },
+  { path: "/luxury-rehab-centers-usa", priority: 0.85, changefreq: "weekly" },
+  { path: "/private-rehab-usa", priority: 0.8, changefreq: "monthly" },
+  { path: "/confidential-rehab-usa", priority: 0.8, changefreq: "monthly" },
+
+  // RECOVERY SUPPORT & GUIDES
+  { path: "/aftercare-and-relapse-prevention", priority: 0.85, changefreq: "monthly" },
+  { path: "/questions-to-ask-rehab-center", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-to-pack-for-rehab", priority: 0.8, changefreq: "monthly" },
+
+  // EXPANDED TREATMENT TYPE ALIASES
+  { path: "/treatment-types/drug-addiction", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/dual-diagnosis", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/faith-based-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/fentanyl-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/free-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/holistic-treatment", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/mens-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/sober-living", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/veterans-rehab", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment-types/womens-rehab", priority: 0.85, changefreq: "weekly" },
+
+  // INTERNATIONAL PAGES (missing)
+  { path: "/best-rehab-centers-in-usa", priority: 0.85, changefreq: "weekly" },
+  { path: "/best-rehab-centers-in-usa-for-foreigners", priority: 0.8, changefreq: "monthly" },
+  { path: "/rehab-in-usa-for-international-patients", priority: 0.85, changefreq: "monthly" },
+  { path: "/rehab-in-usa-for-canadians", priority: 0.85, changefreq: "monthly" },
+  { path: "/rehab-in-usa-for-uk-patients", priority: 0.85, changefreq: "monthly" },
+
   // TREATMENT HUB PAGES (NEW)
   { path: "/php-programs", priority: 0.85, changefreq: "weekly" },
   { path: "/iop-programs", priority: 0.85, changefreq: "weekly" },
