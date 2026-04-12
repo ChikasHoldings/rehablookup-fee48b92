@@ -131,7 +131,6 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
       toast.error(firstError || "Please fix the form errors");
       return;
     }
-    }
 
     const { data: validated } = validation;
     const displayName = `${validated.firstName} ${validated.lastName || ""}`.trim();

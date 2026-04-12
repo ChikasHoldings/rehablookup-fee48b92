@@ -45,7 +45,6 @@ export function ManagerDashboard() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("ManagerDashboard");
   const { hasPermission } = useAdminAuth();
-  const [confirmResolveEscId, setConfirmResolveEscId] = useState<string | null>(null);
 
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["manager-stats"] });
@@ -738,6 +737,7 @@ export function ManagerDashboard() {
 function RecentEscalationsList() {
   const queryClient = useQueryClient();
   const { user } = useAdminAuth();
+  const [confirmResolveEscId, setConfirmResolveEscId] = useState<string | null>(null);
 
   const { data: recentEscalations } = useQuery({
     queryKey: ["manager-recent-escalations"],
