@@ -268,16 +268,6 @@ const ArticleDetail = () => {
     enabled: linkedArticleIds.length > 0,
   });
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      toast({ title: "Link copied to clipboard!" });
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast({ title: "Failed to copy link", variant: "destructive" });
-    }
-  };
 
   // Redirect if slug has uppercase characters (SEO canonical fix)
   if (needsRedirect) {
