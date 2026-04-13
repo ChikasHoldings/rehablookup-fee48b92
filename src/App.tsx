@@ -1049,6 +1049,27 @@ const AppInner = () => {
             <Route path="/provider-guides/mental-health-rehab-marketing" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-near-me-ranking-strategy" element={<PublicRouteGuard><ProviderHighKeywordPage /></PublicRouteGuard>} />
 
+            {/* Provider Compliance & Regulation Pages */}
+            <Route path="/provider-guides/rehab-hipaa-compliance-marketing" element={<PublicRouteGuard><ProviderCompliancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-42-cfr-part-2-compliance" element={<PublicRouteGuard><ProviderCompliancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-legitscript-certification-guide" element={<PublicRouteGuard><ProviderCompliancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-state-licensing-requirements" element={<PublicRouteGuard><ProviderCompliancePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-joint-commission-accreditation" element={<PublicRouteGuard><ProviderCompliancePage /></PublicRouteGuard>} />
+
+            {/* Provider Revenue & Reimbursement Pages */}
+            <Route path="/provider-guides/rehab-insurance-reimbursement-optimization" element={<PublicRouteGuard><ProviderRevenuePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-private-pay-revenue-strategies" element={<PublicRouteGuard><ProviderRevenuePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-medicaid-reimbursement-guide" element={<PublicRouteGuard><ProviderRevenuePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-utilization-review-optimization" element={<PublicRouteGuard><ProviderRevenuePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-value-based-care-transition" element={<PublicRouteGuard><ProviderRevenuePage /></PublicRouteGuard>} />
+
+            {/* Provider Facility Type Marketing Pages */}
+            <Route path="/provider-guides/luxury-rehab-center-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/faith-based-rehab-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/sober-living-home-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/mat-clinic-patient-acquisition" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/adolescent-rehab-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
             <Route path="/providers/resources/:slug" element={<PublicRouteGuard><ProviderResourceArticle /></PublicRouteGuard>} />
