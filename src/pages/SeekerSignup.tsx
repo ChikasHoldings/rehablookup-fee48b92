@@ -13,7 +13,7 @@ import { EmailInput } from '@/components/ui/email-input';
 import { isValidPhoneNumber } from '@/lib/phoneUtils';
 import { isValidEmail } from '@/lib/emailUtils';
 import { useZipcodeLookup } from '@/hooks/useZipcodeLookup';
-import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator';
+import { PasswordStrengthIndicator, calculatePasswordStrength } from '@/components/ui/password-strength-indicator';
 
 export default function SeekerSignup() {
   const navigate = useNavigate();
@@ -27,6 +27,11 @@ export default function SeekerSignup() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
+  // Anti-bot honeypot
+  const [honeypot, setHoneypot] = useState('');
+  // Client-side rate limiting
+  const [lastSubmitAttempt, setLastSubmitAttempt] = useState(0);
+
   // Form fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
