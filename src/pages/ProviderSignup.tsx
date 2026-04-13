@@ -34,7 +34,7 @@ import {
   Lock,
   Image as ImageIcon,
   ShieldCheck,
-  
+  X,
 } from "lucide-react";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
