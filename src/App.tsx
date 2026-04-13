@@ -1137,7 +1137,9 @@ const AppInner = () => {
             {/* Provider Marketing Channel Pages */}
             <Route path="/provider-guides/rehab-seo-marketing-strategy" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-ppc-advertising-guide" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-social-media-marketing-strategy" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-content-marketing-strategy" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-reputation-management-guide" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
 
             {/* Provider Patient Experience Pages */}
             <Route path="/provider-guides/rehab-intake-optimization-guide" element={<PublicRouteGuard><ProviderPatientExperiencePage /></PublicRouteGuard>} />
