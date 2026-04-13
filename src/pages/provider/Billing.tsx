@@ -225,6 +225,7 @@ export default function ProviderBillingPage() {
       setTimeout(() => { purchaseDebounceRef.current = false; }, 5000);
     }
   };
+  const handleUpgrade = () => {
     navigate("/provider/pro-upgrade");
   };
 
