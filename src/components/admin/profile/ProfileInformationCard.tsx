@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, Camera, Loader2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -144,16 +144,40 @@ export function ProfileInformationCard({
     }
   };
 
+  const lastProfileSaveRef = useRef<number>(0);
+
   const handleUpdateProfile = async () => {
     if (!userId) return;
+
+    // Rate limit: 5s cooldown
+    const now = Date.now();
+    if (now - lastProfileSaveRef.current < 5000) {
+      toast({ title: "Please wait", description: "You're saving too frequently.", variant: "destructive" });
+      return;
+    }
+    lastProfileSaveRef.current = now;
+
+    // Sanitize names
+    const cleanFirst = firstName
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/[^a-zA-Z\s\-'.]/g, '')
+      .trim()
+      .slice(0, 50);
+    const cleanLast = lastName
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/[^a-zA-Z\s\-'.]/g, '')
+      .trim()
+      .slice(0, 50);
 
     setIsUpdatingProfile(true);
     try {
       const { error } = await supabase
         .from("admin_user_profiles")
         .update({ 
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
+          first_name: cleanFirst || null,
+          last_name: cleanLast || null,
           updated_at: new Date().toISOString()
         })
         .eq("user_id", userId);
@@ -167,7 +191,7 @@ export function ProfileInformationCard({
         actionType: AdminAuditActions.PROFILE_NAME_UPDATED,
         targetType: "admin_profile",
         targetId: userId,
-        details: { firstName: firstName.trim(), lastName: lastName.trim() },
+        details: { firstName: cleanFirst, lastName: cleanLast },
       });
 
       toast({

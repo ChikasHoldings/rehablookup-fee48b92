@@ -216,7 +216,8 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
                       id="firstName"
                       placeholder="John"
                       value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
+                      onChange={(e) => setFirstName(e.target.value.slice(0, 50))}
+                      maxLength={50}
                     />
                   </div>
                   <div className="space-y-2">
@@ -225,7 +226,8 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
                       id="lastName"
                       placeholder="Smith"
                       value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
+                      onChange={(e) => setLastName(e.target.value.slice(0, 50))}
+                      maxLength={50}
                     />
                   </div>
                 </div>
@@ -237,7 +239,8 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
                     type="email"
                     placeholder="admin@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.slice(0, 255))}
+                    maxLength={255}
                   />
                   <p className="text-xs text-muted-foreground">
                     A welcome email with login credentials will be sent here
