@@ -704,6 +704,14 @@ Deno.serve(async (req) => {
     // Generate idempotency key if not provided
     const idempotencyKey = data.idempotencyKey || `${data.email}-${data.facilityId}-${Date.now()}`;
 
+    // Detect high-intent signals
+    const isHighIntent = !!(
+      (data.urgency && ["Urgent", "Immediately", "immediate"].includes(data.urgency)) ||
+      (data.preferredContact === "call" || data.preferredContact === "phone") ||
+      (data.readinessLevel && ["high", "ready"].includes(data.readinessLevel)) ||
+      (data.levelOfCare && ["detox", "residential", "inpatient"].some(t => (data.levelOfCare || "").toLowerCase().includes(t)))
+    );
+
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
@@ -732,6 +740,8 @@ Deno.serve(async (req) => {
         exclusive_until: exclusiveUntil.toISOString(),
         extended_until: extendedUntil.toISOString(),
         redistribution_status: "exclusive",
+        // High-intent flag
+        high_intent: isHighIntent,
         // Enhanced intake fields
         age_range: data.ageRange || null,
         gender: data.gender || null,
@@ -747,7 +757,7 @@ Deno.serve(async (req) => {
         budget_preference: data.budgetPreference || null,
         special_needs: Array.isArray(data.specialNeeds) ? data.specialNeeds : [],
       })
-      .select("id")
+      .select("id, credit_cost, lead_score_label")
       .single();
 
     if (insertError) {
@@ -870,24 +880,51 @@ Deno.serve(async (req) => {
       log(requestId, "WARN", "Failed to send SMS notification", { error: String(smsError) });
     }
 
-    // In-app notification
+    // In-app notification — enriched with high-intent + credit cost + direct link
+    const intentLabel = isHighIntent ? "🔥 High-Intent" : "";
+    const urgencyLabel = data.urgency && ["Urgent", "Immediately", "immediate"].includes(data.urgency) ? " — Needs help now" : "";
+    const notificationTitle = isHighIntent ? "🔥 High-Intent Inquiry Received" : "New Inquiry Received";
+    const notificationMessage = `${maskLeadName(data.name)} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}${urgencyLabel}`;
+
     try {
       await supabase.from("provider_notifications").insert({
         user_id: facility.user_id,
         facility_id: facility.id,
-        type: "new_lead",
-        title: "New Inquiry Received",
-        message: `${maskLeadName(data.name)} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}`,
+        type: isHighIntent ? "high_intent_lead" : "new_lead",
+        title: notificationTitle,
+        message: notificationMessage,
         metadata: {
           lead_id: lead.id,
           urgency: data.urgency,
           level_of_care: data.levelOfCare,
+          location_city_state: data.locationCityState,
           source: validatedSource,
+          high_intent: isHighIntent,
+          credit_cost: lead.credit_cost,
+          lead_score_label: lead.lead_score_label,
+          inquiry_type: data.preferredContact === "call" ? "request_callback" : "request_info",
+          link: "/provider/inquiries",
         },
         read: false,
       });
     } catch (notifError) {
       log(requestId, "WARN", "Failed to create in-app notification", { error: String(notifError) });
+    }
+
+    // Track instant notification event
+    try {
+      await supabase.from("notification_events").insert({
+        lead_id: lead.id,
+        facility_id: facility.id,
+        user_id: facility.user_id,
+        notification_stage: "instant",
+        channel: "email",
+        event_type: "sent",
+        notification_type: isHighIntent ? "high_intent" : "new_lead",
+        metadata: { credit_cost: lead.credit_cost, urgency: data.urgency },
+      });
+    } catch (trackError) {
+      log(requestId, "WARN", "Failed to track notification event", { error: String(trackError) });
     }
 
     log(requestId, "INFO", "Inquiry submitted successfully", { leadId: lead.id });

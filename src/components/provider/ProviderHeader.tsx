@@ -140,7 +140,11 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       return;
     }
     
-    const leadTypes = ["lead_received", "lead_status_changed", "lead_redistributed", "lead_unlocked"];
+    // Lead-related notification types — route to inquiries
+    const leadTypes = [
+      "new_lead", "high_intent_lead", "lead_received", "lead_status_changed", 
+      "lead_redistributed", "lead_unlocked", "lead_reminder", "lead_expired",
+    ];
     const billingTypes = ["subscription_updated", "subscription_renewal", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"];
     const placementTypes = ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete", "tour_request", "tour_confirmed", "tour_cancelled"];
 
