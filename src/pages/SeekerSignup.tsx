@@ -118,11 +118,32 @@ export default function SeekerSignup() {
     return data;
   };
 
+  const passwordStrength = calculatePasswordStrength(password);
+  const isPasswordStrong = passwordStrength.score >= 3;
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Honeypot check
+    if (honeypot) {
+      toast.error('An unexpected error occurred. Please try again.');
+      return;
+    }
+
+    // Client-side rate limiting: 1 attempt per 10 seconds
+    const now = Date.now();
+    if (now - lastSubmitAttempt < 10_000) {
+      toast.error('Please wait a few seconds before trying again.');
+      return;
+    }
+    setLastSubmitAttempt(now);
+
+    // Sanitize inputs
+    const sanitizedFirst = firstName.trim().replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').slice(0, 50);
+    const sanitizedLast = lastName.trim().replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').slice(0, 50);
+
     // Validation
-    if (!firstName.trim() || !lastName.trim()) {
+    if (!sanitizedFirst || !sanitizedLast) {
       toast.error('Please enter your first and last name');
       return;
     }
@@ -142,8 +163,8 @@ export default function SeekerSignup() {
       return;
     }
     
-    if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    if (!isPasswordStrong) {
+      toast.error('Please choose a stronger password');
       return;
     }
     
@@ -151,21 +172,41 @@ export default function SeekerSignup() {
       toast.error('Passwords do not match');
       return;
     }
-    
+
+    if (isSubmitting) return;
     setIsSubmitting(true);
     
     try {
-      const displayName = `${firstName.trim()} ${lastName.trim()}`;
+      const trimmedEmail = email.trim().toLowerCase();
+
+      // Cross-account checks: prevent duplicate accounts across roles
+      const [providerResult, adminResult] = await Promise.all([
+        supabase.rpc('is_email_provider', { p_email: trimmedEmail }),
+        supabase.rpc('is_email_admin', { p_email: trimmedEmail }),
+      ]);
+
+      if (!providerResult.error && providerResult.data) {
+        toast.error('This email is registered as a facility provider. Please use the provider login or a different email.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!adminResult.error && adminResult.data) {
+        toast.error('This email is associated with an administrative account. Please use a different email.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const displayName = `${sanitizedFirst} ${sanitizedLast}`;
       
-      // With auto-confirm enabled, user gets a session immediately
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
         options: {
           data: {
             display_name: displayName,
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
+            first_name: sanitizedFirst,
+            last_name: sanitizedLast,
             account_type: 'seeker',
             phone: phone,
             zipcode: zipcode,
@@ -177,7 +218,7 @@ export default function SeekerSignup() {
       
       if (error) {
         if (error.message.includes('already registered')) {
-          toast.error('An account with this email already exists');
+          toast.error('An account with this email already exists. Please sign in instead.');
         } else {
           toast.error(error.message);
         }
@@ -185,7 +226,7 @@ export default function SeekerSignup() {
       }
       
       if (data.user) {
-        // Update profile with phone/location data if we have a session
+        // Update seeker profile with phone/location (trigger creates the base profile)
         if (data.session) {
           supabase
             .from('seeker_profiles')
@@ -204,19 +245,19 @@ export default function SeekerSignup() {
           body: {
             type: 'welcome',
             seekerId: data.user.id,
-            email: email.trim()
+            email: trimmedEmail
           }
         }).catch(() => {});
         
-        // Send 6-digit verification code via Resend
+        // Send 6-digit verification code
         try {
-          await sendVerificationCode(email.trim());
+          await sendVerificationCode(trimmedEmail);
           toast.success('Account created! Enter the 6-digit code sent to your email.');
         } catch {
           toast.success('Account created! We\'ll send you a verification code.');
         }
         
-        setSignupEmail(email.trim());
+        setSignupEmail(trimmedEmail);
         setShowVerification(true);
         setResendCooldown(60);
       }
