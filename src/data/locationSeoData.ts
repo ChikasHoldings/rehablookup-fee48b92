@@ -1558,14 +1558,14 @@ for (const s of statesData) {
   STATE_ABBR_TO_SLUG[s.abbreviation] = s.slug;
 }
 
-export function getNearbyStates(stateSlug: string, limit = 4): Array<{ name: string; slug: string }> {
+export function getNearbyStates(stateSlug: string, limit = 4): Array<{ name: string; slug: string; abbreviation: string }> {
   const state = getStateBySlug(stateSlug);
   if (!state) return [];
   const abbrs = (ADJACENT_STATES[state.abbreviation] || []).slice(0, limit);
   return abbrs
     .map(a => {
       const s = statesData.find(st => st.abbreviation === a);
-      return s ? { name: s.name, slug: s.slug } : null;
+      return s ? { name: s.name, slug: s.slug, abbreviation: s.abbreviation } : null;
     })
-    .filter(Boolean) as Array<{ name: string; slug: string }>;
+    .filter(Boolean) as Array<{ name: string; slug: string; abbreviation: string }>;
 }
