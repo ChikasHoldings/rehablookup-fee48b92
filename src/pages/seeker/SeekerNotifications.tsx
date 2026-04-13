@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { Helmet } from "react-helmet-async";
-import { 
+import { useNavigate } from "react-router-dom";
+import {
   Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings,
   Send, Heart, Star, Building2, MapPin, Calendar, HeartHandshake, UserCheck, CheckCircle
 } from "lucide-react";
