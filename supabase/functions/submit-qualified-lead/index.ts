@@ -704,6 +704,14 @@ Deno.serve(async (req) => {
     // Generate idempotency key if not provided
     const idempotencyKey = data.idempotencyKey || `${data.email}-${data.facilityId}-${Date.now()}`;
 
+    // Detect high-intent signals
+    const isHighIntent = !!(
+      (data.urgency && ["Urgent", "Immediately", "immediate"].includes(data.urgency)) ||
+      (data.preferredContact === "call" || data.preferredContact === "phone") ||
+      (data.readinessLevel && ["high", "ready"].includes(data.readinessLevel)) ||
+      (data.levelOfCare && ["detox", "residential", "inpatient"].some(t => (data.levelOfCare || "").toLowerCase().includes(t)))
+    );
+
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
@@ -732,6 +740,8 @@ Deno.serve(async (req) => {
         exclusive_until: exclusiveUntil.toISOString(),
         extended_until: extendedUntil.toISOString(),
         redistribution_status: "exclusive",
+        // High-intent flag
+        high_intent: isHighIntent,
         // Enhanced intake fields
         age_range: data.ageRange || null,
         gender: data.gender || null,
@@ -747,7 +757,7 @@ Deno.serve(async (req) => {
         budget_preference: data.budgetPreference || null,
         special_needs: Array.isArray(data.specialNeeds) ? data.specialNeeds : [],
       })
-      .select("id")
+      .select("id, credit_cost, lead_score_label")
       .single();
 
     if (insertError) {
