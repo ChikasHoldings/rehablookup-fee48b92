@@ -165,7 +165,8 @@ function NotificationItem({
     
     // Type-based routing
     const leadTypes = ["new_lead", "high_intent_lead", "lead_received", "lead_reminder", "lead_expired", "lead_status_changed", "lead_redistributed", "lead_unlocked"];
-    const billingTypes = ["subscription_updated", "subscription_renewal", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"];
+    const billingTypes = ["credits_added", "subscription_updated", "subscription_active", "subscription_renewal", "subscription_cancelled", "payment_failed", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"];
+    const listingTypes = ["listing_approved", "listing_rejected", "listing_needs_edits", "featured_activated", "featured_expired", "image_flagged", "credential_verified", "credential_rejected"];
     const placementTypes = ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete"];
     const tourTypes = ["tour_request", "tour_confirmed", "tour_cancelled"];
 
@@ -173,7 +174,7 @@ function NotificationItem({
       navigate("/provider/inquiries");
     } else if (billingTypes.includes(notification.type)) {
       navigate("/provider/billing");
-    } else if (notification.type === "listing_approved") {
+    } else if (listingTypes.includes(notification.type)) {
       navigate("/provider/listings");
     } else if (placementTypes.includes(notification.type)) {
       navigate("/provider/placement-network");
