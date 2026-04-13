@@ -49,7 +49,11 @@ import { useProviderNotifications, ProviderNotification } from "@/hooks/useProvi
 import { cn } from "@/lib/utils";
 
 const notificationTypeIcons: Record<string, React.ReactNode> = {
+  new_lead: <UserPlus className="h-5 w-5 text-primary" />,
+  high_intent_lead: <UserPlus className="h-5 w-5 text-orange-500" />,
   lead_received: <UserPlus className="h-5 w-5 text-primary" />,
+  lead_reminder: <Bell className="h-5 w-5 text-amber-500" />,
+  lead_expired: <AlertTriangle className="h-5 w-5 text-red-500" />,
   lead_status_changed: <MessageSquare className="h-5 w-5 text-blue-500" />,
   lead_redistributed: <UserPlus className="h-5 w-5 text-primary" />,
   lead_unlocked: <UserPlus className="h-5 w-5 text-green-500" />,
@@ -72,7 +76,11 @@ const notificationTypeIcons: Record<string, React.ReactNode> = {
 };
 
 const notificationTypeLabels: Record<string, string> = {
+  new_lead: "New Inquiry",
+  high_intent_lead: "🔥 High Intent",
   lead_received: "New Inquiry",
+  lead_reminder: "Reminder",
+  lead_expired: "Lead Expired",
   lead_status_changed: "Inquiry Update",
   lead_redistributed: "New Inquiry",
   lead_unlocked: "Lead Unlocked",
@@ -98,7 +106,7 @@ type NotificationTypeFilter = "all" | "leads" | "billing" | "placements" | "syst
 
 const typeFilterCategories: Record<NotificationTypeFilter, string[]> = {
   all: [],
-  leads: ["lead_received", "lead_status_changed", "lead_redistributed", "lead_unlocked"],
+  leads: ["new_lead", "high_intent_lead", "lead_received", "lead_reminder", "lead_expired", "lead_status_changed", "lead_redistributed", "lead_unlocked"],
   billing: ["subscription_updated", "subscription_renewal", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"],
   placements: ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete", "tour_request", "tour_confirmed", "tour_cancelled"],
   system: ["listing_approved", "review_received", "image_flagged", "system"],
