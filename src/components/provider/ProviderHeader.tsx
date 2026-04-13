@@ -67,11 +67,44 @@ interface ProviderHeaderProps {
 }
 
 const notificationIcons: Record<string, React.ReactNode> = {
+  // Lead types
+  new_lead: <UserPlus className="h-4 w-4 text-primary" />,
+  high_intent_lead: <UserPlus className="h-4 w-4 text-orange-500" />,
   lead_received: <UserPlus className="h-4 w-4 text-primary" />,
+  lead_reminder: <Bell className="h-4 w-4 text-amber-500" />,
+  lead_expired: <AlertTriangle className="h-4 w-4 text-destructive" />,
   lead_status_changed: <MessageSquare className="h-4 w-4 text-primary" />,
-  listing_approved: <Shield className="h-4 w-4 text-success" />,
+  lead_redistributed: <UserPlus className="h-4 w-4 text-primary" />,
+  lead_unlocked: <Check className="h-4 w-4 text-green-500" />,
+  // Billing types
+  credits_added: <CreditCard className="h-4 w-4 text-green-500" />,
   subscription_updated: <CreditCard className="h-4 w-4 text-accent-foreground" />,
-  lead_limit_warning: <AlertTriangle className="h-4 w-4 text-warning" />,
+  subscription_active: <Crown className="h-4 w-4 text-amber-500" />,
+  subscription_renewal: <CreditCard className="h-4 w-4 text-purple-500" />,
+  subscription_cancelled: <AlertTriangle className="h-4 w-4 text-destructive" />,
+  payment_failed: <AlertCircle className="h-4 w-4 text-destructive" />,
+  low_credits_warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  lead_limit_warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  concierge_invoice_issued: <CreditCard className="h-4 w-4 text-purple-500" />,
+  concierge_invoice_paid: <CreditCard className="h-4 w-4 text-green-500" />,
+  // Listing types
+  listing_approved: <Shield className="h-4 w-4 text-green-500" />,
+  listing_rejected: <AlertCircle className="h-4 w-4 text-destructive" />,
+  listing_needs_edits: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  featured_activated: <Star className="h-4 w-4 text-amber-500" />,
+  featured_expired: <Star className="h-4 w-4 text-muted-foreground" />,
+  image_flagged: <AlertTriangle className="h-4 w-4 text-destructive" />,
+  credential_verified: <Shield className="h-4 w-4 text-green-500" />,
+  credential_rejected: <AlertCircle className="h-4 w-4 text-destructive" />,
+  // Placement types
+  placement_introduction: <UserPlus className="h-4 w-4 text-indigo-500" />,
+  concierge_seeker_confirmed: <Check className="h-4 w-4 text-green-500" />,
+  concierge_placement_complete: <Check className="h-4 w-4 text-green-500" />,
+  tour_request: <MessageSquare className="h-4 w-4 text-blue-500" />,
+  tour_confirmed: <Check className="h-4 w-4 text-green-500" />,
+  tour_cancelled: <AlertTriangle className="h-4 w-4 text-destructive" />,
+  // Review & system
+  review_received: <MessageSquare className="h-4 w-4 text-yellow-500" />,
   system: <Settings className="h-4 w-4 text-muted-foreground" />,
 };
 
@@ -145,14 +178,19 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       "new_lead", "high_intent_lead", "lead_received", "lead_status_changed", 
       "lead_redistributed", "lead_unlocked", "lead_reminder", "lead_expired",
     ];
-    const billingTypes = ["subscription_updated", "subscription_renewal", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"];
+    const billingTypes = [
+      "credits_added", "subscription_updated", "subscription_active", "subscription_renewal",
+      "subscription_cancelled", "payment_failed", "low_credits_warning", "lead_limit_warning",
+      "concierge_invoice_issued", "concierge_invoice_paid",
+    ];
+    const listingTypes = ["listing_approved", "listing_rejected", "listing_needs_edits", "featured_activated", "featured_expired", "image_flagged", "credential_verified", "credential_rejected"];
     const placementTypes = ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete", "tour_request", "tour_confirmed", "tour_cancelled"];
 
     if (leadTypes.includes(notification.type)) {
       navigate("/provider/inquiries");
     } else if (billingTypes.includes(notification.type)) {
       navigate("/provider/billing");
-    } else if (notification.type === "listing_approved") {
+    } else if (listingTypes.includes(notification.type)) {
       navigate("/provider/listings");
     } else if (placementTypes.includes(notification.type)) {
       navigate("/provider/placement-network");

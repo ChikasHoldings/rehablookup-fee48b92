@@ -385,40 +385,10 @@ export default function ProviderSettingsPage() {
     };
 
     try {
-      // Check if preferences exist
-      const { data: existing } = await supabase
+      // Use upsert for atomic, race-condition-free save
+      const { error } = await supabase
         .from("notification_preferences")
-        .select("id")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      let error;
-      if (existing) {
-        const result = await supabase
-          .from("notification_preferences")
-          .update({
-            email_lead_alerts: emailLeadAlerts,
-            email_weekly_digest: emailWeeklyDigest,
-            email_product_updates: emailProductUpdates,
-            sms_lead_alerts: smsLeadAlerts,
-            browser_notifications: browserNotifications,
-            lead_notification_frequency: leadNotificationFrequency,
-            notify_new_leads: notifyNewLeads,
-            notify_lead_status_changes: notifyLeadStatusChanges,
-            notify_lead_limit_warnings: notifyLeadLimitWarnings,
-            notify_facility_views: notifyFacilityViews,
-            digest_time: digestTime,
-            followup_reminders_enabled: followupRemindersEnabled,
-            default_snooze_duration: defaultSnoozeDuration,
-          })
-          .eq("user_id", session.user.id);
-        error = result.error;
-      } else {
-        const result = await supabase
-          .from("notification_preferences")
-          .insert(preferences);
-        error = result.error;
-      }
+        .upsert(preferences, { onConflict: "user_id" });
 
       if (error) throw error;
 
