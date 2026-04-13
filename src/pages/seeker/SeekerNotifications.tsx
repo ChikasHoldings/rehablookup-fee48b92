@@ -111,8 +111,21 @@ function NotificationItem({
 }
 
 export default function SeekerNotifications() {
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification, isAuthenticated } =
+  const { isAuthenticated, isReady } = useSeekerSession();
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
     useSeekerNotifications();
+
+  // Auth guard
+  if (isReady && !isAuthenticated) {
+    return (
+      <AuthPrompt
+        title="Sign in to view notifications"
+        description="Create a free account to receive and manage your notifications."
+        icon="lock"
+        returnTo="/account/notifications"
+      />
+    );
+  }
 
   if (isLoading) {
     return (
