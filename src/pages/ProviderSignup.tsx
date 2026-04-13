@@ -110,69 +110,12 @@ const steps = [
   { id: 7, name: "Review", icon: CheckCircle },
 ];
 
-const treatmentTypes = [
-  "Detoxification",
-  "Inpatient/Residential",
-  "Outpatient",
-  "Intensive Outpatient (IOP)",
-  "Partial Hospitalization (PHP)",
-  "Medication-Assisted Treatment (MAT)",
-  "Dual Diagnosis",
-  "Trauma Therapy",
-  "Cognitive Behavioral Therapy (CBT)",
-  "Group Therapy",
-  "Family Therapy",
-  "Holistic/Alternative Therapies",
-  "Aftercare/Continuing Care",
-];
-
-const insuranceProviders = [
-  "Aetna",
-  "Anthem Blue Cross",
-  "Blue Cross Blue Shield",
-  "Cigna",
-  "Humana",
-  "Kaiser Permanente",
-  "Medicaid",
-  "Medicare",
-  "Tricare",
-  "UnitedHealthcare",
-  "Self-Pay/Private Pay",
-  "Sliding Scale/Financial Assistance",
-];
-
-const facilityTypes = [
-  "Residential Treatment Center",
-  "Outpatient Program",
-  "Detox Center",
-  "Intensive Outpatient (IOP)",
-  "Partial Hospitalization (PHP)",
-  "Sober Living",
-  "Dual Diagnosis",
-  "Luxury Rehab",
-  "Telehealth/Virtual",
-];
-
-// Structured accreditation options
-const accreditationOptions = [
-  { value: "JCAHO", label: "JCAHO Accredited", description: "Joint Commission on Accreditation of Healthcare Organizations" },
-  { value: "CARF", label: "CARF Certified", description: "Commission on Accreditation of Rehabilitation Facilities" },
-  { value: "LegitScript", label: "LegitScript Certified", description: "Verified for advertising compliance" },
-  { value: "NAATP", label: "NAATP Member", description: "National Association of Addiction Treatment Providers" },
-  { value: "State Licensed", label: "State Licensed", description: "Licensed by state regulatory authority" },
-  { value: "SAMHSA Listed", label: "SAMHSA Listed", description: "Listed in SAMHSA's National Directory" },
-];
-
-const states = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
-  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
-  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
-  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
-  "Wisconsin", "Wyoming"
-];
+// Use shared constants - single source of truth
+const treatmentTypes = [...TREATMENT_SERVICES];
+const insuranceProviders = [...INSURANCE_PROVIDERS];
+const facilityTypes = FACILITY_TYPES.map(t => t.value);
+const accreditationOptions = [...ACCREDITATION_OPTIONS];
+const states = [...US_STATES];
 
 export default function ProviderSignup() {
   const [currentStep, setCurrentStep] = useState(1);
