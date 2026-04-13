@@ -39,6 +39,8 @@ const formatPhoneNumber = (value: string) => {
 };
 
 export function StepContact({ data, errors, onChange }: Props) {
+  const sanitizeName = (val: string) => val.replace(/<[^>]*>/g, "").replace(/javascript:/gi, "").slice(0, 100);
+
   const handlePhoneChange = (value: string, field: 'phone' | 'alternativeContactPhone' | 'emergencyContactPhone') => {
     onChange({ [field]: formatPhoneNumber(value) });
   };
@@ -60,8 +62,9 @@ export function StepContact({ data, errors, onChange }: Props) {
             </Label>
             <Input
               value={data.firstName || ""}
-              onChange={(e) => onChange({ firstName: e.target.value })}
+              onChange={(e) => onChange({ firstName: sanitizeName(e.target.value) })}
               placeholder="First name"
+              maxLength={100}
               className={`h-11 ${errors.firstName ? "border-destructive ring-1 ring-destructive" : ""}`}
             />
             {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
@@ -73,8 +76,9 @@ export function StepContact({ data, errors, onChange }: Props) {
             </Label>
             <Input
               value={data.lastName || ""}
-              onChange={(e) => onChange({ lastName: e.target.value })}
+              onChange={(e) => onChange({ lastName: sanitizeName(e.target.value) })}
               placeholder="Last name"
+              maxLength={100}
               className={`h-11 ${errors.lastName ? "border-destructive ring-1 ring-destructive" : ""}`}
             />
             {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
@@ -140,8 +144,9 @@ export function StepContact({ data, errors, onChange }: Props) {
           </Label>
           <Input
             value={data.alternativeContactName || ""}
-            onChange={(e) => onChange({ alternativeContactName: e.target.value })}
+            onChange={(e) => onChange({ alternativeContactName: sanitizeName(e.target.value) })}
             placeholder="Name"
+            maxLength={100}
             className="h-10"
           />
           <Input
@@ -160,8 +165,9 @@ export function StepContact({ data, errors, onChange }: Props) {
           </Label>
           <Input
             value={data.emergencyContactName || ""}
-            onChange={(e) => onChange({ emergencyContactName: e.target.value })}
+            onChange={(e) => onChange({ emergencyContactName: sanitizeName(e.target.value) })}
             placeholder="Name"
+            maxLength={100}
             className="h-10"
           />
           <Input

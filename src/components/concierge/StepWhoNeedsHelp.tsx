@@ -180,8 +180,9 @@ export function StepWhoNeedsHelp({ data, errors, onChange }: Props) {
         </Label>
         <Input
           value={data.mobilityNeeds || ""}
-          onChange={(e) => onChange({ mobilityNeeds: e.target.value })}
+          onChange={(e) => onChange({ mobilityNeeds: e.target.value.replace(/<[^>]*>/g, "").slice(0, 200) })}
           placeholder="Wheelchair, ADA, etc."
+          maxLength={200}
           className="h-11"
         />
       </div>
