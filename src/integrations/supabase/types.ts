@@ -3066,6 +3066,7 @@ export type Database = {
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
           gender: string | null
+          high_intent: boolean | null
           id: string
           idempotency_key: string | null
           inquiry_type: string | null
@@ -3095,7 +3096,9 @@ export type Database = {
           redistribution_status: string | null
           relationship_to_patient: string | null
           reminder_12h_sent_at: string | null
+          reminder_20h_sent_at: string | null
           reminder_24h_sent_at: string | null
+          reminder_2h_sent_at: string | null
           reminder_6h_sent_at: string | null
           routing_order: number | null
           shared_with: string[] | null
@@ -3128,6 +3131,7 @@ export type Database = {
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
+          high_intent?: boolean | null
           id?: string
           idempotency_key?: string | null
           inquiry_type?: string | null
@@ -3157,7 +3161,9 @@ export type Database = {
           redistribution_status?: string | null
           relationship_to_patient?: string | null
           reminder_12h_sent_at?: string | null
+          reminder_20h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
+          reminder_2h_sent_at?: string | null
           reminder_6h_sent_at?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
@@ -3190,6 +3196,7 @@ export type Database = {
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
+          high_intent?: boolean | null
           id?: string
           idempotency_key?: string | null
           inquiry_type?: string | null
@@ -3219,7 +3226,9 @@ export type Database = {
           redistribution_status?: string | null
           relationship_to_patient?: string | null
           reminder_12h_sent_at?: string | null
+          reminder_20h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
+          reminder_2h_sent_at?: string | null
           reminder_6h_sent_at?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
@@ -3386,6 +3395,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_events: {
+        Row: {
+          channel: string
+          created_at: string
+          event_type: string
+          facility_id: string
+          id: string
+          lead_id: string
+          metadata: Json | null
+          notification_stage: string
+          notification_type: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          event_type: string
+          facility_id: string
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          notification_stage: string
+          notification_type: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          event_type?: string
+          facility_id?: string
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          notification_stage?: string
+          notification_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           browser_notifications: boolean
@@ -3395,15 +3443,18 @@ export type Database = {
           email_lead_alerts: boolean
           email_product_updates: boolean
           email_weekly_digest: boolean
+          engagement_tier: string | null
           followup_reminders_enabled: boolean | null
           id: string
           last_digest_sent_at: string | null
+          last_unlock_at: string | null
           lead_notification_frequency: string | null
           notify_facility_views: boolean | null
           notify_lead_limit_warnings: boolean | null
           notify_lead_status_changes: boolean | null
           notify_new_leads: boolean | null
           sms_lead_alerts: boolean
+          total_unlocks_30d: number | null
           updated_at: string
           user_id: string
         }
@@ -3415,15 +3466,18 @@ export type Database = {
           email_lead_alerts?: boolean
           email_product_updates?: boolean
           email_weekly_digest?: boolean
+          engagement_tier?: string | null
           followup_reminders_enabled?: boolean | null
           id?: string
           last_digest_sent_at?: string | null
+          last_unlock_at?: string | null
           lead_notification_frequency?: string | null
           notify_facility_views?: boolean | null
           notify_lead_limit_warnings?: boolean | null
           notify_lead_status_changes?: boolean | null
           notify_new_leads?: boolean | null
           sms_lead_alerts?: boolean
+          total_unlocks_30d?: number | null
           updated_at?: string
           user_id: string
         }
@@ -3435,15 +3489,18 @@ export type Database = {
           email_lead_alerts?: boolean
           email_product_updates?: boolean
           email_weekly_digest?: boolean
+          engagement_tier?: string | null
           followup_reminders_enabled?: boolean | null
           id?: string
           last_digest_sent_at?: string | null
+          last_unlock_at?: string | null
           lead_notification_frequency?: string | null
           notify_facility_views?: boolean | null
           notify_lead_limit_warnings?: boolean | null
           notify_lead_status_changes?: boolean | null
           notify_new_leads?: boolean | null
           sms_lead_alerts?: boolean
+          total_unlocks_30d?: number | null
           updated_at?: string
           user_id?: string
         }
