@@ -246,6 +246,7 @@ export default function ProviderInquiriesPage() {
       if (highlightLeadId) {
         const newParams = new URLSearchParams(searchParams);
         newParams.delete("highlight");
+        newParams.delete("lead");
         setSearchParams(newParams, { replace: true });
       }
     }
