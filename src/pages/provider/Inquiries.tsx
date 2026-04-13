@@ -57,7 +57,7 @@ interface LeadWithFacility extends Lead {
 
 export default function ProviderInquiriesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const highlightLeadId = searchParams.get("highlight");
+  const highlightLeadId = searchParams.get("highlight") || searchParams.get("lead");
   const statusParam = searchParams.get("status");
   
   const [selectedInquiry, setSelectedInquiry] = useState<LeadWithFacility | null>(null);
@@ -246,6 +246,7 @@ export default function ProviderInquiriesPage() {
       if (highlightLeadId) {
         const newParams = new URLSearchParams(searchParams);
         newParams.delete("highlight");
+        newParams.delete("lead");
         setSearchParams(newParams, { replace: true });
       }
     }

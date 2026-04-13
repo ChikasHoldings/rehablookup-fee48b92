@@ -3073,6 +3073,7 @@ export type Database = {
           insurance_provider: string | null
           insurance_type: string | null
           ip_hash: string | null
+          lead_expired_at: string | null
           lead_score: number | null
           lead_score_label: string | null
           legal_involvement: string | null
@@ -3096,6 +3097,7 @@ export type Database = {
           redistribution_status: string | null
           relationship_to_patient: string | null
           reminder_12h_sent_at: string | null
+          reminder_1h_sent_at: string | null
           reminder_20h_sent_at: string | null
           reminder_24h_sent_at: string | null
           reminder_2h_sent_at: string | null
@@ -3138,6 +3140,7 @@ export type Database = {
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
+          lead_expired_at?: string | null
           lead_score?: number | null
           lead_score_label?: string | null
           legal_involvement?: string | null
@@ -3161,6 +3164,7 @@ export type Database = {
           redistribution_status?: string | null
           relationship_to_patient?: string | null
           reminder_12h_sent_at?: string | null
+          reminder_1h_sent_at?: string | null
           reminder_20h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
           reminder_2h_sent_at?: string | null
@@ -3203,6 +3207,7 @@ export type Database = {
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
+          lead_expired_at?: string | null
           lead_score?: number | null
           lead_score_label?: string | null
           legal_involvement?: string | null
@@ -3226,6 +3231,7 @@ export type Database = {
           redistribution_status?: string | null
           relationship_to_patient?: string | null
           reminder_12h_sent_at?: string | null
+          reminder_1h_sent_at?: string | null
           reminder_20h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
           reminder_2h_sent_at?: string | null
@@ -3456,6 +3462,7 @@ export type Database = {
           notify_lead_limit_warnings: boolean | null
           notify_lead_status_changes: boolean | null
           notify_new_leads: boolean | null
+          sms_escalation_enabled: boolean | null
           sms_lead_alerts: boolean
           total_unlocks_30d: number | null
           updated_at: string
@@ -3479,6 +3486,7 @@ export type Database = {
           notify_lead_limit_warnings?: boolean | null
           notify_lead_status_changes?: boolean | null
           notify_new_leads?: boolean | null
+          sms_escalation_enabled?: boolean | null
           sms_lead_alerts?: boolean
           total_unlocks_30d?: number | null
           updated_at?: string
@@ -3502,6 +3510,7 @@ export type Database = {
           notify_lead_limit_warnings?: boolean | null
           notify_lead_status_changes?: boolean | null
           notify_new_leads?: boolean | null
+          sms_escalation_enabled?: boolean | null
           sms_lead_alerts?: boolean
           total_unlocks_30d?: number | null
           updated_at?: string

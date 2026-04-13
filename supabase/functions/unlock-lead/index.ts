@@ -528,6 +528,7 @@ Deno.serve(async (req) => {
       // Mark all reminder columns as sent to prevent any future reminders
       const now = new Date().toISOString();
       await supabaseAdmin.from("leads").update({
+        reminder_1h_sent_at: now,
         reminder_2h_sent_at: now,
         reminder_6h_sent_at: now,
         reminder_12h_sent_at: now,
