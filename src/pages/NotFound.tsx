@@ -56,7 +56,6 @@ const NotFound = () => {
         title="Page Not Found - RehabLookup"
         description="The page you're looking for doesn't exist. Find addiction treatment centers and get help at RehabLookup."
         noindex={true}
-        canonical="/404"
       />
       <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-primary/5 via-background to-muted/30 py-12 px-4 md:py-20">
         <div className="max-w-4xl mx-auto">
