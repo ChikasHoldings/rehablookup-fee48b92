@@ -1153,11 +1153,11 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-telebehavioral-health-compliance" element={<PublicRouteGuard><ProviderTelehealthPage /></PublicRouteGuard>} />
 
             {/* Provider Data & Analytics Pages */}
-            <Route path="/provider-guides/rehab-census-forecasting-tools" element={<PublicRouteGuard><ProviderAnalyticsPage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/rehab-kpi-dashboard-guide" element={<PublicRouteGuard><ProviderAnalyticsPage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/rehab-outcome-reporting-systems" element={<PublicRouteGuard><ProviderAnalyticsPage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/rehab-payer-analytics-reporting" element={<PublicRouteGuard><ProviderAnalyticsPage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/rehab-marketing-attribution-guide" element={<PublicRouteGuard><ProviderAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-census-forecasting-tools" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-kpi-dashboard-guide" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-outcome-reporting-systems" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-payer-analytics-reporting" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-marketing-attribution-guide" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
 
             {/* Provider Accreditation & Quality Pages */}
             <Route path="/provider-guides/rehab-carf-accreditation-preparation" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
