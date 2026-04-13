@@ -51,10 +51,9 @@ import { lazy, Suspense } from "react";
 const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 
 const CREDIT_PACKAGES = [
-  { amountCents: 10000, label: "$100", credits: 100, bonus: null, perLead: "~2-6 leads" },
-  { amountCents: 25000, label: "$250", credits: 250, bonus: null, perLead: "~5-16 leads" },
-  { amountCents: 50000, label: "$500", credits: 500, bonus: "Best Value", perLead: "~10-33 leads" },
-  { amountCents: 100000, label: "$1,000", credits: 1000, bonus: "Most Popular", perLead: "~20-66 leads" },
+  { amountCents: 20000, label: "$200", credits: 200, bonusCents: 0, badge: null, perLead: "~4-13 leads" },
+  { amountCents: 50000, label: "$500", credits: 500, bonusCents: 0, badge: null, perLead: "~10-33 leads" },
+  { amountCents: 100000, label: "$1,000", credits: 1000, bonusCents: 10000, badge: "Best Value", perLead: "~20-66 leads + $100 bonus" },
 ];
 
 const PRO_BENEFITS = [
@@ -156,12 +155,16 @@ export default function ProviderBillingPage() {
 
     if (creditsSuccess === "true") {
       const amount = searchParams.get("amount");
+      const bonus = searchParams.get("bonus");
       const formattedAmount = amount ? `$${(parseInt(amount, 10) / 100).toFixed(0)}` : "";
-      toast.success(`${formattedAmount} credits added to your account!`, { duration: 5000 });
+      const bonusCents = bonus ? parseInt(bonus, 10) : 0;
+      const bonusMsg = bonusCents > 0 ? ` + $${(bonusCents / 100).toFixed(0)} bonus credits!` : "";
+      toast.success(`${formattedAmount} credits added to your account${bonusMsg}`, { duration: 6000 });
       refetchCredits();
       startPostCheckoutPolling(() => refetchCredits());
       searchParams.delete("credits_success");
       searchParams.delete("amount");
+      searchParams.delete("bonus");
       setSearchParams(searchParams, { replace: true });
     }
 
