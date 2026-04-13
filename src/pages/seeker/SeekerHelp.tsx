@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, HelpCircle, MessageSquare, BookOpen, Mail, Phone, ExternalLink, ChevronRight, Send } from "lucide-react";
+import { HelpCircle, MessageSquare, BookOpen, Mail, Phone, ExternalLink, ChevronRight, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
