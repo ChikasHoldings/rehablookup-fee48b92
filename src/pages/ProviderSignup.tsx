@@ -40,6 +40,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
+import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite } from "@/lib/facilitySanitization";
 
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 
@@ -369,22 +370,48 @@ export default function ProviderSignup() {
         if (import.meta.env.DEV) console.log("[ProviderSignup] Profile created successfully");
       }
 
-      // 3. Create facility
+      // 3. Create facility (with input sanitization)
       if (import.meta.env.DEV) console.log("[ProviderSignup] Creating facility...");
+
+      // Validate and sanitize all facility inputs before DB insert
+      let sanitizedName: string, sanitizedAddress: string, sanitizedCity: string;
+      let sanitizedPhone: string, sanitizedEmail: string | null, sanitizedWebsite: string | null;
+      let sanitizedDescription: string | null;
+      try {
+        validateFacilityType(formData.facilityType);
+        validateState(formData.state);
+        validateZipCode(formData.zipCode);
+        sanitizedName = sanitizeFacilityName(formData.facilityName);
+        sanitizedAddress = sanitizeText(formData.address).slice(0, 200);
+        sanitizedCity = sanitizeText(formData.city).slice(0, 100);
+        sanitizedPhone = validatePhone(formData.facilityPhone);
+        sanitizedEmail = validateEmail(formData.facilityEmail);
+        sanitizedWebsite = sanitizeWebsite(formData.website);
+        sanitizedDescription = sanitizeDescription(formData.description);
+      } catch (validationError: any) {
+        toast({
+          title: "Validation Error",
+          description: validationError.message || "Please check your facility information.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: facilityData, error: facilityError } = await supabase
         .from("facilities")
         .insert({
           user_id: userId,
-          name: formData.facilityName,
+          name: sanitizedName,
           facility_type: formData.facilityType,
-          phone: formData.facilityPhone,
-          email: formData.facilityEmail,
-          website: formData.website,
-          address: formData.address,
-          city: formData.city,
+          phone: sanitizedPhone,
+          email: sanitizedEmail,
+          website: sanitizedWebsite,
+          address: sanitizedAddress,
+          city: sanitizedCity,
           state: formData.state,
-          zip_code: formData.zipCode,
-          description: formData.description,
+          zip_code: formData.zipCode.trim(),
+          description: sanitizedDescription,
           bed_count: formData.bedCount,
           gender_served: formData.genderServed,
           year_established: formData.yearEstablished ? parseInt(formData.yearEstablished) : null,
