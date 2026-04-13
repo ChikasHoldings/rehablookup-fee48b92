@@ -478,11 +478,7 @@ const CenterProfile = () => {
 
   useEffect(() => {
     if (facility?.id) {
-      // Track view in facility_views (existing system)
-      supabase.functions.invoke("track-view", {
-        body: { facilityId: facility.id },
-      });
-      // Track profile view in provider_events (new analytics system)
+      // Track profile view in provider_events (single source of truth)
       trackProfileView(facility.id);
     }
   }, [facility?.id, trackProfileView]);
@@ -493,11 +489,7 @@ const CenterProfile = () => {
 
   const trackInteraction = useCallback((type: "call" | "website") => {
     if (facility?.id) {
-      // Track in facility_interactions (existing system)
-      supabase.functions.invoke("track-interaction", {
-        body: { facilityId: facility.id, interactionType: type },
-      });
-      // Track in provider_events (new analytics system)
+      // Track in provider_events (single source of truth)
       if (type === "call") {
         trackClickToCall(facility.id, "profile");
       } else {
