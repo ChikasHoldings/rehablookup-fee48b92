@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite } from "@/lib/facilitySanitization";
+import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite, validateYearEstablished } from "@/lib/facilitySanitization";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { 
@@ -151,6 +151,17 @@ const validateField = (field: string, value: string | null): string | null => {
     case "website":
       if (trimmedValue && !/^(https?:\/\/)?[\w\-]+(\.[\w\-]+)+/.test(trimmedValue)) {
         return "Enter a valid website URL";
+      }
+      if (trimmedValue && /^(javascript|data):/i.test(trimmedValue)) {
+        return "Invalid URL protocol";
+      }
+      return null;
+    case "year_established":
+      if (trimmedValue) {
+        const year = parseInt(trimmedValue, 10);
+        if (isNaN(year) || year < 1900 || year > new Date().getFullYear()) {
+          return `Year must be between 1900 and ${new Date().getFullYear()}`;
+        }
       }
       return null;
     default:

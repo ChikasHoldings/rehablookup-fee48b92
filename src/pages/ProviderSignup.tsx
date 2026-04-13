@@ -40,7 +40,8 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
-import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite } from "@/lib/facilitySanitization";
+import { sanitizeText, sanitizeFacilityName, sanitizePersonName, sanitizeJobTitle, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite, validateYearEstablished } from "@/lib/facilitySanitization";
+import { FACILITY_TYPES, FACILITY_TYPE_VALUES, US_STATES, INSURANCE_PROVIDERS, TREATMENT_SERVICES, AGE_GROUPS, ACCREDITATION_OPTIONS } from "@/lib/facilityConstants";
 
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 
@@ -109,69 +110,12 @@ const steps = [
   { id: 7, name: "Review", icon: CheckCircle },
 ];
 
-const treatmentTypes = [
-  "Detoxification",
-  "Inpatient/Residential",
-  "Outpatient",
-  "Intensive Outpatient (IOP)",
-  "Partial Hospitalization (PHP)",
-  "Medication-Assisted Treatment (MAT)",
-  "Dual Diagnosis",
-  "Trauma Therapy",
-  "Cognitive Behavioral Therapy (CBT)",
-  "Group Therapy",
-  "Family Therapy",
-  "Holistic/Alternative Therapies",
-  "Aftercare/Continuing Care",
-];
-
-const insuranceProviders = [
-  "Aetna",
-  "Anthem Blue Cross",
-  "Blue Cross Blue Shield",
-  "Cigna",
-  "Humana",
-  "Kaiser Permanente",
-  "Medicaid",
-  "Medicare",
-  "Tricare",
-  "UnitedHealthcare",
-  "Self-Pay/Private Pay",
-  "Sliding Scale/Financial Assistance",
-];
-
-const facilityTypes = [
-  "Residential Treatment Center",
-  "Outpatient Program",
-  "Detox Center",
-  "Intensive Outpatient (IOP)",
-  "Partial Hospitalization (PHP)",
-  "Sober Living",
-  "Dual Diagnosis",
-  "Luxury Rehab",
-  "Telehealth/Virtual",
-];
-
-// Structured accreditation options
-const accreditationOptions = [
-  { value: "JCAHO", label: "JCAHO Accredited", description: "Joint Commission on Accreditation of Healthcare Organizations" },
-  { value: "CARF", label: "CARF Certified", description: "Commission on Accreditation of Rehabilitation Facilities" },
-  { value: "LegitScript", label: "LegitScript Certified", description: "Verified for advertising compliance" },
-  { value: "NAATP", label: "NAATP Member", description: "National Association of Addiction Treatment Providers" },
-  { value: "State Licensed", label: "State Licensed", description: "Licensed by state regulatory authority" },
-  { value: "SAMHSA Listed", label: "SAMHSA Listed", description: "Listed in SAMHSA's National Directory" },
-];
-
-const states = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
-  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
-  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
-  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
-  "Wisconsin", "Wyoming"
-];
+// Use shared constants - single source of truth
+const treatmentTypes = [...TREATMENT_SERVICES];
+const insuranceProviders = [...INSURANCE_PROVIDERS];
+const facilityTypes = FACILITY_TYPES.map(t => t.value);
+const accreditationOptions = [...ACCREDITATION_OPTIONS];
+const states = [...US_STATES];
 
 export default function ProviderSignup() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -284,18 +228,27 @@ export default function ProviderSignup() {
     if (import.meta.env.DEV) console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
 
     try {
-      // Check if email is already registered as a seeker
-      if (import.meta.env.DEV) console.log("[ProviderSignup] Checking for existing seeker account...");
-      const { data: isSeeker, error: seekerCheckError } = await supabase.rpc('is_email_seeker', { p_email: formData.email });
+      // Check if email is already registered as a seeker or admin
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Checking for existing accounts...");
+      const [seekerResult, adminResult] = await Promise.all([
+        supabase.rpc('is_email_seeker', { p_email: formData.email }),
+        supabase.rpc('is_email_admin', { p_email: formData.email }),
+      ]);
       
-      if (seekerCheckError) {
-        console.error("[ProviderSignup] Seeker check error:", seekerCheckError);
-        // Non-blocking - continue with signup if check fails
-      } else if (isSeeker) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Email already registered as seeker");
+      if (!seekerResult.error && seekerResult.data) {
         toast({
           title: "Account Exists",
           description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!adminResult.error && adminResult.data) {
+        toast({
+          title: "Account Exists",
+          description: "This email is associated with an administrative account. Please use a different email.",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -348,15 +301,15 @@ export default function ProviderSignup() {
       const userId = authData.user.id;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
 
-      // 2. Create profile
+      // 2. Create profile (with sanitized personal fields)
       if (import.meta.env.DEV) console.log("[ProviderSignup] Creating provider profile...");
       const { error: profileError } = await supabase.from("profiles").insert({
         user_id: userId,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        job_title: formData.jobTitle,
+        first_name: sanitizePersonName(formData.firstName),
+        last_name: sanitizePersonName(formData.lastName),
+        email: formData.email.trim().slice(0, 255),
+        phone: formData.phone.trim().slice(0, 30),
+        job_title: sanitizeJobTitle(formData.jobTitle),
       });
 
       if (profileError) {
@@ -377,6 +330,7 @@ export default function ProviderSignup() {
       let sanitizedName: string, sanitizedAddress: string, sanitizedCity: string;
       let sanitizedPhone: string, sanitizedEmail: string | null, sanitizedWebsite: string | null;
       let sanitizedDescription: string | null;
+      let validatedYear: number | null;
       try {
         validateFacilityType(formData.facilityType);
         validateState(formData.state);
@@ -388,6 +342,7 @@ export default function ProviderSignup() {
         sanitizedEmail = validateEmail(formData.facilityEmail);
         sanitizedWebsite = sanitizeWebsite(formData.website);
         sanitizedDescription = sanitizeDescription(formData.description);
+        validatedYear = validateYearEstablished(formData.yearEstablished);
       } catch (validationError: any) {
         toast({
           title: "Validation Error",
@@ -414,7 +369,7 @@ export default function ProviderSignup() {
           description: sanitizedDescription,
           bed_count: formData.bedCount,
           gender_served: formData.genderServed,
-          year_established: formData.yearEstablished ? parseInt(formData.yearEstablished) : null,
+          year_established: validatedYear,
           accepts_international_patients: formData.acceptsInternationalPatients,
         })
         .select()

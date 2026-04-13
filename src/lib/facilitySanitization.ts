@@ -1,9 +1,39 @@
 /**
- * Input sanitization utilities for facility data.
+ * Input sanitization utilities for facility and profile data.
  * Used across ProviderSignup, AddLocation, and ListingEditor.
  */
 
 import { FACILITY_TYPE_VALUES, US_STATES } from "./facilityConstants";
+
+/**
+ * Sanitize a personal name field (first name, last name).
+ * Strips HTML/JS, limits length, trims.
+ */
+export function sanitizePersonName(name: string, maxLength = 50): string {
+  return sanitizeText(name).slice(0, maxLength);
+}
+
+/**
+ * Sanitize a job title field.
+ */
+export function sanitizeJobTitle(title: string | null | undefined, maxLength = 100): string | null {
+  if (!title || title.trim() === "") return null;
+  return sanitizeText(title).slice(0, maxLength) || null;
+}
+
+/**
+ * Validate year established (must be between 1900 and current year).
+ */
+export function validateYearEstablished(year: string | number | null | undefined): number | null {
+  if (year === null || year === undefined || year === "") return null;
+  const numYear = typeof year === "string" ? parseInt(year, 10) : year;
+  if (isNaN(numYear)) return null;
+  const currentYear = new Date().getFullYear();
+  if (numYear < 1900 || numYear > currentYear) {
+    throw new Error(`Year established must be between 1900 and ${currentYear}`);
+  }
+  return numYear;
+}
 
 /**
  * Strip HTML tags, JS protocol handlers, and inline event handlers from text.
