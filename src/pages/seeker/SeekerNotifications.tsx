@@ -108,7 +108,7 @@ function NotificationItem({
 }
 
 export default function SeekerNotifications() {
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification, isAuthenticated } =
     useSeekerNotifications();
 
   if (isLoading) {
