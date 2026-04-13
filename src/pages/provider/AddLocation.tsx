@@ -34,7 +34,7 @@ import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
 import { US_STATES, FACILITY_TYPES } from "@/lib/facilityConstants";
-import { sanitizeFacilityPayload } from "@/lib/facilitySanitization";
+import { sanitizeFacilityPayload, validateYearEstablished } from "@/lib/facilitySanitization";
 
 interface FacilityFormData {
   name: string;
