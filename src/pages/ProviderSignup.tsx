@@ -285,6 +285,11 @@ export default function ProviderSignup() {
         password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/provider/dashboard`,
+          data: {
+            account_type: "provider",
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+          },
         },
       });
 
@@ -632,7 +637,7 @@ export default function ProviderSignup() {
       // 13. Redirect to dashboard
       toast({
         title: "Welcome to RehabLookup!",
-        description: "Your account has been created. Your listing is now live!",
+        description: "Your account has been created. Your listing is pending review and will be live shortly.",
       });
       navigate("/provider/dashboard");
     } catch (error: any) {
@@ -1240,7 +1245,7 @@ export default function ProviderSignup() {
                           onClick={() => removeGalleryImage(index)}
                           className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <CheckCircle className="h-3 w-3" />
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
@@ -1554,7 +1559,12 @@ export default function ProviderSignup() {
                   className="ml-auto"
                   size="default"
                 >
-                  {isSubmitting ? "Creating Account..." : "Create Account"}
+                  {isSubmitting ? (
+                    <>
+                      <svg className="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      Creating Account...
+                    </>
+                  ) : "Create Account"}
                   <CheckCircle className="ml-2 h-4 w-4" />
                 </Button>
               )}
