@@ -44,7 +44,20 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export default function SeekerInternationalCase() {
-  const { userId: currentUserId, isReady } = useSeekerSession();
+  const { userId: currentUserId, isReady, isAuthenticated } = useSeekerSession();
+
+  if (isReady && !isAuthenticated) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <AuthPrompt
+          title="Sign in to access international placement"
+          description="Create a free account to start your international placement case."
+          icon="lock"
+          returnTo="/account/international"
+        />
+      </div>
+    );
+  }
 
   const user = isReady && currentUserId ? { id: currentUserId } : null;
 
