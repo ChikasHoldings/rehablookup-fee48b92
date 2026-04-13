@@ -286,13 +286,14 @@ export default function SeekerFacilityProfile() {
 
   const ratingData = useFacilityRating(facility?.id);
 
+  const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
+
   useEffect(() => {
     if (facility?.id) {
-      supabase.functions.invoke("track-view", {
-        body: { facilityId: facility.id },
-      });
+      // Track profile view in provider_events (single source of truth)
+      trackProfileView(facility.id);
     }
-  }, [facility?.id]);
+  }, [facility?.id, trackProfileView]);
 
   const handleFavoriteClick = useCallback(() => {
     if (facility?.id) {

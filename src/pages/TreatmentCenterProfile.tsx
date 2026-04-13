@@ -67,6 +67,7 @@ const TreatmentCenterProfile = () => {
   const { slug: id } = useParams<{ slug: string }>();
   const [hasTrackedView, setHasTrackedView] = useState(false);
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
+  const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
   
   const staticCenter = treatmentCenters.find((c) => c.id === id);
   
@@ -75,9 +76,8 @@ const TreatmentCenterProfile = () => {
       if (!id || hasTrackedView || staticCenter) return;
       
       try {
-        await supabase.functions.invoke('track-view', {
-          body: { facility_id: id }
-        });
+        // Track profile view in provider_events (single source of truth)
+        trackProfileView(id);
         setHasTrackedView(true);
         
         // Track in GA
@@ -90,7 +90,7 @@ const TreatmentCenterProfile = () => {
     };
 
     trackView();
-  }, [id, hasTrackedView, staticCenter]);
+  }, [id, hasTrackedView, staticCenter, trackProfileView]);
 
   const center = staticCenter;
 
