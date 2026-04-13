@@ -221,11 +221,10 @@ export default function ProviderBillingPage() {
       toast.error(message);
     } finally {
       setPurchaseLoading(null);
-      setTimeout(() => { purchaseDebounceRef.current = false; }, 2000);
+      // 5-second cooldown to prevent rapid re-clicks after checkout tab opens
+      setTimeout(() => { purchaseDebounceRef.current = false; }, 5000);
     }
   };
-
-  const handleUpgrade = () => {
     navigate("/provider/pro-upgrade");
   };
 
