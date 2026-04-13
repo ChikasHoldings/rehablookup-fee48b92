@@ -810,12 +810,12 @@ export default function ProviderSignup() {
                   <button
                     key={step.id}
                     onClick={() => {
-                      if (step.id < currentStep) {
-                        if (step.id === 2 && emailVerified) return;
+                      // Only allow navigating to previously completed steps (not forward)
+                      if (step.id < currentStep && !(step.id === 2 && emailVerified)) {
                         setCurrentStep(step.id);
                       }
                     }}
-                    disabled={step.id > currentStep || (step.id === 2 && emailVerified)}
+                    disabled={step.id >= currentStep || (step.id === 2 && emailVerified)}
                     className={cn(
                       "flex items-center justify-center transition-all",
                       step.id === 2 && emailVerified && "cursor-not-allowed opacity-50"
