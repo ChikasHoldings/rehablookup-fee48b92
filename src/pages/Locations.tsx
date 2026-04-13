@@ -231,8 +231,8 @@ const Locations = () => {
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {topCities.slice(0, 10).map((city, index) => (
               <Link
-                key={`${city.state.slug}-${city.slug}`}
-                to={`/rehab-centers/${city.state.slug}/${city.slug}`}
+                key={`${city.stateSlug}-${city.slug}`}
+                to={`/rehab-centers/${city.stateSlug}/${city.slug}`}
                 className="group relative flex items-center gap-3 rounded-xl border bg-background p-4 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
               >
                 {index < 3 && (
@@ -241,13 +241,13 @@ const Locations = () => {
                   </div>
                 )}
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  {city.state.abbreviation}
+                  {city.stateAbbr}
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                     {city.name}
                   </p>
-                  <p className="text-xs text-muted-foreground">{city.state.name}</p>
+                  <p className="text-xs text-muted-foreground">{city.stateName}</p>
                 </div>
               </Link>
             ))}
@@ -258,12 +258,12 @@ const Locations = () => {
             <span className="text-xs font-medium text-muted-foreground mr-1">Also popular:</span>
             {topCities.slice(10, 20).map((city) => (
               <Link
-                key={`${city.state.slug}-${city.slug}`}
-                to={`/rehab-centers/${city.state.slug}/${city.slug}`}
+                key={`${city.stateSlug}-${city.slug}`}
+                to={`/rehab-centers/${city.stateSlug}/${city.slug}`}
                 className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary hover:bg-primary/5"
               >
                 <MapPin className="h-2.5 w-2.5" />
-                {city.name}, {city.state.abbreviation}
+                {city.name}, {city.stateAbbr}
               </Link>
             ))}
           </div>
