@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
+const VERSION = "2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -14,12 +15,12 @@ const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 const log = (requestId: string, level: "INFO" | "WARN" | "ERROR", message: string, details?: unknown) => {
   const timestamp = new Date().toISOString();
   const detailsStr = details ? ` | ${JSON.stringify(details)}` : "";
-  console.log(`[${timestamp}] [${requestId}] [${level}] ${message}${detailsStr}`);
+  console.log(`[${timestamp}] [${VERSION}] [${requestId}] [${level}] ${message}${detailsStr}`);
 };
 
 // ============ INTERFACES ============
 interface InquiryRequest {
-  facilityId: string; // Required - all inquiries must target a facility
+  facilityId: string;
   name: string;
   email: string;
   phone: string;
@@ -35,7 +36,6 @@ interface InquiryRequest {
   dualDiagnosis?: string;
   whoSeekingHelp?: string;
   source?: string;
-  // Enhanced intake fields
   firstName?: string;
   lastName?: string;
   specialNeeds?: string[];
@@ -51,6 +51,40 @@ interface InquiryRequest {
   readinessLevel?: string;
   bestTimeToCall?: string;
   budgetPreference?: string;
+  idempotencyKey?: string;
+}
+
+// ============ INPUT SANITIZATION ============
+function sanitizeEmail(email: string): string {
+  return email.toLowerCase().trim().slice(0, 255);
+}
+
+function sanitizePhone(phone: string): string {
+  return phone.replace(/\D/g, "").slice(0, 15);
+}
+
+function sanitizeName(name: string): string {
+  return name.trim().replace(/[<>{}[\]\\\/`'"]/g, "").slice(0, 100);
+}
+
+function sanitizeMessage(message: string | undefined): string | undefined {
+  if (!message) return undefined;
+  return message.trim()
+    .replace(/<script[^>]*>.*?<\/script>/gi, "")
+    .replace(/<[^>]*>/g, "")  // Strip ALL HTML tags
+    .replace(/javascript:/gi, "")
+    .replace(/on\w+\s*=/gi, "")
+    .slice(0, 2000) || undefined;
+}
+
+function sanitizeZip(zip: string | undefined): string | undefined {
+  if (!zip) return undefined;
+  return zip.replace(/[^0-9-]/g, "").slice(0, 10);
+}
+
+function sanitizeGenericField(value: string | undefined, maxLen = 100): string | undefined {
+  if (!value) return undefined;
+  return value.trim().replace(/[<>{}[\]\\\/`'"]/g, "").slice(0, maxLen);
 }
 
 // ============ LEAD MASKING (PRIVACY) ============
@@ -77,28 +111,7 @@ function maskPhone(): string {
   return "(●●●) ●●●-●●●●";
 }
 
-// ============ INPUT SANITIZATION ============
-function sanitizeEmail(email: string): string {
-  return email.toLowerCase().trim().slice(0, 255);
-}
-
-function sanitizePhone(phone: string): string {
-  // Remove all non-digit characters and limit length
-  return phone.replace(/\D/g, "").slice(0, 15);
-}
-
-function sanitizeName(name: string): string {
-  // Remove potentially dangerous characters, limit length
-  return name.trim().replace(/[<>{}[\]\\]/g, "").slice(0, 100);
-}
-
-function sanitizeMessage(message: string | undefined): string | undefined {
-  if (!message) return undefined;
-  // Limit length and remove script tags
-  return message.trim().replace(/<script[^>]*>.*?<\/script>/gi, "").slice(0, 2000) || undefined;
-}
-
-// ============ DUPLICATE CHECK ============
+// ============ DUPLICATE & RATE LIMIT CHECKS ============
 // deno-lint-ignore no-explicit-any
 async function checkForDuplicate(
   supabase: any,
@@ -109,7 +122,6 @@ async function checkForDuplicate(
 ): Promise<{ isDuplicate: boolean; reason?: string }> {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   
-  // Check by email first
   const { data: emailLeads, error: emailError } = await supabase
     .from("leads")
     .select("id")
@@ -127,7 +139,6 @@ async function checkForDuplicate(
     return { isDuplicate: true, reason: "You've already submitted an inquiry to this facility recently." };
   }
   
-  // Check by phone if provided
   if (phone && phone.length >= 10) {
     const { data: phoneLeads, error: phoneError } = await supabase
       .from("leads")
@@ -150,6 +161,51 @@ async function checkForDuplicate(
   return { isDuplicate: false };
 }
 
+// deno-lint-ignore no-explicit-any
+async function checkIdempotency(supabase: any, key: string, requestId: string): Promise<{ exists: boolean; leadId?: string }> {
+  if (!key) return { exists: false };
+  
+  const { data } = await supabase
+    .from("leads")
+    .select("id")
+    .eq("idempotency_key", key)
+    .maybeSingle();
+  
+  if (data) {
+    log(requestId, "WARN", "Idempotent request detected", { key });
+    return { exists: true, leadId: data.id };
+  }
+  return { exists: false };
+}
+
+// ============ BLOCKED IDENTIFIER CHECK ============
+// deno-lint-ignore no-explicit-any
+async function isBlocked(supabase: any, email: string, phone: string): Promise<boolean> {
+  const { data: emailBlocked } = await supabase.rpc("is_identifier_blocked", { p_identifier: email });
+  if (emailBlocked) return true;
+  
+  if (phone && phone.length >= 10) {
+    const { data: phoneBlocked } = await supabase.rpc("is_identifier_blocked", { p_identifier: phone });
+    if (phoneBlocked) return true;
+  }
+  
+  return false;
+}
+
+// ============ SERVER-SIDE EMAIL VERIFICATION CHECK ============
+// deno-lint-ignore no-explicit-any
+async function isEmailServerVerified(supabase: any, email: string): Promise<boolean> {
+  const { data } = await supabase.rpc("is_email_verified", { p_email: email });
+  return data === true;
+}
+
+// ============ IP EXTRACTION ============
+function extractClientIp(req: Request): string | null {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-real-ip")
+    || null;
+}
+
 // ============ EMAIL TEMPLATES ============
 function getSeekerConfirmationEmail(name: string, facilityName: string): string {
   const firstName = name.split(" ")[0];
@@ -165,7 +221,6 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">✉️</div>
@@ -176,7 +231,6 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
               <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">Your message has been delivered</p>
             </td>
           </tr>
-          <!-- Body -->
           <tr>
             <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
               <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
@@ -185,8 +239,6 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
               <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
                 Thank you for reaching out! Your inquiry has been successfully delivered to <strong style="color: #0f766e;">${facilityName}</strong>.
               </p>
-              
-              <!-- What's Next Box -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
@@ -199,13 +251,11 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
                   </td>
                 </tr>
               </table>
-              
               <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
                 If you have any questions in the meantime, feel free to contact us at <a href="mailto:Support@rehablookup.com" style="color: #0f766e; text-decoration: none;">Support@rehablookup.com</a>.
               </p>
             </td>
           </tr>
-          <!-- Footer -->
           <tr>
             <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -240,20 +290,17 @@ function getFacilityNotificationEmail(
   facilityName: string,
   details: { urgency?: string; levelOfCare?: string; insuranceType?: string; message?: string; preferredContact?: string }
 ): string {
-  // PRIVACY: Mask all contact information - providers must unlock to see full details
   const maskedName = maskLeadName(leadName);
   const maskedEmail = maskEmail(_leadEmail);
   const maskedPhone = maskPhone();
   const firstName = leadName.split(" ")[0];
   
-  // Format urgency display
   const urgencyDisplay = details.urgency === 'immediate' ? '🔴 Immediate' 
     : details.urgency === 'within_week' ? '🟡 Within a week'
     : details.urgency === 'within_month' ? '🟢 Within a month'
     : details.urgency === 'flexible' ? '🔵 Flexible'
     : '⚪ Pending assessment';
   
-  // Format level of care
   const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—';
   
   return `
@@ -268,7 +315,6 @@ function getFacilityNotificationEmail(
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">🔔</div>
@@ -279,14 +325,11 @@ function getFacilityNotificationEmail(
               <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">${facilityName}</p>
             </td>
           </tr>
-          <!-- Body -->
           <tr>
             <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
               <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
                 Great news! Someone is interested in your facility and has submitted an inquiry through RehabLookup.
               </p>
-              
-              <!-- Lead Preview Card -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 24px;">
@@ -303,10 +346,7 @@ function getFacilityNotificationEmail(
                         </td>
                       </tr>
                     </table>
-                    
                     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                    
-                    <!-- Masked Contact Info -->
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 8px 0;">
@@ -354,8 +394,6 @@ function getFacilityNotificationEmail(
                   </td>
                 </tr>
               </table>
-              
-              <!-- Unlock CTA -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px; text-align: center;">
@@ -369,8 +407,6 @@ function getFacilityNotificationEmail(
                   </td>
                 </tr>
               </table>
-              
-              <!-- Tip -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 16px;">
@@ -382,7 +418,6 @@ function getFacilityNotificationEmail(
               </table>
             </td>
           </tr>
-          <!-- Footer -->
           <tr>
             <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -411,13 +446,30 @@ function getFacilityNotificationEmail(
 </html>`;
 }
 
+// ============ ALLOWED VALUES WHITELIST ============
+const ALLOWED_URGENCY = ['immediate', 'within_week', 'within_month', 'flexible', 'Urgent', 'Immediately', 'This week', 'This month'];
+const ALLOWED_PREFERRED_CONTACT = ['call', 'text', 'email', 'phone'];
+const ALLOWED_SOURCES = ['facility_profile', 'direct', 'search', 'seeker_dashboard', 'marketing', 'referral'];
+
+function validateEnum(value: string | undefined, allowed: string[]): string | undefined {
+  if (!value) return undefined;
+  return allowed.includes(value) ? value : undefined;
+}
+
 // ============ MAIN HANDLER ============
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
-  log(requestId, "INFO", "Request received", { method: req.method });
+  log(requestId, "INFO", "Request received", { method: req.method, version: VERSION });
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Only accept POST
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -426,9 +478,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const rawData: InquiryRequest = await req.json();
+    // Extract client IP for rate limiting
+    const clientIp = extractClientIp(req);
+
+    let rawData: InquiryRequest;
+    try {
+      rawData = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid request body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
-    // Sanitize all inputs immediately
+    // ===== INPUT SANITIZATION =====
     const data = {
       ...rawData,
       name: sanitizeName(rawData.name || ""),
@@ -437,61 +500,114 @@ Deno.serve(async (req) => {
       message: sanitizeMessage(rawData.message),
       firstName: rawData.firstName ? sanitizeName(rawData.firstName) : undefined,
       lastName: rawData.lastName ? sanitizeName(rawData.lastName) : undefined,
+      locationZip: sanitizeZip(rawData.locationZip),
+      locationCityState: sanitizeGenericField(rawData.locationCityState, 150),
+      levelOfCare: sanitizeGenericField(rawData.levelOfCare, 50),
+      insuranceType: sanitizeGenericField(rawData.insuranceType, 100),
+      insuranceProvider: sanitizeGenericField(rawData.insuranceProvider, 100),
+      dualDiagnosis: sanitizeGenericField(rawData.dualDiagnosis, 50),
+      whoSeekingHelp: sanitizeGenericField(rawData.whoSeekingHelp, 20),
+      ageRange: sanitizeGenericField(rawData.ageRange, 20),
+      gender: sanitizeGenericField(rawData.gender, 30),
+      previousTreatment: sanitizeGenericField(rawData.previousTreatment, 20),
+      previousTreatmentDetails: sanitizeGenericField(rawData.previousTreatmentDetails, 500),
+      employmentStatus: sanitizeGenericField(rawData.employmentStatus, 30),
+      veteranStatus: sanitizeGenericField(rawData.veteranStatus, 20),
+      legalInvolvement: sanitizeGenericField(rawData.legalInvolvement, 30),
+      readinessLevel: sanitizeGenericField(rawData.readinessLevel, 20),
+      bestTimeToCall: sanitizeGenericField(rawData.bestTimeToCall, 30),
+      budgetPreference: sanitizeGenericField(rawData.budgetPreference, 50),
+      relationshipToPatient: sanitizeGenericField(rawData.relationshipToPatient, 30),
     };
     
     log(requestId, "INFO", "Inquiry data received", { 
       facilityId: data.facilityId,
-      email: data.email?.substring(0, 3) + "***",
+      hasIdempotencyKey: !!data.idempotencyKey,
     });
 
-    // Validation - facility_id is now REQUIRED
+    // ===== VALIDATION: Required fields =====
     if (!data.facilityId) {
-      log(requestId, "ERROR", "Missing facility_id - all inquiries must target a facility");
       return new Response(
         JSON.stringify({ success: false, error: "facility_id is required for all inquiries" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate facility_id format (UUID)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(data.facilityId)) {
-      log(requestId, "ERROR", "Invalid facility_id format");
       return new Response(
         JSON.stringify({ success: false, error: "Invalid facility ID" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validation - basic required fields
-    if (!data.name || !data.email || !data.phone) {
-      log(requestId, "ERROR", "Missing required fields");
+    if (!data.name || data.name.length < 2) {
       return new Response(
-        JSON.stringify({ success: false, error: "Name, email, and phone are required" }),
+        JSON.stringify({ success: false, error: "Name is required (minimum 2 characters)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate email format
+    if (!data.email) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Email is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
-      log(requestId, "ERROR", "Invalid email format");
       return new Response(
         JSON.stringify({ success: false, error: "Please provide a valid email address" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate phone (at least 10 digits)
-    if (data.phone.length < 10) {
-      log(requestId, "ERROR", "Invalid phone format");
+    if (!data.phone || data.phone.length < 10) {
       return new Response(
-        JSON.stringify({ success: false, error: "Please provide a valid phone number" }),
+        JSON.stringify({ success: false, error: "Please provide a valid phone number (minimum 10 digits)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify facility exists and is active
+    // ===== ENUM VALIDATION (reject invalid values) =====
+    const validatedUrgency = validateEnum(data.urgency, ALLOWED_URGENCY);
+    const validatedPreferredContact = validateEnum(data.preferredContact, ALLOWED_PREFERRED_CONTACT) || "phone";
+    const validatedSource = validateEnum(data.source, ALLOWED_SOURCES) || "facility_profile";
+
+    // ===== BLOCKED IDENTIFIER CHECK =====
+    const blocked = await isBlocked(supabase, data.email, data.phone);
+    if (blocked) {
+      log(requestId, "WARN", "Blocked identifier detected", { email: data.email.substring(0, 3) + "***" });
+      // Return success to not reveal blocking to abusers
+      return new Response(
+        JSON.stringify({ success: true, message: "Your inquiry has been sent successfully!" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ===== SERVER-SIDE EMAIL VERIFICATION ENFORCEMENT =====
+    const emailVerified = await isEmailServerVerified(supabase, data.email);
+    if (!emailVerified) {
+      log(requestId, "WARN", "Email not verified server-side", { email: data.email.substring(0, 3) + "***" });
+      return new Response(
+        JSON.stringify({ success: false, error: "Email address must be verified before submitting. Please verify your email first." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ===== IDEMPOTENCY CHECK =====
+    if (data.idempotencyKey) {
+      const idemCheck = await checkIdempotency(supabase, data.idempotencyKey, requestId);
+      if (idemCheck.exists) {
+        return new Response(
+          JSON.stringify({ success: true, leadId: idemCheck.leadId, message: "Your inquiry has been sent successfully!" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // ===== FACILITY VERIFICATION =====
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
       .select("id, name, email, user_id, status, suspended, reply_email, reply_email_verified")
@@ -507,14 +623,14 @@ Deno.serve(async (req) => {
     }
 
     if (facility.status !== "approved" || facility.suspended) {
-      log(requestId, "ERROR", "Facility not accepting inquiries", { facilityId: data.facilityId });
+      log(requestId, "ERROR", "Facility not accepting inquiries", { facilityId: data.facilityId, status: facility.status });
       return new Response(
         JSON.stringify({ success: false, error: "This facility is not currently accepting inquiries" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check for duplicates using sanitized data
+    // ===== DUPLICATE CHECK =====
     const duplicateCheck = await checkForDuplicate(supabase, data.email, data.phone, data.facilityId, requestId);
     if (duplicateCheck.isDuplicate) {
       return new Response(
@@ -523,8 +639,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Global rate limit: max 10 submissions per email per hour (across all facilities)
+    // ===== GLOBAL RATE LIMITING =====
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    
+    // Per-email rate limit: 10/hour
     const { count: globalEmailCount } = await supabase
       .from("leads")
       .select("*", { count: "exact", head: true })
@@ -532,19 +650,60 @@ Deno.serve(async (req) => {
       .gte("created_at", oneHourAgo);
 
     if (globalEmailCount && globalEmailCount >= 10) {
-      log(requestId, "WARN", "Global rate limit exceeded", { email: data.email.substring(0, 3) + "***" });
+      log(requestId, "WARN", "Global email rate limit exceeded");
       return new Response(
         JSON.stringify({ success: false, error: "Too many inquiries. Please wait before submitting again." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Calculate expiry timestamps for redistribution
-    const now = new Date();
-    const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
-    const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000); // 72 hours total
+    // Per-facility rate limit: 5/hour (same email)
+    const { count: facilityEmailCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("email", data.email)
+      .eq("facility_id", data.facilityId)
+      .gte("created_at", oneHourAgo);
 
-    // Insert lead with redistribution fields and enhanced intake data (using sanitized data)
+    if (facilityEmailCount && facilityEmailCount >= 5) {
+      log(requestId, "WARN", "Per-facility email rate limit exceeded");
+      return new Response(
+        JSON.stringify({ success: false, error: "Too many inquiries to this facility. Please wait before submitting again." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // IP-based rate limit: 15/hour (if IP available)
+    if (clientIp) {
+      const ipHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(clientIp + "lead-salt-v2"));
+      const ipHashHex = Array.from(new Uint8Array(ipHash)).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      const { count: ipCount } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("ip_hash", ipHashHex)
+        .gte("created_at", oneHourAgo);
+
+      if (ipCount && ipCount >= 15) {
+        log(requestId, "WARN", "IP-based rate limit exceeded", { ipHash: ipHashHex.substring(0, 8) });
+        return new Response(
+          JSON.stringify({ success: false, error: "Too many inquiries from this network. Please wait before submitting again." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Store hashed IP for tracking
+      data.ipHash = ipHashHex;
+    }
+
+    // ===== LEAD INSERTION =====
+    const now = new Date();
+    const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+
+    // Generate idempotency key if not provided
+    const idempotencyKey = data.idempotencyKey || `${data.email}-${data.facilityId}-${Date.now()}`;
+
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
@@ -552,19 +711,22 @@ Deno.serve(async (req) => {
         name: data.name,
         email: data.email,
         phone: data.phone,
-        preferred_contact: data.preferredContact || "phone",
+        preferred_contact: validatedPreferredContact,
         message: data.message,
-        urgency: data.urgency || null,
+        urgency: validatedUrgency || null,
         level_of_care: data.levelOfCare || null,
         insurance_type: data.insuranceType || null,
         insurance_provider: data.insuranceProvider || null,
         location_zip: data.locationZip || null,
         location_city_state: data.locationCityState || null,
-        primary_substance: data.primarySubstance || [],
+        primary_substance: Array.isArray(data.primarySubstance) ? data.primarySubstance.map(s => sanitizeGenericField(s, 50)).filter(Boolean) : [],
         dual_diagnosis: data.dualDiagnosis || null,
         who_seeking_help: data.whoSeekingHelp || null,
-        source: data.source || "facility_profile",
+        source: validatedSource,
         status: "new",
+        email_verified: true,
+        ip_hash: (data as any).ipHash || null,
+        idempotency_key: idempotencyKey,
         // Redistribution fields
         original_facility_id: data.facilityId,
         exclusive_until: exclusiveUntil.toISOString(),
@@ -576,20 +738,29 @@ Deno.serve(async (req) => {
         relationship_to_patient: data.relationshipToPatient || null,
         previous_treatment: data.previousTreatment || null,
         previous_treatment_details: data.previousTreatmentDetails || null,
-        co_occurring_conditions: data.coOccurringConditions || null,
+        co_occurring_conditions: Array.isArray(data.coOccurringConditions) ? data.coOccurringConditions : null,
         employment_status: data.employmentStatus || null,
         veteran_status: data.veteranStatus || null,
         legal_involvement: data.legalInvolvement || null,
         readiness_level: data.readinessLevel || null,
         best_time_to_call: data.bestTimeToCall || null,
         budget_preference: data.budgetPreference || null,
-        special_needs: data.specialNeeds || [],
+        special_needs: Array.isArray(data.specialNeeds) ? data.specialNeeds : [],
       })
       .select("id")
       .single();
 
     if (insertError) {
-      log(requestId, "ERROR", "Failed to insert lead", { error: insertError.message });
+      // Check for idempotency violation (unique constraint)
+      if (insertError.code === '23505' && insertError.message?.includes('idempotency')) {
+        log(requestId, "WARN", "Idempotent duplicate caught by constraint");
+        return new Response(
+          JSON.stringify({ success: true, message: "Your inquiry has been sent successfully!" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      log(requestId, "ERROR", "Failed to insert lead", { error: insertError.message, code: insertError.code });
       return new Response(
         JSON.stringify({ success: false, error: "Failed to submit inquiry. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -610,6 +781,7 @@ Deno.serve(async (req) => {
         notification_sent_at: now.toISOString(),
       });
 
+    // ===== NON-BLOCKING NOTIFICATIONS =====
     // Send seeker confirmation email
     const firstName = data.name.split(" ")[0];
     try {
@@ -619,7 +791,7 @@ Deno.serve(async (req) => {
         subject: `Your inquiry to ${facility.name} has been received`,
         html: getSeekerConfirmationEmail(data.name, facility.name),
       });
-      log(requestId, "INFO", "Seeker email sent", { email: data.email });
+      log(requestId, "INFO", "Seeker email sent");
     } catch (e) {
       log(requestId, "WARN", "Failed to send seeker email", { error: String(e) });
     }
@@ -649,13 +821,13 @@ Deno.serve(async (req) => {
             preferredContact: data.preferredContact,
           }),
         });
-        log(requestId, "INFO", "Facility email sent", { email: notificationEmail });
+        log(requestId, "INFO", "Facility email sent");
       } catch (e) {
         log(requestId, "WARN", "Failed to send facility email", { error: String(e) });
       }
     }
 
-    // ========== SMS NOTIFICATION ==========
+    // SMS notification (non-blocking)
     try {
       const { data: notifPrefs } = await supabase
         .from("notification_preferences")
@@ -671,8 +843,6 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (providerProfile?.phone && providerProfile.phone_verified) {
-          log(requestId, "INFO", "Triggering SMS notification for provider");
-          
           const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
           const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
           
@@ -694,15 +864,13 @@ Deno.serve(async (req) => {
               },
             }),
           });
-          
-          log(requestId, "INFO", "SMS notification triggered");
         }
       }
     } catch (smsError) {
       log(requestId, "WARN", "Failed to send SMS notification", { error: String(smsError) });
     }
 
-    // ========== IN-APP NOTIFICATION ==========
+    // In-app notification
     try {
       await supabase.from("provider_notifications").insert({
         user_id: facility.user_id,
@@ -714,16 +882,15 @@ Deno.serve(async (req) => {
           lead_id: lead.id,
           urgency: data.urgency,
           level_of_care: data.levelOfCare,
-          source: data.source || "facility_profile",
+          source: validatedSource,
         },
         read: false,
       });
-      log(requestId, "INFO", "In-app notification created");
     } catch (notifError) {
       log(requestId, "WARN", "Failed to create in-app notification", { error: String(notifError) });
     }
 
-    log(requestId, "INFO", "Inquiry submitted successfully", { leadId: lead.id, facilityName: facility.name });
+    log(requestId, "INFO", "Inquiry submitted successfully", { leadId: lead.id });
 
     return new Response(
       JSON.stringify({
