@@ -40,7 +40,11 @@ Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
 Disallow: /search?
+Disallow: /search-results
 Disallow: /search-results?*
+Disallow: /search-results/
+Disallow: /404
+Disallow: /404/
 Disallow: /*?utm_source=
 Disallow: /*?utm_medium=
 Disallow: /*?utm_campaign=
@@ -310,7 +314,11 @@ Disallow: /functions/
 Disallow: /_vercel/
 Disallow: /.netlify/
 Disallow: /search?
+Disallow: /search-results
 Disallow: /search-results?*
+Disallow: /search-results/
+Disallow: /404
+Disallow: /404/
 Disallow: /*?utm_source=
 Disallow: /*?utm_medium=
 Disallow: /*?utm_campaign=
