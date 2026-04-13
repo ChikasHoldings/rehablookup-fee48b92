@@ -8,6 +8,7 @@ import { useAuthReady } from "@/hooks/useAuthReady";
 
 const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
+const SUBMISSION_DEBOUNCE_MS = 3000; // 3 second debounce between submissions
 
 interface StoredFormData {
   data: LeadIntakeFormData;
@@ -27,6 +28,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   const [searchParams] = useSearchParams();
   const { user, isAuthenticated } = useAuthReady();
   const hasPrePopulated = useRef(false);
+  const lastSubmitAt = useRef(0);
+  const idempotencyKeyRef = useRef<string | null>(null);
   
   // Parse facility info from URL, but allow overrides from props
   const urlFacilityId = searchParams.get("facility");
@@ -332,6 +335,14 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   }, []);
   
  const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
+    // Submission debounce - prevent double-clicks and rapid resubmission
+    const now = Date.now();
+    if (now - lastSubmitAt.current < SUBMISSION_DEBOUNCE_MS) {
+      console.log("[useLeadIntakeForm] Submission debounced");
+      return;
+    }
+    lastSubmitAt.current = now;
+
     // Check honeypot
     if (formData.website) {
       console.log("Honeypot triggered");
@@ -391,6 +402,11 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       });
       return;
     }
+
+    // Generate idempotency key (unique per submission attempt)
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `${formData.email.toLowerCase().trim()}-${facilityId}-${Date.now()}-${crypto.randomUUID().slice(0,8)}`;
+    }
     
     setIsSubmitting(true);
     
@@ -431,14 +447,16 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
           legalInvolvement: formData.legalInvolvement || undefined,
           readinessLevel: formData.readinessLevel || undefined,
           bestTimeToCall: formData.bestTimeToCall || undefined,
+          idempotencyKey: idempotencyKeyRef.current,
         },
       });
       
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       
-      // Clear saved form data
+      // Clear saved form data and idempotency key
       localStorage.removeItem(STORAGE_KEY);
+      idempotencyKeyRef.current = null;
       
       trackAnalytics("form_submit_success");
       analytics.leadFormComplete(source);
@@ -460,6 +478,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       }).catch(() => { /* non-blocking */ });
       
     } catch (error: any) {
+      // Reset idempotency key so user can retry
+      idempotencyKeyRef.current = null;
       trackAnalytics("form_submit_error", { error: error.message });
       toast({
         title: "Submission failed",

@@ -2,7 +2,10 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 // Version tracking for deployment verification
-const VERSION = "1.0.3";
+const VERSION = "2.0.0";
+
+// Rate limit: max unlocks per facility per hour
+const MAX_UNLOCKS_PER_HOUR = 20;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,10 +62,17 @@ async function getUnlockPricing(supabase: any): Promise<{
 
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
-  logStep(requestId, "Request received", { method: req.method });
+  logStep(requestId, "Request received", { method: req.method, version: VERSION });
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Only accept POST
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -149,6 +159,25 @@ Deno.serve(async (req) => {
       logStep(requestId, "Facility access denied", { facilityId, userId: user.id });
       return new Response(JSON.stringify({ error: "Facility not found or unauthorized", requestId }), {
         status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ===== UNLOCK RATE LIMITING: max N unlocks per facility per hour =====
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentUnlockCount } = await supabaseAdmin
+      .from("lead_unlocks")
+      .select("*", { count: "exact", head: true })
+      .eq("facility_id", facilityId)
+      .gte("unlocked_at", oneHourAgo);
+
+    if (recentUnlockCount && recentUnlockCount >= MAX_UNLOCKS_PER_HOUR) {
+      logStep(requestId, "Unlock rate limit exceeded", { facilityId, count: recentUnlockCount });
+      return new Response(JSON.stringify({ 
+        error: "Unlock rate limit exceeded. Please wait before unlocking more leads.",
+        requestId 
+      }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
