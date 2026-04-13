@@ -461,7 +461,7 @@ const AppInner = () => {
                 <ScrollToTop />
         <TrailingSlashRedirect />
         <CookieConsentBanner />
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
           <Routes>
             {/* Public Routes - Providers are redirected away */}
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
@@ -1137,9 +1137,9 @@ const AppInner = () => {
             {/* Provider Marketing Channel Pages */}
             <Route path="/provider-guides/rehab-seo-marketing-strategy" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-ppc-advertising-guide" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/rehab-social-media-marketing" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-social-media-marketing-strategy" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-content-marketing-strategy" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/rehab-reputation-management" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-reputation-management-guide" element={<PublicRouteGuard><ProviderMarketingChannelPage /></PublicRouteGuard>} />
 
             {/* Provider Patient Experience Pages */}
             <Route path="/provider-guides/rehab-intake-optimization-guide" element={<PublicRouteGuard><ProviderPatientExperiencePage /></PublicRouteGuard>} />
