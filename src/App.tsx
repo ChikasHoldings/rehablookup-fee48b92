@@ -1169,6 +1169,27 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-quality-improvement-programs" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-peer-review-clinical-governance" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
 
+            {/* Provider Insurance & Billing Operations Pages */}
+            <Route path="/provider-guides/rehab-claim-denial-management" element={<PublicRouteGuard><ProviderBillingOpsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-prior-authorization-optimization" element={<PublicRouteGuard><ProviderBillingOpsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-billing-compliance-guide" element={<PublicRouteGuard><ProviderBillingOpsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-revenue-cycle-management" element={<PublicRouteGuard><ProviderBillingOpsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-out-of-network-billing-strategies" element={<PublicRouteGuard><ProviderBillingOpsPage /></PublicRouteGuard>} />
+
+            {/* Provider Facility Design & Environment Pages */}
+            <Route path="/provider-guides/rehab-therapeutic-environment-design" element={<PublicRouteGuard><ProviderFacilityDesignPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-ada-accessibility-compliance" element={<PublicRouteGuard><ProviderFacilityDesignPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-safety-design-standards" element={<PublicRouteGuard><ProviderFacilityDesignPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-amenity-planning-guide" element={<PublicRouteGuard><ProviderFacilityDesignPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-outdoor-recreation-programming" element={<PublicRouteGuard><ProviderFacilityDesignPage /></PublicRouteGuard>} />
+
+            {/* Provider Crisis & Emergency Preparedness Pages */}
+            <Route path="/provider-guides/rehab-overdose-response-protocols" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-disaster-preparedness-planning" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-workplace-violence-prevention" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-pandemic-response-planning" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-behavioral-emergency-management" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
+
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
             <Route path="/providers/resources/:slug" element={<PublicRouteGuard><ProviderResourceArticle /></PublicRouteGuard>} />
