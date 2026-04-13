@@ -419,7 +419,7 @@ export default function AdminAnalytics() {
     const prevTotalProfileViews = prevViewsData?.filter(e => e.event_type === "profile_view").length || 0;
     const prevTotalClicks = prevInteractionsData?.length || 0;
     const prevTotalLeads = prevLeadsData?.length || 0;
-    const prevConversionRate = prevTotalViews > 0 ? ((prevTotalLeads / prevTotalViews) * 100) : 0;
+    const prevConversionRate = prevTotalProfileViews > 0 ? ((prevTotalLeads / prevTotalProfileViews) * 100) : 0;
 
     // Calculate percentage changes
     const calcChange = (current: number, previous: number): number | null => {
@@ -429,8 +429,9 @@ export default function AdminAnalytics() {
     };
 
     return {
-      visitors: totalViews,
-      visitorsChange: calcChange(totalViews, prevTotalViews),
+      visitors: totalProfileViews,
+      impressions: totalImpressions,
+      visitorsChange: calcChange(totalProfileViews, prevTotalProfileViews),
       clicks: totalClicks,
       clicksChange: calcChange(totalClicks, prevTotalClicks),
       totalLeads,
