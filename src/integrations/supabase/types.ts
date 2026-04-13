@@ -3067,6 +3067,7 @@ export type Database = {
           follow_up_reminder_sent_at: string | null
           gender: string | null
           id: string
+          idempotency_key: string | null
           inquiry_type: string | null
           insurance_provider: string | null
           insurance_type: string | null
@@ -3128,6 +3129,7 @@ export type Database = {
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
           id?: string
+          idempotency_key?: string | null
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
@@ -3189,6 +3191,7 @@ export type Database = {
           follow_up_reminder_sent_at?: string | null
           gender?: string | null
           id?: string
+          idempotency_key?: string | null
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
