@@ -667,99 +667,113 @@ export default function ProviderBillingPage() {
         <Dialog open={showPurchaseModal} onOpenChange={(open) => {
           if (!purchaseLoading) setShowPurchaseModal(open);
         }}>
-          <DialogContent className="w-[95vw] sm:max-w-lg p-0 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 border-b">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-primary/15 flex items-center justify-center">
-                    <Wallet className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground font-medium">Current Balance</p>
-                    <p className="text-2xl sm:text-3xl font-bold tabular-nums text-foreground">{balanceFormatted}</p>
-                  </div>
+          <DialogContent className="w-[95vw] sm:max-w-[480px] p-0 overflow-hidden gap-0 rounded-2xl">
+            {/* Header with balance */}
+            <div className="relative bg-gradient-to-br from-primary/12 via-primary/6 to-transparent px-6 pt-7 pb-5">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.08),transparent_70%)]" />
+              <div className="relative flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-primary/15 ring-1 ring-primary/10 flex items-center justify-center shrink-0">
+                  <Wallet className="h-6 w-6 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Your Balance</p>
+                  <p className="text-3xl font-bold tabular-nums text-foreground leading-tight">{balanceFormatted}</p>
                 </div>
                 {proStatus?.isPro && (
-                  <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs">
+                  <Badge className="ml-auto bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25 text-[11px] font-semibold px-2 py-0.5 shrink-0">
                     <Sparkles className="h-3 w-3 mr-1" />
-                    Pro 20% off
+                    Pro&nbsp;20%&nbsp;off
                   </Badge>
                 )}
               </div>
             </div>
             
             {/* Package Selection */}
-            <div className="p-5 sm:p-6 space-y-4">
+            <div className="px-6 pt-5 pb-6 space-y-4">
               <div>
-                <h3 className="font-semibold text-base sm:text-lg">Add Credits</h3>
-                <p className="text-sm text-muted-foreground">Select a package — credits are used to unlock lead contact info</p>
+                <h3 className="font-semibold text-base text-foreground">Choose a credit package</h3>
+                <p className="text-[13px] text-muted-foreground mt-0.5">Credits are used to unlock lead contact info</p>
               </div>
               
-              <div className="grid gap-2.5">
-                {CREDIT_PACKAGES.map((pkg) => {
+              <div className="grid gap-3">
+                {CREDIT_PACKAGES.map((pkg, idx) => {
                   const isPkgLoading = purchaseLoading === pkg.amountCents;
                   const isDisabled = purchaseLoading !== null;
+                  const isBest = pkg.badge === "Best Value";
                   return (
-                    <button
-                      key={pkg.amountCents}
-                      onClick={() => handlePurchase(pkg.amountCents)}
-                      disabled={isDisabled}
-                      className={cn(
-                        "flex items-center justify-between p-3.5 sm:p-4 rounded-xl border-2 transition-all text-left group",
-                        "hover:border-primary/50 hover:bg-primary/5 hover:shadow-sm",
-                        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                        "disabled:opacity-60 disabled:cursor-not-allowed",
-                        isPkgLoading && "border-primary bg-primary/5 shadow-sm",
-                        pkg.badge === "Best Value" && !isDisabled && "border-emerald-500/40 bg-emerald-50/50"
+                    <div key={pkg.amountCents} className="relative">
+                      {isBest && (
+                        <div className="absolute -top-2.5 left-4 z-10">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                            <Star className="h-2.5 w-2.5 fill-current" />
+                            Best Value
+                          </span>
+                        </div>
                       )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm",
-                          pkg.badge === "Best Value" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
-                        )}>
-                          {pkg.label}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm sm:text-base text-foreground">
-                            {pkg.credits} credits
-                            {pkg.bonusCents > 0 && (
-                              <span className="text-emerald-600 font-bold ml-1">+ ${(pkg.bonusCents / 100).toFixed(0)} bonus</span>
-                            )}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{pkg.perLead}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {pkg.badge && (
-                          <Badge 
-                            variant="secondary"
-                            className="text-xs whitespace-nowrap bg-emerald-600 text-white border-0"
-                          >
-                            {pkg.badge}
-                          </Badge>
+                      <button
+                        onClick={() => handlePurchase(pkg.amountCents)}
+                        disabled={isDisabled}
+                        className={cn(
+                          "w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 text-left group",
+                          "hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                          "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:scale-100",
+                          isPkgLoading && "border-primary bg-primary/5 shadow-md scale-[1.01]",
+                          isBest && !isPkgLoading
+                            ? "border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/20 hover:border-emerald-500/70"
+                            : !isPkgLoading && "border-border hover:border-primary/40 hover:bg-primary/[0.03]"
                         )}
-                        {isPkgLoading ? (
-                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                        )}
-                      </div>
-                    </button>
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className={cn(
+                            "h-11 w-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-colors",
+                            isBest
+                              ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
+                              : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                          )}>
+                            {pkg.label}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[15px] text-foreground leading-snug">
+                              {pkg.credits.toLocaleString()} credits
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {pkg.bonusCents > 0 ? (
+                                <>
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+${(pkg.bonusCents / 100).toFixed(0)} bonus included</span>
+                                  <span className="mx-1.5 text-border">·</span>
+                                </>
+                              ) : null}
+                              {pkg.perLead.replace(/ \+ \$100 bonus/, "")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="shrink-0 ml-2">
+                          {isPkgLoading ? (
+                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Loader2 className="h-4.5 w-4.5 animate-spin text-primary" />
+                            </div>
+                          ) : (
+                            <div className="h-9 w-9 rounded-lg bg-muted/60 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                              <ChevronRight className="h-4.5 w-4.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
               
               {/* Trust signals */}
-              <div className="flex items-center justify-center gap-4 pt-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <CheckCircle className="h-3.5 w-3.5" />
+              <div className="flex items-center justify-center gap-5 pt-3 pb-1">
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
                   Credits never expire
                 </span>
-                <span className="flex items-center gap-1">
-                  <CreditCard className="h-3.5 w-3.5" />
-                  Secure via Stripe
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary/70" />
+                  Secure checkout
                 </span>
               </div>
             </div>
