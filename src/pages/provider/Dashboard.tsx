@@ -141,7 +141,7 @@ export default function ProviderDashboardPage() {
       if (!facilityId) return [];
       const { data, error } = await supabase
         .from("leads_provider_view")
-        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at")
+        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, preferred_contact, snooze_until")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);

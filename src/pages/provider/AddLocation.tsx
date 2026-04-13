@@ -226,7 +226,7 @@ export default function AddLocationPage() {
 
       // Navigate to listings page after short delay
       setTimeout(() => {
-        navigate("/provider/listing");
+        navigate("/provider/listings");
       }, 2000);
 
     } catch (err: any) {
