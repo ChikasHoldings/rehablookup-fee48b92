@@ -3055,7 +3055,6 @@ export type Database = {
           budget_preference: string | null
           co_occurring_conditions: string[] | null
           created_at: string
-          credit_cost: number | null
           dual_diagnosis: string | null
           email: string
           email_verified: boolean | null
@@ -3071,8 +3070,6 @@ export type Database = {
           insurance_provider: string | null
           insurance_type: string | null
           ip_hash: string | null
-          lead_score: number | null
-          lead_score_label: string | null
           legal_involvement: string | null
           level_of_care: string | null
           location_city_state: string | null
@@ -3116,7 +3113,6 @@ export type Database = {
           budget_preference?: string | null
           co_occurring_conditions?: string[] | null
           created_at?: string
-          credit_cost?: number | null
           dual_diagnosis?: string | null
           email: string
           email_verified?: boolean | null
@@ -3132,8 +3128,6 @@ export type Database = {
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
-          lead_score?: number | null
-          lead_score_label?: string | null
           legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
@@ -3177,7 +3171,6 @@ export type Database = {
           budget_preference?: string | null
           co_occurring_conditions?: string[] | null
           created_at?: string
-          credit_cost?: number | null
           dual_diagnosis?: string | null
           email?: string
           email_verified?: boolean | null
@@ -3193,8 +3186,6 @@ export type Database = {
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
-          lead_score?: number | null
-          lead_score_label?: string | null
           legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
@@ -5740,11 +5731,6 @@ export type Database = {
         }
         Returns: Json
       }
-      calculate_lead_credit_cost: {
-        Args: { p_facility_id?: string; p_lead_id: string }
-        Returns: number
-      }
-      calculate_lead_score: { Args: { p_lead_id: string }; Returns: number }
       can_access_lead: {
         Args: { p_lead_id: string; p_user_id: string }
         Returns: boolean
@@ -5826,7 +5812,6 @@ export type Database = {
           total_count: number
         }[]
       }
-      get_lead_score_label: { Args: { p_score: number }; Returns: string }
       get_owner_facility_data: {
         Args: { p_user_id: string }
         Returns: {
