@@ -903,7 +903,7 @@ Deno.serve(async (req) => {
           credit_cost: lead.credit_cost,
           lead_score_label: lead.lead_score_label,
           inquiry_type: data.preferredContact === "call" ? "request_callback" : "request_info",
-          link: "/provider/inquiries",
+          link: `/provider/inquiries?lead=${lead.id}`,
         },
         read: false,
       });
