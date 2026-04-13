@@ -34,7 +34,7 @@ import {
   Lock,
   Image as ImageIcon,
   ShieldCheck,
-  
+  X,
 } from "lucide-react";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -285,6 +285,11 @@ export default function ProviderSignup() {
         password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/provider/dashboard`,
+          data: {
+            account_type: "provider",
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+          },
         },
       });
 
@@ -408,60 +413,61 @@ export default function ProviderSignup() {
       const facilityId = facilityData.id;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
 
-      // 4. Insert services (non-blocking)
+      // 4-7: Insert related data in parallel (services, age groups, insurance, accreditations)
+      const relatedInserts: PromiseLike<void>[] = [];
+      let relatedErrors: string[] = [];
+
       if (formData.selectedTreatments.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting services:", formData.selectedTreatments.length);
-        const servicesData = formData.selectedTreatments.map((service) => ({
-          facility_id: facilityId,
-          service_name: service,
-        }));
-        const { error: servicesError } = await supabase.from("facility_services").insert(servicesData);
-        if (servicesError) console.error("[ProviderSignup] Services insert error:", servicesError);
+        relatedInserts.push(
+          supabase.from("facility_services").insert(
+            formData.selectedTreatments.map((service) => ({ facility_id: facilityId, service_name: service }))
+          ).then(({ error }) => { if (error) relatedErrors.push("services"); })
+        );
       }
 
-      // 5. Insert age groups (non-blocking)
       if (formData.ageGroups.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting age groups:", formData.ageGroups.length);
-        const ageGroupsData = formData.ageGroups.map((ageGroup) => ({
-          facility_id: facilityId,
-          age_group: ageGroup,
-        }));
-        const { error: ageGroupsError } = await supabase.from("facility_age_groups").insert(ageGroupsData);
-        if (ageGroupsError) console.error("[ProviderSignup] Age groups insert error:", ageGroupsError);
+        relatedInserts.push(
+          supabase.from("facility_age_groups").insert(
+            formData.ageGroups.map((ag) => ({ facility_id: facilityId, age_group: ag }))
+          ).then(({ error }) => { if (error) relatedErrors.push("age groups"); })
+        );
       }
 
-      // 6. Insert insurance (non-blocking)
       if (formData.selectedInsurance.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting insurance:", formData.selectedInsurance.length);
-        const insuranceData = formData.selectedInsurance.map((insurance) => ({
-          facility_id: facilityId,
-          insurance_name: insurance,
-        }));
-        const { error: insuranceError } = await supabase.from("facility_insurance").insert(insuranceData);
-        if (insuranceError) console.error("[ProviderSignup] Insurance insert error:", insuranceError);
+        relatedInserts.push(
+          supabase.from("facility_insurance").insert(
+            formData.selectedInsurance.map((ins) => ({ facility_id: facilityId, insurance_name: ins }))
+          ).then(({ error }) => { if (error) relatedErrors.push("insurance"); })
+        );
       }
 
-      // 7. Insert credentials (legacy free-text) - non-blocking
       if (formData.licensingInfo || formData.accreditations) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting credentials...");
-        const { error: credentialsError } = await supabase.from("facility_credentials").insert({
-          facility_id: facilityId,
-          licensing_info: formData.licensingInfo,
-          accreditations: formData.accreditations,
-        });
-        if (credentialsError) console.error("[ProviderSignup] Credentials insert error:", credentialsError);
+        relatedInserts.push(
+          supabase.from("facility_credentials").insert({
+            facility_id: facilityId,
+            licensing_info: formData.licensingInfo,
+            accreditations: formData.accreditations,
+          }).then(({ error }) => { if (error) relatedErrors.push("credentials"); })
+        );
       }
 
-      // 7b. Insert structured accreditations (non-blocking)
       if (formData.selectedAccreditations.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting accreditations:", formData.selectedAccreditations.length);
-        const accreditationsData = formData.selectedAccreditations.map((accreditation) => ({
-          facility_id: facilityId,
-          accreditation_type: accreditation,
-          verified: false,
-        }));
-        const { error: accreditationsError } = await supabase.from("facility_accreditations").insert(accreditationsData);
-        if (accreditationsError) console.error("[ProviderSignup] Accreditations insert error:", accreditationsError);
+        relatedInserts.push(
+          supabase.from("facility_accreditations").insert(
+            formData.selectedAccreditations.map((acc) => ({ facility_id: facilityId, accreditation_type: acc, verified: false }))
+          ).then(({ error }) => { if (error) relatedErrors.push("accreditations"); })
+        );
+      }
+
+      await Promise.allSettled(relatedInserts);
+
+      if (relatedErrors.length > 0) {
+        console.warn("[ProviderSignup] Some related data failed to save:", relatedErrors);
+        toast({
+          title: "Partial Save",
+          description: `Some data (${relatedErrors.join(", ")}) couldn't be saved. You can update these in your dashboard settings.`,
+          variant: "default",
+        });
       }
 
       // 8. Upload images if provided
@@ -632,7 +638,7 @@ export default function ProviderSignup() {
       // 13. Redirect to dashboard
       toast({
         title: "Welcome to RehabLookup!",
-        description: "Your account has been created. Your listing is now live!",
+        description: "Your account has been created. Your listing is pending review and will be live shortly.",
       });
       navigate("/provider/dashboard");
     } catch (error: any) {
@@ -805,12 +811,12 @@ export default function ProviderSignup() {
                   <button
                     key={step.id}
                     onClick={() => {
-                      if (step.id < currentStep) {
-                        if (step.id === 2 && emailVerified) return;
+                      // Only allow navigating to previously completed steps (not forward)
+                      if (step.id < currentStep && !(step.id === 2 && emailVerified)) {
                         setCurrentStep(step.id);
                       }
                     }}
-                    disabled={step.id > currentStep || (step.id === 2 && emailVerified)}
+                    disabled={step.id >= currentStep || (step.id === 2 && emailVerified)}
                     className={cn(
                       "flex items-center justify-center transition-all",
                       step.id === 2 && emailVerified && "cursor-not-allowed opacity-50"
@@ -1240,7 +1246,7 @@ export default function ProviderSignup() {
                           onClick={() => removeGalleryImage(index)}
                           className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <CheckCircle className="h-3 w-3" />
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
@@ -1554,7 +1560,12 @@ export default function ProviderSignup() {
                   className="ml-auto"
                   size="default"
                 >
-                  {isSubmitting ? "Creating Account..." : "Create Account"}
+                  {isSubmitting ? (
+                    <>
+                      <svg className="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      Creating Account...
+                    </>
+                  ) : "Create Account"}
                   <CheckCircle className="ml-2 h-4 w-4" />
                 </Button>
               )}
