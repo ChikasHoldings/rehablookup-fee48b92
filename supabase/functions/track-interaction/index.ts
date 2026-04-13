@@ -5,6 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MAX_BODY_SIZE = 5000;
+
+const isValidUUID = (str: unknown): boolean =>
+  typeof str === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[TRACK-INTERACTION] ${step}${detailsStr}`);
@@ -15,8 +20,32 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // POST-only
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     logStep("Function started");
+
+    // Body size limit
+    const rawBody = await req.text();
+    if (rawBody.length > MAX_BODY_SIZE) {
+      return new Response(JSON.stringify({ error: "Request too large" }), {
+        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -24,20 +53,27 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { facilityId, interactionType } = await req.json();
-    logStep("Request parsed", { facilityId, interactionType });
+    const facilityId = body.facilityId;
+    const interactionType = body.interactionType;
 
-    if (!facilityId || !interactionType) {
-      throw new Error("Missing required parameters: facilityId and interactionType");
+    // Validate facilityId is a valid UUID
+    if (!isValidUUID(facilityId)) {
+      return new Response(JSON.stringify({ error: "Invalid facilityId format" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    if (!["call", "website"].includes(interactionType)) {
-      throw new Error("Invalid interaction type. Must be 'call' or 'website'");
+    // Validate interactionType against whitelist
+    if (!interactionType || !["call", "website"].includes(String(interactionType))) {
+      return new Response(JSON.stringify({ error: "Invalid interaction type. Must be 'call' or 'website'" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+
+    logStep("Request validated", { facilityId, interactionType });
 
     const today = new Date().toISOString().split("T")[0];
 
-    // Try to update existing record first
     const { data: existing, error: selectError } = await supabaseClient
       .from("facility_interactions")
       .select("id, interaction_count")
@@ -46,62 +82,29 @@ Deno.serve(async (req) => {
       .eq("interaction_date", today)
       .maybeSingle();
 
-    if (selectError) {
-      logStep("Select error", { error: selectError.message });
-      throw selectError;
-    }
+    if (selectError) throw selectError;
 
     if (existing) {
-      // Update existing record
       const { error: updateError } = await supabaseClient
         .from("facility_interactions")
-        .update({ 
-          interaction_count: existing.interaction_count + 1,
-          updated_at: new Date().toISOString()
-        })
+        .update({ interaction_count: existing.interaction_count + 1, updated_at: new Date().toISOString() })
         .eq("id", existing.id);
-
-      if (updateError) {
-        logStep("Update error", { error: updateError.message });
-        throw updateError;
-      }
-      logStep("Updated existing record", { newCount: existing.interaction_count + 1 });
+      if (updateError) throw updateError;
     } else {
-      // Insert new record
       const { error: insertError } = await supabaseClient
         .from("facility_interactions")
-        .insert({
-          facility_id: facilityId,
-          interaction_type: interactionType,
-          interaction_date: today,
-          interaction_count: 1
-        });
-
-      if (insertError) {
-        logStep("Insert error", { error: insertError.message });
-        throw insertError;
-      }
-      logStep("Inserted new record");
+        .insert({ facility_id: facilityId as string, interaction_type: interactionType as string, interaction_date: today, interaction_count: 1 });
+      if (insertError) throw insertError;
     }
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
     });
   } catch (error) {
-    // Handle Postgres errors (which have .message and .code properties)
-    let errorMessage: string;
-    if (error && typeof error === 'object' && 'message' in error) {
-      errorMessage = (error as { message: string }).message;
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    } else {
-      errorMessage = String(error);
-    }
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+    return new Response(JSON.stringify({ error: "Internal error" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500,
     });
   }
 });
