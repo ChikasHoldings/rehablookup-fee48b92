@@ -330,6 +330,7 @@ export default function ProviderSignup() {
       let sanitizedName: string, sanitizedAddress: string, sanitizedCity: string;
       let sanitizedPhone: string, sanitizedEmail: string | null, sanitizedWebsite: string | null;
       let sanitizedDescription: string | null;
+      let validatedYear: number | null;
       try {
         validateFacilityType(formData.facilityType);
         validateState(formData.state);
@@ -341,6 +342,7 @@ export default function ProviderSignup() {
         sanitizedEmail = validateEmail(formData.facilityEmail);
         sanitizedWebsite = sanitizeWebsite(formData.website);
         sanitizedDescription = sanitizeDescription(formData.description);
+        validatedYear = validateYearEstablished(formData.yearEstablished);
       } catch (validationError: any) {
         toast({
           title: "Validation Error",
