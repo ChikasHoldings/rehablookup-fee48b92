@@ -502,6 +502,49 @@ Deno.serve(async (req) => {
       logStep(requestId, "WARN - Failed to create provider notification", { error: String(notifError) });
     }
 
+    // Track unlock conversion event and mark all reminder columns to stop future notifications
+    try {
+      // Calculate time to unlock
+      const leadCreatedAt = lead?.created_at ? new Date(lead.created_at) : null;
+      const unlockTimeHours = leadCreatedAt 
+        ? (Date.now() - leadCreatedAt.getTime()) / (1000 * 60 * 60) 
+        : null;
+
+      await supabaseAdmin.from("notification_events").insert({
+        lead_id: leadId,
+        facility_id: facilityId,
+        user_id: user.id,
+        notification_stage: "unlock",
+        channel: "platform",
+        event_type: "unlocked",
+        notification_type: "conversion",
+        metadata: { 
+          price_paid: unlockPrice, 
+          time_to_unlock_hours: unlockTimeHours ? Math.round(unlockTimeHours * 10) / 10 : null,
+          payment_method: paymentMethod,
+        },
+      });
+
+      // Mark all reminder columns as sent to prevent any future reminders
+      const now = new Date().toISOString();
+      await supabaseAdmin.from("leads").update({
+        reminder_2h_sent_at: now,
+        reminder_6h_sent_at: now,
+        reminder_12h_sent_at: now,
+        reminder_20h_sent_at: now,
+        reminder_24h_sent_at: now,
+      }).eq("id", leadId);
+
+      // Update provider engagement metrics
+      await supabaseAdmin.from("notification_preferences").update({
+        last_unlock_at: now,
+      }).eq("user_id", user.id);
+
+      logStep(requestId, "Unlock conversion tracked and reminders stopped");
+    } catch (trackError) {
+      logStep(requestId, "WARN - Failed to track unlock event", { error: String(trackError) });
+    }
+
     logStep(requestId, "Lead unlock completed successfully", { 
       unlockId: unlock.id, 
       pricePaid: unlockPrice,
