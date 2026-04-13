@@ -146,6 +146,9 @@ const ProviderFacilityTypePage = lazy(() => import("./pages/provider-guides/Prov
 const ProviderTechnologyPage = lazy(() => import("./pages/provider-guides/ProviderTechnologyPage"));
 const ProviderStartupPage = lazy(() => import("./pages/provider-guides/ProviderStartupPage"));
 const ProviderClinicalPage = lazy(() => import("./pages/provider-guides/ProviderClinicalPage"));
+const ProviderPayerPage = lazy(() => import("./pages/provider-guides/ProviderPayerPage"));
+const ProviderRiskPage = lazy(() => import("./pages/provider-guides/ProviderRiskPage"));
+const ProviderPartnershipsPage = lazy(() => import("./pages/provider-guides/ProviderPartnershipsPage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
@@ -1093,6 +1096,27 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-clinical-staff-recruitment" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-group-therapy-programming" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-family-program-development" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
+
+            {/* Provider Payer Relations & Contracting Pages */}
+            <Route path="/provider-guides/rehab-insurance-credentialing-guide" element={<PublicRouteGuard><ProviderPayerPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-payer-contract-negotiation" element={<PublicRouteGuard><ProviderPayerPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-single-case-agreement-strategy" element={<PublicRouteGuard><ProviderPayerPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-network-adequacy-strategy" element={<PublicRouteGuard><ProviderPayerPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-out-of-network-billing-strategy" element={<PublicRouteGuard><ProviderPayerPage /></PublicRouteGuard>} />
+
+            {/* Provider Risk Management & Legal Pages */}
+            <Route path="/provider-guides/rehab-malpractice-liability-prevention" element={<PublicRouteGuard><ProviderRiskPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-patient-safety-protocols" element={<PublicRouteGuard><ProviderRiskPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-insurance-audit-preparation" element={<PublicRouteGuard><ProviderRiskPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-employment-law-compliance" element={<PublicRouteGuard><ProviderRiskPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-crisis-management-plan" element={<PublicRouteGuard><ProviderRiskPage /></PublicRouteGuard>} />
+
+            {/* Provider Community & Referral Partnerships Pages */}
+            <Route path="/provider-guides/rehab-physician-referral-network" element={<PublicRouteGuard><ProviderPartnershipsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-hospital-er-partnership" element={<PublicRouteGuard><ProviderPartnershipsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-court-criminal-justice-referrals" element={<PublicRouteGuard><ProviderPartnershipsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-employer-eap-partnerships" element={<PublicRouteGuard><ProviderPartnershipsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-alumni-referral-program" element={<PublicRouteGuard><ProviderPartnershipsPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
