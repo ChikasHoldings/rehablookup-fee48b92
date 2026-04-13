@@ -413,60 +413,61 @@ export default function ProviderSignup() {
       const facilityId = facilityData.id;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
 
-      // 4. Insert services (non-blocking)
+      // 4-7: Insert related data in parallel (services, age groups, insurance, accreditations)
+      const relatedInserts: Promise<void>[] = [];
+      let relatedErrors: string[] = [];
+
       if (formData.selectedTreatments.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting services:", formData.selectedTreatments.length);
-        const servicesData = formData.selectedTreatments.map((service) => ({
-          facility_id: facilityId,
-          service_name: service,
-        }));
-        const { error: servicesError } = await supabase.from("facility_services").insert(servicesData);
-        if (servicesError) console.error("[ProviderSignup] Services insert error:", servicesError);
+        relatedInserts.push(
+          supabase.from("facility_services").insert(
+            formData.selectedTreatments.map((service) => ({ facility_id: facilityId, service_name: service }))
+          ).then(({ error }) => { if (error) relatedErrors.push("services"); })
+        );
       }
 
-      // 5. Insert age groups (non-blocking)
       if (formData.ageGroups.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting age groups:", formData.ageGroups.length);
-        const ageGroupsData = formData.ageGroups.map((ageGroup) => ({
-          facility_id: facilityId,
-          age_group: ageGroup,
-        }));
-        const { error: ageGroupsError } = await supabase.from("facility_age_groups").insert(ageGroupsData);
-        if (ageGroupsError) console.error("[ProviderSignup] Age groups insert error:", ageGroupsError);
+        relatedInserts.push(
+          supabase.from("facility_age_groups").insert(
+            formData.ageGroups.map((ag) => ({ facility_id: facilityId, age_group: ag }))
+          ).then(({ error }) => { if (error) relatedErrors.push("age groups"); })
+        );
       }
 
-      // 6. Insert insurance (non-blocking)
       if (formData.selectedInsurance.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting insurance:", formData.selectedInsurance.length);
-        const insuranceData = formData.selectedInsurance.map((insurance) => ({
-          facility_id: facilityId,
-          insurance_name: insurance,
-        }));
-        const { error: insuranceError } = await supabase.from("facility_insurance").insert(insuranceData);
-        if (insuranceError) console.error("[ProviderSignup] Insurance insert error:", insuranceError);
+        relatedInserts.push(
+          supabase.from("facility_insurance").insert(
+            formData.selectedInsurance.map((ins) => ({ facility_id: facilityId, insurance_name: ins }))
+          ).then(({ error }) => { if (error) relatedErrors.push("insurance"); })
+        );
       }
 
-      // 7. Insert credentials (legacy free-text) - non-blocking
       if (formData.licensingInfo || formData.accreditations) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting credentials...");
-        const { error: credentialsError } = await supabase.from("facility_credentials").insert({
-          facility_id: facilityId,
-          licensing_info: formData.licensingInfo,
-          accreditations: formData.accreditations,
-        });
-        if (credentialsError) console.error("[ProviderSignup] Credentials insert error:", credentialsError);
+        relatedInserts.push(
+          supabase.from("facility_credentials").insert({
+            facility_id: facilityId,
+            licensing_info: formData.licensingInfo,
+            accreditations: formData.accreditations,
+          }).then(({ error }) => { if (error) relatedErrors.push("credentials"); })
+        );
       }
 
-      // 7b. Insert structured accreditations (non-blocking)
       if (formData.selectedAccreditations.length > 0) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Inserting accreditations:", formData.selectedAccreditations.length);
-        const accreditationsData = formData.selectedAccreditations.map((accreditation) => ({
-          facility_id: facilityId,
-          accreditation_type: accreditation,
-          verified: false,
-        }));
-        const { error: accreditationsError } = await supabase.from("facility_accreditations").insert(accreditationsData);
-        if (accreditationsError) console.error("[ProviderSignup] Accreditations insert error:", accreditationsError);
+        relatedInserts.push(
+          supabase.from("facility_accreditations").insert(
+            formData.selectedAccreditations.map((acc) => ({ facility_id: facilityId, accreditation_type: acc, verified: false }))
+          ).then(({ error }) => { if (error) relatedErrors.push("accreditations"); })
+        );
+      }
+
+      await Promise.allSettled(relatedInserts);
+
+      if (relatedErrors.length > 0) {
+        console.warn("[ProviderSignup] Some related data failed to save:", relatedErrors);
+        toast({
+          title: "Partial Save",
+          description: `Some data (${relatedErrors.join(", ")}) couldn't be saved. You can update these in your dashboard settings.`,
+          variant: "default",
+        });
       }
 
       // 8. Upload images if provided
