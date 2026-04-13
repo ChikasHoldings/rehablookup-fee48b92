@@ -3291,6 +3291,7 @@ export type Database = {
           id: string
           insurance_provider: string | null
           insurance_type: string | null
+          ip_hash: string | null
           landing_page: string | null
           last_name: string
           level_of_care: string | null
@@ -3331,6 +3332,7 @@ export type Database = {
           id?: string
           insurance_provider?: string | null
           insurance_type?: string | null
+          ip_hash?: string | null
           landing_page?: string | null
           last_name: string
           level_of_care?: string | null
@@ -3371,6 +3373,7 @@ export type Database = {
           id?: string
           insurance_provider?: string | null
           insurance_type?: string | null
+          ip_hash?: string | null
           landing_page?: string | null
           last_name?: string
           level_of_care?: string | null

@@ -480,10 +480,10 @@ Deno.serve(async (req) => {
       .eq("lead_id", leadId)
       .eq("facility_id", facilityId);
 
-    // Fetch the lead with full details
+    // Fetch the lead with explicit columns (never select *)
     const { data: lead } = await supabaseAdmin
       .from("leads")
-      .select("*")
+      .select("id, name, email, phone, facility_id, created_at, status, urgency, level_of_care, insurance_type, message, preferred_contact, inquiry_type, location_city_state, location_zip, primary_substance")
       .eq("id", leadId)
       .single();
 
