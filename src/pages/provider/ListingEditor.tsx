@@ -471,6 +471,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       validateState(facility.state);
       validateZipCode(facility.zip_code);
       validatePhone(facility.phone);
+      if (facility.year_established != null) {
+        validateYearEstablished(facility.year_established);
+      }
+      if (facility.email) validateEmail(facility.email);
+      if (facility.website && /^(javascript|data):/i.test(facility.website.trim())) {
+        return; // Block dangerous URLs silently
+      }
     } catch {
       return; // Skip auto-save if validation fails
     }
@@ -566,6 +573,19 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       validateState(facility.state);
       validateZipCode(facility.zip_code);
       validatePhone(facility.phone);
+      if (facility.year_established != null) {
+        validateYearEstablished(facility.year_established);
+      }
+      if (facility.email) validateEmail(facility.email);
+      if (facility.website && /^(javascript|data):/i.test(facility.website.trim())) {
+        toast({
+          title: "Invalid Website URL",
+          description: "The website URL contains a blocked protocol.",
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
     } catch (validationErr: any) {
       toast({
         title: "Validation Error",
