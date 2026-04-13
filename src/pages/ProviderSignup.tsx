@@ -133,6 +133,11 @@ export default function ProviderSignup() {
     });
   }, [navigate]);
 
+  // Anti-bot honeypot
+  const [honeypot, setHoneypot] = useState("");
+  // Client-side rate limiting for submissions
+  const [lastSubmitAttempt, setLastSubmitAttempt] = useState(0);
+
   // Form state
   const [formData, setFormData] = useState({
     // Step 1: Account
@@ -223,6 +228,21 @@ export default function ProviderSignup() {
       if (import.meta.env.DEV) console.log("[ProviderSignup] Prevented double submission");
       return;
     }
+
+    // Honeypot check - bots fill hidden fields
+    if (honeypot) {
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Honeypot triggered");
+      toast({ title: "Signup Failed", description: "An unexpected error occurred. Please try again.", variant: "destructive" });
+      return;
+    }
+
+    // Client-side rate limiting: 1 attempt per 10 seconds
+    const now = Date.now();
+    if (now - lastSubmitAttempt < 10_000) {
+      toast({ title: "Too Fast", description: "Please wait a few seconds before trying again.", variant: "destructive" });
+      return;
+    }
+    setLastSubmitAttempt(now);
     
     setIsSubmitting(true);
     if (import.meta.env.DEV) console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
@@ -634,27 +654,40 @@ export default function ProviderSignup() {
     switch (currentStep) {
       case 1:
         return (
-          formData.firstName &&
-          formData.lastName &&
+          formData.firstName.trim().length >= 1 &&
+          formData.firstName.trim().length <= 50 &&
+          formData.lastName.trim().length >= 1 &&
+          formData.lastName.trim().length <= 50 &&
           formData.email &&
           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
+          formData.email.length <= 255 &&
           formData.phone &&
+          formData.phone.replace(/\D/g, "").length >= 7 &&
           formData.password &&
+          formData.password.length >= 8 &&
           isPasswordStrong &&
           formData.password === formData.confirmPassword
         );
       case 2:
         return emailVerified;
-      case 3:
+      case 3: {
+        const zipValid = /^\d{5}(-\d{4})?$/.test(formData.zipCode.trim());
+        const phoneDigits = formData.facilityPhone.replace(/\D/g, "").length;
         return (
-          formData.facilityName &&
+          formData.facilityName.trim().length >= 2 &&
+          formData.facilityName.trim().length <= 100 &&
           formData.facilityType &&
-          formData.facilityPhone &&
-          formData.address &&
-          formData.city &&
+          FACILITY_TYPE_VALUES.includes(formData.facilityType as any) &&
+          phoneDigits >= 7 &&
+          formData.address.trim().length >= 2 &&
+          formData.address.trim().length <= 200 &&
+          formData.city.trim().length >= 1 &&
+          formData.city.trim().length <= 100 &&
           formData.state &&
-          formData.zipCode
+          US_STATES.includes(formData.state as any) &&
+          zipValid
         );
+      }
       case 4:
         return true; // Branding is optional
       case 5:
@@ -813,8 +846,9 @@ export default function ProviderSignup() {
                       <Input
                         id="firstName"
                         value={formData.firstName}
-                        onChange={(e) => updateFormData("firstName", e.target.value)}
+                        onChange={(e) => updateFormData("firstName", e.target.value.slice(0, 50))}
                         placeholder="John"
+                        maxLength={50}
                         className="h-10"
                       />
                     </div>
@@ -823,8 +857,9 @@ export default function ProviderSignup() {
                       <Input
                         id="lastName"
                         value={formData.lastName}
-                        onChange={(e) => updateFormData("lastName", e.target.value)}
+                        onChange={(e) => updateFormData("lastName", e.target.value.slice(0, 50))}
                         placeholder="Smith"
+                        maxLength={50}
                         className="h-10"
                       />
                     </div>
@@ -835,8 +870,9 @@ export default function ProviderSignup() {
                     <Input
                       id="jobTitle"
                       value={formData.jobTitle}
-                      onChange={(e) => updateFormData("jobTitle", e.target.value)}
+                      onChange={(e) => updateFormData("jobTitle", e.target.value.slice(0, 100))}
                       placeholder="Admissions Director"
+                      maxLength={100}
                       className="h-10"
                     />
                   </div>
@@ -850,12 +886,13 @@ export default function ProviderSignup() {
                         type="email"
                         value={formData.email}
                         onChange={(e) => {
-                          updateFormData("email", e.target.value);
+                          updateFormData("email", e.target.value.slice(0, 255).toLowerCase().trim());
                           if (emailVerified) {
                             setEmailVerified(false);
                           }
                         }}
                         placeholder="john@facility.com"
+                        maxLength={255}
                         className="pl-10 h-10"
                       />
                     </div>
@@ -945,8 +982,9 @@ export default function ProviderSignup() {
                       <Input
                         id="facilityName"
                         value={formData.facilityName}
-                        onChange={(e) => updateFormData("facilityName", e.target.value)}
+                        onChange={(e) => updateFormData("facilityName", e.target.value.slice(0, 100))}
                         placeholder="Serenity Recovery Center"
+                        maxLength={100}
                         className="pl-10 h-10"
                       />
                     </div>
@@ -1008,8 +1046,9 @@ export default function ProviderSignup() {
                         <Input
                           id="website"
                           value={formData.website}
-                          onChange={(e) => updateFormData("website", e.target.value)}
+                          onChange={(e) => updateFormData("website", e.target.value.slice(0, 500))}
                           placeholder="https://www.yourfacility.com"
+                          maxLength={500}
                           className="pl-10 h-10"
                         />
                       </div>
@@ -1036,8 +1075,9 @@ export default function ProviderSignup() {
                       <Input
                         id="address"
                         value={formData.address}
-                        onChange={(e) => updateFormData("address", e.target.value)}
+                        onChange={(e) => updateFormData("address", e.target.value.slice(0, 200))}
                         placeholder="123 Recovery Lane"
+                        maxLength={200}
                         className="pl-10 h-10"
                       />
                     </div>
@@ -1049,8 +1089,9 @@ export default function ProviderSignup() {
                       <Input
                         id="city"
                         value={formData.city}
-                        onChange={(e) => updateFormData("city", e.target.value)}
+                        onChange={(e) => updateFormData("city", e.target.value.slice(0, 100))}
                         placeholder="Los Angeles"
+                        maxLength={100}
                         className="h-10"
                       />
                     </div>
@@ -1077,8 +1118,10 @@ export default function ProviderSignup() {
                       <Input
                         id="zipCode"
                         value={formData.zipCode}
-                        onChange={(e) => updateFormData("zipCode", e.target.value)}
+                        onChange={(e) => updateFormData("zipCode", e.target.value.replace(/[^\d-]/g, "").slice(0, 10))}
                         placeholder="90210"
+                        maxLength={10}
+                        inputMode="numeric"
                         className="h-10"
                       />
                     </div>
@@ -1089,11 +1132,13 @@ export default function ProviderSignup() {
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => updateFormData("description", e.target.value)}
+                      onChange={(e) => updateFormData("description", e.target.value.slice(0, 2000))}
                       placeholder="Tell potential clients about your facility, treatment philosophy, and what makes you unique..."
                       rows={3}
+                      maxLength={2000}
                       className="min-h-[100px]"
                     />
+                    <p className="text-xs text-muted-foreground text-right">{formData.description.length}/2000</p>
                   </div>
 
                   {/* International Patients */}
