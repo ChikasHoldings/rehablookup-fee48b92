@@ -447,6 +447,7 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
           legalInvolvement: formData.legalInvolvement || undefined,
           readinessLevel: formData.readinessLevel || undefined,
           bestTimeToCall: formData.bestTimeToCall || undefined,
+          idempotencyKey: idempotencyKeyRef.current,
         },
       });
       
