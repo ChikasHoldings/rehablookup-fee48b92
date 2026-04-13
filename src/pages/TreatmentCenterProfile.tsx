@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";

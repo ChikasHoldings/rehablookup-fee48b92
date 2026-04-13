@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
