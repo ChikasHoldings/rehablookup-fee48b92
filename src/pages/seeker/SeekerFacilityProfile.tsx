@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
@@ -285,13 +286,14 @@ export default function SeekerFacilityProfile() {
 
   const ratingData = useFacilityRating(facility?.id);
 
+  const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
+
   useEffect(() => {
     if (facility?.id) {
-      supabase.functions.invoke("track-view", {
-        body: { facilityId: facility.id },
-      });
+      // Track profile view in provider_events (single source of truth)
+      trackProfileView(facility.id);
     }
-  }, [facility?.id]);
+  }, [facility?.id, trackProfileView]);
 
   const handleFavoriteClick = useCallback(() => {
     if (facility?.id) {
@@ -731,7 +733,11 @@ export default function SeekerFacilityProfile() {
                     {showContactDetails && (
                       <div className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <a href={`tel:${facility.phone}`} className="text-sm font-medium text-primary hover:underline">
+                        <a 
+                          href={`tel:${facility.phone}`} 
+                          className="text-sm font-medium text-primary hover:underline"
+                          onClick={() => facility?.id && trackClickToCall(facility.id, "profile")}
+                        >
                           {formatPhoneNumber(facility.phone)}
                         </a>
                       </div>

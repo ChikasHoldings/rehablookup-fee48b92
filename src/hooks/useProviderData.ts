@@ -172,12 +172,12 @@ export function useProviderData(facilityId?: string) {
         startOfMonth.setHours(0, 0, 0, 0);
 
         const [viewsResult, leadsCountResult] = await Promise.all([
-          // Views count for last 30 days from provider_events
+          // Profile views count for last 30 days from provider_events (excludes impressions to avoid double-counting)
           supabase
             .from("provider_events")
             .select("id", { count: "exact", head: true })
             .eq("facility_id", facilityData.id)
-            .in("event_type", ["profile_view", "listing_impression"])
+            .eq("event_type", "profile_view")
             .gte("created_at", thirtyDaysAgo.toISOString()),
           // Accurate leads count via security definer function (bypasses RLS unlock restriction)
           supabase.rpc("get_facility_leads_count", { p_facility_id: facilityData.id }),

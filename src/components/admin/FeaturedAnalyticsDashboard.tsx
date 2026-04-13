@@ -136,12 +136,12 @@ export function FeaturedAnalyticsDashboard() {
         .in("facility_id", featuredIds)
         .gte("event_date", startDateStr);
 
-      // Fetch facility views from provider_events
+      // Fetch facility profile views from provider_events (excludes impressions)
       const { data: viewsData } = await supabase
         .from("provider_events")
         .select("facility_id")
         .in("facility_id", featuredIds)
-        .in("event_type", ["profile_view", "listing_impression"])
+        .eq("event_type", "profile_view")
         .gte("created_at", startDate.toISOString());
 
       // Fetch leads for conversions

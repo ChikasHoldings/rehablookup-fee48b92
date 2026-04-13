@@ -408,17 +408,18 @@ export default function AdminAnalytics() {
 
   // Calculate KPIs with comparison
   const kpis = useMemo(() => {
-    // Calculate current period totals (each row = 1 event)
-    const totalViews = viewsData?.length || 0;
+    // Calculate current period totals - separate impressions from profile views
+    const totalProfileViews = viewsData?.filter(e => e.event_type === "profile_view").length || 0;
+    const totalImpressions = viewsData?.filter(e => e.event_type === "listing_impression").length || 0;
     const totalClicks = interactionsData?.length || 0;
     const totalLeads = leadsData?.length || 0;
-    const conversionRate = totalViews > 0 ? ((totalLeads / totalViews) * 100).toFixed(2) : "0.00";
+    const conversionRate = totalProfileViews > 0 ? ((totalLeads / totalProfileViews) * 100).toFixed(2) : "0.00";
 
     // Previous period calculations
-    const prevTotalViews = prevViewsData?.length || 0;
+    const prevTotalProfileViews = prevViewsData?.filter(e => e.event_type === "profile_view").length || 0;
     const prevTotalClicks = prevInteractionsData?.length || 0;
     const prevTotalLeads = prevLeadsData?.length || 0;
-    const prevConversionRate = prevTotalViews > 0 ? ((prevTotalLeads / prevTotalViews) * 100) : 0;
+    const prevConversionRate = prevTotalProfileViews > 0 ? ((prevTotalLeads / prevTotalProfileViews) * 100) : 0;
 
     // Calculate percentage changes
     const calcChange = (current: number, previous: number): number | null => {
@@ -428,8 +429,9 @@ export default function AdminAnalytics() {
     };
 
     return {
-      visitors: totalViews,
-      visitorsChange: calcChange(totalViews, prevTotalViews),
+      visitors: totalProfileViews,
+      impressions: totalImpressions,
+      visitorsChange: calcChange(totalProfileViews, prevTotalProfileViews),
       clicks: totalClicks,
       clicksChange: calcChange(totalClicks, prevTotalClicks),
       totalLeads,
@@ -980,7 +982,7 @@ export default function AdminAnalytics() {
                 <div className="grid grid-cols-3 gap-4 mb-3">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.visitors.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Visitors</p>
+                    <p className="text-xs text-muted-foreground">Profile Views</p>
                   </div>
                   <div className="text-center border-x">
                     <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.clicks.toLocaleString()}</div>
