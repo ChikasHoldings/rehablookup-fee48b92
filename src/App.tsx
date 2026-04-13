@@ -146,6 +146,9 @@ const ProviderFacilityTypePage = lazy(() => import("./pages/provider-guides/Prov
 const ProviderTechnologyPage = lazy(() => import("./pages/provider-guides/ProviderTechnologyPage"));
 const ProviderStartupPage = lazy(() => import("./pages/provider-guides/ProviderStartupPage"));
 const ProviderClinicalPage = lazy(() => import("./pages/provider-guides/ProviderClinicalPage"));
+const ProviderPayerPage = lazy(() => import("./pages/provider-guides/ProviderPayerPage"));
+const ProviderRiskPage = lazy(() => import("./pages/provider-guides/ProviderRiskPage"));
+const ProviderPartnershipsPage = lazy(() => import("./pages/provider-guides/ProviderPartnershipsPage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
