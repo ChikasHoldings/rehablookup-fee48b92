@@ -80,7 +80,7 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
   ].filter(Boolean);
   const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : `${facility.city}, ${facility.state}`;
 
-  // Fetch views count from provider_events (profile_view + listing_impression)
+  // Fetch profile views count from provider_events (profile_view only, excludes impressions)
   const { data: viewsData } = useQuery({
     queryKey: ['facility-views-count', facility.id],
     queryFn: async () => {
@@ -88,7 +88,7 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
         .from('provider_events')
         .select('id', { count: 'exact', head: true })
         .eq('facility_id', facility.id)
-        .in('event_type', ['profile_view', 'listing_impression']);
+        .eq('event_type', 'profile_view');
       
       if (error) throw error;
       return count || 0;
