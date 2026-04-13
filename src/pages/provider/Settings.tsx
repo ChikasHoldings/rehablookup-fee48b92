@@ -549,11 +549,27 @@ export default function ProviderSettingsPage() {
     }
   };
 
+  // Rate limiting for password changes
+  const lastPasswordChangeRef = useRef<number>(0);
+
   const handleUpdatePassword = async () => {
     setPasswordError(null);
     
+    // Rate limit: 10 second cooldown
+    const now = Date.now();
+    if (now - lastPasswordChangeRef.current < 10000) {
+      setPasswordError("Please wait before trying again");
+      return;
+    }
+
     if (!newPassword || !confirmPassword) {
       setPasswordError("Please fill in all password fields");
+      return;
+    }
+
+    // Prevent excessively long passwords (DoS protection)
+    if (newPassword.length > 128) {
+      setPasswordError("Password must be 128 characters or less");
       return;
     }
 
@@ -573,6 +589,7 @@ export default function ProviderSettingsPage() {
       return;
     }
 
+    lastPasswordChangeRef.current = now;
     setIsUpdatingPassword(true);
     
     try {
