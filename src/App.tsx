@@ -143,6 +143,9 @@ const ProviderHighKeywordPage = lazy(() => import("./pages/provider-guides/Provi
 const ProviderCompliancePage = lazy(() => import("./pages/provider-guides/ProviderCompliancePage"));
 const ProviderRevenuePage = lazy(() => import("./pages/provider-guides/ProviderRevenuePage"));
 const ProviderFacilityTypePage = lazy(() => import("./pages/provider-guides/ProviderFacilityTypePage"));
+const ProviderTechnologyPage = lazy(() => import("./pages/provider-guides/ProviderTechnologyPage"));
+const ProviderStartupPage = lazy(() => import("./pages/provider-guides/ProviderStartupPage"));
+const ProviderClinicalPage = lazy(() => import("./pages/provider-guides/ProviderClinicalPage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
@@ -1069,6 +1072,27 @@ const AppInner = () => {
             <Route path="/provider-guides/sober-living-home-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/mat-clinic-patient-acquisition" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/adolescent-treatment-center-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+
+            {/* Provider Technology & Systems Pages */}
+            <Route path="/provider-guides/rehab-ehr-software-guide" element={<PublicRouteGuard><ProviderTechnologyPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-crm-patient-management" element={<PublicRouteGuard><ProviderTechnologyPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-intake-automation" element={<PublicRouteGuard><ProviderTechnologyPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-website-conversion-optimization" element={<PublicRouteGuard><ProviderTechnologyPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-call-tracking-analytics" element={<PublicRouteGuard><ProviderTechnologyPage /></PublicRouteGuard>} />
+
+            {/* Provider Startup & Expansion Pages */}
+            <Route path="/provider-guides/how-to-start-outpatient-rehab-center" element={<PublicRouteGuard><ProviderStartupPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-facility-acquisition-guide" element={<PublicRouteGuard><ProviderStartupPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-market-analysis-new-location" element={<PublicRouteGuard><ProviderStartupPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-franchise-opportunities" element={<PublicRouteGuard><ProviderStartupPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-construction-design-guide" element={<PublicRouteGuard><ProviderStartupPage /></PublicRouteGuard>} />
+
+            {/* Provider Clinical Operations Pages */}
+            <Route path="/provider-guides/rehab-evidence-based-program-development" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-outcomes-measurement-reporting" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-clinical-staff-recruitment" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-group-therapy-programming" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-family-program-development" element={<PublicRouteGuard><ProviderClinicalPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
