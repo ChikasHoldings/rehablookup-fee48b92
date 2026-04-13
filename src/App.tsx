@@ -152,6 +152,9 @@ const ProviderPartnershipsPage = lazy(() => import("./pages/provider-guides/Prov
 const ProviderStaffingPage = lazy(() => import("./pages/provider-guides/ProviderStaffingPage"));
 const ProviderMarketingChannelPage = lazy(() => import("./pages/provider-guides/ProviderMarketingChannelPage"));
 const ProviderPatientExperiencePage = lazy(() => import("./pages/provider-guides/ProviderPatientExperiencePage"));
+const ProviderTelehealthPage = lazy(() => import("./pages/provider-guides/ProviderTelehealthPage"));
+const ProviderDataAnalyticsPage = lazy(() => import("./pages/provider-guides/ProviderAnalyticsPage"));
+const ProviderAccreditationPage = lazy(() => import("./pages/provider-guides/ProviderAccreditationPage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
@@ -1141,6 +1144,27 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-aftercare-planning-programs" element={<PublicRouteGuard><ProviderPatientExperiencePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-patient-satisfaction-measurement" element={<PublicRouteGuard><ProviderPatientExperiencePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-discharge-planning-best-practices" element={<PublicRouteGuard><ProviderPatientExperiencePage /></PublicRouteGuard>} />
+
+            {/* Provider Telehealth & Virtual Care Pages */}
+            <Route path="/provider-guides/rehab-telehealth-program-launch" element={<PublicRouteGuard><ProviderTelehealthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-virtual-iop-program-guide" element={<PublicRouteGuard><ProviderTelehealthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-remote-patient-monitoring" element={<PublicRouteGuard><ProviderTelehealthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-hybrid-treatment-model" element={<PublicRouteGuard><ProviderTelehealthPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-telebehavioral-health-compliance" element={<PublicRouteGuard><ProviderTelehealthPage /></PublicRouteGuard>} />
+
+            {/* Provider Data & Analytics Pages */}
+            <Route path="/provider-guides/rehab-census-forecasting-tools" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-kpi-dashboard-guide" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-outcome-reporting-systems" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-payer-analytics-reporting" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-marketing-attribution-guide" element={<PublicRouteGuard><ProviderDataAnalyticsPage /></PublicRouteGuard>} />
+
+            {/* Provider Accreditation & Quality Pages */}
+            <Route path="/provider-guides/rehab-carf-accreditation-preparation" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-joint-commission-readiness" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-state-licensing-survey-preparation" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-quality-improvement-programs" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-peer-review-clinical-governance" element={<PublicRouteGuard><ProviderAccreditationPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
