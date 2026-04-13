@@ -13,7 +13,7 @@ import { EmailInput } from '@/components/ui/email-input';
 import { isValidPhoneNumber } from '@/lib/phoneUtils';
 import { isValidEmail } from '@/lib/emailUtils';
 import { useZipcodeLookup } from '@/hooks/useZipcodeLookup';
-import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator';
+import { PasswordStrengthIndicator, calculatePasswordStrength } from '@/components/ui/password-strength-indicator';
 
 export default function SeekerSignup() {
   const navigate = useNavigate();
@@ -27,6 +27,11 @@ export default function SeekerSignup() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
+  // Anti-bot honeypot
+  const [honeypot, setHoneypot] = useState('');
+  // Client-side rate limiting
+  const [lastSubmitAttempt, setLastSubmitAttempt] = useState(0);
+
   // Form fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -113,11 +118,32 @@ export default function SeekerSignup() {
     return data;
   };
 
+  const passwordStrength = calculatePasswordStrength(password);
+  const isPasswordStrong = passwordStrength.score >= 3;
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Honeypot check
+    if (honeypot) {
+      toast.error('An unexpected error occurred. Please try again.');
+      return;
+    }
+
+    // Client-side rate limiting: 1 attempt per 10 seconds
+    const now = Date.now();
+    if (now - lastSubmitAttempt < 10_000) {
+      toast.error('Please wait a few seconds before trying again.');
+      return;
+    }
+    setLastSubmitAttempt(now);
+
+    // Sanitize inputs
+    const sanitizedFirst = firstName.trim().replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').slice(0, 50);
+    const sanitizedLast = lastName.trim().replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').slice(0, 50);
+
     // Validation
-    if (!firstName.trim() || !lastName.trim()) {
+    if (!sanitizedFirst || !sanitizedLast) {
       toast.error('Please enter your first and last name');
       return;
     }
@@ -137,8 +163,8 @@ export default function SeekerSignup() {
       return;
     }
     
-    if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    if (!isPasswordStrong) {
+      toast.error('Please choose a stronger password');
       return;
     }
     
@@ -146,21 +172,41 @@ export default function SeekerSignup() {
       toast.error('Passwords do not match');
       return;
     }
-    
+
+    if (isSubmitting) return;
     setIsSubmitting(true);
     
     try {
-      const displayName = `${firstName.trim()} ${lastName.trim()}`;
+      const trimmedEmail = email.trim().toLowerCase();
+
+      // Cross-account checks: prevent duplicate accounts across roles
+      const [providerResult, adminResult] = await Promise.all([
+        supabase.rpc('is_email_provider', { p_email: trimmedEmail }),
+        supabase.rpc('is_email_admin', { p_email: trimmedEmail }),
+      ]);
+
+      if (!providerResult.error && providerResult.data) {
+        toast.error('This email is registered as a facility provider. Please use the provider login or a different email.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!adminResult.error && adminResult.data) {
+        toast.error('This email is associated with an administrative account. Please use a different email.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const displayName = `${sanitizedFirst} ${sanitizedLast}`;
       
-      // With auto-confirm enabled, user gets a session immediately
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
         options: {
           data: {
             display_name: displayName,
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
+            first_name: sanitizedFirst,
+            last_name: sanitizedLast,
             account_type: 'seeker',
             phone: phone,
             zipcode: zipcode,
@@ -172,7 +218,7 @@ export default function SeekerSignup() {
       
       if (error) {
         if (error.message.includes('already registered')) {
-          toast.error('An account with this email already exists');
+          toast.error('An account with this email already exists. Please sign in instead.');
         } else {
           toast.error(error.message);
         }
@@ -180,7 +226,7 @@ export default function SeekerSignup() {
       }
       
       if (data.user) {
-        // Update profile with phone/location data if we have a session
+        // Update seeker profile with phone/location (trigger creates the base profile)
         if (data.session) {
           supabase
             .from('seeker_profiles')
@@ -199,19 +245,19 @@ export default function SeekerSignup() {
           body: {
             type: 'welcome',
             seekerId: data.user.id,
-            email: email.trim()
+            email: trimmedEmail
           }
         }).catch(() => {});
         
-        // Send 6-digit verification code via Resend
+        // Send 6-digit verification code
         try {
-          await sendVerificationCode(email.trim());
+          await sendVerificationCode(trimmedEmail);
           toast.success('Account created! Enter the 6-digit code sent to your email.');
         } catch {
           toast.success('Account created! We\'ll send you a verification code.');
         }
         
-        setSignupEmail(email.trim());
+        setSignupEmail(trimmedEmail);
         setShowVerification(true);
         setResendCooldown(60);
       }
@@ -602,7 +648,10 @@ export default function SeekerSignup() {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    {password && <PasswordStrengthIndicator password={password} showRequirements={false} />}
+                    {password && <PasswordStrengthIndicator password={password} />}
+                    {password && !isPasswordStrong && (
+                      <p className="text-xs text-destructive mt-1">Please choose a stronger password</p>
+                    )}
                   </div>
                   
                   {/* Confirm Password */}
@@ -631,7 +680,7 @@ export default function SeekerSignup() {
                     )}
                   </div>
                   
-                  <Button type="submit" className="w-full h-10 sm:h-11" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full h-10 sm:h-11" disabled={isSubmitting || !isPasswordStrong || password !== confirmPassword || !firstName.trim() || !lastName.trim()}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -641,6 +690,20 @@ export default function SeekerSignup() {
                       'Create Account'
                     )}
                   </Button>
+
+                  {/* Honeypot field - hidden from real users */}
+                  <div className="absolute opacity-0 pointer-events-none h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <label htmlFor="website_url_hp">Leave this empty</label>
+                    <input
+                      id="website_url_hp"
+                      name="website_url_hp"
+                      type="text"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      autoComplete="off"
+                      tabIndex={-1}
+                    />
+                  </div>
                 </form>
                 
                 <p className="text-xs text-muted-foreground text-center mt-4">
