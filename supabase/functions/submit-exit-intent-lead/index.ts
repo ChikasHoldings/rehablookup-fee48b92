@@ -1,7 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "1.0.0";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,13 +11,24 @@ const corsHeaders = {
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 const ADMIN_EMAIL = "chikasholdings@gmail.com";
 const FROM_EMAIL = "RehabLookup <no-reply@rehablookup.com>";
+const MAX_BODY_SIZE = 50000; // 50KB
 
 function sanitize(str: string, max = 200): string {
   return str.trim().slice(0, max).replace(/[<>]/g, "").replace(/\0/g, "");
 }
 
+function sanitizeName(str: string, max = 100): string {
+  return str.trim().slice(0, max).replace(/[<>{}[\]\\\/`'"]/g, "").replace(/\0/g, "");
+}
+
 function isValidEmail(e: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254 && e.length >= 5;
+}
+
+function extractClientIp(req: Request): string | null {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-real-ip")
+    || null;
 }
 
 Deno.serve(async (req) => {
@@ -26,10 +36,36 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // POST-only enforcement
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
-    const body = await req.json();
-    const firstName = sanitize(String(body.firstName || ""), 100);
-    const lastName = sanitize(String(body.lastName || ""), 100);
+    // Body size limit
+    const rawBody = await req.text();
+    if (rawBody.length > MAX_BODY_SIZE) {
+      return new Response(JSON.stringify({ error: "Request too large" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const firstName = sanitizeName(String(body.firstName || ""), 100);
+    const lastName = sanitizeName(String(body.lastName || ""), 100);
     const email = String(body.email || "").trim().toLowerCase().slice(0, 254);
     const phone = body.phone ? sanitize(String(body.phone), 30).replace(/[^\d+\-() ]/g, "") : null;
     const pageUrl = sanitize(String(body.pageUrl || "/"), 500);
@@ -55,6 +91,38 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // Blocked identifier check
+    const { data: emailBlocked } = await supabase.rpc("is_identifier_blocked", { p_identifier: email });
+    if (emailBlocked) {
+      // Silent success to not reveal blocking
+      return new Response(JSON.stringify({ success: true, message: "Already submitted" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // IP-based rate limiting: 10 exit-intent leads per hour per IP
+    const clientIp = extractClientIp(req);
+    if (clientIp) {
+      const ipHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(clientIp + "exit-intent-salt-v2"));
+      const ipHashHex = Array.from(new Uint8Array(ipHash)).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: ipCount } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("ip_hash", ipHashHex)
+        .eq("source", "exit_intent")
+        .gte("created_at", oneHourAgo);
+
+      if (ipCount && ipCount >= 10) {
+        return new Response(JSON.stringify({ error: "Too many submissions. Please try again later." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Dedup: check for same email + exit_intent in last 24 hours
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { count } = await supabase
@@ -71,6 +139,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Per-email global rate limit: 15 leads per hour across all sources
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: emailHourCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("email", email)
+      .gte("created_at", oneHourAgo);
+
+    if (emailHourCount && emailHourCount >= 15) {
+      return new Response(JSON.stringify({ error: "Too many submissions. Please try again later." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Compute IP hash for storage
+    let ipHashForStorage: string | null = null;
+    if (clientIp) {
+      const ipHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(clientIp + "exit-intent-salt-v2"));
+      ipHashForStorage = Array.from(new Uint8Array(ipHash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     // Insert lead
     const { data: lead, error: insertErr } = await supabase
       .from("leads")
@@ -85,12 +175,13 @@ Deno.serve(async (req) => {
         inquiry_type: "request_info",
         level_of_care: treatmentType || null,
         location_city_state: preferredState || null,
+        ip_hash: ipHashForStorage,
       })
       .select("id")
       .single();
 
     if (insertErr) {
-      console.error("Insert error:", insertErr.message);
+      console.error(`[EXIT-INTENT v${VERSION}] Insert error:`, insertErr.message);
       return new Response(JSON.stringify({ error: "Failed to save lead" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -113,7 +204,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
         }).catch((e) => console.warn("Email send failed:", e.message));
 
-      // Admin notification
+      // Admin notification - mask PII
       sendEmail(
         ADMIN_EMAIL,
         `New Exit-Intent Lead: ${firstName}`,
@@ -169,7 +260,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (err) {
-    console.error("Exit-intent error:", err instanceof Error ? err.message : String(err));
+    console.error(`[EXIT-INTENT v${VERSION}] Error:`, err instanceof Error ? err.message : String(err));
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
