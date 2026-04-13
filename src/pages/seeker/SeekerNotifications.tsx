@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { Helmet } from "react-helmet-async";
-import { 
+import { useNavigate } from "react-router-dom";
+import {
   Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings,
   Send, Heart, Star, Building2, MapPin, Calendar, HeartHandshake, UserCheck, CheckCircle
 } from "lucide-react";
@@ -8,6 +9,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSeekerNotifications, SeekerNotification } from "@/hooks/useSeekerNotifications";
+import { useSeekerSession } from "@/hooks/useSeekerSession";
+import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { cn } from "@/lib/utils";
 
 const notificationTypeIcons: Record<string, React.ReactNode> = {
@@ -108,8 +111,21 @@ function NotificationItem({
 }
 
 export default function SeekerNotifications() {
+  const { isAuthenticated, isReady } = useSeekerSession();
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
     useSeekerNotifications();
+
+  // Auth guard
+  if (isReady && !isAuthenticated) {
+    return (
+      <AuthPrompt
+        title="Sign in to view notifications"
+        description="Create a free account to receive and manage your notifications."
+        icon="lock"
+        returnTo="/account/notifications"
+      />
+    );
+  }
 
   if (isLoading) {
     return (

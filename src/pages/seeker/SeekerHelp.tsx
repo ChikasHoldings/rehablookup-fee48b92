@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, HelpCircle, MessageSquare, BookOpen, Mail, Phone, ExternalLink, ChevronRight, Send } from "lucide-react";
+import { HelpCircle, MessageSquare, BookOpen, Mail, Phone, ExternalLink, ChevronRight, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,19 +63,19 @@ const helpTopics = [
     icon: BookOpen,
     title: "Getting Started",
     description: "Learn how to search and connect with treatment centers",
-    link: "#getting-started"
+    link: "/account/search"
   },
   {
     icon: HelpCircle,
     title: "Account Help",
     description: "Manage your profile, settings, and preferences",
-    link: "#account"
+    link: "/account/settings"
   },
   {
     icon: MessageSquare,
     title: "Reviews & Feedback",
     description: "How to leave reviews and report issues",
-    link: "#reviews"
+    link: "/account/reviews"
   }
 ];
 
@@ -129,23 +129,17 @@ export default function SeekerHelp() {
       </Helmet>
 
       <div className="min-h-screen bg-background pb-24">
-        {/* Header */}
-        <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
-          <div className="flex items-center gap-3 px-4 py-4">
-            <Link 
-              to="/account" 
-              className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </Link>
+        <div className="px-4 py-6 space-y-6">
+          {/* Page Header */}
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <HelpCircle className="h-5 w-5 text-primary" />
+            </div>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">Help & Support</h1>
-              <p className="text-xs text-muted-foreground">Get assistance and find answers</p>
+              <h1 className="text-lg sm:text-2xl font-display font-bold text-foreground">Help & Support</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Get assistance and find answers</p>
             </div>
           </div>
-        </div>
-
-        <div className="px-4 py-6 space-y-6">
           {/* Quick Help Topics */}
           <section>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -155,20 +149,22 @@ export default function SeekerHelp() {
               {helpTopics.map((topic) => {
                 const Icon = topic.icon;
                 return (
-                  <Card key={topic.title} className="bg-card border-border hover:bg-muted/50 transition-colors cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center">
-                          <Icon className="h-5 w-5 text-primary" />
+                  <Link key={topic.title} to={topic.link} className="block">
+                    <Card className="bg-card border-border hover:bg-muted/50 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                            <Icon className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-foreground">{topic.title}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-1">{topic.description}</p>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-foreground">{topic.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-1">{topic.description}</p>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 );
               })}
             </div>

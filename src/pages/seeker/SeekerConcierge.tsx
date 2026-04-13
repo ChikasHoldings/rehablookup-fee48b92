@@ -257,7 +257,7 @@ export default function SeekerConcierge() {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
+          queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases", userId] });
         }
       )
       .subscribe();

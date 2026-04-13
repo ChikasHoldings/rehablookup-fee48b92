@@ -147,8 +147,8 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     }
   }, [searchOpen]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearchSubmit = (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (searchQuery.trim()) {
       setSearchOpen(false);
       navigate(`/search-results?q=${encodeURIComponent(searchQuery)}`);

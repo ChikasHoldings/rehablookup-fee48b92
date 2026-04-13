@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useSeekerSession } from "@/hooks/useSeekerSession";
+import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { 
   Globe, 
   Clock, 
@@ -44,7 +45,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export default function SeekerInternationalCase() {
-  const { userId: currentUserId, isReady } = useSeekerSession();
+  const { userId: currentUserId, isReady, isAuthenticated } = useSeekerSession();
 
   const user = isReady && currentUserId ? { id: currentUserId } : null;
 
@@ -67,17 +68,32 @@ export default function SeekerInternationalCase() {
     enabled: !!user?.id,
   });
 
+  if (isReady && !isAuthenticated) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <AuthPrompt
+          title="Sign in to access international placement"
+          description="Create a free account to start your international placement case."
+          icon="lock"
+          returnTo="/account/international"
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">International Placement</h1>
           <p className="text-muted-foreground">Get placed into top US treatment facilities</p>
@@ -101,7 +117,7 @@ export default function SeekerInternationalCase() {
 
   if (!placementCase) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">International Placement</h1>
           <p className="text-muted-foreground">Get placed into top US treatment facilities</p>
@@ -133,7 +149,7 @@ export default function SeekerInternationalCase() {
     : {};
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">International Placement</h1>
         <p className="text-muted-foreground">Track your placement case status</p>
