@@ -105,7 +105,9 @@ Deno.serve(async (req) => {
       throw new Error("Inquiry not found");
     }
 
-    // Guard: prevent confirming already-placed or closed cases
+    // Guard: strict status transition validation
+    const CONFIRMABLE_STATUSES = ['matched', 'introductions_sent', 'in_contact'];
+    
     if (inquiry.status === 'placed') {
       logStep(requestId, "Case already placed - idempotent return", { inquiryId });
       return new Response(JSON.stringify({ 
@@ -120,6 +122,9 @@ Deno.serve(async (req) => {
     }
     if (inquiry.status === 'closed') {
       throw new Error("Cannot confirm placement for a closed case");
+    }
+    if (!CONFIRMABLE_STATUSES.includes(inquiry.status)) {
+      throw new Error(`Cannot confirm placement: case is in '${inquiry.status}' status. Must be in: ${CONFIRMABLE_STATUSES.join(', ')}`);
     }
 
     // Verify the facility is in the matched list
