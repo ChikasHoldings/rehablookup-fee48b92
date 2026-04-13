@@ -203,10 +203,38 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
       return;
     }
 
-    if (!documentName.trim()) {
+    const trimmedName = documentName.trim();
+    if (!trimmedName) {
       toast({
         title: "Document name required",
         description: "Please enter a name for this document.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Sanitize document name - strip HTML/JS
+    const sanitizedName = trimmedName
+      .replace(/<[^>]*>/g, "")
+      .replace(/javascript:/gi, "")
+      .replace(/on\w+\s*=/gi, "")
+      .slice(0, 200);
+
+    if (!sanitizedName) {
+      toast({
+        title: "Invalid document name",
+        description: "Document name contains invalid characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate UUID format for facilityId and userId
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(facilityId) || !uuidRegex.test(userId)) {
+      toast({
+        title: "Invalid request",
+        description: "Invalid facility or user identifier.",
         variant: "destructive",
       });
       return;
@@ -244,7 +272,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
         .from("facility_credential_documents")
         .insert({
           facility_id: facilityId,
-          document_name: `${documentName.trim()} (${categoryLabel})`,
+          document_name: `${sanitizedName} (${categoryLabel})`,
           document_url: urlData.publicUrl,
           document_type: selectedFile.type,
           status: 'pending',

@@ -1,5 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { sanitizeText, validateEmail, validatePhone } from "@/lib/facilitySanitization";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { toast } from "sonner";
@@ -245,15 +246,53 @@ export default function ProviderPlacementNetworkPage() {
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
       if (!selectedFacility?.id) throw new Error("No facility selected");
+      
+      // Sanitize all text inputs
+      const sanitizedContact = profileForm.admissionsContact 
+        ? sanitizeText(profileForm.admissionsContact).slice(0, 100)
+        : null;
+      
+      // Validate email if provided
+      let sanitizedEmail: string | null = null;
+      if (profileForm.admissionsEmail?.trim()) {
+        try {
+          sanitizedEmail = validateEmail(profileForm.admissionsEmail);
+        } catch {
+          throw new Error("Invalid admissions email format");
+        }
+      }
+      
+      // Validate phone if provided
+      let sanitizedPhone: string | null = null;
+      if (profileForm.admissionsPhone?.trim()) {
+        try {
+          sanitizedPhone = validatePhone(profileForm.admissionsPhone);
+        } catch {
+          throw new Error("Invalid admissions phone format");
+        }
+      }
+
+      // Validate availability status whitelist
+      const validStatuses = ["open", "limited", "waitlist", "closed"];
+      if (!validStatuses.includes(profileForm.availabilityStatus)) {
+        throw new Error("Invalid availability status");
+      }
+
+      // Validate agreement preference whitelist
+      const validPrefs = ["either", "flat_fee", "percentage"];
+      if (!validPrefs.includes(profileForm.agreementPreference)) {
+        throw new Error("Invalid agreement preference");
+      }
+
       const { error } = await supabase
         .from("facilities")
         .update({
           concierge_accepted_care_types: profileForm.acceptedCareTypes,
           concierge_accepted_insurance: profileForm.acceptedInsurance,
           concierge_availability_status: profileForm.availabilityStatus,
-          concierge_admissions_contact: profileForm.admissionsContact || null,
-          concierge_admissions_email: profileForm.admissionsEmail || null,
-          concierge_admissions_phone: profileForm.admissionsPhone || null,
+          concierge_admissions_contact: sanitizedContact,
+          concierge_admissions_email: sanitizedEmail,
+          concierge_admissions_phone: sanitizedPhone,
           concierge_agreement_preference: profileForm.agreementPreference,
         })
         .eq("id", selectedFacility.id);
@@ -263,7 +302,7 @@ export default function ProviderPlacementNetworkPage() {
       queryClient.invalidateQueries({ queryKey: ["facility-concierge"] });
       toast.success("Network profile saved");
     },
-    onError: () => toast.error("Failed to save profile"),
+    onError: (err: Error) => toast.error(err.message || "Failed to save profile"),
   });
 
   const deletePaymentMethodMutation = useMutation({
