@@ -136,13 +136,21 @@ export function SearchForm({
     e.preventDefault();
     setShowSuggestions(false);
     
+    // Sanitize location input - strip HTML/JS, limit length
+    const sanitizedLocation = location
+      .replace(/<[^>]*>/g, "")
+      .replace(/javascript:/gi, "")
+      .replace(/data:/gi, "")
+      .trim()
+      .slice(0, 200);
+    
     // Track search in GA
-    analytics.search(location || "all locations");
+    analytics.search(sanitizedLocation || "all locations");
     
     const params = new URLSearchParams();
-    if (location) params.set("location", location);
-    if (selectedTreatmentTypes.length > 0) params.set("treatment", selectedTreatmentTypes.join(","));
-    if (selectedInsurance.length > 0) params.set("insurance", selectedInsurance.join(","));
+    if (sanitizedLocation) params.set("location", sanitizedLocation);
+    if (selectedTreatmentTypes.length > 0) params.set("treatment", selectedTreatmentTypes.slice(0, 10).join(","));
+    if (selectedInsurance.length > 0) params.set("insurance", selectedInsurance.slice(0, 10).join(","));
     navigate(`${targetPath}?${params.toString()}`);
     
     // Delay scroll to allow navigation/render
@@ -176,9 +184,10 @@ export function SearchForm({
                 type="text"
                 placeholder="Enter city, state, or ZIP code"
                 value={location}
-                onChange={(e) => handleLocationChange(e.target.value)}
+                onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}
                 onFocus={() => setShowSuggestions(true)}
                 onKeyDown={handleKeyDown}
+                maxLength={200}
                 className={cn(
                   "w-full bg-transparent text-[15px] font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none",
                   zipcodeData && !isZipcode && "text-green-700 dark:text-green-400"
@@ -291,7 +300,8 @@ export function SearchForm({
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
-              onChange={(e) => handleLocationChange(e.target.value)}
+              onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}
+              maxLength={200}
               className={cn(
                 "h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
                 zipcodeData && !isZipcode && "border-green-200 bg-green-50/50 dark:bg-green-950/20"
@@ -361,7 +371,8 @@ export function SearchForm({
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
-              onChange={(e) => handleLocationChange(e.target.value)}
+              onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}
+              maxLength={200}
               className={cn(
                 "h-12 w-full rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-3 md:text-sm",
                 zipcodeData && !isZipcode && "border-green-200 bg-green-50/50 dark:bg-green-950/20"
