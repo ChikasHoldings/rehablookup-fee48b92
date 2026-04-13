@@ -196,8 +196,17 @@ export default function AddLocationPage() {
         .from("facilities")
         .insert({
           user_id: session.user.id,
-          ...sanitizedPayload,
-          status: "pending", // All new facilities start as pending
+          name: sanitizedPayload.name as string,
+          address: sanitizedPayload.address as string,
+          city: sanitizedPayload.city as string,
+          state: sanitizedPayload.state as string,
+          zip_code: sanitizedPayload.zip_code as string,
+          phone: sanitizedPayload.phone as string,
+          email: sanitizedPayload.email as string | null,
+          website: sanitizedPayload.website as string | null,
+          facility_type: sanitizedPayload.facility_type as string,
+          description: sanitizedPayload.description as string | null,
+          status: "pending",
         })
         .select()
         .single();
