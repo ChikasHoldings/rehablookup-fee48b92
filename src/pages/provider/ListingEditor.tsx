@@ -152,6 +152,17 @@ const validateField = (field: string, value: string | null): string | null => {
       if (trimmedValue && !/^(https?:\/\/)?[\w\-]+(\.[\w\-]+)+/.test(trimmedValue)) {
         return "Enter a valid website URL";
       }
+      if (trimmedValue && /^(javascript|data):/i.test(trimmedValue)) {
+        return "Invalid URL protocol";
+      }
+      return null;
+    case "year_established":
+      if (trimmedValue) {
+        const year = parseInt(trimmedValue, 10);
+        if (isNaN(year) || year < 1900 || year > new Date().getFullYear()) {
+          return `Year must be between 1900 and ${new Date().getFullYear()}`;
+        }
+      }
       return null;
     default:
       return null;
