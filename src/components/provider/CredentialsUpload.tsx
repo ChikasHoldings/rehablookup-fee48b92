@@ -453,6 +453,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
             value={documentName}
             onChange={(e) => setDocumentName(e.target.value)}
             placeholder="e.g., State License, CARF Certificate, DEA Registration"
+            maxLength={200}
             className="h-9 text-sm"
           />
         </div>

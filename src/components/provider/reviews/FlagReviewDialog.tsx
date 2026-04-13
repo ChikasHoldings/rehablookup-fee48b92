@@ -48,8 +48,30 @@ export const FlagReviewDialog = memo(function FlagReviewDialog({ review, open, o
       return;
     }
 
+    // Validate reason against whitelist
+    const validReasons = DISPUTE_REASONS.map(r => r.value);
+    if (!validReasons.includes(reason)) {
+      toast.error('Invalid dispute reason');
+      return;
+    }
+
+    // Sanitize details text
+    const sanitizedDetails = details
+      .replace(/<[^>]*>/g, "")
+      .replace(/javascript:/gi, "")
+      .replace(/on\w+\s*=/gi, "")
+      .trim()
+      .slice(0, 1000);
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(review.id)) {
+      toast.error('Invalid review identifier');
+      return;
+    }
+
     setIsSubmitting(true);
-    const { error } = await onSubmit(review.id, reason, details);
+    const { error } = await onSubmit(review.id, reason, sanitizedDetails || undefined);
     setIsSubmitting(false);
 
     if (error) {
