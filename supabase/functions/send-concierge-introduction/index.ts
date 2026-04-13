@@ -101,6 +101,26 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Processing", { inquiryId, facilityId, introductionId });
 
+    // Idempotency: check if introduction already sent
+    const { data: existingIntro } = await supabase
+      .from("concierge_introductions")
+      .select("id, sent_at")
+      .eq("id", introductionId)
+      .single();
+
+    if (existingIntro?.sent_at) {
+      logStep(requestId, "Introduction already sent - idempotent return", { introductionId });
+      return new Response(JSON.stringify({ 
+        success: true, 
+        alreadySent: true, 
+        requestId, 
+        _version: VERSION 
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Fetch inquiry details
     const { data: inquiry, error: inquiryError } = await supabase
       .from("concierge_inquiries")
@@ -110,6 +130,11 @@ Deno.serve(async (req) => {
 
     if (inquiryError || !inquiry) {
       throw new Error("Inquiry not found");
+    }
+
+    // Guard: don't send introductions for closed/placed cases
+    if (inquiry.status === 'closed' || inquiry.status === 'placed') {
+      throw new Error(`Cannot send introduction: case is ${inquiry.status}`);
     }
 
     // Fetch facility details
