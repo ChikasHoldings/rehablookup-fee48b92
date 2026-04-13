@@ -1065,10 +1065,10 @@ const AppInner = () => {
 
             {/* Provider Facility Type Marketing Pages */}
             <Route path="/provider-guides/luxury-rehab-center-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/faith-based-rehab-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/faith-based-rehab-growth-strategies" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/sober-living-home-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
             <Route path="/provider-guides/mat-clinic-patient-acquisition" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
-            <Route path="/provider-guides/adolescent-rehab-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/adolescent-treatment-center-marketing" element={<PublicRouteGuard><ProviderFacilityTypePage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />

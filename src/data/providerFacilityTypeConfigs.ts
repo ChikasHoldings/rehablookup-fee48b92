@@ -26,7 +26,7 @@ export const providerFacilityTypeConfigs: ProviderBusinessConfig[] = [
     keywords: ["luxury rehab marketing", "executive rehab center advertising", "high-end treatment center marketing", "private addiction treatment marketing"],
   },
   {
-    slug: "faith-based-rehab-marketing",
+    slug: "faith-based-rehab-growth-strategies",
     label: "Faith-Based Rehab Marketing",
     metaTitle: "Faith-Based Rehab Center Marketing: Reach Patients Seeking Spiritual Recovery | RehabLookup",
     metaDescription: "30% of treatment seekers prefer faith-based programs. Learn how to market your Christian, spiritual, or holistic recovery program to reach the right patients.",
@@ -98,7 +98,7 @@ export const providerFacilityTypeConfigs: ProviderBusinessConfig[] = [
     keywords: ["MAT clinic marketing", "Suboxone clinic patient acquisition", "methadone clinic advertising", "opioid treatment program marketing"],
   },
   {
-    slug: "adolescent-rehab-marketing",
+    slug: "adolescent-treatment-center-marketing",
     label: "Adolescent Rehab Marketing",
     metaTitle: "Adolescent Rehab Marketing: Reach Parents Seeking Teen Treatment | RehabLookup",
     metaDescription: "Marketing teen rehab programs requires reaching parents, not patients. Learn unique strategies for adolescent treatment center marketing and admissions.",
