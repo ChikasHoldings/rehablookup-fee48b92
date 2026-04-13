@@ -711,32 +711,33 @@ export default function ProviderBillingPage() {
                         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                         "disabled:opacity-60 disabled:cursor-not-allowed",
                         isPkgLoading && "border-primary bg-primary/5 shadow-sm",
-                        pkg.bonus === "Most Popular" && !isDisabled && "border-primary/30 bg-primary/[0.03]"
+                        pkg.badge === "Best Value" && !isDisabled && "border-emerald-500/40 bg-emerald-50/50"
                       )}
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm",
-                          pkg.bonus === "Most Popular" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                          pkg.badge === "Best Value" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
                         )}>
                           {pkg.label}
                         </div>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base text-foreground">{pkg.credits} credits</p>
+                          <p className="font-semibold text-sm sm:text-base text-foreground">
+                            {pkg.credits} credits
+                            {pkg.bonusCents > 0 && (
+                              <span className="text-emerald-600 font-bold ml-1">+ ${(pkg.bonusCents / 100).toFixed(0)} bonus</span>
+                            )}
+                          </p>
                           <p className="text-xs text-muted-foreground">{pkg.perLead}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {pkg.bonus && (
+                        {pkg.badge && (
                           <Badge 
                             variant="secondary"
-                            className={cn(
-                              "text-xs whitespace-nowrap",
-                              pkg.bonus === "Most Popular" && "bg-primary text-primary-foreground",
-                              pkg.bonus === "Best Value" && "bg-emerald-600 text-white border-0"
-                            )}
+                            className="text-xs whitespace-nowrap bg-emerald-600 text-white border-0"
                           >
-                            {pkg.bonus}
+                            {pkg.badge}
                           </Badge>
                         )}
                         {isPkgLoading ? (
