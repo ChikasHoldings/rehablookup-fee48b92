@@ -33,29 +33,8 @@ import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
-
-const US_STATES = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
-  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
-  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
-  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
-  "Wisconsin", "Wyoming"
-];
-
-const FACILITY_TYPES = [
-  { value: "Residential Treatment Center", label: "Residential Treatment Center" },
-  { value: "Outpatient Program", label: "Outpatient Program" },
-  { value: "Detox Center", label: "Detox Center" },
-  { value: "Intensive Outpatient (IOP)", label: "Intensive Outpatient (IOP)" },
-  { value: "Partial Hospitalization (PHP)", label: "Partial Hospitalization (PHP)" },
-  { value: "Sober Living", label: "Sober Living" },
-  { value: "Dual Diagnosis", label: "Dual Diagnosis" },
-  { value: "Luxury Rehab", label: "Luxury Rehab" },
-  { value: "Telehealth/Virtual", label: "Telehealth/Virtual" },
-];
+import { US_STATES, FACILITY_TYPES } from "@/lib/facilityConstants";
+import { sanitizeFacilityPayload } from "@/lib/facilitySanitization";
 
 interface FacilityFormData {
   name: string;
@@ -187,11 +166,10 @@ export default function AddLocationPage() {
         return;
       }
 
-      // Create new facility
-      const { data: newFacility, error } = await supabase
-        .from("facilities")
-        .insert({
-          user_id: session.user.id,
+      // Sanitize and validate all inputs before DB insert
+      let sanitizedPayload: Record<string, unknown>;
+      try {
+        sanitizedPayload = sanitizeFacilityPayload({
           name: formData.name,
           address: formData.address,
           city: formData.city,
@@ -202,7 +180,33 @@ export default function AddLocationPage() {
           website: formData.website || null,
           facility_type: formData.facility_type,
           description: formData.description || null,
-          status: "pending", // All new facilities start as pending
+        });
+      } catch (validationErr: any) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: validationErr.message || "Please check your facility information.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Create new facility
+      const { data: newFacility, error } = await supabase
+        .from("facilities")
+        .insert({
+          user_id: session.user.id,
+          name: sanitizedPayload.name as string,
+          address: sanitizedPayload.address as string,
+          city: sanitizedPayload.city as string,
+          state: sanitizedPayload.state as string,
+          zip_code: sanitizedPayload.zip_code as string,
+          phone: sanitizedPayload.phone as string,
+          email: sanitizedPayload.email as string | null,
+          website: sanitizedPayload.website as string | null,
+          facility_type: sanitizedPayload.facility_type as string,
+          description: sanitizedPayload.description as string | null,
+          status: "pending",
         })
         .select()
         .single();

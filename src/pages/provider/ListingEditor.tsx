@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite } from "@/lib/facilitySanitization";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { 
@@ -443,7 +444,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     };
   }, [currentFacilityId, queryClient, refetchServices, refetchInsurance, refetchAgeGroups]);
 
-  // Auto-save function (silent, no toast)
+  // Auto-save function (silent, no toast) - with input sanitization
   const performAutoSave = useCallback(async () => {
     if (!facility || isSaving) return;
     
@@ -452,22 +453,32 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       const error = validateField(field, facility[field as keyof Facility] as string | null);
       if (error) return;
     }
+
+    // Validate and sanitize before saving
+    try {
+      validateFacilityType(facility.facility_type);
+      validateState(facility.state);
+      validateZipCode(facility.zip_code);
+      validatePhone(facility.phone);
+    } catch {
+      return; // Skip auto-save if validation fails
+    }
     
     setIsAutoSaving(true);
     
     const { error } = await supabase
       .from("facilities")
       .update({
-        name: facility.name,
-        address: facility.address,
-        city: facility.city,
+        name: sanitizeFacilityName(facility.name),
+        address: sanitizeText(facility.address).slice(0, 200),
+        city: sanitizeText(facility.city).slice(0, 100),
         state: facility.state,
-        zip_code: facility.zip_code,
-        phone: facility.phone,
-        email: facility.email,
-        reply_email: facility.reply_email,
-        website: facility.website,
-        description: facility.description,
+        zip_code: facility.zip_code.trim(),
+        phone: facility.phone.trim(),
+        email: validateEmail(facility.email) ?? null,
+        reply_email: facility.reply_email?.trim() || null,
+        website: sanitizeWebsite(facility.website),
+        description: sanitizeDescription(facility.description),
         facility_type: facility.facility_type,
         gender_served: facility.gender_served,
         bed_count: facility.bed_count,
@@ -538,19 +549,37 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     setShowSaved(true);
     setIsSaving(true);
     
+    // Validate enums before saving
+    try {
+      validateFacilityType(facility.facility_type);
+      validateState(facility.state);
+      validateZipCode(facility.zip_code);
+      validatePhone(facility.phone);
+    } catch (validationErr: any) {
+      toast({
+        title: "Validation Error",
+        description: validationErr.message || "Please fix the highlighted errors before saving.",
+        variant: "destructive",
+      });
+      setHasChanges(true);
+      setShowSaved(false);
+      setIsSaving(false);
+      return;
+    }
+
     const { error } = await supabase
       .from("facilities")
       .update({
-        name: facility.name,
-        address: facility.address,
-        city: facility.city,
+        name: sanitizeFacilityName(facility.name),
+        address: sanitizeText(facility.address).slice(0, 200),
+        city: sanitizeText(facility.city).slice(0, 100),
         state: facility.state,
-        zip_code: facility.zip_code,
-        phone: facility.phone,
-        email: facility.email,
-        reply_email: facility.reply_email,
-        website: facility.website,
-        description: facility.description,
+        zip_code: facility.zip_code.trim(),
+        phone: facility.phone.trim(),
+        email: validateEmail(facility.email) ?? null,
+        reply_email: facility.reply_email?.trim() || null,
+        website: sanitizeWebsite(facility.website),
+        description: sanitizeDescription(facility.description),
         facility_type: facility.facility_type,
         gender_served: facility.gender_served,
         bed_count: facility.bed_count,
