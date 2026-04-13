@@ -616,3 +616,9 @@ export function getAllCountySlugs(): { stateSlug: string; countySlug: string }[]
   }
   return slugs;
 }
+
+// Aliases for backward compatibility
+export const getCountiesForState = getStateCounties;
+export function getStateCountyData(stateSlug: string): StateCountyData | undefined {
+  return stateCountyData.find(s => s.stateSlug === stateSlug);
+}

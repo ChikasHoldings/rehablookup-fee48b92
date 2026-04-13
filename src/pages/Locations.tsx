@@ -231,7 +231,7 @@ const Locations = () => {
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {topCities.slice(0, 10).map((city, index) => (
               <Link
-                key={`${city.state.slug}-${city.slug}`}
+                key={`${city.stateSlug}-${city.slug}`}
                 to={`/rehab-centers/${city.state.slug}/${city.slug}`}
                 className="group relative flex items-center gap-3 rounded-xl border bg-background p-4 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
               >
