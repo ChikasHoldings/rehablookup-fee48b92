@@ -40,7 +40,8 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
-import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite } from "@/lib/facilitySanitization";
+import { sanitizeText, sanitizeFacilityName, sanitizePersonName, sanitizeJobTitle, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite, validateYearEstablished } from "@/lib/facilitySanitization";
+import { FACILITY_TYPES, FACILITY_TYPE_VALUES, US_STATES, INSURANCE_PROVIDERS, TREATMENT_SERVICES, AGE_GROUPS, ACCREDITATION_OPTIONS } from "@/lib/facilityConstants";
 
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 
