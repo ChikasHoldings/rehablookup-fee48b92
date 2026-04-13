@@ -369,7 +369,7 @@ export default function ProviderSignup() {
           description: sanitizedDescription,
           bed_count: formData.bedCount,
           gender_served: formData.genderServed,
-          year_established: formData.yearEstablished ? parseInt(formData.yearEstablished) : null,
+          year_established: validatedYear,
           accepts_international_patients: formData.acceptsInternationalPatients,
         })
         .select()
