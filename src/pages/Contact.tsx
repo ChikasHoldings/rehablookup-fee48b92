@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -46,10 +46,17 @@ const contactMethods = [
   },
 ];
 
+const VALID_SUBJECTS = ["general", "listing", "feedback", "technical", "other"];
+
+const sanitizeText = (str: string, maxLen: number): string =>
+  str.replace(/<[^>]*>/g, "").replace(/javascript:/gi, "").replace(/data:/gi, "").trim().slice(0, maxLen);
+
 const Contact = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const lastSubmitRef = useRef<number>(0);
+  const [honeypot, setHoneypot] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -59,11 +66,45 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Honeypot check
+    if (honeypot) return;
+
+    // Rate limit: 10s cooldown
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 10_000) {
+      toast({ title: "Please wait", description: "You can only submit once every 10 seconds.", variant: "destructive" });
+      return;
+    }
+
+    // Client-side validation
+    const cleanName = sanitizeText(formData.name, 100);
+    const cleanEmail = formData.email.trim().slice(0, 255);
+    const cleanMessage = sanitizeText(formData.message, 5000);
+
+    if (!cleanName || cleanName.length < 2) {
+      toast({ title: "Invalid name", description: "Please enter a valid name (2-100 characters).", variant: "destructive" });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+    if (!VALID_SUBJECTS.includes(formData.subject)) {
+      toast({ title: "Invalid subject", description: "Please select a valid subject.", variant: "destructive" });
+      return;
+    }
+    if (!cleanMessage || cleanMessage.length < 10) {
+      toast({ title: "Message too short", description: "Please enter at least 10 characters.", variant: "destructive" });
+      return;
+    }
+
+    lastSubmitRef.current = now;
     setIsSubmitting(true);
 
     try {
       const { data, error } = await supabase.functions.invoke("send-contact-form", {
-        body: formData,
+        body: { name: cleanName, email: cleanEmail, subject: formData.subject, message: cleanMessage },
       });
 
       if (error) throw error;
@@ -248,6 +289,17 @@ const Contact = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-5">
+                      {/* Honeypot - hidden from real users */}
+                      <input
+                        type="text"
+                        name="website_url"
+                        value={honeypot}
+                        onChange={(e) => setHoneypot(e.target.value)}
+                        className="absolute -left-[9999px] opacity-0 h-0 w-0"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        aria-hidden="true"
+                      />
                       <div className="grid gap-5 md:grid-cols-2">
                         <div>
                           <label className="mb-2 block text-sm font-medium text-foreground">
@@ -256,6 +308,7 @@ const Contact = () => {
                           <input
                             type="text"
                             required
+                            maxLength={100}
                             value={formData.name}
                             onChange={(e) =>
                               setFormData({ ...formData, name: e.target.value })
@@ -271,6 +324,7 @@ const Contact = () => {
                           <input
                             type="email"
                             required
+                            maxLength={255}
                             value={formData.email}
                             onChange={(e) =>
                               setFormData({ ...formData, email: e.target.value })
@@ -308,6 +362,7 @@ const Contact = () => {
                         </label>
                         <textarea
                           required
+                          maxLength={5000}
                           value={formData.message}
                           onChange={(e) =>
                             setFormData({ ...formData, message: e.target.value })
@@ -316,6 +371,7 @@ const Contact = () => {
                           rows={5}
                           className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-200"
                         />
+                        <p className="text-xs text-muted-foreground text-right mt-1">{formData.message.length}/5000</p>
                       </div>
 
                       <Button
