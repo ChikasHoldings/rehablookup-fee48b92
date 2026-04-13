@@ -163,6 +163,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ===== UNLOCK RATE LIMITING: max N unlocks per facility per hour =====
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentUnlockCount } = await supabaseAdmin
+      .from("lead_unlocks")
+      .select("*", { count: "exact", head: true })
+      .eq("facility_id", facilityId)
+      .gte("unlocked_at", oneHourAgo);
+
+    if (recentUnlockCount && recentUnlockCount >= MAX_UNLOCKS_PER_HOUR) {
+      logStep(requestId, "Unlock rate limit exceeded", { facilityId, count: recentUnlockCount });
+      return new Response(JSON.stringify({ 
+        error: "Unlock rate limit exceeded. Please wait before unlocking more leads.",
+        requestId 
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Fetch the lead to get inquiry_type and redistribution status
     const { data: leadData, error: leadError } = await supabaseAdmin
       .from("leads")
