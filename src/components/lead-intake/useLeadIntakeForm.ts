@@ -8,6 +8,7 @@ import { useAuthReady } from "@/hooks/useAuthReady";
 
 const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
+const SUBMISSION_DEBOUNCE_MS = 3000; // 3 second debounce between submissions
 
 interface StoredFormData {
   data: LeadIntakeFormData;
@@ -27,6 +28,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   const [searchParams] = useSearchParams();
   const { user, isAuthenticated } = useAuthReady();
   const hasPrePopulated = useRef(false);
+  const lastSubmitAt = useRef(0);
+  const idempotencyKeyRef = useRef<string | null>(null);
   
   // Parse facility info from URL, but allow overrides from props
   const urlFacilityId = searchParams.get("facility");
