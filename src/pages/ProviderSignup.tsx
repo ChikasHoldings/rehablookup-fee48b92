@@ -301,15 +301,15 @@ export default function ProviderSignup() {
       const userId = authData.user.id;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
 
-      // 2. Create profile
+      // 2. Create profile (with sanitized personal fields)
       if (import.meta.env.DEV) console.log("[ProviderSignup] Creating provider profile...");
       const { error: profileError } = await supabase.from("profiles").insert({
         user_id: userId,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        job_title: formData.jobTitle,
+        first_name: sanitizePersonName(formData.firstName),
+        last_name: sanitizePersonName(formData.lastName),
+        email: formData.email.trim().slice(0, 255),
+        phone: formData.phone.trim().slice(0, 30),
+        job_title: sanitizeJobTitle(formData.jobTitle),
       });
 
       if (profileError) {
