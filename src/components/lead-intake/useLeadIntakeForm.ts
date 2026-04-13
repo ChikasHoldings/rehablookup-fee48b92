@@ -454,8 +454,9 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       
-      // Clear saved form data
+      // Clear saved form data and idempotency key
       localStorage.removeItem(STORAGE_KEY);
+      idempotencyKeyRef.current = null;
       
       trackAnalytics("form_submit_success");
       analytics.leadFormComplete(source);
@@ -477,6 +478,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       }).catch(() => { /* non-blocking */ });
       
     } catch (error: any) {
+      // Reset idempotency key so user can retry
+      idempotencyKeyRef.current = null;
       trackAnalytics("form_submit_error", { error: error.message });
       toast({
         title: "Submission failed",
