@@ -148,6 +148,10 @@ export default function ConciergeCreatePassword() {
       toast.error("Password must be at least 8 characters");
       return;
     }
+    if (password.length > 128) {
+      toast.error("Password must be 128 characters or less");
+      return;
+    }
 
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
