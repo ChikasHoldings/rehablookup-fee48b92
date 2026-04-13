@@ -132,12 +132,21 @@ export default function ProviderBillingPage() {
   }, []);
 
   // Handle success/cancel URL params from Stripe checkout
+  // HARDENING: Don't trust URL params for amounts — only use as signal to poll
+  const handledParamsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const proSuccess = searchParams.get("pro_success");
     const proCanceled = searchParams.get("pro_canceled");
     const creditsSuccess = searchParams.get("credits_success");
     const creditsCanceled = searchParams.get("credits_canceled");
     const purchaseCredits = searchParams.get("purchase_credits");
+    const sessionId = searchParams.get("session_id");
+
+    // Prevent re-processing same params on re-renders
+    const paramKey = `${proSuccess}|${creditsSuccess}|${creditsCanceled}|${purchaseCredits}|${sessionId}`;
+    if (handledParamsRef.current.has(paramKey)) return;
+    handledParamsRef.current.add(paramKey);
 
     if (proSuccess === "true") {
       toast.success("Welcome to Pro! Your benefits are now active.", { duration: 5000 });
@@ -154,15 +163,12 @@ export default function ProviderBillingPage() {
     }
 
     if (creditsSuccess === "true") {
-      const amount = searchParams.get("amount");
-      const bonus = searchParams.get("bonus");
-      const formattedAmount = amount ? `$${(parseInt(amount, 10) / 100).toFixed(0)}` : "";
-      const bonusCents = bonus ? parseInt(bonus, 10) : 0;
-      const bonusMsg = bonusCents > 0 ? ` + $${(bonusCents / 100).toFixed(0)} bonus credits!` : "";
-      toast.success(`${formattedAmount} credits added to your account${bonusMsg}`, { duration: 6000 });
+      // Don't display amounts from URL (could be spoofed) — just confirm and let polling update balance
+      toast.success("Credits have been added to your account!", { duration: 6000 });
       refetchCredits();
-      startPostCheckoutPolling(() => refetchCredits());
+      startPostCheckoutPolling(() => refetchCredits(), 10); // poll more aggressively
       searchParams.delete("credits_success");
+      searchParams.delete("session_id");
       searchParams.delete("amount");
       searchParams.delete("bonus");
       setSearchParams(searchParams, { replace: true });
@@ -215,10 +221,10 @@ export default function ProviderBillingPage() {
       toast.error(message);
     } finally {
       setPurchaseLoading(null);
-      setTimeout(() => { purchaseDebounceRef.current = false; }, 2000);
+      // 5-second cooldown to prevent rapid re-clicks after checkout tab opens
+      setTimeout(() => { purchaseDebounceRef.current = false; }, 5000);
     }
   };
-
   const handleUpgrade = () => {
     navigate("/provider/pro-upgrade");
   };

@@ -483,10 +483,33 @@ Deno.serve(async (req) => {
         // Validate bonus matches tier (only $1,000 = 10000 bonus)
         const expectedBonus = amountCents === 100000 ? 10000 : 0;
         const safeBonusCents = Math.min(bonusCents, expectedBonus);
-
         const totalCreditsCents = amountCents + safeBonusCents;
 
-        logStep("Processing credit purchase", { amountCents, bonusCents: safeBonusCents, totalCreditsCents, facilityId, userId });
+        // HARDENING: Verify actual payment status from Stripe (don't trust event alone)
+        let verifiedAmount: number;
+        try {
+          const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+          if (pi.status !== "succeeded") {
+            logStep("WARN - PaymentIntent not succeeded, skipping credit grant", { piStatus: pi.status, paymentIntentId });
+            return new Response(JSON.stringify({ received: true }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          verifiedAmount = pi.amount;
+          if (verifiedAmount !== amountCents) {
+            logStep("WARN - PaymentIntent amount mismatch", { piAmount: verifiedAmount, metadataAmount: amountCents });
+            return new Response(JSON.stringify({ received: true }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } catch (piErr) {
+          logStep("ERROR - Could not verify PaymentIntent", { error: String(piErr) });
+          return new Response(JSON.stringify({ error: "Payment verification failed" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        logStep("Processing credit purchase (verified)", { amountCents, bonusCents: safeBonusCents, totalCreditsCents, facilityId, userId });
 
         // Idempotency check: prevent double-crediting from duplicate webhooks
         const { data: existingTx } = await supabaseAdmin
@@ -511,6 +534,7 @@ Deno.serve(async (req) => {
           });
 
           if (txInsertError) {
+            // If insert fails with unique constraint, it's a concurrent duplicate — safe to skip
             logStep("Credit transaction insert failed (likely duplicate)", { error: txInsertError.message });
           } else {
             // 2. If bonus credits, insert separate bonus transaction for audit trail
@@ -527,35 +551,23 @@ Deno.serve(async (req) => {
 
               if (bonusError) {
                 logStep("WARN - Bonus transaction insert failed", { error: bonusError.message });
-                // Continue — purchase was logged, bonus is best-effort
               } else {
                 logStep("Bonus credits transaction logged", { bonusCents: safeBonusCents });
               }
             }
 
-            // 3. Update balance atomically
-            const { data: existingCredits } = await supabaseAdmin
-              .from("provider_credits")
-              .select("balance_cents")
-              .eq("provider_id", userId)
-              .maybeSingle();
-
-            const currentBalance = existingCredits?.balance_cents ?? 0;
-            const newBalance = currentBalance + totalCreditsCents;
-
-            const { error: creditError } = await supabaseAdmin
-              .from("provider_credits")
-              .upsert({
-                provider_id: userId,
-                facility_id: facilityId,
-                balance_cents: newBalance,
-                updated_at: new Date().toISOString(),
-              }, { onConflict: "provider_id" });
+            // 3. ATOMIC balance increment — eliminates race condition
+            const { data: newBalance, error: creditError } = await supabaseAdmin
+              .rpc("increment_provider_credits", {
+                p_provider_id: userId,
+                p_facility_id: facilityId,
+                p_amount_cents: totalCreditsCents,
+              });
 
             if (creditError) {
-              logStep("ERROR - Failed to update credits balance", { error: creditError.message });
+              logStep("ERROR - Failed to increment credits balance", { error: creditError.message });
             } else {
-              logStep("Credits added successfully", { previousBalance: currentBalance, newBalance, totalCreditsCents });
+              logStep("Credits added successfully (atomic)", { newBalance, totalCreditsCents });
 
               // 4. Provider notification
               const bonusMsg = safeBonusCents > 0

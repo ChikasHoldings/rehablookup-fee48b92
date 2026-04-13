@@ -6057,6 +6057,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_provider_credits: {
+        Args: {
+          p_amount_cents: number
+          p_facility_id: string
+          p_provider_id: string
+        }
+        Returns: number
+      }
       is_admin_session_active: { Args: { p_user_id: string }; Returns: boolean }
       is_email_admin: { Args: { p_email: string }; Returns: boolean }
       is_email_provider: { Args: { p_email: string }; Returns: boolean }

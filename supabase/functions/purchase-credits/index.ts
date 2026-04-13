@@ -1,7 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "2.0.0";
+const VERSION = "3.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +23,8 @@ const CREDIT_PACKAGES = [
 ];
 
 const VALID_AMOUNTS: Set<number> = new Set(CREDIT_PACKAGES.map(p => p.amountCents));
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_BODY_SIZE = 2048;
 
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
@@ -61,9 +63,9 @@ Deno.serve(async (req) => {
     const stripeMode = stripeKey.startsWith("sk_test_") ? "test" : "live";
     logStep(requestId, "Stripe mode detected", { mode: stripeMode });
 
-    // Authenticate user
+    // ── Authenticate user ──
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized", requestId, _version: VERSION }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -84,7 +86,7 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "User authenticated", { userId: user.id });
 
-    // Rate limit: max 5 purchase attempts per 15 minutes
+    // ── Rate limit: max 5 purchase attempts per 15 minutes ──
     const { data: rateCheck } = await supabaseClient.rpc("check_rate_limit", {
       p_identifier: `purchase:${user.id}`,
       p_action_type: "credit_purchase",
@@ -100,21 +102,22 @@ Deno.serve(async (req) => {
       }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Log attempt (initially as failure; success logged after checkout creation)
     await supabaseClient.rpc("log_rate_limit_event", {
       p_identifier: `purchase:${user.id}`,
       p_action_type: "credit_purchase",
       p_success: false,
     });
 
-    // Parse and validate body
+    // ── Parse and validate body ──
     const rawBody = await req.text();
-    if (rawBody.length > 2048) {
+    if (rawBody.length > MAX_BODY_SIZE) {
       return new Response(JSON.stringify({ error: "Request too large", requestId, _version: VERSION }), {
         status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let body: { amountCents?: number; facilityId?: string };
+    let body: { amountCents?: unknown; facilityId?: unknown };
     try {
       body = JSON.parse(rawBody);
     } catch {
@@ -125,26 +128,23 @@ Deno.serve(async (req) => {
 
     const { amountCents, facilityId } = body;
 
-    if (!amountCents || !facilityId) {
+    if (amountCents === undefined || amountCents === null || !facilityId) {
       return new Response(JSON.stringify({ error: "Missing amountCents or facilityId", requestId, _version: VERSION }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Validate UUID format for facilityId
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (typeof facilityId !== "string" || !uuidRegex.test(facilityId)) {
+    // Strict type + UUID validation
+    if (typeof facilityId !== "string" || !UUID_RE.test(facilityId)) {
       return new Response(JSON.stringify({ error: "Invalid facility ID", requestId, _version: VERSION }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Validate amount is a valid tier (server-side price enforcement)
-    if (typeof amountCents !== "number" || !VALID_AMOUNTS.has(amountCents)) {
+    if (typeof amountCents !== "number" || !Number.isInteger(amountCents) || !VALID_AMOUNTS.has(amountCents)) {
       logStep(requestId, "ERROR - Invalid credit amount", { amountCents });
       return new Response(JSON.stringify({
         error: "Invalid credit amount. Choose $200, $500, or $1,000.",
-        validAmounts: Array.from(VALID_AMOUNTS),
         requestId, _version: VERSION,
       }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -154,10 +154,10 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify facility ownership
+    // ── Verify facility ownership + status ──
     const { data: facility, error: facilityError } = await supabaseAdmin
       .from("facilities")
-      .select("id, user_id, name")
+      .select("id, user_id, name, status, suspended")
       .eq("id", facilityId)
       .single();
 
@@ -174,11 +174,26 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Block purchases for suspended or non-approved facilities
+    if (facility.suspended) {
+      logStep(requestId, "ERROR - Facility is suspended", { facilityId });
+      return new Response(JSON.stringify({ error: "Your facility is currently suspended. Please contact support.", requestId, _version: VERSION }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (facility.status !== "approved") {
+      logStep(requestId, "ERROR - Facility not approved", { facilityId, status: facility.status });
+      return new Response(JSON.stringify({ error: "Your facility must be approved before purchasing credits.", requestId, _version: VERSION }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     logStep(requestId, "Facility verified", { facilityId, facilityName: facility.name });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Find or create Stripe customer
+    // ── Find or create Stripe customer ──
     let customerId: string;
     try {
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -202,11 +217,14 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
 
-    // Build description including bonus if applicable
+    // ── Build description ──
     const bonusText = validPackage.bonusCents > 0
       ? ` + $${(validPackage.bonusCents / 100).toFixed(0)} bonus credits`
       : "";
     const productDescription = `${validPackage.label} in credits${bonusText} for unlocking inquiries`;
+
+    // ── Idempotency key to prevent duplicate Stripe sessions from rapid clicks ──
+    const idempotencyKey = `credits_${user.id}_${amountCents}_${Math.floor(Date.now() / 60000)}`;
 
     let session: Stripe.Checkout.Session;
     try {
@@ -225,8 +243,10 @@ Deno.serve(async (req) => {
           },
           quantity: 1,
         }],
-        success_url: `${origin}/provider/billing?credits_success=true&amount=${amountCents}&bonus=${validPackage.bonusCents}`,
+        // Don't leak purchase amounts in URL — use opaque token
+        success_url: `${origin}/provider/billing?credits_success=true&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/provider/billing?credits_canceled=true`,
+        expires_at: Math.floor(Date.now() / 1000) + 1800, // 30 min expiry
         metadata: {
           type: "credit_purchase",
           amount_cents: amountCents.toString(),
@@ -235,11 +255,15 @@ Deno.serve(async (req) => {
           facility_id: facilityId,
           user_id: user.id,
           request_id: requestId,
+          idempotency_key: idempotencyKey,
         },
+      }, {
+        idempotencyKey,
       });
 
-      logStep(requestId, "Checkout session created", { sessionId: session.id, bonus: validPackage.bonusCents });
+      logStep(requestId, "Checkout session created", { sessionId: session.id, bonus: validPackage.bonusCents, expiresAt: session.expires_at });
 
+      // Mark rate limit event as successful
       await supabaseClient.rpc("log_rate_limit_event", {
         p_identifier: `purchase:${user.id}`,
         p_action_type: "credit_purchase",
