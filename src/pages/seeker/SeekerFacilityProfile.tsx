@@ -733,7 +733,11 @@ export default function SeekerFacilityProfile() {
                     {showContactDetails && (
                       <div className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <a href={`tel:${facility.phone}`} className="text-sm font-medium text-primary hover:underline">
+                        <a 
+                          href={`tel:${facility.phone}`} 
+                          className="text-sm font-medium text-primary hover:underline"
+                          onClick={() => facility?.id && trackClickToCall(facility.id, "profile")}
+                        >
                           {formatPhoneNumber(facility.phone)}
                         </a>
                       </div>
