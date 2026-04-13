@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { sanitizeText, sanitizePersonName, sanitizeJobTitle, validateEmail, validatePhone as validatePhoneSanitize } from "@/lib/facilitySanitization";
 import { 
   Save, 
   Mail, 
@@ -458,9 +459,24 @@ export default function ProviderSettingsPage() {
     return Object.keys(errors).length === 0;
   };
 
+  // Rate limiting for profile save
+  const lastProfileSaveRef = useRef<number>(0);
+
   const handleSaveProfile = async () => {
     if (!profile) return;
     if (!validateProfileForm()) return;
+
+    // Rate limit: 5 second cooldown
+    const now = Date.now();
+    if (now - lastProfileSaveRef.current < 5000) {
+      toast({
+        title: "Please wait",
+        description: "You're saving too quickly. Please wait a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    lastProfileSaveRef.current = now;
 
     setIsSaving(true);
     const { data: { session } } = await supabase.auth.getSession();
@@ -475,14 +491,32 @@ export default function ProviderSettingsPage() {
     }
 
     try {
+      // Sanitize all text fields before saving
+      const sanitizedFirstName = sanitizePersonName(profile.first_name);
+      const sanitizedLastName = sanitizePersonName(profile.last_name);
+      const sanitizedJobTitle = sanitizeJobTitle(profile.job_title);
+      const sanitizedContactName = profile.primary_contact_name?.trim()
+        ? sanitizeText(profile.primary_contact_name).slice(0, 100)
+        : null;
+
+      if (!sanitizedFirstName || !sanitizedLastName) {
+        toast({
+          title: "Invalid input",
+          description: "First and last name are required.",
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
-          first_name: profile.first_name.trim(),
-          last_name: profile.last_name.trim(),
+          first_name: sanitizedFirstName,
+          last_name: sanitizedLastName,
           phone: profile.phone ? formatPhone(profile.phone) : null,
-          job_title: profile.job_title?.trim() || null,
-          primary_contact_name: profile.primary_contact_name?.trim() || null,
+          job_title: sanitizedJobTitle,
+          primary_contact_name: sanitizedContactName,
           timezone: profile.timezone,
         })
         .eq("user_id", session.user.id);
@@ -497,7 +531,7 @@ export default function ProviderSettingsPage() {
       
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
-      setLocalProfile(null); // Reset local state so it picks up fresh data
+      setLocalProfile(null);
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       toast({
         title: "Profile updated",
@@ -515,11 +549,27 @@ export default function ProviderSettingsPage() {
     }
   };
 
+  // Rate limiting for password changes
+  const lastPasswordChangeRef = useRef<number>(0);
+
   const handleUpdatePassword = async () => {
     setPasswordError(null);
     
+    // Rate limit: 10 second cooldown
+    const now = Date.now();
+    if (now - lastPasswordChangeRef.current < 10000) {
+      setPasswordError("Please wait before trying again");
+      return;
+    }
+
     if (!newPassword || !confirmPassword) {
       setPasswordError("Please fill in all password fields");
+      return;
+    }
+
+    // Prevent excessively long passwords (DoS protection)
+    if (newPassword.length > 128) {
+      setPasswordError("Password must be 128 characters or less");
       return;
     }
 
@@ -539,6 +589,7 @@ export default function ProviderSettingsPage() {
       return;
     }
 
+    lastPasswordChangeRef.current = now;
     setIsUpdatingPassword(true);
     
     try {
@@ -818,6 +869,7 @@ export default function ProviderSettingsPage() {
                       id="firstName"
                       value={profile?.first_name || ""}
                       onChange={(e) => updateField("first_name", e.target.value)}
+                      maxLength={50}
                       className={`h-10 ${profileErrors.first_name ? "border-destructive" : ""}`}
                     />
                     {profileErrors.first_name && (
@@ -832,6 +884,7 @@ export default function ProviderSettingsPage() {
                       id="lastName"
                       value={profile?.last_name || ""}
                       onChange={(e) => updateField("last_name", e.target.value)}
+                      maxLength={50}
                       className={`h-10 ${profileErrors.last_name ? "border-destructive" : ""}`}
                     />
                     {profileErrors.last_name && (
@@ -849,6 +902,7 @@ export default function ProviderSettingsPage() {
                     value={profile?.job_title || ""}
                     onChange={(e) => updateField("job_title", e.target.value)}
                     placeholder="e.g., Facility Director"
+                    maxLength={100}
                     className="h-10"
                   />
                 </div>
@@ -862,6 +916,7 @@ export default function ProviderSettingsPage() {
                     value={profile?.primary_contact_name || ""}
                     onChange={(e) => updateField("primary_contact_name", e.target.value)}
                     placeholder="Name shown in outgoing emails"
+                    maxLength={100}
                     className="h-10"
                   />
                   <p className="text-xs text-muted-foreground">

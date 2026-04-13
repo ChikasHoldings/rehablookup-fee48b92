@@ -46,9 +46,22 @@ export function RequestReviewSection({ facilityId, facilityName, open, onOpenCha
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recipientName.trim() || !recipientEmail.trim()) return;
+    
+    // Sanitize name - strip HTML/JS
+    const sanitizedName = recipientName.trim()
+      .replace(/<[^>]*>/g, "")
+      .replace(/javascript:/gi, "")
+      .replace(/on\w+\s*=/gi, "")
+      .slice(0, 100);
+    
+    const sanitizedEmail = recipientEmail.trim().toLowerCase().slice(0, 255);
+    
+    if (!sanitizedName || !sanitizedEmail) return;
 
-    const result = await sendReviewRequest(recipientName, recipientEmail);
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) return;
+
+    const result = await sendReviewRequest(sanitizedName, sanitizedEmail);
     if (!result.error) {
       setRecipientName('');
       setRecipientEmail('');
