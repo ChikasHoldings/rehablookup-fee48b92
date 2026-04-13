@@ -958,6 +958,19 @@ export default function ProviderSignup() {
                       )}
                     </div>
                   </div>
+                  {/* Honeypot field - hidden from real users, bots fill it */}
+                  <div className="absolute opacity-0 pointer-events-none h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <label htmlFor="website_url_confirm">Leave this empty</label>
+                    <input
+                      id="website_url_confirm"
+                      name="website_url_confirm"
+                      type="text"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      autoComplete="off"
+                      tabIndex={-1}
+                    />
+                  </div>
                 </div>
               </div>
             )}

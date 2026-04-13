@@ -53,12 +53,20 @@ export function ProviderWelcomeModal({
   isFirstLogin = true,
   onDismiss 
 }: ProviderWelcomeModalProps) {
-  const [open, setOpen] = useState(isFirstLogin);
+  // Validate facilityId is a valid UUID before any DB operations
+  const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(facilityId);
+  
+  const [open, setOpen] = useState(isFirstLogin && isValidUUID);
   const [isUpdating, setIsUpdating] = useState(false);
   const navigate = useNavigate();
 
+  // Sanitize facilityName for display (React auto-escapes, but strip tags as defense-in-depth)
+  const safeFacilityName = facilityName
+    ? facilityName.replace(/<[^>]*>/g, "").slice(0, 100)
+    : undefined;
+
   const handleDismiss = async () => {
-    if (isUpdating) return;
+    if (isUpdating || !isValidUUID) return;
     setIsUpdating(true);
     
     try {
@@ -75,11 +83,14 @@ export function ProviderWelcomeModal({
   };
 
   const handleNavigate = (action: string) => {
+    // Whitelist allowed navigation targets
+    const allowedActions = ["listings", "inquiries", "analytics"];
+    if (!allowedActions.includes(action)) return;
     handleDismiss();
     navigate(`/provider/${action}`);
   };
 
-  if (!open) return null;
+  if (!open || !isValidUUID) return null;
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && handleDismiss()}>
@@ -95,8 +106,8 @@ export function ProviderWelcomeModal({
                 Welcome to RehabLookup!
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
-                {facilityName ? (
-                  <>Your listing for <span className="font-medium text-foreground">{facilityName}</span> is under review</>
+                {safeFacilityName ? (
+                  <>Your listing for <span className="font-medium text-foreground">{safeFacilityName}</span> is under review</>
                 ) : (
                   <>Your facility listing is under review</>
                 )}
