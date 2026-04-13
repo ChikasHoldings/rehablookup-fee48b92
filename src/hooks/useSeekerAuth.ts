@@ -143,18 +143,13 @@ export function useSeekerAuth() {
       };
     }
 
-    // Check if email is already registered as an admin
-    // First check if user exists, then check their role
-    const { data: existingUser } = await supabase.auth.signInWithPassword({
-      email,
-      password: 'dummy-check-password-12345!',
-    }).catch(() => ({ data: null }));
-    
-    // Reset any failed login attempt
-    if (!existingUser) {
-      // Check if this email exists as admin by checking user_roles via RPC
-      // We can't directly query auth.users, so we use a different approach
-      // For now, the database constraint will prevent double accounts
+    // Check if email is already registered as an admin via safe RPC
+    const { data: isAdmin } = await supabase.rpc('is_email_admin', { p_email: email });
+    if (isAdmin) {
+      return {
+        data: null,
+        error: new Error('This email is associated with an administrative account. Please use a different email.')
+      };
     }
 
     const redirectUrl = `${window.location.origin}/`;

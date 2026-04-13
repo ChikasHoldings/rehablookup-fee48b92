@@ -648,7 +648,10 @@ export default function SeekerSignup() {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    {password && <PasswordStrengthIndicator password={password} showRequirements={false} />}
+                    {password && <PasswordStrengthIndicator password={password} />}
+                    {password && !isPasswordStrong && (
+                      <p className="text-xs text-destructive mt-1">Please choose a stronger password</p>
+                    )}
                   </div>
                   
                   {/* Confirm Password */}
@@ -677,7 +680,7 @@ export default function SeekerSignup() {
                     )}
                   </div>
                   
-                  <Button type="submit" className="w-full h-10 sm:h-11" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full h-10 sm:h-11" disabled={isSubmitting || !isPasswordStrong || password !== confirmPassword || !firstName.trim() || !lastName.trim()}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -687,6 +690,20 @@ export default function SeekerSignup() {
                       'Create Account'
                     )}
                   </Button>
+
+                  {/* Honeypot field - hidden from real users */}
+                  <div className="absolute opacity-0 pointer-events-none h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <label htmlFor="website_url_hp">Leave this empty</label>
+                    <input
+                      id="website_url_hp"
+                      name="website_url_hp"
+                      type="text"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      autoComplete="off"
+                      tabIndex={-1}
+                    />
+                  </div>
                 </form>
                 
                 <p className="text-xs text-muted-foreground text-center mt-4">
