@@ -982,7 +982,7 @@ export default function AdminAnalytics() {
                 <div className="grid grid-cols-3 gap-4 mb-3">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.visitors.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Visitors</p>
+                    <p className="text-xs text-muted-foreground">Profile Views</p>
                   </div>
                   <div className="text-center border-x">
                     <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.clicks.toLocaleString()}</div>
