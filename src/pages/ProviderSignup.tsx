@@ -228,18 +228,27 @@ export default function ProviderSignup() {
     if (import.meta.env.DEV) console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
 
     try {
-      // Check if email is already registered as a seeker
-      if (import.meta.env.DEV) console.log("[ProviderSignup] Checking for existing seeker account...");
-      const { data: isSeeker, error: seekerCheckError } = await supabase.rpc('is_email_seeker', { p_email: formData.email });
+      // Check if email is already registered as a seeker or admin
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Checking for existing accounts...");
+      const [seekerResult, adminResult] = await Promise.all([
+        supabase.rpc('is_email_seeker', { p_email: formData.email }),
+        supabase.rpc('is_email_admin', { p_email: formData.email }),
+      ]);
       
-      if (seekerCheckError) {
-        console.error("[ProviderSignup] Seeker check error:", seekerCheckError);
-        // Non-blocking - continue with signup if check fails
-      } else if (isSeeker) {
-        if (import.meta.env.DEV) console.log("[ProviderSignup] Email already registered as seeker");
+      if (!seekerResult.error && seekerResult.data) {
         toast({
           title: "Account Exists",
           description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!adminResult.error && adminResult.data) {
+        toast({
+          title: "Account Exists",
+          description: "This email is associated with an administrative account. Please use a different email.",
           variant: "destructive",
         });
         setIsSubmitting(false);
