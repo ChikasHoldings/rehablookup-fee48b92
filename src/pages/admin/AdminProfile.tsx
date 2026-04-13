@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -244,8 +244,25 @@ export default function AdminProfile() {
     }
   }, [profile]);
 
+  const lastNotifSaveRef = useRef<number>(0);
+
   const handleSaveNotificationPrefs = async () => {
     if (!userData?.id) return;
+
+    // Rate limit: 5s cooldown
+    const now = Date.now();
+    if (now - lastNotifSaveRef.current < 5000) {
+      toast({ title: "Please wait", description: "You're saving too frequently.", variant: "destructive" });
+      return;
+    }
+    lastNotifSaveRef.current = now;
+
+    // Validate email_digest_frequency against whitelist
+    const VALID_FREQUENCIES = ['daily', 'weekly', 'monthly', 'never'];
+    if (!VALID_FREQUENCIES.includes(notificationPrefs.email_digest_frequency)) {
+      toast({ title: "Invalid preference", description: "Invalid digest frequency.", variant: "destructive" });
+      return;
+    }
 
     setIsSavingNotifications(true);
     try {

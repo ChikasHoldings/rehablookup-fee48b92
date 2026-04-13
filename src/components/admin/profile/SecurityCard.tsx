@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,15 +24,16 @@ import {
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 const passwordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
+  currentPassword: z.string().min(1, "Current password is required").max(128, "Password too long"),
   newPassword: z
     .string()
     .min(8, "Password must be at least 8 characters")
+    .max(128, "Password must be 128 characters or less")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
     .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
-  confirmPassword: z.string(),
+  confirmPassword: z.string().max(128),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -66,6 +67,7 @@ interface SecurityCardProps {
 export function SecurityCard({ userId, userEmail }: SecurityCardProps) {
   const { toast } = useToast();
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const lastPasswordChangeRef = useRef<number>(0);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -85,6 +87,14 @@ export function SecurityCard({ userId, userEmail }: SecurityCardProps) {
 
   const handleChangePassword = async (data: PasswordFormData) => {
     if (!userEmail) return;
+
+    // Rate limit: 10s cooldown
+    const now = Date.now();
+    if (now - lastPasswordChangeRef.current < 10000) {
+      toast({ title: "Please wait", description: "Too many attempts. Try again shortly.", variant: "destructive" });
+      return;
+    }
+    lastPasswordChangeRef.current = now;
 
     setIsUpdatingPassword(true);
     try {

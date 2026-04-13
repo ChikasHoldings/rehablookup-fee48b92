@@ -149,10 +149,17 @@ export function SupportTicketModal({
 
   const handleAddNote = () => {
     if (!newNote.trim() || !user?.id || addNote.isPending) return;
+    // Sanitize note content
+    const sanitized = newNote
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .trim()
+      .slice(0, 5000);
+    if (!sanitized) return;
     addNote.mutate(
       {
         ticketId: ticket.id,
-        content: newNote.trim(),
+        content: sanitized,
         authorId: user.id,
       },
       {
@@ -400,8 +407,9 @@ export function SupportTicketModal({
                   <Textarea
                     placeholder="Add an internal note..."
                     value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
+                    onChange={(e) => setNewNote(e.target.value.slice(0, 5000))}
                     rows={2}
+                    maxLength={5000}
                     className="resize-none text-xs sm:text-sm"
                   />
                   <Button

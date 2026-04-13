@@ -276,11 +276,18 @@ export default function AdminReviews() {
   const handleApprove = async (reviewId: string) => {
     setProcessingId(reviewId);
     
+    // Sanitize admin notes
+    const sanitizedNotes = (adminNotes[reviewId] || '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .trim()
+      .slice(0, 2000);
+
     const { error } = await supabase
       .from('facility_reviews')
       .update({ 
         status: 'approved',
-        admin_notes: adminNotes[reviewId] || null,
+        admin_notes: sanitizedNotes || null,
         reviewed_by: currentUserId,
         reviewed_at: new Date().toISOString()
       })
@@ -311,11 +318,18 @@ export default function AdminReviews() {
 
     setProcessingId(reviewId);
     
+    // Sanitize admin notes
+    const sanitizedNotes = adminNotes[reviewId]
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .trim()
+      .slice(0, 2000);
+
     const { error } = await supabase
       .from('facility_reviews')
       .update({ 
         status: 'rejected',
-        admin_notes: adminNotes[reviewId],
+        admin_notes: sanitizedNotes,
         reviewed_by: currentUserId,
         reviewed_at: new Date().toISOString()
       })
@@ -613,8 +627,9 @@ export default function AdminReviews() {
                       <Textarea
                         placeholder="Admin notes (optional)"
                         value={disputeNotes[dispute.id] || ''}
-                        onChange={(e) => setDisputeNotes(prev => ({ ...prev, [dispute.id]: e.target.value }))}
+                        onChange={(e) => setDisputeNotes(prev => ({ ...prev, [dispute.id]: e.target.value.slice(0, 2000) }))}
                         rows={2}
+                        maxLength={2000}
                       />
                       <div className="flex items-center gap-2">
                         <Button
@@ -727,8 +742,9 @@ export default function AdminReviews() {
                           <Textarea
                             placeholder="Admin notes (required for rejection)"
                             value={adminNotes[review.id] || ''}
-                            onChange={(e) => setAdminNotes(prev => ({ ...prev, [review.id]: e.target.value }))}
+                            onChange={(e) => setAdminNotes(prev => ({ ...prev, [review.id]: e.target.value.slice(0, 2000) }))}
                             rows={2}
+                            maxLength={2000}
                           />
                           <div className="flex items-center gap-2">
                             <Button 
