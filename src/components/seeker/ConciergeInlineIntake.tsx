@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,43 +218,59 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // Rate limit ref
+  const lastSubmitRef = useRef<number>(0);
+
   const handleSubmitAndPay = async () => {
     if (!validateStep(currentStep)) {
       toast.error("Please complete all required fields");
       return;
     }
 
+    // Rate limit: 10s cooldown
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 10000) {
+      toast.error("Please wait before submitting again.");
+      return;
+    }
+    lastSubmitRef.current = now;
+
     setIsProcessing(true);
 
     try {
-      // Call the checkout function with auth user data
+      // Sanitize all text fields before submission
+      const sanitize = (s: string, max = 200) => s.replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').trim().slice(0, max);
+      const cleanPhone = (formData.phone || userPhone || "").replace(/[^\d+\-() ]/g, '').slice(0, 20);
+
       const { data, error } = await supabase.functions.invoke("create-concierge-checkout", {
         body: {
           email: userEmail,
           intakeData: {
             ...formData,
-            decisionMakerName: userName,
+            currentCity: sanitize(formData.currentCity, 100),
+            desiredCity: sanitize(formData.desiredCity, 100),
+            insuranceCarrier: sanitize(formData.insuranceCarrier, 100),
+            notes: sanitize(formData.notes, 2000),
+            decisionMakerName: sanitize(userName, 100),
             email: userEmail,
-            phone: formData.phone || userPhone || "",
+            phone: cleanPhone,
           },
           isAuthenticated: true,
-          userId: userId, // Pass user ID for linking
+          userId: userId,
         },
       });
 
       if (error) throw error;
 
       if (data?.url) {
-        // Store intake data for post-payment submission
         localStorage.setItem("concierge_pending_intake", JSON.stringify({
           formData,
           userName,
           userEmail,
-          userPhone: formData.phone || userPhone,
+          userPhone: cleanPhone,
           sessionId: data.sessionId,
         }));
         
-        // Redirect to Stripe checkout (validate URL origin)
         if (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com")) {
           window.location.href = data.url;
         } else {
@@ -348,8 +364,9 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <Label>Current City *</Label>
           <Input
             value={formData.currentCity}
-            onChange={e => updateField("currentCity", e.target.value)}
+            onChange={e => updateField("currentCity", e.target.value.slice(0, 100))}
             placeholder="Enter city"
+            maxLength={100}
             className={errors.currentCity ? "border-destructive" : ""}
           />
         </div>
@@ -515,8 +532,9 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <Label>Preferred City (optional)</Label>
           <Input
             value={formData.desiredCity}
-            onChange={e => updateField("desiredCity", e.target.value)}
+            onChange={e => updateField("desiredCity", e.target.value.slice(0, 100))}
             placeholder="Enter city or leave blank"
+            maxLength={100}
           />
         </div>
       </div>
@@ -557,8 +575,9 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <Label>Insurance Carrier *</Label>
           <Input
             value={formData.insuranceCarrier}
-            onChange={e => updateField("insuranceCarrier", e.target.value)}
+            onChange={e => updateField("insuranceCarrier", e.target.value.slice(0, 100))}
             placeholder="e.g., Blue Cross, Aetna, United"
+            maxLength={100}
             className={errors.insuranceCarrier ? "border-destructive" : ""}
           />
         </div>
@@ -582,9 +601,10 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
         <Label>Additional Notes (optional)</Label>
         <Textarea
           value={formData.notes}
-          onChange={e => updateField("notes", e.target.value)}
+          onChange={e => updateField("notes", e.target.value.slice(0, 2000))}
           placeholder="Any other details that would help us find the right match (special needs, preferences, concerns...)"
           rows={4}
+          maxLength={2000}
         />
       </div>
 
