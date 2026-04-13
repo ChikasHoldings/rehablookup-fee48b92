@@ -335,6 +335,14 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   }, []);
   
  const handleSubmit = async (options?: { skipVerificationCheck?: boolean }) => {
+    // Submission debounce - prevent double-clicks and rapid resubmission
+    const now = Date.now();
+    if (now - lastSubmitAt.current < SUBMISSION_DEBOUNCE_MS) {
+      console.log("[useLeadIntakeForm] Submission debounced");
+      return;
+    }
+    lastSubmitAt.current = now;
+
     // Check honeypot
     if (formData.website) {
       console.log("Honeypot triggered");
@@ -393,6 +401,11 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         variant: "destructive",
       });
       return;
+    }
+
+    // Generate idempotency key (unique per submission attempt)
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `${formData.email.toLowerCase().trim()}-${facilityId}-${Date.now()}-${crypto.randomUUID().slice(0,8)}`;
     }
     
     setIsSubmitting(true);
