@@ -414,7 +414,7 @@ export default function ProviderSignup() {
       if (import.meta.env.DEV) console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
 
       // 4-7: Insert related data in parallel (services, age groups, insurance, accreditations)
-      const relatedInserts: Promise<void>[] = [];
+      const relatedInserts: PromiseLike<void>[] = [];
       let relatedErrors: string[] = [];
 
       if (formData.selectedTreatments.length > 0) {
