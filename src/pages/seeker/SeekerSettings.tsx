@@ -325,28 +325,68 @@ export default function SeekerSettings() {
     }
   };
 
+  // Rate limiting refs
+  const lastProfileSaveRef = useRef<number>(0);
+  const lastPasswordChangeRef = useRef<number>(0);
+  const lastEmailChangeRef = useRef<number>(0);
+
+  // Sanitize text: strip HTML tags and dangerous protocols
+  const sanitizeText = (str: string, maxLen = 100): string => {
+    return str
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/data:/gi, '')
+      .trim()
+      .slice(0, maxLen);
+  };
+
+  const sanitizePersonName = (str: string): string => {
+    return sanitizeText(str, 50).replace(/[^a-zA-Z\s\-'.]/g, '');
+  };
+
   const handleSaveProfile = async () => {
     if (isSaving) return;
     if (!sessionUserId) return;
 
+    // Rate limit: 5s cooldown
+    const now = Date.now();
+    if (now - lastProfileSaveRef.current < 5000) {
+      toast({ title: "Please wait", description: "You're saving too frequently.", variant: "destructive" });
+      return;
+    }
+    lastProfileSaveRef.current = now;
+
+    // Sanitize inputs
+    const cleanFirstName = sanitizePersonName(firstName);
+    const cleanLastName = sanitizePersonName(lastName);
+    const cleanPhone = phone.replace(/[^\d+\-() ]/g, '').slice(0, 20);
+    const cleanZipcode = zipcode.replace(/[^\d\-]/g, '').slice(0, 10);
+    const cleanCity = sanitizeText(city, 100);
+    const cleanState = sanitizeText(state, 50);
+
+    // Validate name lengths
+    if (cleanFirstName && cleanFirstName.length < 1) {
+      toast({ title: "Invalid name", description: "First name is too short.", variant: "destructive" });
+      return;
+    }
+
     setIsSaving(true);
 
-    const fullDisplayName = firstName && lastName 
-      ? `${firstName.trim()} ${lastName.trim()}`
+    const fullDisplayName = cleanFirstName && cleanLastName 
+      ? `${cleanFirstName} ${cleanLastName}`
       : displayName;
 
-    // Use upsert to handle cases where profile doesn't exist yet
     const { error } = await supabase
       .from('seeker_profiles')
       .upsert({ 
         user_id: sessionUserId,
-        display_name: fullDisplayName,
-        first_name: firstName.trim() || null,
-        last_name: lastName.trim() || null,
-        phone: phone || null,
-        zipcode: zipcode || null,
-        city: city || null,
-        state: state || null,
+        display_name: sanitizeText(fullDisplayName, 100),
+        first_name: cleanFirstName || null,
+        last_name: cleanLastName || null,
+        phone: cleanPhone || null,
+        zipcode: cleanZipcode || null,
+        city: cleanCity || null,
+        state: cleanState || null,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' });
 
@@ -358,7 +398,6 @@ export default function SeekerSettings() {
       });
     } else {
       setDisplayName(fullDisplayName);
-      // Invalidate the seeker profile query to update header name
       queryClient.invalidateQueries({ queryKey: ['seeker-profile', sessionUserId] });
       await logActivity({
         eventType: "profile_update",
@@ -384,10 +423,28 @@ export default function SeekerSettings() {
 
   const handleChangePassword = async () => {
     if (isChangingPassword) return;
-    if (newPassword.length < 6) {
+
+    // Rate limit: 10s cooldown
+    const now = Date.now();
+    if (now - lastPasswordChangeRef.current < 10000) {
+      toast({ title: "Please wait", description: "Too many attempts. Try again shortly.", variant: "destructive" });
+      return;
+    }
+    lastPasswordChangeRef.current = now;
+
+    if (newPassword.length < 8) {
       toast({
         title: "Password too short",
-        description: "Password must be at least 6 characters.",
+        description: "Password must be at least 8 characters.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newPassword.length > 128) {
+      toast({
+        title: "Password too long",
+        description: "Password must be 128 characters or less.",
         variant: "destructive"
       });
       return;
@@ -433,7 +490,18 @@ export default function SeekerSettings() {
 
   const handleChangeEmail = async () => {
     if (isChangingEmail) return;
-    if (!newEmail || !newEmail.includes('@')) {
+
+    // Rate limit: 10s cooldown
+    const now = Date.now();
+    if (now - lastEmailChangeRef.current < 10000) {
+      toast({ title: "Please wait", description: "Too many attempts. Try again shortly.", variant: "destructive" });
+      return;
+    }
+    lastEmailChangeRef.current = now;
+
+    const trimmedEmail = newEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail) || trimmedEmail.length > 254) {
       toast({
         title: "Invalid email",
         description: "Please enter a valid email address.",
@@ -445,7 +513,7 @@ export default function SeekerSettings() {
     setIsChangingEmail(true);
 
     const { error } = await supabase.auth.updateUser({
-      email: newEmail
+      email: trimmedEmail
     });
 
     if (error) {

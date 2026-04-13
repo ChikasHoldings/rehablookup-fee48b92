@@ -15,9 +15,17 @@ export function FeedbackForm({ onSubmit, isSubmitting }: FeedbackFormProps) {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [feedback, setFeedback] = useState("");
 
+  const MAX_FEEDBACK_LENGTH = 2000;
+
   const handleSubmit = () => {
-    if (rating === 0) return;
-    onSubmit(rating, feedback);
+    if (rating === 0 || rating < 1 || rating > 5) return;
+    // Sanitize feedback text
+    const sanitized = feedback
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .trim()
+      .slice(0, MAX_FEEDBACK_LENGTH);
+    onSubmit(rating, sanitized);
   };
 
   return (
@@ -64,10 +72,12 @@ export function FeedbackForm({ onSubmit, isSubmitting }: FeedbackFormProps) {
         <Textarea
           id="feedback"
           value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
+          onChange={(e) => setFeedback(e.target.value.slice(0, MAX_FEEDBACK_LENGTH))}
           placeholder="How was your experience with our concierge service? Any suggestions for improvement?"
           rows={4}
+          maxLength={MAX_FEEDBACK_LENGTH}
         />
+        <p className="text-xs text-muted-foreground text-right">{feedback.length}/{MAX_FEEDBACK_LENGTH}</p>
       </div>
 
       {/* Submit Button */}

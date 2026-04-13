@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -346,8 +346,31 @@ export default function SeekerReviews() {
     setEditText(review.review_text || "");
   };
 
+  const lastReviewSaveRef = useRef<number>(0);
+
   const handleSaveEdit = async () => {
     if (!editingReview || isSaving) return;
+
+    // Rate limit: 5s cooldown
+    const now = Date.now();
+    if (now - lastReviewSaveRef.current < 5000) {
+      toast({ title: "Please wait", description: "You're saving too frequently.", variant: "destructive" });
+      return;
+    }
+    lastReviewSaveRef.current = now;
+
+    // Validate rating
+    if (editRating < 1 || editRating > 5) {
+      toast({ title: "Invalid rating", description: "Rating must be between 1 and 5.", variant: "destructive" });
+      return;
+    }
+
+    // Sanitize review text
+    const sanitizedText = editText
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .trim()
+      .slice(0, 2000);
 
     setIsSaving(true);
     try {
@@ -360,7 +383,7 @@ export default function SeekerReviews() {
         .from('facility_reviews')
         .update({
           rating: editRating,
-          review_text: editText || null,
+          review_text: sanitizedText || null,
         })
         .eq('id', editingReview.id)
         .eq('user_id', userId);
@@ -564,10 +587,12 @@ export default function SeekerReviews() {
               <Textarea
                 id="review-text"
                 value={editText}
-                onChange={(e) => setEditText(e.target.value)}
+                onChange={(e) => setEditText(e.target.value.slice(0, 2000))}
                 placeholder="Share your experience..."
                 rows={4}
+                maxLength={2000}
               />
+              <p className="text-xs text-muted-foreground text-right">{editText.length}/2000</p>
             </div>
           </div>
 

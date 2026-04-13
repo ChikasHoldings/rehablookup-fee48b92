@@ -346,8 +346,9 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
           <Input
             placeholder="Message your advisor..."
             value={messageContent}
-            onChange={(e) => setMessageContent(e.target.value)}
+            onChange={(e) => setMessageContent(e.target.value.slice(0, 5000))}
             disabled={sendMessageMutation.isPending || uploading}
+            maxLength={5000}
           />
           <Button
             type="submit"
