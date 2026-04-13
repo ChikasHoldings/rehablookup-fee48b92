@@ -2,7 +2,10 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 // Version tracking for deployment verification
-const VERSION = "1.0.3";
+const VERSION = "2.0.0";
+
+// Rate limit: max unlocks per facility per hour
+const MAX_UNLOCKS_PER_HOUR = 20;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,10 +62,17 @@ async function getUnlockPricing(supabase: any): Promise<{
 
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
-  logStep(requestId, "Request received", { method: req.method });
+  logStep(requestId, "Request received", { method: req.method, version: VERSION });
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Only accept POST
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
