@@ -93,7 +93,7 @@ export default function SeekerInternationalCase() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">International Placement</h1>
           <p className="text-muted-foreground">Get placed into top US treatment facilities</p>
@@ -117,7 +117,7 @@ export default function SeekerInternationalCase() {
 
   if (!placementCase) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">International Placement</h1>
           <p className="text-muted-foreground">Get placed into top US treatment facilities</p>
