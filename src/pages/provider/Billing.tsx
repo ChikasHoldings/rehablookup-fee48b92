@@ -51,10 +51,9 @@ import { lazy, Suspense } from "react";
 const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 
 const CREDIT_PACKAGES = [
-  { amountCents: 10000, label: "$100", credits: 100, bonus: null, perLead: "~2-6 leads" },
-  { amountCents: 25000, label: "$250", credits: 250, bonus: null, perLead: "~5-16 leads" },
-  { amountCents: 50000, label: "$500", credits: 500, bonus: "Best Value", perLead: "~10-33 leads" },
-  { amountCents: 100000, label: "$1,000", credits: 1000, bonus: "Most Popular", perLead: "~20-66 leads" },
+  { amountCents: 20000, label: "$200", credits: 200, bonusCents: 0, badge: null, perLead: "~4-13 leads" },
+  { amountCents: 50000, label: "$500", credits: 500, bonusCents: 0, badge: null, perLead: "~10-33 leads" },
+  { amountCents: 100000, label: "$1,000", credits: 1000, bonusCents: 10000, badge: "Best Value", perLead: "~20-66 leads + $100 bonus" },
 ];
 
 const PRO_BENEFITS = [
@@ -156,12 +155,16 @@ export default function ProviderBillingPage() {
 
     if (creditsSuccess === "true") {
       const amount = searchParams.get("amount");
+      const bonus = searchParams.get("bonus");
       const formattedAmount = amount ? `$${(parseInt(amount, 10) / 100).toFixed(0)}` : "";
-      toast.success(`${formattedAmount} credits added to your account!`, { duration: 5000 });
+      const bonusCents = bonus ? parseInt(bonus, 10) : 0;
+      const bonusMsg = bonusCents > 0 ? ` + $${(bonusCents / 100).toFixed(0)} bonus credits!` : "";
+      toast.success(`${formattedAmount} credits added to your account${bonusMsg}`, { duration: 6000 });
       refetchCredits();
       startPostCheckoutPolling(() => refetchCredits());
       searchParams.delete("credits_success");
       searchParams.delete("amount");
+      searchParams.delete("bonus");
       setSearchParams(searchParams, { replace: true });
     }
 
@@ -708,32 +711,33 @@ export default function ProviderBillingPage() {
                         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                         "disabled:opacity-60 disabled:cursor-not-allowed",
                         isPkgLoading && "border-primary bg-primary/5 shadow-sm",
-                        pkg.bonus === "Most Popular" && !isDisabled && "border-primary/30 bg-primary/[0.03]"
+                        pkg.badge === "Best Value" && !isDisabled && "border-emerald-500/40 bg-emerald-50/50"
                       )}
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm",
-                          pkg.bonus === "Most Popular" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                          pkg.badge === "Best Value" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
                         )}>
                           {pkg.label}
                         </div>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base text-foreground">{pkg.credits} credits</p>
+                          <p className="font-semibold text-sm sm:text-base text-foreground">
+                            {pkg.credits} credits
+                            {pkg.bonusCents > 0 && (
+                              <span className="text-emerald-600 font-bold ml-1">+ ${(pkg.bonusCents / 100).toFixed(0)} bonus</span>
+                            )}
+                          </p>
                           <p className="text-xs text-muted-foreground">{pkg.perLead}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {pkg.bonus && (
+                        {pkg.badge && (
                           <Badge 
                             variant="secondary"
-                            className={cn(
-                              "text-xs whitespace-nowrap",
-                              pkg.bonus === "Most Popular" && "bg-primary text-primary-foreground",
-                              pkg.bonus === "Best Value" && "bg-emerald-600 text-white border-0"
-                            )}
+                            className="text-xs whitespace-nowrap bg-emerald-600 text-white border-0"
                           >
-                            {pkg.bonus}
+                            {pkg.badge}
                           </Badge>
                         )}
                         {isPkgLoading ? (

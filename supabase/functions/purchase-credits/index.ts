@@ -1,7 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.1.0";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,11 +15,11 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
   console.log(`[PURCHASE-CREDITS] [${VERSION}] [${requestId}] [${timestamp}] ${step}${detailsStr}`);
 };
 
+// Fixed credit tiers — $200, $500, $1,000 (with $100 bonus)
 const CREDIT_PACKAGES = [
-  { amountCents: 10000, label: "$100" },
-  { amountCents: 25000, label: "$250" },
-  { amountCents: 50000, label: "$500" },
-  { amountCents: 100000, label: "$1,000" },
+  { amountCents: 20000, label: "$200", creditsCents: 20000, bonusCents: 0 },
+  { amountCents: 50000, label: "$500", creditsCents: 50000, bonusCents: 0 },
+  { amountCents: 100000, label: "$1,000", creditsCents: 100000, bonusCents: 10000 },
 ];
 
 const VALID_AMOUNTS: Set<number> = new Set(CREDIT_PACKAGES.map(p => p.amountCents));
@@ -32,8 +32,13 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
-    // Validate environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -41,71 +46,45 @@ Deno.serve(async (req) => {
 
     if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
       logStep(requestId, "ERROR - Missing Supabase configuration");
-      return new Response(JSON.stringify({ 
-        error: "Server configuration error", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Server configuration error", requestId, _version: VERSION }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!stripeKey) {
-      logStep(requestId, "ERROR - STRIPE_SECRET_KEY not configured");
-      return new Response(JSON.stringify({ 
-        error: "Payment system not configured", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate Stripe key format
-    if (stripeKey.startsWith("pk_") || stripeKey.startsWith("rk_")) {
-      logStep(requestId, "ERROR - Invalid Stripe key type");
-      return new Response(JSON.stringify({ 
-        error: "Invalid payment configuration", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!stripeKey || stripeKey.startsWith("pk_") || stripeKey.startsWith("rk_")) {
+      logStep(requestId, "ERROR - Invalid or missing Stripe key");
+      return new Response(JSON.stringify({ error: "Payment system not configured", requestId, _version: VERSION }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const stripeMode = stripeKey.startsWith("sk_test_") ? "test" : "live";
     logStep(requestId, "Stripe mode detected", { mode: stripeMode });
 
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: req.headers.get("Authorization")! } }
-    });
-
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      logStep(requestId, "ERROR - No authorization header");
       return new Response(JSON.stringify({ error: "Unauthorized", requestId, _version: VERSION }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
       logStep(requestId, "ERROR - Authentication failed", { error: authError?.message });
       return new Response(JSON.stringify({ error: "Unauthorized", requestId, _version: VERSION }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     logStep(requestId, "User authenticated", { userId: user.id });
 
-    // Rate limit: max 5 purchase attempts per 15 minutes per user
+    // Rate limit: max 5 purchase attempts per 15 minutes
     const { data: rateCheck } = await supabaseClient.rpc("check_rate_limit", {
       p_identifier: `purchase:${user.id}`,
       p_action_type: "credit_purchase",
@@ -117,72 +96,65 @@ Deno.serve(async (req) => {
       logStep(requestId, "Rate limited", { retryAfter: rateCheck.retry_after_seconds });
       return new Response(JSON.stringify({
         error: "Too many purchase attempts. Please wait a few minutes.",
-        requestId,
-        _version: VERSION,
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        requestId, _version: VERSION,
+      }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Log the attempt
     await supabaseClient.rpc("log_rate_limit_event", {
       p_identifier: `purchase:${user.id}`,
       p_action_type: "credit_purchase",
       p_success: false,
     });
 
-    // Parse and validate request body
+    // Parse and validate body
+    const rawBody = await req.text();
+    if (rawBody.length > 2048) {
+      return new Response(JSON.stringify({ error: "Request too large", requestId, _version: VERSION }), {
+        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     let body: { amountCents?: number; facilityId?: string };
     try {
-      body = await req.json();
-    } catch (parseError) {
-      logStep(requestId, "ERROR - Invalid JSON body");
-      return new Response(JSON.stringify({ 
-        error: "Invalid request body", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      body = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid request body", requestId, _version: VERSION }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const { amountCents, facilityId } = body;
 
     if (!amountCents || !facilityId) {
-      logStep(requestId, "ERROR - Missing required fields", { amountCents: !!amountCents, facilityId: !!facilityId });
-      return new Response(JSON.stringify({ 
-        error: "Missing amountCents or facilityId", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Missing amountCents or facilityId", requestId, _version: VERSION }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Validate amount is a valid package (server-side price validation)
-    if (!VALID_AMOUNTS.has(amountCents)) {
+    // Validate UUID format for facilityId
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof facilityId !== "string" || !uuidRegex.test(facilityId)) {
+      return new Response(JSON.stringify({ error: "Invalid facility ID", requestId, _version: VERSION }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate amount is a valid tier (server-side price enforcement)
+    if (typeof amountCents !== "number" || !VALID_AMOUNTS.has(amountCents)) {
       logStep(requestId, "ERROR - Invalid credit amount", { amountCents });
-      return new Response(JSON.stringify({ 
-        error: "Invalid credit amount", 
+      return new Response(JSON.stringify({
+        error: "Invalid credit amount. Choose $200, $500, or $1,000.",
         validAmounts: Array.from(VALID_AMOUNTS),
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        requestId, _version: VERSION,
+      }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const validPackage = CREDIT_PACKAGES.find(p => p.amountCents === amountCents);
-    logStep(requestId, "Package validated", { amountCents, label: validPackage?.label });
+    const validPackage = CREDIT_PACKAGES.find(p => p.amountCents === amountCents)!;
+    logStep(requestId, "Package validated", { amountCents, label: validPackage.label, bonusCents: validPackage.bonusCents });
 
-    // Create admin client
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify facility belongs to user
+    // Verify facility ownership
     const { data: facility, error: facilityError } = await supabaseAdmin
       .from("facilities")
       .select("id, user_id, name")
@@ -190,72 +162,52 @@ Deno.serve(async (req) => {
       .single();
 
     if (facilityError || !facility) {
-      logStep(requestId, "ERROR - Facility not found", { facilityId, error: facilityError?.message });
-      return new Response(JSON.stringify({ 
-        error: "Facility not found", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Facility not found", requestId, _version: VERSION }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (facility.user_id !== user.id) {
-      logStep(requestId, "ERROR - Facility ownership mismatch", { facilityUserId: facility.user_id, requestUserId: user.id });
-      return new Response(JSON.stringify({ 
-        error: "Facility not found or unauthorized", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      logStep(requestId, "ERROR - Facility ownership mismatch");
+      return new Response(JSON.stringify({ error: "Unauthorized", requestId, _version: VERSION }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     logStep(requestId, "Facility verified", { facilityId, facilityName: facility.name });
 
-    // Initialize Stripe with timeout handling
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2025-08-27.basil",
-    });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Find or create Stripe customer
     let customerId: string;
     try {
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
         logStep(requestId, "Existing Stripe customer found", { customerId });
       } else {
         const customer = await stripe.customers.create({
           email: user.email,
-          metadata: { 
-            user_id: user.id,
-            facility_id: facilityId,
-          },
+          metadata: { user_id: user.id, facility_id: facilityId },
         });
         customerId = customer.id;
         logStep(requestId, "New Stripe customer created", { customerId });
       }
     } catch (stripeError) {
-      const errorMessage = stripeError instanceof Error ? stripeError.message : "Unknown Stripe error";
-      logStep(requestId, "ERROR - Stripe customer operation failed", { error: errorMessage });
-      return new Response(JSON.stringify({ 
-        error: "Payment provider error. Please try again.", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      logStep(requestId, "ERROR - Stripe customer operation failed", { error: String(stripeError) });
+      return new Response(JSON.stringify({ error: "Payment provider error. Please try again.", requestId, _version: VERSION }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Get origin for redirect URLs
     const origin = req.headers.get("origin") || "https://rehablookup.com";
-    
-    // Create Stripe checkout session
+
+    // Build description including bonus if applicable
+    const bonusText = validPackage.bonusCents > 0
+      ? ` + $${(validPackage.bonusCents / 100).toFixed(0)} bonus credits`
+      : "";
+    const productDescription = `${validPackage.label} in credits${bonusText} for unlocking inquiries`;
+
     let session: Stripe.Checkout.Session;
     try {
       session = await stripe.checkout.sessions.create({
@@ -267,65 +219,50 @@ Deno.serve(async (req) => {
             currency: "usd",
             product_data: {
               name: "Lead Unlock Credits",
-              description: `${validPackage?.label} in credits for unlocking inquiries`,
+              description: productDescription,
             },
             unit_amount: amountCents,
           },
           quantity: 1,
         }],
-        success_url: `${origin}/provider/billing?credits_success=true&amount=${amountCents}`,
+        success_url: `${origin}/provider/billing?credits_success=true&amount=${amountCents}&bonus=${validPackage.bonusCents}`,
         cancel_url: `${origin}/provider/billing?credits_canceled=true`,
         metadata: {
           type: "credit_purchase",
           amount_cents: amountCents.toString(),
+          bonus_cents: validPackage.bonusCents.toString(),
+          total_credits_cents: (validPackage.creditsCents + validPackage.bonusCents).toString(),
           facility_id: facilityId,
           user_id: user.id,
           request_id: requestId,
         },
       });
 
-      logStep(requestId, "Checkout session created", { sessionId: session.id });
+      logStep(requestId, "Checkout session created", { sessionId: session.id, bonus: validPackage.bonusCents });
 
-      // Mark rate limit attempt as successful
       await supabaseClient.rpc("log_rate_limit_event", {
         p_identifier: `purchase:${user.id}`,
         p_action_type: "credit_purchase",
         p_success: true,
       });
     } catch (checkoutError) {
-      const errorMessage = checkoutError instanceof Error ? checkoutError.message : "Unknown checkout error";
-      logStep(requestId, "ERROR - Checkout session creation failed", { error: errorMessage });
-      return new Response(JSON.stringify({ 
-        error: "Failed to create checkout session. Please try again.", 
-        requestId,
-        _version: VERSION 
-      }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      logStep(requestId, "ERROR - Checkout session creation failed", { error: String(checkoutError) });
+      return new Response(JSON.stringify({ error: "Failed to create checkout session. Please try again.", requestId, _version: VERSION }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logStep(requestId, "Purchase flow completed successfully");
-
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       checkoutUrl: session.url,
       sessionId: session.id,
       requestId,
       _version: VERSION,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logStep(requestId, "ERROR - Unhandled exception", { error: message });
-    return new Response(JSON.stringify({ 
-      error: "An unexpected error occurred. Please try again.", 
-      requestId,
-      _version: VERSION 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    logStep(requestId, "ERROR - Unhandled exception", { error: error instanceof Error ? error.message : String(error) });
+    return new Response(JSON.stringify({ error: "An unexpected error occurred. Please try again.", requestId, _version: VERSION }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

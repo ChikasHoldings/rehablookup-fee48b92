@@ -458,76 +458,126 @@ Deno.serve(async (req) => {
       // CREDIT PURCHASE FULFILLMENT
       if (session.mode === "payment" && metadataType === "credit_purchase") {
         const amountCents = parseInt(session.metadata?.amount_cents || "0", 10);
+        const bonusCents = parseInt(session.metadata?.bonus_cents || "0", 10);
         const facilityId = session.metadata?.facility_id;
         const userId = session.metadata?.user_id;
+        const paymentIntentId = session.payment_intent as string;
 
-        if (amountCents > 0 && userId && facilityId) {
-          logStep("Processing credit purchase", { amountCents, facilityId, userId });
+        // Validate required fields
+        if (amountCents <= 0 || !userId || !facilityId) {
+          logStep("WARN - Invalid credit purchase metadata", { amountCents, userId, facilityId });
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
-          // Idempotency check: prevent double-crediting from duplicate webhooks
-          const { data: existingTx } = await supabaseAdmin
-            .from("credit_transactions")
-            .select("id")
-            .eq("reference_id", session.id)
-            .eq("transaction_type", "purchase")
-            .maybeSingle();
+        // Validate amount is a recognized tier (server-side enforcement)
+        const validTiers = new Set([20000, 50000, 100000]);
+        if (!validTiers.has(amountCents)) {
+          logStep("WARN - Unrecognized credit tier", { amountCents });
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
-          if (existingTx) {
-            logStep("Credit purchase already processed (duplicate webhook), skipping", { sessionId: session.id, existingTxId: existingTx.id });
+        // Validate bonus matches tier (only $1,000 = 10000 bonus)
+        const expectedBonus = amountCents === 100000 ? 10000 : 0;
+        const safeBonusCents = Math.min(bonusCents, expectedBonus);
+
+        const totalCreditsCents = amountCents + safeBonusCents;
+
+        logStep("Processing credit purchase", { amountCents, bonusCents: safeBonusCents, totalCreditsCents, facilityId, userId });
+
+        // Idempotency check: prevent double-crediting from duplicate webhooks
+        const { data: existingTx } = await supabaseAdmin
+          .from("credit_transactions")
+          .select("id")
+          .eq("reference_id", session.id)
+          .eq("transaction_type", "purchase")
+          .maybeSingle();
+
+        if (existingTx) {
+          logStep("Credit purchase already processed (duplicate webhook), skipping", { sessionId: session.id, existingTxId: existingTx.id });
+        } else {
+          // 1. Insert purchase transaction as idempotency gate
+          const { error: txInsertError } = await supabaseAdmin.from("credit_transactions").insert({
+            provider_id: userId,
+            facility_id: facilityId,
+            amount_cents: amountCents,
+            transaction_type: "purchase",
+            reference_id: session.id,
+            description: `Purchased $${(amountCents / 100).toFixed(0)} in credits`,
+            stripe_payment_intent_id: paymentIntentId,
+          });
+
+          if (txInsertError) {
+            logStep("Credit transaction insert failed (likely duplicate)", { error: txInsertError.message });
           } else {
-            // Insert the transaction record FIRST as the idempotency gate
-            // If a concurrent webhook tries to insert with the same reference_id, it will fail
-            const { error: txInsertError } = await supabaseAdmin.from("credit_transactions").insert({
-              provider_id: userId,
-              facility_id: facilityId,
-              amount_cents: amountCents,
-              transaction_type: "purchase",
-              reference_id: session.id,
-              description: `Purchased $${(amountCents / 100).toFixed(2)} in credits`,
-              stripe_payment_intent_id: session.payment_intent as string,
-            });
+            // 2. If bonus credits, insert separate bonus transaction for audit trail
+            if (safeBonusCents > 0) {
+              const { error: bonusError } = await supabaseAdmin.from("credit_transactions").insert({
+                provider_id: userId,
+                facility_id: facilityId,
+                amount_cents: safeBonusCents,
+                transaction_type: "bonus",
+                reference_id: `${session.id}_bonus`,
+                description: `Bonus credits for $${(amountCents / 100).toFixed(0)} purchase`,
+                stripe_payment_intent_id: paymentIntentId,
+              });
 
-            if (txInsertError) {
-              // If insert fails (e.g. duplicate), another webhook already processed this
-              logStep("Credit transaction insert failed (likely duplicate)", { error: txInsertError.message });
-            } else {
-              // Transaction logged — now safely update balance
-              // Use read-then-upsert; the transaction record above prevents double-crediting
-              const { data: existingCredits } = await supabaseAdmin
-                .from("provider_credits")
-                .select("balance_cents")
-                .eq("provider_id", userId)
-                .maybeSingle();
-
-              const currentBalance = existingCredits?.balance_cents ?? 0;
-              const newBalance = currentBalance + amountCents;
-
-              const { error: creditError } = await supabaseAdmin
-                .from("provider_credits")
-                .upsert({
-                  provider_id: userId,
-                  facility_id: facilityId,
-                  balance_cents: newBalance,
-                  updated_at: new Date().toISOString(),
-                }, { onConflict: "provider_id" });
-
-              if (creditError) {
-                logStep("Error updating credits", { error: creditError.message });
+              if (bonusError) {
+                logStep("WARN - Bonus transaction insert failed", { error: bonusError.message });
+                // Continue — purchase was logged, bonus is best-effort
               } else {
-                logStep("Credits added successfully", { previousBalance: currentBalance, newBalance });
-
-                // Create provider notification
-                await supabaseAdmin.from("provider_notifications").insert({
-                  user_id: userId,
-                  facility_id: facilityId,
-                  type: "credits_added",
-                  title: "Credits Added",
-                  message: `$${(amountCents / 100).toFixed(2)} credits have been added to your account.`,
-                  metadata: { amount_cents: amountCents, new_balance: newBalance },
-                });
-
-                logStep("Credit purchase fully processed");
+                logStep("Bonus credits transaction logged", { bonusCents: safeBonusCents });
               }
+            }
+
+            // 3. Update balance atomically
+            const { data: existingCredits } = await supabaseAdmin
+              .from("provider_credits")
+              .select("balance_cents")
+              .eq("provider_id", userId)
+              .maybeSingle();
+
+            const currentBalance = existingCredits?.balance_cents ?? 0;
+            const newBalance = currentBalance + totalCreditsCents;
+
+            const { error: creditError } = await supabaseAdmin
+              .from("provider_credits")
+              .upsert({
+                provider_id: userId,
+                facility_id: facilityId,
+                balance_cents: newBalance,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: "provider_id" });
+
+            if (creditError) {
+              logStep("ERROR - Failed to update credits balance", { error: creditError.message });
+            } else {
+              logStep("Credits added successfully", { previousBalance: currentBalance, newBalance, totalCreditsCents });
+
+              // 4. Provider notification
+              const bonusMsg = safeBonusCents > 0
+                ? ` (includes $${(safeBonusCents / 100).toFixed(0)} bonus!)`
+                : "";
+              await supabaseAdmin.from("provider_notifications").insert({
+                user_id: userId,
+                facility_id: facilityId,
+                type: "credits_added",
+                title: "Credits Added",
+                message: `$${(totalCreditsCents / 100).toFixed(0)} in credits added to your account${bonusMsg}`,
+                metadata: {
+                  purchase_amount_cents: amountCents,
+                  bonus_cents: safeBonusCents,
+                  total_credits_cents: totalCreditsCents,
+                  new_balance: newBalance,
+                  payment_intent_id: paymentIntentId,
+                  checkout_session_id: session.id,
+                },
+              });
+
+              logStep("Credit purchase fully processed", { newBalance });
             }
           }
         }
