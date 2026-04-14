@@ -644,6 +644,14 @@ export default function SeekerConcierge() {
           </div>
         )}
 
+        {/* Advisor Trust Layer */}
+        {selectedCase && (
+          <AdvisorTrustCard 
+            advisorId={selectedCase.assigned_advisor_id} 
+            caseStatus={selectedCase.status} 
+          />
+        )}
+
         {/* Placed Facility */}
         {selectedCase?.status === "placed" && placedFacility && (
           <div className="space-y-4">
