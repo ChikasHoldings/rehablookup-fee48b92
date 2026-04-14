@@ -126,6 +126,11 @@ export default function ConciergeThankYou() {
         submittedSessions.push(sessionId);
         localStorage.setItem(SUBMITTED_KEY, JSON.stringify(submittedSessions));
 
+        // Clear draft data after successful submission to prevent stale data
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem("concierge_email_verified");
+        localStorage.removeItem("concierge_draft_id");
+
         toast.success("Your placement request has been submitted!");
 
       } catch (err) {
