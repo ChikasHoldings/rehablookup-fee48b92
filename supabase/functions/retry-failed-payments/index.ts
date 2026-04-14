@@ -218,14 +218,16 @@ Deno.serve(async (req) => {
             metadata: { invoice_id: invoice.id, facility_id: invoice.facility_id, error: errorMessage },
           });
 
-          // Notify provider
+          // Notify provider via provider_notifications (shown in provider dashboard)
           if (invoice.facilities?.user_id) {
-            await supabase.from('admin_user_notifications').insert({
+            await supabase.from('provider_notifications').insert({
               user_id: invoice.facilities.user_id,
+              facility_id: invoice.facility_id,
               type: 'payment_failed',
               title: 'Payment Failed - Action Required',
               message: 'Your placement fee payment has failed multiple times. Please update your payment method to avoid service interruption.',
               link: '/provider/placement-network',
+              metadata: { invoice_id: invoice.id },
             });
           }
 
