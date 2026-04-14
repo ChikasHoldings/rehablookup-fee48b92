@@ -45,6 +45,7 @@ export function FacilityReviewsSection({ facilityId, facilityName }: FacilityRev
         isLoading={isLoading}
         isAuthenticated={isAuthenticated}
         onToggleHelpful={toggleHelpful}
+        facilityId={facilityId}
       />
     </div>
   );

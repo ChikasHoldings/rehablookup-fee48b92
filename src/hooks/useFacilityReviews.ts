@@ -146,6 +146,16 @@ export function useFacilityReviews(facilityId: string) {
 
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
+    if (!isEmailVerified) return { error: new Error('Please verify your email before submitting a review.') };
+    if (rating < 1 || rating > 5) return { error: new Error('Rating must be between 1 and 5') };
+    if (reviewText && reviewText.length > 2000) return { error: new Error('Review text must be 2000 characters or less') };
+
+    // Sanitize review text client-side (server also validates)
+    const sanitized = reviewText
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/data:/gi, '')
+      .trim();
 
     // Resolve reviewer display name — required, not optional
     let reviewerDisplayName: string | null = null;
@@ -182,7 +192,7 @@ export function useFacilityReviews(facilityId: string) {
         user_id: user.id,
         facility_id: facilityId,
         rating,
-        review_text: reviewText.trim() || null,
+        review_text: sanitized || null,
         reviewer_display_name: reviewerDisplayName
       } as any)
       .select()
