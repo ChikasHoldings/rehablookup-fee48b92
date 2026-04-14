@@ -231,6 +231,30 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
       )}
 
+      {/* Notify Seeker — Send provider options for review */}
+      {caseData.status === "in_contact" && !caseData.seeker_confirmed && (
+        <NotifySeekerCard caseData={caseData} onRefresh={onRefresh} />
+      )}
+
+      {/* Seeker confirmed indicator for admin */}
+      {caseData.seeker_confirmed && caseData.status !== "placed" && (
+        <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2Icon className="h-5 w-5 text-emerald-600" />
+              <div>
+                <p className="font-medium text-emerald-800 dark:text-emerald-400">Seeker Confirmed</p>
+                <p className="text-sm text-muted-foreground">
+                  {caseData.seeker_confirmed_at
+                    ? `Confirmed on ${new Date(caseData.seeker_confirmed_at).toLocaleDateString()}`
+                    : "The seeker has confirmed their preferred facility. You can now finalize the placement."}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status Update */}
       <Card>
         <CardHeader className="py-3">
