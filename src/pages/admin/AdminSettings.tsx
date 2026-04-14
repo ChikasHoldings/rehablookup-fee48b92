@@ -168,16 +168,10 @@ export default function AdminSettings() {
       )
       .subscribe();
 
-    const leadsChannel = supabase
-      .channel("admin-settings-leads")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "leads" },
-        () => {
-          invalidateSettingsQueries();
-        }
-      )
-      .subscribe();
+    // Poll for leads data every 60 seconds (leads removed from Realtime for PII security)
+    const leadsInterval = setInterval(() => {
+      invalidateSettingsQueries();
+    }, 60000);
 
     const usersChannel = supabase
       .channel("admin-settings-users")
