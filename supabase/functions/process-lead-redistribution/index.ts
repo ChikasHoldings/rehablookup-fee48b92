@@ -191,12 +191,12 @@ Deno.serve(async (req) => {
       // Also try to match by facility_type if lead has level_of_care
       let facilityQuery = supabase
         .from("facilities")
-        .select("id, name, email, user_id, reply_email, reply_email_verified, facility_type")
+        .select("id, name, email, user_id, reply_email, reply_email_verified, facility_type, featured")
         .eq("state", leadState)
         .eq("status", "approved")
         .neq("suspended", true)
         .neq("id", lead.facility_id)
-        .limit(maxRedistributionFacilities * 3); // Get more to filter
+        .limit(maxRedistributionFacilities * 5); // Get more to filter and prioritize Pro
 
       const { data: nearbyFacilities } = await facilityQuery;
 
