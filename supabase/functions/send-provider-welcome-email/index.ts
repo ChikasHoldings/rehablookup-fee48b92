@@ -220,6 +220,9 @@ Deno.serve(async (req) => {
       );
     }
 
+    const emailHtml = generateWelcomeEmail(providerFirstName, facilityName, selectedPlan);
+    const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
+
     const { error: emailError } = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
@@ -234,6 +237,14 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Record send for idempotency
+    await supabase.from("email_tracking_events").insert({
+      email_id: dedupKey,
+      email_type: "provider_welcome",
+      event_type: "sent",
+      recipient_email: providerEmail,
+    });
 
     logStep("Welcome email sent successfully", { to: providerEmail });
     return new Response(
