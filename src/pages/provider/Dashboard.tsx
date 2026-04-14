@@ -227,6 +227,23 @@ export default function ProviderDashboardPage() {
     refetchOnMount: true,
   });
 
+  // Fetch review count
+  const { data: reviewCount = 0 } = useQuery({
+    queryKey: ["review-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const { count, error } = await supabase
+        .from("facility_reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facilityId)
+        .eq("status", "approved");
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Compute missing fields
   const computeMissingFields = () => {
     if (!providerData?.facility) return [];
