@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useSelectedFacilityOptional } from "@/contexts/SelectedFacilityContext";
+import { useMatchScore, MatchScoreBadge } from "./MatchScoreUtils";
 
 interface ConciergeInquiry {
   id: string;
@@ -77,6 +79,8 @@ export function IntroductionCard({
   const [isDeclining, setIsDeclining] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const inquiry = introduction.concierge_inquiries;
+  const { selectedFacility } = useSelectedFacilityOptional();
+  const matchScore = useMatchScore(selectedFacility, inquiry);
 
   const caseId = `Case #${inquiry?.id?.slice(0, 8).toUpperCase() || introduction.id.slice(0, 8).toUpperCase()}`;
   const firstName = inquiry?.user_name?.split(" ")[0] || "Client";
