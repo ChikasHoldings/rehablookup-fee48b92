@@ -8,6 +8,7 @@ import {
   Users, 
   CreditCard,
   Building2,
+  Eye,
   FileEdit,
   Phone,
   AlertTriangle,
