@@ -174,6 +174,14 @@ export function useSeekerAuth() {
     // If signup successful, explicitly create seeker profile and role
     // IMPORTANT: Only create seeker profile if this is a NEW user (not existing admin/provider)
     if (!error && data.user) {
+      // CRITICAL: Verify the returned user is a seeker, not cross-account
+      if (data.session) {
+        const accountType = data.user.user_metadata?.account_type;
+        if (accountType && accountType !== 'seeker') {
+          await supabase.auth.signOut();
+          return { data: null, error: new Error('This email is already associated with another account type. Please use a different email.') };
+        }
+      }
       try {
         // First, verify this user doesn't already have a provider profile
         const { data: existingProvider } = await supabase

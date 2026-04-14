@@ -226,6 +226,15 @@ export default function SeekerSignup() {
       }
       
       if (data.user) {
+        // CRITICAL: Verify the returned user is actually a seeker, not a hijacked session
+        if (data.session) {
+          const accountType = data.user.user_metadata?.account_type;
+          if (accountType && accountType !== 'seeker') {
+            await supabase.auth.signOut();
+            toast.error('This email is already associated with another account type. Please use a different email.');
+            return;
+          }
+        }
         // Update seeker profile with phone/location (trigger creates the base profile)
         if (data.session) {
           supabase
