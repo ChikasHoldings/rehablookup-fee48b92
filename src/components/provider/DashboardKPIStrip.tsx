@@ -149,6 +149,30 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
         ))}
       </div>
 
+      {/* Missed Leads Banner */}
+      {!isLoading && missed > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3">
+          <div className="h-9 w-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+            <AlertCircle className="h-4.5 w-4.5 text-destructive" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              You missed {missed} lead{missed !== 1 ? "s" : ""} this week
+            </p>
+            <p className="text-xs text-muted-foreground">
+              That's ~${estRevenueLost.toLocaleString()} in potential revenue. {!isPro ? "Upgrade to Pro for priority access + save 20% on every unlock." : "Respond faster to avoid missing opportunities."}
+            </p>
+          </div>
+          {!isPro && (
+            <Button size="sm" className="shrink-0 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white" asChild>
+              <Link to="/provider/pro-upgrade">
+                Upgrade to Pro <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Link>
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Contextual Banners */}
       {!isLoading && (
         <>
