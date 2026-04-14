@@ -85,6 +85,33 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
     enabled: !!selectedThread?.id,
   });
 
+  // Realtime subscription for new messages across all threads
+  useEffect(() => {
+    const channel = supabase
+      .channel(`admin-case-messages-${caseData.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "concierge_messages",
+        },
+        (payload: any) => {
+          // Refresh messages if it's in the selected thread
+          if (selectedThread?.id && payload.new.thread_id === selectedThread.id) {
+            queryClient.invalidateQueries({ queryKey: ["admin-thread-messages", selectedThread.id] });
+          }
+          // Always refresh thread list for unread indicators
+          queryClient.invalidateQueries({ queryKey: ["admin-case-threads", caseData.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [caseData.id, selectedThread?.id, queryClient]);
+
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

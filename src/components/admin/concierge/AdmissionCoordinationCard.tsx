@@ -108,6 +108,37 @@ export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoor
           actor_id: user.id,
           actor_type: "admin",
         });
+
+        // Determine which notification to send based on what changed
+        let notificationType: string | null = null;
+        if (admissionStatus === "moved_in" && caseData.admission_status !== "moved_in") {
+          notificationType = "moved_in";
+        } else if (admissionStatus === "move_in_scheduled" && caseData.admission_status !== "move_in_scheduled") {
+          notificationType = "move_in_scheduled";
+        } else if (tourStatus === "completed" && caseData.tour_coordination_status !== "completed") {
+          notificationType = "tour_completed";
+        } else if (admissionStatus !== caseData.admission_status) {
+          notificationType = "admission_updated";
+        }
+
+        if (notificationType) {
+          try {
+            await supabase.functions.invoke("send-concierge-notifications", {
+              body: {
+                type: notificationType,
+                inquiryId: caseData.id,
+                facilityId: caseData.placed_facility_id,
+                metadata: {
+                  admission_status: admissionStatus,
+                  tour_status: tourStatus,
+                  move_in_date: moveInDate?.toISOString() || null,
+                },
+              },
+            });
+          } catch (e) {
+            console.error("Notification send failed:", e);
+          }
+        }
       }
     },
     onSuccess: () => {
