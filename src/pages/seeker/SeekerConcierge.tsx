@@ -36,6 +36,7 @@ import {
   PlacementMatchCard,
   PlacementSupportCard,
   SeekerPlacementModal,
+  SeekerProviderReviewCard,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 
@@ -633,7 +634,7 @@ export default function SeekerConcierge() {
         )}
 
         {/* Tabs for active cases */}
-        {showMatchedFacilities && selectedCase?.status !== "placed" && (
+        {showMatchedFacilities && selectedCase?.status !== "placed" && selectedCase?.status !== "in_contact" && (
           <PlacementTabs 
             inquiryId={selectedCase.id}
             matchedFacilityIds={selectedCase.matched_facility_ids}
@@ -641,9 +642,26 @@ export default function SeekerConcierge() {
           />
         )}
 
-        {/* In Contact - Advisor is coordinating with facilities */}
-        {showInContactInfo && (
-          <PlacementConfirmationCard type="ready" />
+        {/* In Contact — Seeker reviews and selects from interested facilities */}
+        {selectedCase?.status === "in_contact" && (
+          <>
+            <SeekerProviderReviewCard
+              inquiryId={selectedCase.id}
+              onConfirmed={() => {
+                queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases", userId] });
+              }}
+            />
+            <PlacementTabs 
+              inquiryId={selectedCase.id}
+              matchedFacilityIds={selectedCase.matched_facility_ids}
+              matchedFacilities={matchedFacilities}
+            />
+          </>
+        )}
+
+        {/* Seeker confirmed, awaiting admin final confirmation */}
+        {selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed && selectedCase.status !== "placed" && (
+          <PlacementConfirmationCard type="awaiting_admin" />
         )}
 
         {/* Feedback */}
