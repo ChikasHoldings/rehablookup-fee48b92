@@ -362,23 +362,6 @@ export default function ProviderDashboardPage() {
                   </div>
                   
                   <div className="flex items-center gap-2.5">
-                    {/* Credit Balance Chip */}
-                    <Link
-                      to="/provider/billing"
-                      className="group flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-sm transition-all text-sm"
-                    >
-                      <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <CreditCard className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      {creditsLoading ? (
-                        <Skeleton className="h-5 w-12" />
-                      ) : (
-                        <span className="font-bold text-foreground tabular-nums tracking-tight">
-                          ${((creditsData?.balance_cents || 0) / 100).toFixed(2)}
-                        </span>
-                      )}
-                    </Link>
-
                     {/* Plan Badge */}
                     {proStatus.isPro ? (
                       <Link
