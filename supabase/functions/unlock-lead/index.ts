@@ -512,7 +512,74 @@ Deno.serve(async (req) => {
       logStep(requestId, "WARN - Failed to create provider notification", { error: String(notifError) });
     }
 
-    // Track unlock conversion event and mark all reminder columns to stop future notifications
+    // Send unlock confirmation email to provider
+    try {
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (resendKey) {
+        const { data: providerProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("email, first_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const { data: facilityData } = await supabaseAdmin
+          .from("facilities")
+          .select("name")
+          .eq("id", facilityId)
+          .maybeSingle();
+
+        if (providerProfile?.email) {
+          const resendClient = new Resend(resendKey);
+          const providerName = providerProfile.first_name || "there";
+          const facilityNameStr = facilityData?.name || "your facility";
+          const leadName = lead?.name ? lead.name.split(" ")[0] : "a seeker";
+
+          await sendEmailWithRetry(supabaseAdmin, resendClient, {
+            from: "RehabLookup <no-reply@rehablookup.com>",
+            to: [providerProfile.email],
+            subject: `Lead Unlocked — ${leadName}'s contact details are ready`,
+            html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;">
+<tr><td align="center" style="padding:40px 20px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+<tr><td style="background:linear-gradient(135deg,#1B365D 0%,#2a4a7f 100%);padding:32px;text-align:center;">
+<div style="font-size:40px;margin-bottom:12px;">🔓</div>
+<h1 style="margin:0;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:24px;font-weight:700;">Lead Unlocked</h1>
+</td></tr>
+<tr><td style="padding:32px;">
+<p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;color:#1a1a1a;line-height:1.6;">Hi ${providerName},</p>
+<p style="margin:0 0 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;color:#4b5563;line-height:1.7;">You've unlocked a lead for <strong>${facilityNameStr}</strong>. The contact details are now available in your dashboard.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9ff;border-radius:12px;margin-bottom:24px;">
+<tr><td style="padding:20px;">
+<p style="margin:0 0 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:#1e40af;"><strong>Amount:</strong> $${(unlockPrice / 100).toFixed(2)}</p>
+<p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:#1e40af;"><strong>Payment:</strong> ${paymentMethod === 'credits' ? 'Credits' : 'Card'}</p>
+</td></tr></table>
+<p style="margin:0 0 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;color:#4b5563;line-height:1.7;">💡 <strong>Tip:</strong> Respond within 1 hour for the best chance of connecting with this lead.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr><td align="center">
+<a href="https://rehablookup.com/provider/inquiries" style="display:inline-block;background:#1B365D;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:600;font-size:15px;">View Lead Details</a>
+</td></tr></table>
+</td></tr>
+<tr><td style="background:#1B365D;padding:24px;text-align:center;">
+<p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:18px;font-weight:700;color:#fff;">RehabLookup</p>
+<p style="margin:8px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;color:rgba(255,255,255,0.6);">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
+</td></tr>
+</table></td></tr></table>
+</body></html>`,
+          }, {
+            emailType: "lead_unlock_confirmation",
+            idempotencyKey: `unlock-confirm-${leadId}-${facilityId}`,
+          });
+          logStep(requestId, "Unlock confirmation email sent");
+        }
+      }
+    } catch (emailErr) {
+      logStep(requestId, "WARN - Failed to send unlock confirmation email", { error: String(emailErr) });
+    }
+
     try {
       // Calculate time to unlock
       const leadCreatedAt = lead?.created_at ? new Date(lead.created_at) : null;
