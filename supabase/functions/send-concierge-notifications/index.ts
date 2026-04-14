@@ -25,7 +25,11 @@ type NotificationType =
   | 'placement_complete'   // Both: Congratulations on the placement!
   | 'invoice_issued'       // Provider: Your placement fee invoice
   | 'invoice_paid'         // Provider: Payment received
-  | 'signup_prompt';       // Seeker (no account): Create account to track
+  | 'signup_prompt'        // Seeker (no account): Create account to track
+  | 'tour_completed'       // Both: Tour has been completed
+  | 'admission_updated'    // Both: Admission status changed
+  | 'move_in_scheduled'    // Both: Move-in date has been set
+  | 'moved_in';            // Both: Client has moved in
 
 interface NotificationRequest {
   type: NotificationType;
@@ -106,7 +110,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate notification type
-    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt'];
+    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in'];
     if (!validTypes.includes(type)) {
       throw new Error("Invalid notification type");
     }
