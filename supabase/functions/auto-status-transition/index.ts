@@ -40,7 +40,7 @@ const VALID_TRANSITIONS: Record<string, { from: string[]; to: string }> = {
   admin_viewed: { from: ['new'], to: 'reviewing' },
   matches_completed: { from: ['reviewing', 'matching'], to: 'matched' },
   introduction_sent: { from: ['matched'], to: 'introductions_sent' },
-  provider_interested: { from: ['introductions_sent'], to: 'in_contact' },
+  provider_interested: { from: ['matched', 'introductions_sent'], to: 'in_contact' },
 };
 
 Deno.serve(async (req) => {
