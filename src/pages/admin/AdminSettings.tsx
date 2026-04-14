@@ -1901,7 +1901,7 @@ export default function AdminSettings() {
                       onClick={async () => {
                         try {
                           toast.info("Sending weekly report...");
-                          const response = await supabase.functions.invoke("send-admin-weekly-report");
+                          const response = await supabase.functions.invoke("send-admin-daily-summary", { body: { period: "weekly" } });
                           if (response.error) throw response.error;
                           await logAdminAction({
                             actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
