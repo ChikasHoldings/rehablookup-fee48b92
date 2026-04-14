@@ -117,11 +117,15 @@ export default function ConciergeThankYou() {
           return;
         }
 
+        setPaymentVerified(true);
+        setUserEmail(verifyData.email);
+
         // Get intake data from localStorage
         const savedIntake = localStorage.getItem(STORAGE_KEY);
         if (!savedIntake) {
           setError("Intake data not found. Please contact support if you completed payment.");
           setIsVerifying(false);
+          submissionInFlight.current = false;
           return;
         }
 
@@ -157,6 +161,7 @@ export default function ConciergeThankYou() {
       } finally {
         setIsVerifying(false);
         setIsSubmitting(false);
+        submissionInFlight.current = false;
       }
     };
 
