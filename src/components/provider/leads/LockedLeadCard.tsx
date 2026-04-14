@@ -1,9 +1,11 @@
-import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Timer, Flame, Eye, Users, MapPin, Heart, Shield, DollarSign, CalendarClock, UserCheck } from "lucide-react";
+import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Timer, Flame, Eye, Users, MapPin, Heart, Shield, DollarSign, CalendarClock, UserCheck, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router-dom";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { useLeadCountdown } from "@/hooks/useLeadCountdown";
+import { useProStatus } from "@/hooks/useProStatus";
 
 interface LockedLeadCardProps {
   leadId: string;
@@ -73,7 +75,8 @@ export function LockedLeadCard({
   const initial = name.charAt(0).toUpperCase();
   const blurredName = `${initial}${"●".repeat(Math.min(name.length - 1, 8))}`;
   const countdown = useLeadCountdown(createdAt);
-
+  const { data: proStatus } = useProStatus(facilityId);
+  const isPro = proStatus?.isPro ?? false;
   const location = locationCityState || (locationZip ? `ZIP: ${locationZip}` : null);
   const urgencyInfo = urgency ? URGENCY_LABELS[urgency] : null;
   const insuranceHint = insuranceProvider || insuranceType;
@@ -250,9 +253,19 @@ export function LockedLeadCard({
               🔥 This lead may be shared with others if not unlocked
             </div>
           )}
+
+          {/* Pro upgrade nudge for Free providers */}
+          {!isPro && (
+            <Link
+              to="/provider/pro-upgrade"
+              className="mt-2 flex items-center gap-1.5 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              <Star className="h-3 w-3" />
+              Upgrade to Pro — save 20% on unlocks &amp; get priority leads
+            </Link>
+          )}
         </div>
       </div>
-      
       {/* Unlock CTA */}
       <UnlockLeadButton
         leadId={leadId}
