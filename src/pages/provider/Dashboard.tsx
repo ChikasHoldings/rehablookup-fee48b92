@@ -365,13 +365,15 @@ export default function ProviderDashboardPage() {
                     {/* Credit Balance Chip */}
                     <Link
                       to="/provider/billing"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 bg-muted/40 hover:bg-muted/70 transition-colors text-sm"
+                      className="group flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-sm transition-all text-sm"
                     >
-                      <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                      <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <CreditCard className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       {creditsLoading ? (
-                        <Skeleton className="h-4 w-10" />
+                        <Skeleton className="h-5 w-12" />
                       ) : (
-                        <span className="font-semibold text-foreground tabular-nums">
+                        <span className="font-bold text-foreground tabular-nums tracking-tight">
                           ${((creditsData?.balance_cents || 0) / 100).toFixed(2)}
                         </span>
                       )}
@@ -381,18 +383,24 @@ export default function ProviderDashboardPage() {
                     {proStatus.isPro ? (
                       <Link
                         to="/provider/billing"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-semibold shadow-sm hover:shadow-md transition-shadow"
+                        className="group relative inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 text-white text-xs font-bold tracking-wide shadow-[0_2px_8px_-2px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_12px_-2px_rgba(245,158,11,0.5)] transition-all overflow-hidden"
                       >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        PRO
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="h-5 w-5 rounded-md bg-white/20 flex items-center justify-center">
+                          <Sparkles className="h-3 w-3" />
+                        </div>
+                        <span className="relative">PRO</span>
                       </Link>
                     ) : (
                       <Link
                         to="/provider/pro-upgrade"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/30 transition-colors text-xs font-semibold text-muted-foreground hover:text-primary"
+                        className="group relative inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-semibold text-muted-foreground hover:text-primary"
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
-                        Free Plan
+                        <div className="h-5 w-5 rounded-md bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                          <Sparkles className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                        </div>
+                        <span>Free</span>
+                        <ArrowRight className="h-3 w-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all" />
                       </Link>
                     )}
                   </div>
