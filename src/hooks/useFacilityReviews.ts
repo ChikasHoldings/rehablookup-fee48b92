@@ -210,6 +210,7 @@ export function useFacilityReviews(facilityId: string) {
       .single();
 
     if (!error && data) {
+      lastSubmitRef.current = Date.now();
       setUserReview(data);
       
       // Notify admins about new review
