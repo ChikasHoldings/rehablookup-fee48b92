@@ -92,7 +92,7 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     // If we have a selected facility, try to find the full version
     if (currentId) {
       const fullFacility = facilities.find(f => f.id === currentId);
-      if (fullFacility) {
+      if (fullFacility && !fullFacility.suspended) {
         console.log("[SelectedFacilityContext] Hydrated facility:", fullFacility.name);
         setSelectedFacilityState(fullFacility);
         localStorage.setItem("selectedFacilityData", JSON.stringify(fullFacility));
@@ -101,11 +101,14 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
       }
     }
     
-    // Default to first facility
-    console.log("[SelectedFacilityContext] Defaulting to first facility:", facilities[0]?.name);
-    setSelectedFacilityState(facilities[0]);
-    localStorage.setItem("selectedFacilityId", facilities[0].id);
-    localStorage.setItem("selectedFacilityData", JSON.stringify(facilities[0]));
+    // Default to first non-suspended facility
+    const activeFacility = facilities.find(f => !f.suspended) ?? facilities[0];
+    if (activeFacility) {
+      console.log("[SelectedFacilityContext] Defaulting to first active facility:", activeFacility.name);
+      setSelectedFacilityState(activeFacility);
+      localStorage.setItem("selectedFacilityId", activeFacility.id);
+      localStorage.setItem("selectedFacilityData", JSON.stringify(activeFacility));
+    }
     hydratedRef.current = true;
   }, [facilities, facilitiesLoading, selectedFacility?.id]);
 
