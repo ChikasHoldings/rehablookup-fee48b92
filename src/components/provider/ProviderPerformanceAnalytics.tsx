@@ -38,7 +38,7 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
     );
   }
 
-  const totalViews = engagement?.periodListingViews || 0;
+  const totalViews = engagement?.periodImpressions || 0;
   const totalLeads = leads?.thisMonthLeads || 0;
   const converted = leads?.conversionFunnel.converted || 0;
   const viewToLeadRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
@@ -84,7 +84,7 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
     <div className="space-y-5">
       {/* Performance KPIs */}
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <PerfCard title="Total Views" value={totalViews} icon={Eye} color="primary" />
+        <PerfCard title="Impressions" value={totalViews} icon={Eye} color="primary" />
         <PerfCard title="Total Leads" value={totalLeads} icon={MessageSquare} color="blue" />
         <PerfCard title="View → Lead" value={`${viewToLeadRate}%`} icon={TrendingUp} color="purple" />
         <PerfCard title="Lead → Convert" value={`${leadToConversionRate}%`} icon={Target} color="emerald" />
