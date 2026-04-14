@@ -429,6 +429,9 @@ async function sendIntakeReceivedEmail(
     to: [inquiry.user_email],
     subject: `We've Received Your Request - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_intake_received",
+    idempotencyKey: `concierge-intake-${inquiry.id}`,
   });
 
   if (!emailError) {
@@ -501,6 +504,9 @@ async function sendMatchesFoundEmail(
     to: [inquiry.user_email],
     subject: `We Found ${matchCount} Matches for You - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_matched",
+    idempotencyKey: `concierge-matched-${inquiry.id}`,
   });
 
   if (!emailError) {
@@ -562,6 +568,9 @@ async function sendIntroductionsSentEmail(
     to: [inquiry.user_email],
     subject: `Your Advisor is Contacting Facilities - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_intros_sent",
+    idempotencyKey: `concierge-intros-${inquiry.id}`,
   });
 
   if (!emailError) {
@@ -624,6 +633,9 @@ async function sendFacilitiesReadyForReviewEmail(
     to: [inquiry.user_email],
     subject: `Your Treatment Options Are Ready - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_in_contact",
+    idempotencyKey: `concierge-contact-${inquiry.id}`,
   });
 
   if (!emailError) {
@@ -730,6 +742,9 @@ async function sendAdmissionStageNotification(
       to: [inquiry.user_email],
       subject: config.seekerSubject,
       html: seekerHtml,
+    }, {
+      emailType: `concierge_admission_${stage}`,
+      idempotencyKey: `concierge-admission-${stage}-${inquiry.id}`,
     });
 
     if (!emailError) {
@@ -999,6 +1014,9 @@ async function sendSeekerConfirmedEmail(
     to: [recipientEmail],
     subject: `Client Confirmed Admission - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_seeker_confirmed",
+    idempotencyKey: `concierge-seeker-confirmed-${inquiry.id}`,
   });
 
   if (!emailError) {
@@ -1063,6 +1081,9 @@ async function sendProviderConfirmedEmail(
     to: [inquiry.user_email],
     subject: `${facility.name} Confirmed Your Placement - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_provider_confirmed",
+    idempotencyKey: `concierge-provider-confirmed-${inquiry.id}`,
   });
 
   if (!emailError) {
@@ -1141,6 +1162,9 @@ async function sendPlacementCompleteEmails(
     to: [inquiry.user_email],
     subject: `Congratulations! Your Placement is Complete - Case #${caseId}`,
     html: seekerHtml,
+  }, {
+    emailType: "concierge_placed_seeker",
+    idempotencyKey: `concierge-placed-seeker-${inquiry.id}`,
   });
 
   if (!seekerEmailError) {
@@ -1177,6 +1201,9 @@ async function sendPlacementCompleteEmails(
       to: [recipientEmail],
       subject: `Placement Complete - Case #${caseId}`,
       html: providerHtml,
+    }, {
+      emailType: "concierge_placed_provider",
+      idempotencyKey: `concierge-placed-provider-${inquiry.id}`,
     });
 
     if (!providerEmailError) {
@@ -1296,6 +1323,9 @@ async function sendInvoiceIssuedEmail(
     to: [recipientEmail],
     subject: `Placement Fee Invoice - ${amountFormatted} - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_invoice",
+    idempotencyKey: `concierge-invoice-${invoiceId}`,
   });
 
   if (!emailError) {
@@ -1371,6 +1401,9 @@ async function sendInvoicePaidEmail(
     to: [recipientEmail],
     subject: `Payment Received - ${amountFormatted} - Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_invoice_paid",
+    idempotencyKey: `concierge-invoice-paid-${invoiceId}`,
   });
 
   if (!emailError) {
