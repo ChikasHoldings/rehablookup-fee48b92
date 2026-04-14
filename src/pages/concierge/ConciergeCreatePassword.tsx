@@ -128,10 +128,10 @@ export default function ConciergeCreatePassword() {
           return;
         }
 
-        // Now sign up the user
+        // Now sign up the user with a temporary password (will be replaced in next step)
         const tempPassword = crypto.randomUUID();
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim().toLowerCase(),
           password: tempPassword,
           options: { data: { account_type: 'seeker' } },
         });
@@ -142,6 +142,16 @@ export default function ConciergeCreatePassword() {
             return;
           }
           throw signUpError;
+        }
+
+        // Guard: verify the returned user is actually a seeker
+        if (signUpData?.user && signUpData?.session) {
+          const accountType = signUpData.user.user_metadata?.account_type;
+          if (accountType && accountType !== 'seeker') {
+            await supabase.auth.signOut();
+            toast.error("This email is already associated with another account type. Please use a different email.");
+            return;
+          }
         }
 
         setStep("set-password");
