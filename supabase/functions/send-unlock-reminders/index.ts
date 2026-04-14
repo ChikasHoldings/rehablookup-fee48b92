@@ -387,7 +387,7 @@ Deno.serve(async (req) => {
         .select(`
           id, name, facility_id, level_of_care, urgency, location_city_state,
           inquiry_type, high_intent, created_at, credit_cost,
-          facilities!inner (id, name, email, user_id, reply_email, reply_email_verified)
+          facilities!leads_facility_id_fkey (id, name, email, user_id, reply_email, reply_email_verified)
         `)
         .is(stage.column, null)
         .is("lead_expired_at", null) // Skip already expired leads
