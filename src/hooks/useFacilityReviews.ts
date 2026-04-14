@@ -151,6 +151,13 @@ export function useFacilityReviews(facilityId: string) {
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
     if (!isEmailVerified) return { error: new Error('Please verify your email before submitting a review.') };
+
+    // Client-side cooldown to prevent rapid submissions
+    const now = Date.now();
+    if (now - lastSubmitRef.current < REVIEW_COOLDOWN_MS) {
+      return { error: new Error('Please wait a moment before submitting another review.') };
+    }
+
     if (!reviewText || reviewText.trim().length < 10) return { error: new Error('Review text is required (minimum 10 characters)') };
     if (reviewText.length > 2000) return { error: new Error('Review text must be 2000 characters or less') };
 
