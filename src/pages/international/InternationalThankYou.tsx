@@ -109,9 +109,37 @@ export default function InternationalThankYou() {
 
     setIsCreatingAccount(true);
     try {
+      const trimmedEmail = email.trim().toLowerCase();
+
+      // CRITICAL: Check if email belongs to a provider or admin account first
+      const [providerResult, adminResult] = await Promise.all([
+        supabase.rpc('is_email_provider', { p_email: trimmedEmail }),
+        supabase.rpc('is_email_admin', { p_email: trimmedEmail }),
+      ]);
+
+      if (!providerResult.error && providerResult.data) {
+        toast({
+          title: "Account Exists",
+          description: "This email is registered as a facility provider. Please use a different email or log in to your provider account separately.",
+          variant: "destructive",
+        });
+        setIsCreatingAccount(false);
+        return;
+      }
+
+      if (!adminResult.error && adminResult.data) {
+        toast({
+          title: "Account Exists",
+          description: "This email is associated with an administrative account. Please use a different email.",
+          variant: "destructive",
+        });
+        setIsCreatingAccount(false);
+        return;
+      }
+
       // Create user account
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: trimmedEmail,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/account`,
@@ -125,30 +153,47 @@ export default function InternationalThankYou() {
       if (signUpError) throw signUpError;
 
       if (signUpData.user) {
+        // Guard: if signUp returned an existing session with wrong account type, sign out
+        if (signUpData.session) {
+          const accountType = signUpData.user.user_metadata?.account_type;
+          if (accountType && accountType !== 'seeker') {
+            await supabase.auth.signOut();
+            toast({
+              title: "Account Conflict",
+              description: "This email is already associated with another account type. Please use a different email.",
+              variant: "destructive",
+            });
+            setIsCreatingAccount(false);
+            return;
+          }
+        }
+
         // Create seeker profile
         await supabase.from("seeker_profiles").insert({
           user_id: signUpData.user.id,
           first_name: firstName,
-          email: email,
+          email: trimmedEmail,
         });
 
         // Link international cases to this user
         await supabase
           .from("international_placement_cases")
           .update({ user_id: signUpData.user.id })
-          .eq("client_email", email)
+          .eq("client_email", trimmedEmail)
           .is("user_id", null);
 
         setAccountCreated(true);
         toast({
           title: "Account Created!",
-          description: "You can now track your placement progress.",
+          description: "Check your email to verify, then track your placement progress.",
         });
 
-        // Redirect to account after a short delay
-        setTimeout(() => {
-          navigate("/account/international");
-        }, 1500);
+        // Only redirect if they have an active session
+        if (signUpData.session) {
+          setTimeout(() => {
+            navigate("/account/international");
+          }, 1500);
+        }
       }
     } catch (err: any) {
       console.error("Account creation error:", err);
