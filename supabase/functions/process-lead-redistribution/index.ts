@@ -17,68 +17,61 @@ const log = (level: "INFO" | "WARN" | "ERROR", message: string, details?: unknow
   console.log(`[${timestamp}] [process-lead-redistribution] [${level}] ${message}${detailsStr}`);
 };
 
-// ============ EMAIL TEMPLATE ============
-function getNewLeadNotificationEmail(facilityName: string, leadName: string, dashboardUrl: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
-              <div style="font-size: 48px; margin-bottom: 16px;">🔔</div>
-              <p style="margin: 0 0 8px 0; font-size: 12px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
-              <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-weight: 600;">New Lead Available</h1>
-              <p style="margin: 8px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 14px;">${facilityName}</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
-                Hi ${facilityName} team,
-              </p>
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                A new potential client, <strong>${leadName}</strong>, is looking for treatment services in your area. They've submitted an inquiry and are waiting to connect.
-              </p>
-              
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0; font-size: 14px; color: #166534; line-height: 1.5;">
-                      💡 <strong>Quick Tip:</strong> Families often reach out to multiple facilities. Be the first to respond and increase your chances of helping them!
-                    </p>
-                  </td>
-                </tr>
-              </table>
-              
-              <div style="text-align: center;">
-                <a href="${dashboardUrl}" style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px;">
-                  View Lead Details
-                </a>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0 0 12px 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 600;">RehabLookup</p>
-              <p style="margin: 0; color: #94a3b8; font-family: Arial, Helvetica, sans-serif; font-size: 11px;">
-                © ${new Date().getFullYear()} RehabLookup. All rights reserved.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+// ============ EMAIL TEMPLATES ============
+function getRedistributedLeadEmail(facilityName: string, leadName: string, dashboardUrl: string, discountPrice: string, locationHint: string | null, levelOfCare: string | null): string {
+  const detailItems: string[] = [];
+  if (locationHint) detailItems.push(`📍 Location: <strong>${locationHint}</strong>`);
+  if (levelOfCare) detailItems.push(`🏥 Seeking: <strong>${levelOfCare.replace(/_/g, " ")}</strong>`);
+  
+  const detailsHtml = detailItems.length > 0 
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;margin-bottom:20px;">
+        <tr><td style="padding:16px;">
+          <p style="margin:0 0 8px 0;font-size:13px;font-weight:600;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.5px;">Lead Details</p>
+          ${detailItems.map(i => `<p style="margin:4px 0;font-size:14px;color:#1e40af;">${i}</p>`).join("")}
+        </td></tr>
+      </table>`
+    : "";
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 16px;"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+  <tr><td style="background:#059669;padding:32px;border-radius:12px 12px 0 0;text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">🔁</div>
+    <p style="margin:0 0 8px 0;font-size:12px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1px;">REHABLOOKUP — NEW OPPORTUNITY</p>
+    <h1 style="margin:0;font-size:22px;color:#fff;font-family:Arial,sans-serif;font-weight:600;">New Lead Available in Your Area</h1>
+    <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:14px;">${facilityName}</p>
+  </td></tr>
+  <tr><td style="background:#fff;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
+    <p style="margin:0 0 20px 0;color:#374151;font-size:16px;line-height:1.6;">Hi ${facilityName} team,</p>
+    <p style="margin:0 0 20px 0;color:#374151;font-size:15px;line-height:1.6;">
+      A potential client, <strong>${leadName}</strong>, is actively looking for treatment in your area and hasn't connected with a provider yet. This lead is now available to a <strong>limited number of facilities</strong>.
+    </p>
+    ${detailsHtml}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ecfdf5;border:2px solid #10b981;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:20px;text-align:center;">
+        <p style="margin:0 0 4px 0;font-size:13px;color:#065f46;">🎯 Discounted unlock price</p>
+        <p style="margin:0 0 8px 0;font-size:28px;font-weight:700;color:#047857;">${discountPrice}</p>
+        <p style="margin:0;font-size:12px;color:#059669;">Only available to max 2 providers · First to unlock wins</p>
+      </td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:14px 16px;">
+        <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
+          ⚠️ <strong>Limited availability</strong> — This lead is shared with at most one other provider. Act fast to be the first to connect.
+        </p>
+      </td></tr>
+    </table>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${dashboardUrl}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">🔓 Unlock Discounted Lead Now</a>
+    </div>
+  </td></tr>
+  <tr><td style="background:#1B365D;padding:24px 32px;border-radius:0 0 12px 12px;text-align:center;">
+    <p style="margin:0 0 12px 0;color:#fff;font-size:14px;font-weight:600;">RehabLookup</p>
+    <p style="margin:0;color:#94a3b8;font-size:11px;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
+    <a href="https://rehablookup.com/provider/settings" style="color:#93c5fd;text-decoration:none;font-size:11px;">Notification Settings</a>
+  </td></tr>
+</table></td></tr></table></body></html>`;
 }
 
 // Mask name for emails
