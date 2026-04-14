@@ -162,18 +162,16 @@ export default function AdminProviders() {
       })
       .subscribe();
 
-    const leadsChannel = supabase
-      .channel("admin-providers-leads")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
-        queryClient.invalidateQueries({ queryKey: ["admin-provider-leads"] });
-      })
-      .subscribe();
+    // Poll for leads data every 60 seconds (leads removed from Realtime for PII security)
+    const leadsInterval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-provider-leads"] });
+    }, 60000);
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
       supabase.removeChannel(proChannel);
-      supabase.removeChannel(leadsChannel);
+      clearInterval(leadsInterval);
     };
   }, [invalidateProviderQueries, queryClient]);
 

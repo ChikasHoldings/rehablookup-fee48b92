@@ -85,9 +85,6 @@ export function DataHealthMonitor() {
       .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () => {
         setLastSyncTime(new Date());
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => {
-        setLastSyncTime(new Date());
-      })
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           setRealtimeStatus("connected");

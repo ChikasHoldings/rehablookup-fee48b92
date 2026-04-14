@@ -221,16 +221,9 @@ export default function AdminSubscriptions() {
         .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () => invalidateSubscriptionQueries())
         .subscribe(),
       supabase
-        .channel("admin-subs-unlocks-rt")
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "lead_unlocks" }, () => {
-          queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
-          queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
-        })
-        .subscribe(),
-      supabase
-        .channel("admin-subs-leads-rt")
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, () => {
-          queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
+        .channel("admin-subs-alerts-rt")
+        .on("postgres_changes", { event: "*", schema: "public", table: "subscription_alerts" }, () => {
+          queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
         })
         .subscribe(),
       supabase
