@@ -63,7 +63,7 @@ const HERO_BENEFITS = [
   {
     icon: Mail,
     title: "Review Tools",
-    description: "Send review requests & import Google Reviews.",
+    description: "Send review requests to clients via email.",
     highlight: "Reputation mgmt",
   },
   {
@@ -89,7 +89,7 @@ const COMPARISON_ITEMS: { feature: string; free: string | boolean; pro: string |
   { feature: "Search Ranking", free: "Standard", pro: "Priority (+50)" },
   { feature: "Homepage Featured", free: false, pro: true },
   { feature: "Pro Badge", free: false, pro: true },
-  { feature: "Google Reviews Import", free: false, pro: true },
+  
   { feature: "Review Requests", free: false, pro: true },
   { feature: "Per-Facility Analytics", free: false, pro: true },
   { feature: "Support Priority", free: "Standard", pro: "Priority" },

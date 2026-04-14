@@ -142,11 +142,6 @@ Deno.serve(async (req) => {
         .delete()
         .in("facility_id", facilityIds);
 
-      // Delete facility reviews config
-      await adminClient
-        .from("facility_reviews_config")
-        .delete()
-        .in("facility_id", facilityIds);
 
       // Delete pending changes
       await adminClient

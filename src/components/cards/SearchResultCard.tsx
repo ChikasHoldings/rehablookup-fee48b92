@@ -27,7 +27,7 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useFavorites } from "@/hooks/useFavorites";
 import type { ProximityTier } from "@/lib/proximitySearch";
-import { GoogleReviewsCompactBadge } from "@/components/reviews/GoogleReviewsBadge";
+
 
 interface SearchResultCardProps {
   center: TreatmentCenter & { 
@@ -357,12 +357,6 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
 
           {/* Stats Badges Row */}
           <div className="flex items-center gap-2 flex-wrap mb-2" role="list" aria-label="Provider credentials">
-            {center.googleRating && center.googleReviewCount && (
-              <GoogleReviewsCompactBadge 
-                rating={center.googleRating} 
-                reviewCount={center.googleReviewCount} 
-              />
-            )}
             {center.verified && (
               <Badge className="gap-1.5 px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 rounded-md shadow-sm" role="listitem">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />

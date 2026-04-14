@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
-import { GoogleReviewsCompactBadge } from "@/components/reviews/GoogleReviewsBadge";
+
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -248,12 +248,6 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
 
             {/* Badge row */}
             <div className="flex items-center gap-1.5 flex-wrap" role="list" aria-label="Provider credentials">
-              {center.googleRating && center.googleReviewCount && (
-                <GoogleReviewsCompactBadge 
-                  rating={center.googleRating} 
-                  reviewCount={center.googleReviewCount} 
-                />
-              )}
               {center.verified && (
                 <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 border-0" role="listitem">
                   <ShieldCheck className="h-3 w-3" aria-hidden="true" />
@@ -423,12 +417,6 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
 
         {/* Badge row */}
         <div className="flex items-center gap-1.5 mb-2 flex-wrap" role="list" aria-label="Provider credentials">
-          {center.googleRating && center.googleReviewCount && (
-            <GoogleReviewsCompactBadge 
-              rating={center.googleRating} 
-              reviewCount={center.googleReviewCount} 
-            />
-          )}
           {center.verified && (
             <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full" role="listitem">
               <ShieldCheck className="h-3 w-3" aria-hidden="true" />

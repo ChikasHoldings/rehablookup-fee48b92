@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
       await adminClient.from("review_disputes").delete().in("review_id", reviewIds);
     }
     await adminClient.from("facility_reviews").delete().eq("facility_id", facilityId);
-    await adminClient.from("facility_reviews_config").delete().eq("facility_id", facilityId);
+    
 
     // Delete pending changes
     await adminClient.from("facility_pending_changes").delete().eq("facility_id", facilityId);

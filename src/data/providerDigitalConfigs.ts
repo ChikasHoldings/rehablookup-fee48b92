@@ -16,14 +16,14 @@ export const providerDigitalConfigs: ProviderBusinessConfig[] = [
       "Alumni who had great outcomes forget to leave reviews — they move on with their lives and your online reputation stagnates",
     ],
     insightHeadline: "Review Economics for Rehab",
-    insightContent: "Facilities with 40+ Google reviews and a 4.5+ rating see 70% more click-throughs from search results. The key is building a HIPAA-compliant review request system: asking patients at discharge (with proper consent), following up at 30 and 90 days, and making the process frictionless. Directory listings with verified reviews add another credibility layer — RehabLookup profiles with reviews get 2.5x more engagement than those without.",
+    insightContent: "Facilities with strong review profiles see 70% more click-throughs from search results. The key is building a HIPAA-compliant review request system: asking patients at discharge (with proper consent), following up at 30 and 90 days, and making the process frictionless. Directory listings with verified reviews add another credibility layer — RehabLookup profiles with reviews get 2.5x more engagement than those without.",
     insightStats: [
       { label: "Patients Who Read Reviews", value: "88%" },
       { label: "Conversion Lift (50+ Reviews)", value: "3x" },
       { label: "Click Increase (4.5+ Stars)", value: "+70%" },
       { label: "Profile Engagement w/ Reviews", value: "2.5x" },
     ],
-    keywords: ["rehab center reviews", "treatment center online reputation", "get rehab reviews", "rehab google reviews strategy"],
+    keywords: ["rehab center reviews", "treatment center online reputation", "get rehab reviews", "rehab reviews strategy"],
   },
   {
     slug: "rehab-local-seo-domination",

@@ -47,9 +47,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
 import { TrustBadge, AccreditationType } from "@/components/trust/TrustBadge";
-import { GoogleReviewsCard } from "@/components/reviews/GoogleReviewsCard";
 import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSection";
-import { usePublicGoogleReviews } from "@/hooks/useGoogleReviews";
 import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
@@ -196,23 +194,6 @@ function TruncatedDescription({ text }: { text: string }) {
   );
 }
 
-// Google Reviews Display Component
-function GoogleReviewsDisplay({ facilityId }: { facilityId: string }) {
-  const { data: reviewsConfig } = usePublicGoogleReviews(facilityId);
-  
-  if (!reviewsConfig?.google_rating || !reviewsConfig?.google_review_count) {
-    return null;
-  }
-
-  return (
-    <GoogleReviewsCard
-      rating={Number(reviewsConfig.google_rating)}
-      reviewCount={reviewsConfig.google_review_count}
-      googleUrl={reviewsConfig.google_place_url}
-      className="mt-8"
-    />
-  );
-}
 
 const CenterProfile = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -1056,8 +1037,6 @@ const CenterProfile = () => {
                 );
               })()}
 
-              {/* Google Reviews */}
-              <GoogleReviewsDisplay facilityId={facility.id} />
 
               {/* Our Team Section */}
               <FacilityStaffSection facilityId={facility.id} />

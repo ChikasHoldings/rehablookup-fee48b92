@@ -32,8 +32,6 @@ export interface ApprovedFacility extends TreatmentCenter {
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
-  googleRating?: number | null;
-  googleReviewCount?: number | null;
   calculatedRankingScore?: number; // cached ranking score for sorting
   // Plan tier for sorting
   planTier?: 'pro' | 'free';
@@ -207,10 +205,9 @@ export const useApprovedFacilities = () => {
       // Fetch services, insurance, and reviews separately since views don't support joins
       const facilityIds = (facilitiesData || []).map(f => f.id).filter(Boolean) as string[];
       
-      const [servicesResult, insuranceResult, reviewsResult] = await Promise.all([
+      const [servicesResult, insuranceResult] = await Promise.all([
         supabase.from("facility_services").select("facility_id, service_name").in("facility_id", facilityIds),
         supabase.from("facility_insurance").select("facility_id, insurance_name").in("facility_id", facilityIds),
-        supabase.from("facility_reviews_config").select("facility_id, google_rating, google_review_count, show_on_profile").in("facility_id", facilityIds).eq("show_on_profile", true),
       ]);
 
       // Create lookup maps
@@ -226,16 +223,11 @@ export const useApprovedFacilities = () => {
         insuranceMap.set(i.facility_id, [...existing, i.insurance_name]);
       });
 
-      const reviewsMap = new Map<string, { rating: number | null; count: number | null }>();
-      (reviewsResult.data || []).forEach(r => {
-        reviewsMap.set(r.facility_id, { rating: r.google_rating, count: r.google_review_count });
-      });
       
       return (facilitiesData || []).map(f => ({
         ...f,
         facility_services: (servicesMap.get(f.id!) || []).map(name => ({ service_name: name })),
         facility_insurance: (insuranceMap.get(f.id!) || []).map(name => ({ insurance_name: name })),
-        reviewsConfig: reviewsMap.get(f.id!) || null,
       }));
     },
     staleTime: 1000 * 60 * 2, // 2 minutes for fresher data
@@ -281,8 +273,6 @@ export const useApprovedFacilities = () => {
         isFromDatabase: true,
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
-        googleRating: facility.reviewsConfig?.rating ?? null,
-        googleReviewCount: facility.reviewsConfig?.count ?? null,
         calculatedRankingScore: (facility as any).calculated_ranking_score ?? 0,
       };
     });
