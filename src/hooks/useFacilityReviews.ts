@@ -93,7 +93,8 @@ export function useFacilityReviews(facilityId: string) {
       const builtName = firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : '';
       
       // Priority: stored reviewer_display_name → built from profile (name is required at signup)
-      const displayName = storedName || builtName || `${firstName || 'Anonymous'}`;
+      // Never fall back to "Anonymous" — name is mandatory at submission time
+      const displayName = storedName || builtName || null;
       
       return {
         ...review,

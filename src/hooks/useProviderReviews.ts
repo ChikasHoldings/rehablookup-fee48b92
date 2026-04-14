@@ -134,7 +134,7 @@ export function useProviderReviews() {
         const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
         const builtName = firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : '';
         
-        const displayName = storedName || builtName || `${firstName || 'Anonymous'}`;
+        const displayName = storedName || builtName || null;
         const facilityInfo = facilityMap.get(review.facility_id);
         
         return {
