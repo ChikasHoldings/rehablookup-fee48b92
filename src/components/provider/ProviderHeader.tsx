@@ -128,8 +128,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   
   const recentNotifications = notifications.slice(0, 5);
   const isPro = planTier === "pro";
-  const approvedFacilities = facilities.filter(f => f.status === "approved");
-  const pendingFacilities = facilities.filter(f => f.status === "pending");
+  const approvedFacilities = facilities.filter(f => f.status === "approved" && !f.suspended);
+  const pendingFacilities = facilities.filter(f => f.status === "pending" && !f.suspended);
+  const suspendedFacilities = facilities.filter(f => f.suspended);
 
   const getPlanConfig = (isPro: boolean) => {
     if (isPro) {
