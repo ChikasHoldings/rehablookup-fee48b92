@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
-  Unlock,
+  Users,
   Eye,
   Star,
   AlertTriangle,
@@ -25,6 +25,8 @@ interface DashboardKPIStripProps {
   proSavingsCents?: number;
   viewsCount?: number;
   reviewCount?: number;
+  totalLeadsCount?: number;
+  conciergeCount?: number;
 }
 
 interface WeeklyKPIs {
@@ -37,7 +39,7 @@ interface WeeklyKPIs {
 // Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
 const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
 
-export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, viewsCount = 0, reviewCount = 0 }: DashboardKPIStripProps) {
+export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, viewsCount = 0, reviewCount = 0, totalLeadsCount = 0, conciergeCount = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
 
   const { data: kpis, isLoading } = useQuery({
@@ -95,16 +97,16 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, view
 
   const metrics = [
     {
-      label: "Leads Received",
-      value: kpis?.received ?? 0,
+      label: "Leads",
+      value: totalLeadsCount,
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
-      label: "Leads Unlocked",
-      value: kpis?.unlocked ?? 0,
-      icon: Unlock,
+      label: "Concierge",
+      value: conciergeCount,
+      icon: Users,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-600 dark:text-emerald-400",
     },

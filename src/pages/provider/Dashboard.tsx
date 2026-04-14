@@ -193,7 +193,22 @@ export default function ProviderDashboardPage() {
     refetchOnMount: true,
   });
 
-  // Fetch services count for profile completion
+  // Fetch concierge introductions count for this facility
+  const { data: conciergeCount = 0 } = useQuery({
+    queryKey: ["concierge-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const { count, error } = await supabase
+        .from("concierge_introductions")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facilityId);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const { data: servicesCount = 0 } = useQuery({
     queryKey: ["services-count", facilityId],
     queryFn: async (): Promise<number> => {
@@ -416,22 +431,10 @@ export default function ProviderDashboardPage() {
                 isPro={proStatus.isPro}
                 viewsCount={viewsCount}
                 reviewCount={reviewCount}
+                totalLeadsCount={totalLeadsCount}
+                conciergeCount={conciergeCount}
               />
             )}
-
-            {/* Inquiries Metric */}
-            <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4">
-              <MetricCard
-                title="Inquiries"
-                value={totalLeadsCount}
-                subtitle={totalLeadsCount > 0 ? `${recentLeads.filter(l => l.status === 'new').length} new` : "No inquiries yet"}
-                icon={TrendingUp}
-                iconBg="bg-success/10"
-                iconColor="text-success"
-                action={totalLeadsCount > 0 ? { label: "View", href: "/provider/inquiries" } : undefined}
-                isLoading={leadsLoading}
-              />
-            </div>
 
             {/* Lead Feed — Core Money Section */}
             <DashboardLeadFeed
