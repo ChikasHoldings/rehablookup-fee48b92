@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CaseSlaCompactBadge } from "./CaseSlaAlerts";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
@@ -202,6 +203,9 @@ export function PlacementPipelineBoard({
                                 </span>
                               )}
                             </div>
+
+                            {/* SLA Alert */}
+                            <CaseSlaCompactBadge caseData={c} />
 
                             {c.assigned_advisor_id && advisorNames[c.assigned_advisor_id] && (
                               <div className="flex items-center gap-1 mt-1.5">
