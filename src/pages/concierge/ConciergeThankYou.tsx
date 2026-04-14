@@ -596,9 +596,9 @@ export default function ConciergeThankYou() {
                   {/* Already Logged In CTA */}
                   {isLoggedIn && (
                     <Button asChild size="lg" className="w-full">
-                      <Link to="/account">
+                      <Link to="/account/requests">
                         <User className="mr-2 h-4 w-4" />
-                        Go to Your Dashboard
+                        View Your Placement
                       </Link>
                     </Button>
                   )}
