@@ -291,6 +291,10 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
               ? "A facility has accepted your case. Review and confirm to proceed."
               : `${interestedFacilities.length} facilities have accepted your case. Choose your preferred option.`}
           </CardDescription>
+          <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-warning/10 border border-warning/20 rounded-lg">
+            <span className="text-sm font-medium text-warning">⚠️ Availability may change quickly</span>
+            <span className="text-xs text-muted-foreground">— Secure your spot today</span>
+          </div>
         </CardHeader>
         <CardContent className="p-4 space-y-3">
           <AnimatePresence>
