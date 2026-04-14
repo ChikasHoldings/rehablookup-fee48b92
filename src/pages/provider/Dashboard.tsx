@@ -42,7 +42,7 @@ import { ProMultiFacilityOverview } from "@/components/provider/ProMultiFacility
 import { ProROIWidget } from "@/components/provider/ProROIWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
-import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
+
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
