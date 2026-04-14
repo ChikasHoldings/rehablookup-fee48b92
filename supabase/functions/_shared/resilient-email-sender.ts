@@ -68,7 +68,7 @@ type SupabaseClient = any;
 
 const LOG_PREFIX = "[RESILIENT-EMAIL]";
 
-function sleep(ms: number): Promise<void> {
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
