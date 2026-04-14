@@ -75,7 +75,8 @@ export function LockedLeadCard({
   const initial = name.charAt(0).toUpperCase();
   const blurredName = `${initial}${"●".repeat(Math.min(name.length - 1, 8))}`;
   const countdown = useLeadCountdown(createdAt);
-
+  const { data: proStatus } = useProStatus(facilityId);
+  const isPro = proStatus?.isPro ?? false;
   const location = locationCityState || (locationZip ? `ZIP: ${locationZip}` : null);
   const urgencyInfo = urgency ? URGENCY_LABELS[urgency] : null;
   const insuranceHint = insuranceProvider || insuranceType;
