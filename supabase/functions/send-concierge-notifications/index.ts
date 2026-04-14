@@ -612,7 +612,7 @@ async function sendProviderInterestedNotification(
   }
 }
 
-// Provider declined — admin-only notification
+// Provider declined — admin-only notification (with individual admin alerts)
 async function sendProviderDeclinedNotification(
   inquiry: InquiryData,
   facility: FacilityData,
@@ -627,6 +627,25 @@ async function sendProviderDeclinedNotification(
     message: `${facility.name} declined candidate for Case #${caseId}. Consider sending additional introductions.`,
     metadata: { inquiry_id: inquiry.id, facility_id: facility.id, facility_name: facility.name },
   });
+
+  // Notify all admin users individually (advisors + super admins)
+  const { data: adminUsers } = await supabase
+    .from('admin_user_profiles')
+    .select('user_id')
+    .in('admin_role', ['super_admin', 'advisor']);
+
+  if (adminUsers) {
+    for (const admin of adminUsers) {
+      await supabase.from('admin_user_notifications').insert({
+        user_id: admin.user_id,
+        type: 'concierge_provider_declined',
+        title: 'Provider Declined Candidate',
+        message: `${facility.name} declined Case #${caseId}. Consider additional introductions.`,
+        link: '/admin/concierge',
+        metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
+      });
+    }
+  }
 
   results.push({ recipient: 'admin', notificationId: 'admin_declined_alert' });
 }

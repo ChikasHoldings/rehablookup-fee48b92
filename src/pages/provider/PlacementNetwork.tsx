@@ -663,7 +663,8 @@ export default function ProviderPlacementNetworkPage() {
                             <SelectContent>
                               <SelectItem value="open">Open for Admissions</SelectItem>
                               <SelectItem value="limited">Limited Availability</SelectItem>
-                              <SelectItem value="full">Not Taking New Admissions</SelectItem>
+                              <SelectItem value="waitlist">Waitlist Only</SelectItem>
+                              <SelectItem value="closed">Not Taking New Admissions</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
