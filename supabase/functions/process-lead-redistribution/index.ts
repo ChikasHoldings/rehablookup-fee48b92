@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
 
     let exclusiveWindowHours = 24;
     let extendedWindowHours = 48;
-    let maxRedistributionFacilities = 3;
+    let maxRedistributionFacilities = 2; // Max 2 providers per spec
 
     if (settings) {
       for (const setting of settings) {
