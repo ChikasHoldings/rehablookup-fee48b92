@@ -134,19 +134,19 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
         {!isPro ? (
           <div className="rounded-lg border border-amber-300/40 bg-gradient-to-r from-amber-500/5 to-amber-600/5 p-3">
             <p className="text-xs font-semibold text-foreground mb-1">
-              Don't miss the next one
+              You missed this lead — Pro providers get priority
             </p>
             <p className="text-[11px] text-muted-foreground mb-2.5">
-              Pro members get priority access + 20% off every unlock. Respond faster, win more admissions.
+              Pro members get first access to every lead + 20% off every unlock. Don't let another opportunity slip away.
             </p>
             <Button
               size="sm"
               className="h-7 text-xs bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
               asChild
             >
-              <Link to="/provider/pro">
+              <Link to="/provider/pro-upgrade">
                 <Crown className="h-3 w-3 mr-1" />
-                Upgrade to Pro
+                Upgrade to Pro — $399/mo
               </Link>
             </Button>
           </div>

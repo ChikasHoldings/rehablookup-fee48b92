@@ -337,28 +337,93 @@ export default function ProUpgradePage() {
           </div>
         </div>
 
-        {/* ROI + Bottom CTA */}
+        {/* ━━━ VALUE STACK ━━━ */}
+        {!isPro && (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Real Savings, Real Results</h2>
+              <p className="text-sm text-muted-foreground mt-1">See how Pro pays for itself</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border bg-card p-5 text-center">
+                <p className="text-3xl font-bold text-primary">20</p>
+                <p className="text-xs text-muted-foreground font-medium mt-1">Avg leads unlocked / month</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">by active providers</p>
+              </div>
+              <div className="rounded-xl border bg-card p-5 text-center">
+                <p className="text-3xl font-bold text-emerald-600">$160</p>
+                <p className="text-xs text-muted-foreground font-medium mt-1">Saved / month with Pro</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">20% off × 20 unlocks</p>
+              </div>
+              <div className="rounded-xl border bg-card p-5 text-center">
+                <p className="text-3xl font-bold text-amber-600">1st</p>
+                <p className="text-xs text-muted-foreground font-medium mt-1">Priority lead access</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">before free providers</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ━━━ URGENCY SECTION ━━━ */}
+        {!isPro && (
+          <Card className="border-destructive/20 bg-destructive/[0.03]">
+            <CardContent className="p-5 sm:p-6">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Zap className="h-5 w-5 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-foreground">⚠️ Free providers miss up to 40% of leads</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Leads expire within 24 hours and are redistributed to other providers. 
+                    Pro providers get first access — so you never miss a high-intent inquiry.
+                  </p>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-emerald-500" /> Pro providers get first access</span>
+                    <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-emerald-500" /> 24h exclusive window</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ━━━ CTA + RISK REDUCTION ━━━ */}
         {!isPro && (
           <Card className="border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-amber-600/10">
-            <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex-1 min-w-0 text-center sm:text-left">
-                <p className="font-bold text-lg text-foreground">Pro pays for itself quickly</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  With 20% off every unlock, just a few extra admissions cover your $399/mo membership. Most providers see ROI within the first week.
-                </p>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex-1 min-w-0 text-center sm:text-left">
+                  <p className="font-bold text-lg text-foreground">Pro pays for itself quickly</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    With 20% off every unlock, just a few extra admissions cover your $399/mo membership. Most providers see ROI within the first week.
+                  </p>
+                </div>
+                <Button
+                  onClick={handleUpgrade}
+                  disabled={upgradeLoading || !facilityId}
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md h-11 px-8 text-sm font-semibold shrink-0"
+                >
+                  {upgradeLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  Upgrade to Pro — $399/month
+                </Button>
               </div>
-              <Button
-                onClick={handleUpgrade}
-                disabled={upgradeLoading || !facilityId}
-                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md h-11 px-8 text-sm font-semibold shrink-0"
-              >
-                {upgradeLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Zap className="h-4 w-4 mr-2" />
-                )}
-                Get Started Now
-              </Button>
+              {/* Risk Reduction */}
+              <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground border-t border-border/50 pt-3">
+                <span className="flex items-center gap-1.5">
+                  <Shield className="h-3.5 w-3.5 text-emerald-500" /> Cancel anytime
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" /> Instant activation
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle className="h-3.5 w-3.5 text-primary" /> Secure via Stripe
+                </span>
+              </div>
             </CardContent>
           </Card>
         )}

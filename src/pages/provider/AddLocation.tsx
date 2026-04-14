@@ -263,14 +263,17 @@ export default function AddLocationPage() {
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <p className="text-sm text-muted-foreground text-center">
-                Upgrade to Pro for up to 5 locations.
+                Upgrade to Pro to list up to 5 facilities and get 20% off all lead unlocks.
               </p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => navigate(-1)}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Go Back
                 </Button>
-                <Button onClick={() => navigate("/provider/pro-upgrade")}>
+                <Button 
+                  onClick={() => navigate("/provider/pro-upgrade")}
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+                >
                   Upgrade to Pro
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
