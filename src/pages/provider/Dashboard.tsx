@@ -46,6 +46,7 @@ import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
 import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
+import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -443,6 +444,11 @@ export default function ProviderDashboardPage() {
               isLoading={leadsLoading}
               onLeadClick={handleLeadClick}
             />
+
+            {/* Missed Leads — Psychological Trigger */}
+            {facilityId && (
+              <DashboardMissedLeads facilityId={facilityId} isPro={proStatus.isPro} />
+            )}
 
             {/* Lead Conversion Widget */}
             {facilityIds.length > 0 && (
