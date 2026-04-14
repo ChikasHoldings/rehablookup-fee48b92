@@ -133,7 +133,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, view
             key={m.label}
             className={cn(
               "border-border/40 transition-colors",
-              m.highlight && "border-destructive/30 bg-destructive/[0.02]"
+              (m as any).highlight && "border-destructive/30 bg-destructive/[0.02]"
             )}
           >
             <CardContent className="p-3 sm:p-4">
@@ -150,7 +150,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, view
                   ) : (
                     <p className={cn(
                       "text-lg sm:text-xl font-bold leading-tight tabular-nums",
-                      m.highlight ? "text-destructive" : "text-foreground"
+                      (m as any).highlight ? "text-destructive" : "text-foreground"
                     )}>
                       {typeof m.value === "number" ? m.value : m.value}
                     </p>
