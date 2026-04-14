@@ -268,6 +268,31 @@ Deno.serve(async (req) => {
     const caseNumber = caseData.id.slice(0, 8).toUpperCase();
     logStep(requestId, "Case created", { caseId: caseData.id, caseNumber });
 
+    // Create in-app admin notification
+    try {
+      const urgencyLabel: Record<string, string> = {
+        immediate: "🔴 IMMEDIATE",
+        within_week: "🟠 This Week",
+        within_month: "🟡 Within 30 Days",
+        flexible: "🟢 Flexible",
+      };
+      await supabase.from("admin_notifications").insert({
+        type: "placement_case",
+        title: `New Placement Case ${urgencyLabel[urgency] || ""}`.trim(),
+        message: `${seekerName} — ${primaryIssues.join(", ") || "General"} | ${levelOfCare} | ${preferredStates.join(", ") || "No state pref"}`,
+        metadata: {
+          case_id: caseData.id,
+          case_number: caseNumber,
+          urgency,
+          level_of_care: levelOfCare,
+          payment_type: paymentType,
+        },
+      });
+      logStep(requestId, "Admin in-app notification created");
+    } catch (notifErr) {
+      logStep(requestId, "Warning: Failed to create admin notification", { error: String(notifErr) });
+    }
+
     // Send confirmation email to user
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);

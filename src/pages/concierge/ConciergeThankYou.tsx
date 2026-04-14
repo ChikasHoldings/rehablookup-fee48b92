@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Header as PublicHeader } from "@/components/layout/Header";
@@ -53,6 +53,9 @@ export default function ConciergeThankYou() {
 
   const sessionId = searchParams.get("session_id");
 
+  // Guard against React strict mode double-fire
+  const submissionInFlight = useRef(false);
+
   useEffect(() => {
     const verifyAndSubmit = async () => {
       if (!sessionId) {
@@ -60,6 +63,10 @@ export default function ConciergeThankYou() {
         setIsVerifying(false);
         return;
       }
+
+      // Prevent concurrent submissions (React strict mode double-fire)
+      if (submissionInFlight.current) return;
+      submissionInFlight.current = true;
 
       // Check if already submitted for this session (idempotency)
       const submittedSessions = JSON.parse(localStorage.getItem(SUBMITTED_KEY) || "[]");
@@ -78,6 +85,7 @@ export default function ConciergeThankYou() {
         }
         setPaymentVerified(true);
         setIsVerifying(false);
+        submissionInFlight.current = false;
         return;
       }
 
@@ -93,6 +101,19 @@ export default function ConciergeThankYou() {
         if (!verifyData?.paid) {
           setError("Payment not verified. Please contact support.");
           setIsVerifying(false);
+          submissionInFlight.current = false;
+          return;
+        }
+
+        // Server already detected duplicate - skip re-submit
+        if (verifyData.alreadySubmitted && verifyData.inquiryId) {
+          setPaymentVerified(true);
+          setInquiryId(verifyData.inquiryId);
+          setUserEmail(verifyData.email);
+          submittedSessions.push(sessionId);
+          localStorage.setItem(SUBMITTED_KEY, JSON.stringify(submittedSessions));
+          setIsVerifying(false);
+          submissionInFlight.current = false;
           return;
         }
 
@@ -104,6 +125,7 @@ export default function ConciergeThankYou() {
         if (!savedIntake) {
           setError("Intake data not found. Please contact support if you completed payment.");
           setIsVerifying(false);
+          submissionInFlight.current = false;
           return;
         }
 
@@ -139,6 +161,7 @@ export default function ConciergeThankYou() {
       } finally {
         setIsVerifying(false);
         setIsSubmitting(false);
+        submissionInFlight.current = false;
       }
     };
 
