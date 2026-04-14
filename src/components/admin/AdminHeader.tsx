@@ -202,8 +202,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
-      if (leadsChannel) {
-        supabase.removeChannel(leadsChannel);
+      if (leadsInterval) {
+        clearInterval(leadsInterval);
       }
     };
   }, [invalidateNotifications, navigate, triggerBellAnimation, isAdvisor]);

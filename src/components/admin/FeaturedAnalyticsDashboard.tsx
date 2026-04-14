@@ -93,7 +93,7 @@ export function FeaturedAnalyticsDashboard() {
 
     return () => {
       supabase.removeChannel(analyticsChannel);
-      supabase.removeChannel(leadsChannel);
+      clearInterval(leadsInterval);
       supabase.removeChannel(viewsChannel);
     };
   }, [queryClient, dateRange]);

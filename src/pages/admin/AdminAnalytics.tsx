@@ -121,7 +121,7 @@ export default function AdminAnalytics() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(leadsChannel);
+      clearInterval(leadsInterval);
       supabase.removeChannel(viewsChannel);
       supabase.removeChannel(facilitiesChannel);
     };
