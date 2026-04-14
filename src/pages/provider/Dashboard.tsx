@@ -48,6 +48,7 @@ import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
 import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads";
 import { DashboardCreditSpendingPanel } from "@/components/provider/DashboardCreditSpendingPanel";
+import { DashboardPlacementPanel } from "@/components/provider/DashboardPlacementPanel";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -458,6 +459,9 @@ export default function ProviderDashboardPage() {
 
             {/* Facility Performance Panel (Pro-gated) */}
             <DashboardFacilityPerformancePanel isPro={proStatus.isPro} />
+
+            {/* Placement Opportunities Panel */}
+            <DashboardPlacementPanel facilityIds={facilityIds} isPro={proStatus.isPro} />
 
             {/* Multi-Facility Overview (Pro only) */}
             {proStatus?.isPro && facilities && facilities.length > 1 && (
