@@ -205,17 +205,22 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    const { error: emailError } = await resend.emails.send({
+    const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `New provider: ${facilityName}`,
       html: emailHtml,
+    }, {
+      emailType: "admin_provider_signup",
+      idempotencyKey: `admin-signup-${facilityId}`,
+      checkSuppression: false,
+      metadata: { facilityId, facilityName },
     });
 
-    if (emailError) {
-      logStep("Error sending admin email", emailError);
+    if (!result.success && !result.deduplicated) {
+      logStep("Error sending admin email", { error: result.error });
     } else {
-      logStep("Admin email sent successfully", { recipients: adminEmails.length });
+      logStep("Admin email sent", { recipients: adminEmails.length, deduplicated: result.deduplicated });
     }
 
     return new Response(JSON.stringify({ success: true }), {
