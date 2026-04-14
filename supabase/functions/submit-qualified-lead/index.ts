@@ -747,7 +747,8 @@ Deno.serve(async (req) => {
         redistribution_status: "exclusive",
         // High-intent flag
         high_intent: isHighIntent,
-        // Enhanced intake fields
+        // Inquiry type for pricing
+        inquiry_type: inquiryType,
         age_range: data.ageRange || null,
         gender: data.gender || null,
         relationship_to_patient: data.relationshipToPatient || null,
@@ -907,7 +908,7 @@ Deno.serve(async (req) => {
           high_intent: isHighIntent,
           credit_cost: lead.credit_cost,
           lead_score_label: lead.lead_score_label,
-          inquiry_type: data.preferredContact === "call" ? "request_callback" : "request_info",
+          inquiry_type: inquiryType,
           link: `/provider/inquiries?lead=${lead.id}`,
         },
         read: false,
