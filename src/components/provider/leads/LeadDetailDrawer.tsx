@@ -25,6 +25,7 @@ import {
   BellOff,
   Bell,
   Lock,
+  Smartphone,
 } from "lucide-react";
 import {
   Dialog,
@@ -417,7 +418,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                       <Button 
                         className="h-12 flex-col gap-0.5"
                         variant="outline"
-                        onClick={() => setShowEmailDialog(true)}
+                        onClick={() => setEmailDialogOpen(true)}
                       >
                         <Mail className="h-4 w-4" />
                         <span className="text-[10px] font-medium">📧 Email</span>
