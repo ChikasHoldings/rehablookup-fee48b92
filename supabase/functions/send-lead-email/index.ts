@@ -561,6 +561,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       subject: emailSubject,
       html: emailHtml,
       reply_to: replyToEmail,
+    }, {
+      emailType: "lead_email",
+      idempotencyKey: `lead-email-${lead.id}-${templateId}`,
     });
 
     console.log("Email sent:", emailResponse);

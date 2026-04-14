@@ -214,6 +214,9 @@ Deno.serve(async (req) => {
           to: [email.to],
           subject: email.subject,
           html: email.html,
+        }, {
+          emailType: `message_${payload.notificationType}`,
+          idempotencyKey: `msg-${payload.threadId}-${payload.notificationType}-${Date.now().toString(36)}`,
         });
         console.log(`Email sent to ${email.to}:`, result);
       } catch (emailError) {
