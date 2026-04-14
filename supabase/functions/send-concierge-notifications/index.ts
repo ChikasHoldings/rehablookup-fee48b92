@@ -214,6 +214,16 @@ Deno.serve(async (req) => {
         }
         break;
 
+      case 'advisor_claimed':
+        await sendAdvisorClaimedNotification(inquiry, supabase, results, metadata);
+        break;
+
+      case 'seeker_rejected_provider':
+        if (facility) {
+          await sendSeekerRejectedProviderNotification(inquiry, facility, supabase, results, metadata);
+        }
+        break;
+
       case 'tour_completed':
         await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'tour_completed', metadata);
         break;
