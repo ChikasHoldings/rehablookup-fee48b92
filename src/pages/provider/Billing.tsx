@@ -751,13 +751,13 @@ export default function ProviderBillingPage() {
                               {pkg.credits.toLocaleString()} credits
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {pkg.bonusCents > 0 ? (
+                              {pkg.savingsNote ? (
                                 <>
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+${(pkg.bonusCents / 100).toFixed(0)} bonus included</span>
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{pkg.savingsNote} · +${(pkg.bonusCents / 100).toFixed(0)} free</span>
                                   <span className="mx-1.5 text-border">·</span>
                                 </>
                               ) : null}
-                              {pkg.perLead.replace(/ \+ \$100 bonus/, "")}
+                              {pkg.perLead}
                             </p>
                           </div>
                         </div>
