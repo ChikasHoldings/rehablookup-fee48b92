@@ -63,7 +63,7 @@ const HERO_BENEFITS = [
   {
     icon: Mail,
     title: "Review Tools",
-    description: "Send review requests to clients via email.",
+    description: "Manage and respond to client reviews.",
     highlight: "Reputation mgmt",
   },
   {
@@ -90,7 +90,7 @@ const COMPARISON_ITEMS: { feature: string; free: string | boolean; pro: string |
   { feature: "Homepage Featured", free: false, pro: true },
   { feature: "Pro Badge", free: false, pro: true },
   
-  { feature: "Review Requests", free: false, pro: true },
+  
   { feature: "Per-Facility Analytics", free: false, pro: true },
   { feature: "Support Priority", free: "Standard", pro: "Priority" },
 ];
