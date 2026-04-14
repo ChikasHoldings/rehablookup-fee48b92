@@ -36,6 +36,16 @@ interface SendOptions {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Default inter-send delay for bulk email loops (ms).
+ * Keeps sends well under Resend's 10 req/s rate limit.
+ * Import and use: `await sleep(BULK_SEND_DELAY_MS)` after each send in a loop.
+ */
+export const BULK_SEND_DELAY_MS = 200;
+
+/** Default max emails per single function invocation */
+export const BULK_BATCH_LIMIT = 50;
+
 interface SendResult {
   success: boolean;
   /** True if the email was already sent (idempotency dedup) */
