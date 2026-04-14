@@ -704,10 +704,15 @@ Deno.serve(async (req) => {
     // Generate idempotency key if not provided
     const idempotencyKey = data.idempotencyKey || `${data.email}-${data.facilityId}-${Date.now()}`;
 
+    // Determine inquiry type based on preferred contact method
+    const inquiryType = (validatedPreferredContact === "call" || validatedPreferredContact === "phone") 
+      ? "request_callback" 
+      : "request_info";
+
     // Detect high-intent signals
     const isHighIntent = !!(
       (data.urgency && ["Urgent", "Immediately", "immediate"].includes(data.urgency)) ||
-      (data.preferredContact === "call" || data.preferredContact === "phone") ||
+      (validatedPreferredContact === "call" || validatedPreferredContact === "phone") ||
       (data.readinessLevel && ["high", "ready"].includes(data.readinessLevel)) ||
       (data.levelOfCare && ["detox", "residential", "inpatient"].some(t => (data.levelOfCare || "").toLowerCase().includes(t)))
     );
