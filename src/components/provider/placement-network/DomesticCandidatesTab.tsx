@@ -147,6 +147,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
 
       // Log case event for the provider response
       try {
+        const { data: { user } } = await supabase.auth.getUser();
         await supabase.from("concierge_case_events").insert({
           inquiry_id: inquiryId,
           event_type: response === "interested" ? "provider_accepted" : "provider_declined",
@@ -155,6 +156,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
             introduction_id: id,
             notes: notes?.trim() || null,
           },
+          actor_id: user?.id || null,
           actor_type: "provider",
         });
       } catch (e) { console.error("Failed to log case event:", e); }

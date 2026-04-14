@@ -171,9 +171,19 @@ export function IntroductionCard({
               {firstName} · {format(new Date(introduction.created_at), "MMM d 'at' h:mm a")}
             </p>
           </div>
-          <Badge variant="outline" className="border-amber-300 text-amber-600 dark:text-amber-400 text-xs shrink-0">
-            Awaiting Response
-          </Badge>
+          {(!introduction.provider_response || introduction.provider_response === "pending") ? (
+            <Badge variant="outline" className="border-amber-300 text-amber-600 dark:text-amber-400 text-xs shrink-0">
+              Awaiting Response
+            </Badge>
+          ) : introduction.provider_response === "interested" ? (
+            <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:text-emerald-400 text-xs shrink-0">
+              Accepted
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground text-xs shrink-0">
+              Declined
+            </Badge>
+          )}
         </div>
 
         <Separator />
