@@ -28,6 +28,7 @@ interface WelcomeOfferRequest {
   providerEmail: string;
   providerFirstName: string;
   selectedPlan: string;
+  idempotencyKey?: string;
 }
 
 const P = "#1B365D";
