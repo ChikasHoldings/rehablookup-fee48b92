@@ -2,7 +2,6 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import {
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
   PLAN_CONFIG,
   PRO_PRODUCT_IDS,
   getPlanStyles,
@@ -17,6 +16,7 @@ import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
   ctaButton,
   type PlanType,
 } from "../_shared/email-templates.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

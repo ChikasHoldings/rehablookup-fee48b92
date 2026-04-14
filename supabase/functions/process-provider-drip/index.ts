@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import {
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
   emailStart,
   emailHeader,
   emailBodyStart,
@@ -14,6 +13,7 @@ import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
   emailEnd,
   emailDivider,
 } from "../_shared/email-templates.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.0";
 

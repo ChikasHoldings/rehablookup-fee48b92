@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import {
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
   tourRequestedFacilityEmail,
   tourRequestedAdminEmail,
   tourProposedUserEmail,
@@ -10,6 +9,7 @@ import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
   tourCancelledUserEmail,
   TourEmailData,
 } from "../_shared/tour-email-templates.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
