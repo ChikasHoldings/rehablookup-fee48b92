@@ -363,6 +363,7 @@ export default function AdminReviews() {
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
 
+    const review = reviews.find(r => r.id === deleteConfirm.id);
     setProcessingId(deleteConfirm.id);
     
     const { error } = await supabase
@@ -376,6 +377,8 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to delete review');
     } else {
+      // Log with full review snapshot for traceability
+      auditLog({ actionType: 'review_deleted', targetType: 'review', targetId: deleteConfirm.id, details: { facility_id: review?.facility_id, facility_name: review?.facility_name, reviewer: review?.reviewer_name, rating: review?.rating, review_text: review?.review_text, status_before_delete: review?.status } });
       toast.success('Review deleted');
       fetchReviews();
       queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
