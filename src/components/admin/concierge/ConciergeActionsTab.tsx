@@ -96,6 +96,18 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
           inquiry_id: caseData.id,
           event_type: "status_changed",
           event_data: { from: caseData.status, to: updates.status },
+          actor_id: user?.id || null,
+          actor_type: isAdvisor ? "advisor" : "admin",
+        });
+      }
+
+      // Log notes changes
+      if (updates.admin_notes !== undefined && updates.admin_notes !== caseData.admin_notes && !updates.status) {
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: caseData.id,
+          event_type: "notes_updated",
+          event_data: {},
+          actor_id: user?.id || null,
           actor_type: isAdvisor ? "advisor" : "admin",
         });
       }
