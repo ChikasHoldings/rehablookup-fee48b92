@@ -177,7 +177,7 @@ export default function ProviderAnalyticsPage() {
                     handleCustomDateSelect(range);
                     if (range?.from && range?.to) setIsCalendarOpen(false);
                   }}
-                  numberOfMonths={2}
+                  numberOfMonths={typeof window !== "undefined" && window.innerWidth < 640 ? 1 : 2}
                   className="p-3 pointer-events-auto"
                   disabled={(date) => date > new Date()}
                 />
@@ -232,7 +232,7 @@ export default function ProviderAnalyticsPage() {
         )}
 
         {/* ── Tab Navigation ── */}
-        <div className="flex gap-1 border-b">
+        <div className="flex gap-1 border-b overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -240,7 +240,7 @@ export default function ProviderAnalyticsPage() {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
+                  "px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap shrink-0",
                   isActive
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
