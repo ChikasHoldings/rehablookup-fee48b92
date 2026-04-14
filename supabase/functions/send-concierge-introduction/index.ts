@@ -1,5 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.1";
 
@@ -308,17 +309,21 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    const { error: emailError, data: emailData } = await resend.emails.send({
+    const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup Concierge <no-reply@rehablookup.com>",
       to: [recipientEmail],
       subject: `New Concierge Case Introduction - ${levelOfCare}`,
       html: emailHtml,
-      reply_to: "concierge@rehablookup.com",
+      replyTo: "concierge@rehablookup.com",
+    }, {
+      emailType: "concierge_introduction",
+      idempotencyKey: `intro-${introductionId}`,
+      metadata: { inquiryId, facilityId, introductionId },
     });
 
-    if (emailError) {
-      console.error("[SEND-CONCIERGE-INTRODUCTION] Email error:", emailError);
-      throw emailError;
+    if (!result.success) {
+      console.error("[SEND-CONCIERGE-INTRODUCTION] Email failed:", result.error);
+      throw new Error(result.error || "Email send failed");
     }
 
     console.log("[SEND-CONCIERGE-INTRODUCTION] Email sent successfully to:", recipientEmail);
