@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
     const { data: proSub, error: proError } = await adminClient
       .from("pro_subscriptions")
       .select("id, status, current_period_end")
-      .eq("user_id", userId)
+      .eq("provider_id", userId)
       .eq("status", "active")
       .maybeSingle();
 
