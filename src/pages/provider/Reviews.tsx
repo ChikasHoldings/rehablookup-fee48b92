@@ -19,21 +19,17 @@ import {
   RefreshCw,
   Inbox,
   Building2,
-  Mail,
-  Star,
-  ArrowRight,
-  Lock,
-  Sparkles
+  Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { useReviewRequests } from '@/hooks/useReviewRequests';
+
 
 import { useProStatus } from '@/hooks/useProStatus';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
-import { RequestReviewSection } from '@/components/provider/reviews/RequestReviewSection';
+
 
 
 export default function ProviderReviews() {
@@ -57,14 +53,12 @@ export default function ProviderReviews() {
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
-  const [requestReviewOpen, setRequestReviewOpen] = useState(false);
+  
   
 
   // Get the active facility ID for modals
   const activeFacilityId = facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null;
   
-  // Get stats for the trigger cards
-  const { stats: requestStats } = useReviewRequests(activeFacilityId);
   
 
   const filteredReviews = useMemo(() => {
@@ -155,79 +149,7 @@ export default function ProviderReviews() {
         </div>
       </div>
 
-      {/* Request Reviews */}
-      <div className="grid gap-4">
-        {/* Request Reviews Trigger Card */}
-        <Card 
-          className={cn(
-            "cursor-pointer transition-all group",
-            isPro 
-              ? "hover:border-primary/50 hover:shadow-sm" 
-              : "opacity-75 hover:opacity-90"
-          )}
-          onClick={() => isPro ? setRequestReviewOpen(true) : navigate('/provider/pro-upgrade')}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 relative",
-                  isPro ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                )}>
-                  <Mail className="h-5 w-5" />
-                  {!isPro && (
-                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center">
-                      <Lock className="h-2.5 w-2.5 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <CardTitle className="text-base font-semibold">Request Reviews</CardTitle>
-                  <CardDescription className="text-xs">
-                    Send email invitations to clients
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {isPro && requestStats.sent > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {requestStats.sent} sent
-                  </Badge>
-                )}
-                {!isPro && (
-                  <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs font-medium">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    PRO
-                  </Badge>
-                )}
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
 
-      </div>
-
-      {/* Pro Upgrade Banner */}
-      {!isPro && (
-        <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-amber-600/10">
-          <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-              <p className="text-sm text-muted-foreground truncate">
-                Upgrade to Pro to unlock Google Reviews Import & Review Requests
-              </p>
-            </div>
-            <Button 
-              size="sm" 
-              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs h-7"
-              onClick={() => navigate('/provider/pro-upgrade')}
-            >
-              Upgrade
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Stats Cards */}
       <ReviewStatsCards stats={filteredStats} />
@@ -325,13 +247,6 @@ export default function ProviderReviews() {
         onSubmit={handleSubmitDispute}
       />
 
-      {/* Request Reviews Modal */}
-      <RequestReviewSection 
-        facilityId={activeFacilityId}
-        facilityName={facilityFilter !== "all" ? facilities.find(f => f.id === facilityFilter)?.name : facilities[0]?.name}
-        open={requestReviewOpen}
-        onOpenChange={setRequestReviewOpen}
-      />
 
       </div>
     </div>
