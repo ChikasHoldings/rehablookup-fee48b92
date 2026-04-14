@@ -160,10 +160,18 @@ export default function ConciergeThankYou() {
       return;
     }
 
+    if (password.length > 128) {
+      toast.error("Password must be 128 characters or less");
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
+
+    // Prevent double-submit
+    if (isCreatingAccount) return;
 
     setIsCreatingAccount(true);
 

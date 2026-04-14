@@ -98,6 +98,18 @@ export default function InternationalThankYou() {
       return;
     }
 
+    if (password.length > 128) {
+      toast({
+        title: "Password Too Long",
+        description: "Password must be 128 characters or less.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent double-submit
+    if (isCreatingAccount) return;
+
     if (password !== confirmPassword) {
       toast({
         title: "Passwords Don't Match",
