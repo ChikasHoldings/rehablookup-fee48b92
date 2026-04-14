@@ -254,16 +254,16 @@ export default function ProviderAnalyticsPage() {
 
         {/* ── Tab Content ── */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <Card>
-              <CardContent className="p-5">
-                <h2 className="text-sm font-semibold text-foreground mb-4">Engagement Overview</h2>
+              <CardContent className="p-3 sm:p-5">
+                <h2 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">Engagement Overview</h2>
                 <CentralizedEngagementAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-5">
-                <h2 className="text-sm font-semibold text-foreground mb-4">Lead Overview</h2>
+              <CardContent className="p-3 sm:p-5">
+                <h2 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">Lead Overview</h2>
                 <CentralizedLeadAnalyticsDashboard dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
               </CardContent>
             </Card>
@@ -271,29 +271,29 @@ export default function ProviderAnalyticsPage() {
         )}
         {activeTab === "engagement" && (
           <Card>
-            <CardContent className="p-5">
+            <CardContent className="p-3 sm:p-5">
               <CentralizedEngagementAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
             </CardContent>
           </Card>
         )}
         {activeTab === "leads" && (
           <Card>
-            <CardContent className="p-5">
+            <CardContent className="p-3 sm:p-5">
               <CentralizedLeadAnalyticsDashboard dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
             </CardContent>
           </Card>
         )}
         {activeTab === "performance" && (
           <Card>
-            <CardContent className="p-5">
+            <CardContent className="p-3 sm:p-5">
               <ProviderPerformanceAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
             </CardContent>
           </Card>
         )}
         {activeTab === "roi" && (
           <Card>
-            <CardContent className="p-5">
-              <h2 className="text-sm font-semibold text-foreground mb-4">ROI Calculator — Compare Your Lead Costs</h2>
+            <CardContent className="p-3 sm:p-5">
+              <h2 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">ROI Calculator — Compare Your Lead Costs</h2>
               <ROICalculatorWidget />
             </CardContent>
           </Card>
