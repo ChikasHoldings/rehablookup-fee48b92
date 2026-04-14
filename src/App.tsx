@@ -169,7 +169,7 @@ const ProviderResourceArticle = lazy(() => import("./pages/providers/ProviderRes
 const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding"));
 const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
 const ConciergeThankYou = lazy(() => import("./pages/concierge/ConciergeThankYou"));
-const ConciergeCreatePassword = lazy(() => import("./pages/concierge/ConciergeCreatePassword"));
+
 
 // International Placement (Global Clients) - lazy load
 const InternationalLanding = lazy(() => import("./pages/international/InternationalLanding"));
@@ -757,13 +757,13 @@ const AppInner = () => {
             <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
             <Route path="/concierge/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
             <Route path="/concierge/thank-you" element={<PublicRouteGuard><ConciergeThankYou /></PublicRouteGuard>} />
-            <Route path="/concierge/create-password" element={<PublicRouteGuard><ConciergeCreatePassword /></PublicRouteGuard>} />
             
             {/* Legacy concierge redirects */}
+            <Route path="/concierge/create-password" element={<Navigate to="/concierge/thank-you" replace />} />
             <Route path="/request-help" element={<Navigate to="/concierge" replace />} />
             <Route path="/request-help/intake" element={<Navigate to="/concierge/intake" replace />} />
             <Route path="/request-help/thank-you" element={<Navigate to="/concierge/thank-you" replace />} />
-            <Route path="/request-help/create-password" element={<Navigate to="/concierge/create-password" replace />} />
+            <Route path="/request-help/create-password" element={<Navigate to="/concierge/thank-you" replace />} />
             
             {/* Legacy /treatment/ redirects to /treatment-types/ */}
             <Route path="/treatment/dual-diagnosis" element={<Navigate to="/treatment-types/dual-diagnosis-treatment" replace />} />
