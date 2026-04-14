@@ -89,7 +89,6 @@ export interface LeadIntakeContextValue {
   handleSubmit: () => Promise<void>;
 }
 
-export const STEP_LABELS = ["About You", "Treatment Details", "Contact Info"];
 export const TOTAL_STEPS = 3;
 
 // Form options
