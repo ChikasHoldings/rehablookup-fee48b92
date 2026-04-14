@@ -44,6 +44,7 @@ import { ListingPreviewModal } from "@/components/provider/listing/ListingPrevie
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
+import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -431,99 +432,16 @@ export default function ProviderDashboardPage() {
               />
             </div>
 
-            {/* Recent Leads Card */}
-            <Card>
-              <CardHeader className="p-3 sm:p-4 pb-2 border-b">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-sm font-semibold">Recent Leads</CardTitle>
-                  </div>
-                  {recentLeads.length > 0 && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2.5" asChild>
-                      <Link to="/provider/inquiries">
-                        View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {leadsLoading ? (
-                  <div className="p-3 space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-2 p-2 rounded-lg border">
-                        <Skeleton className="h-7 w-7 rounded-full" />
-                        <div className="flex-1 space-y-1">
-                          <Skeleton className="h-3 w-20" />
-                          <Skeleton className="h-2 w-28" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : recentLeads.length === 0 ? (
-                  <div className="text-center py-6 px-4">
-                    <Users className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-foreground">No leads yet</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Leads appear when families reach out</p>
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {recentLeads.slice(0, 4).map((lead, index) => {
-                      const isUnlocked = unlockedLeadIds.has(lead.id);
-                      // View data is already masked/unmasked at DB level
-                      const displayName = lead.name;
-                      const displayContact = isUnlocked 
-                        ? (lead.preferred_contact === "call" ? lead.phone : lead.email)
-                        : "••••••••••";
-                      
-                      return (
-                        <button
-                          key={lead.id}
-                          onClick={() => handleLeadClick(lead)}
-                          className={cn(
-                            "w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left",
-                            index === 0 && lead.status === 'new' && "bg-primary/[0.02]"
-                          )}
-                        >
-                          <div className="relative">
-                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                              {isUnlocked ? (
-                                <span className="text-xs font-bold text-primary">
-                                  {lead.name.charAt(0).toUpperCase()}
-                                </span>
-                              ) : (
-                                <Lock className="h-3.5 w-3.5 text-primary" />
-                              )}
-                            </div>
-                            {index === 0 && lead.status === 'new' && (
-                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-success rounded-full border-2 border-background" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
-                              {!isUnlocked && (
-                                <span className="inline-flex items-center gap-0.5 text-xs font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded">
-                                  <Lock className="h-2.5 w-2.5" />
-                                  Locked
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                              {lead.preferred_contact === "call" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
-                              <span className="truncate">{displayContact}</span>
-                            </div>
-                          </div>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Lead Feed — Core Money Section */}
+            <DashboardLeadFeed
+              leads={recentLeads}
+              unlockedLeadIds={unlockedLeadIds}
+              facilityId={facilityId || ""}
+              facilityName={facility?.name}
+              isPro={proStatus.isPro}
+              isLoading={leadsLoading}
+              onLeadClick={handleLeadClick}
+            />
 
             {/* Lead Conversion Widget */}
             {facilityIds.length > 0 && (
