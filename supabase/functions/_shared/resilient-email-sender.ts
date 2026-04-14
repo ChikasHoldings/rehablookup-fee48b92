@@ -132,10 +132,10 @@ export async function sendEmailWithRetry(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const sendParams: Record<string, unknown> = {
-        from: params.from,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
+        from: normalizedParams.from,
+        to: normalizedParams.to,
+        subject: normalizedParams.subject,
+        html: normalizedParams.html,
       };
       if (params.headers) sendParams.headers = params.headers;
       if (params.replyTo) sendParams.reply_to = params.replyTo;
