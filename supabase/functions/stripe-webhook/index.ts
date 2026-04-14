@@ -1378,7 +1378,42 @@ Deno.serve(async (req) => {
                   `,
                 });
               } catch (emailError) {
-                logStep("Cancel email failed", { error: String(emailError) });
+                logStep("Cancel admin email failed", { error: String(emailError) });
+              }
+
+              // Send cancellation email to provider
+              if (customerEmail) {
+                try {
+                  await resend.emails.send({
+                    from: "RehabLookup <no-reply@rehablookup.com>",
+                    to: [customerEmail],
+                    subject: `Your Pro Subscription Has Been Cancelled`,
+                    html: `
+                      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background-color: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                          <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Pro Subscription Cancelled</h1>
+                        </div>
+                        <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+                          <p style="color: #374151;">Hi ${profiles[0].first_name},</p>
+                          <p style="color: #374151;">Your Pro subscription for <strong>${facilities[0].name}</strong> has been cancelled.</p>
+                          <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+                            <p style="margin: 0; color: #92400e; font-weight: 600;">What This Means</p>
+                            <p style="margin: 8px 0 0; color: #92400e;">• Lead unlock & placement fee discounts (20%) removed</p>
+                            <p style="margin: 4px 0 0; color: #92400e;">• Featured placement & priority ranking removed</p>
+                            <p style="margin: 4px 0 0; color: #92400e;">• Extra listings paused (data preserved)</p>
+                          </div>
+                          <p style="color: #374151;">Your data is safe — nothing has been deleted. You can resubscribe anytime to restore all Pro benefits.</p>
+                          <div style="text-align: center; margin: 30px 0;">
+                            <a href="https://rehablookup.com/provider/pro-upgrade" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">Resubscribe to Pro</a>
+                          </div>
+                        </div>
+                      </div>
+                    `,
+                  });
+                  logStep("Cancellation email sent to provider");
+                } catch (provEmailError) {
+                  logStep("Provider cancel email failed", { error: String(provEmailError) });
+                }
               }
             }
           }
