@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Star, ThumbsUp, User, Building2, MapPin } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Star, ThumbsUp, Building2, MapPin, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { FacilityReview } from '@/hooks/useFacilityReviews';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ReviewResponse {
@@ -13,6 +13,8 @@ interface ReviewResponse {
   response_text: string;
   created_at: string;
 }
+
+const REVIEWS_PER_PAGE = 5;
 
 interface ReviewsListProps {
   reviews: FacilityReview[];
@@ -34,6 +36,7 @@ export function ReviewsList({
   facilityId
 }: ReviewsListProps) {
   const [responses, setResponses] = useState<Map<string, ReviewResponse>>(new Map());
+  const [visibleCount, setVisibleCount] = useState(REVIEWS_PER_PAGE);
 
   useEffect(() => {
     if (!facilityId || reviews.length === 0) return;
@@ -54,6 +57,18 @@ export function ReviewsList({
 
     fetchResponses();
   }, [facilityId, reviews]);
+
+  // Reset visible count when reviews change (e.g. new facility)
+  useEffect(() => {
+    setVisibleCount(REVIEWS_PER_PAGE);
+  }, [facilityId]);
+
+  const visibleReviews = useMemo(
+    () => reviews.slice(0, visibleCount),
+    [reviews, visibleCount]
+  );
+
+  const hasMore = visibleCount < reviews.length;
 
   if (isLoading) {
     return (
@@ -88,7 +103,7 @@ export function ReviewsList({
                 ))}
               </div>
               <span className="font-semibold">{averageRating}</span>
-              <span className="text-muted-foreground text-sm">({reviewCount} reviews)</span>
+              <span className="text-muted-foreground text-sm">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
             </div>
           )}
         </div>
@@ -101,69 +116,76 @@ export function ReviewsList({
           </div>
         ) : (
           <div className="space-y-6">
-            {reviews.map((review) => {
+            {visibleReviews.map((review) => {
               const response = responses.get(review.id);
+              const reviewDate = new Date(review.created_at);
+
               return (
                 <div key={review.id} className="border-b border-border/50 pb-6 last:border-0 last:pb-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <span className="text-sm font-semibold text-primary">
                           {review.reviewer_first_name?.charAt(0) || ''}
                           {review.reviewer_last_initial || ''}
                         </span>
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">{review.user_display_name}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground truncate">{review.user_display_name}</p>
                         {(review.reviewer_city || review.reviewer_state) && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                            <MapPin className="h-3 w-3" />
-                            {[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}</span>
                           </p>
                         )}
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center gap-0.5">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={cn(
-                                  "h-3.5 w-3.5",
-                                  star <= review.rating
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-muted-foreground/30"
-                                )}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Rating + Date row */}
+                  <div className="flex items-center gap-2 mt-2 ml-[52px]">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={cn(
+                            "h-3.5 w-3.5",
+                            star <= review.rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-muted-foreground/30"
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground" title={format(reviewDate, 'PPP p')}>
+                      {format(reviewDate, 'MMM d, yyyy')}
+                    </span>
+                    <span className="text-xs text-muted-foreground/60">·</span>
+                    <span className="text-xs text-muted-foreground/60">
+                      {formatDistanceToNow(reviewDate, { addSuffix: true })}
+                    </span>
+                  </div>
                   
-                  {review.review_text && (
-                    <p className="mt-3 text-sm text-foreground/80 leading-relaxed">
-                      {review.review_text}
-                    </p>
-                  )}
+                  {/* Review text — always present (required at submission) */}
+                  <p className="mt-3 ml-[52px] text-sm text-foreground/80 leading-relaxed">
+                    {review.review_text}
+                  </p>
 
                   {/* Provider Response */}
                   {response && (
-                    <div className="mt-3 ml-6 border-l-2 border-primary/20 pl-4 bg-muted/30 rounded-r-lg py-2 pr-3">
+                    <div className="mt-3 ml-[52px] border-l-2 border-primary/20 pl-4 bg-muted/30 rounded-r-lg py-2 pr-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <Building2 className="h-3.5 w-3.5 text-primary" />
+                        <Building2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                         <span className="text-xs font-medium text-primary">Response from Facility</span>
                         <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(response.created_at), { addSuffix: true })}
+                          {format(new Date(response.created_at), 'MMM d, yyyy')}
                         </span>
                       </div>
                       <p className="text-sm text-foreground/80">{response.response_text}</p>
                     </div>
                   )}
                   
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-3 ml-[52px] flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -182,6 +204,21 @@ export function ReviewsList({
                 </div>
               );
             })}
+
+            {/* Load More */}
+            {hasMore && (
+              <div className="pt-2 text-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setVisibleCount(prev => prev + REVIEWS_PER_PAGE)}
+                  className="gap-1.5"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                  Show More Reviews ({reviews.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
