@@ -99,13 +99,13 @@ export function useFacilityReviews(facilityId: string) {
       return {
         ...review,
         user_display_name: displayName,
-        reviewer_first_name: firstName || displayName.charAt(0),
+        reviewer_first_name: firstName || displayName?.charAt(0) || '',
         reviewer_last_initial: lastInitial || '',
         reviewer_city: profile?.city || null,
         reviewer_state: profile?.state || null,
         has_voted_helpful: votedReviewIds.includes(review.id)
       };
-    });
+    }).filter(r => !!r.user_display_name);
 
     setReviews(enrichedReviews);
     setReviewCount(enrichedReviews.length);
