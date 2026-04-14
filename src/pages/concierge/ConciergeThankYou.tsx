@@ -168,13 +168,18 @@ export default function ConciergeThankYou() {
     verifyAndSubmit();
   }, [sessionId]);
 
-  // Check auth status
+  // Check auth status and listen for changes (e.g. user logs in from another tab)
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setIsLoggedIn(!!data.session);
     };
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleCreateAccount = async () => {
