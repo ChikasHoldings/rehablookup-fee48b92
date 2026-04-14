@@ -544,6 +544,19 @@ export default function ConciergeThankYou() {
                         </CollapsibleContent>
                       </div>
                     </Collapsible>
+
+                    {/* Already have an account? */}
+                    <div className="mt-3 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Already have an account?{" "}
+                        <Link 
+                          to={`/login?redirect=${encodeURIComponent('/account/requests')}`}
+                          className="text-primary hover:underline font-medium"
+                        >
+                          Log in here
+                        </Link>
+                      </p>
+                    </div>
                   )}
 
                   {/* Account Created Success */}
