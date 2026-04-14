@@ -1,0 +1,226 @@
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import {
+  emailStart,
+  emailHeader,
+  emailBodyStart,
+  emailBodyEnd,
+  emailGreeting,
+  emailParagraph,
+  emailFooter,
+  emailEnd,
+  emailDivider,
+  type PlanType,
+} from "../_shared/email-templates.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  console.log(`[SEND-PROVIDER-WELCOME-OFFER] ${step}`, details ? JSON.stringify(details) : "");
+};
+
+interface WelcomeOfferRequest {
+  facilityId: string;
+  facilityName: string;
+  providerEmail: string;
+  providerFirstName: string;
+  selectedPlan: string;
+}
+
+const P = "#1B365D";
+const GOLD = "#CDA223";
+const PRO = "#7c3aed";
+
+function generateWelcomeOfferEmail(
+  providerFirstName: string,
+  facilityName: string,
+  selectedPlan: string
+): string {
+  const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
+  const plan: PlanType = isPro ? "pro" : "free";
+  const discountLabel = isPro ? "20% Pro discount on top" : "";
+
+  let html = emailStart();
+  html += emailHeader("Your Welcome Credit Offer", plan, {
+    icon: "🎁",
+    subtitle: "Exclusive limited-time offer for new providers",
+  });
+  html += emailBodyStart();
+  html += emailGreeting(providerFirstName);
+
+  html += emailParagraph(`Congratulations on registering <strong style="color:${P};">${facilityName}</strong> on RehabLookup! To help you hit the ground running, we've prepared an <strong>exclusive welcome credit offer</strong> — available only to new providers for a limited time.`);
+
+  // Urgency banner
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;margin-bottom:24px;">
+    <tr><td style="padding:14px 18px;text-align:center;">
+      <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:600;color:#991b1b;">⏰ This offer expires 7 days after signup — don't miss out</p>
+    </td></tr>
+  </table>`;
+
+  // Why credits matter
+  html += `<p style="margin:0 0 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;font-weight:700;color:${P};">Why Credits Matter</p>`;
+  html += emailParagraph("When families inquire about your facility, you'll see their basic details — but to view full contact information and respond directly, you need to <strong>unlock the lead with credits</strong>. The faster you respond, the more likely families are to choose your facility.");
+
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">`;
+  const points = [
+    { icon: "⚡", text: "Respond first, win the referral — speed matters in treatment placement" },
+    { icon: "📈", text: "Every unlocked lead is a potential admission worth thousands" },
+    { icon: "🔒", text: "Without credits, inquiries expire and families move on" },
+  ];
+  for (const pt of points) {
+    html += `<tr><td style="padding:6px 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td style="width:28px;vertical-align:top;font-size:16px;">${pt.icon}</td>
+        <td style="padding-left:10px;">
+          <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:#334155;line-height:1.5;">${pt.text}</p>
+        </td>
+      </tr></table>
+    </td></tr>`;
+  }
+  html += `</table>`;
+
+  html += emailDivider();
+
+  // Credit tiers
+  html += `<p style="margin:0 0 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;font-weight:700;color:${P};">Welcome Credit Bundles</p>`;
+  html += emailParagraph("Choose your first top-up and get <strong>bonus credits</strong> to unlock more leads:");
+
+  const tiers = [
+    { amount: "$200", bonus: "—", label: "Starter", highlight: false },
+    { amount: "$500", bonus: "+$50 bonus", label: "Growth", highlight: false },
+    { amount: "$1,000", bonus: "+$200 bonus", label: "Best Value", highlight: true },
+  ];
+
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">`;
+  for (const tier of tiers) {
+    const bg = tier.highlight ? "#f0f7ff" : "#f8fafc";
+    const border = tier.highlight ? `2px solid ${P}` : "1px solid #e2e8f0";
+    const bonusColor = tier.highlight ? P : "#059669";
+    html += `<tr><td style="padding:4px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${bg};border:${border};border-radius:10px;">
+        <tr>
+          <td style="padding:14px 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td>
+                <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;font-weight:700;color:${P};">${tier.amount} <span style="font-size:12px;font-weight:400;color:#64748b;">— ${tier.label}</span></p>
+              </td>
+              <td style="text-align:right;">
+                ${tier.bonus !== "—"
+                  ? `<span style="display:inline-block;background:${tier.highlight ? '#dbeafe' : '#d1fae5'};color:${bonusColor};padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">${tier.bonus}</span>`
+                  : `<span style="font-size:12px;color:#94a3b8;">Standard</span>`
+                }
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+      </table>
+    </td></tr>`;
+  }
+  html += `</table>`;
+
+  if (isPro) {
+    html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf5ff;border-left:4px solid ${PRO};border-radius:0 8px 8px 0;margin-bottom:24px;">
+      <tr><td style="padding:14px 16px;">
+        <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:#5b21b6;line-height:1.5;">⭐ <strong>Pro Bonus:</strong> Your 20% lead unlock discount applies on top of bundle bonuses — maximizing every dollar.</p>
+      </td></tr>
+    </table>`;
+  }
+
+  // Primary CTA
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+    <tr><td align="center">
+      <a href="https://rehablookup.com/provider/billing?purchase_credits=true&welcome=true" style="display:inline-block;background:${GOLD};color:#ffffff;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">Claim My Welcome Credits →</a>
+    </td></tr>
+  </table>`;
+
+  html += `<p style="margin:0 0 20px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;color:#94a3b8;">No commitment required. Credits never expire once purchased.</p>`;
+
+  html += emailDivider();
+
+  // Don't miss section
+  html += `<p style="margin:0 0 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;font-weight:700;color:${P};">Don't Let Leads Slip Away</p>`;
+  html += emailParagraph("Families searching for treatment are making decisions <strong>right now</strong>. Every inquiry you don't respond to is a potential admission lost to another provider. With credits ready, you can unlock and contact leads the moment they reach out.");
+
+  // Secondary CTAs
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+    <tr><td align="center">
+      <a href="https://rehablookup.com/provider/listings" style="display:inline-block;background:${P};color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">Complete My Listing</a>
+    </td></tr>
+  </table>`;
+
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;margin-bottom:8px;">
+    <tr><td align="center">
+      <a href="https://rehablookup.com/provider/dashboard" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:${P};text-decoration:underline;">View My Dashboard</a>
+    </td></tr>
+  </table>`;
+
+  if (!isPro) {
+    html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;margin-bottom:8px;">
+      <tr><td align="center">
+        <a href="https://rehablookup.com/provider/pro-upgrade" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:${PRO};font-weight:600;text-decoration:underline;">⭐ Upgrade to Pro for 20% off all unlocks</a>
+      </td></tr>
+    </table>`;
+  }
+
+  html += `<div style="height:12px;"></div>`;
+  html += emailBodyEnd();
+  html += emailFooter();
+  html += emailEnd();
+
+  return html;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      logStep("ERROR", "RESEND_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "Email service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
+    const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan }: WelcomeOfferRequest = await req.json();
+    logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
+
+    const emailHtml = generateWelcomeOfferEmail(providerFirstName, facilityName, selectedPlan);
+
+    const { error: emailError } = await resend.emails.send({
+      from: "RehabLookup <no-reply@rehablookup.com>",
+      to: [providerEmail],
+      subject: `🎁 ${providerFirstName}, your welcome credit offer is waiting — claim bonus credits now`,
+      html: emailHtml,
+    });
+
+    if (emailError) {
+      logStep("Error sending welcome offer email", emailError);
+      return new Response(
+        JSON.stringify({ error: "Failed to send welcome offer email", details: emailError }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    logStep("Welcome offer email sent successfully", { to: providerEmail });
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

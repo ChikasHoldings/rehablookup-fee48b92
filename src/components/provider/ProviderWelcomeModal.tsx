@@ -229,24 +229,37 @@ function WelcomeStep({
           </div>
         </div>
 
-        {/* Welcome Offer — inline banner */}
+        {/* Welcome Offer — exclusive banner */}
         <button
           onClick={() => onNavigate("billing", "welcome_offer")}
           className={cn(
-            "w-full flex items-center gap-3 rounded-lg px-3.5 py-3",
-            "bg-accent/8 border border-accent/20",
-            "hover:border-accent/35 hover:bg-accent/12",
-            "transition-all group text-left"
+            "w-full rounded-xl px-4 py-3.5 text-left",
+            "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20",
+            "border border-amber-300/50 dark:border-amber-700/40",
+            "hover:border-amber-400/70 hover:shadow-sm",
+            "transition-all group relative overflow-hidden"
           )}
         >
-          <div className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15">
-            <Gift className="h-4 w-4 text-accent" />
+          <div className="absolute top-0 right-0 px-2 py-0.5 bg-red-500 text-white text-[8px] font-bold uppercase tracking-wider rounded-bl-lg">
+            Limited Time
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-bold text-foreground leading-tight">Welcome Offer</p>
-            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Bonus credits on your first top-up</p>
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
+              <Gift className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0 pr-12">
+              <p className="text-[13px] font-bold text-foreground leading-tight">🎁 Welcome Credit Offer</p>
+              <p className="text-[11px] text-amber-800 dark:text-amber-300/80 leading-snug mt-1">
+                Get up to <strong>$200 bonus credits</strong> on your first top-up. Respond to inquiries faster — don't let leads slip away.
+              </p>
+            </div>
           </div>
-          <ChevronRight className="h-3.5 w-3.5 text-accent/50 group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+          <div className="mt-2.5 flex items-center justify-between">
+            <span className="text-[10px] text-amber-700/70 dark:text-amber-400/60">Exclusive to new providers</span>
+            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+              Claim Now <ChevronRight className="h-3 w-3" />
+            </span>
+          </div>
         </button>
       </div>
 
