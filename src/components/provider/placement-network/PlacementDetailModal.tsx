@@ -321,6 +321,11 @@ export function PlacementDetailModal({
           </div>
         </DialogHeader>
 
+        {/* ─── Match Score ─── */}
+        <div className="px-6 pb-2 flex-shrink-0">
+          <MatchScoreBadge score={matchScore} size="large" />
+        </div>
+
         {/* ─── Tab Bar ─── */}
         <div className="flex border-b flex-shrink-0 px-6 bg-background">
           {tabs.map((tab) => (
