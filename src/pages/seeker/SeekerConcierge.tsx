@@ -70,6 +70,7 @@ interface ConciergeInquiry {
   tour_coordination_status: string;
   admission_status: string;
   move_in_date: string | null;
+  assigned_advisor_id: string | null;
 }
 
 interface Facility {
