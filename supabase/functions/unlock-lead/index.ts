@@ -473,14 +473,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update lead status to 'unlocked' and mark distributions
+    // Update lead status to 'unlocked' — only valid from 'new' or 'expired' (redistributed leads may be expired)
     const unlockTimestamp = new Date().toISOString();
     
     await supabaseAdmin
       .from("leads")
       .update({ status: "unlocked" })
       .eq("id", leadId)
-      .eq("status", "new"); // Only transition from 'new' (idempotent)
+      .in("status", ["new", "expired"]); // Allow transition from new or expired
 
     await supabaseAdmin
       .from("lead_distributions")

@@ -704,10 +704,15 @@ Deno.serve(async (req) => {
     // Generate idempotency key if not provided
     const idempotencyKey = data.idempotencyKey || `${data.email}-${data.facilityId}-${Date.now()}`;
 
+    // Determine inquiry type based on preferred contact method
+    const inquiryType = (validatedPreferredContact === "call" || validatedPreferredContact === "phone") 
+      ? "request_callback" 
+      : "request_info";
+
     // Detect high-intent signals
     const isHighIntent = !!(
       (data.urgency && ["Urgent", "Immediately", "immediate"].includes(data.urgency)) ||
-      (data.preferredContact === "call" || data.preferredContact === "phone") ||
+      (validatedPreferredContact === "call" || validatedPreferredContact === "phone") ||
       (data.readinessLevel && ["high", "ready"].includes(data.readinessLevel)) ||
       (data.levelOfCare && ["detox", "residential", "inpatient"].some(t => (data.levelOfCare || "").toLowerCase().includes(t)))
     );
@@ -742,7 +747,8 @@ Deno.serve(async (req) => {
         redistribution_status: "exclusive",
         // High-intent flag
         high_intent: isHighIntent,
-        // Enhanced intake fields
+        // Inquiry type for pricing
+        inquiry_type: inquiryType,
         age_range: data.ageRange || null,
         gender: data.gender || null,
         relationship_to_patient: data.relationshipToPatient || null,
@@ -902,7 +908,7 @@ Deno.serve(async (req) => {
           high_intent: isHighIntent,
           credit_cost: lead.credit_cost,
           lead_score_label: lead.lead_score_label,
-          inquiry_type: data.preferredContact === "call" ? "request_callback" : "request_info",
+          inquiry_type: inquiryType,
           link: `/provider/inquiries?lead=${lead.id}`,
         },
         read: false,
