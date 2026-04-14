@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -120,6 +120,7 @@ const states = [...US_STATES];
 export default function ProviderSignup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -223,8 +224,8 @@ export default function ProviderSignup() {
   };
 
   const handleSubmit = async () => {
-    // Prevent double submissions
-    if (isSubmitting) {
+    // Prevent double submissions (useRef survives React StrictMode double-fire)
+    if (submittingRef.current || isSubmitting) {
       if (import.meta.env.DEV) console.log("[ProviderSignup] Prevented double submission");
       return;
     }
@@ -244,6 +245,7 @@ export default function ProviderSignup() {
     }
     setLastSubmitAttempt(now);
     
+    submittingRef.current = true;
     setIsSubmitting(true);
     if (import.meta.env.DEV) console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
 
@@ -634,7 +636,7 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if notification fails
       }
 
-      // 12. Send welcome email to provider
+      // 12. Send welcome email to provider (with idempotency key)
       try {
         await supabase.functions.invoke("send-provider-welcome-email", {
           body: {
@@ -643,6 +645,7 @@ export default function ProviderSignup() {
             providerEmail: formData.email,
             providerFirstName: formData.firstName,
             selectedPlan: "free",
+            idempotencyKey: `welcome-${facilityId}`,
           },
         });
       } catch (welcomeError) {
@@ -650,7 +653,7 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if email fails
       }
 
-      // 12b. Send welcome offer email (separate, delayed send)
+      // 12b. Send welcome offer email (with idempotency key)
       try {
         await supabase.functions.invoke("send-provider-welcome-offer-email", {
           body: {
@@ -659,6 +662,7 @@ export default function ProviderSignup() {
             providerEmail: formData.email,
             providerFirstName: formData.firstName,
             selectedPlan: "free",
+            idempotencyKey: `welcome-offer-${facilityId}`,
           },
         });
       } catch (offerError) {
@@ -680,6 +684,7 @@ export default function ProviderSignup() {
         variant: "destructive",
       });
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
