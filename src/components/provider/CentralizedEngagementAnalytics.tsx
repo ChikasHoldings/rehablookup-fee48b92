@@ -58,7 +58,7 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
   return (
     <div className="space-y-5">
       {/* Full Engagement Funnel KPIs */}
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <KPICard title="Search Appearances" value={periodImpressions} total={totalImpressions} icon={Search} trend={analytics?.impressionGrowth} color="blue" />
         <KPICard title="Profile Views" value={periodProfileViews} total={totalProfileViews} icon={Eye} trend={analytics?.profileViewGrowth} color="primary" />
         {isPro ? (
@@ -82,7 +82,7 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
             <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs font-semibold text-foreground">Engagement Funnel</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0">
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 [&>*]:min-w-0">
             <ConversionCell label="Search → Profile" value={`${impressionToViewRate}%`} desc="Impressions → views" />
             <ConversionCell label="Profile → Call" value={`${viewToCallRate}%`} desc="Views → phone clicks" />
             <ConversionCell label="Profile → Website" value={`${viewToWebsiteRate}%`} desc="Views → site clicks" />
@@ -154,15 +154,15 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
               <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-foreground">Daily Trends</span>
             </div>
-            <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
               <LegendDot color="hsl(217, 91%, 60%)" label="Impressions" />
               <LegendDot color="hsl(var(--primary))" label="Views" />
               <LegendDot color="hsl(142, 71%, 45%)" label="Calls" />
               <LegendDot color="hsl(280, 65%, 60%)" label="Website" />
             </div>
           </div>
-          <div className="rounded-lg border bg-muted/10 p-3">
-            <div className="h-[220px]">
+          <div className="rounded-lg border bg-muted/10 p-2 sm:p-3">
+            <div className="h-[180px] sm:h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={analytics.dailyTrends} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                   <defs>
@@ -264,10 +264,10 @@ function KPICard({ title, value, total, icon: Icon, trend, color, locked }: {
 
 function ConversionCell({ label, value, desc }: { label: string; value: string; desc: string }) {
   return (
-    <div className="p-3 text-center">
-      <p className="text-lg font-bold text-foreground">{value}</p>
-      <p className="text-xs font-medium text-foreground mt-0.5">{label}</p>
-      <p className="text-xs text-muted-foreground">{desc}</p>
+    <div className="p-2 sm:p-3 text-center">
+      <p className="text-base sm:text-lg font-bold text-foreground">{value}</p>
+      <p className="text-[10px] sm:text-xs font-medium text-foreground mt-0.5 leading-tight">{label}</p>
+      <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight hidden sm:block">{desc}</p>
     </div>
   );
 }
