@@ -33,8 +33,8 @@ interface WeeklyKPIs {
   estimatedRevenueLostCents: number;
 }
 
-// Average revenue per unlocked lead (used for "estimated revenue lost")
-const AVG_REVENUE_PER_LEAD_CENTS = 4900; // $49 average lead value
+// Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
+const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
 
 export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
