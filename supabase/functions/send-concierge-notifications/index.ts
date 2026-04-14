@@ -397,7 +397,7 @@ async function sendIntakeReceivedEmail(
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   
   const html = emailWrapper(`
@@ -464,7 +464,7 @@ async function sendMatchesFoundEmail(
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   const matchCount = inquiry.match_count || 3;
   
@@ -528,7 +528,7 @@ async function sendIntroductionsSentEmail(
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   
   const html = emailWrapper(`
@@ -589,7 +589,7 @@ async function sendFacilitiesReadyForReviewEmail(
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   
   const html = emailWrapper(`
@@ -657,7 +657,7 @@ async function sendAdmissionStageNotification(
   stage: 'tour_completed' | 'admission_updated' | 'move_in_scheduled' | 'moved_in',
   metadata?: Record<string, unknown>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   const facilityName = facility?.name || 'your matched facility';
 
@@ -829,7 +829,7 @@ async function sendProviderInterestedNotification(
   }
 
   // Email to seeker — brokerage-safe (no PII, no facility direct contact)
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const seekerHtml = emailWrapper(`
     ${emailHeader('Good News About Your Case!', `Case #${caseId}`, '🤝')}
     <tr>
@@ -912,7 +912,7 @@ async function sendSignupPromptEmail(
   inquiry: InquiryData,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   
   const html = emailWrapper(`
@@ -1029,7 +1029,7 @@ async function sendProviderConfirmedEmail(
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   
   const html = emailWrapper(`
@@ -1097,7 +1097,7 @@ async function sendPlacementCompleteEmails(
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
 ) {
-  const firstName = inquiry.user_name.split(' ')[0];
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   const recipientEmail = facility.concierge_admissions_email || facility.reply_email || facility.email;
   const contactName = facility.concierge_admissions_contact || "Admissions Team";
