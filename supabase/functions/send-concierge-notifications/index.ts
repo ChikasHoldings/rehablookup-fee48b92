@@ -211,6 +211,22 @@ Deno.serve(async (req) => {
           await sendSignupPromptEmail(resend, inquiry, results);
         }
         break;
+
+      case 'tour_completed':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'tour_completed', metadata);
+        break;
+
+      case 'admission_updated':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'admission_updated', metadata);
+        break;
+
+      case 'move_in_scheduled':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'move_in_scheduled', metadata);
+        break;
+
+      case 'moved_in':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'moved_in', metadata);
+        break;
     }
 
     logStep("Notifications sent", { count: results.length, type });
