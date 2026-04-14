@@ -36,6 +36,8 @@ import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalytics
 import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
 import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
+import { ProMultiFacilityOverview } from "@/components/provider/ProMultiFacilityOverview";
+import { ProROIWidget } from "@/components/provider/ProROIWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
