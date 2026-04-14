@@ -4926,6 +4926,13 @@ export type Database = {
             referencedRelation: "facility_reviews"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "review_disputes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "public_facility_reviews"
+            referencedColumns: ["id"]
+          },
         ]
       }
       review_helpful_votes: {
@@ -4953,6 +4960,13 @@ export type Database = {
             columns: ["review_id"]
             isOneToOne: false
             referencedRelation: "facility_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_helpful_votes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "public_facility_reviews"
             referencedColumns: ["id"]
           },
         ]
@@ -5071,6 +5085,13 @@ export type Database = {
             columns: ["review_id"]
             isOneToOne: true
             referencedRelation: "facility_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "public_facility_reviews"
             referencedColumns: ["id"]
           },
         ]
@@ -5830,6 +5851,60 @@ export type Database = {
           zip_code?: string | null
         }
         Relationships: []
+      }
+      public_facility_reviews: {
+        Row: {
+          created_at: string | null
+          disputed: boolean | null
+          facility_id: string | null
+          helpful_count: number | null
+          id: string | null
+          rating: number | null
+          review_text: string | null
+          reviewer_display_name: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          disputed?: boolean | null
+          facility_id?: string | null
+          helpful_count?: number | null
+          id?: string | null
+          rating?: number | null
+          review_text?: string | null
+          reviewer_display_name?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          disputed?: boolean | null
+          facility_id?: string | null
+          helpful_count?: number | null
+          id?: string | null
+          rating?: number | null
+          review_text?: string | null
+          reviewer_display_name?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_reviews_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_reviews_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       public_facility_staff: {
         Row: {
