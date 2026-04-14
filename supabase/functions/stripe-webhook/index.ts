@@ -729,6 +729,42 @@ Deno.serve(async (req) => {
         logStep("Error updating subscription", { error: updateError.message });
       } else {
         logStep("Subscription updated successfully", { status: mappedStatus, currentPeriodEnd, cancelAtPeriodEnd: subscription.cancel_at_period_end });
+
+        // Notify provider on status transitions (past_due, cancel_at_period_end)
+        if (mappedStatus === "past_due" || subscription.cancel_at_period_end) {
+          const { data: proSub } = await supabaseAdmin
+            .from("pro_subscriptions")
+            .select("provider_id, facility_id")
+            .eq("stripe_subscription_id", subscription.id)
+            .maybeSingle();
+
+          if (proSub) {
+            if (mappedStatus === "past_due") {
+              await supabaseAdmin.from("provider_notifications").insert({
+                user_id: proSub.provider_id,
+                facility_id: proSub.facility_id,
+                type: "subscription_past_due",
+                title: "Subscription Payment Past Due",
+                message: "Your Pro subscription payment is past due. Please update your payment method to avoid losing Pro benefits.",
+                metadata: { subscription_id: subscription.id, status: "past_due" },
+              });
+              logStep("Past-due notification sent to provider");
+            }
+
+            if (subscription.cancel_at_period_end) {
+              const endDate = new Date(subscription.current_period_end * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+              await supabaseAdmin.from("provider_notifications").insert({
+                user_id: proSub.provider_id,
+                facility_id: proSub.facility_id,
+                type: "subscription_pending_cancel",
+                title: "Pro Cancellation Scheduled",
+                message: `Your Pro subscription will end on ${endDate}. You'll retain Pro benefits until then. You can resubscribe anytime.`,
+                metadata: { subscription_id: subscription.id, cancel_date: endDate },
+              });
+              logStep("Pending cancellation notification sent to provider");
+            }
+          }
+        }
       }
     }
 
@@ -921,6 +957,76 @@ Deno.serve(async (req) => {
             },
           });
           logStep("Payment event recorded");
+
+          // Send payment confirmation notification + email to provider (renewals & first payments)
+          if (userId && facilityId) {
+            const amountFormatted = (invoice.amount_paid / 100).toFixed(2);
+            const currencyUpper = invoice.currency.toUpperCase();
+            const isRenewal = invoice.billing_reason === "subscription_cycle";
+            const isPro = planTier === "pro";
+
+            await supabaseAdmin.from("provider_notifications").insert({
+              user_id: userId,
+              facility_id: facilityId,
+              type: "payment_confirmation",
+              title: isRenewal ? "Subscription Renewed" : "Payment Confirmed",
+              message: isRenewal
+                ? `Your ${planName} subscription has been renewed. ${currencyUpper} ${amountFormatted} charged.${isPro ? " Your 20% discount on leads and placement fees continues." : ""}`
+                : `Payment of ${currencyUpper} ${amountFormatted} for ${planName} confirmed.`,
+              metadata: {
+                amount_cents: invoice.amount_paid,
+                currency: currencyUpper,
+                invoice_id: invoice.id,
+                billing_reason: invoice.billing_reason,
+                plan_tier: planTier,
+              },
+            });
+
+            // Send payment confirmation email
+            if (resend && customerEmail) {
+              try {
+                const { data: providerProfile } = await supabaseAdmin
+                  .from("profiles")
+                  .select("first_name")
+                  .eq("user_id", userId)
+                  .maybeSingle();
+                const firstName = providerProfile?.first_name || "Provider";
+
+                const proBenefits = isPro
+                  ? `<div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
+                       <p style="margin: 0; color: #047857; font-weight: 600;">Your Pro Benefits Are Active</p>
+                       <p style="margin: 8px 0 0; color: #047857;">✓ 20% discount on lead unlocks & placement fees</p>
+                       <p style="margin: 4px 0 0; color: #047857;">✓ Featured placement & priority ranking</p>
+                       <p style="margin: 4px 0 0; color: #047857;">✓ Up to 5 facility listings</p>
+                     </div>`
+                  : "";
+
+                await resend.emails.send({
+                  from: "RehabLookup <no-reply@rehablookup.com>",
+                  to: [customerEmail],
+                  subject: isRenewal ? `✅ Subscription Renewed — ${planName}` : `✅ Payment Confirmed — ${planName}`,
+                  html: `
+                    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                      <div style="background-color: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">✅ ${isRenewal ? "Subscription Renewed" : "Payment Confirmed"}</h1>
+                      </div>
+                      <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+                        <p style="color: #374151;">Hi ${firstName},</p>
+                        <p style="color: #374151;">Your payment of <strong>${currencyUpper} ${amountFormatted}</strong> for <strong>${planName}</strong> has been processed successfully.</p>
+                        ${proBenefits}
+                        <div style="text-align: center; margin: 30px 0;">
+                          <a href="https://rehablookup.com/provider/billing" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Billing</a>
+                        </div>
+                      </div>
+                    </div>
+                  `,
+                });
+                logStep("Payment confirmation email sent to provider");
+              } catch (emailError) {
+                logStep("Payment confirmation email failed", { error: String(emailError) });
+              }
+            }
+          }
         }
       }
     }
@@ -1272,7 +1378,42 @@ Deno.serve(async (req) => {
                   `,
                 });
               } catch (emailError) {
-                logStep("Cancel email failed", { error: String(emailError) });
+                logStep("Cancel admin email failed", { error: String(emailError) });
+              }
+
+              // Send cancellation email to provider
+              if (customerEmail) {
+                try {
+                  await resend.emails.send({
+                    from: "RehabLookup <no-reply@rehablookup.com>",
+                    to: [customerEmail],
+                    subject: `Your Pro Subscription Has Been Cancelled`,
+                    html: `
+                      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background-color: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                          <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Pro Subscription Cancelled</h1>
+                        </div>
+                        <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+                          <p style="color: #374151;">Hi ${profiles[0].first_name},</p>
+                          <p style="color: #374151;">Your Pro subscription for <strong>${facilities[0].name}</strong> has been cancelled.</p>
+                          <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+                            <p style="margin: 0; color: #92400e; font-weight: 600;">What This Means</p>
+                            <p style="margin: 8px 0 0; color: #92400e;">• Lead unlock & placement fee discounts (20%) removed</p>
+                            <p style="margin: 4px 0 0; color: #92400e;">• Featured placement & priority ranking removed</p>
+                            <p style="margin: 4px 0 0; color: #92400e;">• Extra listings paused (data preserved)</p>
+                          </div>
+                          <p style="color: #374151;">Your data is safe — nothing has been deleted. You can resubscribe anytime to restore all Pro benefits.</p>
+                          <div style="text-align: center; margin: 30px 0;">
+                            <a href="https://rehablookup.com/provider/pro-upgrade" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">Resubscribe to Pro</a>
+                          </div>
+                        </div>
+                      </div>
+                    `,
+                  });
+                  logStep("Cancellation email sent to provider");
+                } catch (provEmailError) {
+                  logStep("Provider cancel email failed", { error: String(provEmailError) });
+                }
               }
             }
           }
