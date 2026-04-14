@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { PlacementProgressStepper } from "./concierge/PlacementProgressStepper";
+import { CaseSlaDetailBanner } from "./concierge/CaseSlaAlerts";
 import { ConciergeIntakeTab } from "./concierge/ConciergeIntakeTab";
 import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
@@ -138,6 +139,11 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             {caseData.user_email} • {caseData.user_phone}
           </div>
         </SheetHeader>
+
+        {/* SLA Alerts */}
+        <div className="flex-shrink-0 mt-3">
+          <CaseSlaDetailBanner caseData={caseData} />
+        </div>
 
         {/* Progress Stepper */}
         <div className="flex-shrink-0 mt-3 overflow-x-auto">
