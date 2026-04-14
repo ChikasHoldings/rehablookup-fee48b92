@@ -445,6 +445,11 @@ export default function ProviderDashboardPage() {
               onLeadClick={handleLeadClick}
             />
 
+            {/* Missed Leads — Psychological Trigger */}
+            {facilityId && (
+              <DashboardMissedLeads facilityId={facilityId} isPro={proStatus.isPro} />
+            )}
+
             {/* Lead Conversion Widget */}
             {facilityIds.length > 0 && (
               <LeadConversionWidget facilityIds={facilityIds} />
