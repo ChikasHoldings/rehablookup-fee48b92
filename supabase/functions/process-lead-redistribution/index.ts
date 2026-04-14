@@ -349,6 +349,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Notify admin of redistribution activity
+    if (redistributedCount > 0 || expiredCount > 0) {
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "lead_redistribution",
+          title: "Lead Redistribution Summary",
+          message: `${redistributedCount} lead(s) redistributed, ${expiredCount} lead(s) expired without unlock.`,
+          metadata: { redistributedCount, notificationsSent, expiredCount },
+        });
+      } catch (e) {
+        log("WARN", "Failed to create admin notification", { error: String(e) });
+      }
+    }
+
     log("INFO", "Lead redistribution processing complete", { 
       redistributedCount, 
       notificationsSent,
