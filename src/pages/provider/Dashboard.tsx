@@ -260,6 +260,27 @@ export default function ProviderDashboardPage() {
     refetchOnWindowFocus: true,
   });
 
+  // Auto-refresh impressions via realtime subscription
+  useEffect(() => {
+    if (!facilityId) return;
+    const channel = supabase
+      .channel(`impressions-live-${facilityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "provider_events",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["impression-count", facilityId] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [facilityId, queryClient]);
+
   // Fetch review count
   const { data: reviewCount = 0 } = useQuery({
     queryKey: ["review-count", facilityId],
