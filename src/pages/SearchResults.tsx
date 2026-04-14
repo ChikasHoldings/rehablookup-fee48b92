@@ -436,9 +436,9 @@ const SearchResults = () => {
         const proA = getPlanPriority(a as any);
         const proB = getPlanPriority(b as any);
         if (proA !== proB) return proA - proB;
-        // Tertiary: rating
-        const rA = (a as any).googleRating || 0;
-        const rB = (b as any).googleRating || 0;
+        // Tertiary: ranking score
+        const rA = (a as any).calculatedRankingScore || 0;
+        const rB = (b as any).calculatedRankingScore || 0;
         if (rA !== rB) return rB - rA;
         // Final: stable by ID
         return a.id.localeCompare(b.id);
@@ -463,16 +463,15 @@ const SearchResults = () => {
 
       switch (sortParam) {
         case "rating-high": {
-          const diff = ((b as any).googleRating || 0) - ((a as any).googleRating || 0);
+          const diff = ((b as any).calculatedRankingScore || 0) - ((a as any).calculatedRankingScore || 0);
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
         }
         case "rating-low": {
-          const diff = ((a as any).googleRating || 0) - ((b as any).googleRating || 0);
+          const diff = ((a as any).calculatedRankingScore || 0) - ((b as any).calculatedRankingScore || 0);
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
         }
         case "reviews": {
-          const diff = ((b as any).googleReviewCount || 0) - ((a as any).googleReviewCount || 0);
-          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+          return a.id.localeCompare(b.id);
         }
         case "name-asc": return a.name.localeCompare(b.name);
         case "name-desc": return b.name.localeCompare(a.name);
