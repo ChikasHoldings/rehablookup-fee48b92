@@ -82,12 +82,19 @@ export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoor
         move_in_date: moveInDate ? moveInDate.toISOString() : null,
       };
 
-      const { error } = await supabase
+      // Optimistic lock: only update if updated_at matches what we loaded
+      const { data: updated, error } = await supabase
         .from("concierge_inquiries")
         .update(updates)
-        .eq("id", caseData.id);
+        .eq("id", caseData.id)
+        .eq("updated_at", caseData.updated_at)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
+      if (!updated) {
+        throw new Error("This case was updated by another user. Please refresh and try again.");
+      }
 
       // Log event for meaningful changes
       const changes: string[] = [];
