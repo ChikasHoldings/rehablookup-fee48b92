@@ -222,14 +222,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
     const subjectPrefix = planInfo.plan === "pro" ? "⭐ " : "";
     
-    const emailResponse = await resend.emails.send({
+    const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [profile.email],
       subject: `${subjectPrefix}Your listing is live: ${facilityName}`,
       html: emailHtml,
+    }, {
+      emailType: "facility_approval",
+      idempotencyKey: `approval-${facilityId}`,
+      metadata: { facilityId, facilityName },
     });
 
-    console.log("Approval email sent:", emailResponse);
+    if (!result.success && !result.deduplicated) {
+      console.error("Approval email failed:", result.error, { deadLettered: result.deadLettered });
+    } else {
+      console.log("Approval email result:", { sent: result.success, deduplicated: result.deduplicated, attempts: result.attempts });
+    }
 
     // Submit to IndexNow for instant search engine indexing
     if (facility?.slug) {
