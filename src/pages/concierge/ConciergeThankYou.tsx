@@ -257,15 +257,17 @@ export default function ConciergeThankYou() {
       }
 
       if (authData.user) {
-        // Create seeker profile
+        // The handle_new_seeker trigger auto-creates seeker_profiles on signup
+        // with account_type='seeker'. Only insert if the trigger didn't fire
+        // (e.g. metadata missing). Use upsert to avoid conflicts.
         const { error: profileError } = await supabase
           .from("seeker_profiles")
-          .insert({
+          .upsert({
             user_id: authData.user.id,
             first_name: firstName || "",
             last_name: lastName || "",
             email: trimmedEmail,
-          });
+          }, { onConflict: "user_id" });
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
@@ -283,15 +285,18 @@ export default function ConciergeThankYou() {
         }
 
         setAccountCreated(true);
-        toast.success("Account created! Check your email to verify.");
 
         localStorage.removeItem(STORAGE_KEY);
 
-        // Only redirect if they have an active session (auto-confirm on)
         if (authData.session) {
+          // Active session — redirect to dashboard
+          toast.success("Account created! Redirecting to your dashboard...");
           setTimeout(() => {
-            navigate("/account");
+            navigate("/account/requests");
           }, 2000);
+        } else {
+          // Needs email verification — don't promise redirect
+          toast.success("Account created! Check your email to verify, then log in to track your placement.");
         }
       }
     } catch (err) {
