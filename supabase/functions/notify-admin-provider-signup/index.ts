@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -204,17 +205,22 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    const { error: emailError } = await resend.emails.send({
+    const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `New provider: ${facilityName}`,
       html: emailHtml,
+    }, {
+      emailType: "admin_provider_signup",
+      idempotencyKey: `admin-signup-${facilityId}`,
+      checkSuppression: false,
+      metadata: { facilityId, facilityName },
     });
 
-    if (emailError) {
-      logStep("Error sending admin email", emailError);
+    if (!result.success && !result.deduplicated) {
+      logStep("Error sending admin email", { error: result.error });
     } else {
-      logStep("Admin email sent successfully", { recipients: adminEmails.length });
+      logStep("Admin email sent", { recipients: adminEmails.length, deduplicated: result.deduplicated });
     }
 
     return new Response(JSON.stringify({ success: true }), {

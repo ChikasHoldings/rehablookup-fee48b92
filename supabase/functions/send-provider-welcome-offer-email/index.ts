@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import {
   emailStart,
   emailHeader,
@@ -195,57 +196,34 @@ Deno.serve(async (req) => {
     const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan, idempotencyKey }: WelcomeOfferRequest = await req.json();
     logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
 
-    // Server-side idempotency: prevent duplicate welcome offer emails
-    const dedupKey = idempotencyKey || `welcome-offer-${facilityId}`;
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: existing } = await supabase
-      .from("email_tracking_events")
-      .select("id")
-      .eq("email_id", dedupKey)
-      .eq("email_type", "provider_welcome_offer")
-      .eq("event_type", "sent")
-      .limit(1)
-      .maybeSingle();
-
-    if (existing) {
-      logStep("Duplicate detected, skipping", { dedupKey });
-      return new Response(
-        JSON.stringify({ success: true, deduplicated: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const emailHtml = generateWelcomeOfferEmail(providerFirstName, facilityName, selectedPlan);
 
-    const { error: emailError } = await resend.emails.send({
+    const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
       subject: `🎁 ${providerFirstName}, your welcome credit offer is waiting — claim bonus credits now`,
       html: emailHtml,
+    }, {
+      emailType: "provider_welcome_offer",
+      idempotencyKey: idempotencyKey || `welcome-offer-${facilityId}`,
+      metadata: { facilityId, facilityName },
     });
 
-    if (emailError) {
-      logStep("Error sending welcome offer email", emailError);
+    if (!result.success && !result.deduplicated) {
+      logStep("Failed to send welcome offer email", { error: result.error, deadLettered: result.deadLettered });
       return new Response(
-        JSON.stringify({ error: "Failed to send welcome offer email", details: emailError }),
+        JSON.stringify({ error: "Failed to send welcome offer email", details: result.error }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Record send for idempotency
-    await supabase.from("email_tracking_events").insert({
-      email_id: dedupKey,
-      email_type: "provider_welcome_offer",
-      event_type: "sent",
-      recipient_email: providerEmail,
-    });
-
-    logStep("Welcome offer email sent successfully", { to: providerEmail });
+    logStep(result.deduplicated ? "Duplicate detected" : "Welcome offer email sent", { to: providerEmail });
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, deduplicated: result.deduplicated }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "2.0.0";
 
@@ -122,34 +123,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
     console.log(`[SEND-LEAD-CONFIRMATION v${VERSION}] Sending to: ${leadEmail.substring(0, 3)}***`);
 
     const resend = new Resend(resendKey);
-
     const emailHtml = getConfirmationEmailHtml(leadFirstName);
 
-    const { data: emailResult, error } = await resend.emails.send({
+    const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [leadEmail],
       subject: "We've received your request",
       html: emailHtml,
+    }, {
+      emailType: "lead_confirmation",
+      metadata: { leadFirstName },
     });
 
-    if (error) {
-      console.error(`[SEND-LEAD-CONFIRMATION v${VERSION}] Email error:`, error);
-      throw error;
-    }
-
-    // Track email send
-    try {
-      await supabase.from("email_tracking_events").insert({
-        email_id: emailResult?.id || crypto.randomUUID(),
-        recipient_email: leadEmail,
-        email_type: "lead_confirmation",
-        event_type: "sent",
+    if (!result.success) {
+      console.error(`[SEND-LEAD-CONFIRMATION v${VERSION}] Failed:`, result.error, { deadLettered: result.deadLettered, attempts: result.attempts });
+      return new Response(JSON.stringify({ error: result.error }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    } catch (trackErr) {
-      console.warn(`[SEND-LEAD-CONFIRMATION v${VERSION}] Failed to track:`, trackErr);
     }
 
-    console.log(`[SEND-LEAD-CONFIRMATION v${VERSION}] Email sent successfully`);
+    console.log(`[SEND-LEAD-CONFIRMATION v${VERSION}] Email sent successfully (attempts: ${result.attempts})`);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
