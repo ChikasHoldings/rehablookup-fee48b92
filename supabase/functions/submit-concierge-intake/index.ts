@@ -404,6 +404,27 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Inquiry created successfully", { inquiryId: inquiry.id, userId: effectiveUserId });
 
+    // Create admin notification so admins see new placements in the dashboard
+    try {
+      await supabase.from('admin_notifications').insert({
+        type: 'concierge_intake',
+        title: 'New Placement Request',
+        message: `New concierge placement from ${sanitizedName} — ${sanitizeString(intakeData.primaryConcern, 100) || 'General'} | ${sanitizeString(intakeData.desiredState, 50) || 'No state pref'} | ${sanitizeString(intakeData.timeline, 50) || 'Flexible'}`,
+        metadata: {
+          inquiry_id: inquiry.id,
+          seeker_name: sanitizedName,
+          primary_concern: sanitizeString(intakeData.primaryConcern, 100),
+          level_of_care: sanitizeString(intakeData.levelOfCare, 50),
+          timeline: sanitizeString(intakeData.timeline, 50),
+          payment_type: sanitizeString(intakeData.paymentType, 50),
+          desired_state: sanitizeString(intakeData.desiredState, 50),
+        },
+      });
+      logStep(requestId, "Admin notification created");
+    } catch (adminNotifErr) {
+      logStep(requestId, "Warning: Failed to create admin notification", { error: String(adminNotifErr) });
+    }
+
     // Log case creation event for timeline
     try {
       await supabase.from('concierge_case_events').insert({
