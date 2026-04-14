@@ -397,20 +397,12 @@ export default function ProviderDashboardPage() {
               <DashboardKPIStrip
                 facilityId={facilityId}
                 isPro={proStatus.isPro}
+                viewsCount={viewsCount}
               />
             )}
 
-            {/* Metrics Row */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-              <MetricCard
-                title="Views"
-                value={viewsCount}
-                subtitle="Last 30 days"
-                icon={Eye}
-                iconBg="bg-primary/10"
-                iconColor="text-primary"
-                isLoading={isLoading}
-              />
+            {/* Inquiries Metric */}
+            <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4">
               <MetricCard
                 title="Inquiries"
                 value={totalLeadsCount}
