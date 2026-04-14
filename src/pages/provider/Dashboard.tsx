@@ -43,6 +43,7 @@ import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
+import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
 
 // Compact Metric Card
 function MetricCard({ 
