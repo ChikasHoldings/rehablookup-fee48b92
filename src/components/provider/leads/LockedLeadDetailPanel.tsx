@@ -1,14 +1,21 @@
-import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users, Coins } from "lucide-react";
+import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users, Coins, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { useLeadCountdown } from "@/hooks/useLeadCountdown";
+import { cn } from "@/lib/utils";
 
 interface LockedLeadDetailPanelProps {
   totalLeadsCount: number;
   onClose: () => void;
+  /** Created time of the currently-selected locked lead */
+  selectedLeadCreatedAt?: string;
 }
 
-export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDetailPanelProps) {
+export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCreatedAt }: LockedLeadDetailPanelProps) {
+  const countdown = useLeadCountdown(selectedLeadCreatedAt || new Date().toISOString());
+  const showCountdown = !!selectedLeadCreatedAt && !countdown.isExpired;
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm text-center space-y-6">
@@ -26,6 +33,58 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDe
             Unlock with credits to view contact info
           </p>
         </div>
+
+        {/* Countdown Timer */}
+        {showCountdown && (
+          <div className={cn(
+            "py-3 px-4 rounded-xl border text-center",
+            countdown.urgencyTier === "critical" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+            countdown.urgencyTier === "warning" && "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+            countdown.urgencyTier === "safe" && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+          )}>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Timer className={cn(
+                "h-4 w-4",
+                countdown.urgencyTier === "critical" && "text-red-600 dark:text-red-400 animate-pulse",
+                countdown.urgencyTier === "warning" && "text-amber-600 dark:text-amber-400",
+                countdown.urgencyTier === "safe" && "text-blue-600 dark:text-blue-400",
+              )} />
+              <span className={cn(
+                "text-xs font-medium uppercase tracking-wider",
+                countdown.urgencyTier === "critical" && "text-red-600 dark:text-red-400",
+                countdown.urgencyTier === "warning" && "text-amber-600 dark:text-amber-400",
+                countdown.urgencyTier === "safe" && "text-blue-600 dark:text-blue-400",
+              )}>
+                Exclusive Access Expires In
+              </span>
+            </div>
+            <div className={cn(
+              "text-2xl font-mono font-bold tracking-wider",
+              countdown.urgencyTier === "critical" && "text-red-700 dark:text-red-300",
+              countdown.urgencyTier === "warning" && "text-amber-700 dark:text-amber-300",
+              countdown.urgencyTier === "safe" && "text-blue-700 dark:text-blue-300",
+            )}>
+              {countdown.formatted}
+            </div>
+            {/* Progress bar */}
+            <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full rounded-full transition-all duration-1000",
+                  countdown.urgencyTier === "critical" && "bg-red-500",
+                  countdown.urgencyTier === "warning" && "bg-amber-500",
+                  countdown.urgencyTier === "safe" && "bg-blue-500",
+                )}
+                style={{ width: `${100 - countdown.percentElapsed}%` }}
+              />
+            </div>
+            {countdown.urgencyTier === "critical" && (
+              <p className="text-[11px] text-red-600 dark:text-red-400 mt-1.5 font-medium">
+                ⚠️ This lead will be redistributed soon!
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Waiting leads counter */}
         {totalLeadsCount > 0 && (
