@@ -557,9 +557,20 @@ export default function ConciergeThankYou() {
                         <CheckCircle className="h-5 w-5 text-green-600" />
                         <div>
                           <p className="font-medium text-green-800 dark:text-green-200">Account Created!</p>
-                          <p className="text-sm text-green-700 dark:text-green-300">Redirecting to your dashboard...</p>
+                          <p className="text-sm text-green-700 dark:text-green-300">
+                            {isLoggedIn 
+                              ? "Redirecting to your dashboard..." 
+                              : "Check your email to verify, then log in to track your placement."}
+                          </p>
                         </div>
                       </div>
+                      {!isLoggedIn && (
+                        <Button asChild size="sm" variant="outline" className="mt-3 ml-8">
+                          <Link to={`/login?redirect=${encodeURIComponent('/account/requests')}`}>
+                            Log In Now
+                          </Link>
+                        </Button>
+                      )}
                     </motion.div>
                   )}
 
