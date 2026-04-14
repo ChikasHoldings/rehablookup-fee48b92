@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -429,8 +429,11 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
 
 function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
   const [sending, setSending] = useState(false);
+  const sendGuard = useRef(false);
 
   const handleNotifySeeker = async () => {
+    if (sendGuard.current) return;
+    sendGuard.current = true;
     setSending(true);
     try {
       await supabase.functions.invoke("send-concierge-notifications", {
@@ -453,6 +456,8 @@ function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
       toast.error("Failed to notify seeker.");
     } finally {
       setSending(false);
+      // Allow re-send after 10 seconds cooldown
+      setTimeout(() => { sendGuard.current = false; }, 10000);
     }
   };
 

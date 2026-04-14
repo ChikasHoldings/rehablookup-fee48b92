@@ -119,10 +119,10 @@ Deno.serve(async (req) => {
 
     logStep("Processing notification", { type, inquiryId, facilityId });
 
-    // Fetch inquiry data
+    // Fetch inquiry data — explicit columns per project guidelines
     const { data: inquiry, error: inquiryError } = await supabase
       .from("concierge_inquiries")
-      .select("*")
+      .select("id, user_name, user_email, user_phone, level_of_care, primary_concern, preferred_state, preferred_city, insurance_carrier, payment_type, match_count, placed_facility_id, user_id, assigned_advisor_id, status")
       .eq("id", inquiryId)
       .single();
 

@@ -54,17 +54,33 @@ Deno.serve(async (req) => {
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No authorization header", requestId, _version: VERSION }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !userData.user) {
-      throw new Error("Authentication failed");
+      return new Response(JSON.stringify({ error: "Authentication failed", requestId, _version: VERSION }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const { inquiryId, facilityId, confirmationType, admittedAt, isInternational } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body", requestId, _version: VERSION }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { inquiryId, facilityId, confirmationType, admittedAt, isInternational } = body as {
+      inquiryId: string; facilityId: string; confirmationType: string; admittedAt?: string; isInternational?: boolean;
+    };
     
     // Validate required fields
     if (!inquiryId || !facilityId || !confirmationType) {
@@ -94,10 +110,10 @@ Deno.serve(async (req) => {
 
     const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get the inquiry
+    // Get the inquiry — explicit column list per project guidelines
     const { data: inquiry, error: inquiryError } = await supabaseService
       .from('concierge_inquiries')
-      .select('*')
+      .select('id, status, matched_facility_ids, admin_matched_facility_ids, payment_amount_cents, assigned_advisor_id, provider_fee_cents')
       .eq('id', inquiryId)
       .single();
 
@@ -280,11 +296,16 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
+    // Return 400 for business logic errors, 500 for unexpected failures
+    const isClientError = errorMessage.includes("not found") || 
+      errorMessage.includes("required") || errorMessage.includes("Invalid") ||
+      errorMessage.includes("Cannot") || errorMessage.includes("Only administrators") ||
+      errorMessage.includes("not in matched");
     return new Response(
       JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: isClientError ? 400 : 500,
       }
     );
   }
