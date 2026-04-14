@@ -673,7 +673,14 @@ export default function SeekerConcierge() {
 
         {/* Seeker confirmed, awaiting admin final confirmation */}
         {selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed && selectedCase.status !== "placed" && (
-          <PlacementConfirmationCard type="awaiting_admin" />
+          <>
+            <PlacementConfirmationCard type="awaiting_admin" />
+            <AdmissionStatusCard
+              tourStatus={selectedCase.tour_coordination_status}
+              admissionStatus={selectedCase.admission_status}
+              moveInDate={selectedCase.move_in_date}
+            />
+          </>
         )}
 
         {/* Feedback */}
