@@ -323,11 +323,18 @@ Deno.serve(async (req) => {
 
     console.log("[SEND-CONCIERGE-INTRODUCTION] Email sent successfully to:", recipientEmail);
 
+    // Mark the introduction as sent (idempotency key for future calls)
+    await supabase
+      .from("concierge_introductions")
+      .update({ sent_at: new Date().toISOString(), sent_by: userData.user.id })
+      .eq("id", introductionId);
+
     // Log case event for introduction sent
     await supabase.from("concierge_case_events").insert({
       inquiry_id: inquiryId,
       event_type: "introduction_sent",
       event_data: { facility_id: facilityId, facility_name: facility.name },
+      actor_id: userData.user.id,
       actor_type: "admin",
     });
 
