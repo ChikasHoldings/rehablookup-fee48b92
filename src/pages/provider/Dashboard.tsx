@@ -45,6 +45,7 @@ import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerfo
 import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
 import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
+import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -447,6 +448,9 @@ export default function ProviderDashboardPage() {
             {facilityIds.length > 0 && (
               <LeadConversionWidget facilityIds={facilityIds} />
             )}
+
+            {/* Facility Performance Panel (Pro-gated) */}
+            <DashboardFacilityPerformancePanel isPro={proStatus.isPro} />
 
             {/* Multi-Facility Overview (Pro only) */}
             {proStatus?.isPro && facilities && facilities.length > 1 && (
