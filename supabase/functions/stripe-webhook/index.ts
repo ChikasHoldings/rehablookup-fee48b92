@@ -1024,6 +1024,9 @@ Deno.serve(async (req) => {
                       </div>
                     </div>
                   `,
+                }, {
+                  emailType: "stripe_payment_success",
+                  idempotencyKey: `stripe-pay-success-${event.id}`,
                 });
                 logStep("Payment confirmation email sent to provider");
               } catch (emailError) {
