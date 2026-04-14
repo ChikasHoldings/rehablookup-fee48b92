@@ -92,7 +92,7 @@ export function FeaturedCentersSection({
         .map((c) => ({
           ...c, slug: null, isFromDatabase: false, logo_url: null, gallery_urls: null,
           hasFeaturedSubscription: false, isPro: false, verified: false,
-          year_established: null, facilityType: null, googleRating: null, googleReviewCount: null,
+          year_established: null, facilityType: null,
         }));
     }
 
