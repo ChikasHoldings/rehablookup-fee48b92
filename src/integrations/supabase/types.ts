@@ -715,6 +715,8 @@ export type Database = {
           abandoned_cart_email_sent_at: string | null
           admin_matched_facility_ids: string[] | null
           admin_notes: string | null
+          admission_notes: string | null
+          admission_status: string
           age_range: string | null
           alternative_contact_name: string | null
           alternative_contact_phone: string | null
@@ -761,6 +763,7 @@ export type Database = {
           matched_at: string | null
           matched_facility_ids: string[] | null
           mobility_needs: string | null
+          move_in_date: string | null
           needs_transport_help: boolean | null
           notes: string | null
           payment_amount_cents: number
@@ -796,6 +799,7 @@ export type Database = {
           substance_use_frequency: string | null
           suicide_history: string | null
           timeline_urgency: string | null
+          tour_coordination_status: string
           updated_at: string
           user_email: string
           user_id: string | null
@@ -807,6 +811,8 @@ export type Database = {
           abandoned_cart_email_sent_at?: string | null
           admin_matched_facility_ids?: string[] | null
           admin_notes?: string | null
+          admission_notes?: string | null
+          admission_status?: string
           age_range?: string | null
           alternative_contact_name?: string | null
           alternative_contact_phone?: string | null
@@ -853,6 +859,7 @@ export type Database = {
           matched_at?: string | null
           matched_facility_ids?: string[] | null
           mobility_needs?: string | null
+          move_in_date?: string | null
           needs_transport_help?: boolean | null
           notes?: string | null
           payment_amount_cents?: number
@@ -888,6 +895,7 @@ export type Database = {
           substance_use_frequency?: string | null
           suicide_history?: string | null
           timeline_urgency?: string | null
+          tour_coordination_status?: string
           updated_at?: string
           user_email: string
           user_id?: string | null
@@ -899,6 +907,8 @@ export type Database = {
           abandoned_cart_email_sent_at?: string | null
           admin_matched_facility_ids?: string[] | null
           admin_notes?: string | null
+          admission_notes?: string | null
+          admission_status?: string
           age_range?: string | null
           alternative_contact_name?: string | null
           alternative_contact_phone?: string | null
@@ -945,6 +955,7 @@ export type Database = {
           matched_at?: string | null
           matched_facility_ids?: string[] | null
           mobility_needs?: string | null
+          move_in_date?: string | null
           needs_transport_help?: boolean | null
           notes?: string | null
           payment_amount_cents?: number
@@ -980,6 +991,7 @@ export type Database = {
           substance_use_frequency?: string | null
           suicide_history?: string | null
           timeline_urgency?: string | null
+          tour_coordination_status?: string
           updated_at?: string
           user_email?: string
           user_id?: string | null
