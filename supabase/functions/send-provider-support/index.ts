@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     if (!resendApiKey) {
       console.error("[SEND-PROVIDER-SUPPORT] RESEND_API_KEY not configured");
       return new Response(JSON.stringify({ error: "Email service not configured" }), {
-        status: 500, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
@@ -77,20 +77,20 @@ Deno.serve(async (req) => {
 
     if (!name || !email || !topic || !message) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length < 5) {
       return new Response(JSON.stringify({ error: "Invalid email address" }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
     // Validate topic against whitelist
     if (!topicLabels[topic]) {
       return new Response(JSON.stringify({ error: "Invalid topic category" }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
@@ -217,13 +217,13 @@ Deno.serve(async (req) => {
     });
 
     return new Response(JSON.stringify({ success: true }), {
-      status: 200, headers: { "Content-Type": "application/json", ...corsHeaders },
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
     });
 
   } catch (error: unknown) {
     console.error("[SEND-PROVIDER-SUPPORT] Error:", error);
     return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
-      status: 500, headers: { "Content-Type": "application/json", ...corsHeaders },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
     });
   }
 });

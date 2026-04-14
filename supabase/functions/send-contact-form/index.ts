@@ -61,7 +61,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!resendApiKey) {
       console.error("[SEND-CONTACT-FORM] RESEND_API_KEY not configured");
       return new Response(JSON.stringify({ error: "Email service not configured" }), {
-        status: 500, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
@@ -73,21 +73,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Validate required fields
     if (!name || !email || !subject || !message) {
       return new Response(JSON.stringify({ error: "All fields are required" }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length < 5) {
       return new Response(JSON.stringify({ error: "Invalid email address" }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
     // Validate subject against whitelist
     if (!subjectLabels[subject]) {
       return new Response(JSON.stringify({ error: "Invalid subject category" }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
@@ -180,13 +180,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     console.log("[SEND-CONTACT-FORM] Email sent:", emailResponse);
 
     return new Response(JSON.stringify({ success: true, message: "Message sent successfully" }), {
-      status: 200, headers: { "Content-Type": "application/json", ...corsHeaders },
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
     });
 
   } catch (error: unknown) {
     console.error("[SEND-CONTACT-FORM] Error:", error);
     return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
-      status: 500, headers: { "Content-Type": "application/json", ...corsHeaders },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders },
     });
   }
 });

@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     if (!resendApiKey) {
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return new Response(
         JSON.stringify({ error: "Valid email is required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     if (count && count >= 3) {
       return new Response(
         JSON.stringify({ error: "Too many reset attempts. Please wait 15 minutes." }),
-        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       // Don't reveal whether user exists - always show success
       return new Response(
         JSON.stringify({ success: true }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       console.error("No action_link returned");
       return new Response(
         JSON.stringify({ success: true }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -199,13 +199,13 @@ Deno.serve(async (req) => {
     // Always return success to prevent email enumeration
     return new Response(
       JSON.stringify({ success: true }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error in send-password-reset:", error);
     return new Response(
       JSON.stringify({ success: true }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 });

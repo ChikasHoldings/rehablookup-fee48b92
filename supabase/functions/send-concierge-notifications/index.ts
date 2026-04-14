@@ -1500,8 +1500,7 @@ async function sendProviderSmsNotification(
 
     const response = await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+      headers: { ...corsHeaders, "Content-Type": "application/json",
         "Authorization": `Bearer ${supabaseKey}`,
       },
       body: JSON.stringify({
