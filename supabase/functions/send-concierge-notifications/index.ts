@@ -546,7 +546,69 @@ async function sendIntroductionsSentEmail(
     }).select('id').single();
     
     if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
+}
+
+// Facilities ready for review — seeker can now choose from interested providers
+async function sendFacilitiesReadyForReviewEmail(
+  resend: Resend,
+  inquiry: InquiryData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
+) {
+  const firstName = inquiry.user_name.split(' ')[0];
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  
+  const html = emailWrapper(`
+    ${emailHeader('Your Treatment Options Are Ready!', `Case #${caseId}`, '🏥')}
+    <tr>
+      <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
+          Hi ${firstName},
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          Great news! Treatment facilities have reviewed your case and are ready to work with you. Log in to review your options and choose the facility that feels right.
+        </p>
+        
+        ${infoBox(`<strong>What you need to do:</strong><br><br>
+          1. Log in and review the interested facilities<br>
+          2. View each facility's profile to learn more<br>
+          3. Select your preferred facility<br>
+          4. Your advisor will handle everything from there`)}
+        
+        <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          Take your time reviewing the options. Your advisor is available if you have any questions.
+        </p>
+        
+        ${ctaButton('Review Your Options', 'https://rehablookup.com/account/concierge')}
+      </td>
+    </tr>
+    ${emailFooter()}
+  `);
+
+  const { data: emailData, error: emailError } = await resend.emails.send({
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
+    to: [inquiry.user_email],
+    subject: `Your Treatment Options Are Ready - Case #${caseId}`,
+    html,
+  });
+
+  if (!emailError) {
+    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
   }
+
+  if (inquiry.user_id) {
+    const { data: notif } = await supabase.from('seeker_notifications').insert({
+      user_id: inquiry.user_id,
+      type: 'concierge_options_ready',
+      title: 'Your Options Are Ready!',
+      message: 'Treatment facilities are ready to work with you. Review your options and choose your preferred facility.',
+      link: '/account/concierge',
+      metadata: { inquiry_id: inquiry.id },
+    }).select('id').single();
+    
+    if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
+  }
+}
 }
 
 // Provider interested — admin notification only (brokerage model: advisor coordinates, not direct contact)
