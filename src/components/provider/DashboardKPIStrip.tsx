@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
   Unlock,
-  Eye,
-  Star,
+  AlertCircle,
+  DollarSign,
   Zap,
   TrendingUp,
-  Sparkles,
+  Crown,
   ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
