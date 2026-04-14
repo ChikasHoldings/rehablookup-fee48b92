@@ -1,16 +1,17 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
   Unlock,
-  AlertCircle,
+  XCircle,
   DollarSign,
+  AlertTriangle,
+  Sparkles,
   Zap,
-  TrendingUp,
-  Crown,
   ArrowRight,
+  TrendingUp,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
 interface DashboardKPIStripProps {
   facilityId: string;
   isPro: boolean;
+  /** Total Pro savings from discount_amount_cents on credit_transactions this month */
   proSavingsCents?: number;
 }
 
@@ -28,8 +30,11 @@ interface WeeklyKPIs {
   received: number;
   unlocked: number;
   missed: number;
-  estRevenueLost: number;
+  estimatedRevenueLostCents: number;
 }
+
+// Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
+const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
 
 export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
@@ -37,21 +42,24 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
-      // Fetch leads for the week
-      const { data } = await supabase
+      // Fetch this week's leads for the facility
+      const { data, error } = await supabase
         .from("leads_provider_view")
-        .select("id, is_unlocked")
+        .select("id, status, is_unlocked, created_at")
         .eq("facility_id", facilityId)
         .gte("created_at", weekStart)
+        .order("created_at", { ascending: false })
         .limit(500);
+
+      if (error) throw error;
 
       const leads = data || [];
       const received = leads.length;
       const unlocked = leads.filter(l => l.is_unlocked).length;
-      const missed = received - unlocked;
-      const estRevenueLost = missed * 5000;
+      const missed = leads.filter(l => l.status === "expired" || (l.status === "new" && !l.is_unlocked)).length;
+      const estimatedRevenueLostCents = missed * AVG_REVENUE_PER_LEAD_CENTS;
 
-      return { received, unlocked, missed, estRevenueLost };
+      return { received, unlocked, missed, estimatedRevenueLostCents };
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 3,
@@ -59,13 +67,14 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
     retry: 2,
   });
 
-  // Fetch Pro savings this month
+  // Fetch Pro savings this month from credit transactions
   const monthStart = useMemo(() => startOfMonth(new Date()).toISOString(), []);
   const { data: monthlySavings = 0 } = useQuery({
     queryKey: ["pro-monthly-savings", facilityId, monthStart],
     queryFn: async (): Promise<number> => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return 0;
+
       const { data, error } = await supabase
         .from("credit_transactions")
         .select("discount_amount_cents")
@@ -73,6 +82,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
         .eq("transaction_type", "unlock")
         .eq("discount_applied", true)
         .gte("created_at", monthStart);
+
       if (error) return 0;
       return (data || []).reduce((sum, tx) => sum + (tx.discount_amount_cents || 0), 0);
     },
@@ -82,38 +92,36 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
 
   const effectiveSavings = proSavingsCents || monthlySavings;
 
-  const missed = kpis?.missed ?? 0;
-  const estRevenueLost = kpis?.estRevenueLost ?? 0;
-
   const metrics = [
     {
       label: "Leads Received",
-      value: String(kpis?.received ?? 0),
+      value: kpis?.received ?? 0,
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
       label: "Leads Unlocked",
-      value: String(kpis?.unlocked ?? 0),
+      value: kpis?.unlocked ?? 0,
       icon: Unlock,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-600 dark:text-emerald-400",
     },
     {
       label: "Missed Leads",
-      value: String(missed),
-      icon: AlertCircle,
-      iconBg: missed > 0 ? "bg-destructive/10" : "bg-muted/50",
-      iconColor: missed > 0 ? "text-destructive" : "text-muted-foreground",
+      value: kpis?.missed ?? 0,
+      icon: XCircle,
+      iconBg: "bg-destructive/10",
+      iconColor: "text-destructive",
+      highlight: (kpis?.missed ?? 0) > 0,
     },
     {
-      label: "Est. Revenue L...",
-      value: `$${estRevenueLost.toLocaleString()}`,
+      label: "Est. Revenue Lost",
+      value: `$${((kpis?.estimatedRevenueLostCents ?? 0) / 100).toLocaleString()}`,
       icon: DollarSign,
-      iconBg: estRevenueLost > 0 ? "bg-destructive/10" : "bg-muted/50",
-      iconColor: estRevenueLost > 0 ? "text-destructive" : "text-muted-foreground",
-      highlight: estRevenueLost > 0,
+      iconBg: "bg-warning/10",
+      iconColor: "text-warning",
+      highlight: (kpis?.estimatedRevenueLostCents ?? 0) > 0,
     },
   ];
 
@@ -122,7 +130,13 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         {metrics.map((m) => (
-          <Card key={m.label} className="border-border/40 transition-colors">
+          <Card
+            key={m.label}
+            className={cn(
+              "border-border/40 transition-colors",
+              m.highlight && "border-destructive/30 bg-destructive/[0.02]"
+            )}
+          >
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2.5">
                 <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", m.iconBg)}>
@@ -137,9 +151,9 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
                   ) : (
                     <p className={cn(
                       "text-lg sm:text-xl font-bold leading-tight tabular-nums",
-                      (m as any).highlight ? "text-destructive" : "text-foreground"
+                      m.highlight ? "text-destructive" : "text-foreground"
                     )}>
-                      {m.value}
+                      {typeof m.value === "number" ? m.value : m.value}
                     </p>
                   )}
                 </div>
@@ -149,39 +163,50 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
         ))}
       </div>
 
-      {/* Missed Leads Banner */}
-      {!isLoading && missed > 0 && (
-        <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3">
-          <div className="h-9 w-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-            <AlertCircle className="h-4.5 w-4.5 text-destructive" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              You missed {missed} lead{missed !== 1 ? "s" : ""} this week
-            </p>
-            <p className="text-xs text-muted-foreground">
-              That's ~${estRevenueLost.toLocaleString()} in potential revenue. {!isPro ? "Upgrade to Pro for priority access + save 20% on every unlock." : "Respond faster to avoid missing opportunities."}
-            </p>
-          </div>
-          {!isPro && (
-            <Button size="sm" className="shrink-0 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white" asChild>
-              <Link to="/provider/pro-upgrade">
-                Upgrade to Pro <ArrowRight className="h-3.5 w-3.5 ml-1" />
-              </Link>
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Contextual Banners */}
+      {/* Contextual Banner — Pain-driven for Free, value-reinforcing for Pro */}
       {!isLoading && (
         <>
-          {/* FREE USER: Nudge */}
-          {!isPro && (kpis?.received ?? 0) > 0 && (
+          {/* FREE USER: Missed leads pain banner */}
+          {!isPro && (kpis?.missed ?? 0) > 0 && (
+            <Card className="border-destructive/30 bg-gradient-to-r from-destructive/5 to-warning/5 overflow-hidden">
+              <CardContent className="p-3.5 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        ⚠️ You missed {kpis!.missed} lead{kpis!.missed !== 1 ? "s" : ""} this week
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        That's ~${((kpis!.missed * AVG_REVENUE_PER_LEAD_CENTS) / 100).toLocaleString()} in potential revenue.
+                        Upgrade to Pro for priority access + save 20% on every unlock.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-sm shrink-0"
+                    asChild
+                  >
+                    <Link to="/provider/pro-upgrade">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Upgrade to Pro
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* FREE USER: No missed leads but still nudge */}
+          {!isPro && (kpis?.missed ?? 0) === 0 && (kpis?.received ?? 0) > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 text-xs text-muted-foreground">
               <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>
-                <span className="font-medium text-foreground">Upgrade to Pro</span> to save 20% on unlocks and get priority lead access.
+                Great response rate! <span className="font-medium text-foreground">Upgrade to Pro</span> to save 20% on unlocks and get priority lead access.
               </span>
               <Link to="/provider/pro-upgrade" className="ml-auto text-primary font-medium hover:underline shrink-0">
                 Learn more
