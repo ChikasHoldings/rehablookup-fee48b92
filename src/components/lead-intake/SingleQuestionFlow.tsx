@@ -550,10 +550,15 @@ export function SingleQuestionFlow({
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
-              {isSendingCode ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                   Submitting...
+                </>
+              ) : isSendingCode ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                  Verifying...
                 </>
               ) : (
                 <>

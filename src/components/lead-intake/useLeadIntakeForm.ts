@@ -471,7 +471,7 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
           seekerId: '',
           email: seekerEmail,
           metadata: {
-            facilityName: facilityId,
+            facilityName: facilityName || facilityId,
             source: 'lead_inquiry',
           },
         },
