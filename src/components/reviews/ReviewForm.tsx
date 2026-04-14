@@ -366,7 +366,7 @@ export function ReviewForm({
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {reviewText.length}/1000 characters
+              {reviewText.length}/2000 characters
             </p>
           </div>
 
