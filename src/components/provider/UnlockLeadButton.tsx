@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Lock, Zap, CreditCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
