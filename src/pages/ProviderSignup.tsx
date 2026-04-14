@@ -323,6 +323,21 @@ export default function ProviderSignup() {
         return;
       }
 
+      // CRITICAL: Verify the returned user is actually a provider, not cross-account
+      if (authData.session) {
+        const accountType = authData.user.user_metadata?.account_type;
+        if (accountType && accountType !== 'provider') {
+          await supabase.auth.signOut();
+          toast({
+            title: "Account Conflict",
+            description: "This email is already associated with another account type. Please use a different email.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const userId = authData.user.id;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
 
