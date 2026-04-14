@@ -251,7 +251,7 @@ ${emailBodyStart()}
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">Submitted by: ${seekerProfile?.display_name || "Anonymous"}</p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">Submitted by: ${review.reviewer_display_name || seekerProfile?.display_name || "Unknown reviewer"}</p>
                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">Rating: ${'⭐'.repeat(review.rating)}</p>
                     ${review.review_text ? `<p style="margin: 0; font-size: 14px; color: #374151; font-style: italic;">"${review.review_text.substring(0, 200)}${review.review_text.length > 200 ? '...' : ''}"</p>` : ''}
                   </td>
