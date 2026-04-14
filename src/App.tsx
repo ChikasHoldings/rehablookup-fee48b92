@@ -337,6 +337,7 @@ const AdvisorInbox = lazy(() => import("./pages/admin/AdvisorInbox"));
 const AdminEscalations = lazy(() => import("./pages/admin/AdminEscalations"));
 const AdminBackOffice = lazy(() => import("./pages/admin/AdminBackOffice"));
 const AdvisorProviderDirectory = lazy(() => import("./pages/admin/AdvisorProviderDirectory"));
+const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 
 function LegacyCenterRedirect() {
   const { slug } = useParams();
@@ -1247,6 +1248,7 @@ const AppInner = () => {
               <Route path="escalations" element={<AdminEscalations />} />
               <Route path="back-office" element={<AdminBackOffice />} />
               <Route path="provider-directory" element={<AdvisorProviderDirectory />} />
+              <Route path="email-logs" element={<AdminEmailLogs />} />
             </Route>
             
             {/* Marketing Landing Page (Ad Traffic) */}

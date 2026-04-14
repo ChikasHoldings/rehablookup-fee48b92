@@ -114,6 +114,7 @@ const superAdminNav: NavSection[] = [
         items: [
           { to: "/admin/users", icon: ShieldCheck, label: "Admin Staff", permission: "users" },
           { to: "/admin/back-office", icon: Landmark, label: "Back Office", permission: "back_office" },
+          { to: "/admin/email-logs", icon: Mail, label: "Email Logs", permission: "security_logs" },
           { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
           { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
         ],
