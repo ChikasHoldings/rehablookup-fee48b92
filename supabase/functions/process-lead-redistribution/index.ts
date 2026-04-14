@@ -112,11 +112,12 @@ Deno.serve(async (req) => {
     const { data: settings } = await supabase
       .from("platform_settings")
       .select("setting_key, setting_value")
-      .in("setting_key", ["exclusive_window_hours", "extended_window_hours", "max_redistribution_facilities"]);
+      .in("setting_key", ["exclusive_window_hours", "extended_window_hours", "max_redistribution_facilities", "redistributed_unlock_price"]);
 
     let exclusiveWindowHours = 24;
     let extendedWindowHours = 48;
-    let maxRedistributionFacilities = 2; // Max 2 providers per spec
+    let maxRedistributionFacilities = 2;
+    let redistributedPriceCents = 1500; // $15 default
 
     if (settings) {
       for (const setting of settings) {
@@ -125,10 +126,14 @@ Deno.serve(async (req) => {
         } else if (setting.setting_key === "extended_window_hours") {
           extendedWindowHours = (setting.setting_value as { value: number })?.value ?? 48;
         } else if (setting.setting_key === "max_redistribution_facilities") {
-          maxRedistributionFacilities = Math.min((setting.setting_value as { value: number })?.value ?? 2, 5); // Cap at 5, default 2
+          maxRedistributionFacilities = Math.min((setting.setting_value as { value: number })?.value ?? 2, 5);
+        } else if (setting.setting_key === "redistributed_unlock_price") {
+          redistributedPriceCents = (setting.setting_value as { value: number })?.value ?? 1500;
         }
       }
     }
+
+    const discountPrice = `$${(redistributedPriceCents / 100).toFixed(2)}`;
 
     // Find leads where exclusive window has expired
     const { data: expiredExclusiveLeads } = await supabase
