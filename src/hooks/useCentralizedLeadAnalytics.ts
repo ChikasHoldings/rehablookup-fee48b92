@@ -64,30 +64,15 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
     ? facilities.filter(f => f.id === filterFacilityId).map(f => f.id)
     : facilities.map((f) => f.id);
 
+  // Poll for lead updates every 60 seconds (leads removed from Realtime for PII security)
   useEffect(() => {
     if (facilityIds.length === 0) return;
 
-    const channels = facilityIds.map((facilityId, index) =>
-      supabase
-        .channel(`centralized-leads-${facilityId}-${index}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "leads",
-            filter: `facility_id=eq.${facilityId}`,
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ["centralized-lead-analytics"] });
-          }
-        )
-        .subscribe()
-    );
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["centralized-lead-analytics"] });
+    }, 60000);
 
-    return () => {
-      channels.forEach((channel) => supabase.removeChannel(channel));
-    };
+    return () => clearInterval(interval);
   }, [facilityIds.join(","), queryClient]);
 
   return useQuery({
