@@ -241,6 +241,9 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       {/* Admission Coordination */}
       <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
 
+      {/* Billing Status — only visible on placed cases */}
+      <BillingStatusCard caseData={caseData} onRefresh={onRefresh} />
+
       {/* Seeker confirmed indicator for admin */}
       {caseData.seeker_confirmed && caseData.status !== "placed" && (
         <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
