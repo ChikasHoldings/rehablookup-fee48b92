@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSeekerSession } from './useSeekerSession';
 
@@ -21,12 +21,15 @@ export interface FacilityReview {
   has_voted_helpful?: boolean;
 }
 
+const REVIEW_COOLDOWN_MS = 30_000; // 30-second cooldown between submissions
+
 export function useFacilityReviews(facilityId: string) {
   const [reviews, setReviews] = useState<FacilityReview[]>([]);
   const [userReview, setUserReview] = useState<FacilityReview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState(0);
+  const lastSubmitRef = useRef<number>(0);
   const { user, isAuthenticated, isReady } = useSeekerSession();
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
@@ -148,6 +151,13 @@ export function useFacilityReviews(facilityId: string) {
   const submitReview = async (rating: number, reviewText: string) => {
     if (!user) return { error: new Error('Not authenticated') };
     if (!isEmailVerified) return { error: new Error('Please verify your email before submitting a review.') };
+
+    // Client-side cooldown to prevent rapid submissions
+    const now = Date.now();
+    if (now - lastSubmitRef.current < REVIEW_COOLDOWN_MS) {
+      return { error: new Error('Please wait a moment before submitting another review.') };
+    }
+
     if (!reviewText || reviewText.trim().length < 10) return { error: new Error('Review text is required (minimum 10 characters)') };
     if (reviewText.length > 2000) return { error: new Error('Review text must be 2000 characters or less') };
 
@@ -200,6 +210,7 @@ export function useFacilityReviews(facilityId: string) {
       .single();
 
     if (!error && data) {
+      lastSubmitRef.current = Date.now();
       setUserReview(data);
       
       // Notify admins about new review
