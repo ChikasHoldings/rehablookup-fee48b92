@@ -363,20 +363,38 @@ export default function ProviderDashboardPage() {
                     )}
                   </div>
                   
-                  {facility && profileUrl && (
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setPreviewOpen(true)}>
-                          <Eye className="h-3.5 w-3.5" />
-                          Preview
-                      </Button>
-                      <Button size="sm" className="h-8 text-xs gap-1.5" asChild>
-                        <Link to="/provider/listings">
-                          <FileEdit className="h-3.5 w-3.5" />
-                          Edit
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2.5">
+                    {/* Credit Balance Chip */}
+                    <Link 
+                      to="/provider/billing"
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/50 transition-colors text-xs font-semibold text-foreground tabular-nums"
+                    >
+                      <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                      {creditsLoading ? (
+                        <Skeleton className="h-4 w-10" />
+                      ) : (
+                        `$${((creditsData?.balance_cents || 0) / 100).toFixed(2)}`
+                      )}
+                    </Link>
+                    
+                    {/* Plan Badge */}
+                    {proStatus.isPro ? (
+                      <div className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-semibold shadow-sm">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Pro
+                      </div>
+                    ) : (
+                      <Link
+                        to="/provider/pro-upgrade"
+                        className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-border/60 bg-background hover:bg-muted/30 transition-colors text-xs font-medium text-muted-foreground hover:text-foreground"
+                      >
+                        <div className="h-4 w-4 rounded-full bg-muted-foreground/20 flex items-center justify-center">
+                          <span className="text-[9px] font-bold text-muted-foreground">F</span>
+                        </div>
+                        Free
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -592,38 +610,6 @@ export default function ProviderDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Credit Balance Card */}
-            <Card>
-              <CardHeader className="p-3.5 pb-2.5 border-b">
-                <CardTitle className="text-sm font-semibold">Credit Balance</CardTitle>
-              </CardHeader>
-              <CardContent className="p-3.5">
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-foreground tabular-nums">
-                      {creditsLoading ? (
-                        <Skeleton className="h-7 w-16" />
-                      ) : (
-                        `$${((creditsData?.balance_cents || 0) / 100).toFixed(2)}`
-                      )}
-                    </span>
-                    <Button size="sm" className="h-7 text-xs" asChild>
-                      <Link to="/provider/billing">
-                        <Sparkles className="h-3.5 w-3.5 mr-1" />
-                        Add Credits
-                      </Link>
-                    </Button>
-                  </div>
-                  {proStatus?.isPro && (
-                    <div className="flex items-center gap-1.5 text-xs text-warning bg-warning/10 px-2 py-1 rounded">
-                      <Sparkles className="h-3 w-3" />
-                      <span className="font-medium">Pro Member — 20% off unlocks</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* ROI Widget (Pro only) */}
             {proStatus?.isPro && !creditsLoading && (
               <ProROIWidget
@@ -631,28 +617,6 @@ export default function ProviderDashboardPage() {
                 balanceCents={creditsData?.balance_cents ?? 0}
                 isPro={true}
               />
-            )}
-
-            {/* Pro Status / Upgrade CTA */}
-            {!proStatus?.isPro && (
-              <Card className="border-accent/30 bg-gradient-to-br from-accent/5 to-primary/5">
-                <CardContent className="p-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                      <Sparkles className="h-5 w-5 text-accent" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">Upgrade to Pro</p>
-                      <p className="text-xs text-muted-foreground">Increase visibility and admissions — save 20% on every lead</p>
-                    </div>
-                    <Button size="sm" className="h-7 text-xs bg-accent hover:bg-accent/90" asChild>
-                      <Link to="/provider/pro-upgrade">
-                        Upgrade
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             )}
 
             {/* Featured Analytics Widget - if Pro */}
