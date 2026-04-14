@@ -112,24 +112,36 @@ export default function ConciergeCreatePassword() {
       }
 
       if (data?.success) {
-        // Now sign up or sign in the user with a temporary password
+        // CRITICAL: Check if email belongs to a provider or admin before creating account
+        const [providerResult, adminResult] = await Promise.all([
+          supabase.rpc('is_email_provider', { p_email: email.trim().toLowerCase() }),
+          supabase.rpc('is_email_admin', { p_email: email.trim().toLowerCase() }),
+        ]);
+
+        if (!providerResult.error && providerResult.data) {
+          toast.error("This email is registered as a facility provider. Please use a different email or log in to your provider account.");
+          return;
+        }
+
+        if (!adminResult.error && adminResult.data) {
+          toast.error("This email is associated with an administrative account. Please use a different email.");
+          return;
+        }
+
+        // Now sign up the user
         const tempPassword = crypto.randomUUID();
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password: tempPassword,
           options: { data: { account_type: 'seeker' } },
         });
         
-        if (signUpError && !signUpError.message.includes('already registered')) {
-          // If already registered, sign in instead
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password: tempPassword,
-          });
-          if (signInError) {
-            toast.error("Account setup failed. Please try logging in.");
+        if (signUpError) {
+          if (signUpError.message.includes('already registered')) {
+            toast.error("An account with this email already exists. Please log in instead.");
             return;
           }
+          throw signUpError;
         }
 
         setStep("set-password");
