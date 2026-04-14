@@ -42,6 +42,7 @@ import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
+import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -389,6 +390,14 @@ export default function ProviderDashboardPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Top Bar - Credits, Warnings, Pro Status */}
+            <DashboardTopBar
+              balanceCents={creditsData?.balance_cents ?? 0}
+              isPro={proStatus.isPro}
+              isLoading={creditsLoading || proLoading}
+              discountPercent={proStatus.isPro ? 20 : 0}
+            />
 
             {/* Metrics Row */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
