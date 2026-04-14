@@ -471,7 +471,7 @@ export default function ProviderDashboardPage() {
             {/* Credit & Spending Panel */}
             <DashboardCreditSpendingPanel
               facilityId={facilityId}
-              balanceCents={creditsData?.balanceCents ?? 0}
+              balanceCents={creditsData?.balance_cents ?? 0}
               isLoading={creditsLoading}
             />
 
