@@ -354,15 +354,15 @@ export function ReviewForm({
 
           <div>
             <label htmlFor="review-text" className="block text-sm font-medium mb-2">
-              Your Review (optional)
+              Your Review <span className="text-destructive">*</span>
             </label>
             <Textarea
               id="review-text"
-              placeholder="Share details about your experience..."
+              placeholder="Share details about your experience (minimum 10 characters)..."
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               rows={4}
-              maxLength={1000}
+              maxLength={2000}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground mt-1">
