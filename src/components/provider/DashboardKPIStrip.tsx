@@ -37,33 +37,21 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
-      // Fetch leads, views, and reviews in parallel
-      const [leadsResult, viewsResult, reviewsResult] = await Promise.all([
-        supabase
-          .from("leads_provider_view")
-          .select("id, is_unlocked")
-          .eq("facility_id", facilityId)
-          .gte("created_at", weekStart)
-          .limit(500),
-        supabase
-          .from("facility_views")
-          .select("view_count")
-          .eq("facility_id", facilityId)
-          .gte("view_date", weekStart.split("T")[0]),
-        supabase
-          .from("facility_reviews")
-          .select("id", { count: "exact", head: true })
-          .eq("facility_id", facilityId)
-          .eq("status", "approved"),
-      ]);
+      // Fetch leads for the week
+      const { data } = await supabase
+        .from("leads_provider_view")
+        .select("id, is_unlocked")
+        .eq("facility_id", facilityId)
+        .gte("created_at", weekStart)
+        .limit(500);
 
-      const leads = leadsResult.data || [];
+      const leads = data || [];
       const received = leads.length;
       const unlocked = leads.filter(l => l.is_unlocked).length;
-      const views = (viewsResult.data || []).reduce((sum, v) => sum + (v.view_count || 0), 0);
-      const reviews = reviewsResult.count || 0;
+      const missed = received - unlocked;
+      const estRevenueLost = missed * 5000;
 
-      return { received, unlocked, views, reviews };
+      return { received, unlocked, missed, estRevenueLost };
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 3,
