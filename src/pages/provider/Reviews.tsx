@@ -155,8 +155,8 @@ export default function ProviderReviews() {
         </div>
       </div>
 
-      {/* Request Reviews & Import Google Reviews - Trigger Cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Request Reviews */}
+      <div className="grid gap-4">
         {/* Request Reviews Trigger Card */}
         <Card 
           className={cn(
