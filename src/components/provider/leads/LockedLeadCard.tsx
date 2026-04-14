@@ -1,9 +1,11 @@
-import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Timer, Flame, Eye, Users, MapPin, Heart, Shield, DollarSign, CalendarClock, UserCheck } from "lucide-react";
+import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Timer, Flame, Eye, Users, MapPin, Heart, Shield, DollarSign, CalendarClock, UserCheck, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router-dom";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { useLeadCountdown } from "@/hooks/useLeadCountdown";
+import { useProStatus } from "@/hooks/useProStatus";
 
 interface LockedLeadCardProps {
   leadId: string;
