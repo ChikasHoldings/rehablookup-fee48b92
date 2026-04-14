@@ -523,7 +523,6 @@ export default function ConciergeIntake() {
             paymentState={{ sessionId: null, paid: false, verifiedAt: null }}
             onEdit={handleEditStep}
             onPay={handleProceedToPayment}
-            onSubmit={() => {}} // No longer used - payment redirects to thank you
             isSubmitting={false}
             isProcessingPayment={isProcessingPayment}
           />
