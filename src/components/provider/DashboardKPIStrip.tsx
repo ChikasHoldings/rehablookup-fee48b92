@@ -5,7 +5,7 @@ import {
   Inbox,
   Unlock,
   Eye,
-  DollarSign,
+  Star,
   AlertTriangle,
   Sparkles,
   Zap,
@@ -22,9 +22,9 @@ import { cn } from "@/lib/utils";
 interface DashboardKPIStripProps {
   facilityId: string;
   isPro: boolean;
-  /** Total Pro savings from discount_amount_cents on credit_transactions this month */
   proSavingsCents?: number;
   viewsCount?: number;
+  reviewCount?: number;
 }
 
 interface WeeklyKPIs {
@@ -37,7 +37,7 @@ interface WeeklyKPIs {
 // Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
 const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
 
-export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, viewsCount = 0 }: DashboardKPIStripProps) {
+export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, viewsCount = 0, reviewCount = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
 
   const { data: kpis, isLoading } = useQuery({
@@ -116,12 +116,11 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, view
       iconColor: "text-primary",
     },
     {
-      label: "Est. Revenue Lost",
-      value: `$${((kpis?.estimatedRevenueLostCents ?? 0) / 100).toLocaleString()}`,
-      icon: DollarSign,
-      iconBg: "bg-warning/10",
-      iconColor: "text-warning",
-      highlight: (kpis?.estimatedRevenueLostCents ?? 0) > 0,
+      label: "Reviews",
+      value: reviewCount,
+      icon: Star,
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-500",
     },
   ];
 
@@ -134,7 +133,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, view
             key={m.label}
             className={cn(
               "border-border/40 transition-colors",
-              m.highlight && "border-destructive/30 bg-destructive/[0.02]"
+              (m as any).highlight && "border-destructive/30 bg-destructive/[0.02]"
             )}
           >
             <CardContent className="p-3 sm:p-4">
@@ -151,7 +150,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, view
                   ) : (
                     <p className={cn(
                       "text-lg sm:text-xl font-bold leading-tight tabular-nums",
-                      m.highlight ? "text-destructive" : "text-foreground"
+                      (m as any).highlight ? "text-destructive" : "text-foreground"
                     )}>
                       {typeof m.value === "number" ? m.value : m.value}
                     </p>
