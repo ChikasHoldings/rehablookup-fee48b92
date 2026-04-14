@@ -83,6 +83,15 @@ export function UnlockLeadButton({
     onUnlockSuccess?.();
   };
 
+  // One-click unlock: skip dialog if user has enough credits
+  const handleClick = () => {
+    if (hasEnoughCredits) {
+      handleUnlock();
+    } else {
+      setShowConfirmDialog(true);
+    }
+  };
+
   const priceDisplay = formatPrice(finalPrice);
   // Only show original price strikethrough for non-redistributed leads with Pro discount
   const originalPriceDisplay = (!isRedistributed && isPro) ? formatPrice(basePrice) : null;
