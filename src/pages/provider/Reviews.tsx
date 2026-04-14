@@ -19,11 +19,7 @@ import {
   RefreshCw,
   Inbox,
   Building2,
-  Mail,
-  Star,
-  ArrowRight,
-  Lock,
-  Sparkles
+  Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
