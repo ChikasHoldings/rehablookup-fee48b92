@@ -35,7 +35,7 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCr
         </div>
 
         {/* Countdown Timer */}
-        {countdown && !countdown.isExpired && (
+        {showCountdown && (
           <div className={cn(
             "py-3 px-4 rounded-xl border text-center",
             countdown.urgencyTier === "critical" && "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
