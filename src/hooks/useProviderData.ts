@@ -43,7 +43,8 @@ interface ProviderData {
 export function useProviderData(facilityId?: string) {
   const queryClient = useQueryClient();
 
-  // Set up realtime subscriptions for stats updates
+  // Set up realtime subscription for facility changes + polling for leads/views
+  // (leads table removed from Realtime publication for PII security)
   useEffect(() => {
     if (!facilityId) return;
 
@@ -64,44 +65,14 @@ export function useProviderData(facilityId?: string) {
       )
       .subscribe();
 
-    // Subscribe to provider_events changes
-    const viewsChannel = supabase
-      .channel(`provider-events-${facilityId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'provider_events',
-          filter: `facility_id=eq.${facilityId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
-        }
-      )
-      .subscribe();
-
-    // Subscribe to leads changes
-    const leadsChannel = supabase
-      .channel(`leads-${facilityId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leads',
-          filter: `facility_id=eq.${facilityId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
-        }
-      )
-      .subscribe();
+    // Poll for leads and views updates every 60 seconds
+    const pollInterval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
+    }, 60000);
 
     return () => {
       supabase.removeChannel(facilityChannel);
-      supabase.removeChannel(viewsChannel);
-      supabase.removeChannel(leadsChannel);
+      clearInterval(pollInterval);
     };
   }, [facilityId, queryClient]);
 
