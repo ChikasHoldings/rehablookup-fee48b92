@@ -48,6 +48,7 @@ import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
 import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads";
 import { DashboardCreditSpendingPanel } from "@/components/provider/DashboardCreditSpendingPanel";
+import { DashboardPlacementPanel } from "@/components/provider/DashboardPlacementPanel";
 
 // Compact Metric Card
 function MetricCard({ 
