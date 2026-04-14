@@ -11,7 +11,12 @@ import {
   Calendar,
   MapPin,
   CreditCard,
-  Sparkles
+  Sparkles,
+  ClipboardCheck,
+  UserCheck,
+  Building2,
+  Eye,
+  Home,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -43,28 +48,75 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: 
   closed: { label: "Closed", icon: XCircle, color: "text-muted-foreground", bgColor: "bg-muted" },
 };
 
-const TIMELINE_STEPS = ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed"];
+// Simplified 5-step guided journey for seekers
+const GUIDED_STEPS = [
+  { 
+    key: "submitted", 
+    label: "Intake Submitted", 
+    shortLabel: "Submitted",
+    icon: ClipboardCheck, 
+    statuses: ["new", "pending"],
+    description: "Your intake form has been received",
+  },
+  { 
+    key: "advisor", 
+    label: "Advisor Assigned", 
+    shortLabel: "Advisor",
+    icon: UserCheck, 
+    statuses: ["reviewing"],
+    description: "A placement advisor is reviewing your case",
+  },
+  { 
+    key: "matched", 
+    label: "Providers Matched", 
+    shortLabel: "Matched",
+    icon: Building2, 
+    statuses: ["matching", "matched", "introductions_sent"],
+    description: "Treatment centers have been identified for you",
+  },
+  { 
+    key: "review", 
+    label: "Review Options", 
+    shortLabel: "Review",
+    icon: Eye, 
+    statuses: ["in_contact", "confirming"],
+    description: "Review and choose your treatment center",
+  },
+  { 
+    key: "admission", 
+    label: "Admission", 
+    shortLabel: "Admission",
+    icon: Home, 
+    statuses: ["placed"],
+    description: "You've been placed at a treatment center",
+  },
+];
+
+function getGuidedStepIndex(status: string): number {
+  for (let i = 0; i < GUIDED_STEPS.length; i++) {
+    if (GUIDED_STEPS[i].statuses.includes(status)) return i;
+  }
+  return 0;
+}
 
 export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
   const config = STATUS_CONFIG[caseData.status] || STATUS_CONFIG.new;
   const StatusIcon = config.icon;
-  const currentIndex = TIMELINE_STEPS.indexOf(caseData.status);
-  const effectiveIndex = caseData.status === "confirming" ? TIMELINE_STEPS.indexOf("in_contact") + 0.5 : currentIndex;
-  const progress = Math.min(100, (effectiveIndex / (TIMELINE_STEPS.length - 1)) * 100);
+  const currentStepIndex = getGuidedStepIndex(caseData.status);
+  const isClosed = caseData.status === "closed";
 
   return (
     <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card via-card to-primary/5">
       <CardContent className="p-0">
         {/* Header Section */}
         <div className="relative p-4 sm:p-6 pb-3 sm:pb-4">
-          {/* Background decoration */}
           <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
           
           <div className="relative flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
                 <span>Case</span>
-                <span className="font-mono text-xs sm:text-xs bg-muted px-1.5 py-0.5 rounded">
+                <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
                   #{caseData.id.slice(0, 8).toUpperCase()}
                 </span>
               </div>
@@ -90,55 +142,73 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
                 className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-success/10 rounded-full shrink-0"
               >
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-                <span className="text-xs sm:text-sm font-medium text-success">
-                  Complete
-                </span>
+                <span className="text-xs sm:text-sm font-medium text-success">Complete</span>
               </motion.div>
             )}
           </div>
         </div>
 
-        {/* Progress Timeline */}
-        {caseData.status !== "closed" && (
-          <div className="px-4 sm:px-6 pb-3 sm:pb-4">
-            <div className="relative">
-              {/* Background track */}
-              <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
+        {/* 5-Step Guided Progress Tracker */}
+        {!isClosed && (
+          <div className="px-4 sm:px-6 pb-4 sm:pb-5">
+            {/* Progress bar */}
+            <div className="relative mb-4">
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                 <motion.div 
                   className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
                   initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
+                  animate={{ width: `${(currentStepIndex / (GUIDED_STEPS.length - 1)) * 100}%` }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                 />
               </div>
-              
-              {/* Step indicators */}
-              <div className="flex justify-between mt-2 sm:mt-3">
-                {TIMELINE_STEPS.map((step, index) => {
-                  const stepConfig = STATUS_CONFIG[step];
-                  const isCompleted = index < effectiveIndex;
-                  const isCurrent = step === caseData.status || (caseData.status === "confirming" && step === "in_contact");
-                  
-                  return (
-                    <div key={step} className="flex flex-col items-center">
-                      <div 
-                        className={cn(
-                          "w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300",
-                          isCompleted && "bg-primary",
-                          isCurrent && "bg-primary ring-2 sm:ring-4 ring-primary/20",
-                          !isCompleted && !isCurrent && "bg-muted-foreground/30"
-                        )}
-                      />
-                      <span className={cn(
-                        "text-[10px] sm:text-xs mt-1 sm:mt-1.5 text-center max-w-[40px] sm:max-w-[50px] leading-tight hidden sm:block",
-                        isCurrent ? "font-medium text-foreground" : "text-muted-foreground"
+            </div>
+
+            {/* Step indicators */}
+            <div className="grid grid-cols-5 gap-1">
+              {GUIDED_STEPS.map((step, index) => {
+                const StepIcon = step.icon;
+                const isCompleted = index < currentStepIndex;
+                const isCurrent = index === currentStepIndex;
+                const isFuture = index > currentStepIndex;
+
+                return (
+                  <div key={step.key} className="flex flex-col items-center text-center gap-1.5">
+                    <motion.div
+                      initial={isCurrent ? { scale: 0.8 } : {}}
+                      animate={isCurrent ? { scale: 1 } : {}}
+                      className={cn(
+                        "relative h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center transition-all duration-300",
+                        isCompleted && "bg-primary text-white",
+                        isCurrent && "bg-primary text-white ring-4 ring-primary/20",
+                        isFuture && "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                      ) : (
+                        <StepIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      )}
+                      {isCurrent && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-warning border-2 border-background animate-pulse" />
+                      )}
+                    </motion.div>
+                    <div className="min-w-0">
+                      <p className={cn(
+                        "text-[10px] sm:text-xs font-medium leading-tight",
+                        isCurrent ? "text-foreground" : isCompleted ? "text-primary" : "text-muted-foreground",
                       )}>
-                        {stepConfig?.label?.split(' ')[0]}
-                      </span>
+                        <span className="hidden sm:inline">{step.label}</span>
+                        <span className="sm:hidden">{step.shortLabel}</span>
+                      </p>
+                      {isCurrent && (
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 leading-tight hidden sm:block">
+                          {step.description}
+                        </p>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

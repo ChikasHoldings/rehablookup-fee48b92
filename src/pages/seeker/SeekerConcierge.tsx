@@ -38,6 +38,7 @@ import {
   SeekerPlacementModal,
   SeekerProviderReviewCard,
   AdmissionStatusCard,
+  AdvisorTrustCard,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 
@@ -69,6 +70,7 @@ interface ConciergeInquiry {
   tour_coordination_status: string;
   admission_status: string;
   move_in_date: string | null;
+  assigned_advisor_id: string | null;
 }
 
 interface Facility {
@@ -146,7 +148,8 @@ export default function SeekerConcierge() {
           seeker_confirmed, seeker_confirmed_at, placement_confirmed,
           placement_confirmed_at, placed_facility_id, seeker_rating,
           seeker_feedback, user_name,
-          tour_coordination_status, admission_status, move_in_date
+          tour_coordination_status, admission_status, move_in_date,
+          assigned_advisor_id
         `)
         .eq("user_id", userId)
         .in("payment_status", ["paid", "succeeded"])
@@ -639,6 +642,14 @@ export default function SeekerConcierge() {
           >
             <PlacementStatusCard caseData={selectedCase} />
           </div>
+        )}
+
+        {/* Advisor Trust Layer */}
+        {selectedCase && (
+          <AdvisorTrustCard 
+            advisorId={selectedCase.assigned_advisor_id} 
+            caseStatus={selectedCase.status} 
+          />
         )}
 
         {/* Placed Facility */}
