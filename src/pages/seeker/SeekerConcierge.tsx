@@ -66,6 +66,9 @@ interface ConciergeInquiry {
   seeker_rating: number | null;
   seeker_feedback: string | null;
   user_name: string;
+  tour_coordination_status: string;
+  admission_status: string;
+  move_in_date: string | null;
 }
 
 interface Facility {
