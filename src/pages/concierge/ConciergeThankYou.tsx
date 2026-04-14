@@ -168,9 +168,29 @@ export default function ConciergeThankYou() {
     setIsCreatingAccount(true);
 
     try {
+      const trimmedEmail = userEmail.trim().toLowerCase();
+
+      // CRITICAL: Check if email belongs to a provider or admin account first
+      const [providerResult, adminResult] = await Promise.all([
+        supabase.rpc('is_email_provider', { p_email: trimmedEmail }),
+        supabase.rpc('is_email_admin', { p_email: trimmedEmail }),
+      ]);
+
+      if (!providerResult.error && providerResult.data) {
+        toast.error("This email is registered as a facility provider. Please use a different email or log in to your provider account separately.");
+        setIsCreatingAccount(false);
+        return;
+      }
+
+      if (!adminResult.error && adminResult.data) {
+        toast.error("This email is associated with an administrative account. Please use a different email.");
+        setIsCreatingAccount(false);
+        return;
+      }
+
       // Create user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userEmail,
+        email: trimmedEmail,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/account`,
@@ -184,6 +204,22 @@ export default function ConciergeThankYou() {
 
       if (authError) throw authError;
 
+      // Guard: if signUp returned an existing session (email already registered),
+      // don't proceed — the user needs to log in instead
+      if (authData.user && !authData.session) {
+        // User created but needs email confirmation — this is normal
+      } else if (authData.user && authData.session) {
+        // Check the user's metadata to ensure they're a seeker, not a provider
+        const accountType = authData.user.user_metadata?.account_type;
+        if (accountType && accountType !== 'seeker') {
+          // Sign them out immediately — wrong account type
+          await supabase.auth.signOut();
+          toast.error("This email is already associated with another account type. Please use a different email.");
+          setIsCreatingAccount(false);
+          return;
+        }
+      }
+
       if (authData.user) {
         // Create seeker profile
         const { error: profileError } = await supabase
@@ -192,15 +228,14 @@ export default function ConciergeThankYou() {
             user_id: authData.user.id,
             first_name: firstName || "",
             last_name: lastName || "",
-            email: userEmail,
+            email: trimmedEmail,
           });
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
-          // Don't throw - account was created, profile can be created later
         }
 
-        // Link inquiry to user via edge function (server-side, not client-side update)
+        // Link inquiry to user
         if (inquiryId) {
           try {
             await supabase.functions.invoke("link-inquiry-to-user", {
@@ -214,13 +249,14 @@ export default function ConciergeThankYou() {
         setAccountCreated(true);
         toast.success("Account created! Check your email to verify.");
 
-        // Clear the intake draft
         localStorage.removeItem(STORAGE_KEY);
 
-        // Wait a moment then redirect
-        setTimeout(() => {
-          navigate("/account");
-        }, 2000);
+        // Only redirect if they have an active session (auto-confirm on)
+        if (authData.session) {
+          setTimeout(() => {
+            navigate("/account");
+          }, 2000);
+        }
       }
     } catch (err) {
       console.error("Account creation error:", err);
