@@ -101,11 +101,21 @@ export default function ConciergeThankYou() {
         if (!verifyData?.paid) {
           setError("Payment not verified. Please contact support.");
           setIsVerifying(false);
+          submissionInFlight.current = false;
           return;
         }
 
-        setPaymentVerified(true);
-        setUserEmail(verifyData.email);
+        // Server already detected duplicate - skip re-submit
+        if (verifyData.alreadySubmitted && verifyData.inquiryId) {
+          setPaymentVerified(true);
+          setInquiryId(verifyData.inquiryId);
+          setUserEmail(verifyData.email);
+          submittedSessions.push(sessionId);
+          localStorage.setItem(SUBMITTED_KEY, JSON.stringify(submittedSessions));
+          setIsVerifying(false);
+          submissionInFlight.current = false;
+          return;
+        }
 
         // Get intake data from localStorage
         const savedIntake = localStorage.getItem(STORAGE_KEY);
