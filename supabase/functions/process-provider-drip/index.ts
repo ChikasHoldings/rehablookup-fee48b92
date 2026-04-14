@@ -442,6 +442,10 @@ Deno.serve(async (req) => {
           to: [drip.provider_email],
           subject: dayConfig.subject,
           html,
+          headers: {
+            "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
 
         console.log(`[DRIP v${VERSION}] Day ${drip.day_number} sent to ${drip.provider_email}:`, emailResult);

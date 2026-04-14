@@ -188,6 +188,10 @@ Deno.serve(async (req) => {
       to: [seekerEmail],
       subject,
       html,
+      headers: {
+        "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
     });
 
     if (emailError) {
