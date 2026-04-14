@@ -1391,6 +1391,67 @@ async function sendInvoicePaidEmail(
 // ============================================================================
 // SMS NOTIFICATION HELPERS
 // ============================================================================
+// ADVISOR CLAIMED NOTIFICATION
+// ============================================================================
+
+async function sendAdvisorClaimedNotification(
+  inquiry: InquiryData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>,
+  metadata?: Record<string, unknown>
+) {
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const advisorName = (metadata?.advisor_name as string) || 'An advisor';
+  const selfAssigned = (metadata?.self_assigned as boolean) || false;
+  const action = selfAssigned ? 'claimed' : 'was assigned to';
+
+  await createAdminNotification(supabase, {
+    type: 'concierge_advisor_claimed',
+    title: 'Advisor Assignment',
+    message: `${advisorName} ${action} Case #${caseId} (${inquiry.user_name}).`,
+    metadata: { inquiry_id: inquiry.id, advisor_id: metadata?.advisor_id },
+  });
+
+  // Seeker in-app notification
+  if (inquiry.user_id) {
+    await supabase.from('seeker_notifications').insert({
+      user_id: inquiry.user_id,
+      type: 'concierge_advisor_assigned',
+      title: 'Advisor Assigned',
+      message: 'A placement advisor has been assigned to your case and will be reaching out soon.',
+      link: '/account/concierge',
+      metadata: { inquiry_id: inquiry.id },
+    });
+  }
+
+  results.push({ recipient: 'admin', notificationId: 'advisor_claimed_alert' });
+}
+
+// ============================================================================
+// SEEKER REJECTED PROVIDER NOTIFICATION
+// ============================================================================
+
+async function sendSeekerRejectedProviderNotification(
+  inquiry: InquiryData,
+  facility: FacilityData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>,
+  metadata?: Record<string, unknown>
+) {
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const reason = (metadata?.reason as string) || 'No reason provided';
+
+  await createAdminNotification(supabase, {
+    type: 'concierge_seeker_rejected',
+    title: 'Seeker Rejected Facility',
+    message: `${inquiry.user_name} rejected ${facility.name} for Case #${caseId}. Reason: ${reason}. Consider sending additional introductions.`,
+    metadata: { inquiry_id: inquiry.id, facility_id: facility.id, reason },
+  });
+
+  results.push({ recipient: 'admin', notificationId: 'seeker_rejected_alert' });
+}
+
+// ============================================================================
 
 async function sendProviderSmsNotification(
   supabase: any,
