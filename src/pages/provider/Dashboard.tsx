@@ -431,22 +431,10 @@ export default function ProviderDashboardPage() {
                 isPro={proStatus.isPro}
                 viewsCount={viewsCount}
                 reviewCount={reviewCount}
+                totalLeadsCount={totalLeadsCount}
+                conciergeCount={conciergeCount}
               />
             )}
-
-            {/* Inquiries Metric */}
-            <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4">
-              <MetricCard
-                title="Inquiries"
-                value={totalLeadsCount}
-                subtitle={totalLeadsCount > 0 ? `${recentLeads.filter(l => l.status === 'new').length} new` : "No inquiries yet"}
-                icon={TrendingUp}
-                iconBg="bg-success/10"
-                iconColor="text-success"
-                action={totalLeadsCount > 0 ? { label: "View", href: "/provider/inquiries" } : undefined}
-                isLoading={leadsLoading}
-              />
-            </div>
 
             {/* Lead Feed — Core Money Section */}
             <DashboardLeadFeed
