@@ -1,0 +1,1 @@
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS reminder_12h_sent_at timestamptz DEFAULT NULL;
