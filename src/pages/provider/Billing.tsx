@@ -441,6 +441,9 @@ export default function ProviderBillingPage() {
           </CardContent>
         </Card>
 
+        {/* Auto-Reload Settings */}
+        <AutoReloadSettings facilityId={facilityId} />
+
         {/* Recent Transactions */}
         <Card>
           <CardHeader className="pb-3">
