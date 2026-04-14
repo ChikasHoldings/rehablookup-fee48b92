@@ -122,6 +122,19 @@ export function ToursTab({ caseData }: ToursTabProps) {
       if (!user) throw new Error("Not authenticated");
       if (!createFacilityId) throw new Error("Select a facility");
 
+      // Duplicate guard: check if an active tour already exists for this facility
+      const { data: existingTour } = await supabase
+        .from("concierge_tour_requests")
+        .select("id")
+        .eq("inquiry_id", caseData.id)
+        .eq("facility_id", createFacilityId)
+        .not("status", "in", '("cancelled","completed")')
+        .maybeSingle();
+
+      if (existingTour) {
+        throw new Error("An active tour request already exists for this facility.");
+      }
+
       const preferredDates = createDate ? [createDate.toISOString()] : [];
 
       const { error } = await supabase.from("concierge_tour_requests").insert({
@@ -144,9 +157,23 @@ export function ToursTab({ caseData }: ToursTabProps) {
         actor_id: user.id,
         actor_type: "admin",
       });
+
+      // Notify facility of tour request
+      try {
+        await supabase.functions.invoke("send-concierge-notifications", {
+          body: {
+            type: "tour_requested",
+            inquiryId: caseData.id,
+            facilityId: createFacilityId,
+            metadata: { tour_type: createTourType },
+          },
+        });
+      } catch (e) {
+        console.error("Tour notification failed:", e);
+      }
     },
     onSuccess: () => {
-      toast.success("Tour request created");
+      toast.success("Tour request created and facility notified");
       queryClient.invalidateQueries({ queryKey: ["admin-case-tours", caseData.id] });
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       setShowCreateDialog(false);
