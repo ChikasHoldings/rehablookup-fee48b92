@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+    const resend = new Resend(RESEND_API_KEY);
 
     const body = await req.json();
     
