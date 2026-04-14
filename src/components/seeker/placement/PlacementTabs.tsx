@@ -181,10 +181,11 @@ export function PlacementTabs({
                     These treatment centers match your needs. Your advisor will coordinate all communication and next steps.
                   </p>
                   <div className="grid gap-4 md:grid-cols-2">
-                    {visibleFacilities?.map((facility) => (
+                    {visibleFacilities?.map((facility, index) => (
                       <PlacementMatchCard
                         key={facility.id}
                         facility={facility}
+                        rank={index}
                         onDismiss={() => dismissMutation.mutate(facility.id)}
                         isDismissing={dismissMutation.isPending}
                       />
