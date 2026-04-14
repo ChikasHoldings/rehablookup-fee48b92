@@ -19,7 +19,7 @@ const tips = [
     priority: "medium"
   },
   {
-    text: "Add Google Reviews to build trust",
+    text: "Encourage clients to leave reviews on your listing",
     priority: "low"
   }
 ];
