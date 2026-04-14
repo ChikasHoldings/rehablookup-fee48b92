@@ -47,7 +47,7 @@ import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
 import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
 import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads";
-import { DashboardCreditSpendingPanel } from "@/components/provider/DashboardCreditSpendingPanel";
+
 import { DashboardPlacementPanel } from "@/components/provider/DashboardPlacementPanel";
 
 // Compact Metric Card
@@ -456,12 +456,7 @@ export default function ProviderDashboardPage() {
           {/* Right Column - Sidebar */}
           <div className="lg:col-span-4 space-y-3 sm:space-y-4">
 
-            {/* Credit & Spending Panel */}
-            <DashboardCreditSpendingPanel
-              facilityId={facilityId}
-              balanceCents={creditsData?.balance_cents ?? 0}
-              isLoading={creditsLoading}
-            />
+            {/* Credit spending stats moved to DashboardTopBar — single credit widget */}
 
             {/* Alerts */}
             <div className="space-y-2.5">
