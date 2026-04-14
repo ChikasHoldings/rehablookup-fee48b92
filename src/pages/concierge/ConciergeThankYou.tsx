@@ -455,108 +455,109 @@ export default function ConciergeThankYou() {
 
                   {/* Create Account Section */}
                   {!isLoggedIn && !accountCreated && (
-                    <Collapsible open={showPasswordSection} onOpenChange={setShowPasswordSection}>
-                      <div className="border rounded-lg overflow-hidden">
-                        <CollapsibleTrigger asChild>
-                          <button className="w-full px-4 py-4 flex items-center justify-between bg-muted/50 hover:bg-muted/70 transition-colors text-left">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Shield className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-foreground">Create Account</p>
-                                <p className="text-sm text-muted-foreground">Track your placement progress</p>
-                              </div>
-                            </div>
-                            {showPasswordSection ? (
-                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </button>
-                        </CollapsibleTrigger>
-                        
-                        <CollapsibleContent>
-                          <AnimatePresence>
-                            {showPasswordSection && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="px-4 pb-4 pt-2 border-t"
-                              >
-                                <p className="text-sm text-muted-foreground mb-4">
-                                  Create a password to log in and track your placement request. Your email ({userEmail}) is already verified.
-                                </p>
-                                
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label htmlFor="password">Password</Label>
-                                    <div className="relative mt-1.5">
-                                      <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="At least 8 characters"
-                                        className="pr-10"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                      >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                      </button>
-                                    </div>
-                                  </div>
-                                  
-                                  <div>
-                                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                                    <Input
-                                      id="confirmPassword"
-                                      type={showPassword ? "text" : "password"}
-                                      value={confirmPassword}
-                                      onChange={(e) => setConfirmPassword(e.target.value)}
-                                      placeholder="Re-enter password"
-                                      className="mt-1.5"
-                                    />
-                                  </div>
-                                  
-                                  <Button
-                                    onClick={handleCreateAccount}
-                                    disabled={isCreatingAccount || password.length < 8 || password !== confirmPassword}
-                                    className="w-full"
-                                  >
-                                    {isCreatingAccount ? (
-                                      <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Creating Account...
-                                      </>
-                                    ) : (
-                                      "Create Account"
-                                    )}
-                                  </Button>
+                    <>
+                      <Collapsible open={showPasswordSection} onOpenChange={setShowPasswordSection}>
+                        <div className="border rounded-lg overflow-hidden">
+                          <CollapsibleTrigger asChild>
+                            <button className="w-full px-4 py-4 flex items-center justify-between bg-muted/50 hover:bg-muted/70 transition-colors text-left">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <Shield className="h-5 w-5 text-primary" />
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </CollapsibleContent>
-                      </div>
-                    </Collapsible>
+                                <div>
+                                  <p className="font-semibold text-foreground">Create Account</p>
+                                  <p className="text-sm text-muted-foreground">Track your placement progress</p>
+                                </div>
+                              </div>
+                              {showPasswordSection ? (
+                                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </button>
+                          </CollapsibleTrigger>
+                          
+                          <CollapsibleContent>
+                            <AnimatePresence>
+                              {showPasswordSection && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="px-4 pb-4 pt-2 border-t"
+                                >
+                                  <p className="text-sm text-muted-foreground mb-4">
+                                    Create a password to log in and track your placement request. Your email ({userEmail}) is already verified.
+                                  </p>
+                                  
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Label htmlFor="password">Password</Label>
+                                      <div className="relative mt-1.5">
+                                        <Input
+                                          id="password"
+                                          type={showPassword ? "text" : "password"}
+                                          value={password}
+                                          onChange={(e) => setPassword(e.target.value)}
+                                          placeholder="At least 8 characters"
+                                          className="pr-10"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => setShowPassword(!showPassword)}
+                                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        >
+                                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                      </div>
+                                    </div>
+                                    
+                                    <div>
+                                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                      <Input
+                                        id="confirmPassword"
+                                        type={showPassword ? "text" : "password"}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="Re-enter password"
+                                        className="mt-1.5"
+                                      />
+                                    </div>
+                                    
+                                    <Button
+                                      onClick={handleCreateAccount}
+                                      disabled={isCreatingAccount || password.length < 8 || password !== confirmPassword}
+                                      className="w-full"
+                                    >
+                                      {isCreatingAccount ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Creating Account...
+                                        </>
+                                      ) : (
+                                        "Create Account"
+                                      )}
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
 
-                    {/* Already have an account? */}
-                    <div className="mt-3 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        Already have an account?{" "}
-                        <Link 
-                          to={`/login?redirect=${encodeURIComponent('/account/requests')}`}
-                          className="text-primary hover:underline font-medium"
-                        >
-                          Log in here
-                        </Link>
-                      </p>
-                    </div>
+                      <div className="mt-3 text-center">
+                        <p className="text-sm text-muted-foreground">
+                          Already have an account?{" "}
+                          <Link 
+                            to={`/login?redirect=${encodeURIComponent('/account/requests')}`}
+                            className="text-primary hover:underline font-medium"
+                          >
+                            Log in here
+                          </Link>
+                        </p>
+                      </div>
+                    </>
                   )}
 
                   {/* Account Created Success */}
