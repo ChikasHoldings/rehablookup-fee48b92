@@ -205,10 +205,30 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Score facilities by treatment relevance (level_of_care match)
+      // Score facilities: Pro/Featured prioritized, then treatment relevance
+      // Check Pro status for each facility
+      const facilityIds = nearbyFacilities.map(f => f.id);
+      const { data: proSubs } = await supabase
+        .from("pro_subscriptions")
+        .select("facility_id")
+        .in("facility_id", facilityIds)
+        .eq("status", "active");
+      
+      const proFacilityIds = new Set((proSubs || []).map(s => s.facility_id));
+
       const scoredFacilities = nearbyFacilities.map(f => {
-        let score = Math.random(); // Base randomness for fairness
-        // Boost score for facilities with matching care type
+        let score = Math.random(); // Base randomness for fairness within tiers
+        
+        // Pro facilities get highest priority (+100)
+        if (proFacilityIds.has(f.id)) {
+          score += 100;
+        }
+        // Featured (non-Pro) facilities get secondary priority (+50)
+        else if (f.featured) {
+          score += 50;
+        }
+
+        // Boost score for facilities with matching care type (+10)
         if (lead.level_of_care && f.facility_type) {
           const loc = (lead.level_of_care || "").toLowerCase();
           const ft = (f.facility_type || "").toLowerCase();
