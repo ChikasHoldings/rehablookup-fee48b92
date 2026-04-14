@@ -13,7 +13,8 @@ interface LockedLeadDetailPanelProps {
 }
 
 export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCreatedAt }: LockedLeadDetailPanelProps) {
-  const countdown = selectedLeadCreatedAt ? useLeadCountdown(selectedLeadCreatedAt) : null;
+  const countdown = useLeadCountdown(selectedLeadCreatedAt || new Date().toISOString());
+  const showCountdown = !!selectedLeadCreatedAt && !countdown.isExpired;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-background p-6">
