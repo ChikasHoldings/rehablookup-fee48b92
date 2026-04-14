@@ -72,6 +72,9 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
 
   const retryBillingMutation = useMutation({
     mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const response = await supabase.functions.invoke("charge-placement-fee", {
         body: {
           inquiryId: caseData.id,
@@ -88,6 +91,7 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
         inquiry_id: caseData.id,
         event_type: "charge_retried",
         event_data: { result: response.data },
+        actor_id: user.id,
         actor_type: "admin",
       });
 
@@ -105,10 +109,12 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
       // Log charge_failed event — best-effort, awaited
       (async () => {
         try {
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
           await supabase.from("concierge_case_events").insert({
             inquiry_id: caseData.id,
             event_type: "charge_failed",
             event_data: { error: error.message },
+            actor_id: currentUser?.id || null,
             actor_type: "admin",
           });
           queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });

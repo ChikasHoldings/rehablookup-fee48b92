@@ -130,17 +130,31 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
   };
 
   const handleSaveNotes = () => {
+    if (adminNotes === (caseData.admin_notes || "")) return;
     updateCaseMutation.mutate({ admin_notes: adminNotes });
   };
 
-  const handleCloseCase = () => {
-    updateCaseMutation.mutate({
+  const handleCloseCase = async () => {
+    await updateCaseMutation.mutateAsync({
       status: "closed",
       closed_at: new Date().toISOString(),
       admin_notes: adminNotes
         ? `${adminNotes}\n\n[Closed] ${closeReason}`
         : `[Closed] ${closeReason}`,
     });
+
+    // Notify seeker that their case was closed by admin
+    try {
+      await supabase.functions.invoke("send-concierge-notifications", {
+        body: {
+          type: "case_closed_by_admin",
+          inquiryId: caseData.id,
+          metadata: { reason: closeReason },
+        },
+      });
+    } catch (e) {
+      console.error("Close notification error:", e);
+    }
   };
 
   // Self-assign for advisors
@@ -323,7 +337,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
             className="mt-2"
             variant="outline"
             onClick={handleSaveNotes}
-            disabled={updateCaseMutation.isPending}
+            disabled={updateCaseMutation.isPending || adminNotes === (caseData.admin_notes || "")}
           >
             {updateCaseMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
