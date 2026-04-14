@@ -143,11 +143,26 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
       if (error) throw new Error(`Failed to submit response: ${error.message}`);
       const intro = introductions?.find((i) => i.id === id);
       const inquiryId = intro?.inquiry_id;
-      if (inquiryId && response === "interested") {
+      if (!inquiryId) return;
+
+      // Log case event for the provider response
+      try {
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: inquiryId,
+          event_type: response === "interested" ? "provider_accepted" : "provider_declined",
+          event_data: {
+            facility_id: selectedFacility?.id,
+            introduction_id: id,
+            notes: notes?.trim() || null,
+          },
+          actor_type: "provider",
+        });
+      } catch (e) { console.error("Failed to log case event:", e); }
+
+      if (response === "interested") {
         try { await supabase.functions.invoke("auto-status-transition", { body: { inquiryId, trigger: "provider_interested", actorType: "provider" } }); } catch (e) { console.error(e); }
         try { await supabase.functions.invoke("send-concierge-notifications", { body: { type: "provider_interested", inquiryId, facilityId: selectedFacility?.id } }); } catch (e) { console.error(e); }
-      }
-      if (inquiryId && response === "not_available") {
+      } else {
         try { await supabase.functions.invoke("send-concierge-notifications", { body: { type: "provider_declined", inquiryId, facilityId: selectedFacility?.id } }); } catch (e) { console.error(e); }
       }
     },
