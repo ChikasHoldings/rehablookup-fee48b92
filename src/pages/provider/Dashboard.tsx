@@ -614,6 +614,9 @@ export default function ProviderDashboardPage() {
               )}
             </div>
 
+            {/* Performance Feedback Loop */}
+            {facilityId && <ProviderPerformanceFeedback facilityId={facilityId} />}
+
             {/* Pro Benefits Widget */}
             <ProBenefitsWidget />
 
