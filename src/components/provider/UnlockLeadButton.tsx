@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Lock, Zap, CreditCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ export function UnlockLeadButton({
 }: UnlockLeadButtonProps) {
   const navigate = useNavigate();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const unlockingRef = useRef(false); // StrictMode double-fire guard
   const { unlockLead, isUnlocking, isLeadUnlocked } = useLeadUnlocks(facilityId);
   const { balance } = useProviderCredits(facilityId);
   const { getPriceForLead, getBasePrice, formatPrice, isPro, proDiscountPercent, getRedistributedPrice } = useUnlockPricing(facilityId);
@@ -64,23 +65,29 @@ export function UnlockLeadButton({
   }
 
   const handleUnlock = async () => {
-    if (!hasEnoughCredits) {
-      // Redirect to billing page to purchase credits
-      navigate(`/provider/billing?purchase_credits=true&amount=${finalPrice}`);
-      return;
+    // Prevent double-fire from React StrictMode or rapid clicks
+    if (unlockingRef.current) return;
+    unlockingRef.current = true;
+
+    try {
+      if (!hasEnoughCredits) {
+        navigate(`/provider/billing?purchase_credits=true&amount=${finalPrice}`);
+        return;
+      }
+
+      const discountSaved = (!isRedistributed && isPro) ? (basePrice - finalPrice) : 0;
+
+      await unlockLead.mutateAsync({
+        leadId,
+        facilityId,
+        paymentMethod: 'credits',
+        discountSaved,
+      });
+      setShowConfirmDialog(false);
+      onUnlockSuccess?.();
+    } finally {
+      unlockingRef.current = false;
     }
-
-    // Calculate discount saved for Pro toast message (only for non-redistributed leads)
-    const discountSaved = (!isRedistributed && isPro) ? (basePrice - finalPrice) : 0;
-
-    await unlockLead.mutateAsync({
-      leadId,
-      facilityId,
-      paymentMethod: 'credits',
-      discountSaved,
-    });
-    setShowConfirmDialog(false);
-    onUnlockSuccess?.();
   };
 
   // One-click unlock: skip dialog if user has enough credits
