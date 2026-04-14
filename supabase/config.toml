@@ -36,13 +36,7 @@ verify_jwt = false
 [functions.get-featured-facilities]
 verify_jwt = false
 
-[functions.send-weekly-digest]
-verify_jwt = false
-
 [functions.send-approval-email]
-verify_jwt = false
-
-[functions.send-lead-digest]
 verify_jwt = false
 
 [functions.send-subscription-alerts]
@@ -85,9 +79,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-admin-daily-summary]
-verify_jwt = false
-
-[functions.send-admin-weekly-report]
 verify_jwt = false
 
 [functions.send-reply-email-verification]
@@ -334,16 +325,10 @@ verify_jwt = false
 [functions.process-seeker-drip]
 verify_jwt = false
 
-[functions.send-admin-monthly-report]
-verify_jwt = false
-
 [functions.send-new-facility-alerts]
 verify_jwt = false
 
 [functions.send-password-reset]
-verify_jwt = false
-
-[functions.send-seeker-re-engagement]
 verify_jwt = false
 
 [functions.submit-exit-intent-lead]
