@@ -102,7 +102,7 @@ export function UnlockLeadButton({
         size="sm"
         variant="secondary"
         className={cn("gap-1.5", className)}
-        onClick={() => setShowConfirmDialog(true)}
+        onClick={handleClick}
         disabled={isUnlocking}
       >
         {isUnlocking ? (
@@ -119,7 +119,7 @@ export function UnlockLeadButton({
     return (
       <>
         <div 
-          onClick={() => setShowConfirmDialog(true)}
+          onClick={handleClick}
           className={cn(
             "absolute inset-0 flex items-center justify-center bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg cursor-pointer",
             className
@@ -158,7 +158,7 @@ export function UnlockLeadButton({
     <>
       <Button
         className={cn("gap-2", className)}
-        onClick={() => setShowConfirmDialog(true)}
+        onClick={handleClick}
         disabled={isUnlocking}
       >
         {isUnlocking ? (
