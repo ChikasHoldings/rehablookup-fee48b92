@@ -240,7 +240,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           ? `${subjectPrefix}Payment overdue for ${facility.name}`
           : `Payment reminder: ${formatCurrency(invoice.amount_cents)} due for ${facility.name}`;
 
-        const emailResponse = await resend.emails.send({
+        const emailResponse = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
           subject,

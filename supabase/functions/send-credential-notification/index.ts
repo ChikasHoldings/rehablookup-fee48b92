@@ -187,7 +187,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     `;
 
     const resend = new Resend(resendApiKey);
-    const emailResponse = await resend.emails.send({
+    const emailResponse = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [profile.email],
       subject: isVerified 

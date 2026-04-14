@@ -477,7 +477,7 @@ Deno.serve(async (req) => {
 
           if (email) {
             try {
-              await resend.emails.send({
+              await sendEmailWithRetry(supabase, resend, {
                 from: "RehabLookup <no-reply@rehablookup.com>",
                 to: email,
                 subject: stage.subject(facility.name),

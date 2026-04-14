@@ -265,7 +265,7 @@ ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
     `;
 
-    await resend.emails.send({
+    await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `New Review Pending: ${facility.name}`,
@@ -338,7 +338,7 @@ ${emailEnd()}
     `;
 
     const subjectPrefix = providerPlan === 'pro' ? '⭐ ' : '';
-    await resend.emails.send({
+    await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
       subject: `${subjectPrefix}New ${review.rating}-Star Review for ${facility.name}`,
@@ -362,7 +362,7 @@ ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
     `;
 
-    await resend.emails.send({
+    await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [seekerEmail],
       subject: "Your Review Has Been Published!",
@@ -420,7 +420,7 @@ ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
     `;
 
-    await resend.emails.send({
+    await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [seekerEmail],
       subject: "Update on Your Review",
@@ -476,7 +476,7 @@ ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
     `;
 
-    await resend.emails.send({
+    await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [seekerEmail],
       subject: `${facility.name} Responded to Your Review`,
@@ -528,7 +528,7 @@ ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
     `;
 
-    await resend.emails.send({
+    await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `⚠️ Review Dispute: ${facility.name}`,

@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
         const dueDate = invoice.due_at ? new Date(invoice.due_at).toLocaleDateString() : "Not yet set";
 
         if (facilityEmail) {
-          await resend.emails.send({
+          await sendEmailWithRetry(supabase, resend, {
             from: "RehabLookup <no-reply@rehablookup.com>",
             to: [facilityEmail],
             subject: "Payment Reminder - Placement Fee Due",

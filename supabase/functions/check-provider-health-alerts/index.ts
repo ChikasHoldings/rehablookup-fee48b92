@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
               `;
 
               try {
-                await resend.emails.send({
+                await sendEmailWithRetry(supabaseClient, resend, {
                   from: "RehabLookup Admin <no-reply@rehablookup.com>",
                   to: adminEmails,
                   subject: `⚠️ ${highRiskProviders.length} Provider(s) At Risk of Churning`,

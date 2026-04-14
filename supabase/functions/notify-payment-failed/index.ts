@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    const { error: adminEmailError } = await resend.emails.send({
+    const { error: adminEmailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [adminEmail],
       subject: `Payment failed: ${providerName}`,
@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    const { error: providerEmailError } = await resend.emails.send({
+    const { error: providerEmailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
       subject: "Action needed: Update your payment method",

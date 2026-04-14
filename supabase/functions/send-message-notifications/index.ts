@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
     // Send all emails
     for (const email of emails) {
       try {
-        const result = await resend.emails.send({
+        const result = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup Concierge <no-reply@rehablookup.com>",
           to: [email.to],
           subject: email.subject,

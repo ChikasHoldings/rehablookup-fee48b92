@@ -397,7 +397,7 @@ Deno.serve(async (req) => {
 
       try {
         const unsubToken = crypto.randomUUID();
-        const emailResult = await resend.emails.send({
+        const emailResult = await sendEmailWithRetry(supabaseClient, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [provider.email],
           subject,

@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
     // Send confirmation email
     try {
       const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-      await resend.emails.send({
+      await sendEmailWithRetry(supabase, resend, {
         from: "RehabLookup <no-reply@rehablookup.com>",
         to: [sanitizedEmail],
         subject: "We found treatment options for you",

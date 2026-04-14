@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
           resumeUrl,
         });
 
-        const { error: sendError } = await resend.emails.send({
+        const { error: sendError } = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [inquiry.user_email],
           subject: emailData.subject,
@@ -385,7 +385,7 @@ Deno.serve(async (req) => {
           resumeUrl,
         });
 
-        const { error: sendError } = await resend.emails.send({
+        const { error: sendError } = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [inquiry.user_email],
           subject: emailData.subject,
@@ -430,7 +430,7 @@ Deno.serve(async (req) => {
           resumeUrl: `https://rehablookup.com/international/apply?resume=${caseData.id}`,
         });
 
-        const { error: sendError } = await resend.emails.send({
+        const { error: sendError } = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [caseData.client_email],
           subject: emailData.subject,

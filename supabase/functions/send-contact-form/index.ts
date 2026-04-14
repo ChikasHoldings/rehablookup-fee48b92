@@ -170,7 +170,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 </html>`;
 
     const resend = new Resend(resendApiKey);
-    const emailResponse = await resend.emails.send({
+    const emailResponse = await sendEmailWithRetry(supabaseAdmin, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: ["Support@rehablookup.com"],
       subject: `[${subjectLabel}] Contact from ${escapeHtml(name.slice(0, 50))}`,

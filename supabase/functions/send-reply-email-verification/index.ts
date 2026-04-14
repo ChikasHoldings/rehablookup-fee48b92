@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: emailData, error: emailError } = await resend.emails.send({
+    const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [normalizedEmail],
       subject: `${code} is your reply email verification code`,

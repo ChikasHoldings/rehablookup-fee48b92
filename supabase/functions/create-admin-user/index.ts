@@ -266,7 +266,7 @@ Deno.serve(async (req) => {
         : "";
 
       try {
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup Admin <no-reply@rehablookup.com>",
           to: [email],
           subject: `Welcome to RehabLookup — You're now a ${roleLabel}`,

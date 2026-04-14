@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
         );
     }
 
-    const { data: emailResult, error: emailError } = await resend.emails.send({
+    const { data: emailResult, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [seekerEmail],
       subject,

@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       const location = seeker.city && seeker.state ? `${seeker.city}, ${seeker.state}` : seeker.state || "";
 
       try {
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [email],
           subject: `${unseenFacilities.length} New Treatment Center${unseenFacilities.length > 1 ? "s" : ""} Near ${location}`,

@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
               .join("\n");
 
             try {
-              await resend.emails.send({
+              await sendEmailWithRetry(supabase, resend, {
                 from: "RehabLookup Security <no-reply@rehablookup.com>",
                 to: adminEmails,
                 subject: `⚠️ Security Alert: ${autoBlockedIPs.length > 0 ? `${autoBlockedIPs.length} IP(s) Auto-Blocked` : "Brute Force Attack Detected"}`,

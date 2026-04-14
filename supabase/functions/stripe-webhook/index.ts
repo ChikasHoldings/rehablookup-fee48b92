@@ -854,7 +854,7 @@ Deno.serve(async (req) => {
       // Send emails
       if (resend && customerEmail) {
         try {
-          await resend.emails.send({
+          await sendEmailWithRetry(supabaseAdmin, resend, {
             from: "RehabLookup <no-reply@rehablookup.com>",
             to: [customerEmail],
             subject: "Action Required: Payment Failed",
@@ -1002,7 +1002,7 @@ Deno.serve(async (req) => {
                      </div>`
                   : "";
 
-                await resend.emails.send({
+                await sendEmailWithRetry(supabaseAdmin, resend, {
                   from: "RehabLookup <no-reply@rehablookup.com>",
                   to: [customerEmail],
                   subject: isRenewal ? `✅ Subscription Renewed — ${planName}` : `✅ Payment Confirmed — ${planName}`,
@@ -1174,7 +1174,7 @@ Deno.serve(async (req) => {
         // Send admin email
         if (resend) {
           try {
-            await resend.emails.send({
+            await sendEmailWithRetry(supabaseAdmin, resend, {
               from: "RehabLookup <no-reply@rehablookup.com>",
               to: ["Support@rehablookup.com"],
               subject: `🎉 New Subscription - ${facilityName}`,
@@ -1359,7 +1359,7 @@ Deno.serve(async (req) => {
             // Send admin email
             if (resend) {
               try {
-                await resend.emails.send({
+                await sendEmailWithRetry(supabaseAdmin, resend, {
                   from: "RehabLookup <no-reply@rehablookup.com>",
                   to: ["Support@rehablookup.com"],
                   subject: `⚠️ Subscription Cancelled - ${facilities[0].name}`,
@@ -1385,7 +1385,7 @@ Deno.serve(async (req) => {
               // Send cancellation email to provider
               if (customerEmail) {
                 try {
-                  await resend.emails.send({
+                  await sendEmailWithRetry(supabaseAdmin, resend, {
                     from: "RehabLookup <no-reply@rehablookup.com>",
                     to: [customerEmail],
                     subject: `Your Pro Subscription Has Been Cancelled`,

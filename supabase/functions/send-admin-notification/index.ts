@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       } else {
         const resend = new Resend(resendApiKey);
         
-        const emailResult = await resend.emails.send({
+        const emailResult = await sendEmailWithRetry(supabaseClient, resend, {
           from: "RehabLookup Admin <no-reply@rehablookup.com>",
           to: [providerEmail],
           subject: subject,

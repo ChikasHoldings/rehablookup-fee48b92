@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
     const facilityEmail = facility.reply_email || facility.email;
     if (facilityEmail) {
       try {
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [facilityEmail],
           subject: `New Inquiry for ${facility.name}`,

@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
         const subjectPrefix = planInfo.plan === 'pro' ? '⭐ ' : '';
         
         const unsubToken = crypto.randomUUID();
-        const { error: emailError } = await resend.emails.send({
+        const { error: emailError } = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
           subject: `${subjectPrefix}Weekly Digest: ${weeklyLeads || 0} new leads for ${facility.name}`,

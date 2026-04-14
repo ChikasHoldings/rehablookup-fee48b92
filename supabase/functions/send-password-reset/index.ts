@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
 
     const resend = new Resend(resendApiKey);
 
-    const { error: emailError } = await resend.emails.send({
+    const { error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [normalizedEmail],
       subject: "Reset your password",

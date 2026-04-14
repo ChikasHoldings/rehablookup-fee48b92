@@ -498,7 +498,7 @@ Deno.serve(async (req) => {
           const resend = new Resend(resendApiKey);
           const loginUrl = "https://rehablookup.com/admin/login";
 
-          await resend.emails.send({
+          await sendEmailWithRetry(supabase, resend, {
             from: "RehabLookup Admin <no-reply@rehablookup.com>",
             to: [targetProfile.email],
             subject: "Your RehabLookup Admin Password Has Been Reset",
@@ -672,7 +672,7 @@ Deno.serve(async (req) => {
           const loginUrl = "https://rehablookup.com/admin/login";
           const displayName = adminProfile.display_name || targetProfile.first_name || "Admin";
 
-          await resend.emails.send({
+          await sendEmailWithRetry(supabase, resend, {
             from: "RehabLookup Admin <no-reply@rehablookup.com>",
             to: [targetProfile.email],
             subject: "Your RehabLookup Admin Invitation (Resent)",

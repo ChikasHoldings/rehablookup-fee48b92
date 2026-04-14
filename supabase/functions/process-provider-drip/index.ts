@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
       const html = dayConfig.generate(firstName);
 
       try {
-        const emailResult = await resend.emails.send({
+        const emailResult = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [drip.provider_email],
           subject: dayConfig.subject,

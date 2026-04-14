@@ -555,7 +555,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     
     console.log("Sending email with Reply-To:", replyToEmail);
     
-    const emailResponse = await resend.emails.send({
+    const emailResponse = await sendEmailWithRetry(supabaseAuth, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [lead.email],
       subject: emailSubject,

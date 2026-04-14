@@ -114,14 +114,14 @@ async function sendFeaturedEmail(
   `;
 
   try {
-    await resend.emails.send({
+    await sendEmailWithRetry(supabaseClient, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
       subject: `🌟 ${facilityName} is Featured on Homepage Today!`,
       html: emailHtml,
     });
     if (adminRecipients.length > 0) {
-      await resend.emails.send({
+      await sendEmailWithRetry(supabaseClient, resend, {
         from: "RehabLookup <no-reply@rehablookup.com>",
         to: adminRecipients,
         subject: `[Admin] Featured Rotation: ${facilityName}`,

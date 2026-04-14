@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
             const locationHint = lead.location_city_state || null;
             const levelOfCare = lead.level_of_care || null;
 
-            await resend.emails.send({
+            await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
               subject: `🔁 New discounted lead in your area (${discountPrice}) — ${facility.name}`,

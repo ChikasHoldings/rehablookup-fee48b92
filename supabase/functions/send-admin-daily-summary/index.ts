@@ -489,7 +489,7 @@ Deno.serve(async (req) => {
         const html = wrapEmail(role, period, dateRange, name, bodyHtml);
         const subject = `${roleLabel(role)} ${periodLabel(period)} Digest – ${dateRange}`;
 
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [admin.email],
           subject,

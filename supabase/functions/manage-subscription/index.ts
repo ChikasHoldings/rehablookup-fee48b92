@@ -98,7 +98,7 @@ const sendSubscriptionNotificationEmail = async (
   `;
 
   try {
-    await resend.emails.send({
+    await sendEmailWithRetry(supabaseClient, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [email],
       subject: actionInfo.subject,

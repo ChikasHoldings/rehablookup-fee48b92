@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
       </html>
     `;
 
-    const { error: emailError } = await resend.emails.send({
+    const { error: emailError } = await sendEmailWithRetry(supabaseClient, resend, {
       from: "RehabLookup Admin <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `⚠️ High Churn Alert: ${churnRate.toFixed(1)}% churn rate detected`,
