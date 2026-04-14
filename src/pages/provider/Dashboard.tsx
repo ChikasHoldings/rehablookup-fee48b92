@@ -467,7 +467,14 @@ export default function ProviderDashboardPage() {
 
           {/* Right Column - Sidebar */}
           <div className="lg:col-span-4 space-y-3 sm:space-y-4">
-            
+
+            {/* Credit & Spending Panel */}
+            <DashboardCreditSpendingPanel
+              facilityId={facilityId}
+              balanceCents={creditsData?.balanceCents ?? 0}
+              isLoading={creditsLoading}
+            />
+
             {/* Alerts */}
             <div className="space-y-2.5">
               {/* Locked Inquiries Alert */}
