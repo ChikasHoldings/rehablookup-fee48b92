@@ -253,8 +253,18 @@ export function LockedLeadCard({
               🔥 This lead may be shared with others if not unlocked
             </div>
           )}
+
+          {/* Pro upgrade nudge for Free providers */}
+          {!isPro && (
+            <Link
+              to="/provider/pro-upgrade"
+              className="mt-2 flex items-center gap-1.5 text-[11px] text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              <Star className="h-3 w-3" />
+              Upgrade to Pro — save 20% on unlocks &amp; get priority leads
+            </Link>
+          )}
         </div>
-      </div>
       
       {/* Unlock CTA */}
       <UnlockLeadButton
