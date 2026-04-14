@@ -516,6 +516,29 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                         </div>
                       </button>
                     ))}
+
+                    {/* Suspended facilities */}
+                    {suspendedFacilities.map((facility) => (
+                      <div 
+                        key={facility.id}
+                        className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md opacity-50 cursor-not-allowed"
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                          {facility.logo_url ? (
+                            <img src={facility.logo_url} alt={`${facility.name} logo`} className="h-full w-full object-cover grayscale" />
+                          ) : (
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm text-muted-foreground">{facility.name}</p>
+                          <p className="text-xs text-muted-foreground/70 truncate">Paused — upgrade to reactivate</p>
+                        </div>
+                        <div className="shrink-0">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
