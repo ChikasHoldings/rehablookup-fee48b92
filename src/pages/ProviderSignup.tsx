@@ -650,6 +650,22 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if email fails
       }
 
+      // 12b. Send welcome offer email (separate, delayed send)
+      try {
+        await supabase.functions.invoke("send-provider-welcome-offer-email", {
+          body: {
+            facilityId,
+            facilityName: formData.facilityName,
+            providerEmail: formData.email,
+            providerFirstName: formData.firstName,
+            selectedPlan: "free",
+          },
+        });
+      } catch (offerError) {
+        console.error("Welcome offer email error:", offerError);
+        // Non-blocking
+      }
+
       // 13. Redirect to dashboard
       toast({
         title: "Welcome to RehabLookup!",
