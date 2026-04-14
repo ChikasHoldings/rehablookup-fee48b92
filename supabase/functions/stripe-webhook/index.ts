@@ -1385,6 +1385,7 @@ Deno.serve(async (req) => {
                         <p style="color: #6b7280; font-size: 14px;">Consider reaching out to understand why they cancelled.</p>
                       </div>
                     </div>
+                  `,
                 }, {
                   emailType: "stripe_cancel_admin",
                   idempotencyKey: `stripe-cancel-admin-${event.id}`,
