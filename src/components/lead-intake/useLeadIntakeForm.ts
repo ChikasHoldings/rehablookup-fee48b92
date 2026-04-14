@@ -463,19 +463,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       analytics.formSubmit("lead_intake", true);
       setIsSubmitted(true);
       
-      // Send placement intro email to seeker (non-blocking)
-      const seekerEmail = formData.email.toLowerCase().trim();
-      supabase.functions.invoke('send-seeker-emails', {
-        body: {
-          type: 'placement_intro',
-          seekerId: '',
-          email: seekerEmail,
-          metadata: {
-            facilityName: facilityName || facilityId,
-            source: 'lead_inquiry',
-          },
-        },
-      }).catch(() => { /* non-blocking */ });
+      // NOTE: Seeker confirmation email is sent server-side by submit-qualified-lead.
+      // Do NOT send a duplicate frontend email here.
       
     } catch (error: any) {
       // Reset idempotency key so user can retry
