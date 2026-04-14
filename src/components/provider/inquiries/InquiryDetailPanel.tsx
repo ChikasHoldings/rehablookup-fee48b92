@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   MapPin, Phone, Mail, MessageSquare, User, Building2,
-  PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2, FileText
+  PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2, FileText,
+  Clock, Shield, Heart, DollarSign, AlertTriangle, Users
 } from "lucide-react";
 import { ResponseTemplatesDrawer } from "@/components/provider/inquiries/ResponseTemplatesDrawer";
 import { Button } from "@/components/ui/button";
