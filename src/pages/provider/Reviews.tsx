@@ -28,13 +28,13 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useReviewRequests } from '@/hooks/useReviewRequests';
-import { useGoogleReviews } from '@/hooks/useGoogleReviews';
+
 import { useProStatus } from '@/hooks/useProStatus';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
 import { RequestReviewSection } from '@/components/provider/reviews/RequestReviewSection';
-import { GoogleReviewsImportSection } from '@/components/provider/reviews/GoogleReviewsImportSection';
+
 
 export default function ProviderReviews() {
   const navigate = useNavigate();

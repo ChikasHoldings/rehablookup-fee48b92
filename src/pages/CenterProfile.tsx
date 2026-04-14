@@ -1037,8 +1037,6 @@ const CenterProfile = () => {
                 );
               })()}
 
-              {/* Google Reviews */}
-              <GoogleReviewsDisplay facilityId={facility.id} />
 
               {/* Our Team Section */}
               <FacilityStaffSection facilityId={facility.id} />
