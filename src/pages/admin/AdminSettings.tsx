@@ -201,9 +201,9 @@ export default function AdminSettings() {
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
-      supabase.removeChannel(leadsChannel);
       supabase.removeChannel(usersChannel);
       supabase.removeChannel(settingsChannel);
+      clearInterval(leadsInterval);
     };
   }, [invalidateSettingsQueries]);
 
