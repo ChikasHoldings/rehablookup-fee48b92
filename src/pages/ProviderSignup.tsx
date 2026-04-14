@@ -224,8 +224,8 @@ export default function ProviderSignup() {
   };
 
   const handleSubmit = async () => {
-    // Prevent double submissions
-    if (isSubmitting) {
+    // Prevent double submissions (useRef survives React StrictMode double-fire)
+    if (submittingRef.current || isSubmitting) {
       if (import.meta.env.DEV) console.log("[ProviderSignup] Prevented double submission");
       return;
     }
@@ -245,6 +245,7 @@ export default function ProviderSignup() {
     }
     setLastSubmitAttempt(now);
     
+    submittingRef.current = true;
     setIsSubmitting(true);
     if (import.meta.env.DEV) console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
 
@@ -681,6 +682,7 @@ export default function ProviderSignup() {
         variant: "destructive",
       });
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };

@@ -174,7 +174,8 @@ export default function SeekerSignup() {
       return;
     }
 
-    if (isSubmitting) return;
+    if (submittingRef.current || isSubmitting) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     
     try {
@@ -274,6 +275,7 @@ export default function SeekerSignup() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
