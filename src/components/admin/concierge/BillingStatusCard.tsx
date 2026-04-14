@@ -102,12 +102,18 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
     },
     onError: (error) => {
       toast.error("Billing retry failed: " + error.message);
-      supabase.from("concierge_case_events").insert({
-        inquiry_id: caseData.id,
-        event_type: "charge_failed",
-        event_data: { error: error.message },
-        actor_type: "admin",
-      });
+      // Log charge_failed event — best-effort, awaited
+      (async () => {
+        try {
+          await supabase.from("concierge_case_events").insert({
+            inquiry_id: caseData.id,
+            event_type: "charge_failed",
+            event_data: { error: error.message },
+            actor_type: "admin",
+          });
+          queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
+        } catch { /* best-effort */ }
+      })();
     },
   });
 
