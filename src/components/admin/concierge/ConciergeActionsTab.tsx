@@ -144,16 +144,24 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
   const selfAssignMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("Not authenticated");
-      const { error } = await supabase
+      
+      // Race-condition guard: only claim if still unassigned
+      const { data: updated, error } = await supabase
         .from("concierge_inquiries")
         .update({ assigned_advisor_id: user.id })
-        .eq("id", caseData.id);
+        .eq("id", caseData.id)
+        .is("assigned_advisor_id", null)
+        .select("id")
+        .maybeSingle();
+        
       if (error) throw error;
+      if (!updated) throw new Error("This case was already claimed by another advisor. Please refresh.");
 
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id,
         event_type: "advisor_assigned",
         event_data: { advisor_id: user.id, self_assigned: true },
+        actor_id: user.id,
         actor_type: "advisor",
       });
     },
@@ -161,11 +169,11 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       toast.success("Case assigned to you — starting placement workflow");
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       onRefresh();
-      // Navigate to placement tab so advisor can start working
       onSwitchTab?.("placement");
     },
     onError: (error) => {
-      toast.error("Failed to self-assign: " + error.message);
+      toast.error(error.message || "Failed to self-assign");
+      onRefresh(); // Refresh to show current state
     },
   });
 
