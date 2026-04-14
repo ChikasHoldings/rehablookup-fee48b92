@@ -312,7 +312,7 @@ function infoBox(content: string, bgColor = '#f0f9ff', borderColor = '#0ea5e9', 
 
 async function createAdminNotification(
   supabase: any,
-  notification: { type: string; title: string; message: string; metadata?: Record<string, unknown> }
+  notification: { type: string; title: string; message: string; metadata?: Record<string, unknown>; link?: string }
 ) {
   try {
     // Create a global admin notification visible to all admins
@@ -323,6 +323,27 @@ async function createAdminNotification(
       metadata: notification.metadata || {},
     });
     logStep("Admin notification created", { type: notification.type });
+
+    // Also send per-user notifications to advisors and super_admins
+    const { data: adminUsers } = await supabase
+      .from('admin_user_profiles')
+      .select('user_id')
+      .in('admin_role', ['super_admin', 'manager', 'advisor'])
+      .eq('status', 'active');
+    
+    if (adminUsers && adminUsers.length > 0) {
+      const userNotifications = adminUsers.map((admin: { user_id: string }) => ({
+        user_id: admin.user_id,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        link: notification.link || null,
+        metadata: notification.metadata || {},
+      }));
+      
+      await supabase.from('admin_user_notifications').insert(userNotifications);
+      logStep("Per-user admin notifications created", { count: userNotifications.length });
+    }
   } catch (error) {
     logStep("Warning: Failed to create admin notification", { error: String(error) });
   }
