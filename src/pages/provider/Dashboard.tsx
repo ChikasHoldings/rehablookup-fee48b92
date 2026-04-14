@@ -46,6 +46,7 @@ import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
 import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
+import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads";
 
 // Compact Metric Card
 function MetricCard({ 
