@@ -337,7 +337,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
             className="mt-2"
             variant="outline"
             onClick={handleSaveNotes}
-            disabled={updateCaseMutation.isPending}
+            disabled={updateCaseMutation.isPending || adminNotes === (caseData.admin_notes || "")}
           >
             {updateCaseMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
