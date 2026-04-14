@@ -57,7 +57,7 @@ interface FacilityData {
   state: string;
   zip_code: string;
   address: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   website: string | null;
   description: string | null;
@@ -226,7 +226,7 @@ export default function SeekerFacilityProfile() {
 
       // Fetch facility by slug using direct REST call
       const facilityRes = await fetch(
-        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,phone,email,website,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at,concierge_network_opted_in,accepts_international_patients`,
+        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at,concierge_network_opted_in,accepts_international_patients`,
         { headers: { ...headers, "Accept": "application/vnd.pgrst.object+json" } }
       );
 
@@ -257,8 +257,17 @@ export default function SeekerFacilityProfile() {
         accreditationsRes.ok ? accreditationsRes.json() : [],
       ]);
 
+      // Fetch Pro-gated contact details (phone/website) via security definer function
+      const { data: publicData } = await supabase
+        .rpc("get_public_facility_data", { facility_id: facilityId })
+        .maybeSingle();
+
       return {
         ...base,
+        // Override phone/website with Pro-gated values from the security definer function
+        phone: publicData?.phone || null,
+        email: publicData?.email || base.email || null,
+        website: publicData?.website || null,
         facility_services: services,
         facility_insurance: insurance,
         facility_age_groups: ageGroups,

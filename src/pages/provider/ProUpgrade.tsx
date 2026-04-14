@@ -19,6 +19,8 @@ import {
   Handshake,
   BarChart3,
   Eye,
+  Phone,
+  Globe,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,6 +80,18 @@ const HERO_BENEFITS = [
     description: "Display verified accreditations & trust signals.",
     highlight: "Higher conversions",
   },
+  {
+    icon: Phone,
+    title: "Phone Number Displayed",
+    description: "Show your phone number on your facility page for direct calls.",
+    highlight: "Direct contact",
+  },
+  {
+    icon: Globe,
+    title: "Website Link Displayed",
+    description: "Display your website and receive direct traffic from families.",
+    highlight: "Direct traffic",
+  },
 ];
 
 const COMPARISON_ITEMS: { feature: string; free: string | boolean; pro: string | boolean }[] = [
@@ -85,6 +99,8 @@ const COMPARISON_ITEMS: { feature: string; free: string | boolean; pro: string |
   { feature: "Lead Price", free: "Full Price", pro: "20% OFF" },
   { feature: "Lead Access", free: "Limited", pro: "Priority" },
   { feature: "Visibility", free: "Standard", pro: "Featured" },
+  { feature: "Phone Number on Profile", free: false, pro: true },
+  { feature: "Website Link on Profile", free: false, pro: true },
   { feature: "Placement Fees", free: "Full Price", pro: "20% OFF" },
   { feature: "Search Ranking", free: "Standard", pro: "Priority (+50)" },
   { feature: "Homepage Featured", free: false, pro: true },

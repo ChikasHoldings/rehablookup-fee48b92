@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, Percent, Building2, Star, ChevronRight } from "lucide-react";
+import { Sparkles, Percent, Building2, Star, ChevronRight, Phone, Globe } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,20 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
       description: "Multiple facilities",
       color: "text-violet-600",
       bgColor: "bg-violet-500/10",
+    },
+    {
+      icon: Phone,
+      label: "Phone on profile",
+      description: "Direct calls from families",
+      color: "text-blue-600",
+      bgColor: "bg-blue-500/10",
+    },
+    {
+      icon: Globe,
+      label: "Website displayed",
+      description: "Direct traffic to your site",
+      color: "text-teal-600",
+      bgColor: "bg-teal-500/10",
     },
   ];
 
