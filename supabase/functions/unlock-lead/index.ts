@@ -1,8 +1,10 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 // Version tracking for deployment verification
-const VERSION = "2.0.0";
+const VERSION = "2.1.0";
 
 // Rate limit: max unlocks per facility per hour
 const MAX_UNLOCKS_PER_HOUR = 20;
