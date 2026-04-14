@@ -53,6 +53,10 @@ const EVENT_CONFIG: Record<string, { icon: React.ComponentType<any>; label: stri
   seeker_cancelled: { icon: XCircle, label: "Seeker Cancelled", color: "text-red-500" },
   placement_confirmed: { icon: CheckCircle, label: "Placement Confirmed", color: "text-emerald-600" },
   provider_accepted: { icon: UserCheck, label: "Provider Accepted", color: "text-green-500" },
+  tour_completed: { icon: CheckCircle, label: "Tour Completed", color: "text-emerald-500" },
+  admission_updated: { icon: User, label: "Admission Updated", color: "text-indigo-500" },
+  move_in_scheduled: { icon: Calendar, label: "Move-In Scheduled", color: "text-indigo-500" },
+  moved_in: { icon: CheckCircle, label: "Moved In", color: "text-emerald-600" },
 };
 
 export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
