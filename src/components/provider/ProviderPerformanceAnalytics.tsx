@@ -38,7 +38,7 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
     );
   }
 
-  const totalViews = engagement?.periodListingViews || 0;
+  const totalViews = engagement?.periodImpressions || 0;
   const totalLeads = leads?.thisMonthLeads || 0;
   const converted = leads?.conversionFunnel.converted || 0;
   const viewToLeadRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
