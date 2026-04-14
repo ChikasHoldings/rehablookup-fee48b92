@@ -137,8 +137,8 @@ export async function sendEmailWithRetry(
         subject: normalizedParams.subject,
         html: normalizedParams.html,
       };
-      if (params.headers) sendParams.headers = params.headers;
-      if (params.replyTo) sendParams.reply_to = params.replyTo;
+      if (normalizedParams.headers) sendParams.headers = normalizedParams.headers;
+      if (normalizedParams.replyTo) sendParams.reply_to = normalizedParams.replyTo;
 
       // deno-lint-ignore no-explicit-any
       const { data, error } = await (resend.emails as any).send(sendParams);
