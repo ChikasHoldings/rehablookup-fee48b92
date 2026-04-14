@@ -80,11 +80,6 @@ Deno.serve(async (req) => {
         .from("facility_insurance")
         .select("facility_id, insurance_name")
         .in("facility_id", facilityIds),
-      supabase
-        .from("facility_reviews_config")
-        .select("facility_id, google_rating, google_review_count, show_on_profile")
-        .in("facility_id", facilityIds)
-        .eq("show_on_profile", true),
     ]);
 
     // Create lookup maps
@@ -100,10 +95,6 @@ Deno.serve(async (req) => {
       insuranceMap.set(i.facility_id, [...existing, i.insurance_name]);
     });
 
-    const reviewsMap = new Map<string, { rating: number | null; count: number | null }>();
-    (reviewsResult.data || []).forEach((r) => {
-      reviewsMap.set(r.facility_id, { rating: r.google_rating, count: r.google_review_count });
-    });
 
     // Build complete facility objects
     const facilities = (facilitiesData || []).map((f) => ({
