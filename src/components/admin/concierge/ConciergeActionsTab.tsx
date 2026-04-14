@@ -226,8 +226,8 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
       )}
 
-      {/* Admin Confirm Placement - only for non-advisors */}
-      {!isAdvisor && (
+      {/* Admin Confirm Placement */}
+      {caseData.status !== "closed" && caseData.status !== "new" && (
         <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
       )}
 
