@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSeekerSession } from './useSeekerSession';
 
@@ -21,12 +21,15 @@ export interface FacilityReview {
   has_voted_helpful?: boolean;
 }
 
+const REVIEW_COOLDOWN_MS = 30_000; // 30-second cooldown between submissions
+
 export function useFacilityReviews(facilityId: string) {
   const [reviews, setReviews] = useState<FacilityReview[]>([]);
   const [userReview, setUserReview] = useState<FacilityReview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState(0);
+  const lastSubmitRef = useRef<number>(0);
   const { user, isAuthenticated, isReady } = useSeekerSession();
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
