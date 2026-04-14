@@ -169,7 +169,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("RESEND_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -191,7 +191,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Profile not found:", profileError);
       return new Response(
         JSON.stringify({ error: "Provider profile not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -297,7 +297,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         indexNowSubmitted: !!facility?.slug,
         dripEnrolled: true,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: unknown) {
@@ -305,7 +305,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       console.error("RESEND_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return new Response(
         JSON.stringify({ error: "Invalid email address" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       console.log(`Rate limit exceeded for ${normalizedEmail}: ${count} attempts`);
       return new Response(
         JSON.stringify({ error: "Too many attempts. Please wait 10 minutes." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       console.error("Failed to store verification code:", insertError);
       return new Response(
         JSON.stringify({ error: "Failed to create verification code. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
           errorCode,
           retryable: errorCode !== "INVALID_EMAIL" && errorCode !== "EMAIL_BLOCKED"
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -225,13 +225,13 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, message: "Verification code sent" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("Error in send-verification-code:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Failed to send verification code" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

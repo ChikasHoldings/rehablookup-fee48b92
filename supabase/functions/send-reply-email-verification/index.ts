@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
       console.error("RESEND_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -36,14 +36,14 @@ Deno.serve(async (req) => {
     if (!facilityId) {
       return new Response(
         JSON.stringify({ error: "Facility ID is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return new Response(
         JSON.stringify({ error: "Invalid email address" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       console.log(`Rate limit exceeded for facility ${facilityId}, email ${normalizedEmail}: ${count} attempts`);
       return new Response(
         JSON.stringify({ error: "Too many attempts. Please wait before trying again." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     if (recentCode) {
       return new Response(
         JSON.stringify({ error: "Please wait 60 seconds before requesting a new code." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       console.error("Failed to store verification code:", insertError);
       return new Response(
         JSON.stringify({ error: "Failed to create verification code. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
           errorCode,
           retryable: errorCode !== "INVALID_EMAIL" && errorCode !== "EMAIL_BLOCKED"
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -250,13 +250,13 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, message: "Verification code sent to your email" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("Error in send-reply-email-verification:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Failed to send verification code" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

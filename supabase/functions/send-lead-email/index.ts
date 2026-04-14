@@ -217,7 +217,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "No authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -230,7 +230,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("RESEND_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -243,7 +243,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Auth error:", userError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -258,7 +258,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!template) {
       return new Response(
         JSON.stringify({ error: "Invalid template" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -278,7 +278,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           JSON.stringify({ 
             error: `A welcome email ("${sentTemplate?.name || 'Welcome'}") has already been sent to this lead. Please choose a different template type.` 
           }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
@@ -309,7 +309,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           JSON.stringify({ 
             error: `This follow-up email was sent recently. Please wait ${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''} before sending "${template.name}" again to this lead.` 
           }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
@@ -324,7 +324,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Profile not found:", profileError);
       return new Response(
         JSON.stringify({ error: "Provider profile not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -352,7 +352,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Lead not found:", leadCheckError);
       return new Response(
         JSON.stringify({ error: "Lead not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -399,7 +399,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Facility not found:", facilityError);
       return new Response(
         JSON.stringify({ error: "Facility not found. The lead may not be assigned to a facility yet." }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -408,7 +408,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("Access denied: Lead belongs to different facility");
       return new Response(
         JSON.stringify({ error: "Access denied: This lead is not assigned to your facility" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -425,7 +425,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         console.error("Error checking unlock status:", unlockError);
         return new Response(
           JSON.stringify({ error: "Failed to verify lead unlock status" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -433,7 +433,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         console.error("Access denied: Lead is not unlocked for this facility", { leadId, facilityId: facility.id });
         return new Response(
           JSON.stringify({ error: "You must unlock this lead before sending emails. Unlock the lead to access contact information." }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       console.log("Lead unlock verified:", { leadId, facilityId: facility.id, unlockId: unlockRecord.id });
@@ -444,7 +444,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       console.error("No reply email configured");
       return new Response(
         JSON.stringify({ error: "Please set a reply email in the facility settings before sending emails." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -464,7 +464,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if ((emailsToday || 0) >= DAILY_EMAIL_LIMIT) {
       return new Response(
         JSON.stringify({ error: `Daily email limit (${DAILY_EMAIL_LIMIT}) reached. Try again tomorrow.` }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -604,7 +604,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         emailId: emailLog?.id,
         message: `Email sent to ${lead.name}` 
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: unknown) {
@@ -612,7 +612,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
