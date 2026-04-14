@@ -351,6 +351,7 @@ Deno.serve(async (req) => {
     const emailsFailed: string[] = [];
 
     for (const provider of atRiskProviders) {
+      if (emailsSent.length >= BULK_BATCH_LIMIT) break; // Rate-limit batch size
       // Check if we already sent a retention email to this provider recently
       const alertKey = `retention_${provider.facilityId}`;
       const sevenDaysAgoStr = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
