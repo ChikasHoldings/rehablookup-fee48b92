@@ -257,8 +257,17 @@ export default function SeekerFacilityProfile() {
         accreditationsRes.ok ? accreditationsRes.json() : [],
       ]);
 
+      // Fetch Pro-gated contact details (phone/website) via security definer function
+      const { data: publicData } = await supabase
+        .rpc("get_public_facility_data", { facility_id: facilityId })
+        .maybeSingle();
+
       return {
         ...base,
+        // Override phone/website with Pro-gated values from the security definer function
+        phone: publicData?.phone || null,
+        email: publicData?.email || base.email || null,
+        website: publicData?.website || null,
         facility_services: services,
         facility_insurance: insurance,
         facility_age_groups: ageGroups,
