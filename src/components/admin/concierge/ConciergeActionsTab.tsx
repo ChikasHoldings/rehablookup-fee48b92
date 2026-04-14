@@ -34,6 +34,7 @@ import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
 import { AdvisorAssignmentCard } from "./AdvisorAssignmentCard";
 import { AdmissionCoordinationCard } from "./AdmissionCoordinationCard";
+import { BillingStatusCard } from "./BillingStatusCard";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
@@ -239,6 +240,9 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
 
       {/* Admission Coordination */}
       <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
+
+      {/* Billing Status — only visible on placed cases */}
+      <BillingStatusCard caseData={caseData} onRefresh={onRefresh} />
 
       {/* Seeker confirmed indicator for admin */}
       {caseData.seeker_confirmed && caseData.status !== "placed" && (
