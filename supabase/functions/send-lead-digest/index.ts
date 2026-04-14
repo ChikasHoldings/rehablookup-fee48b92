@@ -268,9 +268,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       try {
         const subjectPrefix = planInfo.plan === "pro" ? "⭐ " : "";
-        
         const unsubToken = crypto.randomUUID();
-        await resend.emails.send({
+        const digestKey = `digest-${provider.user_id}-${digestType.toLowerCase()}-${now.toISOString().split('T')[0]}`;
+        
+        const result = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
           subject: `${subjectPrefix}${digestType} Digest: ${leads.length} New Lead${leads.length === 1 ? "" : "s"} - Unlock to View`,
@@ -279,15 +280,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
             "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
+        }, {
+          emailType: "lead_digest",
+          idempotencyKey: digestKey,
+          metadata: { digestType, leadCount: leads.length, userId: provider.user_id },
         });
 
-        await supabase
-          .from("notification_preferences")
-          .update({ last_digest_sent_at: now.toISOString() })
-          .eq("user_id", provider.user_id);
+        if (result.success || result.deduplicated) {
+          await supabase
+            .from("notification_preferences")
+            .update({ last_digest_sent_at: now.toISOString() })
+            .eq("user_id", provider.user_id);
 
-        digestsSent++;
-        logStep(`Digest sent to ${profile.email}`);
+          digestsSent++;
+          logStep(`Digest ${result.deduplicated ? 'deduplicated' : 'sent'} to ${profile.email}`);
+        } else {
+          console.error(`Failed to send digest to ${profile.email}: ${result.error} (dead-lettered: ${result.deadLettered})`);
+        }
       } catch (emailError) {
         console.error(`Failed to send digest to ${profile.email}:`, emailError);
       }
