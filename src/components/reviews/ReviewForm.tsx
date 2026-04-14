@@ -48,6 +48,7 @@ export function ReviewForm({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
 
   const handleResendVerification = async () => {
     if (!onResendVerification) return;
@@ -70,17 +71,37 @@ export function ReviewForm({
       return;
     }
 
-    // Client-side length validation
-    if (reviewText.length > 2000) {
+    const trimmedText = reviewText.trim();
+
+    // Review text is required
+    if (!trimmedText) {
+      toast.error('Please write a review before submitting');
+      return;
+    }
+
+    if (trimmedText.length < 10) {
+      toast.error('Review must be at least 10 characters');
+      return;
+    }
+
+    if (trimmedText.length > 2000) {
       toast.error('Review text must be 2000 characters or less');
       return;
     }
 
+    // Spam guard: block rapid repeat submissions (10s cooldown)
+    const now = Date.now();
+    if (now - lastSubmitTime < 10_000) {
+      toast.error('Please wait a few seconds before submitting again');
+      return;
+    }
+
     setIsSubmitting(true);
+    setLastSubmitTime(now);
     
     const { error } = userReview 
-      ? await onUpdate(rating, reviewText)
-      : await onSubmit(rating, reviewText);
+      ? await onUpdate(rating, trimmedText)
+      : await onSubmit(rating, trimmedText);
     
     setIsSubmitting(false);
 
@@ -333,19 +354,19 @@ export function ReviewForm({
 
           <div>
             <label htmlFor="review-text" className="block text-sm font-medium mb-2">
-              Your Review (optional)
+              Your Review <span className="text-destructive">*</span>
             </label>
             <Textarea
               id="review-text"
-              placeholder="Share details about your experience..."
+              placeholder="Share details about your experience (minimum 10 characters)..."
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               rows={4}
-              maxLength={1000}
+              maxLength={2000}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {reviewText.length}/1000 characters
+              {reviewText.length}/2000 characters
             </p>
           </div>
 
