@@ -125,6 +125,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
   });
 
   const handleSaveStatus = () => {
+    if (status === caseData.status) return;
     updateCaseMutation.mutate({ status });
   };
 
@@ -293,7 +294,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleSaveStatus} disabled={updateCaseMutation.isPending}>
+            <Button onClick={handleSaveStatus} disabled={updateCaseMutation.isPending || status === caseData.status}>
               {updateCaseMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -436,6 +437,8 @@ function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
     sendGuard.current = true;
     setSending(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       await supabase.functions.invoke("send-concierge-notifications", {
         body: {
           type: "facilities_ready_for_review",
@@ -447,6 +450,7 @@ function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
         inquiry_id: caseData.id,
         event_type: "seeker_notified_options",
         event_data: {},
+        actor_id: user?.id || null,
         actor_type: "admin",
       });
 

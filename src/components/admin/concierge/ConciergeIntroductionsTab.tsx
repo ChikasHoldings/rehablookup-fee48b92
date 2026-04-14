@@ -99,6 +99,18 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Duplicate guard: check if intro already exists for this facility
+      const { data: existingIntro } = await supabase
+        .from("concierge_introductions")
+        .select("id")
+        .eq("inquiry_id", caseData.id)
+        .eq("facility_id", facilityId)
+        .maybeSingle();
+
+      if (existingIntro) {
+        throw new Error("An introduction has already been sent to this facility.");
+      }
+
       // Create introduction record
       const { data: introData, error } = await supabase
         .from("concierge_introductions")
