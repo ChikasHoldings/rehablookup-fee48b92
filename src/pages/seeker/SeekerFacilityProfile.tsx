@@ -57,7 +57,7 @@ interface FacilityData {
   state: string;
   zip_code: string;
   address: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   website: string | null;
   description: string | null;
