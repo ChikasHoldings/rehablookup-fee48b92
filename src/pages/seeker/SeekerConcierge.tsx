@@ -382,18 +382,28 @@ export default function SeekerConcierge() {
   const cancelCaseMutation = useMutation({
     mutationFn: async () => {
       if (!selectedCase) throw new Error("No case selected");
-      
       if (!userId) throw new Error("Not authenticated");
 
+      // Guard: don't cancel already-closed or placed cases
+      if (selectedCase.status === "closed" || selectedCase.status === "placed") {
+        throw new Error("This case cannot be cancelled");
+      }
+
       // Only allow cancellation of own cases (RLS enforces this too)
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("concierge_inquiries")
         .update({ status: "closed", closed_at: new Date().toISOString() })
         .eq("id", selectedCase.id)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .neq("status", "closed")
+        .neq("status", "placed")
+        .select("id")
+        .maybeSingle();
       
       if (error) throw error;
+      if (!updated) return; // Already closed — idempotent
 
+      // Log case event
       await supabase.from("concierge_case_events").insert({
         inquiry_id: selectedCase.id,
         event_type: "seeker_cancelled",
@@ -401,13 +411,21 @@ export default function SeekerConcierge() {
         actor_type: "seeker",
         actor_id: userId,
       });
+
+      // Notify admin/advisor of cancellation (non-blocking)
+      supabase.functions.invoke("send-concierge-notifications", {
+        body: {
+          type: "seeker_cancelled",
+          inquiryId: selectedCase.id,
+        },
+      }).catch((e) => console.error("Cancel notification error:", e));
     },
     onSuccess: () => {
       toast.success("Your request has been cancelled.");
       queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
     },
-    onError: () => {
-      toast.error("Failed to cancel request. Please try again.");
+    onError: (error) => {
+      toast.error(error.message || "Failed to cancel request. Please try again.");
     },
   });
 
