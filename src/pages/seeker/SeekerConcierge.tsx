@@ -630,6 +630,13 @@ export default function SeekerConcierge() {
                 <PlacementMatchCard facility={placedFacility} isPlaced />
               </CardContent>
             </Card>
+            
+            {/* Admission & Move-In Status */}
+            <AdmissionStatusCard
+              tourStatus={selectedCase.tour_coordination_status}
+              admissionStatus={selectedCase.admission_status}
+              moveInDate={selectedCase.move_in_date}
+            />
           </div>
         )}
 
