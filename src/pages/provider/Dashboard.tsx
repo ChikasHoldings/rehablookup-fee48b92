@@ -44,6 +44,7 @@ import { ListingPreviewModal } from "@/components/provider/listing/ListingPrevie
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
+import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 
 // Compact Metric Card
 function MetricCard({ 
