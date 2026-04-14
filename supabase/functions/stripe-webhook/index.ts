@@ -480,8 +480,9 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Validate bonus matches tier (only $1,000 = 10000 bonus)
-        const expectedBonus = amountCents === 100000 ? 10000 : 0;
+        // Validate bonus matches tier: $500 = 5000 (+10%), $1,000 = 20000 (+20%)
+        const TIER_BONUSES: Record<number, number> = { 20000: 0, 50000: 5000, 100000: 20000 };
+        const expectedBonus = TIER_BONUSES[amountCents] ?? 0;
         const safeBonusCents = Math.min(bonusCents, expectedBonus);
         const totalCreditsCents = amountCents + safeBonusCents;
 
