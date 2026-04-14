@@ -1,4 +1,4 @@
-import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users, Coins, Timer } from "lucide-react";
+import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users, Coins, Timer, Flame, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -8,11 +8,11 @@ import { cn } from "@/lib/utils";
 interface LockedLeadDetailPanelProps {
   totalLeadsCount: number;
   onClose: () => void;
-  /** Created time of the currently-selected locked lead */
   selectedLeadCreatedAt?: string;
+  isRedistributed?: boolean;
 }
 
-export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCreatedAt }: LockedLeadDetailPanelProps) {
+export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCreatedAt, isRedistributed }: LockedLeadDetailPanelProps) {
   const countdown = useLeadCountdown(selectedLeadCreatedAt || new Date().toISOString());
   const showCountdown = !!selectedLeadCreatedAt && !countdown.isExpired;
 
