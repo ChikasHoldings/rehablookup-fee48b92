@@ -144,37 +144,14 @@ export default function ProviderInquiriesPage() {
     }
   }, [inquiriesError]);
 
-  // Realtime subscription — listen for INSERT and UPDATE
+  // Poll for new leads every 30 seconds (leads/lead_unlocks removed from Realtime for PII security)
   useEffect(() => {
     if (facilityIds.length === 0) return;
-    
-    const channel = supabase
-      .channel("inquiries-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" },
-        (payload) => {
-          const newLead = payload.new as Lead;
-          if (facilityIds.includes(newLead.facility_id)) {
-            queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-            toast.success(`🎉 New Inquiry from ${newLead.location_city_state || "Unknown Location"}`);
-          }
-        }
-      )
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leads" },
-        (payload) => {
-          const updatedLead = payload.new as Lead;
-          if (facilityIds.includes(updatedLead.facility_id)) {
-            queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-          }
-        }
-      )
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "lead_unlocks" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-          queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
+    }, 30000);
+    return () => clearInterval(interval);
   }, [facilityIds, queryClient]);
 
   // Helper to check if a lead is unlocked

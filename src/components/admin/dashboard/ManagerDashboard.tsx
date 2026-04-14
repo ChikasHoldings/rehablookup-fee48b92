@@ -60,12 +60,15 @@ export function ManagerDashboard() {
     const channel = supabase
       .channel("manager-dashboard")
       .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, invalidateDashboard)
-      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, invalidateDashboard)
       .on("postgres_changes", { event: "*", schema: "public", table: "admin_escalations" }, invalidateDashboard)
       .subscribe();
 
+    // Poll for leads data every 60 seconds (leads removed from Realtime for PII security)
+    const leadsInterval = setInterval(invalidateDashboard, 60000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(leadsInterval);
     };
   }, [invalidateDashboard]);
 

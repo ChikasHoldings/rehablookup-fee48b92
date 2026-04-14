@@ -62,14 +62,12 @@ export function SuperAdminDashboard() {
       .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, invalidateDashboard)
       .subscribe();
 
-    const leadsChannel = supabase
-      .channel("dashboard-leads-super")
-      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, invalidateDashboard)
-      .subscribe();
+    // Poll for leads data every 60 seconds (leads removed from Realtime for PII security)
+    const leadsInterval = setInterval(invalidateDashboard, 60000);
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
-      supabase.removeChannel(leadsChannel);
+      clearInterval(leadsInterval);
     };
   }, [invalidateDashboard]);
 
