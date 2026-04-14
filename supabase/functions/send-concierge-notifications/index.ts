@@ -21,11 +21,13 @@ type NotificationType =
   | 'provider_interested'  // Admin: A provider accepted the candidate
   | 'provider_declined'    // Admin: A provider declined the candidate
   | 'seeker_confirmed'     // Provider: Seeker confirmed admission
+  | 'seeker_rejected_provider' // Admin: Seeker rejected a provider option
   | 'provider_confirmed'   // Seeker: Provider confirmed your admission
   | 'placement_complete'   // Both: Congratulations on the placement!
   | 'invoice_issued'       // Provider: Your placement fee invoice
   | 'invoice_paid'         // Provider: Payment received
   | 'signup_prompt'        // Seeker (no account): Create account to track
+  | 'advisor_claimed'      // Admin: Advisor claimed/was assigned to a case
   | 'tour_completed'       // Both: Tour has been completed
   | 'admission_updated'    // Both: Admission status changed
   | 'move_in_scheduled'    // Both: Move-in date has been set
@@ -110,7 +112,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate notification type
-    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in'];
+    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'seeker_rejected_provider', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'advisor_claimed', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in'];
     if (!validTypes.includes(type)) {
       throw new Error("Invalid notification type");
     }
