@@ -97,6 +97,35 @@ export default function SeekerConcierge() {
   const userEmail = currentUser?.email || "";
   const userPhone = currentUser?.user_metadata?.phone || "";
 
+  // Auto-link unlinked inquiries to current user on login (by email match)
+  useEffect(() => {
+    if (!userId || !userEmail) return;
+    const linkUnlinked = async () => {
+      try {
+        const { data: unlinked } = await supabase
+          .from("concierge_inquiries")
+          .select("id")
+          .eq("user_email", userEmail.toLowerCase())
+          .is("user_id", null)
+          .in("payment_status", ["paid", "succeeded"]);
+        
+        if (unlinked && unlinked.length > 0) {
+          for (const inquiry of unlinked) {
+            await supabase.functions.invoke("link-inquiry-to-user", {
+              body: { inquiryId: inquiry.id, userId },
+            }).catch(() => {}); // Non-blocking
+          }
+          refetchRef.current?.();
+        }
+      } catch {
+        // Non-blocking — don't interrupt the page
+      }
+    };
+    linkUnlinked();
+  }, [userId, userEmail]);
+
+  const refetchRef = useRef<(() => void) | null>(null);
+
   // Fetch user's concierge cases
   const { data: cases, isLoading: casesLoading, isError: casesError, refetch } = useQuery({
     queryKey: ["seeker-concierge-cases", userId],
@@ -136,6 +165,9 @@ export default function SeekerConcierge() {
     },
     enabled: !!userId && isReady,
   });
+
+  // Store refetch for auto-link callback
+  useEffect(() => { refetchRef.current = refetch; }, [refetch]);
 
   // Payment verification
   const verifyPaymentAndSubmit = useCallback(async (sessionId: string) => {
