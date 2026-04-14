@@ -274,21 +274,31 @@ Deno.serve(async (req) => {
 
         if (email) {
           try {
+            const locationHint = lead.location_city_state || null;
+            const levelOfCare = lead.level_of_care || null;
+
             await resend.emails.send({
               from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
-              subject: `New lead available in your area - ${facility.name}`,
-              html: getNewLeadNotificationEmail(facility.name, maskLeadName(lead.name), dashboardUrl),
+              subject: `🔁 New discounted lead in your area (${discountPrice}) — ${facility.name}`,
+              html: getRedistributedLeadEmail(facility.name, maskLeadName(lead.name), dashboardUrl, discountPrice, locationHint, levelOfCare),
             });
 
-            // Create in-app provider notification for redistributed lead
+            // Create in-app provider notification with FOMO signals
             await supabase.from("provider_notifications").insert({
               user_id: facility.user_id,
               facility_id: facility.id,
-              type: "new_lead",
-              title: "New Lead Available",
-              message: `A new lead (${maskLeadName(lead.name)}) is available for ${facility.name}.`,
+              type: "redistributed_lead",
+              title: `🔁 New Lead Available — ${discountPrice}`,
+              message: `${maskLeadName(lead.name)} is looking for treatment in your area. Discounted to ${discountPrice} — only available to max 2 providers. Act fast!`,
               link: "/provider/inquiries",
+              metadata: {
+                lead_id: lead.id,
+                discount_price: discountPrice,
+                is_redistributed: true,
+                location: locationHint,
+                level_of_care: levelOfCare,
+              },
             });
 
             // Mark notification as sent
