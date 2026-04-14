@@ -42,6 +42,20 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
       color: "text-violet-600",
       bgColor: "bg-violet-500/10",
     },
+    {
+      icon: Phone,
+      label: "Phone on profile",
+      description: "Direct calls from families",
+      color: "text-blue-600",
+      bgColor: "bg-blue-500/10",
+    },
+    {
+      icon: Globe,
+      label: "Website displayed",
+      description: "Direct traffic to your site",
+      color: "text-teal-600",
+      bgColor: "bg-teal-500/10",
+    },
   ];
 
   return (
