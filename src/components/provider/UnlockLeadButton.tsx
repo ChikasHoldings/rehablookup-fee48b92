@@ -294,6 +294,22 @@ function UnlockConfirmDialog({
             </ul>
           </div>
 
+          {/* Upgrade nudge for Free providers */}
+          {!discountPercent && (
+            <Link
+              to="/provider/pro-upgrade"
+              className="block bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg p-3 transition-colors"
+            >
+              <p className="text-sm font-medium text-primary flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5" />
+                Upgrade to Pro and save 20% on this lead
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Pro providers also get priority access to redistributed leads
+              </p>
+            </Link>
+          )}
+
           {!hasEnoughCredits && (
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <p className="text-sm text-amber-800 dark:text-amber-200">
