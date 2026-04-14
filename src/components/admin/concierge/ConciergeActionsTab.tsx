@@ -166,6 +166,17 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         actor_id: user.id,
         actor_type: "advisor",
       });
+
+      // Notify other admins/advisors
+      try {
+        await supabase.functions.invoke("send-concierge-notifications", {
+          body: {
+            type: "advisor_claimed",
+            inquiryId: caseData.id,
+            metadata: { advisor_id: user.id, advisor_name: user.email, self_assigned: true },
+          },
+        });
+      } catch (e) { console.error("Notification error:", e); }
     },
     onSuccess: () => {
       toast.success("Case assigned to you — starting placement workflow");

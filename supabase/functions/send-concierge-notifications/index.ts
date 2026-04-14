@@ -21,11 +21,13 @@ type NotificationType =
   | 'provider_interested'  // Admin: A provider accepted the candidate
   | 'provider_declined'    // Admin: A provider declined the candidate
   | 'seeker_confirmed'     // Provider: Seeker confirmed admission
+  | 'seeker_rejected_provider' // Admin: Seeker rejected a provider option
   | 'provider_confirmed'   // Seeker: Provider confirmed your admission
   | 'placement_complete'   // Both: Congratulations on the placement!
   | 'invoice_issued'       // Provider: Your placement fee invoice
   | 'invoice_paid'         // Provider: Payment received
   | 'signup_prompt'        // Seeker (no account): Create account to track
+  | 'advisor_claimed'      // Admin: Advisor claimed/was assigned to a case
   | 'tour_completed'       // Both: Tour has been completed
   | 'admission_updated'    // Both: Admission status changed
   | 'move_in_scheduled'    // Both: Move-in date has been set
@@ -110,7 +112,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate notification type
-    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in'];
+    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'seeker_rejected_provider', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'advisor_claimed', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in'];
     if (!validTypes.includes(type)) {
       throw new Error("Invalid notification type");
     }
@@ -209,6 +211,16 @@ Deno.serve(async (req) => {
       case 'signup_prompt':
         if (!inquiry.user_id) {
           await sendSignupPromptEmail(resend, inquiry, results);
+        }
+        break;
+
+      case 'advisor_claimed':
+        await sendAdvisorClaimedNotification(inquiry, supabase, results, metadata);
+        break;
+
+      case 'seeker_rejected_provider':
+        if (facility) {
+          await sendSeekerRejectedProviderNotification(inquiry, facility, supabase, results, metadata);
         }
         break;
 
@@ -1378,6 +1390,67 @@ async function sendInvoicePaidEmail(
 
 // ============================================================================
 // SMS NOTIFICATION HELPERS
+// ============================================================================
+// ADVISOR CLAIMED NOTIFICATION
+// ============================================================================
+
+async function sendAdvisorClaimedNotification(
+  inquiry: InquiryData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>,
+  metadata?: Record<string, unknown>
+) {
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const advisorName = (metadata?.advisor_name as string) || 'An advisor';
+  const selfAssigned = (metadata?.self_assigned as boolean) || false;
+  const action = selfAssigned ? 'claimed' : 'was assigned to';
+
+  await createAdminNotification(supabase, {
+    type: 'concierge_advisor_claimed',
+    title: 'Advisor Assignment',
+    message: `${advisorName} ${action} Case #${caseId} (${inquiry.user_name}).`,
+    metadata: { inquiry_id: inquiry.id, advisor_id: metadata?.advisor_id },
+  });
+
+  // Seeker in-app notification
+  if (inquiry.user_id) {
+    await supabase.from('seeker_notifications').insert({
+      user_id: inquiry.user_id,
+      type: 'concierge_advisor_assigned',
+      title: 'Advisor Assigned',
+      message: 'A placement advisor has been assigned to your case and will be reaching out soon.',
+      link: '/account/concierge',
+      metadata: { inquiry_id: inquiry.id },
+    });
+  }
+
+  results.push({ recipient: 'admin', notificationId: 'advisor_claimed_alert' });
+}
+
+// ============================================================================
+// SEEKER REJECTED PROVIDER NOTIFICATION
+// ============================================================================
+
+async function sendSeekerRejectedProviderNotification(
+  inquiry: InquiryData,
+  facility: FacilityData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>,
+  metadata?: Record<string, unknown>
+) {
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const reason = (metadata?.reason as string) || 'No reason provided';
+
+  await createAdminNotification(supabase, {
+    type: 'concierge_seeker_rejected',
+    title: 'Seeker Rejected Facility',
+    message: `${inquiry.user_name} rejected ${facility.name} for Case #${caseId}. Reason: ${reason}. Consider sending additional introductions.`,
+    metadata: { inquiry_id: inquiry.id, facility_id: facility.id, reason },
+  });
+
+  results.push({ recipient: 'admin', notificationId: 'seeker_rejected_alert' });
+}
+
 // ============================================================================
 
 async function sendProviderSmsNotification(

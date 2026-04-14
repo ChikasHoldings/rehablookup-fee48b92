@@ -74,6 +74,21 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
         actor_id: user?.id || null,
         actor_type: "admin",
       });
+
+      // Notify team of advisor assignment
+      if (advisorId !== "unassigned") {
+        const advisorEntry = adminStaff?.find(a => a.user_id === advisorId);
+        const advisorLabel = advisorEntry?.display_name || advisorEntry?.first_name || advisorId;
+        try {
+          await supabase.functions.invoke("send-concierge-notifications", {
+            body: {
+              type: "advisor_claimed",
+              inquiryId: caseData.id,
+              metadata: { advisor_id: advisorId, advisor_name: advisorLabel, self_assigned: false },
+            },
+          });
+        } catch (e) { console.error("Notification error:", e); }
+      }
     },
     onSuccess: () => {
       toast.success("Advisor assigned successfully");

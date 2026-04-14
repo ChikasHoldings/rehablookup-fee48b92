@@ -194,6 +194,18 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
         actor_type: "seeker",
         actor_id: userId,
       });
+
+      // Notify admin/advisor of rejection
+      try {
+        await supabase.functions.invoke("send-concierge-notifications", {
+          body: {
+            type: "seeker_rejected_provider",
+            inquiryId,
+            facilityId: facility.id,
+            metadata: { reason: reason.trim() || "No reason provided" },
+          },
+        });
+      } catch (e) { console.error("Notification error:", e); }
     },
     onSuccess: () => {
       toast.success("Facility dismissed. Your advisor will be notified.");
