@@ -511,6 +511,11 @@ export default function ProviderDashboardPage() {
             {facilityIds.length > 0 && (
               <LeadConversionWidget facilityIds={facilityIds} />
             )}
+
+            {/* Multi-Facility Overview (Pro only) */}
+            {proStatus?.isPro && facilities && facilities.length > 1 && (
+              <ProMultiFacilityOverview facilities={facilities} />
+            )}
           </div>
 
           {/* Right Column - Sidebar */}
@@ -688,6 +693,15 @@ export default function ProviderDashboardPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* ROI Widget (Pro only) */}
+            {proStatus?.isPro && !creditsLoading && (
+              <ProROIWidget
+                transactions={creditsData?.transactions ?? []}
+                balanceCents={creditsData?.balance_cents ?? 0}
+                isPro={true}
+              />
+            )}
 
             {/* Pro Status / Upgrade CTA */}
             {!proStatus?.isPro && (
