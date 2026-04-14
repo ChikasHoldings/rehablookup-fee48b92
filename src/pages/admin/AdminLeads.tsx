@@ -309,33 +309,13 @@ export default function AdminLeads() {
     queryClient.invalidateQueries({ queryKey: ["admin-leads-redistribution-stats"] });
   }, [queryClient]);
 
-  // Real-time subscriptions for leads
+  // Poll for lead updates every 30 seconds (leads removed from Realtime for PII security)
   useEffect(() => {
-    const leadsChannel = supabase
-      .channel("admin-leads-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        (payload) => {
-          invalidateLeadsQueries();
-          const newLead = payload.new as Lead;
-          toast.success("New inquiry received", {
-            description: `${newLead.name} submitted an inquiry`,
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "leads" },
-        () => {
-          invalidateLeadsQueries();
-        }
-      )
-      .subscribe();
+    const interval = setInterval(() => {
+      invalidateLeadsQueries();
+    }, 30000);
 
-    return () => {
-      supabase.removeChannel(leadsChannel);
-    };
+    return () => clearInterval(interval);
   }, [invalidateLeadsQueries]);
 
   // Fetch KPI stats independently (not from page data)

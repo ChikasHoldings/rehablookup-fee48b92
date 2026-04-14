@@ -75,16 +75,10 @@ export function FeaturedAnalyticsDashboard() {
       )
       .subscribe();
 
-    const leadsChannel = supabase
-      .channel("featured-leads-updates")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["featured-analytics", dateRange] });
-        }
-      )
-      .subscribe();
+    // Poll for leads data every 60 seconds (leads removed from Realtime for PII security)
+    const leadsInterval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["featured-analytics", dateRange] });
+    }, 60000);
 
     const viewsChannel = supabase
       .channel("featured-provider-events-updates")
@@ -99,7 +93,7 @@ export function FeaturedAnalyticsDashboard() {
 
     return () => {
       supabase.removeChannel(analyticsChannel);
-      supabase.removeChannel(leadsChannel);
+      clearInterval(leadsInterval);
       supabase.removeChannel(viewsChannel);
     };
   }, [queryClient, dateRange]);

@@ -192,45 +192,18 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
       )
       .subscribe();
 
-    // Only subscribe to leads channel if NOT an advisor
-    // Advisors handle placements, not leads
-    let leadsChannel: ReturnType<typeof supabase.channel> | null = null;
+    // Poll for lead updates every 30 seconds (leads removed from Realtime for PII security)
+    let leadsInterval: ReturnType<typeof setInterval> | null = null;
     if (!isAdvisor) {
-      leadsChannel = supabase
-        .channel("admin-leads-notifications-live")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "leads",
-          },
-          () => {
-            invalidateNotifications();
-            triggerBellAnimation();
-            toast.success("New Lead Received", {
-              description: "A new lead has been submitted",
-            });
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "leads",
-          },
-          () => {
-            invalidateNotifications();
-          }
-        )
-        .subscribe();
+      leadsInterval = setInterval(() => {
+        invalidateNotifications();
+      }, 30000);
     }
 
     return () => {
       supabase.removeChannel(facilitiesChannel);
-      if (leadsChannel) {
-        supabase.removeChannel(leadsChannel);
+      if (leadsInterval) {
+        clearInterval(leadsInterval);
       }
     };
   }, [invalidateNotifications, navigate, triggerBellAnimation, isAdvisor]);

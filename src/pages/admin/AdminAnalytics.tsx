@@ -91,17 +91,10 @@ export default function AdminAnalytics() {
 
   useEffect(() => {
 
-    // Subscribe to leads table changes
-    const leadsChannel = supabase
-      .channel('analytics-leads')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'leads' },
-        () => {
-          invalidateAnalyticsQueries();
-        }
-      )
-      .subscribe();
+    // Poll for leads data every 60 seconds (leads removed from Realtime for PII security)
+    const leadsInterval = setInterval(() => {
+      invalidateAnalyticsQueries();
+    }, 60000);
 
     // Subscribe to provider_events table changes (primary analytics source)
     const viewsChannel = supabase
@@ -128,7 +121,7 @@ export default function AdminAnalytics() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(leadsChannel);
+      clearInterval(leadsInterval);
       supabase.removeChannel(viewsChannel);
       supabase.removeChannel(facilitiesChannel);
     };
