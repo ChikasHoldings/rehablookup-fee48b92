@@ -729,6 +729,42 @@ Deno.serve(async (req) => {
         logStep("Error updating subscription", { error: updateError.message });
       } else {
         logStep("Subscription updated successfully", { status: mappedStatus, currentPeriodEnd, cancelAtPeriodEnd: subscription.cancel_at_period_end });
+
+        // Notify provider on status transitions (past_due, cancel_at_period_end)
+        if (mappedStatus === "past_due" || subscription.cancel_at_period_end) {
+          const { data: proSub } = await supabaseAdmin
+            .from("pro_subscriptions")
+            .select("provider_id, facility_id")
+            .eq("stripe_subscription_id", subscription.id)
+            .maybeSingle();
+
+          if (proSub) {
+            if (mappedStatus === "past_due") {
+              await supabaseAdmin.from("provider_notifications").insert({
+                user_id: proSub.provider_id,
+                facility_id: proSub.facility_id,
+                type: "subscription_past_due",
+                title: "Subscription Payment Past Due",
+                message: "Your Pro subscription payment is past due. Please update your payment method to avoid losing Pro benefits.",
+                metadata: { subscription_id: subscription.id, status: "past_due" },
+              });
+              logStep("Past-due notification sent to provider");
+            }
+
+            if (subscription.cancel_at_period_end) {
+              const endDate = new Date(subscription.current_period_end * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+              await supabaseAdmin.from("provider_notifications").insert({
+                user_id: proSub.provider_id,
+                facility_id: proSub.facility_id,
+                type: "subscription_pending_cancel",
+                title: "Pro Cancellation Scheduled",
+                message: `Your Pro subscription will end on ${endDate}. You'll retain Pro benefits until then. You can resubscribe anytime.`,
+                metadata: { subscription_id: subscription.id, cancel_date: endDate },
+              });
+              logStep("Pending cancellation notification sent to provider");
+            }
+          }
+        }
       }
     }
 
