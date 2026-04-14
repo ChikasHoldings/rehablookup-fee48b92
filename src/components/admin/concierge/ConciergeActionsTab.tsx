@@ -33,6 +33,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
 import { AdvisorAssignmentCard } from "./AdvisorAssignmentCard";
+import { AdmissionCoordinationCard } from "./AdmissionCoordinationCard";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
@@ -235,6 +236,9 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       {caseData.status === "in_contact" && !caseData.seeker_confirmed && (
         <NotifySeekerCard caseData={caseData} onRefresh={onRefresh} />
       )}
+
+      {/* Admission Coordination */}
+      <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
 
       {/* Seeker confirmed indicator for admin */}
       {caseData.seeker_confirmed && caseData.status !== "placed" && (

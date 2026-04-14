@@ -37,6 +37,7 @@ import {
   PlacementSupportCard,
   SeekerPlacementModal,
   SeekerProviderReviewCard,
+  AdmissionStatusCard,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 
@@ -65,6 +66,9 @@ interface ConciergeInquiry {
   seeker_rating: number | null;
   seeker_feedback: string | null;
   user_name: string;
+  tour_coordination_status: string;
+  admission_status: string;
+  move_in_date: string | null;
 }
 
 interface Facility {
@@ -141,7 +145,8 @@ export default function SeekerConcierge() {
           timeline_urgency, preferred_state, preferred_city,
           seeker_confirmed, seeker_confirmed_at, placement_confirmed,
           placement_confirmed_at, placed_facility_id, seeker_rating,
-          seeker_feedback, user_name
+          seeker_feedback, user_name,
+          tour_coordination_status, admission_status, move_in_date
         `)
         .eq("user_id", userId)
         .in("payment_status", ["paid", "succeeded"])
@@ -630,6 +635,13 @@ export default function SeekerConcierge() {
                 <PlacementMatchCard facility={placedFacility} isPlaced />
               </CardContent>
             </Card>
+            
+            {/* Admission & Move-In Status */}
+            <AdmissionStatusCard
+              tourStatus={selectedCase.tour_coordination_status}
+              admissionStatus={selectedCase.admission_status}
+              moveInDate={selectedCase.move_in_date}
+            />
           </div>
         )}
 
@@ -661,7 +673,14 @@ export default function SeekerConcierge() {
 
         {/* Seeker confirmed, awaiting admin final confirmation */}
         {selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed && selectedCase.status !== "placed" && (
-          <PlacementConfirmationCard type="awaiting_admin" />
+          <>
+            <PlacementConfirmationCard type="awaiting_admin" />
+            <AdmissionStatusCard
+              tourStatus={selectedCase.tour_coordination_status}
+              admissionStatus={selectedCase.admission_status}
+              moveInDate={selectedCase.move_in_date}
+            />
+          </>
         )}
 
         {/* Feedback */}
