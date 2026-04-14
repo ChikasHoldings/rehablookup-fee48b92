@@ -740,7 +740,7 @@ export default function ProviderBillingPage() {
                         <div className="flex items-center gap-3.5 min-w-0">
                           <div className={cn(
                             "h-11 w-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-colors",
-                            isBest
+                            isHighlighted
                               ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
                               : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                           )}>
