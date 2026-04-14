@@ -6234,6 +6234,8 @@ export type Database = {
         }
         Returns: string
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       touch_admin_activity: { Args: { p_user_id: string }; Returns: undefined }
       user_has_provider_profile: {
         Args: { p_user_id: string }
