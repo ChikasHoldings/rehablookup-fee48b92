@@ -417,8 +417,8 @@ Deno.serve(async (req) => {
         const intakeData = caseData.intake_data as Record<string, unknown> || {};
         
         const emailData = buildAbandonedCartEmail({
-          userName: caseData.seeker_name,
-          userEmail: caseData.seeker_email,
+          userName: caseData.client_name,
+          userEmail: caseData.client_email,
           caseType: 'international',
           intakeSummary: {
             levelOfCare: intakeData.level_of_care as string,
@@ -431,7 +431,7 @@ Deno.serve(async (req) => {
 
         const { error: sendError } = await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
-          to: [caseData.seeker_email],
+          to: [caseData.client_email],
           subject: emailData.subject,
           html: emailData.html,
         });
@@ -446,8 +446,8 @@ Deno.serve(async (req) => {
           .update({ abandoned_cart_email_sent_at: now.toISOString() })
           .eq("id", caseData.id);
 
-        emailsSent.push(caseData.seeker_email);
-        logStep("Sent international abandoned cart email", { email: caseData.seeker_email, caseId: caseData.id });
+        emailsSent.push(caseData.client_email);
+        logStep("Sent international abandoned cart email", { email: caseData.client_email, caseId: caseData.id });
         
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err);
