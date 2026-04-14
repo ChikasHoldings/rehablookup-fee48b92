@@ -875,6 +875,9 @@ Deno.serve(async (req) => {
                 </div>
               </div>
             `,
+          }, {
+            emailType: "stripe_payment_failed",
+            idempotencyKey: `stripe-pay-fail-${event.id}`,
           });
           logStep("Payment failure email sent");
         } catch (emailError) {
