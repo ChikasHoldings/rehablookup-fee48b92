@@ -96,6 +96,19 @@ Deno.serve(async (req) => {
               metadata: { invoice_id: invoice.id, facility_id: invoice.facility_id },
             });
 
+            // Notify provider via provider_notifications
+            if (invoice.facilities?.user_id) {
+              await supabase.from('provider_notifications').insert({
+                user_id: invoice.facilities.user_id,
+                facility_id: invoice.facility_id,
+                type: 'payment_failed',
+                title: 'Payment Failed - No Payment Method',
+                message: 'Your placement fee payment could not be processed. Please add a payment method to avoid service interruption.',
+                link: '/provider/placement-network',
+                metadata: { invoice_id: invoice.id },
+              });
+            }
+
             logStep("Invoice marked delinquent - no payment method", { invoiceId: invoice.id });
           } else {
             // Schedule next retry
