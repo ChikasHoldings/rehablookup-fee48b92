@@ -27,8 +27,8 @@ interface DashboardKPIStripProps {
 interface WeeklyKPIs {
   received: number;
   unlocked: number;
-  views: number;
-  reviews: number;
+  missed: number;
+  estRevenueLost: number;
 }
 
 export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: DashboardKPIStripProps) {
