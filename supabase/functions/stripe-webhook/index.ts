@@ -921,6 +921,76 @@ Deno.serve(async (req) => {
             },
           });
           logStep("Payment event recorded");
+
+          // Send payment confirmation notification + email to provider (renewals & first payments)
+          if (userId && facilityId) {
+            const amountFormatted = (invoice.amount_paid / 100).toFixed(2);
+            const currencyUpper = invoice.currency.toUpperCase();
+            const isRenewal = invoice.billing_reason === "subscription_cycle";
+            const isPro = planTier === "pro";
+
+            await supabaseAdmin.from("provider_notifications").insert({
+              user_id: userId,
+              facility_id: facilityId,
+              type: "payment_confirmation",
+              title: isRenewal ? "Subscription Renewed" : "Payment Confirmed",
+              message: isRenewal
+                ? `Your ${planName} subscription has been renewed. ${currencyUpper} ${amountFormatted} charged.${isPro ? " Your 20% discount on leads and placement fees continues." : ""}`
+                : `Payment of ${currencyUpper} ${amountFormatted} for ${planName} confirmed.`,
+              metadata: {
+                amount_cents: invoice.amount_paid,
+                currency: currencyUpper,
+                invoice_id: invoice.id,
+                billing_reason: invoice.billing_reason,
+                plan_tier: planTier,
+              },
+            });
+
+            // Send payment confirmation email
+            if (resend && customerEmail) {
+              try {
+                const { data: providerProfile } = await supabaseAdmin
+                  .from("profiles")
+                  .select("first_name")
+                  .eq("user_id", userId)
+                  .maybeSingle();
+                const firstName = providerProfile?.first_name || "Provider";
+
+                const proBenefits = isPro
+                  ? `<div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
+                       <p style="margin: 0; color: #047857; font-weight: 600;">Your Pro Benefits Are Active</p>
+                       <p style="margin: 8px 0 0; color: #047857;">✓ 20% discount on lead unlocks & placement fees</p>
+                       <p style="margin: 4px 0 0; color: #047857;">✓ Featured placement & priority ranking</p>
+                       <p style="margin: 4px 0 0; color: #047857;">✓ Up to 5 facility listings</p>
+                     </div>`
+                  : "";
+
+                await resend.emails.send({
+                  from: "RehabLookup <no-reply@rehablookup.com>",
+                  to: [customerEmail],
+                  subject: isRenewal ? `✅ Subscription Renewed — ${planName}` : `✅ Payment Confirmed — ${planName}`,
+                  html: `
+                    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                      <div style="background-color: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">✅ ${isRenewal ? "Subscription Renewed" : "Payment Confirmed"}</h1>
+                      </div>
+                      <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+                        <p style="color: #374151;">Hi ${firstName},</p>
+                        <p style="color: #374151;">Your payment of <strong>${currencyUpper} ${amountFormatted}</strong> for <strong>${planName}</strong> has been processed successfully.</p>
+                        ${proBenefits}
+                        <div style="text-align: center; margin: 30px 0;">
+                          <a href="https://rehablookup.com/provider/billing" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Billing</a>
+                        </div>
+                      </div>
+                    </div>
+                  `,
+                });
+                logStep("Payment confirmation email sent to provider");
+              } catch (emailError) {
+                logStep("Payment confirmation email failed", { error: String(emailError) });
+              }
+            }
+          }
         }
       }
     }
