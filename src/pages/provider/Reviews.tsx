@@ -206,55 +206,6 @@ export default function ProviderReviews() {
           </CardHeader>
         </Card>
 
-        {/* Import Google Reviews Trigger Card */}
-        <Card 
-          className={cn(
-            "cursor-pointer transition-all group",
-            isPro 
-              ? "hover:border-primary/50 hover:shadow-sm" 
-              : "opacity-75 hover:opacity-90"
-          )}
-          onClick={() => isPro ? setGoogleReviewsOpen(true) : navigate('/provider/pro-upgrade')}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 relative",
-                  isPro ? "bg-amber-500/10 text-amber-600" : "bg-muted text-muted-foreground"
-                )}>
-                  <Star className="h-5 w-5" />
-                  {!isPro && (
-                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center">
-                      <Lock className="h-2.5 w-2.5 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <CardTitle className="text-base font-semibold">Import Google Reviews</CardTitle>
-                  <CardDescription className="text-xs">
-                    Display your Google rating
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {isPro && reviewsConfig?.google_rating && (
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                    {reviewsConfig.google_rating.toFixed(1)}
-                  </Badge>
-                )}
-                {!isPro && (
-                  <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs font-medium">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    PRO
-                  </Badge>
-                )}
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
       </div>
 
       {/* Pro Upgrade Banner */}
@@ -382,12 +333,6 @@ export default function ProviderReviews() {
         onOpenChange={setRequestReviewOpen}
       />
 
-      {/* Google Reviews Modal */}
-      <GoogleReviewsImportSection 
-        facilityId={activeFacilityId}
-        open={googleReviewsOpen}
-        onOpenChange={setGoogleReviewsOpen}
-      />
       </div>
     </div>
   );
