@@ -226,7 +226,7 @@ export default function SeekerFacilityProfile() {
 
       // Fetch facility by slug using direct REST call
       const facilityRes = await fetch(
-        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,phone,email,website,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at,concierge_network_opted_in,accepts_international_patients`,
+        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at,concierge_network_opted_in,accepts_international_patients`,
         { headers: { ...headers, "Accept": "application/vnd.pgrst.object+json" } }
       );
 
