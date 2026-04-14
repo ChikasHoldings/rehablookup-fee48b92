@@ -69,10 +69,10 @@ export async function sendEmailWithRetry(
   supabase: SupabaseClient,
   resend: InstanceType<typeof Resend>,
   params: EmailParams,
-  options: SendOptions
+  options: SendOptions = { emailType: "general" }
 ): Promise<SendResult> {
   const {
-    emailType,
+    emailType = "general",
     idempotencyKey,
     maxRetries = 3,
     checkSuppression = true,
