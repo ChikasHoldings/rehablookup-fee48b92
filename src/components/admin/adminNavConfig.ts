@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Landmark,
   Bell,
+  Mail,
 } from "lucide-react";
 import type { AdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
 import type { AdminRoleType } from "@/hooks/useAdminAuth";
