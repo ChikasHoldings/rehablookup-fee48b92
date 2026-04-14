@@ -391,6 +391,14 @@ export default function ProviderDashboardPage() {
               </CardContent>
             </Card>
 
+            {/* Top Bar - Credits, Warnings, Pro Status */}
+            <DashboardTopBar
+              balanceCents={creditsData?.balance_cents ?? 0}
+              isPro={proStatus.isPro}
+              isLoading={creditsLoading || proLoading}
+              discountPercent={proStatus.isPro ? 20 : 0}
+            />
+
             {/* Metrics Row */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <MetricCard
