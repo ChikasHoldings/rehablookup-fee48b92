@@ -58,14 +58,14 @@ export default function ProviderReviews() {
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
   const [requestReviewOpen, setRequestReviewOpen] = useState(false);
-  const [googleReviewsOpen, setGoogleReviewsOpen] = useState(false);
+  
 
   // Get the active facility ID for modals
   const activeFacilityId = facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null;
   
   // Get stats for the trigger cards
   const { stats: requestStats } = useReviewRequests(activeFacilityId);
-  const { reviewsConfig } = useGoogleReviews(activeFacilityId || '');
+  
 
   const filteredReviews = useMemo(() => {
     return reviews.filter(r => {
