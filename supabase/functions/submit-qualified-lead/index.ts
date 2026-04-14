@@ -798,22 +798,25 @@ Deno.serve(async (req) => {
         notification_sent_at: now.toISOString(),
       });
 
-    // ===== NON-BLOCKING NOTIFICATIONS =====
-    // Send seeker confirmation email
+    // ===== NON-BLOCKING NOTIFICATIONS (with idempotency) =====
+    // Send seeker confirmation email — idempotency keyed to lead ID
     const firstName = data.name.split(" ")[0];
     try {
-      await resend.emails.send({
+      await sendEmailWithRetry(supabase, resend, {
         from: "RehabLookup <no-reply@rehablookup.com>",
-        to: data.email,
+        to: [data.email],
         subject: `Your inquiry to ${facility.name} has been received`,
         html: getSeekerConfirmationEmail(data.name, facility.name),
+      }, {
+        emailType: "seeker_inquiry_confirmation",
+        idempotencyKey: `seeker-confirm-${lead.id}`,
       });
       log(requestId, "INFO", "Seeker email sent");
     } catch (e) {
       log(requestId, "WARN", "Failed to send seeker email", { error: String(e) });
     }
 
-    // Send facility notification email
+    // Send facility notification email — idempotency keyed to lead ID
     const { data: profile } = await supabase
       .from("profiles")
       .select("email")
@@ -826,9 +829,9 @@ Deno.serve(async (req) => {
 
     if (notificationEmail) {
       try {
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
-          to: notificationEmail,
+          to: [notificationEmail],
           subject: `New Inquiry from ${firstName} - ${facility.name}`,
           html: getFacilityNotificationEmail(data.name, data.email, data.phone, facility.name, {
             urgency: data.urgency,
@@ -837,6 +840,9 @@ Deno.serve(async (req) => {
             message: data.message,
             preferredContact: data.preferredContact,
           }),
+        }, {
+          emailType: "facility_new_lead",
+          idempotencyKey: `facility-lead-${lead.id}`,
         });
         log(requestId, "INFO", "Facility email sent");
       } catch (e) {
