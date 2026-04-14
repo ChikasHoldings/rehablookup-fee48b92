@@ -39,6 +39,7 @@ import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
+import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -612,6 +613,9 @@ export default function ProviderDashboardPage() {
                 </Card>
               )}
             </div>
+
+            {/* Performance Feedback Loop */}
+            {facilityId && <ProviderPerformanceFeedback facilityId={facilityId} />}
 
             {/* Pro Benefits Widget */}
             <ProBenefitsWidget />
