@@ -84,7 +84,7 @@ export function FeaturedCentersSection({
       pool = [...approvedFacilities].sort((a: any, b: any) => {
         if (a.isPro !== b.isPro) return a.isPro ? -1 : 1;
         if (a.verified !== b.verified) return a.verified ? -1 : 1;
-        return (b.googleRating || 0) - (a.googleRating || 0);
+        return (b.calculatedRankingScore || 0) - (a.calculatedRankingScore || 0);
       });
     } else {
       pool = treatmentCenters

@@ -273,8 +273,6 @@ export const useApprovedFacilities = () => {
         isFromDatabase: true,
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
-        googleRating: facility.reviewsConfig?.rating ?? null,
-        googleReviewCount: facility.reviewsConfig?.count ?? null,
         calculatedRankingScore: (facility as any).calculated_ranking_score ?? 0,
       };
     });
