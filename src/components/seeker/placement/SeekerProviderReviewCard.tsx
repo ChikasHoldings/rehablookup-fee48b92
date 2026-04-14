@@ -121,8 +121,8 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
 
       if (!userId) throw new Error("Not authenticated");
 
-      // Update the inquiry with seeker's choice
-      const { error } = await supabase
+      // Update the inquiry with seeker's choice — idempotent guard
+      const { data: updated, error } = await supabase
         .from("concierge_inquiries")
         .update({
           seeker_confirmed: true,
@@ -131,9 +131,15 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
         })
         .eq("id", inquiryId)
         .eq("user_id", userId)
-        .is("seeker_confirmed", false);
+        .eq("seeker_confirmed", false)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
+      if (!updated) {
+        // Already confirmed — idempotent return
+        return;
+      }
 
       // Log case event
       await supabase.from("concierge_case_events").insert({
