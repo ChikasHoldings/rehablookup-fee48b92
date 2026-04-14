@@ -13,7 +13,7 @@ import {
   emailEnd,
   emailDivider,
 } from "../_shared/email-templates.ts";
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.0";
 
