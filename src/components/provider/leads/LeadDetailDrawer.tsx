@@ -25,6 +25,7 @@ import {
   BellOff,
   Bell,
   Lock,
+  Smartphone,
 } from "lucide-react";
 import {
   Dialog,
@@ -392,8 +393,40 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                     />
                   </div>
                 ) : (
-                  /* Unlocked State - Show full contact info */
-                  <div className="space-y-2">
+                  /* Unlocked State - Show full contact info with instant CTAs */
+                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                    {/* Quick Action CTAs */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button 
+                        className="h-12 flex-col gap-0.5 bg-green-600 hover:bg-green-700 text-white"
+                        asChild
+                      >
+                        <a href={`tel:${lead.phone}`}>
+                          <Phone className="h-4 w-4" />
+                          <span className="text-[10px] font-medium">📞 Call Now</span>
+                        </a>
+                      </Button>
+                      <Button 
+                        className="h-12 flex-col gap-0.5 bg-blue-600 hover:bg-blue-700 text-white"
+                        asChild
+                      >
+                        <a href={`sms:${lead.phone}`}>
+                          <Smartphone className="h-4 w-4" />
+                          <span className="text-[10px] font-medium">Send SMS</span>
+                        </a>
+                      </Button>
+                      <Button 
+                        className="h-12 flex-col gap-0.5"
+                        variant="outline"
+                        onClick={() => setEmailDialogOpen(true)}
+                      >
+                        <Mail className="h-4 w-4" />
+                        <span className="text-[10px] font-medium">📧 Email</span>
+                      </Button>
+                    </div>
+
+                    {/* Contact Details */}
+                    <div className="space-y-2">
                     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -481,6 +514,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                           </a>
                         </Button>
                       </div>
+                    </div>
                     </div>
                   </div>
                 )}

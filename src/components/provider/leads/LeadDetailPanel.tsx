@@ -602,9 +602,18 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                 </div>
               ) : (
                 /* Unlocked State - Show full contact info with prominent CTAs */
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
                   {/* Quick Action Buttons - Prominent CTAs */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button 
+                      className="h-14 flex-col gap-1 bg-green-600 hover:bg-green-700 text-white"
+                      asChild
+                    >
+                      <a href={`tel:${lead.phone}`}>
+                        <Phone className="h-5 w-5" />
+                        <span className="text-xs font-medium">📞 Call Now</span>
+                      </a>
+                    </Button>
                     <Button 
                       className="h-14 flex-col gap-1 bg-blue-600 hover:bg-blue-700 text-white"
                       asChild
@@ -620,7 +629,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                       onClick={() => setShowEmailDialog(true)}
                     >
                       <Mail className="h-5 w-5" />
-                      <span className="text-xs font-medium">Email</span>
+                      <span className="text-xs font-medium">📧 Email</span>
                     </Button>
                   </div>
 
