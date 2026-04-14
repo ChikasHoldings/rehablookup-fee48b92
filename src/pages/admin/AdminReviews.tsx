@@ -407,6 +407,7 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to uphold dispute');
     } else {
+      auditLog({ actionType: 'dispute_upheld', targetType: 'review_dispute', targetId: dispute.id, details: { review_id: dispute.review_id, facility_name: dispute.facility_name, reason: dispute.reason, admin_notes: disputeNotes[dispute.id] || null } });
       toast.success('Dispute upheld — review hidden');
       fetchReviews();
       fetchDisputes();
@@ -434,6 +435,7 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to dismiss dispute');
     } else {
+      auditLog({ actionType: 'dispute_dismissed', targetType: 'review_dispute', targetId: dispute.id, details: { review_id: dispute.review_id, facility_name: dispute.facility_name, reason: dispute.reason, admin_notes: disputeNotes[dispute.id] || null } });
       toast.success('Dispute dismissed — review remains visible');
       fetchReviews();
       fetchDisputes();
