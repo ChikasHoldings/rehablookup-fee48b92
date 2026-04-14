@@ -163,6 +163,7 @@ export function IntroductionCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-semibold text-foreground">{caseId}</h3>
+              <MatchScoreBadge score={matchScore} size="compact" />
               <Badge
                 variant={inquiry?.timeline_urgency === "immediate" ? "destructive" : "secondary"}
                 className="text-xs h-5"
