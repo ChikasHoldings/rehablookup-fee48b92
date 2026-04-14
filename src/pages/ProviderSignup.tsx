@@ -120,6 +120,7 @@ const states = [...US_STATES];
 export default function ProviderSignup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();

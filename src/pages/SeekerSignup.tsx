@@ -18,6 +18,7 @@ import { PasswordStrengthIndicator, calculatePasswordStrength } from '@/componen
 export default function SeekerSignup() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [signupEmail, setSignupEmail] = useState('');
