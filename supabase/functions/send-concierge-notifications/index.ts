@@ -156,6 +156,10 @@ Deno.serve(async (req) => {
         await sendIntroductionsSentEmail(resend, inquiry, supabase, results);
         break;
 
+      case 'facilities_ready_for_review':
+        await sendFacilitiesReadyForReviewEmail(resend, inquiry, supabase, results);
+        break;
+
       case 'provider_interested':
         if (facility) {
           await sendProviderInterestedNotification(resend, inquiry, facility, supabase, results);
