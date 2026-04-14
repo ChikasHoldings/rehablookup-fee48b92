@@ -706,13 +706,18 @@ export default function ProviderBillingPage() {
                   const isPkgLoading = purchaseLoading === pkg.amountCents;
                   const isDisabled = purchaseLoading !== null;
                   const isBest = pkg.badge === "Best Value";
+                  const isPopular = pkg.badge === "Popular";
+                  const isHighlighted = isBest || isPopular;
                   return (
                     <div key={pkg.amountCents} className="relative">
-                      {isBest && (
+                      {pkg.badge && (
                         <div className="absolute -top-2.5 left-4 z-10">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                          <span className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm",
+                            isBest ? "bg-emerald-600" : "bg-primary"
+                          )}>
                             <Star className="h-2.5 w-2.5 fill-current" />
-                            Best Value
+                            {pkg.badge}
                           </span>
                         </div>
                       )}
@@ -727,6 +732,8 @@ export default function ProviderBillingPage() {
                           isPkgLoading && "border-primary bg-primary/5 shadow-md scale-[1.01]",
                           isBest && !isPkgLoading
                             ? "border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/20 hover:border-emerald-500/70"
+                            : isPopular && !isPkgLoading
+                            ? "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
                             : !isPkgLoading && "border-border hover:border-primary/40 hover:bg-primary/[0.03]"
                         )}
                       >
