@@ -218,6 +218,7 @@ Deno.serve(async (req) => {
     logStep(requestId, "Triggering placement fee charge");
     
     // Call the charge function
+    let chargeSuccess = false;
     try {
       const chargeResponse = await fetch(`${supabaseUrl}/functions/v1/charge-placement-fee`, {
         method: 'POST',
@@ -234,10 +235,33 @@ Deno.serve(async (req) => {
       });
 
       const chargeResult = await chargeResponse.json();
-      logStep(requestId, "Charge result", chargeResult);
+      chargeSuccess = chargeResponse.ok && chargeResult?.success;
+      logStep(requestId, "Charge result", { ok: chargeResponse.ok, ...chargeResult });
+
+      if (!chargeSuccess) {
+        // Log billing failure event for admin visibility
+        await supabaseService.from("concierge_case_events").insert({
+          inquiry_id: inquiryId,
+          event_type: "charge_failed",
+          event_data: { 
+            error: chargeResult?.error || "Unknown charge error",
+            facility_id: facilityId,
+          },
+          actor_type: "system",
+        });
+        logStep(requestId, "Charge failed event logged — admin can retry from billing card");
+      }
     } catch (chargeError) {
       logStep(requestId, "Warning: Charge failed", { error: String(chargeError) });
-      // Don't fail the confirmation if charge fails
+      // Log the failure so admins see it
+      try {
+        await supabaseService.from("concierge_case_events").insert({
+          inquiry_id: inquiryId,
+          event_type: "charge_failed",
+          event_data: { error: String(chargeError), facility_id: facilityId },
+          actor_type: "system",
+        });
+      } catch (_) { /* best-effort */ }
     }
 
     return new Response(
