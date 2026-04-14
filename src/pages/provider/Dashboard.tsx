@@ -242,6 +242,24 @@ export default function ProviderDashboardPage() {
     refetchOnMount: true,
   });
 
+  // Fetch total impressions count from provider_events
+  const { data: impressionCount = 0 } = useQuery({
+    queryKey: ["impression-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const { count, error } = await supabase
+        .from("provider_events")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facilityId)
+        .eq("event_type", "listing_impression");
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 3,
+    refetchOnWindowFocus: true,
+  });
+
   // Fetch review count
   const { data: reviewCount = 0 } = useQuery({
     queryKey: ["review-count", facilityId],
@@ -429,7 +447,7 @@ export default function ProviderDashboardPage() {
               <DashboardKPIStrip
                 facilityId={facilityId}
                 isPro={proStatus.isPro}
-                viewsCount={viewsCount}
+                impressionCount={impressionCount}
                 reviewCount={reviewCount}
                 totalLeadsCount={totalLeadsCount}
                 conciergeCount={conciergeCount}
