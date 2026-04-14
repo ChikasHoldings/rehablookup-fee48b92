@@ -126,6 +126,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     cancelFacilitySwitch 
   } = useSelectedFacility();
   const { canAddMore, planTier, limit: locationLimit } = useFacilityLimits();
+  const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
   
   const recentNotifications = notifications.slice(0, 5);
   const isPro = planTier === "pro";
